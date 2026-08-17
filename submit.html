@@ -59,6 +59,7 @@
   .thanks p{font-size:13px; color:var(--ink-soft); line-height:1.8;}
   .thanks button{margin-top:18px; padding:10px 22px; border-radius:10px; border:1.5px solid var(--line); background:var(--white); color:var(--ink-soft); font-size:13px; font-weight:600; cursor:pointer;}
   .foot{text-align:center; margin-top:20px; font-size:11px; color:var(--ink-soft);}
+  .foot-msg{margin-top:18px; padding:12px 16px; background:var(--teal-tint); border:1px solid var(--line); border-radius:12px; font-size:12.5px; color:var(--teal-dark); text-align:center; line-height:1.7;}
 </style>
 </head>
 <body>
@@ -83,6 +84,7 @@
     <button type="button" id="sendAnotherBtn">إرسال بيانات أخرى</button>
   </div>
 
+  <div class="foot-msg" id="footerMsg" style="display:none;"></div>
   <div class="foot">جمعية العوامية الخيرية</div>
 </div>
 
@@ -215,6 +217,44 @@
 
   var state = { activeCategory: "graduates", photo: "" };
 
+  var PUBLIC_FORM_CONFIG_KEY = "zaraHub.publicFormConfig";
+  function loadPublicFormConfig(){
+    var cfg = { footerMessage: "" };
+    CATEGORIES.forEach(function(c){ cfg[c.key] = { hidden: [], hints: {}, custom: [] }; });
+    var raw = localStorage.getItem(PUBLIC_FORM_CONFIG_KEY);
+    if(raw){
+      try{
+        var p = JSON.parse(raw);
+        if(typeof p.footerMessage === "string") cfg.footerMessage = p.footerMessage;
+        CATEGORIES.forEach(function(c){
+          if(p[c.key]){
+            if(Array.isArray(p[c.key].hidden)) cfg[c.key].hidden = p[c.key].hidden;
+            if(p[c.key].hints) cfg[c.key].hints = p[c.key].hints;
+            if(Array.isArray(p[c.key].custom)) cfg[c.key].custom = p[c.key].custom;
+          }
+        });
+      }catch(e){}
+    }
+    return cfg;
+  }
+  function getEffectiveFields(catKey){
+    var cat = CATEGORIES.find(function(c){ return c.key === catKey; });
+    var cfg = loadPublicFormConfig()[catKey];
+    var fields = cat.fields
+      .filter(function(f){ return cfg.hidden.indexOf(f.key) === -1; })
+      .map(function(f){
+        if(cfg.hints[f.key] === undefined) return f;
+        var copy = {};
+        for(var k in f) copy[k] = f[k];
+        copy.hint = cfg.hints[f.key];
+        return copy;
+      });
+    cfg.custom.forEach(function(c){
+      fields.push({ key: "custom_" + c.id, label: c.label, type: "text", hint: c.hint || "" });
+    });
+    return fields;
+  }
+
   function escapeHTML(s){
     return String(s == null ? "" : s).replace(/[&<>"']/g, function(c){
       return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
@@ -238,9 +278,10 @@
 
   function renderForm(){
     var cat = CATEGORIES.find(function(c){ return c.key === state.activeCategory; });
+    var effectiveFields = getEffectiveFields(cat.key);
     state.photo = "";
     var grid = document.getElementById("formGrid");
-    grid.innerHTML = cat.fields.map(function(f){
+    grid.innerHTML = effectiveFields.map(function(f){
       var fieldHTML;
       if(f.type === "select"){
         fieldHTML = '<select data-key="' + f.key + '"><option value="">اختر...</option>' +
@@ -318,9 +359,10 @@
 
   function handleSubmit(){
     var cat = CATEGORIES.find(function(c){ return c.key === state.activeCategory; });
+    var effectiveFields = getEffectiveFields(cat.key);
     var draft = {};
     var missing = [];
-    cat.fields.forEach(function(f){
+    effectiveFields.forEach(function(f){
       var input = document.querySelector('[data-key="' + f.key + '"]');
       var v = input ? input.value.trim() : "";
       draft[f.key] = v;
@@ -335,7 +377,7 @@
       return;
     }
     var rec = { id: genId(), category: cat.key, source: "public", status: "pending", createdAt: Date.now(), updatedAt: Date.now() };
-    cat.fields.forEach(function(f){ rec[f.key] = draft[f.key] || ""; });
+    effectiveFields.forEach(function(f){ rec[f.key] = draft[f.key] || ""; });
     rec.photo = state.photo || "";
     var all = loadRecords();
     all.push(rec);
@@ -356,8 +398,20 @@
     renderForm();
   });
 
+  function renderFooterMessage(){
+    var msg = loadPublicFormConfig().footerMessage;
+    var el = document.getElementById("footerMsg");
+    if(msg && msg.trim()){
+      el.textContent = msg.trim();
+      el.style.display = "block";
+    } else {
+      el.style.display = "none";
+    }
+  }
+
   renderCatSelect();
   renderForm();
+  renderFooterMessage();
 })();
 </script>
 </body>
