@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>تسجيل بيانات المناسبات الاجتماعية | جمعية العوامية الخيرية</title>
+<link rel="icon" href="assets/logo.png" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --teal:#517771; --teal-dark:#3d5b56; --teal-tint:#eef3f2;
+    --tan:#b8906e; --tan-tint:#f8f1ea;
+    --blue:#0080ff; --blue-dark:#0064cc; --blue-tint:#e6f2ff;
+    --white:#ffffff; --ink:#2b3532; --ink-soft:#6b7876; --line:#e4e9e8;
+    --danger:#b3453f; --shadow:0 10px 30px rgba(45,70,66,.10);
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  h1,h2,h3{font-weight:600;}
+  body{
+    font-family:'Cairo', sans-serif; background:
+      radial-gradient(circle at 15% 15%, var(--teal-tint) 0%, transparent 45%),
+      radial-gradient(circle at 85% 85%, var(--tan-tint) 0%, transparent 45%),
+      radial-gradient(circle at 50% 100%, var(--blue-tint) 0%, transparent 40%),
+      var(--white);
+    color:var(--ink); min-height:100vh; padding:28px 16px;
+  }
+  button,input,select{font-family:inherit;}
+  .wrap{max-width:640px; margin:0 auto;}
+  .head{text-align:center; margin-bottom:26px;}
+  .head img{width:100%; max-width:220px; height:auto; margin:0 auto 10px; display:block;}
+  .head h1{font-size:18px; color:var(--teal-dark); margin-bottom:6px;}
+  .head p{font-size:13px; color:var(--ink-soft);}
+  .card{background:var(--white); border:1px solid var(--line); border-radius:20px; box-shadow:var(--shadow); padding:26px 22px;}
+  .cat-select{display:flex; gap:8px; flex-wrap:wrap; margin-bottom:22px;}
+  .cat-select button{flex:1; min-width:120px; padding:12px 10px; border-radius:14px; border:1.5px solid var(--line); background:var(--white); color:var(--ink-soft); font-size:13px; font-weight:600; cursor:pointer; display:flex; flex-direction:column; align-items:center; gap:6px; transition:all .15s;}
+  .cat-select button:hover{border-color:var(--blue); background:var(--blue-tint);}
+  .cat-select button.active{border-color:var(--teal); background:var(--teal-tint); color:var(--teal-dark);}
+  .cat-select .icon{width:22px; height:22px;}
+  .form-grid{display:grid; grid-template-columns:1fr 1fr; gap:14px;}
+  @media (max-width:560px){ .form-grid{grid-template-columns:1fr;} }
+  .field{display:flex; flex-direction:column; gap:5px;}
+  .field.full{grid-column:1 / -1;}
+  .field label{font-size:12.5px; font-weight:600; color:var(--teal-dark);}
+  .field label .req{color:var(--danger);}
+  .field input, .field select{padding:11px 13px; border:1.5px solid var(--line); border-radius:10px; font-size:13.5px; background:#fbfcfc; color:var(--ink);}
+  .field input:focus, .field select:focus{outline:none; border-color:var(--blue); background:var(--white);}
+  .field-hint{font-size:11px; color:var(--ink-soft); line-height:1.5;}
+  .photo-input{padding:10px 12px; border:1.5px dashed var(--line); border-radius:10px; font-size:12.5px; background:#fbfcfc; color:var(--ink-soft); cursor:pointer;}
+  .photo-preview{position:relative; display:inline-block; border-radius:10px; overflow:hidden; border:1px solid var(--line); line-height:0;}
+  .photo-preview img{display:block; height:110px; width:auto; max-width:100%; object-fit:contain;}
+  .photo-preview .rm{position:absolute; top:4px; left:4px; background:rgba(0,0,0,.55); color:#fff; border:none; width:22px; height:22px; border-radius:50%; font-size:13px; cursor:pointer;}
+  .submit-btn{width:100%; margin-top:22px; padding:14px; border:none; border-radius:12px; background:var(--teal); color:#fff; font-size:14.5px; font-weight:600; cursor:pointer; transition:all .15s;}
+  .submit-btn:hover{background:var(--teal-dark);}
+  .err-msg{color:var(--danger); font-size:12.5px; margin-top:10px; display:none;}
+  .thanks{display:none; text-align:center; padding:30px 10px;}
+  .thanks .icon-big{width:56px; height:56px; color:var(--teal); margin:0 auto 14px;}
+  .thanks h2{font-size:17px; color:var(--teal-dark); margin-bottom:8px;}
+  .thanks p{font-size:13px; color:var(--ink-soft); line-height:1.8;}
+  .thanks button{margin-top:18px; padding:10px 22px; border-radius:10px; border:1.5px solid var(--line); background:var(--white); color:var(--ink-soft); font-size:13px; font-weight:600; cursor:pointer;}
+  .foot{text-align:center; margin-top:20px; font-size:11px; color:var(--ink-soft);}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="head">
+    <img src="assets/logo.png" alt="شعار جمعية العوامية الخيرية" />
+    <h1>تسجيل بيانات المناسبات الاجتماعية</h1>
+    <p>شاركونا مناسبتكم الاجتماعية (تخرج، مولود، عقد قران) ليتم توثيقها ضمن سجلات الجمعية</p>
+  </div>
+
+  <div class="card" id="formCard">
+    <div class="cat-select" id="catSelect"></div>
+    <div class="form-grid" id="formGrid"></div>
+    <p class="err-msg" id="errMsg"></p>
+    <button type="button" class="submit-btn" id="submitBtn">إرسال البيانات</button>
+  </div>
+
+  <div class="card thanks" id="thanksCard">
+    <svg class="icon-big" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M8 12.5l2.5 2.5L16 9"/></svg>
+    <h2>تم إرسال بياناتكم بنجاح</h2>
+    <p>شكراً لمشاركتكم — سيتم مراجعة البيانات من قبل الجمعية قبل اعتمادها ضمن السجلات.</p>
+    <button type="button" id="sendAnotherBtn">إرسال بيانات أخرى</button>
+  </div>
+
+  <div class="foot">جمعية العوامية الخيرية</div>
+</div>
+
+<script>
+(function(){
+  "use strict";
+  var EVENTS_DATA_KEY = "zaraHub.eventsRecords";
+  var GREG_MONTHS = ["يناير","فبراير","مارس","أبريل","مايو","يونيو","يوليو","أغسطس","سبتمبر","أكتوبر","نوفمبر","ديسمبر"];
+  var HIJRI_MONTHS = ["محرم","صفر","ربيع الأول","ربيع الآخر","جمادى الأولى","جمادى الآخرة","رجب","شعبان","رمضان","شوال","ذو القعدة","ذو الحجة"];
+
+  var ICON = {
+    grad: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M2 9l10-5 10 5-10 5-10-5z"/><path d="M6 11v5c0 1.5 2.7 3 6 3s6-1.5 6-3v-5"/><path d="M22 9v6"/></svg>',
+    baby: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9 10h.01M15 10h.01"/><path d="M8.5 14.5c1 1.2 2.2 1.8 3.5 1.8s2.5-.6 3.5-1.8"/></svg>',
+    rings: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="14" r="5"/><circle cx="15" cy="14" r="5"/></svg>',
+    memorial: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2c1.5 2 1.5 3.5 0 5-1.5-1.5-1.5-3 0-5z"/><rect x="9" y="7" width="6" height="13" rx="1.4"/><path d="M5 20h14"/></svg>',
+    gift: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="8" width="18" height="13" rx="1.4"/><path d="M3 12h18M12 8v13"/><path d="M12 8C10.5 4 6 4 6 7s3 1 6 1zM12 8c1.5-4 6-4 6-1s-3 1-6 1z"/></svg>'
+  };
+
+  // نفس بنية EVENTS_CATEGORIES الداخلية — الحقول القابلة للنمو (growSelect) تُعرض هنا كحقل نص حر
+  // بدل قائمة منسدلة، لتفادي إضافة خيارات عشوائية لقوائم النظام الداخلي من زوار غير موثوقين؛
+  // المسؤول يراجع وينظّم القيم عند اعتماد السجل من لوحة التحكم.
+  var NOW_YEAR = new Date().getFullYear();
+  var APPROX_HIJRI = Math.floor((NOW_YEAR - 622) * 33 / 32);
+
+  var WORLD_COUNTRIES = [
+    "السعودية","الإمارات","البحرين","الكويت","عُمان","قطر",
+    "مصر","الأردن","العراق","سوريا","لبنان","فلسطين","اليمن","ليبيا","تونس","الجزائر","المغرب","السودان","موريتانيا","الصومال","جيبوتي","جزر القمر",
+    "أفغانستان","ألبانيا","ألمانيا","أندورا","أنغولا","أنتيغوا وباربودا","الأرجنتين","أرمينيا","أستراليا","النمسا","أذربيجان",
+    "الباهاما","بنغلاديش","باربادوس","بيلاروسيا","بلجيكا","بليز","بنين","بوتان","بوليفيا","البوسنة والهرسك","بوتسوانا","البرازيل","بروناي","بلغاريا","بوركينا فاسو","بوروندي",
+    "كمبوديا","الكاميرون","كندا","الرأس الأخضر","جمهورية أفريقيا الوسطى","تشاد","تشيلي","الصين","كولومبيا","الكونغو","جمهورية الكونغو الديمقراطية","كوستاريكا","كرواتيا","كوبا","قبرص","التشيك",
+    "الدنمارك","دومينيكا","جمهورية الدومينيكان",
+    "تيمور الشرقية","الإكوادور","السلفادور","غينيا الاستوائية","إريتريا","إستونيا","إثيوبيا","فيجي","فنلندا","فرنسا",
+    "الغابون","غامبيا","جورجيا","غانا","اليونان","غرينادا","غواتيمالا","غينيا","غينيا بيساو","غيانا",
+    "هايتي","هندوراس","هنغاريا",
+    "آيسلندا","الهند","إندونيسيا","إيران","أيرلندا","إسرائيل","إيطاليا","ساحل العاج",
+    "جامايكا","اليابان",
+    "كازاخستان","كينيا","كيريباتي","كوريا الشمالية","كوريا الجنوبية","كوسوفو","قيرغيزستان",
+    "لاوس","لاتفيا","ليسوتو","ليبيريا","ليختنشتاين","ليتوانيا","لوكسمبورغ",
+    "مدغشقر","مالاوي","ماليزيا","جزر المالديف","مالي","مالطا","جزر مارشال","موريشيوس","المكسيك","ميكرونيزيا","مولدوفا","موناكو","منغوليا","الجبل الأسود","موزمبيق","ميانمار",
+    "ناميبيا","ناورو","نيبال","هولندا","نيوزيلندا","نيكاراغوا","النيجر","نيجيريا","مقدونيا الشمالية","النرويج",
+    "باكستان","بالاو","بنما","بابوا غينيا الجديدة","باراغواي","بيرو","الفلبين","بولندا","البرتغال",
+    "رومانيا","روسيا","رواندا",
+    "سانت كيتس ونيفيس","سانت لوسيا","سانت فينسنت والغرينادين","ساموا","سان مارينو","ساو تومي وبرينسيبي","السنغال","صربيا","سيشيل","سيراليون","سنغافورة","سلوفاكيا","سلوفينيا","جزر سليمان","جنوب أفريقيا","جنوب السودان","إسبانيا","سريلانكا","سورينام","إسواتيني","السويد","سويسرا",
+    "تنزانيا","تايلاند","توغو","تونغا","ترينيداد وتوباغو","تركيا","تركمانستان","توفالو",
+    "أوغندا","أوكرانيا","المملكة المتحدة","الولايات المتحدة الأمريكية","أوروغواي","أوزبكستان",
+    "فانواتو","فنزويلا","فيتنام",
+    "زامبيا","زيمبابوي"
+  ];
+
+  var CATEGORIES = [
+    {
+      key: "graduates", label: "الخريجون", icon: ICON.grad,
+      fields: [
+        { key: "gregorianYear", label: "السنة الميلادية", type: "text", auto: true, locked: true, required: true, hint: "تُملأ تلقائياً بسنة التسجيل ولا يمكن تعديلها" },
+        { key: "hijriYear", label: "السنة الهجرية", type: "text", auto: true, locked: true, required: true, hint: "تُملأ تلقائياً بسنة التسجيل ولا يمكن تعديلها" },
+        { key: "fullName", label: "الاسم الكامل", type: "text", required: true, hint: "اكتب اسمك الثلاثي أو الرباعي كاملاً" },
+        { key: "gender", label: "الجنس", type: "select", options: ["ذكر", "أنثى"], required: true, hint: "حدد الجنس" },
+        { key: "family", label: "العائلة", type: "text", required: true, hint: "اسم العائلة أو القبيلة" },
+        { key: "country", label: "الدولة", type: "select", options: WORLD_COUNTRIES, required: true, hint: "اختر الدولة التي تخرّجت منها" },
+        { key: "university", label: "الجامعة", type: "text", required: true, hint: "اسم الجامعة أو الكلية بشكل كامل" },
+        { key: "specializationType", label: "نوع التخصص", type: "text", required: true, hint: "مثال: صحي، هندسي، إداري" },
+        { key: "degree", label: "الدرجة العلمية", type: "text", required: true, hint: "مثال: بكالوريوس، ماجستير، دكتوراه" },
+        { key: "honor", label: "مرتبة الشرف", type: "text", required: true, hint: "اكتب مرتبة الشرف، أو اكتب \"لا يوجد\" إن لم تحصل على مرتبة" },
+        { key: "specialization", label: "التخصص", type: "text", required: true, hint: "التخصص الدقيق، مثال: هندسة كهربائية" },
+        { key: "phone", label: "رقم الهاتف", type: "text", required: true, hint: "رقم للتواصل" },
+        { key: "email", label: "البريد الإلكتروني", type: "text", required: true, hint: "بريد إلكتروني صالح للتواصل" }
+      ]
+    },
+    {
+      key: "births", label: "المواليد", icon: ICON.baby,
+      fields: [
+        { key: "gregorianYear", label: "السنة الميلادية", type: "text", auto: true, hint: "تُملأ تلقائياً بسنة التسجيل — عدّلها فقط إذا كانت الولادة في سنة سابقة" },
+        { key: "hijriYear", label: "السنة الهجرية", type: "text", auto: true, hint: "تُملأ تلقائياً بسنة التسجيل — عدّلها فقط إذا كانت الولادة في سنة سابقة" },
+        { key: "gender", label: "الجنس", type: "select", options: ["ذكر", "أنثى"], hint: "حدد جنس المولود" },
+        { key: "fullName", label: "اسم المولود", type: "text", required: true, hint: "الاسم الأول للمولود فقط" },
+        { key: "fatherName", label: "اسم الأب", type: "text", hint: "الاسم الكامل لوالد المولود" },
+        { key: "family", label: "العائلة", type: "text", hint: "اسم العائلة أو القبيلة" },
+        { key: "birthDateGregorian", label: "تاريخ الميلاد (ميلادي)", type: "date", hint: "تاريخ الولادة بالتقويم الميلادي" },
+        { key: "birthDateHijri", label: "تاريخ الميلاد (هجري)", type: "text", hint: "مثال: 12 رمضان 1447هـ" },
+        { key: "birthMonthGregorian", label: "الشهر (ميلادي)", type: "select", options: GREG_MONTHS, hint: "شهر الولادة بالتقويم الميلادي" },
+        { key: "birthMonthHijri", label: "الشهر (هجري)", type: "select", options: HIJRI_MONTHS, hint: "شهر الولادة بالتقويم الهجري" }
+      ]
+    },
+    {
+      key: "marriages", label: "عقود القران", icon: ICON.rings,
+      fields: [
+        { key: "gregorianYear", label: "السنة الميلادية", type: "text", auto: true, hint: "تُملأ تلقائياً بسنة التسجيل — عدّلها فقط إذا كان العقد في سنة سابقة" },
+        { key: "hijriYear", label: "السنة الهجرية", type: "text", auto: true, hint: "تُملأ تلقائياً بسنة التسجيل — عدّلها فقط إذا كان العقد في سنة سابقة" },
+        { key: "contractMonthGregorian", label: "شهر العقد (ميلادي)", type: "select", options: GREG_MONTHS, hint: "شهر عقد القران بالتقويم الميلادي" },
+        { key: "contractMonthHijri", label: "شهر العقد (هجري)", type: "select", options: HIJRI_MONTHS, hint: "شهر عقد القران بالتقويم الهجري" },
+        { key: "husbandName", label: "اسم الزوج", type: "text", required: true, hint: "الاسم الكامل للزوج" },
+        { key: "husbandFamily", label: "عائلة الزوج", type: "text", hint: "اسم عائلة الزوج أو قبيلته" },
+        { key: "wifeName", label: "اسم الزوجة", type: "text", required: true, hint: "الاسم الكامل للزوجة" },
+        { key: "wifeGuardian", label: "كريمة / ولي الزوجة", type: "text", hint: "مثال: كريمة فلان الفلاني" },
+        { key: "husbandCountry", label: "بلد الزوج", type: "text", hint: "الدولة التي ينتمي إليها الزوج" },
+        { key: "wifeCountry", label: "بلد الزوجة", type: "text", hint: "الدولة التي تنتمي إليها الزوجة" }
+      ]
+    },
+    {
+      key: "deaths", label: "الوفيات", icon: ICON.memorial,
+      fields: [
+        { key: "gregorianYear", label: "السنة الميلادية", type: "text", auto: true, hint: "تُملأ تلقائياً بسنة التسجيل — عدّلها فقط إذا كانت الوفاة في سنة سابقة" },
+        { key: "hijriYear", label: "السنة الهجرية", type: "text", auto: true, hint: "تُملأ تلقائياً بسنة التسجيل — عدّلها فقط إذا كانت الوفاة في سنة سابقة" },
+        { key: "ageCategory", label: "الفئة العمرية", type: "text", hint: "مثال: طفل، شاب، بالغ، كبير السن" },
+        { key: "gender", label: "الجنس", type: "select", options: ["ذكر", "أنثى"], hint: "حدد جنس المتوفى" },
+        { key: "deceasedFamily", label: "عائلة المتوفى", type: "text", hint: "اسم عائلة المتوفى أو قبيلته" },
+        { key: "deceasedName", label: "اسم المتوفى", type: "text", required: true, hint: "الاسم الكامل للمتوفى" },
+        { key: "deathDateHijri", label: "تاريخ الوفاة (هجري)", type: "text", hint: "مثال: 5 شوال 1447هـ" },
+        { key: "deathDateGregorian", label: "تاريخ الوفاة (ميلادي)", type: "date", hint: "تاريخ الوفاة بالتقويم الميلادي" },
+        { key: "deathMonthGregorian", label: "شهر الوفاة (ميلادي)", type: "select", options: GREG_MONTHS, hint: "شهر الوفاة بالتقويم الميلادي" },
+        { key: "deathMonthHijri", label: "شهر الوفاة (هجري)", type: "select", options: HIJRI_MONTHS, hint: "شهر الوفاة بالتقويم الهجري" },
+        { key: "funeralFrom", label: "التشييع من", type: "text", hint: "مكان انطلاق التشييع، مثال: اسم المسجد" },
+        { key: "funeralTime", label: "وقت التشييع", type: "time", hint: "وقت صلاة الجنازة والتشييع" }
+      ]
+    },
+    {
+      key: "congrats", label: "تهنئات", icon: ICON.gift,
+      fields: [
+        { key: "gregorianYear", label: "السنة الميلادية", type: "text", auto: true, hint: "تُملأ تلقائياً بسنة التسجيل — عدّلها فقط إذا كانت المناسبة في سنة سابقة" },
+        { key: "hijriYear", label: "السنة الهجرية", type: "text", auto: true, hint: "تُملأ تلقائياً بسنة التسجيل — عدّلها فقط إذا كانت المناسبة في سنة سابقة" },
+        { key: "fullName", label: "اسم المحتفى به", type: "text", required: true, hint: "الاسم الكامل للشخص المُهنَّأ" },
+        { key: "family", label: "العائلة", type: "text", hint: "اسم العائلة أو القبيلة" },
+        { key: "occasionType", label: "نوع المناسبة", type: "text", hint: "مثال: ترقية، جائزة، افتتاح مشروع" },
+        { key: "occasionMonthGregorian", label: "الشهر (ميلادي)", type: "select", options: GREG_MONTHS, hint: "شهر المناسبة بالتقويم الميلادي" },
+        { key: "occasionMonthHijri", label: "الشهر (هجري)", type: "select", options: HIJRI_MONTHS, hint: "شهر المناسبة بالتقويم الهجري" },
+        { key: "details", label: "تفاصيل إضافية", type: "text", hint: "أي تفاصيل توضيحية عن المناسبة — اختياري" }
+      ]
+    }
+  ];
+
+  var state = { activeCategory: "graduates", photo: "" };
+
+  function escapeHTML(s){
+    return String(s == null ? "" : s).replace(/[&<>"']/g, function(c){
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+    });
+  }
+  function genId(){ return "evt-" + Date.now().toString(36) + Math.random().toString(36).slice(2, 8); }
+
+  function renderCatSelect(){
+    var el = document.getElementById("catSelect");
+    el.innerHTML = CATEGORIES.map(function(c){
+      return '<button type="button" class="' + (c.key === state.activeCategory ? "active" : "") + '" data-cat="' + c.key + '"><span class="icon">' + c.icon + '</span>' + c.label + '</button>';
+    }).join("");
+    Array.prototype.forEach.call(el.querySelectorAll("button"), function(btn){
+      btn.addEventListener("click", function(){
+        state.activeCategory = btn.dataset.cat;
+        renderCatSelect();
+        renderForm();
+      });
+    });
+  }
+
+  function renderForm(){
+    var cat = CATEGORIES.find(function(c){ return c.key === state.activeCategory; });
+    state.photo = "";
+    var grid = document.getElementById("formGrid");
+    grid.innerHTML = cat.fields.map(function(f){
+      var fieldHTML;
+      if(f.type === "select"){
+        fieldHTML = '<select data-key="' + f.key + '"><option value="">اختر...</option>' +
+          f.options.map(function(o){ return '<option value="' + escapeHTML(o) + '">' + escapeHTML(o) + '</option>'; }).join("") + '</select>';
+      } else {
+        var autoVal = f.key === "gregorianYear" ? NOW_YEAR : (f.key === "hijriYear" ? APPROX_HIJRI : "");
+        fieldHTML = '<input type="' + f.type + '" data-key="' + f.key + '" placeholder="' + escapeHTML(f.label) + '"' +
+          (f.auto ? ' value="' + autoVal + '"' : '') + (f.locked ? ' readonly style="background:var(--line); color:var(--ink-soft); cursor:not-allowed;"' : '') + '/>';
+      }
+      return '<div class="field"><label>' + escapeHTML(f.label) + (f.required ? ' <span class="req">*</span>' : '') + '</label>' + fieldHTML +
+        (f.hint ? '<p class="field-hint">' + escapeHTML(f.hint) + '</p>' : '') + '</div>';
+    }).join("");
+    var photoIsConditional = cat.key === "graduates";
+    var photoLabel = photoIsConditional ? 'صورة المناسبة <span class="req">*</span>' : 'صورة المناسبة (اختياري)';
+    var photoHint = photoIsConditional
+      ? 'إلزامية للخريجين الذكور فقط، واختيارية للإناث — بصيغة jpg أو png، وبحجم لا يتجاوز 2 ميقابايت'
+      : 'صورة توضيحية إن رغبتم بإرفاقها — بصيغة jpg أو png، وبحجم لا يتجاوز 2 ميقابايت';
+    grid.innerHTML += '<div class="field full"><label>' + photoLabel + '</label>' + photoFieldHTML() +
+      '<p class="field-hint">' + photoHint + '</p></div>';
+    document.getElementById("errMsg").style.display = "none";
+    bindPhotoEvents();
+  }
+  function photoFieldHTML(){
+    if(state.photo){
+      return '<div class="photo-preview"><img src="' + state.photo + '" alt=""/><button type="button" class="rm" id="removePhotoBtn">×</button></div>';
+    }
+    return '<input type="file" accept="image/*" class="photo-input" id="photoInput"/>';
+  }
+  function refreshPhotoField(){
+    var wrap = document.querySelector(".field.full");
+    if(!wrap) return;
+    var mount = wrap.querySelector(".photo-preview, .photo-input");
+    if(mount) mount.outerHTML = photoFieldHTML();
+    bindPhotoEvents();
+  }
+  function bindPhotoEvents(){
+    var input = document.getElementById("photoInput");
+    if(input){
+      input.addEventListener("change", function(e){
+        var file = e.target.files && e.target.files[0];
+        if(!file) return;
+        if(file.size > 2 * 1024 * 1024){
+          var errEl = document.getElementById("errMsg");
+          errEl.textContent = "حجم الصورة يتجاوز الحد الأقصى المسموح (2 ميقابايت)";
+          errEl.style.display = "block";
+          e.target.value = "";
+          return;
+        }
+        var reader = new FileReader();
+        reader.onload = function(ev){
+          state.photo = ev.target.result;
+          refreshPhotoField();
+        };
+        reader.readAsDataURL(file);
+      });
+    }
+    var rmBtn = document.getElementById("removePhotoBtn");
+    if(rmBtn){
+      rmBtn.addEventListener("click", function(){
+        state.photo = "";
+        refreshPhotoField();
+      });
+    }
+  }
+
+  function loadRecords(){
+    var raw = localStorage.getItem(EVENTS_DATA_KEY);
+    if(!raw) return [];
+    try{ return JSON.parse(raw); }catch(e){ return []; }
+  }
+  function saveRecords(list){
+    try{ localStorage.setItem(EVENTS_DATA_KEY, JSON.stringify(list)); return true; }
+    catch(e){ return false; }
+  }
+
+  function handleSubmit(){
+    var cat = CATEGORIES.find(function(c){ return c.key === state.activeCategory; });
+    var draft = {};
+    var missing = [];
+    cat.fields.forEach(function(f){
+      var input = document.querySelector('[data-key="' + f.key + '"]');
+      var v = input ? input.value.trim() : "";
+      draft[f.key] = v;
+      if(f.required && !v) missing.push(f.label);
+    });
+    // صورة المناسبة إلزامية للذكور فقط في تصنيف الخريجين
+    if(cat.key === "graduates" && draft.gender === "ذكر" && !state.photo) missing.push("صورة المناسبة");
+    var errEl = document.getElementById("errMsg");
+    if(missing.length){
+      errEl.textContent = "الرجاء تعبئة الحقول المطلوبة: " + missing.join("، ");
+      errEl.style.display = "block";
+      return;
+    }
+    var rec = { id: genId(), category: cat.key, source: "public", status: "pending", createdAt: Date.now(), updatedAt: Date.now() };
+    cat.fields.forEach(function(f){ rec[f.key] = draft[f.key] || ""; });
+    rec.photo = state.photo || "";
+    var all = loadRecords();
+    all.push(rec);
+    var ok = saveRecords(all);
+    if(!ok){
+      errEl.textContent = "تعذّر إرسال البيانات — حاول مرة أخرى";
+      errEl.style.display = "block";
+      return;
+    }
+    document.getElementById("formCard").style.display = "none";
+    document.getElementById("thanksCard").style.display = "block";
+  }
+
+  document.getElementById("submitBtn").addEventListener("click", handleSubmit);
+  document.getElementById("sendAnotherBtn").addEventListener("click", function(){
+    document.getElementById("thanksCard").style.display = "none";
+    document.getElementById("formCard").style.display = "block";
+    renderForm();
+  });
+
+  renderCatSelect();
+  renderForm();
+})();
+</script>
+</body>
+</html>
