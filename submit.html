@@ -273,6 +273,38 @@
   }
   function genId(){ return "evt-" + Date.now().toString(36) + Math.random().toString(36).slice(2, 8); }
 
+  // يضغط الصورة (تصغير الأبعاد + تقليل الجودة تدريجياً) حتى تكون آمنة ضمن حد المستند الواحد بقاعدة البيانات (1 ميقابايت)
+  function compressImageFile(file, maxStoredBytes, cb){
+    var reader = new FileReader();
+    reader.onload = function(e){
+      var img = new Image();
+      img.onload = function(){
+        var maxDim = 1600;
+        var w = img.width, h = img.height;
+        if(w > maxDim || h > maxDim){
+          if(w > h){ h = Math.round(h * maxDim / w); w = maxDim; }
+          else { w = Math.round(w * maxDim / h); h = maxDim; }
+        }
+        var canvas = document.createElement("canvas");
+        canvas.width = w; canvas.height = h;
+        canvas.getContext("2d").drawImage(img, 0, 0, w, h);
+        var quality = 0.85;
+        var dataUrl = canvas.toDataURL("image/jpeg", quality);
+        var attempts = 0;
+        while(dataUrl.length > maxStoredBytes && quality > 0.3 && attempts < 8){
+          quality -= 0.1;
+          dataUrl = canvas.toDataURL("image/jpeg", quality);
+          attempts++;
+        }
+        cb(dataUrl);
+      };
+      img.onerror = function(){ cb(null); };
+      img.src = e.target.result;
+    };
+    reader.onerror = function(){ cb(null); };
+    reader.readAsDataURL(file);
+  }
+
   function renderCatSelect(){
     var el = document.getElementById("catSelect");
     el.innerHTML = CATEGORIES.map(function(c){
@@ -308,8 +340,8 @@
     var photoIsConditional = cat.key === "graduates";
     var photoLabel = photoIsConditional ? 'صورة المناسبة <span class="req">*</span>' : 'صورة المناسبة (اختياري)';
     var photoHint = photoIsConditional
-      ? 'إلزامية للخريجين الذكور فقط، واختيارية للإناث — بصيغة jpg أو png، وبحجم لا يتجاوز 2 ميقابايت'
-      : 'صورة توضيحية إن رغبتم بإرفاقها — بصيغة jpg أو png، وبحجم لا يتجاوز 2 ميقابايت';
+      ? 'إلزامية للخريجين الذكور فقط، واختيارية للإناث — تُضغط تلقائياً لحجم مناسب بعد الرفع'
+      : 'صورة توضيحية إن رغبتم بإرفاقها — تُضغط تلقائياً لحجم مناسب بعد الرفع';
     grid.innerHTML += '<div class="field full"><label>' + photoLabel + '</label>' + photoFieldHTML() +
       '<p class="field-hint">' + photoHint + '</p></div>';
     document.getElementById("errMsg").style.display = "none";
@@ -334,19 +366,23 @@
       input.addEventListener("change", function(e){
         var file = e.target.files && e.target.files[0];
         if(!file) return;
-        if(file.size > 2 * 1024 * 1024){
-          var errEl = document.getElementById("errMsg");
-          errEl.textContent = "حجم الصورة يتجاوز الحد الأقصى المسموح (2 ميقابايت)";
+        var errEl = document.getElementById("errMsg");
+        if(file.size > 15 * 1024 * 1024){
+          errEl.textContent = "حجم الملف كبير جداً — اختر صورة أصغر";
           errEl.style.display = "block";
           e.target.value = "";
           return;
         }
-        var reader = new FileReader();
-        reader.onload = function(ev){
-          state.photo = ev.target.result;
+        errEl.style.display = "none";
+        compressImageFile(file, 400 * 1024, function(dataUrl){
+          if(!dataUrl){
+            errEl.textContent = "تعذّرت قراءة الصورة — جرّب صورة أخرى";
+            errEl.style.display = "block";
+            return;
+          }
+          state.photo = dataUrl;
           refreshPhotoField();
-        };
-        reader.readAsDataURL(file);
+        });
       });
     }
     var rmBtn = document.getElementById("removePhotoBtn");
