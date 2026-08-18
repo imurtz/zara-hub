@@ -7,6 +7,8 @@
 <link rel="icon" href="assets/logo.png" />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
 <style>
   :root{
     --teal:#517771; --teal-dark:#3d5b56; --teal-tint:#eef3f2;
@@ -91,7 +93,17 @@
 <script>
 (function(){
   "use strict";
-  var EVENTS_DATA_KEY = "zaraHub.eventsRecords";
+  var firebaseConfig = {
+    apiKey: "AIzaSyBPos-QSrnK_x5HS742FJkNJVhXwGdq8j8",
+    authDomain: "awamia-zara.firebaseapp.com",
+    projectId: "awamia-zara",
+    storageBucket: "awamia-zara.firebasestorage.app",
+    messagingSenderId: "544481222945",
+    appId: "1:544481222945:web:f5c2ae0bd54b0393135e60"
+  };
+  firebase.initializeApp(firebaseConfig);
+  var db = firebase.firestore();
+
   var GREG_MONTHS = ["يناير","فبراير","مارس","أبريل","مايو","يونيو","يوليو","أغسطس","سبتمبر","أكتوبر","نوفمبر","ديسمبر"];
   var HIJRI_MONTHS = ["محرم","صفر","ربيع الأول","ربيع الآخر","جمادى الأولى","جمادى الآخرة","رجب","شعبان","رمضان","شوال","ذو القعدة","ذو الحجة"];
 
@@ -219,23 +231,20 @@
 
   var state = { activeCategory: "graduates", photo: "" };
 
-  var PUBLIC_FORM_CONFIG_KEY = "zaraHub.publicFormConfig";
+  var _publicFormConfigCache = null;
   function loadPublicFormConfig(){
     var cfg = { footerMessage: "" };
     CATEGORIES.forEach(function(c){ cfg[c.key] = { hidden: [], hints: {}, custom: [] }; });
-    var raw = localStorage.getItem(PUBLIC_FORM_CONFIG_KEY);
-    if(raw){
-      try{
-        var p = JSON.parse(raw);
-        if(typeof p.footerMessage === "string") cfg.footerMessage = p.footerMessage;
-        CATEGORIES.forEach(function(c){
-          if(p[c.key]){
-            if(Array.isArray(p[c.key].hidden)) cfg[c.key].hidden = p[c.key].hidden;
-            if(p[c.key].hints) cfg[c.key].hints = p[c.key].hints;
-            if(Array.isArray(p[c.key].custom)) cfg[c.key].custom = p[c.key].custom;
-          }
-        });
-      }catch(e){}
+    var p = _publicFormConfigCache;
+    if(p){
+      if(typeof p.footerMessage === "string") cfg.footerMessage = p.footerMessage;
+      CATEGORIES.forEach(function(c){
+        if(p[c.key]){
+          if(Array.isArray(p[c.key].hidden)) cfg[c.key].hidden = p[c.key].hidden;
+          if(p[c.key].hints) cfg[c.key].hints = p[c.key].hints;
+          if(Array.isArray(p[c.key].custom)) cfg[c.key].custom = p[c.key].custom;
+        }
+      });
     }
     return cfg;
   }
@@ -349,16 +358,6 @@
     }
   }
 
-  function loadRecords(){
-    var raw = localStorage.getItem(EVENTS_DATA_KEY);
-    if(!raw) return [];
-    try{ return JSON.parse(raw); }catch(e){ return []; }
-  }
-  function saveRecords(list){
-    try{ localStorage.setItem(EVENTS_DATA_KEY, JSON.stringify(list)); return true; }
-    catch(e){ return false; }
-  }
-
   function handleSubmit(){
     var cat = CATEGORIES.find(function(c){ return c.key === state.activeCategory; });
     var effectiveFields = getEffectiveFields(cat.key);
@@ -381,16 +380,20 @@
     var rec = { id: genId(), category: cat.key, source: "public", status: "pending", createdAt: Date.now(), updatedAt: Date.now() };
     effectiveFields.forEach(function(f){ rec[f.key] = draft[f.key] || ""; });
     rec.photo = state.photo || "";
-    var all = loadRecords();
-    all.push(rec);
-    var ok = saveRecords(all);
-    if(!ok){
-      errEl.textContent = "تعذّر إرسال البيانات — حاول مرة أخرى";
+    var submitBtn = document.getElementById("submitBtn");
+    submitBtn.disabled = true;
+    submitBtn.textContent = "جاري الإرسال...";
+    db.collection("events").doc(rec.id).set(rec).then(function(){
+      document.getElementById("formCard").style.display = "none";
+      document.getElementById("thanksCard").style.display = "block";
+    }).catch(function(err){
+      console.error("submit error", err);
+      errEl.textContent = "تعذّر إرسال البيانات — تأكد من اتصالك بالإنترنت وحاول مرة أخرى";
       errEl.style.display = "block";
-      return;
-    }
-    document.getElementById("formCard").style.display = "none";
-    document.getElementById("thanksCard").style.display = "block";
+    }).finally(function(){
+      submitBtn.disabled = false;
+      submitBtn.textContent = "إرسال البيانات";
+    });
   }
 
   document.getElementById("submitBtn").addEventListener("click", handleSubmit);
@@ -414,6 +417,12 @@
   renderCatSelect();
   renderForm();
   renderFooterMessage();
+  db.collection("eventsMeta").doc("publicFormConfig").get().then(function(doc){
+    _publicFormConfigCache = doc.exists ? doc.data() : null;
+    renderCatSelect();
+    renderForm();
+    renderFooterMessage();
+  }).catch(function(err){ console.error("publicFormConfig fetch error", err); });
 })();
 </script>
 </body>

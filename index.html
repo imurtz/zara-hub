@@ -8,6 +8,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
 <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
 <style>
   :root{
     --teal:#517771;
@@ -1074,6 +1076,18 @@
 <script>
 (function(){
   "use strict";
+
+  // ===== Firebase (قسم المناسبات الاجتماعية فقط — بقية الموقع لسه محلي) =====
+  var firebaseConfig = {
+    apiKey: "AIzaSyBPos-QSrnK_x5HS742FJkNJVhXwGdq8j8",
+    authDomain: "awamia-zara.firebaseapp.com",
+    projectId: "awamia-zara",
+    storageBucket: "awamia-zara.firebasestorage.app",
+    messagingSenderId: "544481222945",
+    appId: "1:544481222945:web:f5c2ae0bd54b0393135e60"
+  };
+  firebase.initializeApp(firebaseConfig);
+  var db = firebase.firestore();
 
   var STORAGE_KEY = "zaraHub.employees";
   var SESSION_KEY = "zaraHub.session";
@@ -4469,13 +4483,6 @@
   // إضافة بحقول قوائم قابلة للنمو ("+")، جدول قابل للبحث والفرز وتخصيص الأعمدة،
   // استيراد/تصدير Excel، لوحة قيادة، مهام نشر (قوالب تهنئة/تعازي)، وتقارير أساسية.
   // ===========================================================================
-  var EVENTS_DATA_KEY = "zaraHub.eventsRecords";
-  var EVENTS_OPTIONS_KEY = "zaraHub.eventsOptions";
-  var EVENTS_TEMPLATES_KEY = "zaraHub.eventsTemplates";
-  var EVENTS_PUBLISH_KEY = "zaraHub.eventsPublishStatus";
-  var EVENTS_SETTINGS_KEY = "zaraHub.eventsSettings";
-  var EVENTS_RESP_KEY = "zaraHub.eventsResponsibilities";
-
   var GREG_MONTHS = ["يناير","فبراير","مارس","أبريل","مايو","يونيو","يوليو","أغسطس","سبتمبر","أكتوبر","نوفمبر","ديسمبر"];
   var HIJRI_MONTHS = ["محرم","صفر","ربيع الأول","ربيع الآخر","جمادى الأولى","جمادى الآخرة","رجب","شعبان","رمضان","شوال","ذو القعدة","ذو الحجة"];
 
@@ -4589,19 +4596,44 @@
   }
   function genEventId(){ return "evt-" + Date.now().toString(36) + Math.random().toString(36).slice(2, 8); }
 
-  // ----- تخزين -----
-  function loadEventsData(){
-    var raw = localStorage.getItem(EVENTS_DATA_KEY);
-    if(!raw) return [];
-    try{ return JSON.parse(raw); }catch(e){ return []; }
+  // ----- تخزين (Firestore — يتزامن فوراً بين كل الأجهزة) -----
+  function eventsFirestoreRefresh(){
+    if(currentUser){
+      renderEventsHub();
+      if(currentUser.role === "admin") renderEventsSettingsPanel();
+    }
   }
+  var _eventsRecordsCache = [];
+  db.collection("events").onSnapshot(function(snap){
+    _eventsRecordsCache = snap.docs.map(function(d){ return d.data(); });
+    eventsFirestoreRefresh();
+  }, function(err){ console.error("events snapshot error", err); });
+
+  function loadEventsData(){ return _eventsRecordsCache; }
   function saveEventsData(list){
-    try{ localStorage.setItem(EVENTS_DATA_KEY, JSON.stringify(list)); return true; }
-    catch(e){ showToast("تعذّر الحفظ — المساحة المحلية ممتلئة"); return false; }
+    try{
+      var oldIds = _eventsRecordsCache.map(function(r){ return r.id; });
+      var newIds = list.map(function(r){ return r.id; });
+      oldIds.forEach(function(id){
+        if(newIds.indexOf(id) === -1) db.collection("events").doc(id).delete();
+      });
+      list.forEach(function(rec){
+        var old = _eventsRecordsCache.find(function(r){ return r.id === rec.id; });
+        if(!old || JSON.stringify(old) !== JSON.stringify(rec)) db.collection("events").doc(rec.id).set(rec);
+      });
+      _eventsRecordsCache = list;
+      return true;
+    }catch(e){ showToast("تعذّر الحفظ"); return false; }
   }
   function findEventRecord(id){
     return loadEventsData().find(function(r){ return r.id === id; });
   }
+
+  var _eventsOptionsCache = null;
+  db.collection("eventsMeta").doc("options").onSnapshot(function(doc){
+    _eventsOptionsCache = doc.exists ? doc.data() : null;
+    eventsFirestoreRefresh();
+  }, function(err){ console.error("options snapshot error", err); });
   function loadEventsOptions(){
     var nowYear = new Date().getFullYear();
     var approxHijri = Math.floor((nowYear - 622) * 33 / 32);
@@ -4620,12 +4652,17 @@
       congratsOccasionTypes: ["ترقية وظيفية", "جائزة أو تكريم", "افتتاح مشروع", "إنجاز أو نجاح"],
       congratsTitles: ["المهندس", "المهندسة", "الدكتور", "الدكتورة", "الأستاذ", "الأستاذة", "الشيخ"]
     };
-    var raw = localStorage.getItem(EVENTS_OPTIONS_KEY);
-    if(raw){ try{ var p = JSON.parse(raw); for(var k in defaults){ if(p[k] !== undefined) defaults[k] = p[k]; } }catch(e){} }
+    var p = _eventsOptionsCache;
+    if(p){ for(var k in defaults){ if(p[k] !== undefined) defaults[k] = p[k]; } }
     return defaults;
   }
-  function saveEventsOptions(o){ localStorage.setItem(EVENTS_OPTIONS_KEY, JSON.stringify(o)); }
+  function saveEventsOptions(o){ db.collection("eventsMeta").doc("options").set(o); }
 
+  var _eventsTemplatesCache = null;
+  db.collection("eventsMeta").doc("templates").onSnapshot(function(doc){
+    _eventsTemplatesCache = doc.exists ? doc.data() : null;
+    eventsFirestoreRefresh();
+  }, function(err){ console.error("templates snapshot error", err); });
   function loadEventsTemplates(){
     var defaults = {
       graduates: [{ id: "tpl-grad-1", text: "🎓 تهانينا لـ {fullName} بمناسبة التخرج من {university} تخصص {specialization} ({degree})." }],
@@ -4634,56 +4671,65 @@
       deaths: [{ id: "tpl-death-1", text: "🤲 تعازينا الحارة لعائلة {deceasedFamily} بوفاة {deceasedName}، رحمه الله وأسكنه فسيح جناته وألهم أهله الصبر والسلوان." }],
       congrats: [{ id: "tpl-congrats-1", text: "🎉 تهانينا لـ {fullName} بمناسبة {occasionType}، بارك الله لكم ودمتم بخير." }]
     };
-    var raw = localStorage.getItem(EVENTS_TEMPLATES_KEY);
-    if(raw){ try{ var p = JSON.parse(raw); for(var k in defaults){ if(p[k] !== undefined) defaults[k] = p[k]; } }catch(e){} }
+    var p = _eventsTemplatesCache;
+    if(p){ for(var k in defaults){ if(p[k] !== undefined) defaults[k] = p[k]; } }
     return defaults;
   }
-  function saveEventsTemplates(t){ localStorage.setItem(EVENTS_TEMPLATES_KEY, JSON.stringify(t)); }
+  function saveEventsTemplates(t){ db.collection("eventsMeta").doc("templates").set(t); }
 
-  function loadEventsPublish(){
-    var raw = localStorage.getItem(EVENTS_PUBLISH_KEY);
-    if(!raw) return {};
-    try{ return JSON.parse(raw); }catch(e){ return {}; }
-  }
-  function saveEventsPublish(p){ localStorage.setItem(EVENTS_PUBLISH_KEY, JSON.stringify(p)); }
+  var _eventsPublishCache = {};
+  db.collection("eventsMeta").doc("publish").onSnapshot(function(doc){
+    _eventsPublishCache = doc.exists ? doc.data() : {};
+    eventsFirestoreRefresh();
+  }, function(err){ console.error("publish snapshot error", err); });
+  function loadEventsPublish(){ return _eventsPublishCache; }
+  function saveEventsPublish(p){ db.collection("eventsMeta").doc("publish").set(p); }
 
+  var _eventsSettingsCache = null;
+  db.collection("eventsMeta").doc("settings").onSnapshot(function(doc){
+    _eventsSettingsCache = doc.exists ? doc.data() : null;
+    eventsFirestoreRefresh();
+  }, function(err){ console.error("settings snapshot error", err); });
   function loadEventsSettings(){
     var s = { excelEnabled: true };
     EVENTS_CATEGORIES.forEach(function(c){ s[c.key + "Enabled"] = true; });
-    var raw = localStorage.getItem(EVENTS_SETTINGS_KEY);
-    if(raw){ try{ var p = JSON.parse(raw); for(var k in s){ if(p[k] !== undefined) s[k] = p[k]; } }catch(e){} }
+    var p = _eventsSettingsCache;
+    if(p){ for(var k in s){ if(p[k] !== undefined) s[k] = p[k]; } }
     return s;
   }
-  function saveEventsSettings(s){ localStorage.setItem(EVENTS_SETTINGS_KEY, JSON.stringify(s)); }
-  function loadEventsResp(){
-    var raw = localStorage.getItem(EVENTS_RESP_KEY);
-    if(!raw) return {};
-    try{ return JSON.parse(raw); }catch(e){ return {}; }
-  }
-  function saveEventsResp(r){ localStorage.setItem(EVENTS_RESP_KEY, JSON.stringify(r)); }
+  function saveEventsSettings(s){ db.collection("eventsMeta").doc("settings").set(s); }
+
+  var _eventsRespCache = {};
+  db.collection("eventsMeta").doc("resp").onSnapshot(function(doc){
+    _eventsRespCache = doc.exists ? doc.data() : {};
+    eventsFirestoreRefresh();
+  }, function(err){ console.error("resp snapshot error", err); });
+  function loadEventsResp(){ return _eventsRespCache; }
+  function saveEventsResp(r){ db.collection("eventsMeta").doc("resp").set(r); }
 
   // ----- إعدادات الصفحة الخارجية (نموذج التسجيل العام submit.html) -----
-  var PUBLIC_FORM_CONFIG_KEY = "zaraHub.publicFormConfig";
+  var _publicFormConfigCache = null;
+  db.collection("eventsMeta").doc("publicFormConfig").onSnapshot(function(doc){
+    _publicFormConfigCache = doc.exists ? doc.data() : null;
+    eventsFirestoreRefresh();
+  }, function(err){ console.error("publicFormConfig snapshot error", err); });
   function loadPublicFormConfig(){
     var cfg = { footerMessage: "" };
     EVENTS_CATEGORIES.forEach(function(c){ cfg[c.key] = { hidden: [], hints: {}, custom: [] }; });
-    var raw = localStorage.getItem(PUBLIC_FORM_CONFIG_KEY);
-    if(raw){
-      try{
-        var p = JSON.parse(raw);
-        if(typeof p.footerMessage === "string") cfg.footerMessage = p.footerMessage;
-        EVENTS_CATEGORIES.forEach(function(c){
-          if(p[c.key]){
-            if(Array.isArray(p[c.key].hidden)) cfg[c.key].hidden = p[c.key].hidden;
-            if(p[c.key].hints) cfg[c.key].hints = p[c.key].hints;
-            if(Array.isArray(p[c.key].custom)) cfg[c.key].custom = p[c.key].custom;
-          }
-        });
-      }catch(e){}
+    var p = _publicFormConfigCache;
+    if(p){
+      if(typeof p.footerMessage === "string") cfg.footerMessage = p.footerMessage;
+      EVENTS_CATEGORIES.forEach(function(c){
+        if(p[c.key]){
+          if(Array.isArray(p[c.key].hidden)) cfg[c.key].hidden = p[c.key].hidden;
+          if(p[c.key].hints) cfg[c.key].hints = p[c.key].hints;
+          if(Array.isArray(p[c.key].custom)) cfg[c.key].custom = p[c.key].custom;
+        }
+      });
     }
     return cfg;
   }
-  function savePublicFormConfig(cfg){ localStorage.setItem(PUBLIC_FORM_CONFIG_KEY, JSON.stringify(cfg)); }
+  function savePublicFormConfig(cfg){ db.collection("eventsMeta").doc("publicFormConfig").set(cfg); }
   var publicConfigUI = { category: "graduates" };
 
   function eventsRespBadgeHTML(key){
