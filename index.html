@@ -4825,8 +4825,12 @@
     }
     if(f.type === "growSelect"){
       var opts = loadEventsOptions()[f.optKey] || [];
+      // لو القيمة المحفوظة بالسجل (مثلاً من تسجيل خارجي) مو موجودة أصلاً بقائمة الخيارات المعتمدة،
+      // نظهرها كخيار مؤقت مختار عوض ما تبان القائمة فاضية وتنمسح القيمة الحقيقية عند الحفظ بالغلط
+      var valueMissing = value && opts.indexOf(value) === -1;
       return '<div class="grow-select-row">' +
         '<select data-field-input data-key="' + f.key + '"><option value="">اختر...</option>' +
+          (valueMissing ? '<option value="' + escapeHTML(value) + '" selected>' + escapeHTML(value) + ' (من تسجيل خارجي — راجعها)</option>' : '') +
           opts.map(function(o){ return '<option value="' + escapeHTML(o) + '"' + (value === o ? " selected" : "") + '>' + escapeHTML(o) + '</option>'; }).join("") +
         '</select>' +
         '<button type="button" class="grow-add-btn" data-action="grow-add-toggle" data-fieldkey="' + f.key + '" title="إضافة خيار جديد"><span class="icon">' + TICON.plus + '</span></button>' +
