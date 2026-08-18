@@ -161,6 +161,7 @@
         { key: "gender", label: "الجنس", type: "select", options: ["ذكر", "أنثى"], hint: "حدد جنس المولود" },
         { key: "fullName", label: "اسم المولود", type: "text", required: true, hint: "الاسم الأول للمولود فقط" },
         { key: "fatherName", label: "اسم الأب", type: "text", hint: "الاسم الكامل لوالد المولود" },
+        { key: "motherName", label: "اسم الأم", type: "text", hint: "الاسم الكامل لوالدة المولود" },
         { key: "family", label: "العائلة", type: "text", hint: "اسم العائلة أو القبيلة" },
         { key: "birthDateGregorian", label: "تاريخ الميلاد (ميلادي)", type: "date", hint: "تاريخ الولادة بالتقويم الميلادي" },
         { key: "birthDateHijri", label: "تاريخ الميلاد (هجري)", type: "text", hint: "مثال: 12 رمضان 1447هـ" },
@@ -205,6 +206,7 @@
       fields: [
         { key: "gregorianYear", label: "السنة الميلادية", type: "text", auto: true, hint: "تُملأ تلقائياً بسنة التسجيل — عدّلها فقط إذا كانت المناسبة في سنة سابقة" },
         { key: "hijriYear", label: "السنة الهجرية", type: "text", auto: true, hint: "تُملأ تلقائياً بسنة التسجيل — عدّلها فقط إذا كانت المناسبة في سنة سابقة" },
+        { key: "title", label: "اللقب / المسمى الوظيفي", type: "text", hint: "مثال: المهندس، الدكتور، الأستاذ — اتركه فارغاً إذا لا ينطبق" },
         { key: "fullName", label: "اسم المحتفى به", type: "text", required: true, hint: "الاسم الكامل للشخص المُهنَّأ" },
         { key: "family", label: "العائلة", type: "text", hint: "اسم العائلة أو القبيلة" },
         { key: "occasionType", label: "نوع المناسبة", type: "text", hint: "مثال: ترقية، جائزة، افتتاح مشروع" },
