@@ -609,12 +609,13 @@
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ fullName: fullName, gender: gender, title: title, occasionType: occasionType, details: details })
     }).then(function(res){
-      if(!res.ok) throw new Error("bad_status");
-      return res.json();
-    }).then(function(data){
+      return res.json().then(function(data){ return { ok: res.ok, data: data }; });
+    }).then(function(result){
       state.aiLoading = false;
-      if(data && data.suggestion){
-        state.aiSuggestion = data.suggestion;
+      if(result.ok && result.data && result.data.suggestion){
+        state.aiSuggestion = result.data.suggestion;
+      } else if(result.data && result.data.error === "quota_exceeded"){
+        state.aiError = "الخدمة مشغولة حالياً بسبب الضغط — حاول مرة أخرى بعد قليل";
       } else {
         state.aiError = "تعذّر إعداد نص التهنئة";
       }

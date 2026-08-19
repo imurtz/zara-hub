@@ -73,7 +73,8 @@ export default {
     try {
       text = await callGemini(env, userPrompt);
     } catch (e) {
-      return json({ error: e.message === "gemini_bad_status" ? "gemini_error" : "gemini_unreachable" }, 502, headers);
+      const isQuota = e.message === "quota_exceeded";
+      return json({ error: isQuota ? "quota_exceeded" : "gemini_error" }, isQuota ? 429 : 502, headers);
     }
 
     if (!text) {
@@ -122,7 +123,7 @@ async function callGemini(env, promptText) {
     }
   );
   if (!geminiRes.ok) {
-    throw new Error("gemini_bad_status");
+    throw new Error(geminiRes.status === 429 ? "quota_exceeded" : "gemini_bad_status");
   }
   const data = await geminiRes.json();
   const text = data && data.candidates && data.candidates[0] && data.candidates[0].content &&
