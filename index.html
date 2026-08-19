@@ -4565,7 +4565,7 @@
 
   var EVENTS_CATEGORIES = [
     {
-      key: "graduates", label: "الخريجون", icon: EVICON.grad, color: "var(--blue)",
+      key: "graduates", label: "الخريجون", icon: EVICON.grad, color: "#4d6ea9",
       fields: [
         { key: "gregorianYear", label: "السنة الميلادية", type: "growSelect", optKey: "gregorianYears", auto: true, hint: "تُملأ تلقائياً بسنة التسجيل — عدّلها فقط إذا كان التخرج في سنة سابقة" },
         { key: "hijriYear", label: "السنة الهجرية", type: "growSelect", optKey: "hijriYears", auto: true, hint: "تُملأ تلقائياً بسنة التسجيل — عدّلها فقط إذا كان التخرج في سنة سابقة" },
@@ -4589,7 +4589,7 @@
       columns: ["fullName", "university", "specialization", "degree", "gregorianYear", "gender"]
     },
     {
-      key: "births", label: "المواليد", icon: EVICON.baby, color: "var(--tan)",
+      key: "births", label: "المواليد", icon: EVICON.baby, color: "#4d6ea9",
       fields: [
         { key: "gregorianYear", label: "السنة الميلادية", type: "growSelect", optKey: "gregorianYears", derived: true, hint: "تُحسب تلقائياً من تاريخ الميلاد" },
         { key: "hijriYear", label: "السنة الهجرية", type: "growSelect", optKey: "hijriYears", derived: true, hint: "تُحسب تلقائياً من تاريخ الميلاد" },
@@ -4608,7 +4608,7 @@
       columns: ["fullName", "gender", "fatherName", "motherName", "gregorianYear", "birthMonthGregorian"]
     },
     {
-      key: "marriages", label: "عقود القران", icon: EVICON.rings, color: "var(--teal)",
+      key: "marriages", label: "عقود القران", icon: EVICON.rings, color: "#4d6ea9",
       fields: [
         { key: "gregorianYear", label: "السنة الميلادية", type: "growSelect", optKey: "gregorianYears", derived: true, hint: "تُحسب تلقائياً من تاريخ العقد" },
         { key: "hijriYear", label: "السنة الهجرية", type: "growSelect", optKey: "hijriYears", derived: true, hint: "تُحسب تلقائياً من تاريخ العقد" },
@@ -4628,7 +4628,7 @@
       columns: ["husbandName", "wifeName", "husbandDistrict", "gregorianYear", "contractMonthGregorian"]
     },
     {
-      key: "deaths", label: "الوفيات", icon: EVICON.memorial, color: "var(--ink-soft)",
+      key: "deaths", label: "الوفيات", icon: EVICON.memorial, color: "#4d6ea9",
       fields: [
         { key: "gregorianYear", label: "السنة الميلادية", type: "growSelect", optKey: "gregorianYears", hint: "تُملأ تلقائياً بسنة التسجيل — عدّلها فقط إذا كانت الوفاة في سنة سابقة" },
         { key: "hijriYear", label: "السنة الهجرية", type: "growSelect", optKey: "hijriYears", hint: "تُملأ تلقائياً بسنة التسجيل — عدّلها فقط إذا كانت الوفاة في سنة سابقة" },
@@ -4647,7 +4647,7 @@
       columns: ["deceasedName", "deceasedFamily", "gender", "ageCategory", "gregorianYear", "deathMonthGregorian"]
     },
     {
-      key: "congrats", label: "تهنئات", icon: EVICON.gift, color: "#DB2777",
+      key: "congrats", label: "تهنئات", icon: EVICON.gift, color: "#4d6ea9",
       fields: [
         { key: "gregorianYear", label: "السنة الميلادية", type: "growSelect", optKey: "gregorianYears", derived: true, hint: "تُحسب تلقائياً من تاريخ المناسبة" },
         { key: "hijriYear", label: "السنة الهجرية", type: "growSelect", optKey: "hijriYears", derived: true, hint: "تُحسب تلقائياً من تاريخ المناسبة" },
@@ -4804,13 +4804,22 @@
     eventsFirestoreRefresh();
   }, function(err){ console.error("settings snapshot error", err); });
   function loadEventsSettings(){
-    var s = { excelEnabled: true };
+    var s = { excelEnabled: true, categoryColors: {} };
     EVENTS_CATEGORIES.forEach(function(c){ s[c.key + "Enabled"] = true; });
     var p = _eventsSettingsCache;
-    if(p){ for(var k in s){ if(p[k] !== undefined) s[k] = p[k]; } }
+    if(p){
+      for(var k in s){ if(p[k] !== undefined) s[k] = p[k]; }
+      if(p.categoryColors) s.categoryColors = p.categoryColors;
+    }
     return s;
   }
   function saveEventsSettings(s){ db.collection("eventsMeta").doc("settings").set(s); }
+  function eventCategoryColor(catKey){
+    var s = loadEventsSettings();
+    if(s.categoryColors && s.categoryColors[catKey]) return s.categoryColors[catKey];
+    var cat = EVENTS_CATEGORIES.find(function(c){ return c.key === catKey; });
+    return (cat && cat.color) || "#4d6ea9";
+  }
 
   var _eventsRespCache = {};
   db.collection("eventsMeta").doc("resp").onSnapshot(function(doc){
@@ -4826,21 +4835,30 @@
     _publicFormConfigCache = doc.exists ? doc.data() : null;
     eventsFirestoreRefresh();
   }, function(err){ console.error("publicFormConfig snapshot error", err); });
+  var GRADIENT_PRESETS = {
+    brand: { label: "الأخضر والأزرق (افتراضي)", css: "linear-gradient(120deg, var(--teal) 0%, var(--teal-dark) 55%, var(--blue-dark) 100%)" },
+    indigo: { label: "الأزرق الداكن", css: "linear-gradient(120deg, #4d6ea9 0%, #3a5686 55%, #263a5c 100%)" },
+    tan: { label: "الذهبي الدافئ", css: "linear-gradient(120deg, var(--tan) 0%, #8f6b4d 55%, #5c4632 100%)" }
+  };
   var BANNER_DEFAULTS = {
     enabled: true,
-    title: "سجّل مناسبتكم الاجتماعية معنا",
-    subtitle: "توثيق التخرّجات، المواليد، وعقود القران ضمن سجلات الجمعية — بيانات دقيقة، تحديث فوري، ومتابعة من فريق الجمعية"
+    slides: [
+      { id: "default", type: "text", title: "سجّل مناسبتكم الاجتماعية معنا", subtitle: "توثيق التخرّجات، المواليد، وعقود القران ضمن سجلات الجمعية — بيانات دقيقة، تحديث فوري، ومتابعة من فريق الجمعية", gradient: "brand", image: "" }
+    ]
   };
+  function copyBannerSlide(s){
+    return { id: s.id, type: s.type || "text", title: s.title || "", subtitle: s.subtitle || "", gradient: s.gradient || "brand", image: s.image || "" };
+  }
   function loadPublicFormConfig(){
-    var cfg = { footerMessage: "", banner: { enabled: BANNER_DEFAULTS.enabled, title: BANNER_DEFAULTS.title, subtitle: BANNER_DEFAULTS.subtitle } };
+    var cfg = { footerMessage: "", banner: { enabled: BANNER_DEFAULTS.enabled, slides: BANNER_DEFAULTS.slides.map(copyBannerSlide) } };
     EVENTS_CATEGORIES.forEach(function(c){ cfg[c.key] = { hidden: [], hints: {}, labels: {}, custom: [] }; });
     var p = _publicFormConfigCache;
     if(p){
       if(typeof p.footerMessage === "string") cfg.footerMessage = p.footerMessage;
       if(p.banner){
         if(typeof p.banner.enabled === "boolean") cfg.banner.enabled = p.banner.enabled;
-        if(typeof p.banner.title === "string" && p.banner.title.trim()) cfg.banner.title = p.banner.title;
-        if(typeof p.banner.subtitle === "string" && p.banner.subtitle.trim()) cfg.banner.subtitle = p.banner.subtitle;
+        if(Array.isArray(p.banner.slides) && p.banner.slides.length) cfg.banner.slides = p.banner.slides.map(copyBannerSlide);
+        else if(typeof p.banner.title === "string" && p.banner.title.trim()) cfg.banner.slides = [copyBannerSlide({ id: "legacy", type: "text", title: p.banner.title, subtitle: p.banner.subtitle || "", gradient: "brand" })];
       }
       EVENTS_CATEGORIES.forEach(function(c){
         if(p[c.key]){
@@ -4898,7 +4916,7 @@
     EVENTS_CATEGORIES.forEach(function(cat){
       var count = all.filter(function(r){ return r.category === cat.key; }).length;
       html += '<div class="stat-card" data-action="events-goto-category" data-cat="' + cat.key + '">' +
-        '<span class="icon-lg" style="color:' + cat.color + ';">' + cat.icon + '</span>' +
+        '<span class="icon-lg" style="color:' + eventCategoryColor(cat.key) + ';">' + cat.icon + '</span>' +
         '<div class="num">' + count + '</div>' +
         '<div class="lbl">' + cat.label + '</div>' +
       '</div>';
@@ -5163,7 +5181,7 @@
     EVENTS_CATEGORIES.forEach(function(c){
       if(settings[c.key + "Enabled"] === false) return;
       var pendingCount = allRecs.filter(function(r){ return r.category === c.key && r.status === "pending"; }).length;
-      html += '<button type="button" class="cat-tab' + (c.key === cat.key ? " active" : "") + '" data-action="events-set-category" data-cat="' + c.key + '"><span class="icon" style="color:' + c.color + ';">' + c.icon + '</span>' + c.label +
+      html += '<button type="button" class="cat-tab' + (c.key === cat.key ? " active" : "") + '" data-action="events-set-category" data-cat="' + c.key + '"><span class="icon" style="color:' + eventCategoryColor(c.key) + ';">' + c.icon + '</span>' + c.label +
         (pendingCount ? '<span class="pending-count">' + pendingCount + '</span>' : '') + '</button>';
     });
     html += '</div>';
@@ -5531,6 +5549,14 @@
     });
     html += '</div>';
 
+    html += '<div class="settings-card"><h3>ألوان أيقونات المناسبات</h3>' +
+      '<p class="hint">لون أيقونة كل تصنيف — يظهر بلوحة القيادة وتبويبات إدخال البيانات وصفحة التسجيل العامة</p>';
+    EVENTS_CATEGORIES.forEach(function(c){
+      html += '<div class="toggle-row"><div class="lbl">' + c.label + '</div>' +
+        '<input type="color" data-action="events-cat-color" data-cat="' + c.key + '" value="' + eventCategoryColor(c.key) + '" style="width:44px; height:32px; border:1px solid var(--line); border-radius:8px; padding:2px; cursor:pointer; background:none;"/></div>';
+    });
+    html += '</div>';
+
     html += publicFormConfigCardHTML();
 
     html += '<div class="settings-card"><h3 style="color:var(--danger);">منطقة الحذف الجماعي</h3>' +
@@ -5550,16 +5576,43 @@
       '<p class="hint">تحكم بالحقول الظاهرة للمجتمع في صفحة submit.html، ملاحظاتها، وإضافة حقول مخصصة لكل تصنيف</p>';
 
     html += '<div style="margin-bottom:18px; padding-bottom:16px; border-bottom:1px solid var(--line);">' +
-      '<label style="display:flex; align-items:center; gap:8px; font-size:12.5px; font-weight:700; color:var(--teal-dark); margin-bottom:10px;">' +
+      '<label style="display:flex; align-items:center; gap:8px; font-size:12.5px; font-weight:700; color:var(--teal-dark); margin-bottom:12px;">' +
         '<input type="checkbox" data-action="public-cfg-banner-toggle"' + (cfg.banner.enabled ? " checked" : "") + '/> إظهار البنر الإعلاني أعلى صفحة التسجيل العام' +
       '</label>' +
-      '<input type="text" data-action="public-cfg-banner-title" value="' + escapeHTML(cfg.banner.title) + '" placeholder="عنوان البنر" style="width:100%; margin-bottom:8px; border:1.5px solid var(--line); border-radius:8px; padding:9px 12px; font-size:13px; font-weight:700; background:#fbfcfc;"/>' +
-      '<textarea data-action="public-cfg-banner-subtitle" rows="2" placeholder="وصف البنر" style="width:100%; border:1.5px solid var(--line); border-radius:8px; padding:9px 12px; font-size:12.5px; font-family:inherit; resize:vertical; background:#fbfcfc;">' + escapeHTML(cfg.banner.subtitle) + '</textarea>' +
+      '<p class="hint" style="margin-bottom:10px;">يمكنك إضافة أكثر من بنر — تتناوب تلقائياً بحركة انسيابية. كل بنر إما نص بتدرج لوني، أو صورة إعلانية بنفس أبعاد البنر</p>';
+    cfg.banner.slides.forEach(function(s, idx){
+      html += '<div class="banner-slide-row" style="border:1px solid var(--line); border-radius:12px; padding:12px; margin-bottom:10px; background:#fbfcfc;">';
+      html += '<div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:8px;">' +
+        '<span style="font-size:11.5px; font-weight:700; color:var(--ink-soft);">بنر ' + (idx + 1) + '</span>' +
+        '<div style="display:flex; gap:6px; align-items:center;">' +
+        '<select data-action="banner-slide-type" data-id="' + s.id + '" style="font-size:11.5px; border:1px solid var(--line); border-radius:6px; padding:4px 6px;">' +
+          '<option value="text"' + (s.type === "text" ? " selected" : "") + '>نص</option>' +
+          '<option value="image"' + (s.type === "image" ? " selected" : "") + '>صورة</option>' +
+        '</select>' +
+        (cfg.banner.slides.length > 1 ? '<button type="button" class="task-icon-btn" data-action="banner-slide-remove" data-id="' + s.id + '" title="حذف هذا البنر"><span class="icon">' + ICON_DELETE + '</span></button>' : '') +
+        '</div></div>';
+      if(s.type === "image"){
+        if(s.image){
+          html += '<div class="photo-thumb"><img src="' + s.image + '" alt="" style="max-height:80px;"/><button type="button" class="rm" data-action="banner-slide-remove-image" data-id="' + s.id + '">×</button></div>';
+        } else {
+          html += '<input type="file" accept="image/*" class="event-photo-input" data-action="banner-slide-image-input" data-id="' + s.id + '"/>' +
+            '<p class="hint" style="margin-top:4px;">بنفس أبعاد البنر الحالي — تُضغط تلقائياً بعد الرفع</p>';
+        }
+      } else {
+        html += '<input type="text" data-action="banner-slide-title" data-id="' + s.id + '" value="' + escapeHTML(s.title) + '" placeholder="عنوان البنر" style="width:100%; margin-bottom:6px; border:1.5px solid var(--line); border-radius:8px; padding:8px 10px; font-size:12.5px; font-weight:700; background:var(--white);"/>' +
+          '<textarea data-action="banner-slide-subtitle" data-id="' + s.id + '" rows="2" placeholder="وصف البنر" style="width:100%; margin-bottom:6px; border:1.5px solid var(--line); border-radius:8px; padding:8px 10px; font-size:12px; font-family:inherit; resize:vertical; background:var(--white);">' + escapeHTML(s.subtitle) + '</textarea>' +
+          '<select data-action="banner-slide-gradient" data-id="' + s.id + '" style="width:100%; border:1.5px solid var(--line); border-radius:8px; padding:7px 10px; font-size:12px; background:var(--white);">' +
+            Object.keys(GRADIENT_PRESETS).map(function(k){ return '<option value="' + k + '"' + (s.gradient === k ? " selected" : "") + '>' + GRADIENT_PRESETS[k].label + '</option>'; }).join("") +
+          '</select>';
+      }
+      html += '</div>';
+    });
+    html += '<button type="button" class="btn-secondary" data-action="banner-slide-add" style="width:100%; padding:9px;">+ إضافة بنر جديد</button>' +
     '</div>';
 
     html += '<div class="cat-tabs" style="margin-bottom:16px;">' +
       EVENTS_CATEGORIES.map(function(c){
-        return '<button type="button" class="cat-tab' + (c.key === cat.key ? " active" : "") + '" data-action="public-cfg-set-cat" data-cat="' + c.key + '"><span class="icon" style="color:' + c.color + ';">' + c.icon + '</span>' + c.label + '</button>';
+        return '<button type="button" class="cat-tab' + (c.key === cat.key ? " active" : "") + '" data-action="public-cfg-set-cat" data-cat="' + c.key + '"><span class="icon" style="color:' + eventCategoryColor(c.key) + ';">' + c.icon + '</span>' + c.label + '</button>';
       }).join("") + '</div>';
 
     html += '<div style="display:flex; flex-direction:column; gap:10px;">';
@@ -5795,6 +5848,12 @@
       resp[e.target.dataset.eventsRespSelect] = e.target.value || null;
       saveEventsResp(resp);
       renderEventsHub();
+    } else if(e.target.matches('[data-action="events-cat-color"]')){
+      var colorSettings = loadEventsSettings();
+      colorSettings.categoryColors = colorSettings.categoryColors || {};
+      colorSettings.categoryColors[e.target.dataset.cat] = e.target.value;
+      saveEventsSettings(colorSettings);
+      renderEventsHub();
     } else if(e.target.matches('[data-action="public-cfg-toggle-field"]')){
       var pCfg = loadPublicFormConfig();
       var pCatCfg = pCfg[publicConfigUI.category];
@@ -5823,14 +5882,32 @@
       var pCfg5 = loadPublicFormConfig();
       pCfg5.banner.enabled = e.target.checked;
       savePublicFormConfig(pCfg5);
-    } else if(e.target.matches('[data-action="public-cfg-banner-title"]')){
-      var pCfg6 = loadPublicFormConfig();
-      pCfg6.banner.title = e.target.value.trim() || BANNER_DEFAULTS.title;
-      savePublicFormConfig(pCfg6);
-    } else if(e.target.matches('[data-action="public-cfg-banner-subtitle"]')){
-      var pCfg7 = loadPublicFormConfig();
-      pCfg7.banner.subtitle = e.target.value.trim() || BANNER_DEFAULTS.subtitle;
-      savePublicFormConfig(pCfg7);
+    } else if(e.target.matches('[data-action="banner-slide-type"]')){
+      var pCfgBt = loadPublicFormConfig();
+      var slideBt = pCfgBt.banner.slides.find(function(s){ return s.id === e.target.dataset.id; });
+      if(slideBt){ slideBt.type = e.target.value; savePublicFormConfig(pCfgBt); renderEventsSettingsPanel(); }
+    } else if(e.target.matches('[data-action="banner-slide-title"]')){
+      var pCfgTt = loadPublicFormConfig();
+      var slideTt = pCfgTt.banner.slides.find(function(s){ return s.id === e.target.dataset.id; });
+      if(slideTt){ slideTt.title = e.target.value; savePublicFormConfig(pCfgTt); }
+    } else if(e.target.matches('[data-action="banner-slide-subtitle"]')){
+      var pCfgSt = loadPublicFormConfig();
+      var slideSt = pCfgSt.banner.slides.find(function(s){ return s.id === e.target.dataset.id; });
+      if(slideSt){ slideSt.subtitle = e.target.value; savePublicFormConfig(pCfgSt); }
+    } else if(e.target.matches('[data-action="banner-slide-gradient"]')){
+      var pCfgGr = loadPublicFormConfig();
+      var slideGr = pCfgGr.banner.slides.find(function(s){ return s.id === e.target.dataset.id; });
+      if(slideGr){ slideGr.gradient = e.target.value; savePublicFormConfig(pCfgGr); }
+    } else if(e.target.matches('[data-action="banner-slide-image-input"]')){
+      var file = e.target.files && e.target.files[0];
+      if(!file) return;
+      var slideId = e.target.dataset.id;
+      compressEventImageFile(file, 300 * 1024, function(dataUrl){
+        if(!dataUrl) return;
+        var pCfgImg = loadPublicFormConfig();
+        var slideImg = pCfgImg.banner.slides.find(function(s){ return s.id === slideId; });
+        if(slideImg){ slideImg.image = dataUrl; savePublicFormConfig(pCfgImg); renderEventsSettingsPanel(); }
+      });
     }
   });
   eventsSettingsRootEl.addEventListener("click", function(e){
@@ -5856,6 +5933,27 @@
         delCfg[publicConfigUI.category].custom = delCfg[publicConfigUI.category].custom.filter(function(c){ return c.id !== btn.dataset.id; });
         savePublicFormConfig(delCfg);
         renderEventsSettingsPanel();
+        break;
+      }
+      case "banner-slide-add": {
+        var addBannerCfg = loadPublicFormConfig();
+        addBannerCfg.banner.slides.push({ id: genEventId(), type: "text", title: "", subtitle: "", gradient: "brand", image: "" });
+        savePublicFormConfig(addBannerCfg);
+        renderEventsSettingsPanel();
+        break;
+      }
+      case "banner-slide-remove": {
+        var rmBannerCfg = loadPublicFormConfig();
+        if(rmBannerCfg.banner.slides.length <= 1) return;
+        rmBannerCfg.banner.slides = rmBannerCfg.banner.slides.filter(function(s){ return s.id !== btn.dataset.id; });
+        savePublicFormConfig(rmBannerCfg);
+        renderEventsSettingsPanel();
+        break;
+      }
+      case "banner-slide-remove-image": {
+        var rmImgCfg = loadPublicFormConfig();
+        var slideRmImg = rmImgCfg.banner.slides.find(function(s){ return s.id === btn.dataset.id; });
+        if(slideRmImg){ slideRmImg.image = ""; savePublicFormConfig(rmImgCfg); renderEventsSettingsPanel(); }
         break;
       }
     }

@@ -30,15 +30,22 @@
   button,input,select{font-family:inherit;}
   .wrap{max-width:640px; margin:0 auto;}
 
-  .ad-banner{position:relative; overflow:hidden; border-radius:18px; margin-bottom:22px; padding:22px 20px; box-shadow:var(--shadow);
-    background:linear-gradient(120deg, var(--teal) 0%, var(--teal-dark) 55%, var(--blue-dark) 100%); color:#fff; text-align:center;}
-  .ad-banner::before{content:""; position:absolute; inset:0; background:
+  .ad-banner-carousel{position:relative; overflow:hidden; border-radius:18px; margin-bottom:22px; box-shadow:var(--shadow); display:grid; grid-template-rows:minmax(190px, auto); grid-template-columns:100%;}
+  .ad-banner-slide{grid-area:1/1; opacity:0; transition:opacity 1s ease; pointer-events:none;}
+  .ad-banner-slide.active{opacity:1; pointer-events:auto;}
+  .ad-banner-slide.text-slide{position:relative; padding:22px 20px; color:#fff; text-align:center; display:flex; flex-direction:column; align-items:center; justify-content:center; height:100%;}
+  .ad-banner-slide.text-slide::before{content:""; position:absolute; inset:0; background:
       radial-gradient(circle at 12% 20%, rgba(255,255,255,.14) 0%, transparent 40%),
-      radial-gradient(circle at 88% 80%, rgba(184,144,110,.35) 0%, transparent 45%);}
-  .ad-banner .ad-tag{position:relative; display:inline-block; font-size:10.5px; font-weight:700; letter-spacing:.5px; background:rgba(255,255,255,.16); padding:3px 10px; border-radius:20px; margin-bottom:10px;}
-  .ad-banner h2{position:relative; font-size:17px; margin-bottom:6px;}
-  .ad-banner p{position:relative; font-size:12.5px; color:rgba(255,255,255,.88); line-height:1.7; max-width:480px; margin:0 auto;}
-  .ad-banner .ad-icon{position:relative; width:34px; height:34px; margin:0 auto 10px; color:#fff; opacity:.9;}
+      radial-gradient(circle at 88% 80%, rgba(255,255,255,.12) 0%, transparent 45%);}
+  .ad-banner-slide .ad-tag{position:relative; z-index:1; display:inline-block; font-size:10.5px; font-weight:700; letter-spacing:.5px; background:rgba(255,255,255,.16); padding:3px 10px; border-radius:20px; margin-bottom:10px;}
+  .ad-banner-slide h2{position:relative; z-index:1; font-size:17px; margin-bottom:6px;}
+  .ad-banner-slide p{position:relative; z-index:1; font-size:12.5px; color:rgba(255,255,255,.88); line-height:1.7; max-width:480px; margin:0 auto;}
+  .ad-banner-slide .ad-icon{position:relative; z-index:1; width:34px; height:34px; margin:0 auto 10px; color:#fff; opacity:.9;}
+  .ad-banner-slide.image-slide{position:relative; height:100%;}
+  .ad-banner-slide.image-slide img{position:absolute; inset:0; width:100%; height:100%; object-fit:cover;}
+  .ad-banner-dots{position:absolute; bottom:10px; left:50%; transform:translateX(-50%); display:flex; gap:6px; z-index:2;}
+  .ad-banner-dots button{width:7px; height:7px; border-radius:50%; border:none; background:rgba(255,255,255,.55); cursor:pointer; padding:0; transition:background .2s;}
+  .ad-banner-dots button.active{background:#fff;}
 
   .head{text-align:center; margin-bottom:26px;}
   .head img{width:100%; max-width:220px; height:auto; margin:0 auto 10px; display:block;}
@@ -105,12 +112,7 @@
 </head>
 <body>
 <div class="wrap">
-  <div class="ad-banner" id="adBanner" style="display:none;">
-    <svg class="ad-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l2.4 6.6L21 11l-6.6 2.4L12 20l-2.4-6.6L3 11l6.6-2.4z"/></svg>
-    <span class="ad-tag">جمعية العوامية الخيرية</span>
-    <h2 id="adBannerTitle"></h2>
-    <p id="adBannerSubtitle"></p>
-  </div>
+  <div class="ad-banner-carousel" id="adBannerCarousel" style="display:none;"></div>
 
   <div class="head">
     <img src="assets/logo.png" alt="شعار جمعية العوامية الخيرية" />
@@ -340,22 +342,31 @@
 
   var state = { activeCategory: "graduates", photo: "", fieldImages: {}, aiSuggestion: "", aiLoading: false, aiError: "", aiConsentPolicy: false, aiConsentWording: false };
 
+  var GRADIENT_PRESETS = {
+    brand: "linear-gradient(120deg, var(--teal) 0%, var(--teal-dark) 55%, var(--blue-dark) 100%)",
+    indigo: "linear-gradient(120deg, #4d6ea9 0%, #3a5686 55%, #263a5c 100%)",
+    tan: "linear-gradient(120deg, var(--tan) 0%, #8f6b4d 55%, #5c4632 100%)"
+  };
   var BANNER_DEFAULTS = {
     enabled: true,
-    title: "سجّل مناسبتكم الاجتماعية معنا",
-    subtitle: "توثيق التخرّجات، المواليد، وعقود القران ضمن سجلات الجمعية — بيانات دقيقة، تحديث فوري، ومتابعة من فريق الجمعية"
+    slides: [
+      { id: "default", type: "text", title: "سجّل مناسبتكم الاجتماعية معنا", subtitle: "توثيق التخرّجات، المواليد، وعقود القران ضمن سجلات الجمعية — بيانات دقيقة، تحديث فوري، ومتابعة من فريق الجمعية", gradient: "brand", image: "" }
+    ]
   };
+  function copyBannerSlide(s){
+    return { id: s.id, type: s.type || "text", title: s.title || "", subtitle: s.subtitle || "", gradient: s.gradient || "brand", image: s.image || "" };
+  }
   var _publicFormConfigCache = null;
   function loadPublicFormConfig(){
-    var cfg = { footerMessage: "", banner: { enabled: BANNER_DEFAULTS.enabled, title: BANNER_DEFAULTS.title, subtitle: BANNER_DEFAULTS.subtitle } };
+    var cfg = { footerMessage: "", banner: { enabled: BANNER_DEFAULTS.enabled, slides: BANNER_DEFAULTS.slides.map(copyBannerSlide) } };
     CATEGORIES.forEach(function(c){ cfg[c.key] = { hidden: [], hints: {}, labels: {}, custom: [] }; });
     var p = _publicFormConfigCache;
     if(p){
       if(typeof p.footerMessage === "string") cfg.footerMessage = p.footerMessage;
       if(p.banner){
         if(typeof p.banner.enabled === "boolean") cfg.banner.enabled = p.banner.enabled;
-        if(typeof p.banner.title === "string" && p.banner.title.trim()) cfg.banner.title = p.banner.title;
-        if(typeof p.banner.subtitle === "string" && p.banner.subtitle.trim()) cfg.banner.subtitle = p.banner.subtitle;
+        if(Array.isArray(p.banner.slides) && p.banner.slides.length) cfg.banner.slides = p.banner.slides.map(copyBannerSlide);
+        else if(typeof p.banner.title === "string" && p.banner.title.trim()) cfg.banner.slides = [copyBannerSlide({ id: "legacy", type: "text", title: p.banner.title, subtitle: p.banner.subtitle || "", gradient: "brand" })];
       }
       CATEGORIES.forEach(function(c){
         if(p[c.key]){
@@ -785,16 +796,56 @@
     renderForm();
   });
 
+  var bannerTimer = null;
+  var bannerIndex = 0;
   function renderBanner(){
     var banner = loadPublicFormConfig().banner;
-    var el = document.getElementById("adBanner");
-    if(!banner.enabled){
-      el.style.display = "none";
+    var wrap = document.getElementById("adBannerCarousel");
+    if(bannerTimer){ clearInterval(bannerTimer); bannerTimer = null; }
+    if(!banner.enabled || !banner.slides || !banner.slides.length){
+      wrap.style.display = "none";
+      wrap.innerHTML = "";
       return;
     }
-    document.getElementById("adBannerTitle").textContent = banner.title;
-    document.getElementById("adBannerSubtitle").textContent = banner.subtitle;
-    el.style.display = "block";
+    wrap.style.display = "grid";
+    bannerIndex = 0;
+    wrap.innerHTML = banner.slides.map(function(s, i){
+      if(s.type === "image" && s.image){
+        return '<div class="ad-banner-slide image-slide' + (i === 0 ? " active" : "") + '"><img src="' + s.image + '" alt=""/></div>';
+      }
+      var grad = GRADIENT_PRESETS[s.gradient] || GRADIENT_PRESETS.brand;
+      return '<div class="ad-banner-slide text-slide' + (i === 0 ? " active" : "") + '" style="background:' + grad + '">' +
+        '<svg class="ad-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l2.4 6.6L21 11l-6.6 2.4L12 20l-2.4-6.6L3 11l6.6-2.4z"/></svg>' +
+        '<span class="ad-tag">جمعية العوامية الخيرية</span>' +
+        (s.title ? '<h2>' + escapeHTML(s.title) + '</h2>' : "") +
+        (s.subtitle ? '<p>' + escapeHTML(s.subtitle) + '</p>' : "") +
+      '</div>';
+    }).join("");
+    if(banner.slides.length > 1){
+      wrap.innerHTML += '<div class="ad-banner-dots">' + banner.slides.map(function(_, i){
+        return '<button type="button" data-idx="' + i + '"' + (i === 0 ? ' class="active"' : '') + '></button>';
+      }).join("") + '</div>';
+      Array.prototype.forEach.call(wrap.querySelectorAll(".ad-banner-dots button"), function(btn){
+        btn.addEventListener("click", function(){
+          showBannerSlide(parseInt(btn.dataset.idx, 10), banner.slides.length);
+        });
+      });
+      bannerTimer = setInterval(function(){
+        showBannerSlide((bannerIndex + 1) % banner.slides.length, banner.slides.length);
+      }, 5000);
+    }
+  }
+  function showBannerSlide(idx, count){
+    var wrap = document.getElementById("adBannerCarousel");
+    var slides = wrap.querySelectorAll(".ad-banner-slide");
+    var dots = wrap.querySelectorAll(".ad-banner-dots button");
+    Array.prototype.forEach.call(slides, function(s, i){ s.classList.toggle("active", i === idx); });
+    Array.prototype.forEach.call(dots, function(d, i){ d.classList.toggle("active", i === idx); });
+    bannerIndex = idx;
+    if(bannerTimer){
+      clearInterval(bannerTimer);
+      bannerTimer = setInterval(function(){ showBannerSlide((bannerIndex + 1) % count, count); }, 5000);
+    }
   }
   function renderFooterMessage(){
     var msg = loadPublicFormConfig().footerMessage;
