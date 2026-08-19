@@ -1,0 +1,7 @@
+name = "zara-gemini-proxy"
+main = "worker.js"
+compatibility_date = "2026-08-01"
+
+# لا تضع مفتاح Gemini هنا إطلاقاً — يُضبط كسر (secret) عبر:
+#   wrangler secret put GEMINI_API_KEY
+# أو من لوحة Cloudflare: Workers & Pages > zara-gemini-proxy > Settings > Variables
