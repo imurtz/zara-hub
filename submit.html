@@ -68,13 +68,18 @@
   .field label .req{color:var(--danger);}
   .field input, .field select, .field textarea{padding:11px 13px; border:1.5px solid var(--line); border-radius:10px; font-size:13.5px; background:#fbfcfc; color:var(--ink);}
   .field textarea{resize:vertical; min-height:110px; line-height:1.7; font-family:inherit;}
-  .field select{
+  .select-wrap{position:relative;}
+  .select-wrap select{
+    width:100%; padding:11px 34px 11px 13px;
     appearance:none; -webkit-appearance:none; -moz-appearance:none;
-    padding-left:34px;
+    background-image:none;
+  }
+  .select-wrap::after{
+    content:""; position:absolute; left:12px; top:50%; margin-top:-7px;
+    width:15px; height:15px; pointer-events:none;
     background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236b7876' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
     background-repeat:no-repeat;
-    background-position:left 12px center;
-    background-size:15px;
+    background-size:15px 15px;
   }
   .field input:focus, .field select:focus, .field textarea:focus{outline:none; border-color:var(--blue); background-color:var(--white);}
   .field-hint{font-size:11px; color:var(--ink-soft); line-height:1.5;}
@@ -471,16 +476,16 @@
     if(f.derived) return "";
     if(f.type === "select"){
       var autoSel = f.auto ? fieldAutoValue(f) : "";
-      return '<select data-key="' + f.key + '"' + (f.locked ? " disabled" : "") + ' style="' + (f.locked ? "background:var(--line); color:var(--ink-soft); cursor:not-allowed;" : "") + '">' +
+      return '<div class="select-wrap"><select data-key="' + f.key + '"' + (f.locked ? " disabled" : "") + ' style="' + (f.locked ? "background:var(--line); color:var(--ink-soft); cursor:not-allowed;" : "") + '">' +
         (f.auto ? "" : '<option value="">اختر...</option>') +
         f.options.map(function(o){ return '<option value="' + escapeHTML(o) + '"' + (autoSel === o ? " selected" : "") + '>' + escapeHTML(o) + '</option>'; }).join("") +
-      '</select>';
+      '</select></div>';
     }
     if(f.type === "selectOther"){
-      return '<select data-action="select-other-toggle" data-key="' + f.key + '"><option value="">اختر...</option>' +
+      return '<div class="select-wrap"><select data-action="select-other-toggle" data-key="' + f.key + '"><option value="">اختر...</option>' +
           f.options.map(function(o){ return '<option value="' + escapeHTML(o) + '">' + escapeHTML(o) + '</option>'; }).join("") +
           '<option value="__other__">غير ذلك</option>' +
-        '</select>' +
+        '</select></div>' +
         '<input type="text" class="other-input" data-other-input="' + f.key + '" placeholder="اكتب هنا..." style="display:none;"/>';
     }
     if(f.type === "image"){

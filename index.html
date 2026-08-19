@@ -527,19 +527,24 @@
   .event-field{text-align:right;}
   .event-field label{display:block; font-size:12px; font-weight:500; color:var(--teal-dark); margin-bottom:5px;}
   .event-field input, .event-field select{width:100%; padding:10px 12px; border:1.5px solid var(--line); border-radius:10px; font-size:13px; background:#fbfcfc; color:var(--ink);}
-  .event-field select{
+  .event-field .select-wrap{position:relative;}
+  .event-field .select-wrap select{
+    width:100%; padding:10px 34px 10px 12px;
     appearance:none; -webkit-appearance:none; -moz-appearance:none;
-    padding-left:34px;
+    background-image:none;
+  }
+  .event-field .select-wrap::after{
+    content:""; position:absolute; left:12px; top:50%; margin-top:-7px;
+    width:15px; height:15px; pointer-events:none;
     background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236b7876' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
     background-repeat:no-repeat;
-    background-position:left 12px center;
-    background-size:15px;
+    background-size:15px 15px;
   }
   .event-field-hint{font-size:10.5px; color:var(--ink-soft); margin-top:4px; line-height:1.5;}
   .event-field.full-field{grid-column:1 / -1;}
   .event-photo-input{width:100%; padding:10px 12px; border:1.5px dashed var(--line); border-radius:10px; font-size:12.5px; background:#fbfcfc; color:var(--ink-soft); cursor:pointer;}
   .grow-select-row{display:flex; gap:6px; align-items:center;}
-  .grow-select-row select{flex:1;}
+  .grow-select-row .select-wrap{flex:1;}
   .grow-add-btn{flex-shrink:0; width:36px; height:36px; border-radius:9px; border:1.5px solid var(--line); background:var(--white); color:var(--blue); cursor:pointer; display:flex; align-items:center; justify-content:center; transition:all .15s;}
   .grow-add-btn:hover{border-color:var(--blue); background:var(--blue-tint);}
   .grow-add-btn .icon{width:15px; height:15px;}
@@ -4934,17 +4939,17 @@
   // ----- إدخال البيانات -----
   function fieldInputHTML(f, value){
     if(f.type === "select"){
-      return '<select data-field-input data-key="' + f.key + '"><option value="">اختر...</option>' +
+      return '<div class="select-wrap"><select data-field-input data-key="' + f.key + '"><option value="">اختر...</option>' +
         f.options.map(function(o){ return '<option value="' + escapeHTML(o) + '"' + (value === o ? " selected" : "") + '>' + escapeHTML(o) + '</option>'; }).join("") +
-      '</select>';
+      '</select></div>';
     }
     if(f.type === "selectOther"){
       var isCustom = !!value && f.options.indexOf(value) === -1;
       var selVal = isCustom ? "__other__" : (value || "");
-      return '<select data-action="select-other-toggle" data-key="' + f.key + '"><option value="">اختر...</option>' +
+      return '<div class="select-wrap"><select data-action="select-other-toggle" data-key="' + f.key + '"><option value="">اختر...</option>' +
           f.options.map(function(o){ return '<option value="' + escapeHTML(o) + '"' + (selVal === o ? " selected" : "") + '>' + escapeHTML(o) + '</option>'; }).join("") +
           '<option value="__other__"' + (selVal === "__other__" ? " selected" : "") + '>غير ذلك</option>' +
-        '</select>' +
+        '</select></div>' +
         '<input type="text" data-field-input data-key="' + f.key + '" data-other-input="' + f.key + '" value="' + escapeHTML(isCustom ? value : "") + '" placeholder="اكتب هنا..." style="margin-top:6px;' + (selVal === "__other__" ? "" : "display:none;") + '"/>';
     }
     if(f.type === "growSelect"){
@@ -4953,10 +4958,10 @@
       // نظهرها كخيار مؤقت مختار عوض ما تبان القائمة فاضية وتنمسح القيمة الحقيقية عند الحفظ بالغلط
       var valueMissing = value && opts.indexOf(value) === -1;
       return '<div class="grow-select-row">' +
-        '<select data-field-input data-key="' + f.key + '"><option value="">اختر...</option>' +
+        '<div class="select-wrap"><select data-field-input data-key="' + f.key + '"><option value="">اختر...</option>' +
           (valueMissing ? '<option value="' + escapeHTML(value) + '" selected>' + escapeHTML(value) + ' (من تسجيل خارجي — راجعها)</option>' : '') +
           opts.map(function(o){ return '<option value="' + escapeHTML(o) + '"' + (value === o ? " selected" : "") + '>' + escapeHTML(o) + '</option>'; }).join("") +
-        '</select>' +
+        '</select></div>' +
         '<button type="button" class="grow-add-btn" data-action="grow-add-toggle" data-fieldkey="' + f.key + '" title="إضافة خيار جديد"><span class="icon">' + TICON.plus + '</span></button>' +
       '</div>' +
       '<div class="grow-add-input-row" data-grow-row="' + f.key + '" style="display:none;">' +
