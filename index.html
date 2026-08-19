@@ -2,6 +2,9 @@
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8" />
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+<meta http-equiv="Pragma" content="no-cache" />
+<meta http-equiv="Expires" content="0" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>زارا | جمعية العوامية الخيرية</title>
 <link rel="icon" href="assets/logo.png" />
@@ -4842,21 +4845,23 @@
   };
   var BANNER_DEFAULTS = {
     enabled: true,
+    intervalSeconds: 5,
     slides: [
-      { id: "default", type: "text", title: "سجّل مناسبتكم الاجتماعية معنا", subtitle: "توثيق التخرّجات، المواليد، وعقود القران ضمن سجلات الجمعية — بيانات دقيقة، تحديث فوري، ومتابعة من فريق الجمعية", gradient: "brand", image: "" }
+      { id: "default", type: "text", title: "سجّل مناسبتكم الاجتماعية معنا", subtitle: "توثيق التخرّجات، المواليد، وعقود القران ضمن سجلات الجمعية — بيانات دقيقة، تحديث فوري، ومتابعة من فريق الجمعية", gradient: "brand", image: "", link: "" }
     ]
   };
   function copyBannerSlide(s){
-    return { id: s.id, type: s.type || "text", title: s.title || "", subtitle: s.subtitle || "", gradient: s.gradient || "brand", image: s.image || "" };
+    return { id: s.id, type: s.type || "text", title: s.title || "", subtitle: s.subtitle || "", gradient: s.gradient || "brand", image: s.image || "", link: s.link || "" };
   }
   function loadPublicFormConfig(){
-    var cfg = { footerMessage: "", banner: { enabled: BANNER_DEFAULTS.enabled, slides: BANNER_DEFAULTS.slides.map(copyBannerSlide) } };
+    var cfg = { footerMessage: "", banner: { enabled: BANNER_DEFAULTS.enabled, intervalSeconds: BANNER_DEFAULTS.intervalSeconds, slides: BANNER_DEFAULTS.slides.map(copyBannerSlide) } };
     EVENTS_CATEGORIES.forEach(function(c){ cfg[c.key] = { hidden: [], hints: {}, labels: {}, custom: [] }; });
     var p = _publicFormConfigCache;
     if(p){
       if(typeof p.footerMessage === "string") cfg.footerMessage = p.footerMessage;
       if(p.banner){
         if(typeof p.banner.enabled === "boolean") cfg.banner.enabled = p.banner.enabled;
+        if(typeof p.banner.intervalSeconds === "number" && p.banner.intervalSeconds >= 2) cfg.banner.intervalSeconds = p.banner.intervalSeconds;
         if(Array.isArray(p.banner.slides) && p.banner.slides.length) cfg.banner.slides = p.banner.slides.map(copyBannerSlide);
         else if(typeof p.banner.title === "string" && p.banner.title.trim()) cfg.banner.slides = [copyBannerSlide({ id: "legacy", type: "text", title: p.banner.title, subtitle: p.banner.subtitle || "", gradient: "brand" })];
       }
@@ -5550,10 +5555,14 @@
     html += '</div>';
 
     html += '<div class="settings-card"><h3>ألوان أيقونات المناسبات</h3>' +
-      '<p class="hint">لون أيقونة كل تصنيف — يظهر بلوحة القيادة وتبويبات إدخال البيانات وصفحة التسجيل العامة</p>';
+      '<p class="hint">لون أيقونة كل تصنيف — يظهر بلوحة القيادة وتبويبات إدخال البيانات وصفحة التسجيل العامة. اختر من لوح الألوان أو الصق كود hex مباشرة</p>';
     EVENTS_CATEGORIES.forEach(function(c){
+      var colorVal = eventCategoryColor(c.key);
       html += '<div class="toggle-row"><div class="lbl">' + c.label + '</div>' +
-        '<input type="color" data-action="events-cat-color" data-cat="' + c.key + '" value="' + eventCategoryColor(c.key) + '" style="width:44px; height:32px; border:1px solid var(--line); border-radius:8px; padding:2px; cursor:pointer; background:none;"/></div>';
+        '<div style="display:flex; gap:6px; align-items:center;">' +
+        '<input type="color" data-action="events-cat-color" data-cat="' + c.key + '" value="' + colorVal + '" style="width:40px; height:32px; border:1px solid var(--line); border-radius:8px; padding:2px; cursor:pointer; background:none;"/>' +
+        '<input type="text" data-action="events-cat-color-hex" data-cat="' + c.key + '" value="' + colorVal + '" placeholder="#4d6ea9" maxlength="7" style="width:90px; font-size:12px; font-family:monospace; direction:ltr; text-align:center; border:1px solid var(--line); border-radius:8px; padding:6px 4px;"/>' +
+        '</div></div>';
     });
     html += '</div>';
 
@@ -5579,7 +5588,11 @@
       '<label style="display:flex; align-items:center; gap:8px; font-size:12.5px; font-weight:700; color:var(--teal-dark); margin-bottom:12px;">' +
         '<input type="checkbox" data-action="public-cfg-banner-toggle"' + (cfg.banner.enabled ? " checked" : "") + '/> إظهار البنر الإعلاني أعلى صفحة التسجيل العام' +
       '</label>' +
-      '<p class="hint" style="margin-bottom:10px;">يمكنك إضافة أكثر من بنر — تتناوب تلقائياً بحركة انسيابية. كل بنر إما نص بتدرج لوني، أو صورة إعلانية بنفس أبعاد البنر</p>';
+      '<div style="display:flex; align-items:center; gap:8px; margin-bottom:10px;">' +
+        '<label style="font-size:12px; color:var(--ink-soft); white-space:nowrap;">مدة عرض كل بنر (ثوانٍ)</label>' +
+        '<input type="number" min="2" max="30" data-action="public-cfg-banner-interval" value="' + cfg.banner.intervalSeconds + '" style="width:70px; border:1.5px solid var(--line); border-radius:8px; padding:6px 8px; font-size:12.5px;"/>' +
+      '</div>' +
+      '<p class="hint" style="margin-bottom:10px;">يمكنك إضافة أكثر من بنر — تتناوب تلقائياً بحركة انسيابية. كل بنر إما نص بتدرج لوني، أو صورة إعلانية بنفس أبعاد البنر، ويمكن ربط أي بنر برابط يفتح عند النقر عليه</p>';
     cfg.banner.slides.forEach(function(s, idx){
       html += '<div class="banner-slide-row" style="border:1px solid var(--line); border-radius:12px; padding:12px; margin-bottom:10px; background:#fbfcfc;">';
       html += '<div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:8px;">' +
@@ -5605,6 +5618,7 @@
             Object.keys(GRADIENT_PRESETS).map(function(k){ return '<option value="' + k + '"' + (s.gradient === k ? " selected" : "") + '>' + GRADIENT_PRESETS[k].label + '</option>'; }).join("") +
           '</select>';
       }
+      html += '<input type="text" data-action="banner-slide-link" data-id="' + s.id + '" value="' + escapeHTML(s.link) + '" placeholder="رابط عند النقر على البنر (اختياري) — https://..." style="width:100%; margin-top:6px; border:1.5px solid var(--line); border-radius:8px; padding:8px 10px; font-size:12px; background:var(--white); direction:ltr; text-align:left;"/>';
       html += '</div>';
     });
     html += '<button type="button" class="btn-secondary" data-action="banner-slide-add" style="width:100%; padding:9px;">+ إضافة بنر جديد</button>' +
@@ -5854,6 +5868,19 @@
       colorSettings.categoryColors[e.target.dataset.cat] = e.target.value;
       saveEventsSettings(colorSettings);
       renderEventsHub();
+    } else if(e.target.matches('[data-action="events-cat-color-hex"]')){
+      var hexVal = e.target.value.trim();
+      if(hexVal && hexVal.charAt(0) !== "#") hexVal = "#" + hexVal;
+      if(!/^#[0-9a-fA-F]{6}$/.test(hexVal)){
+        showToast("كود اللون غير صحيح — استخدم صيغة hex مثل 4d6ea9");
+        renderEventsHub();
+        return;
+      }
+      var hexSettings = loadEventsSettings();
+      hexSettings.categoryColors = hexSettings.categoryColors || {};
+      hexSettings.categoryColors[e.target.dataset.cat] = hexVal;
+      saveEventsSettings(hexSettings);
+      renderEventsHub();
     } else if(e.target.matches('[data-action="public-cfg-toggle-field"]')){
       var pCfg = loadPublicFormConfig();
       var pCatCfg = pCfg[publicConfigUI.category];
@@ -5898,6 +5925,15 @@
       var pCfgGr = loadPublicFormConfig();
       var slideGr = pCfgGr.banner.slides.find(function(s){ return s.id === e.target.dataset.id; });
       if(slideGr){ slideGr.gradient = e.target.value; savePublicFormConfig(pCfgGr); }
+    } else if(e.target.matches('[data-action="banner-slide-link"]')){
+      var pCfgLk = loadPublicFormConfig();
+      var slideLk = pCfgLk.banner.slides.find(function(s){ return s.id === e.target.dataset.id; });
+      if(slideLk){ slideLk.link = e.target.value.trim(); savePublicFormConfig(pCfgLk); }
+    } else if(e.target.matches('[data-action="public-cfg-banner-interval"]')){
+      var pCfgIv = loadPublicFormConfig();
+      var iv = parseInt(e.target.value, 10);
+      pCfgIv.banner.intervalSeconds = (iv >= 2 && iv <= 30) ? iv : BANNER_DEFAULTS.intervalSeconds;
+      savePublicFormConfig(pCfgIv);
     } else if(e.target.matches('[data-action="banner-slide-image-input"]')){
       var file = e.target.files && e.target.files[0];
       if(!file) return;
@@ -5937,7 +5973,7 @@
       }
       case "banner-slide-add": {
         var addBannerCfg = loadPublicFormConfig();
-        addBannerCfg.banner.slides.push({ id: genEventId(), type: "text", title: "", subtitle: "", gradient: "brand", image: "" });
+        addBannerCfg.banner.slides.push({ id: genEventId(), type: "text", title: "", subtitle: "", gradient: "brand", image: "", link: "" });
         savePublicFormConfig(addBannerCfg);
         renderEventsSettingsPanel();
         break;

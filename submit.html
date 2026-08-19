@@ -2,6 +2,9 @@
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8" />
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+<meta http-equiv="Pragma" content="no-cache" />
+<meta http-equiv="Expires" content="0" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>تسجيل بيانات المناسبات الاجتماعية | جمعية العوامية الخيرية</title>
 <link rel="icon" href="assets/logo.png" />
@@ -63,7 +66,8 @@
   .field.full{grid-column:1 / -1;}
   .field label{font-size:12.5px; font-weight:600; color:var(--teal-dark);}
   .field label .req{color:var(--danger);}
-  .field input, .field select{padding:11px 13px; border:1.5px solid var(--line); border-radius:10px; font-size:13.5px; background:#fbfcfc; color:var(--ink);}
+  .field input, .field select, .field textarea{padding:11px 13px; border:1.5px solid var(--line); border-radius:10px; font-size:13.5px; background:#fbfcfc; color:var(--ink);}
+  .field textarea{resize:vertical; min-height:110px; line-height:1.7; font-family:inherit;}
   .field select{
     appearance:none; -webkit-appearance:none; -moz-appearance:none;
     padding-left:34px;
@@ -72,7 +76,7 @@
     background-position:left 12px center;
     background-size:15px;
   }
-  .field input:focus, .field select:focus{outline:none; border-color:var(--blue); background-color:var(--white);}
+  .field input:focus, .field select:focus, .field textarea:focus{outline:none; border-color:var(--blue); background-color:var(--white);}
   .field-hint{font-size:11px; color:var(--ink-soft); line-height:1.5;}
   .ai-block{margin-top:-4px;}
   .ai-status{font-size:12px; color:var(--blue-dark); display:flex; align-items:center; gap:6px;}
@@ -334,7 +338,7 @@
         { key: "title", label: "اللقب / المسمى الوظيفي", type: "selectOther", optionsKey: "congratsTitles", options: [], hint: "اختر من القائمة، أو \"غير ذلك\" — اتركه فارغاً إذا لا ينطبق" },
         { key: "fullName", label: "اسم المحتفى به", type: "text", required: true, hint: "الاسم الكامل للشخص المُهنَّأ" },
         { key: "occasionType", label: "نوع المناسبة", type: "selectOther", optionsKey: "congratsOccasionTypes", options: [], required: true, hint: "اختر من القائمة أو \"غير ذلك\"" },
-        { key: "details", label: "تفاصيل إضافية", type: "text", required: true, hint: "تفاصيل المناسبة — تُستخدم بصياغة منشور التهنئة" },
+        { key: "details", label: "تفاصيل إضافية", type: "textarea", required: true, hint: "تفاصيل المناسبة — تُستخدم بصياغة منشور التهنئة" },
         { key: "notes", label: "ملاحظات", type: "text", hint: "أي ملاحظات إضافية تودون إضافتها — اختياري" }
       ]
     }
@@ -349,22 +353,24 @@
   };
   var BANNER_DEFAULTS = {
     enabled: true,
+    intervalSeconds: 5,
     slides: [
-      { id: "default", type: "text", title: "سجّل مناسبتكم الاجتماعية معنا", subtitle: "توثيق التخرّجات، المواليد، وعقود القران ضمن سجلات الجمعية — بيانات دقيقة، تحديث فوري، ومتابعة من فريق الجمعية", gradient: "brand", image: "" }
+      { id: "default", type: "text", title: "سجّل مناسبتكم الاجتماعية معنا", subtitle: "توثيق التخرّجات، المواليد، وعقود القران ضمن سجلات الجمعية — بيانات دقيقة، تحديث فوري، ومتابعة من فريق الجمعية", gradient: "brand", image: "", link: "" }
     ]
   };
   function copyBannerSlide(s){
-    return { id: s.id, type: s.type || "text", title: s.title || "", subtitle: s.subtitle || "", gradient: s.gradient || "brand", image: s.image || "" };
+    return { id: s.id, type: s.type || "text", title: s.title || "", subtitle: s.subtitle || "", gradient: s.gradient || "brand", image: s.image || "", link: s.link || "" };
   }
   var _publicFormConfigCache = null;
   function loadPublicFormConfig(){
-    var cfg = { footerMessage: "", banner: { enabled: BANNER_DEFAULTS.enabled, slides: BANNER_DEFAULTS.slides.map(copyBannerSlide) } };
+    var cfg = { footerMessage: "", banner: { enabled: BANNER_DEFAULTS.enabled, intervalSeconds: BANNER_DEFAULTS.intervalSeconds, slides: BANNER_DEFAULTS.slides.map(copyBannerSlide) } };
     CATEGORIES.forEach(function(c){ cfg[c.key] = { hidden: [], hints: {}, labels: {}, custom: [] }; });
     var p = _publicFormConfigCache;
     if(p){
       if(typeof p.footerMessage === "string") cfg.footerMessage = p.footerMessage;
       if(p.banner){
         if(typeof p.banner.enabled === "boolean") cfg.banner.enabled = p.banner.enabled;
+        if(typeof p.banner.intervalSeconds === "number" && p.banner.intervalSeconds >= 2) cfg.banner.intervalSeconds = p.banner.intervalSeconds;
         if(Array.isArray(p.banner.slides) && p.banner.slides.length) cfg.banner.slides = p.banner.slides.map(copyBannerSlide);
         else if(typeof p.banner.title === "string" && p.banner.title.trim()) cfg.banner.slides = [copyBannerSlide({ id: "legacy", type: "text", title: p.banner.title, subtitle: p.banner.subtitle || "", gradient: "brand" })];
       }
@@ -437,10 +443,12 @@
     reader.readAsDataURL(file);
   }
 
+  var CATEGORY_ICON_COLORS = { graduates: "#4d6ea9", births: "#4d6ea9", marriages: "#4d6ea9", congrats: "#4d6ea9" };
   function renderCatSelect(){
     var el = document.getElementById("catSelect");
     el.innerHTML = CATEGORIES.map(function(c){
-      return '<button type="button" class="' + (c.key === state.activeCategory ? "active" : "") + '" data-cat="' + c.key + '"><span class="icon">' + c.icon + '</span>' + c.label + '</button>';
+      var iconColor = CATEGORY_ICON_COLORS[c.key] || "#4d6ea9";
+      return '<button type="button" class="' + (c.key === state.activeCategory ? "active" : "") + '" data-cat="' + c.key + '"><span class="icon" style="color:' + iconColor + ';">' + c.icon + '</span>' + c.label + '</button>';
     }).join("");
     Array.prototype.forEach.call(el.querySelectorAll("button"), function(btn){
       btn.addEventListener("click", function(){
@@ -478,6 +486,9 @@
     if(f.type === "image"){
       return imageFieldHTML(f.key);
     }
+    if(f.type === "textarea"){
+      return '<textarea data-key="' + f.key + '" rows="5" placeholder="' + escapeHTML(f.label) + '"></textarea>';
+    }
     var autoVal = f.auto ? fieldAutoValue(f) : "";
     return '<input type="' + f.type + '" data-key="' + f.key + '" placeholder="' + escapeHTML(f.label) + '"' +
       (f.auto ? ' value="' + escapeHTML(autoVal) + '"' : '') + (f.locked ? ' readonly style="background:var(--line); color:var(--ink-soft); cursor:not-allowed;"' : '') + '/>';
@@ -501,7 +512,7 @@
     grid.innerHTML = effectiveFields.map(function(f){
       if(f.derived) return "";
       var extra = (cat.aiWordingAssist && f.key === "details") ? aiBlockHTML() : "";
-      return '<div class="field">' +
+      return '<div class="field' + (f.type === "textarea" ? " full" : "") + '">' +
         '<label>' + escapeHTML(f.label) + (f.required ? ' <span class="req">*</span>' : '') + '</label>' +
         fieldInputHTML(f) +
         (f.hint ? '<p class="field-hint">' + escapeHTML(f.hint) + '</p>' : '') +
@@ -809,17 +820,20 @@
     }
     wrap.style.display = "grid";
     bannerIndex = 0;
+    var intervalMs = (banner.intervalSeconds || 5) * 1000;
     wrap.innerHTML = banner.slides.map(function(s, i){
+      var tag = s.link ? "a" : "div";
+      var linkAttrs = s.link ? ' href="' + escapeHTML(s.link) + '" target="_blank" rel="noopener"' : "";
       if(s.type === "image" && s.image){
-        return '<div class="ad-banner-slide image-slide' + (i === 0 ? " active" : "") + '"><img src="' + s.image + '" alt=""/></div>';
+        return '<' + tag + ' class="ad-banner-slide image-slide' + (i === 0 ? " active" : "") + '"' + linkAttrs + '><img src="' + s.image + '" alt=""/></' + tag + '>';
       }
       var grad = GRADIENT_PRESETS[s.gradient] || GRADIENT_PRESETS.brand;
-      return '<div class="ad-banner-slide text-slide' + (i === 0 ? " active" : "") + '" style="background:' + grad + '">' +
+      return '<' + tag + ' class="ad-banner-slide text-slide' + (i === 0 ? " active" : "") + '"' + linkAttrs + ' style="background:' + grad + '">' +
         '<svg class="ad-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l2.4 6.6L21 11l-6.6 2.4L12 20l-2.4-6.6L3 11l6.6-2.4z"/></svg>' +
         '<span class="ad-tag">جمعية العوامية الخيرية</span>' +
         (s.title ? '<h2>' + escapeHTML(s.title) + '</h2>' : "") +
         (s.subtitle ? '<p>' + escapeHTML(s.subtitle) + '</p>' : "") +
-      '</div>';
+      '</' + tag + '>';
     }).join("");
     if(banner.slides.length > 1){
       wrap.innerHTML += '<div class="ad-banner-dots">' + banner.slides.map(function(_, i){
@@ -827,15 +841,15 @@
       }).join("") + '</div>';
       Array.prototype.forEach.call(wrap.querySelectorAll(".ad-banner-dots button"), function(btn){
         btn.addEventListener("click", function(){
-          showBannerSlide(parseInt(btn.dataset.idx, 10), banner.slides.length);
+          showBannerSlide(parseInt(btn.dataset.idx, 10), banner.slides.length, intervalMs);
         });
       });
       bannerTimer = setInterval(function(){
-        showBannerSlide((bannerIndex + 1) % banner.slides.length, banner.slides.length);
-      }, 5000);
+        showBannerSlide((bannerIndex + 1) % banner.slides.length, banner.slides.length, intervalMs);
+      }, intervalMs);
     }
   }
-  function showBannerSlide(idx, count){
+  function showBannerSlide(idx, count, intervalMs){
     var wrap = document.getElementById("adBannerCarousel");
     var slides = wrap.querySelectorAll(".ad-banner-slide");
     var dots = wrap.querySelectorAll(".ad-banner-dots button");
@@ -844,7 +858,7 @@
     bannerIndex = idx;
     if(bannerTimer){
       clearInterval(bannerTimer);
-      bannerTimer = setInterval(function(){ showBannerSlide((bannerIndex + 1) % count, count); }, 5000);
+      bannerTimer = setInterval(function(){ showBannerSlide((bannerIndex + 1) % count, count, intervalMs); }, intervalMs || 5000);
     }
   }
   function renderFooterMessage(){
@@ -900,6 +914,13 @@
     renderCatSelect();
     renderForm();
   }).catch(function(err){ console.error("options fetch error", err); });
+  db.collection("eventsMeta").doc("settings").get().then(function(doc){
+    var data = doc.exists ? doc.data() : null;
+    if(data && data.categoryColors){
+      for(var k in data.categoryColors){ if(data.categoryColors[k]) CATEGORY_ICON_COLORS[k] = data.categoryColors[k]; }
+      renderCatSelect();
+    }
+  }).catch(function(err){ console.error("settings fetch error", err); });
 })();
 </script>
 </body>

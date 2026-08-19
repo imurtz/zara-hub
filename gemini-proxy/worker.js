@@ -69,39 +69,54 @@ export default {
       "نوع المناسبة: " + (occasionType || "غير مذكور") + "\n" +
       "تفاصيل من صاحب المناسبة: " + details;
 
-    let geminiRes;
+    let text;
     try {
-      geminiRes = await fetch(
-        "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=" + env.GEMINI_API_KEY,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            contents: [{ parts: [{ text: userPrompt }] }],
-            systemInstruction: { parts: [{ text: WORDING_POLICY }] },
-            generationConfig: { temperature: 0.6, maxOutputTokens: 1024, thinkingConfig: { thinkingLevel: "low" } }
-          })
-        }
-      );
+      text = await callGemini(env, userPrompt);
     } catch (e) {
-      return json({ error: "gemini_unreachable" }, 502, headers);
+      return json({ error: e.message === "gemini_bad_status" ? "gemini_error" : "gemini_unreachable" }, 502, headers);
     }
-
-    if (!geminiRes.ok) {
-      return json({ error: "gemini_error", status: geminiRes.status }, 502, headers);
-    }
-
-    const data = await geminiRes.json();
-    const text = data && data.candidates && data.candidates[0] && data.candidates[0].content &&
-      data.candidates[0].content.parts && data.candidates[0].content.parts[0] &&
-      data.candidates[0].content.parts[0].text ? data.candidates[0].content.parts[0].text.trim() : "";
 
     if (!text) {
       return json({ error: "empty_suggestion" }, 502, headers);
     }
+
+    // إن جاء النص أقصر من الحد الأدنى (210)، حاول مرة واحدة إضافية بتذكير صريح بالتوسّع
+    if (text.length < 210) {
+      try {
+        const retryPrompt = userPrompt + "\n\n(تنبيه: المحاولة السابقة جاءت " + text.length + " حرفاً فقط، وهذا أقل من الحد الأدنى 210 حرفاً. أعد الصياغة بوصف أوفى وأكثر تفصيلاً ليصل النص إلى 210 حرفاً على الأقل.)";
+        const retryText = await callGemini(env, retryPrompt);
+        if (retryText && retryText.length > text.length) text = retryText;
+      } catch (e) {
+        // تجاهل فشل المحاولة الإضافية — نُبقي أفضل نص متوفر لدينا
+      }
+    }
+
     return json({ suggestion: trimToLimit(text, 700) }, 200, headers);
   }
 };
+
+async function callGemini(env, promptText) {
+  const geminiRes = await fetch(
+    "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=" + env.GEMINI_API_KEY,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        contents: [{ parts: [{ text: promptText }] }],
+        systemInstruction: { parts: [{ text: WORDING_POLICY }] },
+        generationConfig: { temperature: 0.6, maxOutputTokens: 1024, thinkingConfig: { thinkingLevel: "low" } }
+      })
+    }
+  );
+  if (!geminiRes.ok) {
+    throw new Error("gemini_bad_status");
+  }
+  const data = await geminiRes.json();
+  const text = data && data.candidates && data.candidates[0] && data.candidates[0].content &&
+    data.candidates[0].content.parts && data.candidates[0].content.parts[0] &&
+    data.candidates[0].content.parts[0].text ? data.candidates[0].content.parts[0].text.trim() : "";
+  return text;
+}
 
 function clean(v, maxLen) {
   return (v == null ? "" : String(v)).trim().slice(0, maxLen);
