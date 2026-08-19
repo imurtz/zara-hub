@@ -57,16 +57,25 @@
   .field label{font-size:12.5px; font-weight:600; color:var(--teal-dark);}
   .field label .req{color:var(--danger);}
   .field input, .field select{padding:11px 13px; border:1.5px solid var(--line); border-radius:10px; font-size:13.5px; background:#fbfcfc; color:var(--ink);}
-  .field input:focus, .field select:focus{outline:none; border-color:var(--blue); background:var(--white);}
+  .field select{
+    appearance:none; -webkit-appearance:none; -moz-appearance:none;
+    padding-left:34px;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236b7876' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+    background-repeat:no-repeat;
+    background-position:left 12px center;
+    background-size:15px;
+  }
+  .field input:focus, .field select:focus{outline:none; border-color:var(--blue); background-color:var(--white);}
   .field-hint{font-size:11px; color:var(--ink-soft); line-height:1.5;}
   .ai-block{margin-top:-4px;}
-  .ai-suggest-btn{padding:9px 16px; border:1.5px solid var(--blue); border-radius:10px; background:var(--blue-tint); color:var(--blue-dark); font-size:12.5px; font-weight:600; cursor:pointer; transition:all .15s;}
-  .ai-suggest-btn:hover{background:var(--blue); color:#fff;}
-  .ai-suggest-btn:disabled{opacity:.6; cursor:wait;}
-  .ai-error{color:var(--danger); font-size:12px; margin-top:8px;}
-  .ai-suggestion-box{margin-top:12px; padding:14px 16px; background:var(--teal-tint); border:1px solid var(--line); border-radius:12px;}
+  .ai-status{font-size:12px; color:var(--blue-dark); display:flex; align-items:center; gap:6px;}
+  .ai-error{color:var(--danger); font-size:12px;}
+  .ai-retry-btn{border:none; background:none; color:var(--blue-dark); font-size:12px; font-weight:600; text-decoration:underline; cursor:pointer; padding:0;}
+  .ai-suggestion-box{margin-top:4px; padding:14px 16px; background:var(--teal-tint); border:1px solid var(--line); border-radius:12px;}
   .ai-suggestion-box p{font-size:13px; color:var(--ink); line-height:1.9;}
   .ai-consent-row{display:flex; align-items:flex-start; gap:8px; margin-top:10px; font-size:12px; color:var(--ink-soft); line-height:1.6; cursor:pointer;}
+  .ai-regen-link{margin-top:8px; border:none; background:none; color:var(--ink-soft); font-size:11.5px; text-decoration:underline; cursor:pointer; padding:0;}
+  .submit-btn:disabled{opacity:.5; cursor:not-allowed;}
   .ai-consent-row input{margin-top:2px; flex-shrink:0;}
   .field .other-input{margin-top:6px;}
   .photo-input{padding:10px 12px; border:1.5px dashed var(--line); border-radius:10px; font-size:12.5px; background:#fbfcfc; color:var(--ink-soft); cursor:pointer;}
@@ -96,11 +105,11 @@
 </head>
 <body>
 <div class="wrap">
-  <div class="ad-banner">
+  <div class="ad-banner" id="adBanner" style="display:none;">
     <svg class="ad-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l2.4 6.6L21 11l-6.6 2.4L12 20l-2.4-6.6L3 11l6.6-2.4z"/></svg>
     <span class="ad-tag">جمعية العوامية الخيرية</span>
-    <h2>سجّل مناسبتكم الاجتماعية معنا</h2>
-    <p>توثيق التخرّجات، المواليد، وعقود القران ضمن سجلات الجمعية — بيانات دقيقة، تحديث فوري، ومتابعة من فريق الجمعية</p>
+    <h2 id="adBannerTitle"></h2>
+    <p id="adBannerSubtitle"></p>
   </div>
 
   <div class="head">
@@ -268,7 +277,8 @@
         { key: "honor", label: "مرتبة الشرف", type: "select", options: HONORS_LIST, required: true, hint: "اختر مرتبة الشرف إن وجدت" },
         { key: "specialization", label: "التخصص", type: "selectOther", options: SPECIALIZATIONS_LIST, required: true, hint: "التخصص الدقيق — اختر من القائمة أو \"غير ذلك\"" },
         { key: "phone", label: "رقم الهاتف", type: "text", required: true, hint: "رقم للتواصل عند الحاجة" },
-        { key: "email", label: "البريد الإلكتروني", type: "text", required: true, hint: "بريد إلكتروني صالح للتواصل" }
+        { key: "email", label: "البريد الإلكتروني", type: "text", required: true, hint: "بريد إلكتروني صالح للتواصل" },
+        { key: "notes", label: "ملاحظات", type: "text", hint: "أي ملاحظات إضافية تودون إضافتها — اختياري" }
       ]
     },
     {
@@ -285,7 +295,8 @@
         { key: "birthDateGregorian", label: "تاريخ الميلاد (ميلادي)", type: "date", required: true, hint: "تاريخ الولادة الفعلي — بقية التواريخ تُحسب تلقائياً منه" },
         { key: "birthDateHijri", label: "تاريخ الميلاد (هجري)", type: "text", derived: true },
         { key: "birthMonthGregorian", label: "الشهر (ميلادي)", type: "select", options: GREG_MONTHS, derived: true },
-        { key: "birthMonthHijri", label: "الشهر (هجري)", type: "select", options: HIJRI_MONTHS, derived: true }
+        { key: "birthMonthHijri", label: "الشهر (هجري)", type: "select", options: HIJRI_MONTHS, derived: true },
+        { key: "notes", label: "ملاحظات", type: "text", hint: "أي ملاحظات إضافية تودون إضافتها — اختياري" }
       ]
     },
     {
@@ -303,12 +314,13 @@
         { key: "husbandDistrict", label: "منطقة / حي الزوج", type: "selectOther", options: QATIF_DISTRICTS_LIST, required: true, hint: "اختر من القائمة أو \"غير ذلك\"" },
         { key: "wifeName", label: "اسم الزوجة", type: "text", required: true, hint: "الاسم الكامل للزوجة" },
         { key: "wifeGuardian", label: "كريمة / ولي الزوجة", type: "text", required: true, hint: "مثال: كريمة فلان الفلاني، أو اسم ولي أمرها" },
-        { key: "wifeDistrict", label: "منطقة / حي الزوجة", type: "selectOther", options: QATIF_DISTRICTS_LIST, required: true, hint: "اختر من القائمة أو \"غير ذلك\"" }
+        { key: "wifeDistrict", label: "منطقة / حي الزوجة", type: "selectOther", options: QATIF_DISTRICTS_LIST, required: true, hint: "اختر من القائمة أو \"غير ذلك\"" },
+        { key: "notes", label: "ملاحظات", type: "text", hint: "أي ملاحظات إضافية تودون إضافتها — اختياري" }
       ]
     },
     {
       key: "congrats", label: "تهنئات", icon: ICON.gift,
-      photoLabel: "صورة صاحب التهنئة", photoRequired: true, aiWordingAssist: true,
+      photoLabel: "صورة صاحب التهنئة", photoRequired: "maleOnly", aiWordingAssist: true,
       dateSource: { field: "occasionDateGregorian", hijriDate: null, monthGreg: "occasionMonthGregorian", monthHijri: "occasionMonthHijri" },
       fields: [
         { key: "gregorianYear", label: "السنة الميلادية", type: "text", derived: true },
@@ -316,23 +328,35 @@
         { key: "occasionDateGregorian", label: "تاريخ المناسبة (ميلادي)", type: "date", required: true, hint: "تاريخ المناسبة الفعلي — بقية التواريخ تُحسب تلقائياً منه" },
         { key: "occasionMonthGregorian", label: "الشهر (ميلادي)", type: "select", options: GREG_MONTHS, derived: true },
         { key: "occasionMonthHijri", label: "الشهر (هجري)", type: "select", options: HIJRI_MONTHS, derived: true },
-        { key: "title", label: "اللقب / المسمى الوظيفي", type: "text", hint: "مثال: المهندس، الدكتور، الأستاذ — اتركه فارغاً إذا لا ينطبق" },
+        { key: "gender", label: "الجنس", type: "select", options: ["ذكر", "أنثى"], required: true, hint: "حدد جنس المحتفى به" },
+        { key: "title", label: "اللقب / المسمى الوظيفي", type: "selectOther", optionsKey: "congratsTitles", options: [], hint: "اختر من القائمة، أو \"غير ذلك\" — اتركه فارغاً إذا لا ينطبق" },
         { key: "fullName", label: "اسم المحتفى به", type: "text", required: true, hint: "الاسم الكامل للشخص المُهنَّأ" },
-        { key: "occasionType", label: "نوع المناسبة", type: "text", required: true, hint: "سبب التهنئة، مثل: ترقية، جائزة، افتتاح مشروع" },
-        { key: "details", label: "تفاصيل إضافية", type: "text", required: true, hint: "تفاصيل المناسبة — تُستخدم بصياغة منشور التهنئة" }
+        { key: "occasionType", label: "نوع المناسبة", type: "selectOther", optionsKey: "congratsOccasionTypes", options: [], required: true, hint: "اختر من القائمة أو \"غير ذلك\"" },
+        { key: "details", label: "تفاصيل إضافية", type: "text", required: true, hint: "تفاصيل المناسبة — تُستخدم بصياغة منشور التهنئة" },
+        { key: "notes", label: "ملاحظات", type: "text", hint: "أي ملاحظات إضافية تودون إضافتها — اختياري" }
       ]
     }
   ];
 
   var state = { activeCategory: "graduates", photo: "", fieldImages: {}, aiSuggestion: "", aiLoading: false, aiError: "", aiConsentPolicy: false, aiConsentWording: false };
 
+  var BANNER_DEFAULTS = {
+    enabled: true,
+    title: "سجّل مناسبتكم الاجتماعية معنا",
+    subtitle: "توثيق التخرّجات، المواليد، وعقود القران ضمن سجلات الجمعية — بيانات دقيقة، تحديث فوري، ومتابعة من فريق الجمعية"
+  };
   var _publicFormConfigCache = null;
   function loadPublicFormConfig(){
-    var cfg = { footerMessage: "" };
+    var cfg = { footerMessage: "", banner: { enabled: BANNER_DEFAULTS.enabled, title: BANNER_DEFAULTS.title, subtitle: BANNER_DEFAULTS.subtitle } };
     CATEGORIES.forEach(function(c){ cfg[c.key] = { hidden: [], hints: {}, labels: {}, custom: [] }; });
     var p = _publicFormConfigCache;
     if(p){
       if(typeof p.footerMessage === "string") cfg.footerMessage = p.footerMessage;
+      if(p.banner){
+        if(typeof p.banner.enabled === "boolean") cfg.banner.enabled = p.banner.enabled;
+        if(typeof p.banner.title === "string" && p.banner.title.trim()) cfg.banner.title = p.banner.title;
+        if(typeof p.banner.subtitle === "string" && p.banner.subtitle.trim()) cfg.banner.subtitle = p.banner.subtitle;
+      }
       CATEGORIES.forEach(function(c){
         if(p[c.key]){
           if(Array.isArray(p[c.key].hidden)) cfg[c.key].hidden = p[c.key].hidden;
@@ -481,6 +505,7 @@
       '<p class="field-hint">' + photoHint + '</p></div>';
     document.getElementById("errMsg").style.display = "none";
     bindFormEvents();
+    updateSubmitButtonState();
   }
   function photoFieldHTML(){
     if(state.photo){
@@ -504,15 +529,17 @@
   }
   function aiBlockHTML(){
     var html = '<div class="field full ai-block">';
-    html += '<button type="button" class="ai-suggest-btn" id="aiSuggestBtn"' + (state.aiLoading ? " disabled" : "") + '>' +
-      (state.aiLoading ? "جاري إعداد الصياغة..." : (state.aiSuggestion ? "إعادة اقتراح الصياغة" : "اقترح صياغة للتهنئة")) + '</button>';
+    if(state.aiLoading){
+      html += '<p class="ai-status">جاري إعداد نص التهنئة...</p>';
+    }
     if(state.aiError){
-      html += '<p class="ai-error">' + escapeHTML(state.aiError) + '</p>';
+      html += '<p class="ai-error">' + escapeHTML(state.aiError) + ' <button type="button" class="ai-retry-btn" id="aiRetryBtn">إعادة المحاولة</button></p>';
     }
     if(state.aiSuggestion){
       html += '<div class="ai-suggestion-box"><p>' + escapeHTML(state.aiSuggestion) + '</p></div>';
       html += '<label class="ai-consent-row"><input type="checkbox" id="aiConsentPolicy"' + (state.aiConsentPolicy ? " checked" : "") + '/> أوافق على تعديل صياغة المناسبة بما يتناسب مع سياسة النشر للجمعية</label>';
       html += '<label class="ai-consent-row"><input type="checkbox" id="aiConsentWording"' + (state.aiConsentWording ? " checked" : "") + '/> أوافق على الصياغة الظاهرة أعلاه</label>';
+      html += '<button type="button" class="ai-regen-link" id="aiRegenBtn">تعديل الصياغة</button>';
     }
     html += '</div>';
     return html;
@@ -522,18 +549,28 @@
     if(!block) return;
     block.outerHTML = aiBlockHTML();
     bindFormEvents();
+    updateSubmitButtonState();
+  }
+  function updateSubmitButtonState(){
+    var cat = CATEGORIES.find(function(c){ return c.key === state.activeCategory; });
+    var submitBtn = document.getElementById("submitBtn");
+    if(!submitBtn) return;
+    if(cat.aiWordingAssist){
+      submitBtn.disabled = !(state.aiSuggestion && state.aiConsentPolicy && state.aiConsentWording);
+    } else {
+      submitBtn.disabled = false;
+    }
   }
   function fetchAiSuggestion(){
     var cat = CATEGORIES.find(function(c){ return c.key === state.activeCategory; });
     var fullName = fieldValue({ key: "fullName", type: "text" });
-    var title = fieldValue({ key: "title", type: "text" });
-    var occasionType = fieldValue({ key: "occasionType", type: "text" });
+    var gender = fieldValue({ key: "gender", type: "select" });
+    var titleField = cat.fields.find(function(f){ return f.key === "title"; });
+    var occasionTypeField = cat.fields.find(function(f){ return f.key === "occasionType"; });
+    var title = fieldValue(titleField);
+    var occasionType = fieldValue(occasionTypeField);
     var details = fieldValue({ key: "details", type: "text" });
-    if(!details){
-      state.aiError = "اكتب تفاصيل المناسبة أولاً";
-      refreshAiBlock();
-      return;
-    }
+    if(!details) return;
     state.aiLoading = true;
     state.aiError = "";
     state.aiSuggestion = "";
@@ -543,7 +580,7 @@
     fetch(GEMINI_PROXY_URL, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ fullName: fullName, title: title, occasionType: occasionType, details: details })
+      body: JSON.stringify({ fullName: fullName, gender: gender, title: title, occasionType: occasionType, details: details })
     }).then(function(res){
       if(!res.ok) throw new Error("bad_status");
       return res.json();
@@ -552,30 +589,44 @@
       if(data && data.suggestion){
         state.aiSuggestion = data.suggestion;
       } else {
-        state.aiError = "تعذّر إعداد الصياغة — حاول مرة أخرى";
+        state.aiError = "تعذّر إعداد نص التهنئة";
       }
       refreshAiBlock();
     }).catch(function(){
       state.aiLoading = false;
-      state.aiError = "تعذّر الاتصال بخدمة الصياغة — تأكد من اتصالك بالإنترنت وحاول مرة أخرى";
+      state.aiError = "تعذّر الاتصال — تأكد من اتصالك بالإنترنت";
       refreshAiBlock();
     });
   }
   function bindFormEvents(){
-    var aiBtn = document.getElementById("aiSuggestBtn");
-    if(aiBtn) aiBtn.addEventListener("click", fetchAiSuggestion);
+    var aiRetryBtn = document.getElementById("aiRetryBtn");
+    if(aiRetryBtn) aiRetryBtn.addEventListener("click", fetchAiSuggestion);
+    var aiRegenBtn = document.getElementById("aiRegenBtn");
+    if(aiRegenBtn) aiRegenBtn.addEventListener("click", fetchAiSuggestion);
     var aiPolicyChk = document.getElementById("aiConsentPolicy");
-    if(aiPolicyChk) aiPolicyChk.addEventListener("change", function(){ state.aiConsentPolicy = aiPolicyChk.checked; });
+    if(aiPolicyChk) aiPolicyChk.addEventListener("change", function(){ state.aiConsentPolicy = aiPolicyChk.checked; updateSubmitButtonState(); });
     var aiWordingChk = document.getElementById("aiConsentWording");
-    if(aiWordingChk) aiWordingChk.addEventListener("change", function(){ state.aiConsentWording = aiWordingChk.checked; });
-    var detailsInput = document.querySelector('[data-key="details"]');
-    if(detailsInput && state.aiSuggestion && !detailsInput.dataset.aiBound){
-      detailsInput.dataset.aiBound = "1";
-      detailsInput.addEventListener("input", function(){
-        detailsInput.dataset.aiBound = "";
-        state.aiSuggestion = ""; state.aiConsentPolicy = false; state.aiConsentWording = false; state.aiError = "";
-        refreshAiBlock();
-      }, { once: true });
+    if(aiWordingChk) aiWordingChk.addEventListener("change", function(){ state.aiConsentWording = aiWordingChk.checked; updateSubmitButtonState(); });
+    var activeCat = CATEGORIES.find(function(c){ return c.key === state.activeCategory; });
+    if(activeCat && activeCat.aiWordingAssist){
+      var detailsInput = document.querySelector('[data-key="details"]');
+      if(detailsInput && !detailsInput.dataset.aiBound){
+        detailsInput.dataset.aiBound = "1";
+        detailsInput.addEventListener("change", function(){
+          if(state.aiSuggestion || state.aiError){
+            state.aiSuggestion = ""; state.aiConsentPolicy = false; state.aiConsentWording = false; state.aiError = "";
+          }
+          if(detailsInput.value.trim()) fetchAiSuggestion();
+          else refreshAiBlock();
+        });
+      }
+      var genderSelect = document.querySelector('[data-key="gender"]');
+      if(genderSelect && !genderSelect.dataset.aiBound){
+        genderSelect.dataset.aiBound = "1";
+        genderSelect.addEventListener("change", function(){
+          if(state.aiSuggestion && fieldValue({ key: "details", type: "text" })) fetchAiSuggestion();
+        });
+      }
     }
     var input = document.getElementById("photoInput");
     if(input){
@@ -689,16 +740,13 @@
     }
     var photoRequiredNow = cat.photoRequired === true || (cat.photoRequired === "maleOnly" && draft.gender === "ذكر");
     if(photoRequiredNow && !state.photo) missing.push(cat.photoLabel || "صورة المناسبة");
-    if(cat.aiWordingAssist){
-      if(!state.aiSuggestion) missing.push('اقتراح صياغة التهنئة (اضغط زر "اقترح صياغة" أولاً)');
-      else if(!state.aiConsentPolicy || !state.aiConsentWording) missing.push("الموافقة على الصياغة المقترحة (العلامتان أسفل الصياغة)");
-    }
     var errEl = document.getElementById("errMsg");
     if(missing.length){
       errEl.textContent = "الرجاء تعبئة الحقول المطلوبة: " + missing.join("، ");
       errEl.style.display = "block";
       return;
     }
+    if(cat.aiWordingAssist && !(state.aiSuggestion && state.aiConsentPolicy && state.aiConsentWording)) return;
     var rec = { id: genId(), category: cat.key, source: "public", status: "pending", createdAt: Date.now(), updatedAt: Date.now() };
     effectiveFields.forEach(function(f){ rec[f.key] = draft[f.key] || ""; });
     if(cat.dateSource){
@@ -737,6 +785,17 @@
     renderForm();
   });
 
+  function renderBanner(){
+    var banner = loadPublicFormConfig().banner;
+    var el = document.getElementById("adBanner");
+    if(!banner.enabled){
+      el.style.display = "none";
+      return;
+    }
+    document.getElementById("adBannerTitle").textContent = banner.title;
+    document.getElementById("adBannerSubtitle").textContent = banner.subtitle;
+    el.style.display = "block";
+  }
   function renderFooterMessage(){
     var msg = loadPublicFormConfig().footerMessage;
     var el = document.getElementById("footerMsg");
@@ -759,15 +818,37 @@
     }
   });
 
+  var EVENTS_OPTIONS_DEFAULTS = {
+    congratsTitles: ["المهندس", "المهندسة", "الدكتور", "الدكتورة", "الأستاذ", "الأستاذة", "الشيخ"],
+    congratsOccasionTypes: ["ترقية وظيفية", "جائزة أو تكريم", "افتتاح مشروع", "إنجاز أو نجاح"]
+  };
+  function applyEventsOptions(data){
+    var merged = {};
+    for(var k in EVENTS_OPTIONS_DEFAULTS) merged[k] = (data && Array.isArray(data[k])) ? data[k] : EVENTS_OPTIONS_DEFAULTS[k];
+    CATEGORIES.forEach(function(c){
+      c.fields.forEach(function(f){
+        if(f.optionsKey && merged[f.optionsKey]) f.options = merged[f.optionsKey];
+      });
+    });
+  }
+  applyEventsOptions(null);
+
   renderCatSelect();
   renderForm();
   renderFooterMessage();
+  renderBanner();
   db.collection("eventsMeta").doc("publicFormConfig").get().then(function(doc){
     _publicFormConfigCache = doc.exists ? doc.data() : null;
     renderCatSelect();
     renderForm();
     renderFooterMessage();
+    renderBanner();
   }).catch(function(err){ console.error("publicFormConfig fetch error", err); });
+  db.collection("eventsMeta").doc("options").get().then(function(doc){
+    applyEventsOptions(doc.exists ? doc.data() : null);
+    renderCatSelect();
+    renderForm();
+  }).catch(function(err){ console.error("options fetch error", err); });
 })();
 </script>
 </body>

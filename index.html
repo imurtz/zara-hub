@@ -524,6 +524,14 @@
   .event-field{text-align:right;}
   .event-field label{display:block; font-size:12px; font-weight:500; color:var(--teal-dark); margin-bottom:5px;}
   .event-field input, .event-field select{width:100%; padding:10px 12px; border:1.5px solid var(--line); border-radius:10px; font-size:13px; background:#fbfcfc; color:var(--ink);}
+  .event-field select{
+    appearance:none; -webkit-appearance:none; -moz-appearance:none;
+    padding-left:34px;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236b7876' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+    background-repeat:no-repeat;
+    background-position:left 12px center;
+    background-size:15px;
+  }
   .event-field-hint{font-size:10.5px; color:var(--ink-soft); margin-top:4px; line-height:1.5;}
   .event-field.full-field{grid-column:1 / -1;}
   .event-photo-input{width:100%; padding:10px 12px; border:1.5px dashed var(--line); border-radius:10px; font-size:12.5px; background:#fbfcfc; color:var(--ink-soft); cursor:pointer;}
@@ -4574,7 +4582,8 @@
         { key: "honor", label: "مرتبة الشرف", type: "select", options: HONORS_LIST, hint: "اختر مرتبة الشرف إن وجدت" },
         { key: "specialization", label: "التخصص", type: "selectOther", options: SPECIALIZATIONS_LIST, hint: "التخصص الدقيق — اختر من القائمة أو \"غير ذلك\"" },
         { key: "phone", label: "رقم الهاتف", type: "text", hint: "رقم للتواصل عند الحاجة" },
-        { key: "email", label: "البريد الإلكتروني", type: "text", hint: "بريد إلكتروني صالح للتواصل" }
+        { key: "email", label: "البريد الإلكتروني", type: "text", hint: "بريد إلكتروني صالح للتواصل" },
+        { key: "notes", label: "ملاحظات", type: "text", hint: "أي ملاحظات إضافية — اختياري" }
       ],
       photoLabel: "صورة الخريج",
       columns: ["fullName", "university", "specialization", "degree", "gregorianYear", "gender"]
@@ -4591,7 +4600,8 @@
         { key: "birthDateGregorian", label: "تاريخ الميلاد (ميلادي)", type: "date", hint: "تاريخ الولادة الفعلي — بقية التواريخ تُحسب تلقائياً منه" },
         { key: "birthDateHijri", label: "تاريخ الميلاد (هجري)", type: "text", derived: true, hint: "يُحسب تلقائياً من التاريخ الميلادي" },
         { key: "birthMonthGregorian", label: "الشهر (ميلادي)", type: "select", options: GREG_MONTHS, derived: true, hint: "يُحسب تلقائياً" },
-        { key: "birthMonthHijri", label: "الشهر (هجري)", type: "select", options: HIJRI_MONTHS, derived: true, hint: "يُحسب تلقائياً" }
+        { key: "birthMonthHijri", label: "الشهر (هجري)", type: "select", options: HIJRI_MONTHS, derived: true, hint: "يُحسب تلقائياً" },
+        { key: "notes", label: "ملاحظات", type: "text", hint: "أي ملاحظات إضافية — اختياري" }
       ],
       photoLabel: "صورة الأب",
       dateSource: { field: "birthDateGregorian", hijriDate: "birthDateHijri", monthGreg: "birthMonthGregorian", monthHijri: "birthMonthHijri" },
@@ -4610,7 +4620,8 @@
         { key: "husbandDistrict", label: "منطقة / حي الزوج", type: "selectOther", options: QATIF_DISTRICTS_LIST, hint: "اختر من القائمة أو \"غير ذلك\"" },
         { key: "wifeName", label: "اسم الزوجة", type: "text", hint: "الاسم الكامل للزوجة" },
         { key: "wifeGuardian", label: "كريمة / ولي الزوجة", type: "text", hint: "مثال: كريمة فلان الفلاني، أو اسم ولي أمرها" },
-        { key: "wifeDistrict", label: "منطقة / حي الزوجة", type: "selectOther", options: QATIF_DISTRICTS_LIST, hint: "اختر من القائمة أو \"غير ذلك\"" }
+        { key: "wifeDistrict", label: "منطقة / حي الزوجة", type: "selectOther", options: QATIF_DISTRICTS_LIST, hint: "اختر من القائمة أو \"غير ذلك\"" },
+        { key: "notes", label: "ملاحظات", type: "text", hint: "أي ملاحظات إضافية — اختياري" }
       ],
       photoLabel: "صورة الزوج",
       dateSource: { field: "contractDateGregorian", hijriDate: "contractDateHijri", monthGreg: "contractMonthGregorian", monthHijri: "contractMonthHijri" },
@@ -4630,7 +4641,8 @@
         { key: "deathMonthGregorian", label: "شهر الوفاة (ميلادي)", type: "select", options: GREG_MONTHS, hint: "شهر الوفاة بالتقويم الميلادي" },
         { key: "deathMonthHijri", label: "شهر الوفاة (هجري)", type: "select", options: HIJRI_MONTHS, hint: "شهر الوفاة بالتقويم الهجري" },
         { key: "funeralFrom", label: "التشييع من", type: "growSelect", optKey: "funeralFrom", hint: "المكان الذي ينطلق منه التشييع، مثل اسم المسجد" },
-        { key: "funeralTime", label: "وقت التشييع", type: "time", hint: "الوقت المحدد لصلاة الجنازة والتشييع" }
+        { key: "funeralTime", label: "وقت التشييع", type: "time", hint: "الوقت المحدد لصلاة الجنازة والتشييع" },
+        { key: "notes", label: "ملاحظات", type: "text", hint: "أي ملاحظات إضافية — اختياري" }
       ],
       columns: ["deceasedName", "deceasedFamily", "gender", "ageCategory", "gregorianYear", "deathMonthGregorian"]
     },
@@ -4642,10 +4654,12 @@
         { key: "occasionDateGregorian", label: "تاريخ المناسبة (ميلادي)", type: "date", hint: "تاريخ المناسبة الفعلي — بقية التواريخ تُحسب تلقائياً منه" },
         { key: "occasionMonthGregorian", label: "الشهر (ميلادي)", type: "select", options: GREG_MONTHS, derived: true, hint: "يُحسب تلقائياً" },
         { key: "occasionMonthHijri", label: "الشهر (هجري)", type: "select", options: HIJRI_MONTHS, derived: true, hint: "يُحسب تلقائياً" },
+        { key: "gender", label: "الجنس", type: "select", options: ["ذكر", "أنثى"], hint: "حدد جنس المحتفى به" },
         { key: "title", label: "اللقب / المسمى الوظيفي", type: "growSelect", optKey: "congratsTitles", hint: "مثال: المهندس، الدكتور، الأستاذ — اتركه فارغاً إذا لا ينطبق" },
         { key: "fullName", label: "اسم المحتفى به", type: "text", hint: "الاسم الكامل للشخص المُهنَّأ" },
         { key: "occasionType", label: "نوع المناسبة", type: "growSelect", optKey: "congratsOccasionTypes", hint: "سبب التهنئة، مثل: ترقية، جائزة، افتتاح مشروع" },
-        { key: "details", label: "تفاصيل إضافية", type: "text", hint: "تفاصيل المناسبة — تُستخدم بصياغة منشور التهنئة" }
+        { key: "details", label: "تفاصيل إضافية", type: "text", hint: "تفاصيل المناسبة — تُستخدم بصياغة منشور التهنئة" },
+        { key: "notes", label: "ملاحظات", type: "text", hint: "أي ملاحظات إضافية — اختياري" }
       ],
       photoLabel: "صورة صاحب التهنئة",
       dateSource: { field: "occasionDateGregorian", hijriDate: null, monthGreg: "occasionMonthGregorian", monthHijri: "occasionMonthHijri" },
@@ -4812,12 +4826,22 @@
     _publicFormConfigCache = doc.exists ? doc.data() : null;
     eventsFirestoreRefresh();
   }, function(err){ console.error("publicFormConfig snapshot error", err); });
+  var BANNER_DEFAULTS = {
+    enabled: true,
+    title: "سجّل مناسبتكم الاجتماعية معنا",
+    subtitle: "توثيق التخرّجات، المواليد، وعقود القران ضمن سجلات الجمعية — بيانات دقيقة، تحديث فوري، ومتابعة من فريق الجمعية"
+  };
   function loadPublicFormConfig(){
-    var cfg = { footerMessage: "" };
+    var cfg = { footerMessage: "", banner: { enabled: BANNER_DEFAULTS.enabled, title: BANNER_DEFAULTS.title, subtitle: BANNER_DEFAULTS.subtitle } };
     EVENTS_CATEGORIES.forEach(function(c){ cfg[c.key] = { hidden: [], hints: {}, labels: {}, custom: [] }; });
     var p = _publicFormConfigCache;
     if(p){
       if(typeof p.footerMessage === "string") cfg.footerMessage = p.footerMessage;
+      if(p.banner){
+        if(typeof p.banner.enabled === "boolean") cfg.banner.enabled = p.banner.enabled;
+        if(typeof p.banner.title === "string" && p.banner.title.trim()) cfg.banner.title = p.banner.title;
+        if(typeof p.banner.subtitle === "string" && p.banner.subtitle.trim()) cfg.banner.subtitle = p.banner.subtitle;
+      }
       EVENTS_CATEGORIES.forEach(function(c){
         if(p[c.key]){
           if(Array.isArray(p[c.key].hidden)) cfg[c.key].hidden = p[c.key].hidden;
@@ -5524,6 +5548,15 @@
     var catCfg = cfg[cat.key];
     var html = '<div class="settings-card"><h3>إعدادات الصفحة الخارجية — نموذج التسجيل العام</h3>' +
       '<p class="hint">تحكم بالحقول الظاهرة للمجتمع في صفحة submit.html، ملاحظاتها، وإضافة حقول مخصصة لكل تصنيف</p>';
+
+    html += '<div style="margin-bottom:18px; padding-bottom:16px; border-bottom:1px solid var(--line);">' +
+      '<label style="display:flex; align-items:center; gap:8px; font-size:12.5px; font-weight:700; color:var(--teal-dark); margin-bottom:10px;">' +
+        '<input type="checkbox" data-action="public-cfg-banner-toggle"' + (cfg.banner.enabled ? " checked" : "") + '/> إظهار البنر الإعلاني أعلى صفحة التسجيل العام' +
+      '</label>' +
+      '<input type="text" data-action="public-cfg-banner-title" value="' + escapeHTML(cfg.banner.title) + '" placeholder="عنوان البنر" style="width:100%; margin-bottom:8px; border:1.5px solid var(--line); border-radius:8px; padding:9px 12px; font-size:13px; font-weight:700; background:#fbfcfc;"/>' +
+      '<textarea data-action="public-cfg-banner-subtitle" rows="2" placeholder="وصف البنر" style="width:100%; border:1.5px solid var(--line); border-radius:8px; padding:9px 12px; font-size:12.5px; font-family:inherit; resize:vertical; background:#fbfcfc;">' + escapeHTML(cfg.banner.subtitle) + '</textarea>' +
+    '</div>';
+
     html += '<div class="cat-tabs" style="margin-bottom:16px;">' +
       EVENTS_CATEGORIES.map(function(c){
         return '<button type="button" class="cat-tab' + (c.key === cat.key ? " active" : "") + '" data-action="public-cfg-set-cat" data-cat="' + c.key + '"><span class="icon" style="color:' + c.color + ';">' + c.icon + '</span>' + c.label + '</button>';
@@ -5786,6 +5819,18 @@
       var pCfg3 = loadPublicFormConfig();
       pCfg3.footerMessage = e.target.value;
       savePublicFormConfig(pCfg3);
+    } else if(e.target.matches('[data-action="public-cfg-banner-toggle"]')){
+      var pCfg5 = loadPublicFormConfig();
+      pCfg5.banner.enabled = e.target.checked;
+      savePublicFormConfig(pCfg5);
+    } else if(e.target.matches('[data-action="public-cfg-banner-title"]')){
+      var pCfg6 = loadPublicFormConfig();
+      pCfg6.banner.title = e.target.value.trim() || BANNER_DEFAULTS.title;
+      savePublicFormConfig(pCfg6);
+    } else if(e.target.matches('[data-action="public-cfg-banner-subtitle"]')){
+      var pCfg7 = loadPublicFormConfig();
+      pCfg7.banner.subtitle = e.target.value.trim() || BANNER_DEFAULTS.subtitle;
+      savePublicFormConfig(pCfg7);
     }
   });
   eventsSettingsRootEl.addEventListener("click", function(e){
