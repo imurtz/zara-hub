@@ -117,7 +117,7 @@ async function callGemini(env, promptText) {
       body: JSON.stringify({
         contents: [{ parts: [{ text: promptText }] }],
         systemInstruction: { parts: [{ text: WORDING_POLICY }] },
-        generationConfig: { temperature: 0.6, maxOutputTokens: 1024, thinkingConfig: { thinkingLevel: "medium" } }
+        generationConfig: { temperature: 0.6, maxOutputTokens: 1536, thinkingConfig: { thinkingLevel: "low" } }
       })
     }
   );
