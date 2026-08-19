@@ -4486,6 +4486,65 @@
   var GREG_MONTHS = ["يناير","فبراير","مارس","أبريل","مايو","يونيو","يوليو","أغسطس","سبتمبر","أكتوبر","نوفمبر","ديسمبر"];
   var HIJRI_MONTHS = ["محرم","صفر","ربيع الأول","ربيع الآخر","جمادى الأولى","جمادى الآخرة","رجب","شعبان","رمضان","شوال","ذو القعدة","ذو الحجة"];
 
+  // تحويل ميلادي → هجري (خوارزمية جدولية معروفة — تقريب حسابي، قد يختلف بيوم عن تقويم أم القرى الرسمي أحياناً)
+  function gregorianToHijri(gYear, gMonth, gDay){
+    var a = Math.floor((14 - gMonth) / 12);
+    var y = gYear + 4800 - a;
+    var m = gMonth + 12 * a - 3;
+    var jdn = gDay + Math.floor((153 * m + 2) / 5) + 365 * y + Math.floor(y / 4) - Math.floor(y / 100) + Math.floor(y / 400) - 32045;
+    var l = jdn - 1948440 + 10632;
+    var n = Math.floor((l - 1) / 10631);
+    l = l - 10631 * n + 354;
+    var j = Math.floor((10985 - l) / 5316) * Math.floor((50 * l) / 17719) + Math.floor(l / 5670) * Math.floor((43 * l) / 15238);
+    l = l - Math.floor((30 - j) / 15) * Math.floor((17719 * j) / 50) - Math.floor(j / 16) * Math.floor((15238 * j) / 43) + 29;
+    var hMonth = Math.floor((24 * l) / 709);
+    var hDay = l - Math.floor((709 * hMonth) / 24);
+    var hYear = 30 * n + j - 30;
+    return { year: hYear, month: hMonth, day: hDay };
+  }
+  // قوائم مرجعية مُعدّة مسبقاً (بحث) — تُستخدم بالقوائم المنسدلة مع خيار "غير ذلك" دائماً كصمام أمان لأي اسم ناقص
+  var SAUDI_UNIVERSITIES = [
+    "جامعة الملك سعود","جامعة الملك عبدالعزيز","جامعة الملك فهد للبترول والمعادن","جامعة الملك فيصل","جامعة الملك خالد",
+    "جامعة الإمام محمد بن سعود الإسلامية","جامعة أم القرى","الجامعة الإسلامية بالمدينة المنورة","جامعة الإمام عبدالرحمن بن فيصل",
+    "جامعة الملك سعود بن عبدالعزيز للعلوم الصحية","جامعة الأميرة نورة بنت عبدالرحمن","جامعة القصيم","جامعة تبوك","جامعة حائل",
+    "جامعة جازان","جامعة نجران","جامعة الباحة","جامعة الطائف","جامعة الحدود الشمالية","جامعة جدة","جامعة شقراء","جامعة المجمعة",
+    "جامعة الجوف","جامعة بيشة","جامعة الأمير سطام بن عبدالعزيز","جامعة الملك عبدالله للعلوم والتقنية (كاوست)",
+    "الجامعة السعودية الإلكترونية","جامعة الأمير مقرن بن عبدالعزيز",
+    "جامعة الأمير محمد بن فهد","جامعة الفيصل","جامعة عفت","جامعة دار الحكمة","جامعة اليمامة","الجامعة العربية المفتوحة",
+    "جامعة الأعمال والتكنولوجيا","جامعة رياض العلم","جامعة الفارابي","جامعة ابن سينا الأهلية","كلية الأمير سلطان العسكرية",
+    "الكليات التقنية (المؤسسة العامة للتدريب التقني والمهني)","معهد الإدارة العامة"
+  ];
+  var SPECIALIZATION_TYPES_LIST = ["صحي","هندسي","إداري وأعمال","تربوي","إنساني وأدبي","علوم وتقني","شرعي وقانوني","فني وتصميم","زراعي وبيئي","عسكري وأمني"];
+  var SPECIALIZATIONS_LIST = [
+    "طب بشري","طب أسنان","صيدلة","تمريض","علاج طبيعي","أشعة","مختبرات طبية",
+    "هندسة مدنية","هندسة كهربائية","هندسة ميكانيكية","هندسة صناعية","هندسة حاسب","علوم حاسب","تقنية معلومات","أمن سيبراني",
+    "إدارة أعمال","محاسبة","تمويل ومصارف","تسويق","اقتصاد","موارد بشرية",
+    "قانون","شريعة","علوم سياسية","إعلام وعلاقات عامة",
+    "لغة عربية","لغة إنجليزية","ترجمة","تربية خاصة","رياض أطفال","مناهج وطرق تدريس","علم نفس","خدمة اجتماعية",
+    "تصميم داخلي","عمارة","تخطيط عمراني","رياضيات","فيزياء","كيمياء","أحياء","جيولوجيا"
+  ];
+  var DEGREES_LIST = ["البكالوريوس","الماجستير","الدكتوراة","الدبلوم","الدبلوم العالي"];
+  var HONORS_LIST = ["بدون","مرتبة شرف","مرتبة الشرف الأولى","مرتبة الشرف الثانية","مرتبة الشرف الثالثة"];
+  var QATIF_DISTRICTS_LIST = [
+    "القطيف","العوامية","سيهات","صفوى","تاروت","دارين","عنك","أم الساهك","الجش","الأوجام","حلة محيش","القديح","الملاحة","الربيعية","البحاري","النجيمي","الخويلدية"
+  ];
+
+  function deriveDateFieldsFromGregorian(dateStr){
+    // dateStr: "YYYY-MM-DD" من input[type=date] — يرجع كل الحقول المشتقة منه
+    var parts = (dateStr || "").split("-");
+    if(parts.length !== 3) return null;
+    var gy = parseInt(parts[0], 10), gm = parseInt(parts[1], 10), gd = parseInt(parts[2], 10);
+    if(!gy || !gm || !gd) return null;
+    var h = gregorianToHijri(gy, gm, gd);
+    return {
+      gregorianYear: String(gy),
+      hijriYear: String(h.year),
+      gregorianMonth: GREG_MONTHS[gm - 1] || "",
+      hijriMonth: HIJRI_MONTHS[h.month - 1] || "",
+      hijriDateText: h.day + " " + (HIJRI_MONTHS[h.month - 1] || "") + " " + h.year + "هـ"
+    };
+  }
+
   var EVICON = {
     grid: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="8" height="8" rx="1.8"/><rect x="13" y="3" width="8" height="8" rx="1.8"/><rect x="3" y="13" width="8" height="8" rx="1.8"/><rect x="13" y="13" width="8" height="8" rx="1.8"/></svg>',
     doc: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2h9l5 5v15H6z"/><path d="M15 2v5h5"/><path d="M9 13h6M9 17h6"/></svg>',
@@ -4500,56 +4559,62 @@
     {
       key: "graduates", label: "الخريجون", icon: EVICON.grad, color: "var(--blue)",
       fields: [
-        { key: "gregorianYear", label: "السنة الميلادية", type: "growSelect", optKey: "gregorianYears", hint: "تُملأ تلقائياً بسنة التسجيل — عدّلها فقط إذا كان التخرج في سنة سابقة" },
-        { key: "hijriYear", label: "السنة الهجرية", type: "growSelect", optKey: "hijriYears", hint: "تُملأ تلقائياً بسنة التسجيل — عدّلها فقط إذا كان التخرج في سنة سابقة" },
+        { key: "gregorianYear", label: "السنة الميلادية", type: "growSelect", optKey: "gregorianYears", auto: true, hint: "تُملأ تلقائياً بسنة التسجيل — عدّلها فقط إذا كان التخرج في سنة سابقة" },
+        { key: "hijriYear", label: "السنة الهجرية", type: "growSelect", optKey: "hijriYears", auto: true, hint: "تُملأ تلقائياً بسنة التسجيل — عدّلها فقط إذا كان التخرج في سنة سابقة" },
+        { key: "graduationMonthGregorian", label: "شهر التخرج (ميلادي)", type: "select", options: GREG_MONTHS, auto: true, locked: true, hint: "يُحدَّد تلقائياً بشهر التسجيل" },
+        { key: "graduationMonthHijri", label: "شهر التخرج (هجري)", type: "select", options: HIJRI_MONTHS, auto: true, locked: true, hint: "يُحدَّد تلقائياً بشهر التسجيل" },
         { key: "fullName", label: "الاسم الكامل", type: "text", hint: "الاسم الثلاثي أو الرباعي كاملاً كما في الهوية" },
-        { key: "surname", label: "اللقب", type: "growSelect", optKey: "graduateSurnames", hint: "لقب العائلة — اختره من القائمة أو أضفه إذا كان جديداً" },
+        { key: "jobTitle", label: "اللقب الوظيفي", type: "text", hint: "مثال: مهندس، محاسب، معلم — اتركه فارغاً إذا لا ينطبق" },
         { key: "gender", label: "الجنس", type: "select", options: ["ذكر", "أنثى"], hint: "حدد جنس الخريج" },
-        { key: "family", label: "العائلة", type: "text", hint: "اسم العائلة أو القبيلة" },
         { key: "country", label: "الدولة", type: "growSelect", optKey: "countries", hint: "الدولة التي تخرّج منها الطالب" },
-        { key: "university", label: "الجامعة", type: "growSelect", optKey: "universities", hint: "اسم الجامعة أو الكلية بشكل كامل" },
-        { key: "universityLogo", label: "شعار الجامعة", type: "image", hint: "شعار الجامعة الرسمي — يُستخدم عند تجهيز منشور التهنئة، يُضاف من الموظف عند المراجعة (غير مطلوب من المتقدّم)" },
-        { key: "specializationType", label: "نوع التخصص", type: "growSelect", optKey: "specializationTypes", hint: "التصنيف العام للتخصص، مثل: صحي، هندسي، إداري" },
-        { key: "degree", label: "الدرجة", type: "growSelect", optKey: "degrees", hint: "الدرجة العلمية المُحصّلة، مثل: بكالوريوس، ماجستير" },
-        { key: "honor", label: "مرتبة الشرف", type: "growSelect", optKey: "honors", hint: "اتركه فارغاً إذا لم يتخرج بمرتبة شرف" },
-        { key: "specialization", label: "التخصص", type: "growSelect", optKey: "specializations", hint: "التخصص الدقيق، مثل: هندسة كهربائية، طب أسنان" },
-        { key: "phone", label: "رقم الهاتف", type: "text", hint: "رقم للتواصل عند الحاجة — اختياري" },
-        { key: "email", label: "البريد الإلكتروني", type: "text", hint: "بريد إلكتروني صالح للتواصل — اختياري" }
+        { key: "university", label: "الجامعة", type: "selectOther", options: SAUDI_UNIVERSITIES, hint: "اختر من القائمة، أو \"غير ذلك\" لكتابة اسم الجامعة/الكلية/المعهد" },
+        { key: "universityLogo", label: "شعار الجامعة", type: "image", hint: "شعار الجامعة الرسمي — اختياري، يُستخدم عند تجهيز منشور التهنئة" },
+        { key: "specializationType", label: "نوع التخصص", type: "selectOther", options: SPECIALIZATION_TYPES_LIST, hint: "التصنيف العام للتخصص — اختر من القائمة أو \"غير ذلك\"" },
+        { key: "degree", label: "الدرجة", type: "selectOther", options: DEGREES_LIST, hint: "الدرجة العلمية المُحصّلة — اختر من القائمة أو \"غير ذلك\"" },
+        { key: "honor", label: "مرتبة الشرف", type: "select", options: HONORS_LIST, hint: "اختر مرتبة الشرف إن وجدت" },
+        { key: "specialization", label: "التخصص", type: "selectOther", options: SPECIALIZATIONS_LIST, hint: "التخصص الدقيق — اختر من القائمة أو \"غير ذلك\"" },
+        { key: "phone", label: "رقم الهاتف", type: "text", hint: "رقم للتواصل عند الحاجة" },
+        { key: "email", label: "البريد الإلكتروني", type: "text", hint: "بريد إلكتروني صالح للتواصل" }
       ],
+      photoLabel: "صورة الخريج",
       columns: ["fullName", "university", "specialization", "degree", "gregorianYear", "gender"]
     },
     {
       key: "births", label: "المواليد", icon: EVICON.baby, color: "var(--tan)",
       fields: [
-        { key: "gregorianYear", label: "السنة الميلادية", type: "growSelect", optKey: "gregorianYears", hint: "تُملأ تلقائياً بسنة التسجيل — عدّلها فقط إذا كانت الولادة في سنة سابقة" },
-        { key: "hijriYear", label: "السنة الهجرية", type: "growSelect", optKey: "hijriYears", hint: "تُملأ تلقائياً بسنة التسجيل — عدّلها فقط إذا كانت الولادة في سنة سابقة" },
+        { key: "gregorianYear", label: "السنة الميلادية", type: "growSelect", optKey: "gregorianYears", derived: true, hint: "تُحسب تلقائياً من تاريخ الميلاد" },
+        { key: "hijriYear", label: "السنة الهجرية", type: "growSelect", optKey: "hijriYears", derived: true, hint: "تُحسب تلقائياً من تاريخ الميلاد" },
         { key: "gender", label: "الجنس", type: "select", options: ["ذكر", "أنثى"], hint: "حدد جنس المولود" },
         { key: "fullName", label: "اسم المولود", type: "text", hint: "الاسم الأول للمولود فقط" },
         { key: "fatherName", label: "اسم الأب", type: "text", hint: "الاسم الكامل لوالد المولود" },
-        { key: "motherName", label: "اسم الأم", type: "text", hint: "الاسم الكامل لوالدة المولود" },
-        { key: "family", label: "العائلة", type: "text", hint: "اسم العائلة أو القبيلة" },
-        { key: "birthDateGregorian", label: "تاريخ الميلاد (ميلادي)", type: "date", hint: "تاريخ الولادة الفعلي بالتقويم الميلادي" },
-        { key: "birthDateHijri", label: "تاريخ الميلاد (هجري)", type: "text", hint: "مثال: 12 رمضان 1447هـ" },
-        { key: "birthMonthGregorian", label: "الشهر (ميلادي)", type: "select", options: GREG_MONTHS, hint: "شهر الولادة بالتقويم الميلادي" },
-        { key: "birthMonthHijri", label: "الشهر (هجري)", type: "select", options: HIJRI_MONTHS, hint: "شهر الولادة بالتقويم الهجري" }
+        { key: "motherName", label: "اسم الأم أو كريمة الحاج", type: "text", hint: "مثال: فلانة الفلانية، أو كريمة الحاج فلان الفلاني" },
+        { key: "birthDateGregorian", label: "تاريخ الميلاد (ميلادي)", type: "date", hint: "تاريخ الولادة الفعلي — بقية التواريخ تُحسب تلقائياً منه" },
+        { key: "birthDateHijri", label: "تاريخ الميلاد (هجري)", type: "text", derived: true, hint: "يُحسب تلقائياً من التاريخ الميلادي" },
+        { key: "birthMonthGregorian", label: "الشهر (ميلادي)", type: "select", options: GREG_MONTHS, derived: true, hint: "يُحسب تلقائياً" },
+        { key: "birthMonthHijri", label: "الشهر (هجري)", type: "select", options: HIJRI_MONTHS, derived: true, hint: "يُحسب تلقائياً" }
       ],
-      columns: ["fullName", "gender", "fatherName", "family", "gregorianYear", "birthMonthGregorian"]
+      photoLabel: "صورة الأب",
+      dateSource: { field: "birthDateGregorian", hijriDate: "birthDateHijri", monthGreg: "birthMonthGregorian", monthHijri: "birthMonthHijri" },
+      columns: ["fullName", "gender", "fatherName", "motherName", "gregorianYear", "birthMonthGregorian"]
     },
     {
       key: "marriages", label: "عقود القران", icon: EVICON.rings, color: "var(--teal)",
       fields: [
-        { key: "gregorianYear", label: "السنة الميلادية", type: "growSelect", optKey: "gregorianYears", hint: "تُملأ تلقائياً بسنة التسجيل — عدّلها فقط إذا كان العقد في سنة سابقة" },
-        { key: "hijriYear", label: "السنة الهجرية", type: "growSelect", optKey: "hijriYears", hint: "تُملأ تلقائياً بسنة التسجيل — عدّلها فقط إذا كان العقد في سنة سابقة" },
-        { key: "contractMonthGregorian", label: "شهر العقد (ميلادي)", type: "select", options: GREG_MONTHS, hint: "الشهر الذي تم فيه عقد القران بالتقويم الميلادي" },
-        { key: "contractMonthHijri", label: "شهر العقد (هجري)", type: "select", options: HIJRI_MONTHS, hint: "الشهر الذي تم فيه عقد القران بالتقويم الهجري" },
+        { key: "gregorianYear", label: "السنة الميلادية", type: "growSelect", optKey: "gregorianYears", derived: true, hint: "تُحسب تلقائياً من تاريخ العقد" },
+        { key: "hijriYear", label: "السنة الهجرية", type: "growSelect", optKey: "hijriYears", derived: true, hint: "تُحسب تلقائياً من تاريخ العقد" },
+        { key: "contractDateGregorian", label: "تاريخ العقد (ميلادي)", type: "date", hint: "تاريخ عقد القران الفعلي — بقية التواريخ تُحسب تلقائياً منه" },
+        { key: "contractDateHijri", label: "تاريخ العقد (هجري)", type: "text", derived: true, hint: "يُحسب تلقائياً من التاريخ الميلادي" },
+        { key: "contractMonthGregorian", label: "شهر العقد (ميلادي)", type: "select", options: GREG_MONTHS, derived: true, hint: "يُحسب تلقائياً" },
+        { key: "contractMonthHijri", label: "شهر العقد (هجري)", type: "select", options: HIJRI_MONTHS, derived: true, hint: "يُحسب تلقائياً" },
         { key: "husbandName", label: "اسم الزوج", type: "text", hint: "الاسم الكامل للزوج" },
-        { key: "husbandFamily", label: "عائلة الزوج", type: "text", hint: "اسم عائلة الزوج أو قبيلته" },
+        { key: "husbandDistrict", label: "منطقة / حي الزوج", type: "selectOther", options: QATIF_DISTRICTS_LIST, hint: "اختر من القائمة أو \"غير ذلك\"" },
         { key: "wifeName", label: "اسم الزوجة", type: "text", hint: "الاسم الكامل للزوجة" },
         { key: "wifeGuardian", label: "كريمة / ولي الزوجة", type: "text", hint: "مثال: كريمة فلان الفلاني، أو اسم ولي أمرها" },
-        { key: "husbandCountry", label: "بلد الزوج", type: "growSelect", optKey: "countries", hint: "الدولة التي ينتمي إليها الزوج" },
-        { key: "wifeCountry", label: "بلد الزوجة", type: "growSelect", optKey: "countries", hint: "الدولة التي تنتمي إليها الزوجة" }
+        { key: "wifeDistrict", label: "منطقة / حي الزوجة", type: "selectOther", options: QATIF_DISTRICTS_LIST, hint: "اختر من القائمة أو \"غير ذلك\"" }
       ],
-      columns: ["husbandName", "wifeName", "husbandFamily", "gregorianYear", "contractMonthGregorian"]
+      photoLabel: "صورة الزوج",
+      dateSource: { field: "contractDateGregorian", hijriDate: "contractDateHijri", monthGreg: "contractMonthGregorian", monthHijri: "contractMonthHijri" },
+      columns: ["husbandName", "wifeName", "husbandDistrict", "gregorianYear", "contractMonthGregorian"]
     },
     {
       key: "deaths", label: "الوفيات", icon: EVICON.memorial, color: "var(--ink-soft)",
@@ -4572,17 +4637,19 @@
     {
       key: "congrats", label: "تهنئات", icon: EVICON.gift, color: "#DB2777",
       fields: [
-        { key: "gregorianYear", label: "السنة الميلادية", type: "growSelect", optKey: "gregorianYears", hint: "تُملأ تلقائياً بسنة التسجيل — عدّلها فقط إذا كانت المناسبة في سنة سابقة" },
-        { key: "hijriYear", label: "السنة الهجرية", type: "growSelect", optKey: "hijriYears", hint: "تُملأ تلقائياً بسنة التسجيل — عدّلها فقط إذا كانت المناسبة في سنة سابقة" },
+        { key: "gregorianYear", label: "السنة الميلادية", type: "growSelect", optKey: "gregorianYears", derived: true, hint: "تُحسب تلقائياً من تاريخ المناسبة" },
+        { key: "hijriYear", label: "السنة الهجرية", type: "growSelect", optKey: "hijriYears", derived: true, hint: "تُحسب تلقائياً من تاريخ المناسبة" },
+        { key: "occasionDateGregorian", label: "تاريخ المناسبة (ميلادي)", type: "date", hint: "تاريخ المناسبة الفعلي — بقية التواريخ تُحسب تلقائياً منه" },
+        { key: "occasionMonthGregorian", label: "الشهر (ميلادي)", type: "select", options: GREG_MONTHS, derived: true, hint: "يُحسب تلقائياً" },
+        { key: "occasionMonthHijri", label: "الشهر (هجري)", type: "select", options: HIJRI_MONTHS, derived: true, hint: "يُحسب تلقائياً" },
         { key: "title", label: "اللقب / المسمى الوظيفي", type: "growSelect", optKey: "congratsTitles", hint: "مثال: المهندس، الدكتور، الأستاذ — اتركه فارغاً إذا لا ينطبق" },
         { key: "fullName", label: "اسم المحتفى به", type: "text", hint: "الاسم الكامل للشخص المُهنَّأ" },
-        { key: "family", label: "العائلة", type: "text", hint: "اسم العائلة أو القبيلة" },
         { key: "occasionType", label: "نوع المناسبة", type: "growSelect", optKey: "congratsOccasionTypes", hint: "سبب التهنئة، مثل: ترقية، جائزة، افتتاح مشروع" },
-        { key: "occasionMonthGregorian", label: "الشهر (ميلادي)", type: "select", options: GREG_MONTHS, hint: "الشهر الذي حصلت فيه المناسبة بالتقويم الميلادي" },
-        { key: "occasionMonthHijri", label: "الشهر (هجري)", type: "select", options: HIJRI_MONTHS, hint: "الشهر الذي حصلت فيه المناسبة بالتقويم الهجري" },
-        { key: "details", label: "تفاصيل إضافية", type: "text", hint: "أي تفاصيل توضيحية عن المناسبة — اختياري" }
+        { key: "details", label: "تفاصيل إضافية", type: "text", hint: "تفاصيل المناسبة — تُستخدم بصياغة منشور التهنئة" }
       ],
-      columns: ["fullName", "family", "occasionType", "gregorianYear", "occasionMonthGregorian"]
+      photoLabel: "صورة صاحب التهنئة",
+      dateSource: { field: "occasionDateGregorian", hijriDate: null, monthGreg: "occasionMonthGregorian", monthHijri: "occasionMonthHijri" },
+      columns: ["fullName", "occasionType", "gregorianYear", "occasionMonthGregorian"]
     }
   ];
 
@@ -4747,7 +4814,7 @@
   }, function(err){ console.error("publicFormConfig snapshot error", err); });
   function loadPublicFormConfig(){
     var cfg = { footerMessage: "" };
-    EVENTS_CATEGORIES.forEach(function(c){ cfg[c.key] = { hidden: [], hints: {}, custom: [] }; });
+    EVENTS_CATEGORIES.forEach(function(c){ cfg[c.key] = { hidden: [], hints: {}, labels: {}, custom: [] }; });
     var p = _publicFormConfigCache;
     if(p){
       if(typeof p.footerMessage === "string") cfg.footerMessage = p.footerMessage;
@@ -4755,6 +4822,7 @@
         if(p[c.key]){
           if(Array.isArray(p[c.key].hidden)) cfg[c.key].hidden = p[c.key].hidden;
           if(p[c.key].hints) cfg[c.key].hints = p[c.key].hints;
+          if(p[c.key].labels) cfg[c.key].labels = p[c.key].labels;
           if(Array.isArray(p[c.key].custom)) cfg[c.key].custom = p[c.key].custom;
         }
       });
@@ -4823,6 +4891,15 @@
         f.options.map(function(o){ return '<option value="' + escapeHTML(o) + '"' + (value === o ? " selected" : "") + '>' + escapeHTML(o) + '</option>'; }).join("") +
       '</select>';
     }
+    if(f.type === "selectOther"){
+      var isCustom = !!value && f.options.indexOf(value) === -1;
+      var selVal = isCustom ? "__other__" : (value || "");
+      return '<select data-action="select-other-toggle" data-key="' + f.key + '"><option value="">اختر...</option>' +
+          f.options.map(function(o){ return '<option value="' + escapeHTML(o) + '"' + (selVal === o ? " selected" : "") + '>' + escapeHTML(o) + '</option>'; }).join("") +
+          '<option value="__other__"' + (selVal === "__other__" ? " selected" : "") + '>غير ذلك</option>' +
+        '</select>' +
+        '<input type="text" data-field-input data-key="' + f.key + '" data-other-input="' + f.key + '" value="' + escapeHTML(isCustom ? value : "") + '" placeholder="اكتب هنا..." style="margin-top:6px;' + (selVal === "__other__" ? "" : "display:none;") + '"/>';
+    }
     if(f.type === "growSelect"){
       var opts = loadEventsOptions()[f.optKey] || [];
       // لو القيمة المحفوظة بالسجل (مثلاً من تسجيل خارجي) مو موجودة أصلاً بقائمة الخيارات المعتمدة،
@@ -4859,10 +4936,13 @@
     var draft = rec ? shallowCopy(rec) : {};
     if(!rec){
       // تُقيَّد سنة المناسبة تلقائياً بتاريخ الإدخال بدل اختيارها يدوياً من قِبل من يسجّل البيانات
-      var nowYear = new Date().getFullYear();
-      var approxHijri = Math.floor((nowYear - 622) * 33 / 32);
+      var now = new Date();
+      var nowYear = now.getFullYear();
+      var nowH = gregorianToHijri(nowYear, now.getMonth() + 1, now.getDate());
       if(cat.fields.some(function(f){ return f.key === "gregorianYear"; })) draft.gregorianYear = String(nowYear);
-      if(cat.fields.some(function(f){ return f.key === "hijriYear"; })) draft.hijriYear = String(approxHijri);
+      if(cat.fields.some(function(f){ return f.key === "hijriYear"; })) draft.hijriYear = String(nowH.year);
+      if(cat.fields.some(function(f){ return f.key === "graduationMonthGregorian"; })) draft.graduationMonthGregorian = GREG_MONTHS[now.getMonth()];
+      if(cat.fields.some(function(f){ return f.key === "graduationMonthHijri"; })) draft.graduationMonthHijri = HIJRI_MONTHS[nowH.month - 1];
     }
     eventModalState = { catKey: catKey, recordId: recordId || null, draft: draft };
     renderEventModal();
@@ -4879,16 +4959,18 @@
     var html = '<div class="panel-head"><h3>' + (eventModalState.recordId ? "تعديل" : "إضافة") + ' — ' + cat.label + '</h3><button type="button" class="panel-close" data-action="close-event-modal">✕</button></div>';
     html += '<div class="event-form-grid">';
     cat.fields.forEach(function(f){
+      if(f.derived) return;
       html += '<div class="event-field"><label>' + f.label + '</label>' + fieldInputHTML(f, draft[f.key]) +
         (f.hint ? '<p class="event-field-hint">' + escapeHTML(f.hint) + '</p>' : '') + '</div>';
     });
-    html += '<div class="event-field full-field"><label>صورة المناسبة (اختياري)</label>';
+    var photoLbl = cat.photoLabel || "صورة المناسبة";
+    html += '<div class="event-field full-field"><label>' + photoLbl + ' (اختياري)</label>';
     if(draft.photo){
       html += '<div class="photo-thumb"><img src="' + draft.photo + '" alt=""/><button type="button" class="rm" data-action="remove-event-photo">×</button></div>';
     } else {
       html += '<input type="file" accept="image/*" class="event-photo-input" id="eventPhotoInput"/>';
     }
-    html += '<p class="event-field-hint">صورة توضيحية للمناسبة إن رغبتم بإرفاقها — تُضغط تلقائياً لحجم مناسب بعد الرفع</p></div>';
+    html += '<p class="event-field-hint">صورة توضيحية إن رغبتم بإرفاقها — تُضغط تلقائياً لحجم مناسب بعد الرفع</p></div>';
     html += '</div>';
     html += '<div class="modal-actions" style="margin-top:20px;">' +
       '<button type="button" class="btn-secondary" data-action="close-event-modal">إلغاء</button>' +
@@ -4902,6 +4984,16 @@
     var draft = eventModalState.draft;
     var hasAny = cat.fields.some(function(f){ return draft[f.key]; });
     if(!hasAny){ showToast("عبّئ حقلاً واحداً على الأقل"); return; }
+    if(cat.dateSource){
+      var derived = deriveDateFieldsFromGregorian(draft[cat.dateSource.field]);
+      if(derived){
+        draft.gregorianYear = derived.gregorianYear;
+        draft.hijriYear = derived.hijriYear;
+        if(cat.dateSource.monthGreg) draft[cat.dateSource.monthGreg] = derived.gregorianMonth;
+        if(cat.dateSource.monthHijri) draft[cat.dateSource.monthHijri] = derived.hijriMonth;
+        if(cat.dateSource.hijriDate) draft[cat.dateSource.hijriDate] = derived.hijriDateText;
+      }
+    }
     var all = loadEventsData();
     if(eventModalState.recordId){
       var rec = all.find(function(r){ return r.id === eventModalState.recordId; });
@@ -5441,10 +5533,12 @@
     cat.fields.forEach(function(f){
       var hidden = catCfg.hidden.indexOf(f.key) > -1;
       var hintVal = catCfg.hints[f.key] !== undefined ? catCfg.hints[f.key] : (f.hint || "");
+      var labelVal = catCfg.labels[f.key] !== undefined ? catCfg.labels[f.key] : f.label;
       html += '<div class="checklist-row" style="align-items:flex-start; flex-wrap:wrap;">' +
-        '<label style="display:flex; align-items:center; gap:6px; min-width:150px; font-size:12.5px; font-weight:700;">' +
-          '<input type="checkbox" data-action="public-cfg-toggle-field" data-field="' + f.key + '"' + (hidden ? "" : " checked") + '/> ' + escapeHTML(f.label) +
+        '<label style="display:flex; align-items:center; gap:6px; min-width:20px;">' +
+          '<input type="checkbox" data-action="public-cfg-toggle-field" data-field="' + f.key + '"' + (hidden ? "" : " checked") + '/>' +
         '</label>' +
+        '<input type="text" data-action="public-cfg-label-input" data-field="' + f.key + '" value="' + escapeHTML(labelVal) + '" placeholder="اسم الحقل" title="اسم الحقل الظاهر للزوار" style="min-width:150px; font-size:12.5px; font-weight:700; border:1px solid var(--line); border-radius:8px; padding:7px 10px; background:#fbfcfc; color:var(--teal-dark);"/>' +
         '<input type="text" data-action="public-cfg-hint-input" data-field="' + f.key + '" value="' + escapeHTML(hintVal) + '" placeholder="نص الملاحظة أسفل الحقل" style="flex:1; min-width:220px; border:1px solid var(--line); border-radius:8px; padding:7px 10px; font-size:12px; background:#fbfcfc;"/>' +
       '</div>';
     });
@@ -5544,6 +5638,17 @@
   });
   eventModalOverlayEl.addEventListener("change", function(e){
     if(e.target.matches("[data-field-input]")) eventModalState.draft[e.target.dataset.key] = e.target.value;
+    if(e.target.matches('[data-action="select-other-toggle"]')){
+      var soKey = e.target.dataset.key;
+      var otherInput = eventModalOverlayEl.querySelector('[data-other-input="' + soKey + '"]');
+      if(e.target.value === "__other__"){
+        if(otherInput){ otherInput.style.display = "block"; otherInput.value = ""; otherInput.focus(); }
+        eventModalState.draft[soKey] = "";
+      } else {
+        if(otherInput){ otherInput.style.display = "none"; otherInput.value = ""; }
+        eventModalState.draft[soKey] = e.target.value;
+      }
+    }
     if(e.target.id === "eventPhotoInput"){
       var file = e.target.files && e.target.files[0];
       if(!file) return;
@@ -5669,6 +5774,14 @@
       var pCfg2 = loadPublicFormConfig();
       pCfg2[publicConfigUI.category].hints[e.target.dataset.field] = e.target.value;
       savePublicFormConfig(pCfg2);
+    } else if(e.target.matches('[data-action="public-cfg-label-input"]')){
+      var pCfg4 = loadPublicFormConfig();
+      var lblVal = e.target.value.trim();
+      var lblCat = pCfg4[publicConfigUI.category];
+      var origField = EVENTS_CATEGORIES.find(function(c){ return c.key === publicConfigUI.category; }).fields.find(function(f){ return f.key === e.target.dataset.field; });
+      if(!lblVal || (origField && lblVal === origField.label)) delete lblCat.labels[e.target.dataset.field];
+      else lblCat.labels[e.target.dataset.field] = lblVal;
+      savePublicFormConfig(pCfg4);
     } else if(e.target.id === "publicCfgFooterMsg"){
       var pCfg3 = loadPublicFormConfig();
       pCfg3.footerMessage = e.target.value;
