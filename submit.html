@@ -59,6 +59,15 @@
   .field input, .field select{padding:11px 13px; border:1.5px solid var(--line); border-radius:10px; font-size:13.5px; background:#fbfcfc; color:var(--ink);}
   .field input:focus, .field select:focus{outline:none; border-color:var(--blue); background:var(--white);}
   .field-hint{font-size:11px; color:var(--ink-soft); line-height:1.5;}
+  .ai-block{margin-top:-4px;}
+  .ai-suggest-btn{padding:9px 16px; border:1.5px solid var(--blue); border-radius:10px; background:var(--blue-tint); color:var(--blue-dark); font-size:12.5px; font-weight:600; cursor:pointer; transition:all .15s;}
+  .ai-suggest-btn:hover{background:var(--blue); color:#fff;}
+  .ai-suggest-btn:disabled{opacity:.6; cursor:wait;}
+  .ai-error{color:var(--danger); font-size:12px; margin-top:8px;}
+  .ai-suggestion-box{margin-top:12px; padding:14px 16px; background:var(--teal-tint); border:1px solid var(--line); border-radius:12px;}
+  .ai-suggestion-box p{font-size:13px; color:var(--ink); line-height:1.9;}
+  .ai-consent-row{display:flex; align-items:flex-start; gap:8px; margin-top:10px; font-size:12px; color:var(--ink-soft); line-height:1.6; cursor:pointer;}
+  .ai-consent-row input{margin-top:2px; flex-shrink:0;}
   .field .other-input{margin-top:6px;}
   .photo-input{padding:10px 12px; border:1.5px dashed var(--line); border-radius:10px; font-size:12.5px; background:#fbfcfc; color:var(--ink-soft); cursor:pointer;}
   .photo-preview{position:relative; display:inline-block; border-radius:10px; overflow:hidden; border:1px solid var(--line); line-height:0;}
@@ -142,6 +151,7 @@
   var db = firebase.firestore();
 
   var WHATSAPP_NUMBER = "966543467704";
+  var GEMINI_PROXY_URL = "https://zara-gemini-proxy.murtada-ud.workers.dev/";
 
   var GREG_MONTHS = ["يناير","فبراير","مارس","أبريل","مايو","يونيو","يوليو","أغسطس","سبتمبر","أكتوبر","نوفمبر","ديسمبر"];
   var HIJRI_MONTHS = ["محرم","صفر","ربيع الأول","ربيع الآخر","جمادى الأولى","جمادى الآخرة","رجب","شعبان","رمضان","شوال","ذو القعدة","ذو الحجة"];
@@ -298,7 +308,7 @@
     },
     {
       key: "congrats", label: "تهنئات", icon: ICON.gift,
-      photoLabel: "صورة صاحب التهنئة", photoRequired: true,
+      photoLabel: "صورة صاحب التهنئة", photoRequired: true, aiWordingAssist: true,
       dateSource: { field: "occasionDateGregorian", hijriDate: null, monthGreg: "occasionMonthGregorian", monthHijri: "occasionMonthHijri" },
       fields: [
         { key: "gregorianYear", label: "السنة الميلادية", type: "text", derived: true },
@@ -314,7 +324,7 @@
     }
   ];
 
-  var state = { activeCategory: "graduates", photo: "", fieldImages: {} };
+  var state = { activeCategory: "graduates", photo: "", fieldImages: {}, aiSuggestion: "", aiLoading: false, aiError: "", aiConsentPolicy: false, aiConsentWording: false };
 
   var _publicFormConfigCache = null;
   function loadPublicFormConfig(){
@@ -451,14 +461,16 @@
     var effectiveFields = getEffectiveFields(cat.key);
     state.photo = "";
     state.fieldImages = {};
+    state.aiSuggestion = ""; state.aiLoading = false; state.aiError = ""; state.aiConsentPolicy = false; state.aiConsentWording = false;
     var grid = document.getElementById("formGrid");
     grid.innerHTML = effectiveFields.map(function(f){
       if(f.derived) return "";
+      var extra = (cat.aiWordingAssist && f.key === "details") ? aiBlockHTML() : "";
       return '<div class="field">' +
         '<label>' + escapeHTML(f.label) + (f.required ? ' <span class="req">*</span>' : '') + '</label>' +
         fieldInputHTML(f) +
         (f.hint ? '<p class="field-hint">' + escapeHTML(f.hint) + '</p>' : '') +
-      '</div>';
+      '</div>' + extra;
     }).join("");
     var photoIsMaleOnly = cat.photoRequired === "maleOnly";
     var photoLabel = escapeHTML(cat.photoLabel || "صورة المناسبة") + (cat.photoRequired ? ' <span class="req">*</span>' : ' (اختياري)');
@@ -490,7 +502,81 @@
     if(target) target.outerHTML = imageFieldHTML(key);
     bindFormEvents();
   }
+  function aiBlockHTML(){
+    var html = '<div class="field full ai-block">';
+    html += '<button type="button" class="ai-suggest-btn" id="aiSuggestBtn"' + (state.aiLoading ? " disabled" : "") + '>' +
+      (state.aiLoading ? "جاري إعداد الصياغة..." : (state.aiSuggestion ? "إعادة اقتراح الصياغة" : "اقترح صياغة للتهنئة")) + '</button>';
+    if(state.aiError){
+      html += '<p class="ai-error">' + escapeHTML(state.aiError) + '</p>';
+    }
+    if(state.aiSuggestion){
+      html += '<div class="ai-suggestion-box"><p>' + escapeHTML(state.aiSuggestion) + '</p></div>';
+      html += '<label class="ai-consent-row"><input type="checkbox" id="aiConsentPolicy"' + (state.aiConsentPolicy ? " checked" : "") + '/> أوافق على تعديل صياغة المناسبة بما يتناسب مع سياسة النشر للجمعية</label>';
+      html += '<label class="ai-consent-row"><input type="checkbox" id="aiConsentWording"' + (state.aiConsentWording ? " checked" : "") + '/> أوافق على الصياغة الظاهرة أعلاه</label>';
+    }
+    html += '</div>';
+    return html;
+  }
+  function refreshAiBlock(){
+    var block = document.querySelector(".ai-block");
+    if(!block) return;
+    block.outerHTML = aiBlockHTML();
+    bindFormEvents();
+  }
+  function fetchAiSuggestion(){
+    var cat = CATEGORIES.find(function(c){ return c.key === state.activeCategory; });
+    var fullName = fieldValue({ key: "fullName", type: "text" });
+    var title = fieldValue({ key: "title", type: "text" });
+    var occasionType = fieldValue({ key: "occasionType", type: "text" });
+    var details = fieldValue({ key: "details", type: "text" });
+    if(!details){
+      state.aiError = "اكتب تفاصيل المناسبة أولاً";
+      refreshAiBlock();
+      return;
+    }
+    state.aiLoading = true;
+    state.aiError = "";
+    state.aiSuggestion = "";
+    state.aiConsentPolicy = false;
+    state.aiConsentWording = false;
+    refreshAiBlock();
+    fetch(GEMINI_PROXY_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ fullName: fullName, title: title, occasionType: occasionType, details: details })
+    }).then(function(res){
+      if(!res.ok) throw new Error("bad_status");
+      return res.json();
+    }).then(function(data){
+      state.aiLoading = false;
+      if(data && data.suggestion){
+        state.aiSuggestion = data.suggestion;
+      } else {
+        state.aiError = "تعذّر إعداد الصياغة — حاول مرة أخرى";
+      }
+      refreshAiBlock();
+    }).catch(function(){
+      state.aiLoading = false;
+      state.aiError = "تعذّر الاتصال بخدمة الصياغة — تأكد من اتصالك بالإنترنت وحاول مرة أخرى";
+      refreshAiBlock();
+    });
+  }
   function bindFormEvents(){
+    var aiBtn = document.getElementById("aiSuggestBtn");
+    if(aiBtn) aiBtn.addEventListener("click", fetchAiSuggestion);
+    var aiPolicyChk = document.getElementById("aiConsentPolicy");
+    if(aiPolicyChk) aiPolicyChk.addEventListener("change", function(){ state.aiConsentPolicy = aiPolicyChk.checked; });
+    var aiWordingChk = document.getElementById("aiConsentWording");
+    if(aiWordingChk) aiWordingChk.addEventListener("change", function(){ state.aiConsentWording = aiWordingChk.checked; });
+    var detailsInput = document.querySelector('[data-key="details"]');
+    if(detailsInput && state.aiSuggestion && !detailsInput.dataset.aiBound){
+      detailsInput.dataset.aiBound = "1";
+      detailsInput.addEventListener("input", function(){
+        detailsInput.dataset.aiBound = "";
+        state.aiSuggestion = ""; state.aiConsentPolicy = false; state.aiConsentWording = false; state.aiError = "";
+        refreshAiBlock();
+      }, { once: true });
+    }
     var input = document.getElementById("photoInput");
     if(input){
       input.addEventListener("change", function(e){
@@ -603,6 +689,10 @@
     }
     var photoRequiredNow = cat.photoRequired === true || (cat.photoRequired === "maleOnly" && draft.gender === "ذكر");
     if(photoRequiredNow && !state.photo) missing.push(cat.photoLabel || "صورة المناسبة");
+    if(cat.aiWordingAssist){
+      if(!state.aiSuggestion) missing.push('اقتراح صياغة التهنئة (اضغط زر "اقترح صياغة" أولاً)');
+      else if(!state.aiConsentPolicy || !state.aiConsentWording) missing.push("الموافقة على الصياغة المقترحة (العلامتان أسفل الصياغة)");
+    }
     var errEl = document.getElementById("errMsg");
     if(missing.length){
       errEl.textContent = "الرجاء تعبئة الحقول المطلوبة: " + missing.join("، ");
@@ -620,6 +710,10 @@
     }
     rec.photo = state.photo || "";
     Object.keys(state.fieldImages).forEach(function(k){ rec[k] = state.fieldImages[k]; });
+    if(cat.aiWordingAssist){
+      rec.suggestedWording = state.aiSuggestion || "";
+      rec.wordingApprovedByUser = !!(state.aiConsentPolicy && state.aiConsentWording);
+    }
     var submitBtn = document.getElementById("submitBtn");
     submitBtn.disabled = true;
     submitBtn.textContent = "جاري الإرسال...";
