@@ -499,7 +499,7 @@
     var photoIsMaleOnly = cat.photoRequired === "maleOnly";
     var photoLabel = escapeHTML(cat.photoLabel || "صورة المناسبة") + (cat.photoRequired ? ' <span class="req">*</span>' : ' (اختياري)');
     var photoHint = photoIsMaleOnly
-      ? "إلزامية للخريجين الذكور فقط، واختيارية للإناث — تُضغط تلقائياً لحجم مناسب بعد الرفع"
+      ? "إلزامية للذكور فقط، واختيارية للإناث — تُضغط تلقائياً لحجم مناسب بعد الرفع"
       : (cat.photoRequired ? "إلزامية — تُضغط تلقائياً لحجم مناسب بعد الرفع" : "صورة توضيحية إن رغبتم بإرفاقها — تُضغط تلقائياً لحجم مناسب بعد الرفع");
     grid.innerHTML += '<div class="field full"><label>' + photoLabel + '</label>' + photoFieldHTML() +
       '<p class="field-hint">' + photoHint + '</p></div>';
