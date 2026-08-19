@@ -12,10 +12,10 @@ const WORDING_POLICY = `أنت مساعد صياغة لجمعية العوامي
 قواعد صارمة يجب الالتزام بها دائماً:
 1. يبدأ النص حرفياً بعبارة "وذلك بمناسبة" ثم يليها وصف المناسبة والإنجاز مباشرة.
 2. راعِ صيغة المذكر أو المؤنث في كل الأفعال والضمائر حسب جنس المحتفى به المُعطى (مثال مذكر: حصوله، تخرجه، حصوله على — مثال مؤنث: حصولها، تخرجها، حصولها على). إن لم يُذكر الجنس استخدم صيغة عامة تتفادى الضمير قدر الإمكان.
-3. طول النص الكامل يجب أن يقع بين 210 و240 حرفاً فعلياً (بالعدّ الحرفي الدقيق، بما فيها المسافات وعلامات الترقيم) — هذا نطاق إلزامي، لا تقل عن 210 ولا تتجاوز 240. اكتب بقدر التفصيل المتاح في المعطيات، موزّعاً الوصف بما يملأ هذا النطاق دون حشو أو اختصار مخل.
+3. اجعل طول النص الكامل تقريباً بين 210 و240 حرفاً — أي فقرة متوسطة الطول من 3 إلى 4 جمل قصيرة مترابطة تصف المناسبة بتفصيل مناسب دون حشو ودون اختصار مخل. لا تحسب الأحرف حرفاً حرفاً ولا تُظهر أي عملية حساب — قدّر الطول تقديراً طبيعياً من عدد الجمل والكلمات فقط.
 4. لا تخترع أي تفاصيل غير مذكورة صراحة في المعطيات المُرسلة (لا أسماء جهات، لا تواريخ، لا إنجازات إضافية).
 5. لا تستخدم أي مقدمة مثل "تتقدم الجمعية بالتهنئة" ولا أي خاتمة أو دعاء ختامي — النص يقتصر حصراً على وصف المناسبة بدءاً من "وذلك بمناسبة" وحتى نهاية وصف الإنجاز.
-6. لا عنوان، لا رموز تعبيرية، لا علامات اقتباس، لا شرح أو تعليق منك — أعد نص البيان فقط كما سيُنشر حرفياً.
+6. أعد الجملة النهائية فقط، كنص متصل عادي جاهز للنشر مباشرة. ممنوع منعاً باتاً: عنوان، رموز تعبيرية، علامات اقتباس، أي شرح أو تعليق، وأي أثر لعملية العد أو الحساب مثل أرقام بين قوسين أو علامات + أو كلمة "حرف" أو "حروف" داخل النص — إن ظهر أي من ذلك فهو خطأ فادح.
 
 مثال توضيحي (مذكر) على الشكل المطلوب وعلى طول يقع داخل النطاق المسموح (210 حرفاً تقريباً):
 "وذلك بمناسبة حصوله على شهادة مدرّب معتمد من مؤسسة الملك عبدالعزيز ورجاله للموهبة، لتدريب الطلاب في أولمبياد نسمو بتخصص الأحياء، وكذلك برنامج الأولمبياد العالمي للأحياء (iBO)، على المستويين المحلي والدولي."`;
@@ -80,24 +80,30 @@ export default {
       return json({ error: "empty_suggestion" }, 502, headers);
     }
 
-    // إن خرج النص عن النطاق المطلوب (210-240 حرفاً)، حاول مرة واحدة إضافية بتصحيح صريح للاتجاه المطلوب
-    if (text.length < 210 || text.length > 240) {
+    // إن خرج النص عن النطاق المطلوب (210-240 حرفاً)، أو تسرّب فيه أثر عملية عدّ/حساب، حاول مرة واحدة إضافية
+    const outOfRange = text.length < 210 || text.length > 240;
+    if (outOfRange || hasLeakedArithmetic(text)) {
       try {
         const direction = text.length < 210
           ? "أقصر من اللازم — أعد الصياغة بوصف أوفى وأكثر تفصيلاً ليقع الطول بين 210 و240 حرفاً"
-          : "أطول من اللازم — أعد الصياغة بإيجاز أكثر ليقع الطول بين 210 و240 حرفاً";
-        const retryPrompt = userPrompt + "\n\n(تنبيه: المحاولة السابقة جاءت " + text.length + " حرفاً، وهذا " + direction + ".)";
+          : (text.length > 240
+            ? "أطول من اللازم — أعد الصياغة بإيجاز أكثر ليقع الطول بين 210 و240 حرفاً"
+            : "يحتوي على أثر عملية عدّ أو حساب ظاهر في النص — أعد كتابته كجملة نهائية نظيفة بدون أي أرقام أو رموز حسابية");
+        const retryPrompt = userPrompt + "\n\n(تنبيه: المحاولة السابقة " + direction + ".)";
         const retryText = await callGemini(env, retryPrompt);
-        if (retryText) {
+        if (retryText && !hasLeakedArithmetic(retryText)) {
           const retryInRange = retryText.length >= 210 && retryText.length <= 240;
-          const currentInRange = text.length >= 210 && text.length <= 240;
-          if (retryInRange || !currentInRange) text = retryText;
+          const currentUsable = !outOfRange && !hasLeakedArithmetic(text);
+          if (retryInRange || !currentUsable) text = retryText;
         }
       } catch (e) {
         // تجاهل فشل المحاولة الإضافية — نُبقي أفضل نص متوفر لدينا
       }
     }
 
+    if (hasLeakedArithmetic(text)) {
+      return json({ error: "invalid_generation" }, 502, headers);
+    }
     return json({ suggestion: trimToLimit(text, 240) }, 200, headers);
   }
 };
@@ -111,7 +117,7 @@ async function callGemini(env, promptText) {
       body: JSON.stringify({
         contents: [{ parts: [{ text: promptText }] }],
         systemInstruction: { parts: [{ text: WORDING_POLICY }] },
-        generationConfig: { temperature: 0.6, maxOutputTokens: 1024, thinkingConfig: { thinkingLevel: "low" } }
+        generationConfig: { temperature: 0.6, maxOutputTokens: 1024, thinkingConfig: { thinkingLevel: "medium" } }
       })
     }
   );
@@ -127,6 +133,14 @@ async function callGemini(env, promptText) {
 
 function clean(v, maxLen) {
   return (v == null ? "" : String(v)).trim().slice(0, maxLen);
+}
+// يكتشف تسرّب عملية عدّ الأحرف داخل النص المُولَّد (مثل "(7) +فوزه (4)") بدل الجملة النهائية النظيفة
+function hasLeakedArithmetic(text) {
+  var parenNumbers = text.match(/\(\d+\)/g) || [];
+  if (parenNumbers.length >= 2) return true;
+  if (/[+]\s*\S+\s*\(\d+\)/.test(text)) return true;
+  if (/\bحرفاً?\b|\bحروف\b/.test(text)) return true;
+  return false;
 }
 // شبكة أمان أخيرة فقط — إن فشلت المحاولتان بالبقاء ضمن نطاق 210-240 حرفاً، نقصّ عند آخر مسافة قبل الحد بدل عرض نص أطول من المسموح
 function trimToLimit(text, limit) {
