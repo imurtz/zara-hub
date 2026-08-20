@@ -363,7 +363,7 @@
     }
   ];
 
-  var state = { activeCategory: "graduates", photo: "", fieldImages: {}, aiSuggestion: "", aiLoading: false, aiError: "", aiConsentPolicy: false, aiConsentWording: false, aiImage: "" };
+  var state = { activeCategory: null, photo: "", fieldImages: {}, aiSuggestion: "", aiLoading: false, aiError: "", aiConsentPolicy: false, aiConsentWording: false, aiImage: "" };
 
   var GRADIENT_PRESETS = {
     brand: "linear-gradient(120deg, var(--teal) 0%, var(--teal-dark) 55%, var(--blue-dark) 100%)",
@@ -522,12 +522,20 @@
   }
 
   function renderForm(){
+    var grid = document.getElementById("formGrid");
+    var submitBtn = document.getElementById("submitBtn");
+    if(!state.activeCategory){
+      grid.innerHTML = '<div class="field full"><p class="field-hint" style="text-align:center; font-size:13.5px; padding:24px 0;">اختر نوع المناسبة من الأعلى للبدء بالتسجيل</p></div>';
+      if(submitBtn) submitBtn.style.display = "none";
+      document.getElementById("errMsg").style.display = "none";
+      return;
+    }
+    if(submitBtn) submitBtn.style.display = "";
     var cat = CATEGORIES.find(function(c){ return c.key === state.activeCategory; });
     var effectiveFields = getEffectiveFields(cat.key);
     state.photo = "";
     state.fieldImages = {};
     state.aiSuggestion = ""; state.aiLoading = false; state.aiError = ""; state.aiConsentPolicy = false; state.aiConsentWording = false; state.aiImage = "";
-    var grid = document.getElementById("formGrid");
     grid.innerHTML = effectiveFields.map(function(f){
       if(f.derived) return "";
       var extra = (cat.aiWordingAssist && f.key === "details") ? aiBlockHTML() : "";
