@@ -9,7 +9,7 @@
 <title>زارا | جمعية العوامية الخيرية</title>
 <link rel="icon" href="assets/favicon.png" />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
-<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700&family=Tajawal:wght@400;500;700&family=Almarai:wght@400;700&family=Amiri:wght@400;700&family=Reem+Kufi:wght@400;700&display=swap" rel="stylesheet" />
 <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
@@ -552,6 +552,23 @@
   .grow-add-input-row{display:flex; gap:6px; margin-top:6px;}
   .panel.panel-wide{max-width:760px;}
 
+  .tmpl-canvas-wrap{position:relative; display:inline-block; border:1px solid var(--line); border-radius:10px; overflow:hidden; max-width:100%; cursor:crosshair; background:repeating-conic-gradient(#f0f0f0 0% 25%, #fff 0% 50%) 50% / 16px 16px;}
+  .tmpl-canvas-wrap img{display:block; max-width:100%; height:auto; user-select:none; pointer-events:none;}
+  .tmpl-marker{position:absolute; transform:translate(-50%,-50%); background:var(--blue); color:#fff; font-size:10px; font-weight:700; padding:2px 6px; border-radius:6px; white-space:nowrap; pointer-events:none; box-shadow:0 0 0 2px #fff;}
+  .tmpl-marker.img-marker{background:var(--tan); border:2px dashed #fff; border-radius:6px; padding:0; display:flex; align-items:center; justify-content:center; transform:none;}
+  .tmpl-field-row{border:1px solid var(--line); border-radius:10px; padding:10px 12px; margin-bottom:8px; background:#fbfcfc;}
+  .tmpl-field-row-head{display:flex; align-items:center; justify-content:space-between; margin-bottom:6px;}
+  .tmpl-field-row-head b{font-size:12.5px; color:var(--teal-dark);}
+  .tmpl-field-controls{display:flex; flex-wrap:wrap; gap:6px; align-items:center;}
+  .tmpl-field-controls label{font-size:10.5px; color:var(--ink-soft); display:flex; align-items:center; gap:3px;}
+  .tmpl-field-controls input[type="number"], .tmpl-field-controls input[type="text"]{width:56px; padding:5px 6px; font-size:11px; border:1px solid var(--line); border-radius:6px;}
+  .tmpl-field-controls select{padding:5px 6px; font-size:11px; border:1px solid var(--line); border-radius:6px;}
+  .tmpl-field-controls input[type="color"]{width:30px; height:26px; padding:1px; border:1px solid var(--line); border-radius:6px;}
+  .tmpl-list-card{border:1px solid var(--line); border-radius:12px; padding:12px; margin-bottom:10px; display:flex; align-items:center; gap:12px; background:#fbfcfc;}
+  .tmpl-list-card img{width:70px; height:88px; object-fit:cover; border-radius:8px; border:1px solid var(--line); flex-shrink:0;}
+  .tmpl-list-card .info{flex:1;}
+  .tmpl-pending-btn{background:var(--blue-tint); border:1.5px solid var(--blue); color:var(--blue-dark);}
+
   .bar-table{width:100%; border-collapse:collapse; font-size:12.5px;}
   .bar-table td{padding:8px 4px; border:none;}
   .bar-table .bar-track{background:var(--teal-tint); border-radius:999px; height:8px; overflow:hidden; min-width:80px;}
@@ -1070,6 +1087,12 @@
 </div>
 <div class="panel-overlay" id="eventsImportOverlay">
   <div class="panel" id="eventsImportBody"></div>
+</div>
+<div class="panel-overlay" id="tmplEditorOverlay">
+  <div class="panel panel-wide" id="tmplEditorBody"></div>
+</div>
+<div class="panel-overlay" id="tmplGenerateOverlay">
+  <div class="panel panel-wide" id="tmplGenerateBody"></div>
 </div>
 
 <!-- ===== دردشة الموظفين (معاينة تصميم) ===== -->
@@ -4742,6 +4765,172 @@
     reader.onerror = function(){ cb(null); };
     reader.readAsDataURL(file);
   }
+  // ضغط صورة قالب التصميم — جودة أعلى من صور المناسبات العادية لأن القالب يحتوي نصوصاً دقيقة، لكن يبقى ضمن حد المستند الواحد بـ Firestore (1 ميقابايت)
+  function compressTemplateImageFile(file, cb){
+    var reader = new FileReader();
+    reader.onload = function(e){
+      var img = new Image();
+      img.onload = function(){
+        var maxDim = 2000;
+        var w = img.width, h = img.height;
+        if(w > maxDim || h > maxDim){
+          if(w > h){ h = Math.round(h * maxDim / w); w = maxDim; }
+          else { w = Math.round(w * maxDim / h); h = maxDim; }
+        }
+        var canvas = document.createElement("canvas");
+        canvas.width = w; canvas.height = h;
+        canvas.getContext("2d").drawImage(img, 0, 0, w, h);
+        var maxBytes = 900 * 1024;
+        var pngUrl = canvas.toDataURL("image/png");
+        if(pngUrl.length <= maxBytes){
+          cb(pngUrl, w, h);
+          return;
+        }
+        var quality = 0.9;
+        var dataUrl = canvas.toDataURL("image/jpeg", quality);
+        var attempts = 0;
+        while(dataUrl.length > maxBytes && quality > 0.3 && attempts < 10){
+          quality -= 0.08;
+          dataUrl = canvas.toDataURL("image/jpeg", quality);
+          attempts++;
+        }
+        cb(dataUrl, w, h);
+      };
+      img.onerror = function(){ cb(null); };
+      img.src = e.target.result;
+    };
+    reader.onerror = function(){ cb(null); };
+    reader.readAsDataURL(file);
+  }
+
+  // ===== كشيدة عربية: تمديد النصوص المتغيرة لتملأ عرضاً مستهدفاً بأناقة =====
+  // حروف لا تتصل بما بعدها (يُمنع وضع كشيدة بعدها مباشرة)
+  var AR_NON_CONNECTING = "اأإآدذرزوةى";
+  function canInsertKashidaAfter(ch, nextCh){
+    if(!ch || !nextCh) return false;
+    if(AR_NON_CONNECTING.indexOf(ch) > -1) return false;
+    if(!/[ء-ي]/.test(ch) || !/[ء-ي]/.test(nextCh)) return false;
+    return true;
+  }
+  function kashidaJustifyText(ctx, text, targetWidth){
+    if(!text) return text;
+    var natural = ctx.measureText(text).width;
+    if(natural >= targetWidth) return text;
+    var points = [];
+    for(var i = 0; i < text.length - 1; i++){
+      if(canInsertKashidaAfter(text[i], text[i + 1])) points.push(i);
+    }
+    if(!points.length) return text;
+    var tatweelWidth = ctx.measureText("ـ").width || 6;
+    var needed = targetWidth - natural;
+    var perPoint = Math.max(1, Math.round((needed / tatweelWidth) / points.length));
+    var chars = text.split("");
+    var offset = 0;
+    points.forEach(function(idx){
+      var insertAt = idx + 1 + offset;
+      var ins = new Array(perPoint + 1).join("ـ");
+      chars.splice(insertAt, 0, ins);
+      offset += 1;
+    });
+    var result = chars.join("");
+    // إن تجاوزنا العرض المستهدف بهامش كبير، قلّل عدد التكرارات تدريجياً
+    var safety = 0;
+    while(ctx.measureText(result).width > targetWidth * 1.06 && perPoint > 1 && safety < 20){
+      perPoint--;
+      chars = text.split("");
+      offset = 0;
+      points.forEach(function(idx){
+        var insertAt = idx + 1 + offset;
+        var ins = new Array(perPoint + 1).join("ـ");
+        chars.splice(insertAt, 0, ins);
+        offset += 1;
+      });
+      result = chars.join("");
+      safety++;
+    }
+    return result;
+  }
+
+  // ===== محرك رسم القالب: يركّب بيانات سجل حقيقي فوق قالب جاهز داخل Canvas =====
+  function templateFieldValue(field, record, cat){
+    var v = record[field.key];
+    if(field.key === "photo") v = record.photo;
+    if(v == null) v = "";
+    v = String(v).trim();
+    if(field.hideValues && field.hideValues.indexOf(v) > -1) return "";
+    if(!v) return "";
+    if(field.prefix) v = field.prefix + v;
+    if(field.suffix) v = v + field.suffix;
+    return v;
+  }
+  function drawImageCover(ctx, img, x, y, w, h, radius){
+    var scale = Math.max(w / img.width, h / img.height);
+    var sw = w / scale, sh = h / scale;
+    var sx = (img.width - sw) / 2, sy = (img.height - sh) / 2;
+    ctx.save();
+    ctx.beginPath();
+    if(radius){
+      var r = Math.min(radius, w / 2, h / 2);
+      ctx.moveTo(x + r, y);
+      ctx.arcTo(x + w, y, x + w, y + h, r);
+      ctx.arcTo(x + w, y + h, x, y + h, r);
+      ctx.arcTo(x, y + h, x, y, r);
+      ctx.arcTo(x, y, x + w, y, r);
+    } else {
+      ctx.rect(x, y, w, h);
+    }
+    ctx.closePath();
+    ctx.clip();
+    ctx.drawImage(img, sx, sy, sw, sh, x, y, w, h);
+    ctx.restore();
+  }
+  function loadImageAsync(src){
+    return new Promise(function(resolve){
+      if(!src){ resolve(null); return; }
+      var img = new Image();
+      img.onload = function(){ resolve(img); };
+      img.onerror = function(){ resolve(null); };
+      img.src = src;
+    });
+  }
+  async function renderTemplateToCanvas(canvas, template, record){
+    var bg = await loadImageAsync(template.image);
+    if(!bg) return false;
+    canvas.width = template.width;
+    canvas.height = template.height;
+    var ctx = canvas.getContext("2d");
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.drawImage(bg, 0, 0, template.width, template.height);
+    for(var i = 0; i < template.fields.length; i++){
+      var f = template.fields[i];
+      if(f.type === "image"){
+        var img = await loadImageAsync(record[f.key] || "");
+        if(img) drawImageCover(ctx, img, f.x, f.y, f.boxWidth, f.boxHeight, f.shape === "rounded" ? 28 : 0);
+        continue;
+      }
+      var text = templateFieldValue(f, record, null);
+      if(!text) continue;
+      var weight = f.bold ? "700" : "400";
+      ctx.font = weight + " " + f.fontSize + "px " + (f.font || "Cairo") + ", sans-serif";
+      ctx.fillStyle = f.color || "#000000";
+      ctx.textBaseline = "middle";
+      var renderText = text;
+      if(f.kashida && f.maxWidth) renderText = kashidaJustifyText(ctx, text, f.maxWidth);
+      var w = ctx.measureText(renderText).width;
+      if(f.maxWidth && w > f.maxWidth){
+        var fs = f.fontSize;
+        while(w > f.maxWidth && fs > 10){
+          fs -= 1;
+          ctx.font = weight + " " + fs + "px " + (f.font || "Cairo") + ", sans-serif";
+          w = ctx.measureText(renderText).width;
+        }
+      }
+      var drawX = f.x;
+      ctx.textAlign = f.align || "center";
+      ctx.fillText(renderText, drawX, f.y);
+    }
+    return true;
+  }
 
   // ----- تخزين (Firestore — يتزامن فوراً بين كل الأجهزة) -----
   function eventsFirestoreRefresh(){
@@ -4856,6 +5045,22 @@
     return (cat && cat.color) || "#4d6ea9";
   }
 
+  // ----- قوالب التصميم (توليد صورة مخصصة لكل سجل من قالب جاهز) -----
+  var _designTemplatesCache = [];
+  db.collection("designTemplates").onSnapshot(function(snap){
+    _designTemplatesCache = snap.docs.map(function(d){ return d.data(); });
+    eventsFirestoreRefresh();
+  }, function(err){ console.error("designTemplates snapshot error", err); });
+  function loadDesignTemplates(catKey){
+    return _designTemplatesCache.filter(function(t){ return t.category === catKey; });
+  }
+  function findDesignTemplate(id){
+    return _designTemplatesCache.find(function(t){ return t.id === id; });
+  }
+  function saveDesignTemplate(tmpl){ db.collection("designTemplates").doc(tmpl.id).set(tmpl); }
+  function deleteDesignTemplate(id){ db.collection("designTemplates").doc(id).delete(); }
+  function genTemplateId(){ return "tmpl-" + Date.now().toString(36) + Math.random().toString(36).slice(2, 8); }
+
   var _eventsRespCache = {};
   db.collection("eventsMeta").doc("resp").onSnapshot(function(doc){
     _eventsRespCache = doc.exists ? doc.data() : {};
@@ -4932,6 +5137,7 @@
     publishTypeFilter: "all",
     publishSearch: "",
     templatesCategory: "graduates",
+    designTmplCategory: "graduates",
     reportsCategory: "graduates",
     reportsYear: ""
   };
@@ -5207,6 +5413,9 @@
           html += '<button type="button" class="icon-btn" data-action="approve-event" data-id="' + r.id + '" title="قبول (مراجعة الأدمن)"><span class="icon">' + TICON.check + '</span></button>' +
             '<button type="button" class="icon-btn danger" data-action="reject-event" data-id="' + r.id + '" title="رفض (مراجعة الأدمن)"><span class="icon">' + ICON_DELETE + '</span></button>';
         }
+        if(loadDesignTemplates(cat.key).length){
+          html += '<button type="button" class="icon-btn" data-action="generate-design" data-id="' + r.id + '" title="توليد تصميم"><span class="icon">🎨</span></button>';
+        }
         html += '<button type="button" class="icon-btn" data-action="edit-event" data-id="' + r.id + '" title="تعديل"><span class="icon">' + ICON_EDIT + '</span></button>' +
           '<button type="button" class="icon-btn danger" data-action="delete-event" data-id="' + r.id + '" title="حذف"><span class="icon">' + ICON_DELETE + '</span></button>' +
         '</td></tr>';
@@ -5274,6 +5483,8 @@
   }
 
   var eventsImportState = { catKey: null, rows: null, fileName: "", error: null };
+  var tmplEditorState = null;
+  var tmplGenerateState = null;
   function openEventsImportModal(catKey){
     if(typeof window.XLSX === "undefined"){ showToast("مكتبة Excel غير متوفرة الآن"); return; }
     eventsImportState = { catKey: catKey, rows: null, fileName: "", error: null };
@@ -5513,6 +5724,244 @@
     html += '</table></div>';
     return html;
   }
+  // ----- قوالب التصميم -----
+  var TMPL_PLACEABLE_FIELDS = {
+    graduates: [
+      { key: "fullName", label: "الاسم الكامل" }, { key: "jobTitle", label: "اللقب الوظيفي" },
+      { key: "university", label: "الجامعة" }, { key: "specializationType", label: "نوع التخصص" },
+      { key: "degree", label: "الدرجة" }, { key: "honor", label: "مرتبة الشرف" },
+      { key: "specialization", label: "التخصص" }, { key: "graduationMonthGregorian", label: "شهر التخرج (ميلادي)" },
+      { key: "graduationMonthHijri", label: "شهر التخرج (هجري)" }, { key: "gregorianYear", label: "السنة الميلادية" },
+      { key: "hijriYear", label: "السنة الهجرية" }, { key: "country", label: "الدولة" },
+      { key: "photo", label: "صورة الخريج", type: "image" }, { key: "universityLogo", label: "شعار الجامعة", type: "image" }
+    ],
+    births: [
+      { key: "fullName", label: "اسم المولود" }, { key: "fatherName", label: "اسم الأب" },
+      { key: "motherName", label: "اسم الأم" }, { key: "birthDateHijri", label: "تاريخ الميلاد (هجري)" },
+      { key: "birthMonthGregorian", label: "الشهر (ميلادي)" }, { key: "birthMonthHijri", label: "الشهر (هجري)" },
+      { key: "gregorianYear", label: "السنة الميلادية" }, { key: "hijriYear", label: "السنة الهجرية" },
+      { key: "photo", label: "صورة الأب", type: "image" }
+    ],
+    marriages: [
+      { key: "husbandName", label: "اسم الزوج" }, { key: "husbandDistrict", label: "منطقة/حي الزوج" },
+      { key: "wifeGuardian", label: "كريمة/ولي الزوجة" }, { key: "wifeDistrict", label: "منطقة/حي الزوجة" },
+      { key: "contractDateHijri", label: "تاريخ العقد (هجري)" }, { key: "contractMonthGregorian", label: "شهر العقد (ميلادي)" },
+      { key: "contractMonthHijri", label: "شهر العقد (هجري)" }, { key: "gregorianYear", label: "السنة الميلادية" },
+      { key: "hijriYear", label: "السنة الهجرية" }, { key: "photo", label: "صورة الزوج", type: "image" }
+    ],
+    congrats: [
+      { key: "fullName", label: "اسم المحتفى به" }, { key: "title", label: "اللقب/المسمى الوظيفي" },
+      { key: "occasionType", label: "نوع المناسبة" }, { key: "details", label: "تفاصيل إضافية" },
+      { key: "suggestedWording", label: "الصياغة المعتمدة من جيمناي" },
+      { key: "occasionMonthGregorian", label: "الشهر (ميلادي)" }, { key: "occasionMonthHijri", label: "الشهر (هجري)" },
+      { key: "gregorianYear", label: "السنة الميلادية" }, { key: "hijriYear", label: "السنة الهجرية" },
+      { key: "photo", label: "صورة صاحب التهنئة", type: "image" }
+    ],
+    deaths: [
+      { key: "deceasedName", label: "اسم المتوفى" }, { key: "deceasedFamily", label: "عائلة المتوفى" },
+      { key: "ageCategory", label: "الفئة العمرية" }, { key: "deathDateHijri", label: "تاريخ الوفاة (هجري)" },
+      { key: "deathMonthGregorian", label: "شهر الوفاة (ميلادي)" }, { key: "deathMonthHijri", label: "شهر الوفاة (هجري)" },
+      { key: "funeralFrom", label: "التشييع من" }, { key: "funeralTime", label: "وقت التشييع" },
+      { key: "gregorianYear", label: "السنة الميلادية" }, { key: "hijriYear", label: "السنة الهجرية" }
+    ]
+  };
+  function tmplFieldMeta(catKey, fieldKey){
+    var list = TMPL_PLACEABLE_FIELDS[catKey] || [];
+    return list.find(function(f){ return f.key === fieldKey; });
+  }
+  function tmplManagerHTML(){
+    var cat = eventsUI.designTmplCategory;
+    var templates = loadDesignTemplates(cat);
+    var html = '<div class="cat-tabs" style="margin-bottom:16px;">' +
+      EVENTS_CATEGORIES.map(function(c){
+        return '<button type="button" class="cat-tab' + (c.key === cat ? " active" : "") + '" data-action="set-design-tmpl-cat" data-cat="' + c.key + '"><span class="icon" style="color:' + eventCategoryColor(c.key) + ';">' + c.icon + '</span>' + c.label + '</button>';
+      }).join("") + '</div>';
+    html += '<p class="hint" style="margin-bottom:14px;">ارفع قوالب التصميم الجاهزة لهذا التصنيف، وحدد مكان كل متغير عليها مرة واحدة — بعدها تقدر تولّد صورة مخصصة لأي سجل بضغطة زر من داخل جدول البيانات</p>';
+    if(!templates.length){
+      html += '<p style="text-align:center; color:var(--ink-soft); padding:20px 0;">لا توجد قوالب لهذا التصنيف بعد</p>';
+    } else {
+      templates.forEach(function(t){
+        html += '<div class="tmpl-list-card">' +
+          '<img src="' + t.image + '" alt=""/>' +
+          '<div class="info"><b>' + escapeHTML(t.name) + '</b><div class="hint">' + t.fields.length + ' متغير محدد</div></div>' +
+          '<button type="button" class="btn-secondary" data-action="edit-design-tmpl" data-id="' + t.id + '">تعديل</button>' +
+          '<button type="button" class="task-icon-btn" data-action="delete-design-tmpl" data-id="' + t.id + '" title="حذف"><span class="icon">' + ICON_DELETE + '</span></button>' +
+        '</div>';
+      });
+    }
+    html += '<label class="btn-primary" style="display:inline-flex; align-items:center; gap:6px; cursor:pointer; margin-top:10px;"><span class="icon">' + TICON.plus + '</span> رفع قالب جديد<input type="file" accept="image/*" id="newTmplUploadInput" style="display:none;"/></label>';
+    return html;
+  }
+  function refreshTmplManager(){
+    var sub = document.getElementById("eventsSubRoot");
+    if(sub && eventsUI.tab === "templates") setHTML(sub, tmplManagerHTML());
+  }
+
+  var TMPL_FONT_CHOICES = ["Cairo", "Tajawal", "Almarai", "Amiri", "Reem Kufi"];
+  function tmplEditorCurrentTemplate(){
+    return tmplEditorState ? findDesignTemplate(tmplEditorState.templateId) : null;
+  }
+  function tmplUpdateField(tmpl, key, patch){
+    var f = tmpl.fields.find(function(x){ return x.key === key; });
+    if(!f) return;
+    Object.assign(f, patch);
+    saveDesignTemplate(tmpl);
+  }
+  function tmplCanvasPointFromEvent(e, wrap, tmpl){
+    var img = wrap.querySelector("img");
+    var rect = img.getBoundingClientRect();
+    var x = (e.clientX - rect.left) / rect.width * tmpl.width;
+    var y = (e.clientY - rect.top) / rect.height * tmpl.height;
+    return { x: Math.max(0, Math.min(tmpl.width, x)), y: Math.max(0, Math.min(tmpl.height, y)) };
+  }
+  function finalizeTmplTextField(tmpl, key, pt){
+    tmpl.fields.push({
+      key: key, type: "text",
+      x: Math.round(pt.x), y: Math.round(pt.y),
+      fontSize: 28, font: "Cairo", bold: false, color: "#000000",
+      align: "center", maxWidth: Math.round(tmpl.width * 0.6),
+      kashida: false, hideValues: []
+    });
+    saveDesignTemplate(tmpl);
+  }
+  function finalizeTmplImageField(tmpl, key, x1, y1, x2, y2){
+    var x = Math.round(Math.min(x1, x2)), y = Math.round(Math.min(y1, y2));
+    var w = Math.round(Math.max(20, Math.abs(x2 - x1)));
+    var h = Math.round(Math.max(20, Math.abs(y2 - y1)));
+    tmpl.fields.push({ key: key, type: "image", x: x, y: y, boxWidth: w, boxHeight: h, shape: "rounded" });
+    saveDesignTemplate(tmpl);
+  }
+  function tmplFieldRowHTML(tmpl, f){
+    var meta = tmplFieldMeta(tmpl.category, f.key) || { label: f.key };
+    var isImage = f.type === "image";
+    var html = '<div class="tmpl-field-row" data-field-key="' + f.key + '">' +
+      '<div class="tmpl-field-row-head"><b>' + escapeHTML(meta.label) + '</b><button type="button" class="task-icon-btn" data-action="remove-tmpl-field" data-key="' + f.key + '" title="حذف الموضع"><span class="icon">' + ICON_DELETE + '</span></button></div>' +
+      '<div class="tmpl-field-controls">';
+    if(isImage){
+      html += '<label>العرض<input type="number" min="10" data-tmpl-prop="boxWidth" value="' + f.boxWidth + '"/></label>' +
+        '<label>الارتفاع<input type="number" min="10" data-tmpl-prop="boxHeight" value="' + f.boxHeight + '"/></label>' +
+        '<label>الشكل<select data-tmpl-prop="shape"><option value="rounded"' + (f.shape === "rounded" ? " selected" : "") + '>دائري الحواف</option><option value="square"' + (f.shape !== "rounded" ? " selected" : "") + '>مربّع</option></select></label>';
+    } else {
+      html += '<label>حجم الخط<input type="number" min="8" max="120" data-tmpl-prop="fontSize" value="' + f.fontSize + '"/></label>' +
+        '<label>الخط<select data-tmpl-prop="font">' + TMPL_FONT_CHOICES.map(function(fn){ return '<option value="' + fn + '"' + (f.font === fn ? " selected" : "") + '>' + fn + '</option>'; }).join("") + '</select></label>' +
+        '<label>اللون<input type="color" data-tmpl-prop="color" value="' + (f.color || "#000000") + '"/></label>' +
+        '<label>المحاذاة<select data-tmpl-prop="align"><option value="right"' + (f.align === "right" ? " selected" : "") + '>يمين</option><option value="center"' + (f.align === "center" ? " selected" : "") + '>وسط</option><option value="left"' + (f.align === "left" ? " selected" : "") + '>يسار</option></select></label>' +
+        '<label>أقصى عرض<input type="number" min="20" data-tmpl-prop="maxWidth" value="' + (f.maxWidth || "") + '"/></label>' +
+        '<label><input type="checkbox" data-tmpl-prop="bold"' + (f.bold ? " checked" : "") + '/> عريض</label>' +
+        '<label><input type="checkbox" data-tmpl-prop="kashida"' + (f.kashida ? " checked" : "") + '/> تمديد كشيدة</label>' +
+        '<label style="flex-basis:100%;">إخفاء عند القيمة (افصل بفاصلة)<input type="text" data-tmpl-prop="hideValues" placeholder="مثال: بدون" value="' + escapeHTML((f.hideValues || []).join("، ")) + '" style="width:200px;"/></label>';
+    }
+    html += '</div></div>';
+    return html;
+  }
+  function openTemplateEditor(templateId){
+    var tmpl = findDesignTemplate(templateId);
+    if(!tmpl) return;
+    tmplEditorState = { templateId: templateId, pendingKey: "", dragStart: null };
+    renderTemplateEditor();
+    document.getElementById("tmplEditorOverlay").classList.add("active");
+  }
+  function closeTemplateEditor(){
+    document.getElementById("tmplEditorOverlay").classList.remove("active");
+    tmplEditorState = null;
+    refreshTmplManager();
+  }
+  function renderTemplateEditor(){
+    var tmpl = tmplEditorCurrentTemplate();
+    if(!tmpl || !tmplEditorState) return;
+    var body = document.getElementById("tmplEditorBody");
+    var placedKeys = tmpl.fields.map(function(f){ return f.key; });
+    var available = (TMPL_PLACEABLE_FIELDS[tmpl.category] || []).filter(function(f){ return placedKeys.indexOf(f.key) === -1; });
+    var html = '<div class="panel-head"><h3>تعديل القالب — <input type="text" id="tmplNameInput" value="' + escapeHTML(tmpl.name) + '" style="display:inline-block; width:200px; padding:4px 8px; font-size:14px; border:1px solid var(--line); border-radius:6px;"/></h3><button type="button" class="panel-close" data-action="close-tmpl-editor">✕</button></div>';
+    html += '<div style="display:flex; gap:20px; flex-wrap:wrap;">';
+    html += '<div style="flex:1; min-width:280px;"><div class="tmpl-canvas-wrap" id="tmplCanvasWrap"><img src="' + tmpl.image + '" alt="" draggable="false"/>';
+    tmpl.fields.forEach(function(f){
+      var leftPct = (f.x / tmpl.width * 100);
+      var topPct = (f.y / tmpl.height * 100);
+      var lbl = escapeHTML((tmplFieldMeta(tmpl.category, f.key) || {}).label || f.key);
+      if(f.type === "image"){
+        var wPct = (f.boxWidth / tmpl.width * 100);
+        var hPct = (f.boxHeight / tmpl.height * 100);
+        html += '<div class="tmpl-marker img-marker" style="left:' + leftPct + '%; top:' + topPct + '%; width:' + wPct + '%; height:' + hPct + '%;">' + lbl + '</div>';
+      } else {
+        html += '<div class="tmpl-marker" style="left:' + leftPct + '%; top:' + topPct + '%;">' + lbl + '</div>';
+      }
+    });
+    html += '</div>';
+    var pendingMeta = tmplEditorState.pendingKey ? tmplFieldMeta(tmpl.category, tmplEditorState.pendingKey) : null;
+    html += '<p class="hint" style="margin-top:8px;">' + (pendingMeta ?
+      (pendingMeta.type === "image" ? "اسحب على القالب لتحديد مربع الصورة" : "انقر على موضع النص في القالب") :
+      "اختر متغيراً من القائمة ثم اضغط «تحديد الموضع»") + '</p>';
+    html += '</div>';
+    html += '<div style="flex:1; min-width:280px;">';
+    if(available.length){
+      html += '<div style="display:flex; gap:8px; margin-bottom:14px;"><select id="tmplAddFieldSelect" style="flex:1; margin-bottom:0;">' +
+        available.map(function(f){ return '<option value="' + f.key + '"' + (tmplEditorState.pendingKey === f.key ? " selected" : "") + '>' + escapeHTML(f.label) + '</option>'; }).join("") +
+        '</select><button type="button" class="btn-secondary" data-action="arm-tmpl-field">تحديد الموضع</button></div>';
+    } else {
+      html += '<p class="hint" style="margin-bottom:14px;">تم تحديد مواضع كل المتغيرات المتاحة لهذا التصنيف</p>';
+    }
+    if(!tmpl.fields.length){
+      html += '<p style="text-align:center; color:var(--ink-soft); padding:10px 0;">لم تُحدَّد أي متغيرات بعد</p>';
+    } else {
+      tmpl.fields.forEach(function(f){ html += tmplFieldRowHTML(tmpl, f); });
+    }
+    html += '</div></div>';
+    setHTML(body, html);
+  }
+
+  function openDesignGenerateModal(recordId){
+    var all = loadEventsData();
+    var rec = all.find(function(r){ return r.id === recordId; });
+    if(!rec) return;
+    var cat = EVENTS_CATEGORIES.find(function(c){ return c.key === rec.category; });
+    if(!cat) return;
+    var templates = loadDesignTemplates(cat.key);
+    if(!templates.length) return;
+    tmplGenerateState = { recordId: recordId, catKey: cat.key, templateId: templates[0].id };
+    renderDesignGenerateModal();
+    document.getElementById("tmplGenerateOverlay").classList.add("active");
+  }
+  function closeDesignGenerateModal(){
+    document.getElementById("tmplGenerateOverlay").classList.remove("active");
+    tmplGenerateState = null;
+  }
+  function renderDesignGenerateModal(){
+    if(!tmplGenerateState) return;
+    var body = document.getElementById("tmplGenerateBody");
+    var templates = loadDesignTemplates(tmplGenerateState.catKey);
+    var html = '<div class="panel-head"><h3>توليد تصميم</h3><button type="button" class="panel-close" data-action="close-tmpl-generate">✕</button></div>';
+    if(templates.length > 1){
+      html += '<select id="tmplGenSelect" style="margin-bottom:14px;">' +
+        templates.map(function(t){ return '<option value="' + t.id + '"' + (t.id === tmplGenerateState.templateId ? " selected" : "") + '>' + escapeHTML(t.name) + '</option>'; }).join("") +
+        '</select>';
+    }
+    html += '<div style="text-align:center;"><canvas id="tmplGenCanvas" style="max-width:100%; border:1px solid var(--line); border-radius:10px; background:repeating-conic-gradient(#f0f0f0 0% 25%, #fff 0% 50%) 50% / 16px 16px;"></canvas></div>';
+    html += '<p class="hint" id="tmplGenStatus" style="text-align:center; margin-top:8px;">جارٍ التجهيز...</p>';
+    html += '<div style="text-align:center; margin-top:12px;"><button type="button" class="btn-primary" id="tmplGenDownloadBtn" data-action="download-tmpl-design" disabled>تنزيل الصورة</button></div>';
+    setHTML(body, html);
+    runDesignGenerate();
+  }
+  function runDesignGenerate(){
+    var tmpl = findDesignTemplate(tmplGenerateState.templateId);
+    var rec = loadEventsData().find(function(r){ return r.id === tmplGenerateState.recordId; });
+    var canvas = document.getElementById("tmplGenCanvas");
+    var statusEl = document.getElementById("tmplGenStatus");
+    var dlBtn = document.getElementById("tmplGenDownloadBtn");
+    if(!tmpl || !rec || !canvas) return;
+    dlBtn.disabled = true;
+    statusEl.textContent = "جارٍ التجهيز...";
+    renderTemplateToCanvas(canvas, tmpl, rec).then(function(ok){
+      if(!tmplGenerateState) return;
+      if(ok){
+        statusEl.textContent = "جاهز — يمكنك تنزيل الصورة";
+        dlBtn.disabled = false;
+      } else {
+        statusEl.textContent = "تعذّر تحميل صورة القالب";
+      }
+    });
+  }
+
   function eventsReportsHTML(){
     var cat = EVENTS_CATEGORIES.find(function(c){ return c.key === eventsUI.reportsCategory; }) || EVENTS_CATEGORIES[0];
     var all = loadEventsData().filter(function(r){ return r.category === cat.key; });
@@ -5566,12 +6015,14 @@
       eventsSubnavBtnHTML("dashboard", "لوحة القيادة", EVICON.grid) +
       eventsSubnavBtnHTML("data-entry", "إدخال البيانات", EVICON.doc) +
       eventsSubnavBtnHTML("publish", "مهام النشر", AICON.megaphone) +
+      eventsSubnavBtnHTML("templates", "قوالب التصميم", EVICON.grad) +
       eventsSubnavBtnHTML("reports", "التقارير والإحصائيات", AICON.chart) +
     '</div><div id="eventsSubRoot"></div>';
     setHTML(root, html);
     var subRoot = document.getElementById("eventsSubRoot");
     if(eventsUI.tab === "data-entry") setHTML(subRoot, eventsDataEntryHTML());
     else if(eventsUI.tab === "publish") setHTML(subRoot, eventsPublishHTML());
+    else if(eventsUI.tab === "templates") setHTML(subRoot, tmplManagerHTML());
     else if(eventsUI.tab === "reports") setHTML(subRoot, eventsReportsHTML());
     else setHTML(subRoot, eventsDashboardHTML());
   }
@@ -5752,6 +6203,12 @@
       case "publish-type-filter": eventsUI.publishTypeFilter = btn.dataset.type; renderEventsHub(); break;
       case "set-publish-status": setEventPublishStatus(btn.dataset.id, btn.dataset.status); renderEventsHub(); break;
       case "copy-publish-text": copyToClipboard(btn.dataset.text); break;
+      case "set-design-tmpl-cat": eventsUI.designTmplCategory = btn.dataset.cat; refreshTmplManager(); break;
+      case "edit-design-tmpl": openTemplateEditor(btn.dataset.id); break;
+      case "delete-design-tmpl":
+        if(confirm("حذف هذا القالب نهائياً؟")) deleteDesignTemplate(btn.dataset.id);
+        break;
+      case "generate-design": openDesignGenerateModal(btn.dataset.id); break;
     }
   });
   eventsRootEl.addEventListener("change", function(e){
@@ -5765,6 +6222,15 @@
       eventsUI.reportsCategory = e.target.value; eventsUI.reportsYear = ""; renderEventsHub();
     } else if(e.target.id === "reportsYearSelect"){
       eventsUI.reportsYear = e.target.value; renderEventsHub();
+    } else if(e.target.id === "newTmplUploadInput"){
+      var file = e.target.files && e.target.files[0];
+      if(!file) return;
+      compressTemplateImageFile(file, function(dataUrl, w, h){
+        if(!dataUrl){ showToast("تعذّرت قراءة الصورة"); return; }
+        var tmpl = { id: genTemplateId(), category: eventsUI.designTmplCategory, name: "قالب جديد", image: dataUrl, width: w, height: h, fields: [] };
+        saveDesignTemplate(tmpl);
+        openTemplateEditor(tmpl.id);
+      });
     }
   });
   eventsRootEl.addEventListener("input", function(e){
@@ -5892,6 +6358,111 @@
       case "close-events-import": closeEventsImportModal(); break;
       case "events-import-another": eventsImportState = { catKey: eventsImportState.catKey, rows: null, fileName: "", error: null }; renderEventsImportPanel(); break;
       case "do-events-import": doEventsImport(); break;
+    }
+  });
+
+  var tmplEditorOverlayEl = document.getElementById("tmplEditorOverlay");
+  tmplEditorOverlayEl.addEventListener("click", function(e){
+    if(e.target === tmplEditorOverlayEl){ closeTemplateEditor(); return; }
+    var tmpl = tmplEditorCurrentTemplate();
+    if(!tmpl) return;
+    var wrap = document.getElementById("tmplCanvasWrap");
+    if(wrap && wrap.contains(e.target) && tmplEditorState.pendingKey){
+      var pendMeta = tmplFieldMeta(tmpl.category, tmplEditorState.pendingKey);
+      if(pendMeta && pendMeta.type !== "image"){
+        var pt = tmplCanvasPointFromEvent(e, wrap, tmpl);
+        finalizeTmplTextField(tmpl, tmplEditorState.pendingKey, pt);
+        tmplEditorState.pendingKey = "";
+        renderTemplateEditor();
+      }
+      return;
+    }
+    var btn = e.target.closest("[data-action]");
+    if(!btn) return;
+    switch(btn.dataset.action){
+      case "close-tmpl-editor": closeTemplateEditor(); break;
+      case "arm-tmpl-field": {
+        var sel = document.getElementById("tmplAddFieldSelect");
+        tmplEditorState.pendingKey = sel ? sel.value : "";
+        renderTemplateEditor();
+        break;
+      }
+      case "remove-tmpl-field":
+        tmpl.fields = tmpl.fields.filter(function(f){ return f.key !== btn.dataset.key; });
+        saveDesignTemplate(tmpl);
+        renderTemplateEditor();
+        break;
+    }
+  });
+  tmplEditorOverlayEl.addEventListener("mousedown", function(e){
+    var tmpl = tmplEditorCurrentTemplate();
+    if(!tmpl || !tmplEditorState.pendingKey) return;
+    var meta = tmplFieldMeta(tmpl.category, tmplEditorState.pendingKey);
+    if(!meta || meta.type !== "image") return;
+    var wrap = document.getElementById("tmplCanvasWrap");
+    if(!wrap || !wrap.contains(e.target)) return;
+    tmplEditorState.dragStart = tmplCanvasPointFromEvent(e, wrap, tmpl);
+    e.preventDefault();
+  });
+  tmplEditorOverlayEl.addEventListener("mouseup", function(e){
+    var tmpl = tmplEditorCurrentTemplate();
+    if(!tmpl || !tmplEditorState || !tmplEditorState.dragStart) return;
+    var meta = tmplFieldMeta(tmpl.category, tmplEditorState.pendingKey);
+    var wrap = document.getElementById("tmplCanvasWrap");
+    if(wrap && meta && meta.type === "image"){
+      var pt = tmplCanvasPointFromEvent(e, wrap, tmpl);
+      finalizeTmplImageField(tmpl, tmplEditorState.pendingKey, tmplEditorState.dragStart.x, tmplEditorState.dragStart.y, pt.x, pt.y);
+      tmplEditorState.pendingKey = "";
+    }
+    tmplEditorState.dragStart = null;
+    renderTemplateEditor();
+  });
+  tmplEditorOverlayEl.addEventListener("change", function(e){
+    var tmpl = tmplEditorCurrentTemplate();
+    if(!tmpl) return;
+    if(e.target.id === "tmplNameInput"){
+      tmpl.name = e.target.value.trim() || "قالب بلا اسم";
+      saveDesignTemplate(tmpl);
+      return;
+    }
+    var row = e.target.closest("[data-field-key]");
+    if(row && e.target.dataset.tmplProp){
+      var key = row.dataset.fieldKey;
+      var prop = e.target.dataset.tmplProp;
+      var val;
+      if(e.target.type === "checkbox") val = e.target.checked;
+      else if(e.target.type === "number") val = Number(e.target.value) || 0;
+      else if(prop === "hideValues") val = e.target.value.split(/[،,]/).map(function(s){ return s.trim(); }).filter(Boolean);
+      else val = e.target.value;
+      var patch = {}; patch[prop] = val;
+      tmplUpdateField(tmpl, key, patch);
+    }
+  });
+
+  var tmplGenerateOverlayEl = document.getElementById("tmplGenerateOverlay");
+  tmplGenerateOverlayEl.addEventListener("click", function(e){
+    if(e.target === tmplGenerateOverlayEl){ closeDesignGenerateModal(); return; }
+    var btn = e.target.closest("[data-action]");
+    if(!btn) return;
+    switch(btn.dataset.action){
+      case "close-tmpl-generate": closeDesignGenerateModal(); break;
+      case "download-tmpl-design": {
+        var canvas = document.getElementById("tmplGenCanvas");
+        if(!canvas || !tmplGenerateState) return;
+        var rec = loadEventsData().find(function(r){ return r.id === tmplGenerateState.recordId; });
+        var name = (rec && (rec.fullName || rec.husbandName || rec.deceasedName)) || "تصميم";
+        var link = document.createElement("a");
+        link.download = name.replace(/[^\w؀-ۿ ]/g, "").trim() + ".png";
+        link.href = canvas.toDataURL("image/png");
+        link.click();
+        break;
+      }
+    }
+  });
+  tmplGenerateOverlayEl.addEventListener("change", function(e){
+    if(e.target.id === "tmplGenSelect" && tmplGenerateState){
+      tmplGenerateState.templateId = e.target.value;
+      runDesignGenerate();
     }
   });
 
