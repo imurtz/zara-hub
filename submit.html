@@ -293,7 +293,7 @@
         { key: "graduationMonthGregorian", label: "شهر التخرج (ميلادي)", type: "select", options: GREG_MONTHS, auto: true, locked: true, required: true, hint: "يُحدَّد تلقائياً بشهر التسجيل" },
         { key: "graduationMonthHijri", label: "شهر التخرج (هجري)", type: "select", options: HIJRI_MONTHS, auto: true, locked: true, required: true, hint: "يُحدَّد تلقائياً بشهر التسجيل" },
         { key: "fullName", label: "الاسم الكامل", type: "text", required: true, hint: "الاسم الثلاثي أو الرباعي كاملاً كما في الهوية" },
-        { key: "jobTitle", label: "اللقب الوظيفي", type: "text", hint: "مثال: مهندس، محاسب، معلم — اتركه فارغاً إذا لا ينطبق" },
+        { key: "jobTitle", label: "اللقب الوظيفي", type: "selectOther", optionsKey: "graduateJobTitles", options: [], hint: "اختر من القائمة، أو \"غير ذلك\" — اتركه فارغاً إذا لا ينطبق" },
         { key: "gender", label: "الجنس", type: "select", options: ["ذكر", "أنثى"], required: true, hint: "حدد جنس الخريج" },
         { key: "country", label: "الدولة", type: "select", options: WORLD_COUNTRIES, required: true, hint: "الدولة التي تخرّج منها الطالب" },
         { key: "university", label: "الجامعة", type: "selectOther", options: SAUDI_UNIVERSITIES, required: true, hint: "اختر من القائمة، أو \"غير ذلك\" لكتابة اسم الجامعة/الكلية/المعهد" },
@@ -969,7 +969,8 @@
 
   var EVENTS_OPTIONS_DEFAULTS = {
     congratsTitles: ["المهندس", "المهندسة", "الدكتور", "الدكتورة", "الأستاذ", "الأستاذة", "الشيخ"],
-    congratsOccasionTypes: ["ترقية وظيفية", "جائزة أو تكريم", "افتتاح مشروع", "إنجاز أو نجاح"]
+    congratsOccasionTypes: ["ترقية وظيفية", "جائزة أو تكريم", "افتتاح مشروع", "إنجاز أو نجاح"],
+    graduateJobTitles: ["مهندس", "مهندسة", "محاسب", "محاسبة", "معلم", "معلمة", "طبيب", "طبيبة", "صيدلي", "صيدلانية", "ممرض", "ممرضة", "محامي", "محامية", "مبرمج", "مبرمجة", "مدير", "مديرة", "أخصائي", "أخصائية"]
   };
   function applyEventsOptions(data){
     var merged = {};

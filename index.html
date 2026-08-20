@@ -4580,7 +4580,7 @@
         { key: "graduationMonthGregorian", label: "شهر التخرج (ميلادي)", type: "select", options: GREG_MONTHS, auto: true, locked: true, hint: "يُحدَّد تلقائياً بشهر التسجيل" },
         { key: "graduationMonthHijri", label: "شهر التخرج (هجري)", type: "select", options: HIJRI_MONTHS, auto: true, locked: true, hint: "يُحدَّد تلقائياً بشهر التسجيل" },
         { key: "fullName", label: "الاسم الكامل", type: "text", hint: "الاسم الثلاثي أو الرباعي كاملاً كما في الهوية" },
-        { key: "jobTitle", label: "اللقب الوظيفي", type: "text", hint: "مثال: مهندس، محاسب، معلم — اتركه فارغاً إذا لا ينطبق" },
+        { key: "jobTitle", label: "اللقب الوظيفي", type: "growSelect", optKey: "graduateJobTitles", hint: "اختر من القائمة، أو اترك فارغاً إذا لا ينطبق" },
         { key: "gender", label: "الجنس", type: "select", options: ["ذكر", "أنثى"], hint: "حدد جنس الخريج" },
         { key: "country", label: "الدولة", type: "growSelect", optKey: "countries", hint: "الدولة التي تخرّج منها الطالب" },
         { key: "university", label: "الجامعة", type: "selectOther", options: SAUDI_UNIVERSITIES, hint: "اختر من القائمة، أو \"غير ذلك\" لكتابة اسم الجامعة/الكلية/المعهد" },
@@ -4771,7 +4771,8 @@
       ageCategories: ["طفل", "شاب", "بالغ", "كبير السن"],
       funeralFrom: [],
       congratsOccasionTypes: ["ترقية وظيفية", "جائزة أو تكريم", "افتتاح مشروع", "إنجاز أو نجاح"],
-      congratsTitles: ["المهندس", "المهندسة", "الدكتور", "الدكتورة", "الأستاذ", "الأستاذة", "الشيخ"]
+      congratsTitles: ["المهندس", "المهندسة", "الدكتور", "الدكتورة", "الأستاذ", "الأستاذة", "الشيخ"],
+      graduateJobTitles: ["مهندس", "مهندسة", "محاسب", "محاسبة", "معلم", "معلمة", "طبيب", "طبيبة", "صيدلي", "صيدلانية", "ممرض", "ممرضة", "محامي", "محامية", "مبرمج", "مبرمجة", "مدير", "مديرة", "أخصائي", "أخصائية"]
     };
     var p = _eventsOptionsCache;
     if(p){ for(var k in defaults){ if(p[k] !== undefined) defaults[k] = p[k]; } }
