@@ -4666,6 +4666,7 @@
         { key: "fullName", label: "اسم المحتفى به", type: "text", hint: "الاسم الكامل للشخص المُهنَّأ" },
         { key: "occasionType", label: "نوع المناسبة", type: "growSelect", optKey: "congratsOccasionTypes", hint: "سبب التهنئة، مثل: ترقية، جائزة، افتتاح مشروع" },
         { key: "details", label: "تفاصيل إضافية", type: "text", hint: "تفاصيل المناسبة — تُستخدم بصياغة منشور التهنئة" },
+        { key: "suggestedWording", label: "الصياغة المعتمدة من جيمناي", type: "readonlyText", hint: "النص اللي وافق عليه المُرسل من الصفحة العامة — يُستخدم مباشرة عند تجهيز المنشور" },
         { key: "notes", label: "ملاحظات", type: "text", hint: "أي ملاحظات إضافية — اختياري" }
       ],
       photoLabel: "صورة صاحب التهنئة",
@@ -4975,6 +4976,10 @@
         return '<div class="photo-thumb"><img src="' + value + '" alt=""/><button type="button" class="rm" data-action="remove-field-image" data-key="' + f.key + '">×</button></div>';
       }
       return '<input type="file" accept="image/*" class="event-photo-input" data-action="field-image-input" data-key="' + f.key + '"/>';
+    }
+    if(f.type === "readonlyText"){
+      if(!value) return '<p class="event-field-hint" style="margin:0;">لا يوجد — لم يُستخدم مساعد الصياغة لهذا السجل</p>';
+      return '<div style="padding:10px 12px; background:var(--teal-tint); border:1px solid var(--line); border-radius:10px; font-size:13px; line-height:1.8; color:var(--ink);">' + escapeHTML(value) + '</div>';
     }
     return '<input type="text" data-field-input data-key="' + f.key + '" value="' + escapeHTML(value || "") + '"/>';
   }
