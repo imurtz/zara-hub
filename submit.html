@@ -90,7 +90,15 @@
   }
   .field input:focus, .field select:focus, .field textarea:focus{outline:none; border-color:var(--blue); background-color:var(--white);}
   .field-hint{font-size:11px; color:var(--ink-soft); line-height:1.5;}
-  .ai-block{margin-top:-4px;}
+  .ai-block{margin-top:-4px; display:flex; flex-direction:column; gap:10px;}
+  .ai-image-upload-label{display:inline-flex; align-items:center; gap:6px; font-size:12px; color:var(--teal-dark); border:1.5px dashed var(--line); border-radius:10px; padding:9px 12px; cursor:pointer; width:fit-content;}
+  .ai-image-upload-label:hover{border-color:var(--blue);}
+  .ai-image-preview{position:relative; display:inline-block; border-radius:10px; overflow:hidden; border:1px solid var(--line); line-height:0; width:fit-content;}
+  .ai-image-preview img{display:block; height:90px; width:auto; max-width:100%; object-fit:contain;}
+  .ai-image-preview .rm{position:absolute; top:4px; left:4px; background:rgba(0,0,0,.55); color:#fff; border:none; width:20px; height:20px; border-radius:50%; font-size:12px; cursor:pointer;}
+  .ai-suggest-btn{align-self:flex-start; padding:10px 20px; border:none; border-radius:10px; background:var(--blue); color:#fff; font-size:13px; font-weight:600; cursor:pointer; transition:background .15s;}
+  .ai-suggest-btn:hover{background:var(--blue-dark);}
+  .ai-suggest-btn:disabled{background:var(--line); color:var(--ink-soft); cursor:not-allowed;}
   .ai-status{font-size:12px; color:var(--blue-dark); display:flex; align-items:center; gap:6px;}
   .ai-error{color:var(--danger); font-size:12px;}
   .ai-retry-btn{border:none; background:none; color:var(--blue-dark); font-size:12px; font-weight:600; text-decoration:underline; cursor:pointer; padding:0;}
@@ -349,13 +357,13 @@
         { key: "title", label: "اللقب / المسمى الوظيفي", type: "selectOther", optionsKey: "congratsTitles", options: [], hint: "اختر من القائمة، أو \"غير ذلك\" — اتركه فارغاً إذا لا ينطبق" },
         { key: "fullName", label: "اسم المحتفى به", type: "text", required: true, hint: "الاسم الكامل للشخص المُهنَّأ" },
         { key: "occasionType", label: "نوع المناسبة", type: "selectOther", optionsKey: "congratsOccasionTypes", options: [], required: true, hint: "اختر من القائمة أو \"غير ذلك\"" },
-        { key: "details", label: "تفاصيل إضافية", type: "textarea", required: true, hint: "تفاصيل المناسبة — تُستخدم بصياغة منشور التهنئة" },
+        { key: "details", label: "تفاصيل إضافية", type: "textarea", hint: "تفاصيل المناسبة — تُستخدم بصياغة منشور التهنئة. يمكن رفع صورة بدلاً من الكتابة" },
         { key: "notes", label: "ملاحظات", type: "text", hint: "أي ملاحظات إضافية تودون إضافتها — اختياري" }
       ]
     }
   ];
 
-  var state = { activeCategory: "graduates", photo: "", fieldImages: {}, aiSuggestion: "", aiLoading: false, aiError: "", aiConsentPolicy: false, aiConsentWording: false };
+  var state = { activeCategory: "graduates", photo: "", fieldImages: {}, aiSuggestion: "", aiLoading: false, aiError: "", aiConsentPolicy: false, aiConsentWording: false, aiImage: "" };
 
   var GRADIENT_PRESETS = {
     brand: "linear-gradient(120deg, var(--teal) 0%, var(--teal-dark) 55%, var(--blue-dark) 100%)",
@@ -518,7 +526,7 @@
     var effectiveFields = getEffectiveFields(cat.key);
     state.photo = "";
     state.fieldImages = {};
-    state.aiSuggestion = ""; state.aiLoading = false; state.aiError = ""; state.aiConsentPolicy = false; state.aiConsentWording = false;
+    state.aiSuggestion = ""; state.aiLoading = false; state.aiError = ""; state.aiConsentPolicy = false; state.aiConsentWording = false; state.aiImage = "";
     var grid = document.getElementById("formGrid");
     grid.innerHTML = effectiveFields.map(function(f){
       if(f.derived) return "";
@@ -560,8 +568,21 @@
     if(target) target.outerHTML = imageFieldHTML(key);
     bindFormEvents();
   }
+  function currentDetailsValue(){
+    var el = document.querySelector('[data-key="details"]');
+    return el ? el.value.trim() : "";
+  }
   function aiBlockHTML(){
     var html = '<div class="field full ai-block">';
+    if(state.aiImage){
+      html += '<div class="ai-image-preview"><img src="' + state.aiImage + '" alt=""/><button type="button" class="rm" id="aiImageRemoveBtn">×</button></div>';
+    } else {
+      html += '<label class="ai-image-upload-label">📷 أو ارفع صورة (شهادة، جائزة، تكريم...) ليستخرج منها جيمناي التهنئة<input type="file" accept="image/*" id="aiImageInput" style="display:none;"/></label>';
+    }
+    if(!state.aiSuggestion && !state.aiLoading){
+      var hasContent = !!(currentDetailsValue() || state.aiImage);
+      html += '<button type="button" class="ai-suggest-btn" id="aiSuggestBtn"' + (hasContent ? "" : " disabled") + '>✨ اكتب التهنئة الآن</button>';
+    }
     if(state.aiLoading){
       html += '<p class="ai-status">جاري إعداد نص التهنئة...</p>';
     }
@@ -603,7 +624,7 @@
     var title = fieldValue(titleField);
     var occasionType = fieldValue(occasionTypeField);
     var details = fieldValue({ key: "details", type: "text" });
-    if(!details) return;
+    if(!details && !state.aiImage) return;
     state.aiLoading = true;
     state.aiError = "";
     state.aiSuggestion = "";
@@ -613,7 +634,7 @@
     fetch(GEMINI_PROXY_URL, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ fullName: fullName, gender: gender, title: title, occasionType: occasionType, details: details })
+      body: JSON.stringify({ fullName: fullName, gender: gender, title: title, occasionType: occasionType, details: details, image: state.aiImage || "" })
     }).then(function(res){
       return res.json().then(function(data){ return { ok: res.ok, data: data }; });
     }).then(function(result){
@@ -633,6 +654,8 @@
     });
   }
   function bindFormEvents(){
+    var aiSuggestBtn = document.getElementById("aiSuggestBtn");
+    if(aiSuggestBtn) aiSuggestBtn.addEventListener("click", fetchAiSuggestion);
     var aiRetryBtn = document.getElementById("aiRetryBtn");
     if(aiRetryBtn) aiRetryBtn.addEventListener("click", fetchAiSuggestion);
     var aiRegenBtn = document.getElementById("aiRegenBtn");
@@ -641,24 +664,53 @@
     if(aiPolicyChk) aiPolicyChk.addEventListener("change", function(){ state.aiConsentPolicy = aiPolicyChk.checked; updateSubmitButtonState(); });
     var aiWordingChk = document.getElementById("aiConsentWording");
     if(aiWordingChk) aiWordingChk.addEventListener("change", function(){ state.aiConsentWording = aiWordingChk.checked; updateSubmitButtonState(); });
+    var aiImageInput = document.getElementById("aiImageInput");
+    if(aiImageInput){
+      aiImageInput.addEventListener("change", function(e){
+        var file = e.target.files && e.target.files[0];
+        if(!file) return;
+        if(file.size > 15 * 1024 * 1024){
+          state.aiError = "حجم الصورة كبير جداً — اختر صورة أصغر";
+          refreshAiBlock();
+          return;
+        }
+        compressImageFile(file, 600 * 1024, function(dataUrl){
+          if(!dataUrl) return;
+          state.aiImage = dataUrl;
+          if(state.aiSuggestion || state.aiError){
+            state.aiSuggestion = ""; state.aiConsentPolicy = false; state.aiConsentWording = false; state.aiError = "";
+          }
+          refreshAiBlock();
+        });
+      });
+    }
+    var aiImageRemoveBtn = document.getElementById("aiImageRemoveBtn");
+    if(aiImageRemoveBtn){
+      aiImageRemoveBtn.addEventListener("click", function(){
+        state.aiImage = "";
+        refreshAiBlock();
+      });
+    }
     var activeCat = CATEGORIES.find(function(c){ return c.key === state.activeCategory; });
     if(activeCat && activeCat.aiWordingAssist){
       var detailsInput = document.querySelector('[data-key="details"]');
       if(detailsInput && !detailsInput.dataset.aiBound){
         detailsInput.dataset.aiBound = "1";
-        detailsInput.addEventListener("change", function(){
+        detailsInput.addEventListener("input", function(){
           if(state.aiSuggestion || state.aiError){
             state.aiSuggestion = ""; state.aiConsentPolicy = false; state.aiConsentWording = false; state.aiError = "";
+            refreshAiBlock();
+            return;
           }
-          if(detailsInput.value.trim()) fetchAiSuggestion();
-          else refreshAiBlock();
+          var btn = document.getElementById("aiSuggestBtn");
+          if(btn) btn.disabled = !(detailsInput.value.trim() || state.aiImage);
         });
       }
       var genderSelect = document.querySelector('[data-key="gender"]');
       if(genderSelect && !genderSelect.dataset.aiBound){
         genderSelect.dataset.aiBound = "1";
         genderSelect.addEventListener("change", function(){
-          if(state.aiSuggestion && fieldValue({ key: "details", type: "text" })) fetchAiSuggestion();
+          if(state.aiSuggestion) fetchAiSuggestion();
         });
       }
     }

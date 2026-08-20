@@ -13,7 +13,7 @@ const WORDING_POLICY = `أنت مساعد صياغة لجمعية العوامي
 1. يبدأ النص حرفياً بعبارة "وذلك بمناسبة" ثم يليها وصف المناسبة والإنجاز مباشرة.
 2. راعِ صيغة المذكر أو المؤنث في كل الأفعال والضمائر حسب جنس المحتفى به المُعطى (مثال مذكر: حصوله، تخرجه، حصوله على — مثال مؤنث: حصولها، تخرجها، حصولها على). إن لم يُذكر الجنس استخدم صيغة عامة تتفادى الضمير قدر الإمكان.
 3. اجعل طول النص الكامل تقريباً بين 210 و240 حرفاً — أي فقرة متوسطة الطول من 3 إلى 4 جمل قصيرة مترابطة تصف المناسبة بتفصيل مناسب دون حشو ودون اختصار مخل. لا تحسب الأحرف حرفاً حرفاً ولا تُظهر أي عملية حساب — قدّر الطول تقديراً طبيعياً من عدد الجمل والكلمات فقط.
-4. لا تخترع أي تفاصيل غير مذكورة صراحة في المعطيات المُرسلة (لا أسماء جهات، لا تواريخ، لا إنجازات إضافية).
+4. لا تخترع أي تفاصيل غير مذكورة صراحة في المعطيات المُرسلة أو غير ظاهرة بوضوح في الصورة المرفقة إن وُجدت (لا أسماء جهات، لا تواريخ، لا إنجازات إضافية). إن أُرفقت صورة (شهادة، جائزة، شهادة تقدير، تكريم)، استخرج منها تفاصيل المناسبة الظاهرة فيها (نوع الإنجاز، الجهة المانحة، الموضوع) واستخدمها مع أي تفاصيل نصية مرفقة لصياغة البيان.
 5. لا تستخدم أي مقدمة مثل "تتقدم الجمعية بالتهنئة" ولا أي خاتمة أو دعاء ختامي — النص يقتصر حصراً على وصف المناسبة بدءاً من "وذلك بمناسبة" وحتى نهاية وصف الإنجاز.
 6. أعد الجملة النهائية فقط، كنص متصل عادي جاهز للنشر مباشرة. ممنوع منعاً باتاً: عنوان، رموز تعبيرية، علامات اقتباس، أي شرح أو تعليق، وأي أثر لعملية العد أو الحساب مثل أرقام بين قوسين أو علامات + أو كلمة "حرف" أو "حروف" داخل النص — إن ظهر أي من ذلك فهو خطأ فادح.
 
@@ -57,8 +57,9 @@ export default {
     const title = clean(body.title, 100);
     const occasionType = clean(body.occasionType, 200);
     const details = clean(body.details, 800);
+    const image = parseImageDataUrl(body.image);
 
-    if (!details) {
+    if (!details && !image) {
       return json({ error: "missing_details" }, 400, headers);
     }
 
@@ -67,11 +68,11 @@ export default {
       "الجنس: " + (gender || "غير محدد") + "\n" +
       "اللقب/المسمى الوظيفي: " + (title || "لا يوجد") + "\n" +
       "نوع المناسبة: " + (occasionType || "غير مذكور") + "\n" +
-      "تفاصيل من صاحب المناسبة: " + details;
+      "تفاصيل من صاحب المناسبة: " + (details || "(لا يوجد نص — استخرج التفاصيل من الصورة المرفقة)");
 
     let text;
     try {
-      text = await callGemini(env, userPrompt);
+      text = await callGemini(env, userPrompt, image);
     } catch (e) {
       const isQuota = e.message === "quota_exceeded";
       return json({ error: isQuota ? "quota_exceeded" : "gemini_error" }, isQuota ? 429 : 502, headers);
@@ -91,7 +92,7 @@ export default {
             ? "أطول من اللازم — أعد الصياغة بإيجاز أكثر ليقع الطول بين 210 و240 حرفاً"
             : "يحتوي على أثر عملية عدّ أو حساب ظاهر في النص — أعد كتابته كجملة نهائية نظيفة بدون أي أرقام أو رموز حسابية");
         const retryPrompt = userPrompt + "\n\n(تنبيه: المحاولة السابقة " + direction + ".)";
-        const retryText = await callGemini(env, retryPrompt);
+        const retryText = await callGemini(env, retryPrompt, image);
         if (retryText && !hasLeakedArithmetic(retryText)) {
           const retryInRange = retryText.length >= 210 && retryText.length <= 240;
           const currentUsable = !outOfRange && !hasLeakedArithmetic(text);
@@ -109,14 +110,18 @@ export default {
   }
 };
 
-async function callGemini(env, promptText) {
+async function callGemini(env, promptText, image) {
+  const parts = [{ text: promptText }];
+  if (image) {
+    parts.push({ inline_data: { mime_type: image.mimeType, data: image.base64 } });
+  }
   const geminiRes = await fetch(
     "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=" + env.GEMINI_API_KEY,
     {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        contents: [{ parts: [{ text: promptText }] }],
+        contents: [{ parts: parts }],
         systemInstruction: { parts: [{ text: WORDING_POLICY }] },
         generationConfig: { temperature: 0.6, maxOutputTokens: 1536, thinkingConfig: { thinkingLevel: "low" } }
       })
@@ -130,6 +135,13 @@ async function callGemini(env, promptText) {
     data.candidates[0].content.parts && data.candidates[0].content.parts[0] &&
     data.candidates[0].content.parts[0].text ? data.candidates[0].content.parts[0].text.trim() : "";
   return text;
+}
+// يحوّل data URL (data:image/jpeg;base64,....) إلى {mimeType, base64} لإرساله لجيمناي — أو null إن كان غير صالح
+function parseImageDataUrl(v) {
+  if (!v || typeof v !== "string") return null;
+  const match = /^data:(image\/[a-zA-Z0-9.+-]+);base64,(.+)$/.exec(v.trim());
+  if (!match) return null;
+  return { mimeType: match[1], base64: match[2].slice(0, 4000000) };
 }
 
 function clean(v, maxLen) {
