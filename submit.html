@@ -363,7 +363,18 @@
     }
   ];
 
-  var state = { activeCategory: null, photo: "", fieldImages: {}, aiSuggestion: "", aiLoading: false, aiError: "", aiConsentPolicy: false, aiConsentWording: false, aiImage: "" };
+  function getCategoryFromUrl(){
+    var v = new URLSearchParams(location.search).get("cat");
+    return (v && CATEGORIES.some(function(c){ return c.key === v; })) ? v : null;
+  }
+  function setCategoryInUrl(catKey){
+    var url = new URL(location.href);
+    if(catKey) url.searchParams.set("cat", catKey);
+    else url.searchParams.delete("cat");
+    history.replaceState(null, "", url.toString());
+  }
+
+  var state = { activeCategory: getCategoryFromUrl(), photo: "", fieldImages: {}, aiSuggestion: "", aiLoading: false, aiError: "", aiConsentPolicy: false, aiConsentWording: false, aiImage: "" };
 
   var GRADIENT_PRESETS = {
     brand: "linear-gradient(120deg, var(--teal) 0%, var(--teal-dark) 55%, var(--blue-dark) 100%)",
@@ -472,6 +483,7 @@
     Array.prototype.forEach.call(el.querySelectorAll("button"), function(btn){
       btn.addEventListener("click", function(){
         state.activeCategory = btn.dataset.cat;
+        setCategoryInUrl(state.activeCategory);
         renderCatSelect();
         renderForm();
       });
