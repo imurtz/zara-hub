@@ -44,8 +44,15 @@
   .ad-banner-slide h2{position:relative; z-index:1; font-size:17px; margin-bottom:6px;}
   .ad-banner-slide p{position:relative; z-index:1; font-size:12.5px; color:rgba(255,255,255,.88); line-height:1.7; max-width:480px; margin:0 auto;}
   .ad-banner-slide .ad-icon{position:relative; z-index:1; width:34px; height:34px; margin:0 auto 10px; color:#fff; opacity:.9;}
-  .ad-banner-slide.image-slide{position:relative; height:100%;}
-  .ad-banner-slide.image-slide img{position:absolute; inset:0; width:100%; height:100%; object-fit:cover;}
+  .ad-banner-slide.image-slide{position:relative; height:100%; background:var(--white);}
+  .ad-banner-slide.image-slide img{position:absolute; inset:0; width:100%; height:100%; object-fit:contain;}
+  @media (max-width:560px){
+    .ad-banner-carousel{grid-template-rows:minmax(150px, auto);}
+    .ad-banner-slide.text-slide{padding:18px 16px;}
+    .ad-banner-slide h2{font-size:15px;}
+    .ad-banner-slide p{font-size:11.5px;}
+    .ad-banner-slide .ad-icon{width:28px; height:28px;}
+  }
   .ad-banner-dots{position:absolute; bottom:10px; left:50%; transform:translateX(-50%); display:flex; gap:6px; z-index:2;}
   .ad-banner-dots button{width:7px; height:7px; border-radius:50%; border:none; background:rgba(255,255,255,.55); cursor:pointer; padding:0; transition:background .2s;}
   .ad-banner-dots button.active{background:#fff;}
@@ -323,7 +330,6 @@
         { key: "contractMonthHijri", label: "شهر العقد (هجري)", type: "select", options: HIJRI_MONTHS, derived: true },
         { key: "husbandName", label: "اسم الزوج", type: "text", required: true, hint: "الاسم الكامل للزوج" },
         { key: "husbandDistrict", label: "منطقة / حي الزوج", type: "selectOther", options: QATIF_DISTRICTS_LIST, required: true, hint: "اختر من القائمة أو \"غير ذلك\"" },
-        { key: "wifeName", label: "اسم الزوجة", type: "text", required: true, hint: "الاسم الكامل للزوجة" },
         { key: "wifeGuardian", label: "كريمة / ولي الزوجة", type: "text", required: true, hint: "مثال: كريمة فلان الفلاني، أو اسم ولي أمرها" },
         { key: "wifeDistrict", label: "منطقة / حي الزوجة", type: "selectOther", options: QATIF_DISTRICTS_LIST, required: true, hint: "اختر من القائمة أو \"غير ذلك\"" },
         { key: "notes", label: "ملاحظات", type: "text", hint: "أي ملاحظات إضافية تودون إضافتها — اختياري" }

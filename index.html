@@ -4626,14 +4626,13 @@
         { key: "contractMonthHijri", label: "شهر العقد (هجري)", type: "select", options: HIJRI_MONTHS, derived: true, hint: "يُحسب تلقائياً" },
         { key: "husbandName", label: "اسم الزوج", type: "text", hint: "الاسم الكامل للزوج" },
         { key: "husbandDistrict", label: "منطقة / حي الزوج", type: "selectOther", options: QATIF_DISTRICTS_LIST, hint: "اختر من القائمة أو \"غير ذلك\"" },
-        { key: "wifeName", label: "اسم الزوجة", type: "text", hint: "الاسم الكامل للزوجة" },
         { key: "wifeGuardian", label: "كريمة / ولي الزوجة", type: "text", hint: "مثال: كريمة فلان الفلاني، أو اسم ولي أمرها" },
         { key: "wifeDistrict", label: "منطقة / حي الزوجة", type: "selectOther", options: QATIF_DISTRICTS_LIST, hint: "اختر من القائمة أو \"غير ذلك\"" },
         { key: "notes", label: "ملاحظات", type: "text", hint: "أي ملاحظات إضافية — اختياري" }
       ],
       photoLabel: "صورة الزوج",
       dateSource: { field: "contractDateGregorian", hijriDate: "contractDateHijri", monthGreg: "contractMonthGregorian", monthHijri: "contractMonthHijri" },
-      columns: ["husbandName", "wifeName", "husbandDistrict", "gregorianYear", "contractMonthGregorian"]
+      columns: ["husbandName", "wifeGuardian", "husbandDistrict", "gregorianYear", "contractMonthGregorian"]
     },
     {
       key: "deaths", label: "الوفيات", icon: EVICON.memorial, color: "#4d6ea9",
