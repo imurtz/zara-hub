@@ -4765,6 +4765,49 @@
     reader.onerror = function(){ cb(null); };
     reader.readAsDataURL(file);
   }
+  // ضغط صورة مفرّغة الخلفية — يبقى PNG دائماً (بدون تحويل لـ JPEG) حتى لا تُفقد الشفافية، ويقلّص الأبعاد بدل الجودة للوصول للحجم المطلوب
+  function compressCutoutImageFile(blobOrFile, maxStoredBytes, cb){
+    var reader = new FileReader();
+    reader.onload = function(e){
+      var img = new Image();
+      img.onload = function(){
+        var maxDim = 1200;
+        var attempts = 0;
+        var dataUrl;
+        do {
+          var w = img.width, h = img.height;
+          if(w > maxDim || h > maxDim){
+            if(w > h){ h = Math.round(h * maxDim / w); w = maxDim; }
+            else { w = Math.round(w * maxDim / h); h = maxDim; }
+          }
+          var canvas = document.createElement("canvas");
+          canvas.width = w; canvas.height = h;
+          canvas.getContext("2d").drawImage(img, 0, 0, w, h);
+          dataUrl = canvas.toDataURL("image/png");
+          maxDim = Math.round(maxDim * 0.8);
+          attempts++;
+        } while(dataUrl.length > maxStoredBytes && maxDim > 250 && attempts < 8);
+        cb(dataUrl);
+      };
+      img.onerror = function(){ cb(null); };
+      img.src = e.target.result;
+    };
+    reader.onerror = function(){ cb(null); };
+    reader.readAsDataURL(blobOrFile);
+  }
+  // إزالة خلفية صورة بالكامل داخل المتصفح (مكتبة @imgly/background-removal عبر CDN) — بدون سيرفر أو مفتاح API، تُحمَّل عند الطلب فقط
+  function removeImageBackgroundClientSide(file, onStatus){
+    return import("https://cdn.jsdelivr.net/npm/@imgly/background-removal@1.7.0/+esm").then(function(mod){
+      var removeBackground = mod.default;
+      if(onStatus) onStatus("جارٍ تحميل أداة إزالة الخلفية (أول مرة فقط على هذا الجهاز)...");
+      return removeBackground(file, {
+        model: "medium",
+        progress: function(key, current, total){
+          if(onStatus && total) onStatus("جارٍ إزالة الخلفية... " + Math.round(current / total * 100) + "%");
+        }
+      });
+    });
+  }
   // ضغط صورة قالب التصميم — جودة أعلى من صور المناسبات العادية لأن القالب يحتوي نصوصاً دقيقة، لكن يبقى ضمن حد المستند الواحد بـ Firestore (1 ميقابايت)
   function compressTemplateImageFile(file, cb){
     var reader = new FileReader();
@@ -5295,10 +5338,13 @@
     });
     var photoLbl = cat.photoLabel || "صورة المناسبة";
     html += '<div class="event-field full-field"><label>' + photoLbl + ' (اختياري)</label>';
-    if(draft.photo){
+    if(eventModalState.photoProcessing){
+      html += '<p class="event-field-hint" id="eventPhotoProcessingMsg">' + escapeHTML(eventModalState.photoProcessingMsg || "جارٍ المعالجة...") + '</p>';
+    } else if(draft.photo){
       html += '<div class="photo-thumb"><img src="' + draft.photo + '" alt=""/><button type="button" class="rm" data-action="remove-event-photo">×</button></div>';
     } else {
-      html += '<input type="file" accept="image/*" class="event-photo-input" id="eventPhotoInput"/>';
+      html += '<input type="file" accept="image/*" class="event-photo-input" id="eventPhotoInput"/>' +
+        '<label style="display:flex; align-items:center; gap:6px; font-size:12px; margin-top:6px; cursor:pointer;"><input type="checkbox" id="eventPhotoRemoveBg" style="width:auto; margin:0;"/> 🪄 إزالة الخلفية تلقائياً (يفضّل لو الصورة بتُستخدم في تصميم قالب)</label>';
     }
     html += '<p class="event-field-hint">صورة توضيحية إن رغبتم بإرفاقها — تُضغط تلقائياً لحجم مناسب بعد الرفع</p></div>';
     html += '</div>';
@@ -6327,11 +6373,34 @@
         e.target.value = "";
         return;
       }
-      compressEventImageFile(file, 400 * 1024, function(dataUrl){
-        if(!dataUrl){ showToast("تعذّرت قراءة الصورة"); return; }
-        eventModalState.draft.photo = dataUrl;
+      var removeBgBox = document.getElementById("eventPhotoRemoveBg");
+      var wantsRemoveBg = removeBgBox && removeBgBox.checked;
+      var finishPhotoUpload = function(sourceBlob, isCutout){
+        var compressFn = isCutout ? compressCutoutImageFile : compressEventImageFile;
+        compressFn(sourceBlob, 400 * 1024, function(dataUrl){
+          eventModalState.photoProcessing = false;
+          if(!dataUrl){ showToast("تعذّرت قراءة الصورة"); renderEventModal(); return; }
+          eventModalState.draft.photo = dataUrl;
+          renderEventModal();
+        });
+      };
+      if(wantsRemoveBg){
+        eventModalState.photoProcessing = true;
+        eventModalState.photoProcessingMsg = "جارٍ تحميل أداة إزالة الخلفية...";
         renderEventModal();
-      });
+        removeImageBackgroundClientSide(file, function(msg){
+          var el = document.getElementById("eventPhotoProcessingMsg");
+          if(el) el.textContent = msg;
+        }).then(function(blob){
+          finishPhotoUpload(blob, true);
+        }).catch(function(err){
+          console.error("bg removal failed", err);
+          showToast("تعذّرت إزالة الخلفية — تم رفع الصورة الأصلية بدلاً من ذلك");
+          finishPhotoUpload(file, false);
+        });
+      } else {
+        finishPhotoUpload(file, false);
+      }
     }
     if(e.target.matches('[data-action="field-image-input"]')){
       var fieldKey = e.target.dataset.key;
