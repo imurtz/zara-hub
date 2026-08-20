@@ -674,7 +674,7 @@
   }
   .role-pill.admin{background:var(--tan-tint); color:var(--tan);}
   .role-pill.employee{background:var(--teal-tint); color:var(--teal-dark);}
-  .row-actions{display:flex; gap:8px;}
+  .row-actions{display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-end;}
   .icon-btn{
     border:1.5px solid var(--line);
     background:var(--white);
@@ -4884,6 +4884,12 @@
     ctx.drawImage(img, sx, sy, sw, sh, x, y, w, h);
     ctx.restore();
   }
+  function drawImageContain(ctx, img, x, y, w, h){
+    var scale = Math.min(w / img.width, h / img.height);
+    var dw = img.width * scale, dh = img.height * scale;
+    var dx = x + (w - dw) / 2, dy = y + (h - dh) / 2;
+    ctx.drawImage(img, dx, dy, dw, dh);
+  }
   function loadImageAsync(src){
     return new Promise(function(resolve){
       if(!src){ resolve(null); return; }
@@ -4901,17 +4907,30 @@
     var ctx = canvas.getContext("2d");
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     ctx.drawImage(bg, 0, 0, template.width, template.height);
+    var customFontIds = template.fields.filter(function(f){ return f.type !== "image" && typeof f.font === "string" && f.font.indexOf("custom:") === 0; })
+      .map(function(f){ return f.font.slice(7); });
+    var uniqueFontIds = customFontIds.filter(function(v, i, a){ return a.indexOf(v) === i; });
+    var fontFamMap = {};
+    for(var fi = 0; fi < uniqueFontIds.length; fi++){
+      fontFamMap[uniqueFontIds[fi]] = await loadCustomFont(uniqueFontIds[fi]);
+    }
     for(var i = 0; i < template.fields.length; i++){
       var f = template.fields[i];
       if(f.type === "image"){
         var img = await loadImageAsync(record[f.key] || "");
-        if(img) drawImageCover(ctx, img, f.x, f.y, f.boxWidth, f.boxHeight, f.shape === "rounded" ? 28 : 0);
+        if(img){
+          if(f.shape === "transparent") drawImageContain(ctx, img, f.x, f.y, f.boxWidth, f.boxHeight);
+          else drawImageCover(ctx, img, f.x, f.y, f.boxWidth, f.boxHeight, f.shape === "rounded" ? 28 : 0);
+        }
         continue;
       }
       var text = templateFieldValue(f, record, null);
       if(!text) continue;
       var weight = f.bold ? "700" : "400";
-      ctx.font = weight + " " + f.fontSize + "px " + (f.font || "Cairo") + ", sans-serif";
+      var fam = "Cairo";
+      if(f.font && f.font.indexOf("custom:") === 0) fam = fontFamMap[f.font.slice(7)] || "Cairo";
+      else if(f.font) fam = f.font;
+      ctx.font = weight + ' ' + f.fontSize + 'px "' + fam + '", sans-serif';
       ctx.fillStyle = f.color || "#000000";
       ctx.textBaseline = "middle";
       var renderText = text;
@@ -4921,7 +4940,7 @@
         var fs = f.fontSize;
         while(w > f.maxWidth && fs > 10){
           fs -= 1;
-          ctx.font = weight + " " + fs + "px " + (f.font || "Cairo") + ", sans-serif";
+          ctx.font = weight + ' ' + fs + 'px "' + fam + '", sans-serif';
           w = ctx.measureText(renderText).width;
         }
       }
@@ -5060,6 +5079,28 @@
   function saveDesignTemplate(tmpl){ db.collection("designTemplates").doc(tmpl.id).set(tmpl); }
   function deleteDesignTemplate(id){ db.collection("designTemplates").doc(id).delete(); }
   function genTemplateId(){ return "tmpl-" + Date.now().toString(36) + Math.random().toString(36).slice(2, 8); }
+
+  var _designFontsCache = [];
+  db.collection("designFonts").onSnapshot(function(snap){
+    _designFontsCache = snap.docs.map(function(d){ return d.data(); });
+    refreshTmplManager();
+  }, function(err){ console.error("designFonts snapshot error", err); });
+  function loadDesignFonts(){ return _designFontsCache; }
+  function findDesignFont(id){ return _designFontsCache.find(function(f){ return f.id === id; }); }
+  function saveDesignFont(font){ db.collection("designFonts").doc(font.id).set(font); }
+  function deleteDesignFont(id){ db.collection("designFonts").doc(id).delete(); }
+  function genFontId(){ return "font-" + Date.now().toString(36) + Math.random().toString(36).slice(2, 8); }
+  function customFontFamilyName(fontId){ return "df_" + String(fontId).replace(/[^a-zA-Z0-9]/g, ""); }
+  function loadCustomFont(fontId){
+    var fam = customFontFamilyName(fontId);
+    if(window.FontFace && document.fonts && Array.from(document.fonts).some(function(f){ return f.family === fam; })){
+      return Promise.resolve(fam);
+    }
+    var fontDoc = findDesignFont(fontId);
+    if(!fontDoc || !fontDoc.dataUrl || !window.FontFace) return Promise.resolve(null);
+    var face = new FontFace(fam, "url(" + fontDoc.dataUrl + ")");
+    return face.load().then(function(loaded){ document.fonts.add(loaded); return fam; }).catch(function(){ return null; });
+  }
 
   var _eventsRespCache = {};
   db.collection("eventsMeta").doc("resp").onSnapshot(function(doc){
@@ -5840,10 +5881,17 @@
     if(isImage){
       html += '<label>العرض<input type="number" min="10" data-tmpl-prop="boxWidth" value="' + f.boxWidth + '"/></label>' +
         '<label>الارتفاع<input type="number" min="10" data-tmpl-prop="boxHeight" value="' + f.boxHeight + '"/></label>' +
-        '<label>الشكل<select data-tmpl-prop="shape"><option value="rounded"' + (f.shape === "rounded" ? " selected" : "") + '>دائري الحواف</option><option value="square"' + (f.shape !== "rounded" ? " selected" : "") + '>مربّع</option></select></label>';
+        '<label>الشكل<select data-tmpl-prop="shape">' +
+          '<option value="rounded"' + (f.shape === "rounded" ? " selected" : "") + '>دائري الحواف</option>' +
+          '<option value="square"' + (f.shape === "square" ? " selected" : "") + '>مربّع</option>' +
+          '<option value="transparent"' + (f.shape === "transparent" ? " selected" : "") + '>مفرّغة (بدون قص — لصور بخلفية شفافة)</option>' +
+        '</select></label>';
     } else {
       html += '<label>حجم الخط<input type="number" min="8" max="120" data-tmpl-prop="fontSize" value="' + f.fontSize + '"/></label>' +
-        '<label>الخط<select data-tmpl-prop="font">' + TMPL_FONT_CHOICES.map(function(fn){ return '<option value="' + fn + '"' + (f.font === fn ? " selected" : "") + '>' + fn + '</option>'; }).join("") + '</select></label>' +
+        '<label>الخط<select data-tmpl-prop="font">' +
+          TMPL_FONT_CHOICES.map(function(fn){ return '<option value="' + fn + '"' + (f.font === fn ? " selected" : "") + '>' + fn + '</option>'; }).join("") +
+          loadDesignFonts().map(function(df){ return '<option value="custom:' + df.id + '"' + (f.font === "custom:" + df.id ? " selected" : "") + '>🔤 ' + escapeHTML(df.name) + '</option>'; }).join("") +
+        '</select></label>' +
         '<label>اللون<input type="color" data-tmpl-prop="color" value="' + (f.color || "#000000") + '"/></label>' +
         '<label>المحاذاة<select data-tmpl-prop="align"><option value="right"' + (f.align === "right" ? " selected" : "") + '>يمين</option><option value="center"' + (f.align === "center" ? " selected" : "") + '>وسط</option><option value="left"' + (f.align === "left" ? " selected" : "") + '>يسار</option></select></label>' +
         '<label>أقصى عرض<input type="number" min="20" data-tmpl-prop="maxWidth" value="' + (f.maxWidth || "") + '"/></label>' +
@@ -5894,6 +5942,17 @@
       "اختر متغيراً من القائمة ثم اضغط «تحديد الموضع»") + '</p>';
     html += '</div>';
     html += '<div style="flex:1; min-width:280px;">';
+    var fonts = loadDesignFonts();
+    html += '<div style="border:1px solid var(--line); border-radius:10px; padding:10px 12px; margin-bottom:14px; background:#fbfcfc;">' +
+      '<b style="font-size:12.5px; color:var(--teal-dark); display:block; margin-bottom:8px;">الخطوط المخصصة</b>';
+    if(fonts.length){
+      fonts.forEach(function(fnt){
+        html += '<div style="display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:6px; font-size:12px;"><span>🔤 ' + escapeHTML(fnt.name) + '</span><button type="button" class="task-icon-btn" data-action="delete-tmpl-font" data-id="' + fnt.id + '" title="حذف الخط"><span class="icon">' + ICON_DELETE + '</span></button></div>';
+      });
+    }
+    html += '<label class="btn-secondary" style="display:inline-flex; align-items:center; gap:6px; cursor:pointer; font-size:12px; padding:6px 10px;">رفع خط جديد (ttf/otf/woff)<input type="file" accept=".ttf,.otf,.woff,.woff2" id="tmplFontUploadInput" style="display:none;"/></label>' +
+      '<p class="hint" style="margin:6px 0 0;">بعد الرفع سيظهر الخط ضمن قائمة "الخط" لأي متغير نصي — يفضّل ملف بصيغة woff2 لحجم أصغر</p>' +
+      '</div>';
     if(available.length){
       html += '<div style="display:flex; gap:8px; margin-bottom:14px;"><select id="tmplAddFieldSelect" style="flex:1; margin-bottom:0;">' +
         available.map(function(f){ return '<option value="' + f.key + '"' + (tmplEditorState.pendingKey === f.key ? " selected" : "") + '>' + escapeHTML(f.label) + '</option>'; }).join("") +
@@ -6392,6 +6451,12 @@
         saveDesignTemplate(tmpl);
         renderTemplateEditor();
         break;
+      case "delete-tmpl-font":
+        if(confirm("حذف هذا الخط؟ أي متغير يستخدمه سيرجع للخط الافتراضي")){
+          deleteDesignFont(btn.dataset.id);
+          renderTemplateEditor();
+        }
+        break;
     }
   });
   tmplEditorOverlayEl.addEventListener("mousedown", function(e){
@@ -6423,6 +6488,23 @@
     if(e.target.id === "tmplNameInput"){
       tmpl.name = e.target.value.trim() || "قالب بلا اسم";
       saveDesignTemplate(tmpl);
+      return;
+    }
+    if(e.target.id === "tmplFontUploadInput"){
+      var file = e.target.files && e.target.files[0];
+      if(!file) return;
+      if(file.size > 900 * 1024){
+        showToast("حجم ملف الخط كبير — استخدم صيغة woff2 أو ملفاً أصغر من 900 كيلوبايت");
+        e.target.value = "";
+        return;
+      }
+      var reader = new FileReader();
+      reader.onload = function(){
+        var fontDoc = { id: genFontId(), name: file.name.replace(/\.[^.]+$/, ""), dataUrl: reader.result };
+        saveDesignFont(fontDoc);
+        renderTemplateEditor();
+      };
+      reader.readAsDataURL(file);
       return;
     }
     var row = e.target.closest("[data-field-key]");
