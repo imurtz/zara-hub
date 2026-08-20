@@ -505,6 +505,7 @@
   tr.pending-row{background:var(--blue-tint);}
   tr.pending-row:hover td{background:var(--blue-tint);}
   .pending-badge{display:inline-block; font-size:10px; font-weight:600; color:#fff; background:var(--blue); border-radius:999px; padding:2px 8px; margin-inline-end:6px; white-space:nowrap;}
+  .dup-badge{display:inline-block; font-size:10px; font-weight:600; color:#fff; background:var(--danger); border-radius:999px; padding:2px 8px; margin-inline-end:6px; white-space:nowrap;}
   .cat-tab .icon{width:14px; height:14px;}
   .cat-tab.active{background:var(--teal-tint); border-color:var(--teal); color:var(--teal-dark);}
 
@@ -4678,6 +4679,31 @@
   function eventsSingularLabel(catKey){
     return { graduates: "خريج", births: "مولود", marriages: "عقد قران", deaths: "حالة وفاة", congrats: "تهنئة" }[catKey] || "";
   }
+  // مفتاح تعريف السجل لرصد التكرار — نفس الاسم + نفس التاريخ/السنة يعتبر تكراراً محتملاً
+  function eventRecordIdentityKey(cat, r){
+    var nameField = cat.key === "marriages" ? "husbandName" : (cat.key === "deaths" ? "deceasedName" : "fullName");
+    var name = String(r[nameField] || "").trim().toLowerCase().replace(/\s+/g, " ");
+    if(!name) return null;
+    var dateVal = cat.dateSource ? (r[cat.dateSource.field] || "") : (r.gregorianYear || "");
+    if(!dateVal) return null;
+    return name + "|" + dateVal;
+  }
+  function findEventDuplicates(cat, allInCategory){
+    var byKey = {};
+    allInCategory.forEach(function(r){
+      var key = eventRecordIdentityKey(cat, r);
+      if(!key) return;
+      (byKey[key] = byKey[key] || []).push(r);
+    });
+    var dupIds = {};
+    for(var k in byKey){
+      var group = byKey[k];
+      if(group.length > 1 && group.some(function(r){ return r.status === "pending"; })){
+        group.forEach(function(r){ dupIds[r.id] = true; });
+      }
+    }
+    return dupIds;
+  }
   function shallowCopy(o){
     var r = {};
     for(var k in o){ if(Object.prototype.hasOwnProperty.call(o, k)) r[k] = o[k]; }
@@ -5085,6 +5111,11 @@
     var all = loadEventsData();
     var rec = all.find(function(r){ return r.id === id; });
     if(!rec) return;
+    var cat = EVENTS_CATEGORIES.find(function(c){ return c.key === rec.category; });
+    if(cat){
+      var dupIds = findEventDuplicates(cat, all.filter(function(r){ return r.category === cat.key; }));
+      if(dupIds[id] && !confirm("⚠️ هذا السجل يشبه سجلاً آخر موجوداً بنفس الاسم والتاريخ — يبدو أنه تكرار. هل تريد اعتماده رغم ذلك؟")) return;
+    }
     delete rec.status;
     rec.updatedAt = Date.now();
     saveEventsData(all);
@@ -5135,6 +5166,7 @@
 
   function eventsTableHTML(cat){
     var all = loadEventsData().filter(function(r){ return r.category === cat.key; });
+    var dupIds = findEventDuplicates(cat, all);
     var q = (eventsUI.search || "").trim().toLowerCase();
     var filtered = q ? all.filter(function(r){ return cat.fields.some(function(f){ return String(r[f.key] || "").toLowerCase().indexOf(q) > -1; }); }) : all;
     if(eventsUI.sortKey){
@@ -5163,9 +5195,12 @@
     } else {
       filtered.forEach(function(r){
         var pending = r.status === "pending";
+        var isDup = !!dupIds[r.id];
         html += '<tr' + (pending ? ' class="pending-row"' : '') + '>';
         cols.forEach(function(colKey, ci){
-          html += '<td>' + (ci === 0 && pending ? '<span class="pending-badge">قيد المراجعة</span> ' : '') + escapeHTML(cellValue(cat, r, colKey)) + '</td>';
+          var badges = (ci === 0 && pending ? '<span class="pending-badge">قيد المراجعة</span> ' : '') +
+            (ci === 0 && isDup ? '<span class="dup-badge" title="يوجد سجل آخر بنفس الاسم والتاريخ — راجعه قبل الاعتماد">⚠️ تكرار محتمل</span> ' : '');
+          html += '<td>' + badges + escapeHTML(cellValue(cat, r, colKey)) + '</td>';
         });
         html += '<td class="row-actions">';
         if(pending && currentUser.role === "admin"){
