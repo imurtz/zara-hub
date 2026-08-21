@@ -5923,7 +5923,7 @@
       EVENTS_CATEGORIES.map(function(c){
         return '<button type="button" class="cat-tab' + (c.key === cat ? " active" : "") + '" data-action="set-design-tmpl-cat" data-cat="' + c.key + '"><span class="icon" style="color:' + eventCategoryColor(c.key) + ';">' + c.icon + '</span>' + c.label + '</button>';
       }).join("") + '</div>';
-    html += '<p class="hint" style="margin-bottom:14px;">ارفع قوالب التصميم الجاهزة لهذا التصنيف، وحدد مكان كل متغير عليها مرة واحدة — بعدها تقدر تولّد صورة مخصصة لأي سجل بضغطة زر من داخل جدول البيانات</p>';
+    html += '<p class="hint" style="margin-bottom:14px;">ارفع قالب التصميم هنا فقط. بعدها كل شي — إضافة المتغيرات وضبط مواضعها وتوليد الصورة — يصير من زر 🎨 داخل جدول البيانات، وأنت شايف بيانات السجل الحقيقية أثناء الضبط. "تعديل" هنا يفتح نفس الأدوات بس على القالب الفارغ بدون بيانات سجل، لو حبيت تجهّزه قبل أي تسجيل.</p>';
     if(!templates.length){
       html += '<p style="text-align:center; color:var(--ink-soft); padding:20px 0;">لا توجد قوالب لهذا التصنيف بعد</p>';
     } else {
@@ -6162,7 +6162,7 @@
     if(!cat) return;
     var templates = loadDesignTemplates(cat.key);
     if(!templates.length) return;
-    tmplGenerateState = { recordId: recordId, catKey: cat.key, templateId: templates[0].id };
+    tmplGenerateState = { recordId: recordId, catKey: cat.key, templateId: templates[0].id, pendingKey: "" };
     renderDesignGenerateModal();
     document.getElementById("tmplGenerateOverlay").classList.add("active");
   }
@@ -6185,13 +6185,23 @@
     html += '<div style="flex:1; min-width:280px;">';
     html += '<div class="tmpl-canvas-wrap" id="tmplGenCanvasWrap" style="display:block; margin:0 auto; cursor:default;"><canvas id="tmplGenCanvas" style="max-width:100%; display:block; background:repeating-conic-gradient(#f0f0f0 0% 25%, #fff 0% 50%) 50% / 16px 16px;"></canvas></div>';
     html += '<p class="hint" id="tmplGenStatus" style="text-align:center; margin-top:8px;">جارٍ التجهيز...</p>';
-    html += '<p class="hint" style="text-align:center;">اسحب أي عنصر لتحريكه، أو المقبض الدائري بزاوية الصورة لتغيير حجم الصندوق (Shift لحفظ نسبة الأبعاد)، أو مرّر عجلة الفأرة فوق صندوق الصورة نفسه لتقريب/تبعيد محتوى الصورة داخله — والتحكم الكامل بكل عنصر بالعمود المجاور</p>';
+    var pendingMeta = (tmpl && tmplGenerateState.pendingKey) ? tmplFieldMeta(tmpl.category, tmplGenerateState.pendingKey) : null;
+    html += '<p class="hint" style="text-align:center;">' + (pendingMeta ?
+      (pendingMeta.type === "image" ? "اسحب على الصورة لتحديد مربع الصورة الجديد" : "انقر على موضع النص الجديد بالصورة") :
+      'اسحب أي عنصر لتحريكه، أو المقبض الدائري بزاوية الصورة لتغيير حجم الصندوق (Shift لحفظ نسبة الأبعاد)، أو مرّر عجلة الفأرة فوق صندوق الصورة لتقريب/تبعيد محتواها') + '</p>';
     html += '<div style="text-align:center; margin-top:12px;"><button type="button" class="btn-primary" id="tmplGenDownloadBtn" data-action="download-tmpl-design" disabled>تنزيل الصورة</button></div>';
     html += '</div>';
     html += '<div style="flex:1; min-width:280px;" id="tmplGenFieldsList">';
     if(tmpl){
+      var placedKeys = tmpl.fields.map(function(f){ return f.key; });
+      var available = (TMPL_PLACEABLE_FIELDS[tmpl.category] || []).filter(function(f){ return placedKeys.indexOf(f.key) === -1; });
+      if(available.length){
+        html += '<div style="display:flex; gap:8px; margin-bottom:14px;"><select id="tmplGenAddFieldSelect" style="flex:1; margin-bottom:0;">' +
+          available.map(function(f){ return '<option value="' + f.key + '"' + (tmplGenerateState.pendingKey === f.key ? " selected" : "") + '>' + escapeHTML(f.label) + '</option>'; }).join("") +
+          '</select><button type="button" class="btn-secondary" data-action="arm-tmpl-gen-field">إضافة متغير جديد</button></div>';
+      }
       if(!tmpl.fields.length){
-        html += '<p class="hint">لا توجد متغيرات محددة على هذا القالب بعد — أضِفها من "تعديل" داخل قائمة القوالب</p>';
+        html += '<p class="hint">لا توجد متغيرات محددة على هذا القالب بعد — أضِف أول متغير من الأعلى</p>';
       } else {
         tmpl.fields.forEach(function(f){ html += tmplFieldRowHTML(tmpl, f); });
       }
@@ -6841,10 +6851,31 @@
   var tmplGenerateOverlayEl = document.getElementById("tmplGenerateOverlay");
   tmplGenerateOverlayEl.addEventListener("click", function(e){
     if(e.target === tmplGenerateOverlayEl){ closeDesignGenerateModal(); return; }
+    if(!tmplGenerateState) return;
+    var tmplForClick = findDesignTemplate(tmplGenerateState.templateId);
+    if(tmplForClick && !e.target.closest(".tmpl-marker")){
+      var genWrap = document.getElementById("tmplGenCanvasWrap");
+      if(genWrap && genWrap.contains(e.target) && tmplGenerateState.pendingKey){
+        var pendMeta = tmplFieldMeta(tmplForClick.category, tmplGenerateState.pendingKey);
+        if(pendMeta && pendMeta.type !== "image"){
+          var pt = tmplCanvasPointFromEvent(e, genWrap, tmplForClick);
+          finalizeTmplTextField(tmplForClick, tmplGenerateState.pendingKey, pt);
+          tmplGenerateState.pendingKey = "";
+          renderDesignGenerateModal();
+        }
+        return;
+      }
+    }
     var btn = e.target.closest("[data-action]");
     if(!btn) return;
     switch(btn.dataset.action){
       case "close-tmpl-generate": closeDesignGenerateModal(); break;
+      case "arm-tmpl-gen-field": {
+        var genSel = document.getElementById("tmplGenAddFieldSelect");
+        tmplGenerateState.pendingKey = genSel ? genSel.value : "";
+        renderDesignGenerateModal();
+        break;
+      }
       case "download-tmpl-design": {
         var canvas = document.getElementById("tmplGenCanvas");
         if(!canvas || !tmplGenerateState) return;
@@ -6875,7 +6906,8 @@
   tmplGenerateOverlayEl.addEventListener("change", function(e){
     if(e.target.id === "tmplGenSelect" && tmplGenerateState){
       tmplGenerateState.templateId = e.target.value;
-      runDesignGenerate();
+      tmplGenerateState.pendingKey = "";
+      renderDesignGenerateModal();
       return;
     }
     if(!tmplGenerateState) return;
@@ -6930,6 +6962,14 @@
       tmplGenerateState.movingKey = mkey;
       tmplGenerateState.moveOffset = { x: mpt.x - mg.x, y: mpt.y - mg.y };
       e.preventDefault();
+      return;
+    }
+    if(tmplGenerateState.pendingKey && wrap.contains(e.target)){
+      var pendMeta2 = tmplFieldMeta(tmpl.category, tmplGenerateState.pendingKey);
+      if(pendMeta2 && pendMeta2.type === "image"){
+        tmplGenerateState.dragStart = tmplCanvasPointFromEvent(e, wrap, tmpl);
+        e.preventDefault();
+      }
     }
   });
   tmplGenerateOverlayEl.addEventListener("mousemove", function(e){
@@ -6987,6 +7027,18 @@
       saveDesignTemplate(tmpl);
       tmplGenerateState.movingKey = null;
       tmplGenerateState.moveOffset = null;
+      renderDesignGenerateModal();
+      return;
+    }
+    if(tmplGenerateState.dragStart && tmplGenerateState.pendingKey){
+      var wrap2 = document.getElementById("tmplGenCanvasWrap");
+      var pendMeta3 = tmplFieldMeta(tmpl.category, tmplGenerateState.pendingKey);
+      if(wrap2 && pendMeta3 && pendMeta3.type === "image"){
+        var pt2 = tmplCanvasPointFromEvent(e, wrap2, tmpl);
+        finalizeTmplImageField(tmpl, tmplGenerateState.pendingKey, tmplGenerateState.dragStart.x, tmplGenerateState.dragStart.y, pt2.x, pt2.y);
+        tmplGenerateState.pendingKey = "";
+      }
+      tmplGenerateState.dragStart = null;
       renderDesignGenerateModal();
     }
   });
