@@ -4933,23 +4933,33 @@
     ctx.arcTo(x, y, x + w, y, tl);
     ctx.closePath();
   }
-  function drawImageCover(ctx, img, x, y, w, h, radius){
-    var scale = Math.max(w / img.width, h / img.height);
+  function drawImageCover(ctx, img, x, y, w, h, radius, zoom, offsetX, offsetY){
+    zoom = zoom && zoom > 0 ? zoom : 1;
+    offsetX = offsetX || 0; offsetY = offsetY || 0;
+    var baseScale = Math.max(w / img.width, h / img.height);
+    var scale = baseScale * zoom;
     var sw = w / scale, sh = h / scale;
-    var sx = (img.width - sw) / 2, sy = (img.height - sh) / 2;
+    var maxSx = Math.max(0, img.width - sw), maxSy = Math.max(0, img.height - sh);
+    var sx = Math.max(0, Math.min(maxSx, maxSx / 2 + offsetX * (maxSx / 2)));
+    var sy = Math.max(0, Math.min(maxSy, maxSy / 2 + offsetY * (maxSy / 2)));
     ctx.save();
     roundRectPath(ctx, x, y, w, h, radius);
     ctx.clip();
     ctx.drawImage(img, sx, sy, sw, sh, x, y, w, h);
     ctx.restore();
   }
-  function drawImageContain(ctx, img, x, y, w, h, radius){
+  function drawImageContain(ctx, img, x, y, w, h, radius, zoom, offsetX, offsetY){
+    zoom = zoom && zoom > 0 ? zoom : 1;
+    offsetX = offsetX || 0; offsetY = offsetY || 0;
     ctx.save();
     roundRectPath(ctx, x, y, w, h, radius);
     ctx.clip();
-    var scale = Math.min(w / img.width, h / img.height);
+    var baseScale = Math.min(w / img.width, h / img.height);
+    var scale = baseScale * zoom;
     var dw = img.width * scale, dh = img.height * scale;
-    var dx = x + (w - dw) / 2, dy = y + (h - dh) / 2;
+    var overflowX = Math.max(0, (dw - w) / 2), overflowY = Math.max(0, (dh - h) / 2);
+    var dx = x + (w - dw) / 2 + offsetX * overflowX;
+    var dy = y + (h - dh) / 2 + offsetY * overflowY;
     ctx.drawImage(img, dx, dy, dw, dh);
     ctx.restore();
   }
@@ -4965,7 +4975,13 @@
     } else {
       radius = { tl: 28, tr: 28, br: 28, bl: 28 };
     }
-    return { fit: fit, radius: radius };
+    return {
+      fit: fit,
+      radius: radius,
+      zoom: (typeof f.zoom === "number" && f.zoom > 0) ? f.zoom : 1,
+      offsetX: typeof f.offsetX === "number" ? f.offsetX : 0,
+      offsetY: typeof f.offsetY === "number" ? f.offsetY : 0
+    };
   }
   function loadImageAsync(src){
     return new Promise(function(resolve){
@@ -4997,8 +5013,8 @@
         var img = await loadImageAsync(record[f.key] || "");
         if(img){
           var imgStyle = tmplResolveImageStyle(f);
-          if(imgStyle.fit === "contain") drawImageContain(ctx, img, f.x, f.y, f.boxWidth, f.boxHeight, imgStyle.radius);
-          else drawImageCover(ctx, img, f.x, f.y, f.boxWidth, f.boxHeight, imgStyle.radius);
+          if(imgStyle.fit === "contain") drawImageContain(ctx, img, f.x, f.y, f.boxWidth, f.boxHeight, imgStyle.radius, imgStyle.zoom, imgStyle.offsetX, imgStyle.offsetY);
+          else drawImageCover(ctx, img, f.x, f.y, f.boxWidth, f.boxHeight, imgStyle.radius, imgStyle.zoom, imgStyle.offsetX, imgStyle.offsetY);
         }
         continue;
       }
@@ -6007,7 +6023,11 @@
         '<label>⌜ أعلى-يسار<input type="number" min="0" step="0.001" data-tmpl-prop="radiusTL" value="' + imgStyle.radius.tl + '"/></label>' +
         '<label>⌝ أعلى-يمين<input type="number" min="0" step="0.001" data-tmpl-prop="radiusTR" value="' + imgStyle.radius.tr + '"/></label>' +
         '<label>⌞ أسفل-يسار<input type="number" min="0" step="0.001" data-tmpl-prop="radiusBL" value="' + imgStyle.radius.bl + '"/></label>' +
-        '<label>⌟ أسفل-يمين<input type="number" min="0" step="0.001" data-tmpl-prop="radiusBR" value="' + imgStyle.radius.br + '"/></label>';
+        '<label>⌟ أسفل-يمين<input type="number" min="0" step="0.001" data-tmpl-prop="radiusBR" value="' + imgStyle.radius.br + '"/></label>' +
+        '<label style="flex-basis:100%; font-weight:700; margin-top:4px;">تقريب وتحريك الصورة داخل الصندوق</label>' +
+        '<label>🔍 تقريب/تبعيد<input type="number" min="1" step="0.05" data-tmpl-prop="zoom" value="' + imgStyle.zoom + '"/></label>' +
+        '<label>↔ إزاحة أفقية<input type="number" min="-1" max="1" step="0.05" data-tmpl-prop="offsetX" value="' + imgStyle.offsetX + '"/></label>' +
+        '<label>↕ إزاحة عمودية<input type="number" min="-1" max="1" step="0.05" data-tmpl-prop="offsetY" value="' + imgStyle.offsetY + '"/></label>';
     } else {
       html += '<label>حجم الخط<input type="number" min="8" max="120" data-tmpl-prop="fontSize" value="' + f.fontSize + '"/></label>' +
         '<label>الخط<select data-tmpl-prop="font">' +
@@ -6111,7 +6131,7 @@
     html += '<div style="flex:1; min-width:280px;">';
     html += '<div class="tmpl-canvas-wrap" id="tmplGenCanvasWrap" style="display:block; margin:0 auto; cursor:default;"><canvas id="tmplGenCanvas" style="max-width:100%; display:block; background:repeating-conic-gradient(#f0f0f0 0% 25%, #fff 0% 50%) 50% / 16px 16px;"></canvas></div>';
     html += '<p class="hint" id="tmplGenStatus" style="text-align:center; margin-top:8px;">جارٍ التجهيز...</p>';
-    html += '<p class="hint" style="text-align:center;">اسحب أي عنصر لتحريكه، أو المقبض الدائري بزاوية الصورة لتغيير حجمها (اضغط Shift أثناء السحب لحفظ نسبة الأبعاد) — والتحكم الكامل بكل عنصر (الخط، اللون، انحناء الزوايا...) بالعمود المجاور</p>';
+    html += '<p class="hint" style="text-align:center;">اسحب أي عنصر لتحريكه، أو المقبض الدائري بزاوية الصورة لتغيير حجم الصندوق (Shift لحفظ نسبة الأبعاد)، أو مرّر عجلة الفأرة فوق صندوق الصورة نفسه لتقريب/تبعيد محتوى الصورة داخله — والتحكم الكامل بكل عنصر بالعمود المجاور</p>';
     html += '<div style="text-align:center; margin-top:12px;"><button type="button" class="btn-primary" id="tmplGenDownloadBtn" data-action="download-tmpl-design" disabled>تنزيل الصورة</button></div>';
     html += '</div>';
     html += '<div style="flex:1; min-width:280px;" id="tmplGenFieldsList">';
@@ -6889,6 +6909,23 @@
       renderDesignGenerateModal();
     }
   });
+  var tmplGenZoomSaveTimer = null;
+  tmplGenerateOverlayEl.addEventListener("wheel", function(e){
+    if(!tmplGenerateState) return;
+    var tmpl = findDesignTemplate(tmplGenerateState.templateId);
+    if(!tmpl) return;
+    var markerEl = e.target.closest(".tmpl-marker.img-marker");
+    if(!markerEl) return;
+    var f = tmpl.fields.find(function(x){ return x.key === markerEl.dataset.fieldKey; });
+    if(!f) return;
+    e.preventDefault();
+    var style = tmplResolveImageStyle(f);
+    var delta = e.deltaY < 0 ? 0.08 : -0.08;
+    f.zoom = Math.max(1, Math.round((style.zoom + delta) * 100) / 100);
+    runDesignGenerate();
+    clearTimeout(tmplGenZoomSaveTimer);
+    tmplGenZoomSaveTimer = setTimeout(function(){ saveDesignTemplate(tmpl); }, 500);
+  }, { passive: false });
 
   var eventsSettingsRootEl = document.getElementById("eventsSettingsRoot");
   eventsSettingsRootEl.addEventListener("change", function(e){
