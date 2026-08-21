@@ -554,9 +554,12 @@
 
   .tmpl-canvas-wrap{position:relative; display:inline-block; border:1px solid var(--line); border-radius:10px; overflow:hidden; max-width:100%; cursor:crosshair; background:repeating-conic-gradient(#f0f0f0 0% 25%, #fff 0% 50%) 50% / 16px 16px;}
   .tmpl-canvas-wrap img{display:block; max-width:100%; height:auto; user-select:none; pointer-events:none;}
-  .tmpl-marker{position:absolute; transform:translate(-50%,-50%); background:var(--blue); color:#fff; font-size:10px; font-weight:700; padding:2px 6px; border-radius:6px; white-space:nowrap; pointer-events:auto; cursor:move; box-shadow:0 0 0 2px #fff; user-select:none;}
-  .tmpl-marker.img-marker{background:var(--tan); border:2px dashed #fff; border-radius:6px; padding:0; display:flex; align-items:center; justify-content:center; transform:none;}
-  .tmpl-marker.img-marker span:first-child{background:rgba(0,0,0,.4); padding:2px 6px; border-radius:6px;}
+  .tmpl-marker{position:absolute; transform:translate(-50%,-100%); margin-top:-8px; background:var(--blue); color:#fff; font-size:10px; font-weight:700; padding:2px 6px; border-radius:6px; white-space:nowrap; pointer-events:auto; cursor:move; box-shadow:0 0 0 2px #fff; user-select:none; opacity:.85;}
+  .tmpl-marker:hover{opacity:1;}
+  .tmpl-marker::after{content:""; position:absolute; left:50%; bottom:-5px; transform:translateX(-50%); width:7px; height:7px; border-radius:50%; background:var(--blue); box-shadow:0 0 0 2px #fff;}
+  .tmpl-marker.img-marker{background:transparent; border:2px dashed var(--tan); border-radius:6px; padding:0; display:block; transform:none; margin-top:0; box-shadow:none; opacity:1;}
+  .tmpl-marker.img-marker::after{display:none;}
+  .tmpl-marker.img-marker span:first-child{position:absolute; top:-22px; right:0; background:var(--tan); color:#fff; font-size:10px; font-weight:700; padding:2px 6px; border-radius:6px; white-space:nowrap;}
   .tmpl-resize-handle{position:absolute; bottom:-6px; right:-6px; width:14px; height:14px; border-radius:50%; background:var(--white); border:2px solid var(--tan); cursor:nwse-resize; pointer-events:auto;}
   .tmpl-field-row{border:1px solid var(--line); border-radius:10px; padding:10px 12px; margin-bottom:8px; background:#fbfcfc;}
   .tmpl-field-row-head{display:flex; align-items:center; justify-content:space-between; margin-bottom:6px;}
