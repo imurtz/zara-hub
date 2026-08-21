@@ -4803,7 +4803,7 @@
   // إزالة خلفية صورة بالكامل داخل المتصفح (مكتبة @imgly/background-removal عبر CDN) — بدون سيرفر أو مفتاح API، تُحمَّل عند الطلب فقط
   function removeImageBackgroundClientSide(file, onStatus){
     return import("https://cdn.jsdelivr.net/npm/@imgly/background-removal@1.7.0/+esm").then(function(mod){
-      var removeBackground = mod.default;
+      var removeBackground = mod.removeBackground;
       if(onStatus) onStatus("جارٍ تحميل أداة إزالة الخلفية (أول مرة فقط على هذا الجهاز)...");
       return removeBackground(file, {
         model: "medium",
