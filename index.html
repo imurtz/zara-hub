@@ -558,6 +558,8 @@
   .tmpl-marker:hover{opacity:1;}
   .tmpl-marker::after{content:""; position:absolute; left:50%; bottom:-5px; transform:translateX(-50%); width:7px; height:7px; border-radius:50%; background:var(--blue); box-shadow:0 0 0 2px #fff;}
   .tmpl-marker.img-marker{background:transparent; border:2px dashed var(--tan); border-radius:6px; padding:0; display:block; transform:none; margin-top:0; box-shadow:none; opacity:1;}
+  .tmpl-marker.img-marker.contain-marker{border-color:#8a5fd6;}
+  .tmpl-marker.img-marker.contain-marker span:first-child{background:#8a5fd6;}
   .tmpl-marker.img-marker::after{display:none;}
   .tmpl-marker.img-marker span:first-child{position:absolute; top:-22px; right:0; background:var(--tan); color:#fff; font-size:10px; font-weight:700; padding:2px 6px; border-radius:6px; white-space:nowrap;}
   .tmpl-resize-handle{position:absolute; bottom:-6px; right:-6px; width:14px; height:14px; border-radius:50%; background:var(--white); border:2px solid var(--tan); cursor:nwse-resize; pointer-events:auto;}
@@ -4963,6 +4965,11 @@
     ctx.drawImage(img, dx, dy, dw, dh);
     ctx.restore();
   }
+  // إذا فُعِّل "موضع مستقل لوضع الاحتواء الكامل"، تُقرأ/تُكتب إحداثيات الموضع والمقاس والتقريب من هذا الكائن المنفصل بدل الحقل الأساسي — يسمح بموضعين مختلفين لنفس الصورة حسب طريقة الملء (تغطية/احتواء)
+  function tmplGeomTarget(f){
+    if(f.type === "image" && f.fit === "contain" && f.containOverride) return f.containOverride;
+    return f;
+  }
   function tmplResolveImageStyle(f){
     var fit = f.fit || (f.shape === "transparent" ? "contain" : "cover");
     var radius;
@@ -4975,12 +4982,13 @@
     } else {
       radius = { tl: 28, tr: 28, br: 28, bl: 28 };
     }
+    var g = tmplGeomTarget(f);
     return {
       fit: fit,
       radius: radius,
-      zoom: (typeof f.zoom === "number" && f.zoom > 0) ? f.zoom : 1,
-      offsetX: typeof f.offsetX === "number" ? f.offsetX : 0,
-      offsetY: typeof f.offsetY === "number" ? f.offsetY : 0
+      zoom: (typeof g.zoom === "number" && g.zoom > 0) ? g.zoom : 1,
+      offsetX: typeof g.offsetX === "number" ? g.offsetX : 0,
+      offsetY: typeof g.offsetY === "number" ? g.offsetY : 0
     };
   }
   function loadImageAsync(src){
@@ -5013,8 +5021,9 @@
         var img = await loadImageAsync(record[f.key] || "");
         if(img){
           var imgStyle = tmplResolveImageStyle(f);
-          if(imgStyle.fit === "contain") drawImageContain(ctx, img, f.x, f.y, f.boxWidth, f.boxHeight, imgStyle.radius, imgStyle.zoom, imgStyle.offsetX, imgStyle.offsetY);
-          else drawImageCover(ctx, img, f.x, f.y, f.boxWidth, f.boxHeight, imgStyle.radius, imgStyle.zoom, imgStyle.offsetX, imgStyle.offsetY);
+          var imgGeom = tmplGeomTarget(f);
+          if(imgStyle.fit === "contain") drawImageContain(ctx, img, imgGeom.x, imgGeom.y, imgGeom.boxWidth, imgGeom.boxHeight, imgStyle.radius, imgStyle.zoom, imgStyle.offsetX, imgStyle.offsetY);
+          else drawImageCover(ctx, img, imgGeom.x, imgGeom.y, imgGeom.boxWidth, imgGeom.boxHeight, imgStyle.radius, imgStyle.zoom, imgStyle.offsetX, imgStyle.offsetY);
         }
         continue;
       }
@@ -5549,7 +5558,7 @@
         html += '<td class="row-actions">';
         if(pending && currentUser.role === "admin"){
           html += '<button type="button" class="icon-btn" data-action="approve-event" data-id="' + r.id + '" title="قبول (مراجعة الأدمن)"><span class="icon">' + TICON.check + '</span></button>' +
-            '<button type="button" class="icon-btn danger" data-action="reject-event" data-id="' + r.id + '" title="رفض (مراجعة الأدمن)"><span class="icon">' + ICON_DELETE + '</span></button>';
+            '<button type="button" class="icon-btn danger" data-action="reject-event" data-id="' + r.id + '" title="رفض (مراجعة الأدمن)"><span class="icon" style="font-weight:700;">✕</span></button>';
         }
         if(loadDesignTemplates(cat.key).length){
           html += '<button type="button" class="icon-btn" data-action="generate-design" data-id="' + r.id + '" title="توليد تصميم"><span class="icon">🎨</span></button>';
@@ -5939,10 +5948,29 @@
   function tmplEditorCurrentTemplate(){
     return tmplEditorState ? findDesignTemplate(tmplEditorState.templateId) : null;
   }
+  var TMPL_GEOM_PROPS = ["x", "y", "boxWidth", "boxHeight", "zoom", "offsetX", "offsetY"];
   function tmplUpdateField(tmpl, key, patch){
     var f = tmpl.fields.find(function(x){ return x.key === key; });
     if(!f) return;
-    Object.assign(f, patch);
+    var geomTarget = f.type === "image" ? tmplGeomTarget(f) : f;
+    Object.keys(patch).forEach(function(k){
+      (TMPL_GEOM_PROPS.indexOf(k) > -1 ? geomTarget : f)[k] = patch[k];
+    });
+    saveDesignTemplate(tmpl);
+  }
+  function tmplToggleContainOverride(tmpl, key, enable){
+    var f = tmpl.fields.find(function(x){ return x.key === key; });
+    if(!f) return;
+    if(enable){
+      f.containOverride = {
+        x: f.x, y: f.y, boxWidth: f.boxWidth, boxHeight: f.boxHeight,
+        zoom: typeof f.zoom === "number" ? f.zoom : 1,
+        offsetX: typeof f.offsetX === "number" ? f.offsetX : 0,
+        offsetY: typeof f.offsetY === "number" ? f.offsetY : 0
+      };
+    } else {
+      delete f.containOverride;
+    }
     saveDesignTemplate(tmpl);
   }
   function tmplCanvasPointFromEvent(e, wrap, tmpl){
@@ -5965,22 +5993,21 @@
     var existing = wrap.querySelectorAll(".tmpl-marker");
     for(var ei = 0; ei < existing.length; ei++) existing[ei].remove();
     tmpl.fields.forEach(function(f){
-      var leftPct = (f.x / tmpl.width * 100);
-      var topPct = (f.y / tmpl.height * 100);
       var lbl = escapeHTML((tmplFieldMeta(tmpl.category, f.key) || {}).label || f.key);
       var el = document.createElement("div");
       el.dataset.fieldKey = f.key;
       if(f.type === "image"){
-        el.className = "tmpl-marker img-marker" + (extraClass || "");
-        el.style.left = leftPct + "%";
-        el.style.top = topPct + "%";
-        el.style.width = (f.boxWidth / tmpl.width * 100) + "%";
-        el.style.height = (f.boxHeight / tmpl.height * 100) + "%";
-        el.innerHTML = '<span>' + lbl + '</span><span class="tmpl-resize-handle" data-resize-key="' + f.key + '"></span>';
+        var g = tmplGeomTarget(f);
+        el.className = "tmpl-marker img-marker" + (extraClass || "") + (g !== f ? " contain-marker" : "");
+        el.style.left = (g.x / tmpl.width * 100) + "%";
+        el.style.top = (g.y / tmpl.height * 100) + "%";
+        el.style.width = (g.boxWidth / tmpl.width * 100) + "%";
+        el.style.height = (g.boxHeight / tmpl.height * 100) + "%";
+        el.innerHTML = '<span>' + lbl + (g !== f ? " (احتواء)" : "") + '</span><span class="tmpl-resize-handle" data-resize-key="' + f.key + '"></span>';
       } else {
         el.className = "tmpl-marker" + (extraClass || "");
-        el.style.left = leftPct + "%";
-        el.style.top = topPct + "%";
+        el.style.left = (f.x / tmpl.width * 100) + "%";
+        el.style.top = (f.y / tmpl.height * 100) + "%";
         el.textContent = lbl;
       }
       wrap.appendChild(el);
@@ -6006,19 +6033,22 @@
   function tmplFieldRowHTML(tmpl, f){
     var meta = tmplFieldMeta(tmpl.category, f.key) || { label: f.key };
     var isImage = f.type === "image";
+    var g = isImage ? tmplGeomTarget(f) : f;
     var html = '<div class="tmpl-field-row" data-field-key="' + f.key + '">' +
       '<div class="tmpl-field-row-head"><b>' + escapeHTML(meta.label) + '</b><button type="button" class="task-icon-btn" data-action="remove-tmpl-field" data-key="' + f.key + '" title="حذف الموضع"><span class="icon">' + ICON_DELETE + '</span></button></div>' +
       '<div class="tmpl-field-controls">';
-    html += '<label>X<input type="number" step="0.001" data-tmpl-prop="x" value="' + f.x + '"/></label>' +
-      '<label>Y<input type="number" step="0.001" data-tmpl-prop="y" value="' + f.y + '"/></label>';
+    html += '<label>X<input type="number" step="0.001" data-tmpl-prop="x" value="' + g.x + '"/></label>' +
+      '<label>Y<input type="number" step="0.001" data-tmpl-prop="y" value="' + g.y + '"/></label>';
     if(isImage){
       var imgStyle = tmplResolveImageStyle(f);
-      html += '<label>العرض<input type="number" min="10" step="0.001" data-tmpl-prop="boxWidth" value="' + f.boxWidth + '"/></label>' +
-        '<label>الارتفاع<input type="number" min="10" step="0.001" data-tmpl-prop="boxHeight" value="' + f.boxHeight + '"/></label>' +
+      html += '<label>العرض<input type="number" min="10" step="0.001" data-tmpl-prop="boxWidth" value="' + g.boxWidth + '"/></label>' +
+        '<label>الارتفاع<input type="number" min="10" step="0.001" data-tmpl-prop="boxHeight" value="' + g.boxHeight + '"/></label>' +
         '<label>طريقة الملء<select data-tmpl-prop="fit">' +
           '<option value="cover"' + (imgStyle.fit === "cover" ? " selected" : "") + '>تغطية (قص لملء المربع — الخلفية كما هي)</option>' +
           '<option value="contain"' + (imgStyle.fit === "contain" ? " selected" : "") + '>احتواء كامل (بدون قص — لصور مفرّغة الخلفية)</option>' +
         '</select></label>' +
+        '<label style="flex-basis:100%; display:flex; align-items:center; gap:6px;"><input type="checkbox" data-toggle-contain-override="' + f.key + '"' + (f.containOverride ? " checked" : "") + ' style="width:auto; margin:0;"/> موضع ومقاس مستقلّان عند "احتواء كامل" (بدل استخدام نفس موضع التغطية)</label>' +
+        (f.fit === "contain" && f.containOverride ? '<p class="hint" style="flex-basis:100%; margin:0;">تعدّل الآن الموضع الخاص بوضع الاحتواء — لن يؤثر على موضع التغطية</p>' : '') +
         '<label style="flex-basis:100%; font-weight:700; margin-top:4px;">انحناء الزوايا (px) — كل زاوية مستقلة</label>' +
         '<label>⌜ أعلى-يسار<input type="number" min="0" step="0.001" data-tmpl-prop="radiusTL" value="' + imgStyle.radius.tl + '"/></label>' +
         '<label>⌝ أعلى-يمين<input type="number" min="0" step="0.001" data-tmpl-prop="radiusTR" value="' + imgStyle.radius.tr + '"/></label>' +
@@ -6041,8 +6071,32 @@
         '<label><input type="checkbox" data-tmpl-prop="kashida"' + (f.kashida ? " checked" : "") + '/> تمديد كشيدة</label>' +
         '<label style="flex-basis:100%;">إخفاء عند القيمة (افصل بفاصلة)<input type="text" data-tmpl-prop="hideValues" placeholder="مثال: بدون" value="' + escapeHTML((f.hideValues || []).join("، ")) + '" style="width:200px;"/></label>';
     }
+    var otherTmpls = _designTemplatesCache.filter(function(t){ return t.id !== tmpl.id && t.category === tmpl.category; });
+    if(otherTmpls.length){
+      html += '<label style="flex-basis:100%; margin-top:6px; border-top:1px dashed var(--line); padding-top:8px;">نسخ إعدادات هذا المتغير لقالب آخر' +
+        '<select id="tmplCopyTarget-' + f.key + '" style="width:auto; display:inline-block; margin-inline-start:6px;">' +
+          otherTmpls.map(function(t){ return '<option value="' + t.id + '">' + escapeHTML(t.name) + '</option>'; }).join("") +
+        '</select>' +
+        '<button type="button" class="btn-secondary" data-action="copy-tmpl-field-style" data-key="' + f.key + '" style="margin-inline-start:6px; padding:4px 10px; font-size:11px;">نسخ</button>' +
+      '</label>';
+    }
     html += '</div></div>';
     return html;
+  }
+  function copyTmplFieldStyleToTarget(tmpl, key){
+    var sel = document.getElementById("tmplCopyTarget-" + key);
+    var targetId = sel ? sel.value : "";
+    if(!targetId){ showToast("اختر القالب الهدف أولاً"); return; }
+    var srcField = tmpl.fields.find(function(x){ return x.key === key; });
+    var targetTmpl = findDesignTemplate(targetId);
+    if(!srcField || !targetTmpl) return;
+    var existingIdx = targetTmpl.fields.findIndex(function(x){ return x.key === key; });
+    if(existingIdx > -1 && !confirm('هذا المتغير موجود مسبقاً في قالب "' + targetTmpl.name + '" — استبدال إعداداته بإعدادات هذا العنصر؟')) return;
+    var copy = JSON.parse(JSON.stringify(srcField));
+    if(existingIdx > -1) targetTmpl.fields[existingIdx] = copy;
+    else targetTmpl.fields.push(copy);
+    saveDesignTemplate(targetTmpl);
+    showToast('تم نسخ الإعدادات إلى "' + targetTmpl.name + '"');
   }
   function openTemplateEditor(templateId){
     var tmpl = findDesignTemplate(templateId);
@@ -6629,6 +6683,9 @@
           renderTemplateEditor();
         }
         break;
+      case "copy-tmpl-field-style":
+        copyTmplFieldStyleToTarget(tmpl, btn.dataset.key);
+        break;
     }
   });
   tmplEditorOverlayEl.addEventListener("mousedown", function(e){
@@ -6641,10 +6698,11 @@
       var rkey = handleEl.dataset.resizeKey;
       var rf = tmpl.fields.find(function(x){ return x.key === rkey; });
       if(!rf) return;
+      var rg = tmplGeomTarget(rf);
       var rpt = tmplCanvasPointFromEvent(e, wrap, tmpl);
       tmplEditorState.resizingKey = rkey;
       tmplEditorState.resizeStart = rpt;
-      tmplEditorState.resizeStartSize = { w: rf.boxWidth, h: rf.boxHeight };
+      tmplEditorState.resizeStartSize = { w: rg.boxWidth, h: rg.boxHeight };
       e.preventDefault();
       e.stopPropagation();
       return;
@@ -6654,9 +6712,10 @@
       var mkey = markerEl.dataset.fieldKey;
       var mf = tmpl.fields.find(function(x){ return x.key === mkey; });
       if(!mf) return;
+      var mg = mf.type === "image" ? tmplGeomTarget(mf) : mf;
       var mpt = tmplCanvasPointFromEvent(e, wrap, tmpl);
       tmplEditorState.movingKey = mkey;
-      tmplEditorState.moveOffset = { x: mpt.x - mf.x, y: mpt.y - mf.y };
+      tmplEditorState.moveOffset = { x: mpt.x - mg.x, y: mpt.y - mg.y };
       e.preventDefault();
       return;
     }
@@ -6675,15 +6734,16 @@
     if(tmplEditorState.resizingKey){
       var rf = tmpl.fields.find(function(x){ return x.key === tmplEditorState.resizingKey; });
       if(!rf) return;
+      var rg = tmplGeomTarget(rf);
       var rpt = tmplCanvasPointFromEvent(e, wrap, tmpl);
       var rsize = tmplComputeResizeSize(tmplEditorState.resizeStartSize, tmplEditorState.resizeStart, rpt, e.shiftKey);
-      rf.boxWidth = rsize.w;
-      rf.boxHeight = rsize.h;
+      rg.boxWidth = rsize.w;
+      rg.boxHeight = rsize.h;
       var rmarkers = wrap.querySelectorAll(".tmpl-marker");
       for(var ri = 0; ri < rmarkers.length; ri++){
         if(rmarkers[ri].dataset.fieldKey === rf.key){
-          rmarkers[ri].style.width = (rf.boxWidth / tmpl.width * 100) + "%";
-          rmarkers[ri].style.height = (rf.boxHeight / tmpl.height * 100) + "%";
+          rmarkers[ri].style.width = (rg.boxWidth / tmpl.width * 100) + "%";
+          rmarkers[ri].style.height = (rg.boxHeight / tmpl.height * 100) + "%";
           break;
         }
       }
@@ -6692,14 +6752,15 @@
     if(!tmplEditorState.movingKey) return;
     var f = tmpl.fields.find(function(x){ return x.key === tmplEditorState.movingKey; });
     if(!f) return;
+    var g = f.type === "image" ? tmplGeomTarget(f) : f;
     var pt = tmplCanvasPointFromEvent(e, wrap, tmpl);
-    f.x = Math.round(Math.max(0, Math.min(tmpl.width, pt.x - tmplEditorState.moveOffset.x)));
-    f.y = Math.round(Math.max(0, Math.min(tmpl.height, pt.y - tmplEditorState.moveOffset.y)));
+    g.x = Math.round(Math.max(0, Math.min(tmpl.width, pt.x - tmplEditorState.moveOffset.x)));
+    g.y = Math.round(Math.max(0, Math.min(tmpl.height, pt.y - tmplEditorState.moveOffset.y)));
     var markers = wrap.querySelectorAll(".tmpl-marker");
     for(var mi = 0; mi < markers.length; mi++){
       if(markers[mi].dataset.fieldKey === f.key){
-        markers[mi].style.left = (f.x / tmpl.width * 100) + "%";
-        markers[mi].style.top = (f.y / tmpl.height * 100) + "%";
+        markers[mi].style.left = (g.x / tmpl.width * 100) + "%";
+        markers[mi].style.top = (g.y / tmpl.height * 100) + "%";
         break;
       }
     }
@@ -6757,6 +6818,11 @@
       if(oversized.length) showToast("تجاوز الحجم المسموح (900 كيلوبايت) ولم يُرفع: " + oversized.join("، "));
       return;
     }
+    if(e.target.matches("[data-toggle-contain-override]")){
+      tmplToggleContainOverride(tmpl, e.target.dataset.toggleContainOverride, e.target.checked);
+      renderTemplateEditor();
+      return;
+    }
     var row = e.target.closest("[data-field-key]");
     if(row && e.target.dataset.tmplProp){
       var key = row.dataset.fieldKey;
@@ -6798,6 +6864,12 @@
         renderDesignGenerateModal();
         break;
       }
+      case "copy-tmpl-field-style": {
+        var cpTmpl = tmplGenerateState && findDesignTemplate(tmplGenerateState.templateId);
+        if(!cpTmpl) return;
+        copyTmplFieldStyleToTarget(cpTmpl, btn.dataset.key);
+        break;
+      }
     }
   });
   tmplGenerateOverlayEl.addEventListener("change", function(e){
@@ -6809,6 +6881,11 @@
     if(!tmplGenerateState) return;
     var tmpl = findDesignTemplate(tmplGenerateState.templateId);
     if(!tmpl) return;
+    if(e.target.matches("[data-toggle-contain-override]")){
+      tmplToggleContainOverride(tmpl, e.target.dataset.toggleContainOverride, e.target.checked);
+      renderDesignGenerateModal();
+      return;
+    }
     var row = e.target.closest("[data-field-key]");
     if(row && e.target.dataset.tmplProp){
       var key = row.dataset.fieldKey;
@@ -6834,10 +6911,11 @@
       var rkey = handleEl.dataset.resizeKey;
       var rf = tmpl.fields.find(function(x){ return x.key === rkey; });
       if(!rf) return;
+      var rg = tmplGeomTarget(rf);
       var rpt = tmplCanvasPointFromEvent(e, wrap, tmpl);
       tmplGenerateState.resizingKey = rkey;
       tmplGenerateState.resizeStart = rpt;
-      tmplGenerateState.resizeStartSize = { w: rf.boxWidth, h: rf.boxHeight };
+      tmplGenerateState.resizeStartSize = { w: rg.boxWidth, h: rg.boxHeight };
       e.preventDefault();
       e.stopPropagation();
       return;
@@ -6847,9 +6925,10 @@
       var mkey = markerEl.dataset.fieldKey;
       var mf = tmpl.fields.find(function(x){ return x.key === mkey; });
       if(!mf) return;
+      var mg = mf.type === "image" ? tmplGeomTarget(mf) : mf;
       var mpt = tmplCanvasPointFromEvent(e, wrap, tmpl);
       tmplGenerateState.movingKey = mkey;
-      tmplGenerateState.moveOffset = { x: mpt.x - mf.x, y: mpt.y - mf.y };
+      tmplGenerateState.moveOffset = { x: mpt.x - mg.x, y: mpt.y - mg.y };
       e.preventDefault();
     }
   });
@@ -6862,15 +6941,16 @@
     if(tmplGenerateState.resizingKey){
       var rf = tmpl.fields.find(function(x){ return x.key === tmplGenerateState.resizingKey; });
       if(!rf) return;
+      var rg = tmplGeomTarget(rf);
       var rpt = tmplCanvasPointFromEvent(e, wrap, tmpl);
       var rsize = tmplComputeResizeSize(tmplGenerateState.resizeStartSize, tmplGenerateState.resizeStart, rpt, e.shiftKey);
-      rf.boxWidth = rsize.w;
-      rf.boxHeight = rsize.h;
+      rg.boxWidth = rsize.w;
+      rg.boxHeight = rsize.h;
       var rmarkers = wrap.querySelectorAll(".tmpl-marker");
       for(var ri = 0; ri < rmarkers.length; ri++){
         if(rmarkers[ri].dataset.fieldKey === rf.key){
-          rmarkers[ri].style.width = (rf.boxWidth / tmpl.width * 100) + "%";
-          rmarkers[ri].style.height = (rf.boxHeight / tmpl.height * 100) + "%";
+          rmarkers[ri].style.width = (rg.boxWidth / tmpl.width * 100) + "%";
+          rmarkers[ri].style.height = (rg.boxHeight / tmpl.height * 100) + "%";
           break;
         }
       }
@@ -6879,14 +6959,15 @@
     if(!tmplGenerateState.movingKey) return;
     var f = tmpl.fields.find(function(x){ return x.key === tmplGenerateState.movingKey; });
     if(!f) return;
+    var g = f.type === "image" ? tmplGeomTarget(f) : f;
     var pt = tmplCanvasPointFromEvent(e, wrap, tmpl);
-    f.x = Math.round(Math.max(0, Math.min(tmpl.width, pt.x - tmplGenerateState.moveOffset.x)));
-    f.y = Math.round(Math.max(0, Math.min(tmpl.height, pt.y - tmplGenerateState.moveOffset.y)));
+    g.x = Math.round(Math.max(0, Math.min(tmpl.width, pt.x - tmplGenerateState.moveOffset.x)));
+    g.y = Math.round(Math.max(0, Math.min(tmpl.height, pt.y - tmplGenerateState.moveOffset.y)));
     var markers = wrap.querySelectorAll(".tmpl-marker");
     for(var mi = 0; mi < markers.length; mi++){
       if(markers[mi].dataset.fieldKey === f.key){
-        markers[mi].style.left = (f.x / tmpl.width * 100) + "%";
-        markers[mi].style.top = (f.y / tmpl.height * 100) + "%";
+        markers[mi].style.left = (g.x / tmpl.width * 100) + "%";
+        markers[mi].style.top = (g.y / tmpl.height * 100) + "%";
         break;
       }
     }
@@ -6921,7 +7002,8 @@
     e.preventDefault();
     var style = tmplResolveImageStyle(f);
     var delta = e.deltaY < 0 ? 0.08 : -0.08;
-    f.zoom = Math.max(1, Math.round((style.zoom + delta) * 100) / 100);
+    var g = tmplGeomTarget(f);
+    g.zoom = Math.max(1, Math.round((style.zoom + delta) * 100) / 100);
     runDesignGenerate();
     clearTimeout(tmplGenZoomSaveTimer);
     tmplGenZoomSaveTimer = setTimeout(function(){ saveDesignTemplate(tmpl); }, 500);
