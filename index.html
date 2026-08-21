@@ -6079,7 +6079,7 @@
         html += '<div style="display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:6px; font-size:12px;"><span>🔤 ' + escapeHTML(fnt.name) + '</span><button type="button" class="task-icon-btn" data-action="delete-tmpl-font" data-id="' + fnt.id + '" title="حذف الخط"><span class="icon">' + ICON_DELETE + '</span></button></div>';
       });
     }
-    html += '<label class="btn-secondary" style="display:inline-flex; align-items:center; gap:6px; cursor:pointer; font-size:12px; padding:6px 10px;">رفع خط جديد (ttf/otf/woff)<input type="file" accept=".ttf,.otf,.woff,.woff2" id="tmplFontUploadInput" style="display:none;"/></label>' +
+    html += '<label class="btn-secondary" style="display:inline-flex; align-items:center; gap:6px; cursor:pointer; font-size:12px; padding:6px 10px;">رفع خط أو أكثر (ttf/otf/woff)<input type="file" accept=".ttf,.otf,.woff,.woff2" id="tmplFontUploadInput" multiple style="display:none;"/></label>' +
       '<p class="hint" style="margin:6px 0 0;">بعد الرفع سيظهر الخط ضمن قائمة "الخط" لأي متغير نصي — يفضّل ملف بصيغة woff2 لحجم أصغر</p>' +
       '</div>';
     if(available.length){
@@ -6741,20 +6741,20 @@
       return;
     }
     if(e.target.id === "tmplFontUploadInput"){
-      var file = e.target.files && e.target.files[0];
-      if(!file) return;
-      if(file.size > 900 * 1024){
-        showToast("حجم ملف الخط كبير — استخدم صيغة woff2 أو ملفاً أصغر من 900 كيلوبايت");
-        e.target.value = "";
-        return;
-      }
-      var reader = new FileReader();
-      reader.onload = function(){
-        var fontDoc = { id: genFontId(), name: file.name.replace(/\.[^.]+$/, ""), dataUrl: reader.result };
-        saveDesignFont(fontDoc);
-        renderTemplateEditor();
-      };
-      reader.readAsDataURL(file);
+      var files = e.target.files;
+      if(!files || !files.length) return;
+      var oversized = [];
+      Array.prototype.forEach.call(files, function(file){
+        if(file.size > 900 * 1024){ oversized.push(file.name); return; }
+        var reader = new FileReader();
+        reader.onload = function(){
+          var fontDoc = { id: genFontId(), name: file.name.replace(/\.[^.]+$/, ""), dataUrl: reader.result };
+          saveDesignFont(fontDoc);
+          renderTemplateEditor();
+        };
+        reader.readAsDataURL(file);
+      });
+      if(oversized.length) showToast("تجاوز الحجم المسموح (900 كيلوبايت) ولم يُرفع: " + oversized.join("، "));
       return;
     }
     var row = e.target.closest("[data-field-key]");
