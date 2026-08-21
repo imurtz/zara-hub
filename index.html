@@ -554,7 +554,7 @@
 
   .tmpl-canvas-wrap{position:relative; display:inline-block; border:1px solid var(--line); border-radius:10px; overflow:hidden; max-width:100%; cursor:crosshair; background:repeating-conic-gradient(#f0f0f0 0% 25%, #fff 0% 50%) 50% / 16px 16px;}
   .tmpl-canvas-wrap img{display:block; max-width:100%; height:auto; user-select:none; pointer-events:none;}
-  .tmpl-marker{position:absolute; transform:translate(-50%,-50%); background:var(--blue); color:#fff; font-size:10px; font-weight:700; padding:2px 6px; border-radius:6px; white-space:nowrap; pointer-events:none; box-shadow:0 0 0 2px #fff;}
+  .tmpl-marker{position:absolute; transform:translate(-50%,-50%); background:var(--blue); color:#fff; font-size:10px; font-weight:700; padding:2px 6px; border-radius:6px; white-space:nowrap; pointer-events:auto; cursor:move; box-shadow:0 0 0 2px #fff; user-select:none;}
   .tmpl-marker.img-marker{background:var(--tan); border:2px dashed #fff; border-radius:6px; padding:0; display:flex; align-items:center; justify-content:center; transform:none;}
   .tmpl-field-row{border:1px solid var(--line); border-radius:10px; padding:10px 12px; margin-bottom:8px; background:#fbfcfc;}
   .tmpl-field-row-head{display:flex; align-items:center; justify-content:space-between; margin-bottom:6px;}
@@ -4906,11 +4906,7 @@
     if(field.suffix) v = v + field.suffix;
     return v;
   }
-  function drawImageCover(ctx, img, x, y, w, h, radius){
-    var scale = Math.max(w / img.width, h / img.height);
-    var sw = w / scale, sh = h / scale;
-    var sx = (img.width - sw) / 2, sy = (img.height - sh) / 2;
-    ctx.save();
+  function roundRectPath(ctx, x, y, w, h, radius){
     ctx.beginPath();
     if(radius){
       var r = Math.min(radius, w / 2, h / 2);
@@ -4923,15 +4919,36 @@
       ctx.rect(x, y, w, h);
     }
     ctx.closePath();
+  }
+  function drawImageCover(ctx, img, x, y, w, h, radius){
+    var scale = Math.max(w / img.width, h / img.height);
+    var sw = w / scale, sh = h / scale;
+    var sx = (img.width - sw) / 2, sy = (img.height - sh) / 2;
+    ctx.save();
+    roundRectPath(ctx, x, y, w, h, radius);
     ctx.clip();
     ctx.drawImage(img, sx, sy, sw, sh, x, y, w, h);
     ctx.restore();
   }
-  function drawImageContain(ctx, img, x, y, w, h){
+  function drawImageContain(ctx, img, x, y, w, h, radius){
+    ctx.save();
+    if(radius){
+      roundRectPath(ctx, x, y, w, h, radius);
+      ctx.clip();
+    }
     var scale = Math.min(w / img.width, h / img.height);
     var dw = img.width * scale, dh = img.height * scale;
     var dx = x + (w - dw) / 2, dy = y + (h - dh) / 2;
     ctx.drawImage(img, dx, dy, dw, dh);
+    ctx.restore();
+  }
+  function tmplResolveImageStyle(f){
+    if(f.fit || typeof f.radius === "number"){
+      return { fit: f.fit || "cover", radius: typeof f.radius === "number" ? f.radius : 0 };
+    }
+    if(f.shape === "transparent") return { fit: "contain", radius: 0 };
+    if(f.shape === "square") return { fit: "cover", radius: 0 };
+    return { fit: "cover", radius: 28 };
   }
   function loadImageAsync(src){
     return new Promise(function(resolve){
@@ -4962,8 +4979,9 @@
       if(f.type === "image"){
         var img = await loadImageAsync(record[f.key] || "");
         if(img){
-          if(f.shape === "transparent") drawImageContain(ctx, img, f.x, f.y, f.boxWidth, f.boxHeight);
-          else drawImageCover(ctx, img, f.x, f.y, f.boxWidth, f.boxHeight, f.shape === "rounded" ? 28 : 0);
+          var imgStyle = tmplResolveImageStyle(f);
+          if(imgStyle.fit === "contain") drawImageContain(ctx, img, f.x, f.y, f.boxWidth, f.boxHeight, imgStyle.radius);
+          else drawImageCover(ctx, img, f.x, f.y, f.boxWidth, f.boxHeight, imgStyle.radius);
         }
         continue;
       }
@@ -5915,7 +5933,7 @@
     var x = Math.round(Math.min(x1, x2)), y = Math.round(Math.min(y1, y2));
     var w = Math.round(Math.max(20, Math.abs(x2 - x1)));
     var h = Math.round(Math.max(20, Math.abs(y2 - y1)));
-    tmpl.fields.push({ key: key, type: "image", x: x, y: y, boxWidth: w, boxHeight: h, shape: "rounded" });
+    tmpl.fields.push({ key: key, type: "image", x: x, y: y, boxWidth: w, boxHeight: h, fit: "cover", radius: 28 });
     saveDesignTemplate(tmpl);
   }
   function tmplFieldRowHTML(tmpl, f){
@@ -5925,13 +5943,14 @@
       '<div class="tmpl-field-row-head"><b>' + escapeHTML(meta.label) + '</b><button type="button" class="task-icon-btn" data-action="remove-tmpl-field" data-key="' + f.key + '" title="حذف الموضع"><span class="icon">' + ICON_DELETE + '</span></button></div>' +
       '<div class="tmpl-field-controls">';
     if(isImage){
+      var imgStyle = tmplResolveImageStyle(f);
       html += '<label>العرض<input type="number" min="10" data-tmpl-prop="boxWidth" value="' + f.boxWidth + '"/></label>' +
         '<label>الارتفاع<input type="number" min="10" data-tmpl-prop="boxHeight" value="' + f.boxHeight + '"/></label>' +
-        '<label>الشكل<select data-tmpl-prop="shape">' +
-          '<option value="rounded"' + (f.shape === "rounded" ? " selected" : "") + '>دائري الحواف</option>' +
-          '<option value="square"' + (f.shape === "square" ? " selected" : "") + '>مربّع</option>' +
-          '<option value="transparent"' + (f.shape === "transparent" ? " selected" : "") + '>مفرّغة (بدون قص — لصور بخلفية شفافة)</option>' +
-        '</select></label>';
+        '<label>طريقة الملء<select data-tmpl-prop="fit">' +
+          '<option value="cover"' + (imgStyle.fit === "cover" ? " selected" : "") + '>تغطية (قص لملء المربع — الخلفية كما هي)</option>' +
+          '<option value="contain"' + (imgStyle.fit === "contain" ? " selected" : "") + '>احتواء كامل (بدون قص — لصور مفرّغة الخلفية)</option>' +
+        '</select></label>' +
+        '<label>نصف قطر الانحناء (px)<input type="number" min="0" step="0.001" data-tmpl-prop="radius" value="' + imgStyle.radius + '"/></label>';
     } else {
       html += '<label>حجم الخط<input type="number" min="8" max="120" data-tmpl-prop="fontSize" value="' + f.fontSize + '"/></label>' +
         '<label>الخط<select data-tmpl-prop="font">' +
@@ -5976,16 +5995,16 @@
       if(f.type === "image"){
         var wPct = (f.boxWidth / tmpl.width * 100);
         var hPct = (f.boxHeight / tmpl.height * 100);
-        html += '<div class="tmpl-marker img-marker" style="left:' + leftPct + '%; top:' + topPct + '%; width:' + wPct + '%; height:' + hPct + '%;">' + lbl + '</div>';
+        html += '<div class="tmpl-marker img-marker" data-field-key="' + f.key + '" style="left:' + leftPct + '%; top:' + topPct + '%; width:' + wPct + '%; height:' + hPct + '%;">' + lbl + '</div>';
       } else {
-        html += '<div class="tmpl-marker" style="left:' + leftPct + '%; top:' + topPct + '%;">' + lbl + '</div>';
+        html += '<div class="tmpl-marker" data-field-key="' + f.key + '" style="left:' + leftPct + '%; top:' + topPct + '%;">' + lbl + '</div>';
       }
     });
     html += '</div>';
     var pendingMeta = tmplEditorState.pendingKey ? tmplFieldMeta(tmpl.category, tmplEditorState.pendingKey) : null;
     html += '<p class="hint" style="margin-top:8px;">' + (pendingMeta ?
       (pendingMeta.type === "image" ? "اسحب على القالب لتحديد مربع الصورة" : "انقر على موضع النص في القالب") :
-      "اختر متغيراً من القائمة ثم اضغط «تحديد الموضع»") + '</p>';
+      "اختر متغيراً من القائمة ثم اضغط «تحديد الموضع» — وأي عنصر محدد مسبقاً تقدر تسحبه بالماوس لتحريكه فوراً") + '</p>';
     html += '</div>';
     html += '<div style="flex:1; min-width:280px;">';
     var fonts = loadDesignFonts();
@@ -6494,6 +6513,7 @@
     if(e.target === tmplEditorOverlayEl){ closeTemplateEditor(); return; }
     var tmpl = tmplEditorCurrentTemplate();
     if(!tmpl) return;
+    if(e.target.closest(".tmpl-marker")) return;
     var wrap = document.getElementById("tmplCanvasWrap");
     if(wrap && wrap.contains(e.target) && tmplEditorState.pendingKey){
       var pendMeta = tmplFieldMeta(tmpl.category, tmplEditorState.pendingKey);
@@ -6530,17 +6550,57 @@
   });
   tmplEditorOverlayEl.addEventListener("mousedown", function(e){
     var tmpl = tmplEditorCurrentTemplate();
-    if(!tmpl || !tmplEditorState.pendingKey) return;
+    if(!tmpl || !tmplEditorState) return;
+    var wrap = document.getElementById("tmplCanvasWrap");
+    if(!wrap) return;
+    var markerEl = e.target.closest(".tmpl-marker");
+    if(markerEl && wrap.contains(markerEl)){
+      var mkey = markerEl.dataset.fieldKey;
+      var mf = tmpl.fields.find(function(x){ return x.key === mkey; });
+      if(!mf) return;
+      var mpt = tmplCanvasPointFromEvent(e, wrap, tmpl);
+      tmplEditorState.movingKey = mkey;
+      tmplEditorState.moveOffset = { x: mpt.x - mf.x, y: mpt.y - mf.y };
+      e.preventDefault();
+      return;
+    }
+    if(!tmplEditorState.pendingKey) return;
     var meta = tmplFieldMeta(tmpl.category, tmplEditorState.pendingKey);
     if(!meta || meta.type !== "image") return;
-    var wrap = document.getElementById("tmplCanvasWrap");
-    if(!wrap || !wrap.contains(e.target)) return;
+    if(!wrap.contains(e.target)) return;
     tmplEditorState.dragStart = tmplCanvasPointFromEvent(e, wrap, tmpl);
     e.preventDefault();
   });
+  tmplEditorOverlayEl.addEventListener("mousemove", function(e){
+    var tmpl = tmplEditorCurrentTemplate();
+    if(!tmpl || !tmplEditorState || !tmplEditorState.movingKey) return;
+    var wrap = document.getElementById("tmplCanvasWrap");
+    if(!wrap) return;
+    var f = tmpl.fields.find(function(x){ return x.key === tmplEditorState.movingKey; });
+    if(!f) return;
+    var pt = tmplCanvasPointFromEvent(e, wrap, tmpl);
+    f.x = Math.round(Math.max(0, Math.min(tmpl.width, pt.x - tmplEditorState.moveOffset.x)));
+    f.y = Math.round(Math.max(0, Math.min(tmpl.height, pt.y - tmplEditorState.moveOffset.y)));
+    var markers = wrap.querySelectorAll(".tmpl-marker");
+    for(var mi = 0; mi < markers.length; mi++){
+      if(markers[mi].dataset.fieldKey === f.key){
+        markers[mi].style.left = (f.x / tmpl.width * 100) + "%";
+        markers[mi].style.top = (f.y / tmpl.height * 100) + "%";
+        break;
+      }
+    }
+  });
   tmplEditorOverlayEl.addEventListener("mouseup", function(e){
     var tmpl = tmplEditorCurrentTemplate();
-    if(!tmpl || !tmplEditorState || !tmplEditorState.dragStart) return;
+    if(!tmpl || !tmplEditorState) return;
+    if(tmplEditorState.movingKey){
+      saveDesignTemplate(tmpl);
+      tmplEditorState.movingKey = null;
+      tmplEditorState.moveOffset = null;
+      renderTemplateEditor();
+      return;
+    }
+    if(!tmplEditorState.dragStart) return;
     var meta = tmplFieldMeta(tmpl.category, tmplEditorState.pendingKey);
     var wrap = document.getElementById("tmplCanvasWrap");
     if(wrap && meta && meta.type === "image"){
