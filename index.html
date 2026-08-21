@@ -556,6 +556,8 @@
   .tmpl-canvas-wrap img{display:block; max-width:100%; height:auto; user-select:none; pointer-events:none;}
   .tmpl-marker{position:absolute; transform:translate(-50%,-50%); background:var(--blue); color:#fff; font-size:10px; font-weight:700; padding:2px 6px; border-radius:6px; white-space:nowrap; pointer-events:auto; cursor:move; box-shadow:0 0 0 2px #fff; user-select:none;}
   .tmpl-marker.img-marker{background:var(--tan); border:2px dashed #fff; border-radius:6px; padding:0; display:flex; align-items:center; justify-content:center; transform:none;}
+  .tmpl-marker.img-marker span:first-child{background:rgba(0,0,0,.4); padding:2px 6px; border-radius:6px;}
+  .tmpl-resize-handle{position:absolute; bottom:-6px; right:-6px; width:14px; height:14px; border-radius:50%; background:var(--white); border:2px solid var(--tan); cursor:nwse-resize; pointer-events:auto;}
   .tmpl-field-row{border:1px solid var(--line); border-radius:10px; padding:10px 12px; margin-bottom:8px; background:#fbfcfc;}
   .tmpl-field-row-head{display:flex; align-items:center; justify-content:space-between; margin-bottom:6px;}
   .tmpl-field-row-head b{font-size:12.5px; color:var(--teal-dark);}
@@ -5913,11 +5915,36 @@
     saveDesignTemplate(tmpl);
   }
   function tmplCanvasPointFromEvent(e, wrap, tmpl){
-    var img = wrap.querySelector("img");
-    var rect = img.getBoundingClientRect();
+    var surface = wrap.querySelector("img, canvas");
+    var rect = surface.getBoundingClientRect();
     var x = (e.clientX - rect.left) / rect.width * tmpl.width;
     var y = (e.clientY - rect.top) / rect.height * tmpl.height;
     return { x: Math.max(0, Math.min(tmpl.width, x)), y: Math.max(0, Math.min(tmpl.height, y)) };
+  }
+  function tmplRenderMarkersOverlay(wrap, tmpl, extraClass){
+    var existing = wrap.querySelectorAll(".tmpl-marker");
+    for(var ei = 0; ei < existing.length; ei++) existing[ei].remove();
+    tmpl.fields.forEach(function(f){
+      var leftPct = (f.x / tmpl.width * 100);
+      var topPct = (f.y / tmpl.height * 100);
+      var lbl = escapeHTML((tmplFieldMeta(tmpl.category, f.key) || {}).label || f.key);
+      var el = document.createElement("div");
+      el.dataset.fieldKey = f.key;
+      if(f.type === "image"){
+        el.className = "tmpl-marker img-marker" + (extraClass || "");
+        el.style.left = leftPct + "%";
+        el.style.top = topPct + "%";
+        el.style.width = (f.boxWidth / tmpl.width * 100) + "%";
+        el.style.height = (f.boxHeight / tmpl.height * 100) + "%";
+        el.innerHTML = '<span>' + lbl + '</span><span class="tmpl-resize-handle" data-resize-key="' + f.key + '"></span>';
+      } else {
+        el.className = "tmpl-marker" + (extraClass || "");
+        el.style.left = leftPct + "%";
+        el.style.top = topPct + "%";
+        el.textContent = lbl;
+      }
+      wrap.appendChild(el);
+    });
   }
   function finalizeTmplTextField(tmpl, key, pt){
     tmpl.fields.push({
@@ -5987,20 +6014,7 @@
     var available = (TMPL_PLACEABLE_FIELDS[tmpl.category] || []).filter(function(f){ return placedKeys.indexOf(f.key) === -1; });
     var html = '<div class="panel-head"><h3>تعديل القالب — <input type="text" id="tmplNameInput" value="' + escapeHTML(tmpl.name) + '" style="display:inline-block; width:200px; padding:4px 8px; font-size:14px; border:1px solid var(--line); border-radius:6px;"/></h3><button type="button" class="panel-close" data-action="close-tmpl-editor">✕</button></div>';
     html += '<div style="display:flex; gap:20px; flex-wrap:wrap;">';
-    html += '<div style="flex:1; min-width:280px;"><div class="tmpl-canvas-wrap" id="tmplCanvasWrap"><img src="' + tmpl.image + '" alt="" draggable="false"/>';
-    tmpl.fields.forEach(function(f){
-      var leftPct = (f.x / tmpl.width * 100);
-      var topPct = (f.y / tmpl.height * 100);
-      var lbl = escapeHTML((tmplFieldMeta(tmpl.category, f.key) || {}).label || f.key);
-      if(f.type === "image"){
-        var wPct = (f.boxWidth / tmpl.width * 100);
-        var hPct = (f.boxHeight / tmpl.height * 100);
-        html += '<div class="tmpl-marker img-marker" data-field-key="' + f.key + '" style="left:' + leftPct + '%; top:' + topPct + '%; width:' + wPct + '%; height:' + hPct + '%;">' + lbl + '</div>';
-      } else {
-        html += '<div class="tmpl-marker" data-field-key="' + f.key + '" style="left:' + leftPct + '%; top:' + topPct + '%;">' + lbl + '</div>';
-      }
-    });
-    html += '</div>';
+    html += '<div style="flex:1; min-width:280px;"><div class="tmpl-canvas-wrap" id="tmplCanvasWrap"><img src="' + tmpl.image + '" alt="" draggable="false"/></div>';
     var pendingMeta = tmplEditorState.pendingKey ? tmplFieldMeta(tmpl.category, tmplEditorState.pendingKey) : null;
     html += '<p class="hint" style="margin-top:8px;">' + (pendingMeta ?
       (pendingMeta.type === "image" ? "اسحب على القالب لتحديد مربع الصورة" : "انقر على موضع النص في القالب") :
@@ -6032,6 +6046,8 @@
     }
     html += '</div></div>';
     setHTML(body, html);
+    var editorWrap = document.getElementById("tmplCanvasWrap");
+    if(editorWrap) tmplRenderMarkersOverlay(editorWrap, tmpl);
   }
 
   function openDesignGenerateModal(recordId){
@@ -6060,8 +6076,9 @@
         templates.map(function(t){ return '<option value="' + t.id + '"' + (t.id === tmplGenerateState.templateId ? " selected" : "") + '>' + escapeHTML(t.name) + '</option>'; }).join("") +
         '</select>';
     }
-    html += '<div style="text-align:center;"><canvas id="tmplGenCanvas" style="max-width:100%; border:1px solid var(--line); border-radius:10px; background:repeating-conic-gradient(#f0f0f0 0% 25%, #fff 0% 50%) 50% / 16px 16px;"></canvas></div>';
+    html += '<div class="tmpl-canvas-wrap" id="tmplGenCanvasWrap" style="display:block; margin:0 auto; cursor:default;"><canvas id="tmplGenCanvas" style="max-width:100%; display:block; background:repeating-conic-gradient(#f0f0f0 0% 25%, #fff 0% 50%) 50% / 16px 16px;"></canvas></div>';
     html += '<p class="hint" id="tmplGenStatus" style="text-align:center; margin-top:8px;">جارٍ التجهيز...</p>';
+    html += '<p class="hint" style="text-align:center;">تقدر تسحب أي عنصر على الصورة لتحريكه، أو تسحب المقبض الدائري بزاوية الصورة لتغيير حجمها — يتحدث التصميم فوراً</p>';
     html += '<div style="text-align:center; margin-top:12px;"><button type="button" class="btn-primary" id="tmplGenDownloadBtn" data-action="download-tmpl-design" disabled>تنزيل الصورة</button></div>';
     setHTML(body, html);
     runDesignGenerate();
@@ -6080,6 +6097,8 @@
       if(ok){
         statusEl.textContent = "جاهز — يمكنك تنزيل الصورة";
         dlBtn.disabled = false;
+        var genWrap = document.getElementById("tmplGenCanvasWrap");
+        if(genWrap) tmplRenderMarkersOverlay(genWrap, tmpl);
       } else {
         statusEl.textContent = "تعذّر تحميل صورة القالب";
       }
@@ -6553,6 +6572,19 @@
     if(!tmpl || !tmplEditorState) return;
     var wrap = document.getElementById("tmplCanvasWrap");
     if(!wrap) return;
+    var handleEl = e.target.closest(".tmpl-resize-handle");
+    if(handleEl && wrap.contains(handleEl)){
+      var rkey = handleEl.dataset.resizeKey;
+      var rf = tmpl.fields.find(function(x){ return x.key === rkey; });
+      if(!rf) return;
+      var rpt = tmplCanvasPointFromEvent(e, wrap, tmpl);
+      tmplEditorState.resizingKey = rkey;
+      tmplEditorState.resizeStart = rpt;
+      tmplEditorState.resizeStartSize = { w: rf.boxWidth, h: rf.boxHeight };
+      e.preventDefault();
+      e.stopPropagation();
+      return;
+    }
     var markerEl = e.target.closest(".tmpl-marker");
     if(markerEl && wrap.contains(markerEl)){
       var mkey = markerEl.dataset.fieldKey;
@@ -6573,9 +6605,26 @@
   });
   tmplEditorOverlayEl.addEventListener("mousemove", function(e){
     var tmpl = tmplEditorCurrentTemplate();
-    if(!tmpl || !tmplEditorState || !tmplEditorState.movingKey) return;
+    if(!tmpl || !tmplEditorState) return;
     var wrap = document.getElementById("tmplCanvasWrap");
     if(!wrap) return;
+    if(tmplEditorState.resizingKey){
+      var rf = tmpl.fields.find(function(x){ return x.key === tmplEditorState.resizingKey; });
+      if(!rf) return;
+      var rpt = tmplCanvasPointFromEvent(e, wrap, tmpl);
+      rf.boxWidth = Math.max(20, Math.round(tmplEditorState.resizeStartSize.w + (rpt.x - tmplEditorState.resizeStart.x)));
+      rf.boxHeight = Math.max(20, Math.round(tmplEditorState.resizeStartSize.h + (rpt.y - tmplEditorState.resizeStart.y)));
+      var rmarkers = wrap.querySelectorAll(".tmpl-marker");
+      for(var ri = 0; ri < rmarkers.length; ri++){
+        if(rmarkers[ri].dataset.fieldKey === rf.key){
+          rmarkers[ri].style.width = (rf.boxWidth / tmpl.width * 100) + "%";
+          rmarkers[ri].style.height = (rf.boxHeight / tmpl.height * 100) + "%";
+          break;
+        }
+      }
+      return;
+    }
+    if(!tmplEditorState.movingKey) return;
     var f = tmpl.fields.find(function(x){ return x.key === tmplEditorState.movingKey; });
     if(!f) return;
     var pt = tmplCanvasPointFromEvent(e, wrap, tmpl);
@@ -6593,6 +6642,13 @@
   tmplEditorOverlayEl.addEventListener("mouseup", function(e){
     var tmpl = tmplEditorCurrentTemplate();
     if(!tmpl || !tmplEditorState) return;
+    if(tmplEditorState.resizingKey){
+      saveDesignTemplate(tmpl);
+      tmplEditorState.resizingKey = null;
+      tmplEditorState.resizeStartSize = null;
+      renderTemplateEditor();
+      return;
+    }
     if(tmplEditorState.movingKey){
       saveDesignTemplate(tmpl);
       tmplEditorState.movingKey = null;
@@ -6673,6 +6729,91 @@
   tmplGenerateOverlayEl.addEventListener("change", function(e){
     if(e.target.id === "tmplGenSelect" && tmplGenerateState){
       tmplGenerateState.templateId = e.target.value;
+      runDesignGenerate();
+    }
+  });
+  tmplGenerateOverlayEl.addEventListener("mousedown", function(e){
+    if(!tmplGenerateState) return;
+    var tmpl = findDesignTemplate(tmplGenerateState.templateId);
+    if(!tmpl) return;
+    var wrap = document.getElementById("tmplGenCanvasWrap");
+    if(!wrap) return;
+    var handleEl = e.target.closest(".tmpl-resize-handle");
+    if(handleEl && wrap.contains(handleEl)){
+      var rkey = handleEl.dataset.resizeKey;
+      var rf = tmpl.fields.find(function(x){ return x.key === rkey; });
+      if(!rf) return;
+      var rpt = tmplCanvasPointFromEvent(e, wrap, tmpl);
+      tmplGenerateState.resizingKey = rkey;
+      tmplGenerateState.resizeStart = rpt;
+      tmplGenerateState.resizeStartSize = { w: rf.boxWidth, h: rf.boxHeight };
+      e.preventDefault();
+      e.stopPropagation();
+      return;
+    }
+    var markerEl = e.target.closest(".tmpl-marker");
+    if(markerEl && wrap.contains(markerEl)){
+      var mkey = markerEl.dataset.fieldKey;
+      var mf = tmpl.fields.find(function(x){ return x.key === mkey; });
+      if(!mf) return;
+      var mpt = tmplCanvasPointFromEvent(e, wrap, tmpl);
+      tmplGenerateState.movingKey = mkey;
+      tmplGenerateState.moveOffset = { x: mpt.x - mf.x, y: mpt.y - mf.y };
+      e.preventDefault();
+    }
+  });
+  tmplGenerateOverlayEl.addEventListener("mousemove", function(e){
+    if(!tmplGenerateState) return;
+    var tmpl = findDesignTemplate(tmplGenerateState.templateId);
+    if(!tmpl) return;
+    var wrap = document.getElementById("tmplGenCanvasWrap");
+    if(!wrap) return;
+    if(tmplGenerateState.resizingKey){
+      var rf = tmpl.fields.find(function(x){ return x.key === tmplGenerateState.resizingKey; });
+      if(!rf) return;
+      var rpt = tmplCanvasPointFromEvent(e, wrap, tmpl);
+      rf.boxWidth = Math.max(20, Math.round(tmplGenerateState.resizeStartSize.w + (rpt.x - tmplGenerateState.resizeStart.x)));
+      rf.boxHeight = Math.max(20, Math.round(tmplGenerateState.resizeStartSize.h + (rpt.y - tmplGenerateState.resizeStart.y)));
+      var rmarkers = wrap.querySelectorAll(".tmpl-marker");
+      for(var ri = 0; ri < rmarkers.length; ri++){
+        if(rmarkers[ri].dataset.fieldKey === rf.key){
+          rmarkers[ri].style.width = (rf.boxWidth / tmpl.width * 100) + "%";
+          rmarkers[ri].style.height = (rf.boxHeight / tmpl.height * 100) + "%";
+          break;
+        }
+      }
+      return;
+    }
+    if(!tmplGenerateState.movingKey) return;
+    var f = tmpl.fields.find(function(x){ return x.key === tmplGenerateState.movingKey; });
+    if(!f) return;
+    var pt = tmplCanvasPointFromEvent(e, wrap, tmpl);
+    f.x = Math.round(Math.max(0, Math.min(tmpl.width, pt.x - tmplGenerateState.moveOffset.x)));
+    f.y = Math.round(Math.max(0, Math.min(tmpl.height, pt.y - tmplGenerateState.moveOffset.y)));
+    var markers = wrap.querySelectorAll(".tmpl-marker");
+    for(var mi = 0; mi < markers.length; mi++){
+      if(markers[mi].dataset.fieldKey === f.key){
+        markers[mi].style.left = (f.x / tmpl.width * 100) + "%";
+        markers[mi].style.top = (f.y / tmpl.height * 100) + "%";
+        break;
+      }
+    }
+  });
+  tmplGenerateOverlayEl.addEventListener("mouseup", function(e){
+    if(!tmplGenerateState) return;
+    var tmpl = findDesignTemplate(tmplGenerateState.templateId);
+    if(!tmpl) return;
+    if(tmplGenerateState.resizingKey){
+      saveDesignTemplate(tmpl);
+      tmplGenerateState.resizingKey = null;
+      tmplGenerateState.resizeStartSize = null;
+      runDesignGenerate();
+      return;
+    }
+    if(tmplGenerateState.movingKey){
+      saveDesignTemplate(tmpl);
+      tmplGenerateState.movingKey = null;
+      tmplGenerateState.moveOffset = null;
       runDesignGenerate();
     }
   });
