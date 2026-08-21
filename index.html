@@ -5984,10 +5984,12 @@
     var html = '<div class="tmpl-field-row" data-field-key="' + f.key + '">' +
       '<div class="tmpl-field-row-head"><b>' + escapeHTML(meta.label) + '</b><button type="button" class="task-icon-btn" data-action="remove-tmpl-field" data-key="' + f.key + '" title="حذف الموضع"><span class="icon">' + ICON_DELETE + '</span></button></div>' +
       '<div class="tmpl-field-controls">';
+    html += '<label>X<input type="number" step="0.001" data-tmpl-prop="x" value="' + f.x + '"/></label>' +
+      '<label>Y<input type="number" step="0.001" data-tmpl-prop="y" value="' + f.y + '"/></label>';
     if(isImage){
       var imgStyle = tmplResolveImageStyle(f);
-      html += '<label>العرض<input type="number" min="10" data-tmpl-prop="boxWidth" value="' + f.boxWidth + '"/></label>' +
-        '<label>الارتفاع<input type="number" min="10" data-tmpl-prop="boxHeight" value="' + f.boxHeight + '"/></label>' +
+      html += '<label>العرض<input type="number" min="10" step="0.001" data-tmpl-prop="boxWidth" value="' + f.boxWidth + '"/></label>' +
+        '<label>الارتفاع<input type="number" min="10" step="0.001" data-tmpl-prop="boxHeight" value="' + f.boxHeight + '"/></label>' +
         '<label>طريقة الملء<select data-tmpl-prop="fit">' +
           '<option value="cover"' + (imgStyle.fit === "cover" ? " selected" : "") + '>تغطية (قص لملء المربع — الخلفية كما هي)</option>' +
           '<option value="contain"' + (imgStyle.fit === "contain" ? " selected" : "") + '>احتواء كامل (بدون قص — لصور مفرّغة الخلفية)</option>' +
@@ -6089,16 +6091,29 @@
     if(!tmplGenerateState) return;
     var body = document.getElementById("tmplGenerateBody");
     var templates = loadDesignTemplates(tmplGenerateState.catKey);
+    var tmpl = findDesignTemplate(tmplGenerateState.templateId);
     var html = '<div class="panel-head"><h3>توليد تصميم</h3><button type="button" class="panel-close" data-action="close-tmpl-generate">✕</button></div>';
     if(templates.length > 1){
       html += '<select id="tmplGenSelect" style="margin-bottom:14px;">' +
         templates.map(function(t){ return '<option value="' + t.id + '"' + (t.id === tmplGenerateState.templateId ? " selected" : "") + '>' + escapeHTML(t.name) + '</option>'; }).join("") +
         '</select>';
     }
+    html += '<div style="display:flex; gap:20px; flex-wrap:wrap;">';
+    html += '<div style="flex:1; min-width:280px;">';
     html += '<div class="tmpl-canvas-wrap" id="tmplGenCanvasWrap" style="display:block; margin:0 auto; cursor:default;"><canvas id="tmplGenCanvas" style="max-width:100%; display:block; background:repeating-conic-gradient(#f0f0f0 0% 25%, #fff 0% 50%) 50% / 16px 16px;"></canvas></div>';
     html += '<p class="hint" id="tmplGenStatus" style="text-align:center; margin-top:8px;">جارٍ التجهيز...</p>';
-    html += '<p class="hint" style="text-align:center;">تقدر تسحب أي عنصر على الصورة لتحريكه، أو تسحب المقبض الدائري بزاوية الصورة لتغيير حجمها — يتحدث التصميم فوراً</p>';
+    html += '<p class="hint" style="text-align:center;">اسحب أي عنصر لتحريكه، أو المقبض الدائري بزاوية الصورة لتغيير حجمها — والتحكم الكامل بكل عنصر (الخط، اللون، انحناء الزوايا...) بالعمود المجاور</p>';
     html += '<div style="text-align:center; margin-top:12px;"><button type="button" class="btn-primary" id="tmplGenDownloadBtn" data-action="download-tmpl-design" disabled>تنزيل الصورة</button></div>';
+    html += '</div>';
+    html += '<div style="flex:1; min-width:280px;" id="tmplGenFieldsList">';
+    if(tmpl){
+      if(!tmpl.fields.length){
+        html += '<p class="hint">لا توجد متغيرات محددة على هذا القالب بعد — أضِفها من "تعديل" داخل قائمة القوالب</p>';
+      } else {
+        tmpl.fields.forEach(function(f){ html += tmplFieldRowHTML(tmpl, f); });
+      }
+    }
+    html += '</div></div>';
     setHTML(body, html);
     runDesignGenerate();
   }
@@ -6722,6 +6737,7 @@
       else val = e.target.value;
       var patch = {}; patch[prop] = val;
       tmplUpdateField(tmpl, key, patch);
+      renderTemplateEditor();
     }
   });
 
@@ -6743,11 +6759,36 @@
         link.click();
         break;
       }
+      case "remove-tmpl-field": {
+        var rmTmpl = tmplGenerateState && findDesignTemplate(tmplGenerateState.templateId);
+        if(!rmTmpl) return;
+        rmTmpl.fields = rmTmpl.fields.filter(function(f){ return f.key !== btn.dataset.key; });
+        saveDesignTemplate(rmTmpl);
+        renderDesignGenerateModal();
+        break;
+      }
     }
   });
   tmplGenerateOverlayEl.addEventListener("change", function(e){
     if(e.target.id === "tmplGenSelect" && tmplGenerateState){
       tmplGenerateState.templateId = e.target.value;
+      runDesignGenerate();
+      return;
+    }
+    if(!tmplGenerateState) return;
+    var tmpl = findDesignTemplate(tmplGenerateState.templateId);
+    if(!tmpl) return;
+    var row = e.target.closest("[data-field-key]");
+    if(row && e.target.dataset.tmplProp){
+      var key = row.dataset.fieldKey;
+      var prop = e.target.dataset.tmplProp;
+      var val;
+      if(e.target.type === "checkbox") val = e.target.checked;
+      else if(e.target.type === "number") val = Number(e.target.value) || 0;
+      else if(prop === "hideValues") val = e.target.value.split(/[،,]/).map(function(s){ return s.trim(); }).filter(Boolean);
+      else val = e.target.value;
+      var patch = {}; patch[prop] = val;
+      tmplUpdateField(tmpl, key, patch);
       runDesignGenerate();
     }
   });
@@ -6826,14 +6867,14 @@
       saveDesignTemplate(tmpl);
       tmplGenerateState.resizingKey = null;
       tmplGenerateState.resizeStartSize = null;
-      runDesignGenerate();
+      renderDesignGenerateModal();
       return;
     }
     if(tmplGenerateState.movingKey){
       saveDesignTemplate(tmpl);
       tmplGenerateState.movingKey = null;
       tmplGenerateState.moveOffset = null;
-      runDesignGenerate();
+      renderDesignGenerateModal();
     }
   });
 
