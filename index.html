@@ -5936,6 +5936,15 @@
     var y = (e.clientY - rect.top) / rect.height * tmpl.height;
     return { x: Math.max(0, Math.min(tmpl.width, x)), y: Math.max(0, Math.min(tmpl.height, y)) };
   }
+  function tmplComputeResizeSize(startSize, startPt, curPt, lockAspect){
+    var rawW = Math.max(20, startSize.w + (curPt.x - startPt.x));
+    var rawH = Math.max(20, startSize.h + (curPt.y - startPt.y));
+    if(lockAspect){
+      var scale = Math.max(rawW / startSize.w, rawH / startSize.h);
+      return { w: Math.max(20, Math.round(startSize.w * scale)), h: Math.max(20, Math.round(startSize.h * scale)) };
+    }
+    return { w: Math.round(rawW), h: Math.round(rawH) };
+  }
   function tmplRenderMarkersOverlay(wrap, tmpl, extraClass){
     var existing = wrap.querySelectorAll(".tmpl-marker");
     for(var ei = 0; ei < existing.length; ei++) existing[ei].remove();
@@ -6039,7 +6048,7 @@
     var pendingMeta = tmplEditorState.pendingKey ? tmplFieldMeta(tmpl.category, tmplEditorState.pendingKey) : null;
     html += '<p class="hint" style="margin-top:8px;">' + (pendingMeta ?
       (pendingMeta.type === "image" ? "اسحب على القالب لتحديد مربع الصورة" : "انقر على موضع النص في القالب") :
-      "اختر متغيراً من القائمة ثم اضغط «تحديد الموضع» — وأي عنصر محدد مسبقاً تقدر تسحبه بالماوس لتحريكه فوراً") + '</p>';
+      "اختر متغيراً من القائمة ثم اضغط «تحديد الموضع» — وأي عنصر محدد مسبقاً تقدر تسحبه بالماوس لتحريكه فوراً، أو تسحب مقبض الصورة الدائري لتغيير حجمها (Shift لحفظ نسبة الأبعاد)") + '</p>';
     html += '</div>';
     html += '<div style="flex:1; min-width:280px;">';
     var fonts = loadDesignFonts();
@@ -6102,7 +6111,7 @@
     html += '<div style="flex:1; min-width:280px;">';
     html += '<div class="tmpl-canvas-wrap" id="tmplGenCanvasWrap" style="display:block; margin:0 auto; cursor:default;"><canvas id="tmplGenCanvas" style="max-width:100%; display:block; background:repeating-conic-gradient(#f0f0f0 0% 25%, #fff 0% 50%) 50% / 16px 16px;"></canvas></div>';
     html += '<p class="hint" id="tmplGenStatus" style="text-align:center; margin-top:8px;">جارٍ التجهيز...</p>';
-    html += '<p class="hint" style="text-align:center;">اسحب أي عنصر لتحريكه، أو المقبض الدائري بزاوية الصورة لتغيير حجمها — والتحكم الكامل بكل عنصر (الخط، اللون، انحناء الزوايا...) بالعمود المجاور</p>';
+    html += '<p class="hint" style="text-align:center;">اسحب أي عنصر لتحريكه، أو المقبض الدائري بزاوية الصورة لتغيير حجمها (اضغط Shift أثناء السحب لحفظ نسبة الأبعاد) — والتحكم الكامل بكل عنصر (الخط، اللون، انحناء الزوايا...) بالعمود المجاور</p>';
     html += '<div style="text-align:center; margin-top:12px;"><button type="button" class="btn-primary" id="tmplGenDownloadBtn" data-action="download-tmpl-design" disabled>تنزيل الصورة</button></div>';
     html += '</div>';
     html += '<div style="flex:1; min-width:280px;" id="tmplGenFieldsList">';
@@ -6646,8 +6655,9 @@
       var rf = tmpl.fields.find(function(x){ return x.key === tmplEditorState.resizingKey; });
       if(!rf) return;
       var rpt = tmplCanvasPointFromEvent(e, wrap, tmpl);
-      rf.boxWidth = Math.max(20, Math.round(tmplEditorState.resizeStartSize.w + (rpt.x - tmplEditorState.resizeStart.x)));
-      rf.boxHeight = Math.max(20, Math.round(tmplEditorState.resizeStartSize.h + (rpt.y - tmplEditorState.resizeStart.y)));
+      var rsize = tmplComputeResizeSize(tmplEditorState.resizeStartSize, tmplEditorState.resizeStart, rpt, e.shiftKey);
+      rf.boxWidth = rsize.w;
+      rf.boxHeight = rsize.h;
       var rmarkers = wrap.querySelectorAll(".tmpl-marker");
       for(var ri = 0; ri < rmarkers.length; ri++){
         if(rmarkers[ri].dataset.fieldKey === rf.key){
@@ -6832,8 +6842,9 @@
       var rf = tmpl.fields.find(function(x){ return x.key === tmplGenerateState.resizingKey; });
       if(!rf) return;
       var rpt = tmplCanvasPointFromEvent(e, wrap, tmpl);
-      rf.boxWidth = Math.max(20, Math.round(tmplGenerateState.resizeStartSize.w + (rpt.x - tmplGenerateState.resizeStart.x)));
-      rf.boxHeight = Math.max(20, Math.round(tmplGenerateState.resizeStartSize.h + (rpt.y - tmplGenerateState.resizeStart.y)));
+      var rsize = tmplComputeResizeSize(tmplGenerateState.resizeStartSize, tmplGenerateState.resizeStart, rpt, e.shiftKey);
+      rf.boxWidth = rsize.w;
+      rf.boxHeight = rsize.h;
       var rmarkers = wrap.querySelectorAll(".tmpl-marker");
       for(var ri = 0; ri < rmarkers.length; ri++){
         if(rmarkers[ri].dataset.fieldKey === rf.key){
