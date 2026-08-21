@@ -6476,7 +6476,8 @@
           finishPhotoUpload(blob, true);
         }).catch(function(err){
           console.error("bg removal failed", err);
-          showToast("تعذّرت إزالة الخلفية — تم رفع الصورة الأصلية بدلاً من ذلك");
+          var detail = (err && (err.message || err.toString())) || "خطأ غير معروف";
+          showToast("تعذّرت إزالة الخلفية: " + detail);
           finishPhotoUpload(file, false);
         });
       } else {
