@@ -4911,18 +4911,26 @@
     if(field.suffix) v = v + field.suffix;
     return v;
   }
+  // مسار بأربع زوايا مستقلة (وليس نصف قطر موحّد) — يسمح بشكل "قوسي" (منحني أعلى فقط) وليس فقط مستطيل بزوايا متساوية
   function roundRectPath(ctx, x, y, w, h, radius){
-    ctx.beginPath();
-    if(radius){
-      var r = Math.min(radius, w / 2, h / 2);
-      ctx.moveTo(x + r, y);
-      ctx.arcTo(x + w, y, x + w, y + h, r);
-      ctx.arcTo(x + w, y + h, x, y + h, r);
-      ctx.arcTo(x, y + h, x, y, r);
-      ctx.arcTo(x, y, x + w, y, r);
+    var tl, tr, br, bl;
+    if(radius && typeof radius === "object"){
+      tl = radius.tl || 0; tr = radius.tr || 0; br = radius.br || 0; bl = radius.bl || 0;
     } else {
-      ctx.rect(x, y, w, h);
+      tl = tr = br = bl = radius || 0;
     }
+    var maxR = Math.min(w, h) / 2;
+    tl = Math.min(tl, maxR); tr = Math.min(tr, maxR); br = Math.min(br, maxR); bl = Math.min(bl, maxR);
+    ctx.beginPath();
+    ctx.moveTo(x + tl, y);
+    ctx.lineTo(x + w - tr, y);
+    ctx.arcTo(x + w, y, x + w, y + h, tr);
+    ctx.lineTo(x + w, y + h - br);
+    ctx.arcTo(x + w, y + h, x, y + h, br);
+    ctx.lineTo(x + bl, y + h);
+    ctx.arcTo(x, y + h, x, y, bl);
+    ctx.lineTo(x, y + tl);
+    ctx.arcTo(x, y, x + w, y, tl);
     ctx.closePath();
   }
   function drawImageCover(ctx, img, x, y, w, h, radius){
@@ -4937,10 +4945,8 @@
   }
   function drawImageContain(ctx, img, x, y, w, h, radius){
     ctx.save();
-    if(radius){
-      roundRectPath(ctx, x, y, w, h, radius);
-      ctx.clip();
-    }
+    roundRectPath(ctx, x, y, w, h, radius);
+    ctx.clip();
     var scale = Math.min(w / img.width, h / img.height);
     var dw = img.width * scale, dh = img.height * scale;
     var dx = x + (w - dw) / 2, dy = y + (h - dh) / 2;
@@ -4948,12 +4954,18 @@
     ctx.restore();
   }
   function tmplResolveImageStyle(f){
-    if(f.fit || typeof f.radius === "number"){
-      return { fit: f.fit || "cover", radius: typeof f.radius === "number" ? f.radius : 0 };
+    var fit = f.fit || (f.shape === "transparent" ? "contain" : "cover");
+    var radius;
+    if(f.radiusTL != null || f.radiusTR != null || f.radiusBR != null || f.radiusBL != null){
+      radius = { tl: f.radiusTL || 0, tr: f.radiusTR || 0, br: f.radiusBR || 0, bl: f.radiusBL || 0 };
+    } else if(typeof f.radius === "number"){
+      radius = { tl: f.radius, tr: f.radius, br: f.radius, bl: f.radius };
+    } else if(f.shape === "transparent" || f.shape === "square"){
+      radius = { tl: 0, tr: 0, br: 0, bl: 0 };
+    } else {
+      radius = { tl: 28, tr: 28, br: 28, bl: 28 };
     }
-    if(f.shape === "transparent") return { fit: "contain", radius: 0 };
-    if(f.shape === "square") return { fit: "cover", radius: 0 };
-    return { fit: "cover", radius: 28 };
+    return { fit: fit, radius: radius };
   }
   function loadImageAsync(src){
     return new Promise(function(resolve){
@@ -5963,7 +5975,7 @@
     var x = Math.round(Math.min(x1, x2)), y = Math.round(Math.min(y1, y2));
     var w = Math.round(Math.max(20, Math.abs(x2 - x1)));
     var h = Math.round(Math.max(20, Math.abs(y2 - y1)));
-    tmpl.fields.push({ key: key, type: "image", x: x, y: y, boxWidth: w, boxHeight: h, fit: "cover", radius: 28 });
+    tmpl.fields.push({ key: key, type: "image", x: x, y: y, boxWidth: w, boxHeight: h, fit: "cover", radiusTL: 28, radiusTR: 28, radiusBR: 28, radiusBL: 28 });
     saveDesignTemplate(tmpl);
   }
   function tmplFieldRowHTML(tmpl, f){
@@ -5980,7 +5992,11 @@
           '<option value="cover"' + (imgStyle.fit === "cover" ? " selected" : "") + '>تغطية (قص لملء المربع — الخلفية كما هي)</option>' +
           '<option value="contain"' + (imgStyle.fit === "contain" ? " selected" : "") + '>احتواء كامل (بدون قص — لصور مفرّغة الخلفية)</option>' +
         '</select></label>' +
-        '<label>نصف قطر الانحناء (px)<input type="number" min="0" step="0.001" data-tmpl-prop="radius" value="' + imgStyle.radius + '"/></label>';
+        '<label style="flex-basis:100%; font-weight:700; margin-top:4px;">انحناء الزوايا (px) — كل زاوية مستقلة</label>' +
+        '<label>⌜ أعلى-يسار<input type="number" min="0" step="0.001" data-tmpl-prop="radiusTL" value="' + imgStyle.radius.tl + '"/></label>' +
+        '<label>⌝ أعلى-يمين<input type="number" min="0" step="0.001" data-tmpl-prop="radiusTR" value="' + imgStyle.radius.tr + '"/></label>' +
+        '<label>⌞ أسفل-يسار<input type="number" min="0" step="0.001" data-tmpl-prop="radiusBL" value="' + imgStyle.radius.bl + '"/></label>' +
+        '<label>⌟ أسفل-يمين<input type="number" min="0" step="0.001" data-tmpl-prop="radiusBR" value="' + imgStyle.radius.br + '"/></label>';
     } else {
       html += '<label>حجم الخط<input type="number" min="8" max="120" data-tmpl-prop="fontSize" value="' + f.fontSize + '"/></label>' +
         '<label>الخط<select data-tmpl-prop="font">' +
