@@ -5998,7 +5998,7 @@
       templates.forEach(function(t){
         html += '<div class="tmpl-list-card">' +
           '<img src="' + t.image + '" alt=""/>' +
-          '<div class="info"><b>' + escapeHTML(t.name) + '</b><div class="hint">' + t.fields.length + ' متغير محدد</div></div>' +
+          '<div class="info"><b>' + escapeHTML(t.name) + (t.gender ? ' <span class="hint" style="font-weight:400;">(' + (t.gender === "ذكر" ? "♂ ذكور" : "♀ إناث") + ')</span>' : '') + '</b><div class="hint">' + t.fields.length + ' متغير محدد</div></div>' +
           '<button type="button" class="btn-secondary" data-action="edit-design-tmpl" data-id="' + t.id + '">تعديل</button>' +
           '<button type="button" class="btn-secondary" data-action="duplicate-design-tmpl" data-id="' + t.id + '" title="ينسخ الصورة وكل المتغيرات ومواضعها لقالب جديد">📋 نسخ</button>' +
           '<button type="button" class="task-icon-btn" data-action="delete-design-tmpl" data-id="' + t.id + '" title="حذف"><span class="icon">' + ICON_DELETE + '</span></button>' +
@@ -6249,7 +6249,8 @@
   }
   function tmplPreviewSwitcherHTML(tmpl, currentRecordId){
     var records = loadEventsData().filter(function(r){ return r.category === tmpl.category; });
-    var html = '<div style="margin-bottom:16px;"><label style="font-size:11.5px; color:var(--ink-soft); display:block; margin-bottom:4px;">🔍 المعاينة الحالية</label>' +
+    var html = '<div style="display:flex; gap:16px; flex-wrap:wrap; margin-bottom:16px;">';
+    html += '<div><label style="font-size:11.5px; color:var(--ink-soft); display:block; margin-bottom:4px;">🔍 المعاينة الحالية</label>' +
       '<select id="tmplPreviewRecordSelect" style="max-width:360px; margin-bottom:0;">' +
       '<option value=""' + (!currentRecordId ? " selected" : "") + '>— بدون بيانات (تعديل القالب فقط) —</option>' +
       records.map(function(r){
@@ -6257,6 +6258,13 @@
         return '<option value="' + r.id + '"' + (r.id === currentRecordId ? " selected" : "") + '>' + escapeHTML(lbl) + '</option>';
       }).join("") +
       '</select></div>';
+    html += '<div><label style="font-size:11.5px; color:var(--ink-soft); display:block; margin-bottom:4px;">👤 هذا القالب مخصص لـ</label>' +
+      '<select id="tmplGenderSelect" style="max-width:200px; margin-bottom:0;">' +
+        '<option value=""' + (!tmpl.gender ? " selected" : "") + '>الجميع</option>' +
+        '<option value="ذكر"' + (tmpl.gender === "ذكر" ? " selected" : "") + '>ذكور فقط</option>' +
+        '<option value="أنثى"' + (tmpl.gender === "أنثى" ? " selected" : "") + '>إناث فقط</option>' +
+      '</select></div>';
+    html += '</div>';
     return html;
   }
   function renderTemplateEditor(){
@@ -6310,6 +6318,18 @@
     if(editorWrap) tmplRenderMarkersOverlay(editorWrap, tmpl);
   }
 
+  // يختار أنسب قالب لسجل معيّن: قالب مطابق لجنس السجل أولاً، وإلا قالب "للجميع" (بدون تخصيص جنس)، وإلا أول قالب متاح
+  function pickBestTemplateForRecord(templates, rec){
+    if(!templates.length) return null;
+    var g = rec && rec.gender;
+    if(g){
+      var exact = templates.find(function(t){ return t.gender === g; });
+      if(exact) return exact;
+    }
+    var unisex = templates.find(function(t){ return !t.gender; });
+    if(unisex) return unisex;
+    return templates[0];
+  }
   function openDesignGenerateModal(recordId, preferredTemplateId){
     var all = loadEventsData();
     var rec = all.find(function(r){ return r.id === recordId; });
@@ -6318,7 +6338,7 @@
     if(!cat) return;
     var templates = loadDesignTemplates(cat.key);
     if(!templates.length) return;
-    var tid = (preferredTemplateId && templates.some(function(t){ return t.id === preferredTemplateId; })) ? preferredTemplateId : templates[0].id;
+    var tid = (preferredTemplateId && templates.some(function(t){ return t.id === preferredTemplateId; })) ? preferredTemplateId : pickBestTemplateForRecord(templates, rec).id;
     tmplGenerateState = { recordId: recordId, catKey: cat.key, templateId: tid, pendingKey: "" };
     renderDesignGenerateModal();
     document.getElementById("tmplGenerateOverlay").classList.add("active");
@@ -7042,6 +7062,12 @@
       tmplSwitchWorkspace(tmpl.id, e.target.value || null);
       return;
     }
+    if(e.target.id === "tmplGenderSelect"){
+      tmpl.gender = e.target.value || null;
+      saveDesignTemplate(tmpl);
+      refreshTmplManager();
+      return;
+    }
     if(e.target.id === "tmplNameInput"){
       tmpl.name = e.target.value.trim() || "قالب بلا اسم";
       saveDesignTemplate(tmpl);
@@ -7207,6 +7233,11 @@
     if(!tmpl) return;
     if(e.target.id === "tmplPreviewRecordSelect"){
       tmplSwitchWorkspace(tmpl.id, e.target.value || null);
+      return;
+    }
+    if(e.target.id === "tmplGenderSelect"){
+      tmpl.gender = e.target.value || null;
+      saveDesignTemplate(tmpl);
       return;
     }
     if(e.target.id === "tmplReplaceImageInput"){

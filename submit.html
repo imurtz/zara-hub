@@ -1103,13 +1103,27 @@
     }
     ctx.restore();
   }
+  // يختار أنسب قالب: مطابق لجنس السجل أولاً، وإلا قالب "للجميع" (بدون تخصيص جنس)، وإلا أول قالب متاح
+  function pickBestTemplateForRecordPublic(templates, rec){
+    if(!templates.length) return null;
+    var g = rec && rec.gender;
+    if(g){
+      var exact = templates.find(function(t){ return t.gender === g; });
+      if(exact) return exact;
+    }
+    var unisex = templates.find(function(t){ return !t.gender; });
+    if(unisex) return unisex;
+    return templates[0];
+  }
   function showDesignPreview(rec){
     var section = document.getElementById("designPreviewSection");
     var canvas = document.getElementById("designPreviewCanvas");
     if(!section || !canvas) return;
-    db.collection("designTemplates").where("category", "==", rec.category).limit(1).get().then(function(snap){
+    db.collection("designTemplates").where("category", "==", rec.category).get().then(function(snap){
       if(snap.empty) return;
-      var tmpl = snap.docs[0].data();
+      var templates = snap.docs.map(function(d){ return d.data(); });
+      var tmpl = pickBestTemplateForRecordPublic(templates, rec);
+      if(!tmpl) return;
       return renderTemplateToCanvasPublic(canvas, tmpl, rec).then(function(ok){
         if(!ok) return;
         drawPreviewWatermark(canvas.getContext("2d"), canvas.width, canvas.height);
