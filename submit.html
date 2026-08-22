@@ -170,6 +170,13 @@
     <svg class="icon-big" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M8 12.5l2.5 2.5L16 9"/></svg>
     <h2>تم إرسال بياناتكم بنجاح</h2>
     <p>شكراً لمشاركتكم — سيتم مراجعة البيانات من قبل الجمعية قبل اعتمادها ضمن السجلات.</p>
+    <div id="designPreviewSection" style="display:none; margin-top:18px;">
+      <p class="field-hint" style="margin-bottom:8px;">معاينة أولية لتصميم مناسبتكم (للاطلاع فقط):</p>
+      <div style="overflow:auto; border:1px solid var(--line); border-radius:12px; padding:8px; background:#fafafa;">
+        <canvas id="designPreviewCanvas" style="max-width:100%; display:block; margin:0 auto;" oncontextmenu="return false;"></canvas>
+      </div>
+      <p class="field-hint" style="margin-top:8px;">النسخة النهائية عالية الجودة تصدرها الجمعية بعد اعتماد التسجيل</p>
+    </div>
     <button type="button" id="sendAnotherBtn">إرسال بيانات أخرى</button>
   </div>
 
@@ -855,6 +862,262 @@
     return input ? String(input.value).trim() : "";
   }
 
+  // ===== معاينة تصميم بعد التسجيل مباشرة — نسخة مبسّطة (للعرض فقط، بدون تحرير) من محرك رسم القوالب في لوحة التحكم =====
+  var AR_NON_CONNECTING = "اأإآدذرزوةى";
+  function canInsertKashidaAfter(ch, nextCh){
+    if(!ch || !nextCh) return false;
+    if(AR_NON_CONNECTING.indexOf(ch) > -1) return false;
+    if(!/[ء-ي]/.test(ch) || !/[ء-ي]/.test(nextCh)) return false;
+    return true;
+  }
+  function kashidaJustifyText(ctx, text, targetWidth){
+    if(!text) return text;
+    var natural = ctx.measureText(text).width;
+    if(natural >= targetWidth) return text;
+    var points = [];
+    for(var i = 0; i < text.length - 1; i++){
+      if(canInsertKashidaAfter(text[i], text[i + 1])) points.push(i);
+    }
+    if(!points.length) return text;
+    var tatweelWidth = ctx.measureText("ـ").width || 6;
+    var needed = targetWidth - natural;
+    var perPoint = Math.max(1, Math.round((needed / tatweelWidth) / points.length));
+    var chars = text.split("");
+    var offset = 0;
+    points.forEach(function(idx){
+      var insertAt = idx + 1 + offset;
+      var ins = new Array(perPoint + 1).join("ـ");
+      chars.splice(insertAt, 0, ins);
+      offset += 1;
+    });
+    var result = chars.join("");
+    var safety = 0;
+    while(ctx.measureText(result).width > targetWidth * 1.06 && perPoint > 1 && safety < 20){
+      perPoint--;
+      chars = text.split("");
+      offset = 0;
+      points.forEach(function(idx){
+        var insertAt = idx + 1 + offset;
+        var ins = new Array(perPoint + 1).join("ـ");
+        chars.splice(insertAt, 0, ins);
+        offset += 1;
+      });
+      result = chars.join("");
+      safety++;
+    }
+    return result;
+  }
+  function templateFieldValuePublic(field, record){
+    var v = record[field.key];
+    if(field.key === "photo") v = record.photo;
+    if(v == null) v = "";
+    v = String(v).trim();
+    if(field.hideValues && field.hideValues.indexOf(v) > -1) return "";
+    if(!v) return "";
+    if(field.prefix) v = field.prefix + v;
+    if(field.suffix) v = v + field.suffix;
+    return v;
+  }
+  function roundRectPath(ctx, x, y, w, h, radius){
+    var tl, tr, br, bl;
+    if(radius && typeof radius === "object"){
+      tl = radius.tl || 0; tr = radius.tr || 0; br = radius.br || 0; bl = radius.bl || 0;
+    } else {
+      tl = tr = br = bl = radius || 0;
+    }
+    var maxR = Math.min(w, h) / 2;
+    tl = Math.min(tl, maxR); tr = Math.min(tr, maxR); br = Math.min(br, maxR); bl = Math.min(bl, maxR);
+    ctx.beginPath();
+    ctx.moveTo(x + tl, y);
+    ctx.lineTo(x + w - tr, y);
+    ctx.arcTo(x + w, y, x + w, y + h, tr);
+    ctx.lineTo(x + w, y + h - br);
+    ctx.arcTo(x + w, y + h, x, y + h, br);
+    ctx.lineTo(x + bl, y + h);
+    ctx.arcTo(x, y + h, x, y, bl);
+    ctx.lineTo(x, y + tl);
+    ctx.arcTo(x, y, x + w, y, tl);
+    ctx.closePath();
+  }
+  function drawImageCoverPublic(ctx, img, x, y, w, h, radius, zoom, offsetX, offsetY){
+    zoom = zoom && zoom > 0 ? zoom : 1;
+    offsetX = offsetX || 0; offsetY = offsetY || 0;
+    var baseScale = Math.max(w / img.width, h / img.height);
+    var scale = baseScale * zoom;
+    var sw = w / scale, sh = h / scale;
+    var maxSx = Math.max(0, img.width - sw), maxSy = Math.max(0, img.height - sh);
+    var sx = Math.max(0, Math.min(maxSx, maxSx / 2 + offsetX * (maxSx / 2)));
+    var sy = Math.max(0, Math.min(maxSy, maxSy / 2 + offsetY * (maxSy / 2)));
+    ctx.save();
+    roundRectPath(ctx, x, y, w, h, radius);
+    ctx.clip();
+    ctx.drawImage(img, sx, sy, sw, sh, x, y, w, h);
+    ctx.restore();
+  }
+  function drawImageContainPublic(ctx, img, x, y, w, h, radius, zoom, offsetX, offsetY){
+    zoom = zoom && zoom > 0 ? zoom : 1;
+    offsetX = offsetX || 0; offsetY = offsetY || 0;
+    ctx.save();
+    roundRectPath(ctx, x, y, w, h, radius);
+    ctx.clip();
+    var baseScale = Math.min(w / img.width, h / img.height);
+    var scale = baseScale * zoom;
+    var dw = img.width * scale, dh = img.height * scale;
+    var overflowX = Math.max(0, (dw - w) / 2), overflowY = Math.max(0, (dh - h) / 2);
+    var dx = x + (w - dw) / 2 + offsetX * overflowX;
+    var dy = y + (h - dh) / 2 + offsetY * overflowY;
+    ctx.drawImage(img, dx, dy, dw, dh);
+    ctx.restore();
+  }
+  function tmplGeomTargetPublic(f){
+    if(f.type === "image" && f.fit === "contain" && f.containOverride) return f.containOverride;
+    return f;
+  }
+  function tmplResolveImageStylePublic(f){
+    var fit = f.fit || (f.shape === "transparent" ? "contain" : "cover");
+    var radius;
+    if(f.radiusTL != null || f.radiusTR != null || f.radiusBR != null || f.radiusBL != null){
+      radius = { tl: f.radiusTL || 0, tr: f.radiusTR || 0, br: f.radiusBR || 0, bl: f.radiusBL || 0 };
+    } else if(typeof f.radius === "number"){
+      radius = { tl: f.radius, tr: f.radius, br: f.radius, bl: f.radius };
+    } else if(f.shape === "transparent" || f.shape === "square"){
+      radius = { tl: 0, tr: 0, br: 0, bl: 0 };
+    } else {
+      radius = { tl: 28, tr: 28, br: 28, bl: 28 };
+    }
+    var g = tmplGeomTargetPublic(f);
+    return {
+      fit: fit,
+      radius: radius,
+      zoom: (typeof g.zoom === "number" && g.zoom > 0) ? g.zoom : 1,
+      offsetX: typeof g.offsetX === "number" ? g.offsetX : 0,
+      offsetY: typeof g.offsetY === "number" ? g.offsetY : 0
+    };
+  }
+  function loadImageAsyncPublic(src){
+    return new Promise(function(resolve){
+      if(!src){ resolve(null); return; }
+      var img = new Image();
+      img.onload = function(){ resolve(img); };
+      img.onerror = function(){ resolve(null); };
+      img.src = src;
+    });
+  }
+  function customFontFamilyNamePublic(fontId){ return "df_" + String(fontId).replace(/[^a-zA-Z0-9]/g, ""); }
+  function loadCustomFontOncePublic(fontId){
+    var fam = customFontFamilyNamePublic(fontId);
+    if(window.FontFace && document.fonts && Array.from(document.fonts).some(function(f){ return f.family === fam; })){
+      return Promise.resolve(fam);
+    }
+    return db.collection("designFonts").doc(fontId).get().then(function(doc){
+      var fontDoc = doc.exists ? doc.data() : null;
+      if(!fontDoc || !fontDoc.dataUrl || !window.FontFace) return null;
+      var face = new FontFace(fam, "url(" + fontDoc.dataUrl + ")");
+      return face.load().then(function(loaded){ document.fonts.add(loaded); return fam; }).catch(function(){ return null; });
+    }).catch(function(){ return null; });
+  }
+  async function renderTemplateToCanvasPublic(canvas, template, record){
+    var bg = await loadImageAsyncPublic(template.image);
+    if(!bg) return false;
+    canvas.width = template.width;
+    canvas.height = template.height;
+    var ctx = canvas.getContext("2d");
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.drawImage(bg, 0, 0, template.width, template.height);
+    var customFontIds = template.fields.filter(function(f){ return f.type !== "image" && typeof f.font === "string" && f.font.indexOf("custom:") === 0; })
+      .map(function(f){ return f.font.slice(7); });
+    var uniqueFontIds = customFontIds.filter(function(v, i, a){ return a.indexOf(v) === i; });
+    var fontFamMap = {};
+    for(var fi = 0; fi < uniqueFontIds.length; fi++){
+      fontFamMap[uniqueFontIds[fi]] = await loadCustomFontOncePublic(uniqueFontIds[fi]);
+    }
+    for(var i = 0; i < template.fields.length; i++){
+      var f = template.fields[i];
+      if(f.type === "image"){
+        var srcVal = record[f.key] || "";
+        var imgGeom = tmplGeomTargetPublic(f);
+        if(srcVal && imgGeom.boxWidth > 0 && imgGeom.boxHeight > 0){
+          var img = await loadImageAsyncPublic(srcVal);
+          if(img){
+            var imgStyle = tmplResolveImageStylePublic(f);
+            if(imgStyle.fit === "contain") drawImageContainPublic(ctx, img, imgGeom.x, imgGeom.y, imgGeom.boxWidth, imgGeom.boxHeight, imgStyle.radius, imgStyle.zoom, imgStyle.offsetX, imgStyle.offsetY);
+            else drawImageCoverPublic(ctx, img, imgGeom.x, imgGeom.y, imgGeom.boxWidth, imgGeom.boxHeight, imgStyle.radius, imgStyle.zoom, imgStyle.offsetX, imgStyle.offsetY);
+          }
+        }
+        continue;
+      }
+      var text = templateFieldValuePublic(f, record);
+      if(!text) continue;
+      var weight = f.bold ? "700" : "400";
+      var fam = "Cairo";
+      if(f.font && f.font.indexOf("custom:") === 0) fam = fontFamMap[f.font.slice(7)] || "Cairo";
+      else if(f.font) fam = f.font;
+      ctx.font = weight + ' ' + f.fontSize + 'px "' + fam + '", sans-serif';
+      ctx.fillStyle = f.color || "#000000";
+      ctx.textBaseline = "middle";
+      var renderText = text;
+      if(f.kashida && f.maxWidth) renderText = kashidaJustifyText(ctx, text, f.maxWidth);
+      var w = ctx.measureText(renderText).width;
+      if(f.maxWidth && w > f.maxWidth){
+        var fs = f.fontSize;
+        while(w > f.maxWidth && fs > 10){
+          fs -= 1;
+          ctx.font = weight + ' ' + fs + 'px "' + fam + '", sans-serif';
+          w = ctx.measureText(renderText).width;
+        }
+      }
+      ctx.textAlign = f.align || "center";
+      ctx.fillText(renderText, f.x, f.y);
+    }
+    return true;
+  }
+  // علامة مائية متكررة بطبقتين متقاطعتين بزوايا وأحجام مختلفة — تصعّب الاستخلاص النظيف حتى بلقطة شاشة
+  function drawPreviewWatermark(ctx, w, h){
+    ctx.save();
+    var text = "معاينة فقط — خيرية العوامية";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillStyle = "rgba(0,0,0,0.10)";
+    ctx.font = "bold 22px Cairo, sans-serif";
+    var stepX1 = 230, stepY1 = 150, angle1 = -28 * Math.PI / 180;
+    for(var y1 = -stepY1; y1 < h + stepY1; y1 += stepY1){
+      for(var x1 = -stepX1; x1 < w + stepX1; x1 += stepX1){
+        ctx.save();
+        ctx.translate(x1, y1);
+        ctx.rotate(angle1);
+        ctx.fillText(text, 0, 0);
+        ctx.restore();
+      }
+    }
+    ctx.fillStyle = "rgba(0,0,0,0.07)";
+    ctx.font = "bold 14px Cairo, sans-serif";
+    var stepX2 = 170, stepY2 = 110, angle2 = 18 * Math.PI / 180;
+    for(var y2 = -stepY2; y2 < h + stepY2; y2 += stepY2){
+      for(var x2 = -stepX2 - 60; x2 < w + stepX2; x2 += stepX2){
+        ctx.save();
+        ctx.translate(x2, y2);
+        ctx.rotate(angle2);
+        ctx.fillText(text, 0, 0);
+        ctx.restore();
+      }
+    }
+    ctx.restore();
+  }
+  function showDesignPreview(rec){
+    var section = document.getElementById("designPreviewSection");
+    var canvas = document.getElementById("designPreviewCanvas");
+    if(!section || !canvas) return;
+    db.collection("designTemplates").where("category", "==", rec.category).limit(1).get().then(function(snap){
+      if(snap.empty) return;
+      var tmpl = snap.docs[0].data();
+      return renderTemplateToCanvasPublic(canvas, tmpl, rec).then(function(ok){
+        if(!ok) return;
+        drawPreviewWatermark(canvas.getContext("2d"), canvas.width, canvas.height);
+        section.style.display = "block";
+      });
+    }).catch(function(err){ console.error("design preview error", err); });
+  }
+
   function handleSubmit(){
     var cat = CATEGORIES.find(function(c){ return c.key === state.activeCategory; });
     var effectiveFields = getEffectiveFields(cat.key);
@@ -906,6 +1169,7 @@
     db.collection("events").doc(rec.id).set(rec).then(function(){
       document.getElementById("formCard").style.display = "none";
       document.getElementById("thanksCard").style.display = "block";
+      showDesignPreview(rec);
     }).catch(function(err){
       console.error("submit error", err);
       errEl.textContent = "تعذّر إرسال البيانات — تأكد من اتصالك بالإنترنت وحاول مرة أخرى";
@@ -919,6 +1183,7 @@
   document.getElementById("submitBtn").addEventListener("click", handleSubmit);
   document.getElementById("sendAnotherBtn").addEventListener("click", function(){
     document.getElementById("thanksCard").style.display = "none";
+    document.getElementById("designPreviewSection").style.display = "none";
     document.getElementById("formCard").style.display = "block";
     renderForm();
   });
