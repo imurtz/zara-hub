@@ -613,6 +613,12 @@
     html += '<p class="ai-choice-hint">اختر إحدى الطريقتين، ونتولى صياغة نص التهنئة النهائي لك</p>';
     html += '<div class="ai-choice-grid">';
     html += '<div class="ai-choice-card">';
+    html += '<b>✍️ كتابة التفاصيل بنفسك</b>';
+    html += '<p>صف المناسبة بجملة أو جملتين، ونتولى صياغتها بالشكل النهائي</p>';
+    html += '<textarea data-key="details" rows="4" placeholder="مثال: حصوله على جائزة التميز من..."></textarea>';
+    html += '</div>';
+    html += '<div class="ai-choice-divider"><span>أو</span></div>';
+    html += '<div class="ai-choice-card">';
     html += '<b>📎 إرفاق شهادة أو صورة</b>';
     html += '<p>صورة شهادة، جائزة، أو تكريم يخص المناسبة — نصوغ التهنئة اعتماداً على تفاصيلها</p>';
     if(state.aiImage){
@@ -620,12 +626,6 @@
     } else {
       html += '<label class="ai-image-upload-label">📷 اختر صورة<input type="file" accept="image/*" id="aiImageInput" style="display:none;"/></label>';
     }
-    html += '</div>';
-    html += '<div class="ai-choice-divider"><span>أو</span></div>';
-    html += '<div class="ai-choice-card">';
-    html += '<b>✍️ كتابة التفاصيل بنفسك</b>';
-    html += '<p>صف المناسبة بجملة أو جملتين، ونتولى صياغتها بالشكل النهائي</p>';
-    html += '<textarea data-key="details" rows="4" placeholder="مثال: حصوله على جائزة التميز من..."></textarea>';
     html += '</div>';
     html += '</div>';
     if(!state.aiSuggestion && !state.aiLoading){
