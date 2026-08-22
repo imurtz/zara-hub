@@ -5688,6 +5688,7 @@
   var tmplGenerateState = null;
   var tmplDragKey = null;
   var tmplActiveFieldKey = null;
+  var tmplExpandedFieldKeys = {};
   function openEventsImportModal(catKey){
     if(typeof window.XLSX === "undefined"){ showToast("مكتبة Excel غير متوفرة الآن"); return; }
     eventsImportState = { catKey: catKey, rows: null, fileName: "", error: null };
@@ -6121,7 +6122,7 @@
     var isImage = f.type === "image";
     var g = isImage ? tmplGeomTarget(f) : f;
     var typeIcon = isImage ? "🖼️" : "🔤";
-    var html = '<div class="tmpl-field-row" data-field-key="' + f.key + '">' +
+    var html = '<div class="tmpl-field-row' + (tmplExpandedFieldKeys[f.key] ? "" : " collapsed") + '" data-field-key="' + f.key + '">' +
       '<div class="tmpl-field-row-head" data-action="toggle-tmpl-field-row"><b><span class="tmpl-drag-handle" draggable="true" title="اسحب لتغيير الترتيب (يتحكم أيضاً بأيها يظهر فوق الآخر عند التداخل)">⠿</span><span class="tmpl-field-type-icon">' + typeIcon + '</span>' + escapeHTML(meta.label) + '</b><button type="button" class="task-icon-btn" data-action="remove-tmpl-field" data-key="' + f.key + '" title="حذف الموضع"><span class="icon">' + ICON_DELETE + '</span></button></div>';
     html += '<div class="tmpl-field-body">';
     if(isImage && previewRecordId){
@@ -6839,8 +6840,10 @@
       case "toggle-tmpl-field-row": {
         var toggleRow = btn.closest(".tmpl-field-row");
         if(toggleRow){
-          toggleRow.classList.toggle("collapsed");
-          tmplActiveFieldKey = toggleRow.dataset.fieldKey;
+          var tKey = toggleRow.dataset.fieldKey;
+          tmplExpandedFieldKeys[tKey] = !tmplExpandedFieldKeys[tKey];
+          toggleRow.classList.toggle("collapsed", !tmplExpandedFieldKeys[tKey]);
+          tmplActiveFieldKey = tKey;
         }
         break;
       }
@@ -7099,8 +7102,10 @@
       case "toggle-tmpl-field-row": {
         var toggleRow2 = btn.closest(".tmpl-field-row");
         if(toggleRow2){
-          toggleRow2.classList.toggle("collapsed");
-          tmplActiveFieldKey = toggleRow2.dataset.fieldKey;
+          var tKey2 = toggleRow2.dataset.fieldKey;
+          tmplExpandedFieldKeys[tKey2] = !tmplExpandedFieldKeys[tKey2];
+          toggleRow2.classList.toggle("collapsed", !tmplExpandedFieldKeys[tKey2]);
+          tmplActiveFieldKey = tKey2;
         }
         break;
       }
