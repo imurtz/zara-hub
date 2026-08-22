@@ -557,7 +557,9 @@
     .panel-overlay.panel-overlay-fullscreen .panel.panel-fullscreen{padding:24px 48px 48px;}
   }
 
-  .tmpl-workspace-stack{display:flex; flex-direction:column; gap:20px; max-width:760px; margin:0 auto;}
+  .tmpl-workspace-stack{display:flex; flex-direction:row; gap:20px; align-items:flex-start;}
+  .tmpl-workspace-stack > .tmpl-fields-col{flex:1; min-width:320px;}
+  .tmpl-workspace-stack > .tmpl-canvas-col{flex:1; min-width:320px;}
   .tmpl-canvas-stage{background:var(--white); border:1px solid var(--line); border-radius:16px; padding:16px; box-shadow:0 2px 10px rgba(0,0,0,.04);}
   .tmpl-canvas-stage .tmpl-canvas-wrap{max-width:520px; margin:0 auto;}
   .tmpl-canvas-wrap{position:relative; display:inline-block; border:1px solid var(--line); border-radius:10px; overflow:hidden; max-width:100%; cursor:crosshair; background:repeating-conic-gradient(#f0f0f0 0% 25%, #fff 0% 50%) 50% / 16px 16px;}
@@ -588,6 +590,9 @@
   .tmpl-field-row.collapsed .tmpl-field-row-head{margin-bottom:0;}
   .tmpl-field-row.collapsed .tmpl-field-body{display:none;}
   .tmpl-field-type-icon{display:inline-block; margin-inline-end:5px; font-size:12px;}
+  .tmpl-drag-handle{display:inline-block; margin-inline-end:6px; cursor:grab; color:var(--ink-soft); font-size:13px; letter-spacing:-1px;}
+  .tmpl-drag-handle:active{cursor:grabbing;}
+  .tmpl-field-row.drag-over{border-top:3px solid var(--teal);}
   .tmpl-field-bg-row{display:flex; align-items:center; gap:10px; background:var(--teal-tint); border:1px solid var(--line); border-radius:10px; padding:8px 10px; margin-bottom:8px;}
   .tmpl-field-bg-thumb{width:34px; height:34px; border-radius:8px; object-fit:cover; border:1px solid var(--line); background:repeating-conic-gradient(#f0f0f0 0% 25%, #fff 0% 50%) 50% / 10px 10px; flex-shrink:0;}
   .tmpl-field-bg-thumb-empty{display:flex; align-items:center; justify-content:center; color:var(--ink-soft); font-size:13px;}
@@ -5673,6 +5678,7 @@
   var eventsImportState = { catKey: null, rows: null, fileName: "", error: null };
   var tmplEditorState = null;
   var tmplGenerateState = null;
+  var tmplDragKey = null;
   function openEventsImportModal(catKey){
     if(typeof window.XLSX === "undefined"){ showToast("مكتبة Excel غير متوفرة الآن"); return; }
     eventsImportState = { catKey: catKey, rows: null, fileName: "", error: null };
@@ -6084,7 +6090,7 @@
     var g = isImage ? tmplGeomTarget(f) : f;
     var typeIcon = isImage ? "🖼️" : "🔤";
     var html = '<div class="tmpl-field-row" data-field-key="' + f.key + '">' +
-      '<div class="tmpl-field-row-head" data-action="toggle-tmpl-field-row"><b><span class="tmpl-field-type-icon">' + typeIcon + '</span>' + escapeHTML(meta.label) + '</b><button type="button" class="task-icon-btn" data-action="remove-tmpl-field" data-key="' + f.key + '" title="حذف الموضع"><span class="icon">' + ICON_DELETE + '</span></button></div>';
+      '<div class="tmpl-field-row-head" data-action="toggle-tmpl-field-row"><b><span class="tmpl-drag-handle" draggable="true" title="اسحب لتغيير الترتيب (يتحكم أيضاً بأيها يظهر فوق الآخر عند التداخل)">⠿</span><span class="tmpl-field-type-icon">' + typeIcon + '</span>' + escapeHTML(meta.label) + '</b><button type="button" class="task-icon-btn" data-action="remove-tmpl-field" data-key="' + f.key + '" title="حذف الموضع"><span class="icon">' + ICON_DELETE + '</span></button></div>';
     html += '<div class="tmpl-field-body">';
     if(isImage && previewRecordId){
       var previewRec = loadEventsData().find(function(r){ return r.id === previewRecordId; });
@@ -6208,16 +6214,9 @@
     var html = '<div class="panel-head"><h3><span style="color:' + eventCategoryColor(tmpl.category) + ';">' + (catMeta ? catMeta.icon : "") + '</span> تعديل القالب — <input type="text" id="tmplNameInput" value="' + escapeHTML(tmpl.name) + '" style="display:inline-block; width:200px; padding:4px 8px; font-size:14px; border:1px solid var(--line); border-radius:6px;"/></h3><button type="button" class="panel-close" data-action="close-tmpl-editor" title="رجوع لقائمة القوالب">✕</button></div>';
     html += tmplPreviewSwitcherHTML(tmpl, null);
     html += '<div class="tmpl-workspace-stack">';
-    html += '<div class="tmpl-canvas-stage" style="text-align:center;"><div class="tmpl-canvas-wrap" id="tmplCanvasWrap"><img src="' + tmpl.image + '" alt="" draggable="false"/></div>';
-    var pendingMeta = tmplEditorState.pendingKey ? tmplFieldMeta(tmpl.category, tmplEditorState.pendingKey) : null;
-    if(pendingMeta){
-      html += '<p class="hint" style="margin-top:10px; font-weight:700; color:var(--teal-dark);">' + (pendingMeta.type === "image" ? "✋ اسحب على القالب لتحديد مربع الصورة" : "✋ انقر على موضع النص في القالب") + '</p>';
-    }
-    html += '<div class="tmpl-toolbar-legend" style="justify-content:center;"><span>↔ سحب = تحريك</span><span>⤡ المقبض = تحجيم (Shift لحفظ النسبة)</span></div>';
-    html += '</div>';
+    html += '<div class="tmpl-fields-col">';
     var fonts = loadDesignFonts();
-    html += '<div style="border:1px solid var(--line); border-radius:10px; padding:10px 12px; margin-bottom:14px; background:#fbfcfc;">' +
-      '<b style="font-size:12.5px; color:var(--teal-dark); display:block; margin-bottom:8px;">🔤 الخطوط المخصصة</b>';
+    html += '<details class="tmpl-field-group" style="border-top:none; margin-top:0;"><summary>🔤 الخطوط المخصصة' + (fonts.length ? ' (' + fonts.length + ')' : '') + '</summary><div style="padding-top:8px;">';
     if(fonts.length){
       fonts.forEach(function(fnt){
         html += '<div style="display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:6px; font-size:12px;"><span>🔤 ' + escapeHTML(fnt.name) + '</span><button type="button" class="task-icon-btn" data-action="delete-tmpl-font" data-id="' + fnt.id + '" title="حذف الخط"><span class="icon">' + ICON_DELETE + '</span></button></div>';
@@ -6225,8 +6224,8 @@
     }
     html += '<label class="btn-secondary" style="display:inline-flex; align-items:center; gap:6px; cursor:pointer; font-size:12px; padding:6px 10px;">رفع خط أو أكثر (ttf/otf/woff)<input type="file" accept=".ttf,.otf,.woff,.woff2" id="tmplFontUploadInput" multiple style="display:none;"/></label>' +
       '<p class="hint" style="margin:6px 0 0;">بعد الرفع سيظهر الخط ضمن قائمة "الخط" لأي متغير نصي — يفضّل ملف بصيغة woff2 لحجم أصغر</p>' +
-      '</div>';
-    html += '<div class="tmpl-fields-panel">';
+      '</div></details>';
+    html += '<div class="tmpl-fields-panel" style="margin-top:14px;">';
     html += '<div class="tmpl-fields-panel-head">📋 المتغيرات (' + tmpl.fields.length + ')</div>';
     if(available.length){
       html += '<div style="display:flex; gap:8px; margin-bottom:14px;"><select id="tmplAddFieldSelect" style="flex:1; margin-bottom:0;">' +
@@ -6241,6 +6240,15 @@
       tmpl.fields.forEach(function(f){ html += tmplFieldRowHTML(tmpl, f); });
     }
     html += '</div></div>';
+    html += '<div class="tmpl-canvas-col">';
+    html += '<div class="tmpl-canvas-stage" style="text-align:center;"><div class="tmpl-canvas-wrap" id="tmplCanvasWrap"><img src="' + tmpl.image + '" alt="" draggable="false"/></div>';
+    var pendingMeta = tmplEditorState.pendingKey ? tmplFieldMeta(tmpl.category, tmplEditorState.pendingKey) : null;
+    if(pendingMeta){
+      html += '<p class="hint" style="margin-top:10px; font-weight:700; color:var(--teal-dark);">' + (pendingMeta.type === "image" ? "✋ اسحب على القالب لتحديد مربع الصورة" : "✋ انقر على موضع النص في القالب") + '</p>';
+    }
+    html += '<div class="tmpl-toolbar-legend" style="justify-content:center;"><span>↔ سحب = تحريك</span><span>⤡ المقبض = تحجيم (Shift لحفظ النسبة)</span></div>';
+    html += '</div></div>';
+    html += '</div>';
     setHTML(body, html);
     var editorWrap = document.getElementById("tmplCanvasWrap");
     if(editorWrap) tmplRenderMarkersOverlay(editorWrap, tmpl);
@@ -6277,17 +6285,7 @@
         '</select>';
     }
     html += '<div class="tmpl-workspace-stack">';
-    html += '<div class="tmpl-canvas-stage" style="text-align:center;">';
-    html += '<div class="tmpl-canvas-wrap" id="tmplGenCanvasWrap" style="display:inline-block; margin:0 auto; cursor:default;"><canvas id="tmplGenCanvas" style="max-width:100%; display:block; background:repeating-conic-gradient(#f0f0f0 0% 25%, #fff 0% 50%) 50% / 16px 16px;"></canvas></div>';
-    html += '<p class="hint" id="tmplGenStatus" style="text-align:center; margin-top:10px; font-weight:600;">جارٍ التجهيز...</p>';
-    var pendingMeta = (tmpl && tmplGenerateState.pendingKey) ? tmplFieldMeta(tmpl.category, tmplGenerateState.pendingKey) : null;
-    if(pendingMeta){
-      html += '<p class="hint" style="text-align:center; font-weight:700; color:var(--teal-dark);">✋ ' + (pendingMeta.type === "image" ? "اسحب على الصورة لتحديد مربع الصورة الجديد" : "انقر على موضع النص الجديد بالصورة") + '</p>';
-    }
-    html += '<div class="tmpl-toolbar-legend" style="justify-content:center;"><span>↔ سحب = تحريك</span><span>⤡ المقبض = تحجيم</span><span>🖱️ عجلة الفأرة = تقريب/تبعيد الصورة</span></div>';
-    html += '<div style="text-align:center; margin-top:14px;"><button type="button" class="btn-primary" id="tmplGenDownloadBtn" data-action="download-tmpl-design" disabled>⬇ تنزيل الصورة</button></div>';
-    html += '</div>';
-    html += '<div id="tmplGenFieldsList">';
+    html += '<div class="tmpl-fields-col" id="tmplGenFieldsList">';
     if(tmpl){
       var placedKeys = tmpl.fields.map(function(f){ return f.key; });
       var available = (TMPL_PLACEABLE_FIELDS[tmpl.category] || []).filter(function(f){ return placedKeys.indexOf(f.key) === -1; });
@@ -6305,7 +6303,19 @@
       }
       html += '</div>';
     }
+    html += '</div>';
+    html += '<div class="tmpl-canvas-col">';
+    html += '<div class="tmpl-canvas-stage" style="text-align:center;">';
+    html += '<div class="tmpl-canvas-wrap" id="tmplGenCanvasWrap" style="display:inline-block; margin:0 auto; cursor:default;"><canvas id="tmplGenCanvas" style="max-width:100%; display:block; background:repeating-conic-gradient(#f0f0f0 0% 25%, #fff 0% 50%) 50% / 16px 16px;"></canvas></div>';
+    html += '<p class="hint" id="tmplGenStatus" style="text-align:center; margin-top:10px; font-weight:600;">جارٍ التجهيز...</p>';
+    var pendingMeta = (tmpl && tmplGenerateState.pendingKey) ? tmplFieldMeta(tmpl.category, tmplGenerateState.pendingKey) : null;
+    if(pendingMeta){
+      html += '<p class="hint" style="text-align:center; font-weight:700; color:var(--teal-dark);">✋ ' + (pendingMeta.type === "image" ? "اسحب على الصورة لتحديد مربع الصورة الجديد" : "انقر على موضع النص الجديد بالصورة") + '</p>';
+    }
+    html += '<div class="tmpl-toolbar-legend" style="justify-content:center;"><span>↔ سحب = تحريك</span><span>⤡ المقبض = تحجيم</span><span>🖱️ عجلة الفأرة = تقريب/تبعيد الصورة</span></div>';
+    html += '<div style="text-align:center; margin-top:14px;"><button type="button" class="btn-primary" id="tmplGenDownloadBtn" data-action="download-tmpl-design" disabled>⬇ تنزيل الصورة</button></div>';
     html += '</div></div>';
+    html += '</div>';
     setHTML(body, html);
     runDesignGenerate();
   }
@@ -6809,6 +6819,44 @@
         break;
     }
   });
+  tmplEditorOverlayEl.addEventListener("dragstart", function(e){
+    var handle = e.target.closest(".tmpl-drag-handle");
+    if(!handle){ e.preventDefault(); return; }
+    var row = handle.closest(".tmpl-field-row");
+    if(!row) return;
+    tmplDragKey = row.dataset.fieldKey;
+    e.dataTransfer.effectAllowed = "move";
+    e.dataTransfer.setData("text/plain", tmplDragKey);
+  });
+  tmplEditorOverlayEl.addEventListener("dragover", function(e){
+    if(!tmplDragKey) return;
+    var row = e.target.closest(".tmpl-field-row");
+    if(!row) return;
+    e.preventDefault();
+    document.querySelectorAll("#tmplEditorOverlay .tmpl-field-row.drag-over").forEach(function(el){ el.classList.remove("drag-over"); });
+    if(row.dataset.fieldKey !== tmplDragKey) row.classList.add("drag-over");
+  });
+  tmplEditorOverlayEl.addEventListener("dragleave", function(e){
+    var row = e.target.closest(".tmpl-field-row");
+    if(row) row.classList.remove("drag-over");
+  });
+  tmplEditorOverlayEl.addEventListener("drop", function(e){
+    var row = e.target.closest(".tmpl-field-row");
+    if(!row || !tmplDragKey) return;
+    e.preventDefault();
+    row.classList.remove("drag-over");
+    var tmpl = tmplEditorCurrentTemplate();
+    var targetKey = row.dataset.fieldKey;
+    if(!tmpl || targetKey === tmplDragKey) { tmplDragKey = null; return; }
+    var fromIdx = tmpl.fields.findIndex(function(f){ return f.key === tmplDragKey; });
+    var toIdx = tmpl.fields.findIndex(function(f){ return f.key === targetKey; });
+    tmplDragKey = null;
+    if(fromIdx === -1 || toIdx === -1) return;
+    var moved = tmpl.fields.splice(fromIdx, 1)[0];
+    tmpl.fields.splice(toIdx, 0, moved);
+    saveDesignTemplate(tmpl);
+    renderTemplateEditor();
+  });
   tmplEditorOverlayEl.addEventListener("mousedown", function(e){
     var tmpl = tmplEditorCurrentTemplate();
     if(!tmpl || !tmplEditorState) return;
@@ -7085,6 +7133,45 @@
       tmplUpdateField(tmpl, key, patch);
       runDesignGenerate();
     }
+  });
+  tmplGenerateOverlayEl.addEventListener("dragstart", function(e){
+    var handle = e.target.closest(".tmpl-drag-handle");
+    if(!handle){ e.preventDefault(); return; }
+    var row = handle.closest(".tmpl-field-row");
+    if(!row) return;
+    tmplDragKey = row.dataset.fieldKey;
+    e.dataTransfer.effectAllowed = "move";
+    e.dataTransfer.setData("text/plain", tmplDragKey);
+  });
+  tmplGenerateOverlayEl.addEventListener("dragover", function(e){
+    if(!tmplDragKey) return;
+    var row = e.target.closest(".tmpl-field-row");
+    if(!row) return;
+    e.preventDefault();
+    document.querySelectorAll("#tmplGenerateOverlay .tmpl-field-row.drag-over").forEach(function(el){ el.classList.remove("drag-over"); });
+    if(row.dataset.fieldKey !== tmplDragKey) row.classList.add("drag-over");
+  });
+  tmplGenerateOverlayEl.addEventListener("dragleave", function(e){
+    var row = e.target.closest(".tmpl-field-row");
+    if(row) row.classList.remove("drag-over");
+  });
+  tmplGenerateOverlayEl.addEventListener("drop", function(e){
+    var row = e.target.closest(".tmpl-field-row");
+    if(!row || !tmplDragKey) return;
+    e.preventDefault();
+    row.classList.remove("drag-over");
+    if(!tmplGenerateState) { tmplDragKey = null; return; }
+    var tmpl = findDesignTemplate(tmplGenerateState.templateId);
+    var targetKey = row.dataset.fieldKey;
+    if(!tmpl || targetKey === tmplDragKey) { tmplDragKey = null; return; }
+    var fromIdx = tmpl.fields.findIndex(function(f){ return f.key === tmplDragKey; });
+    var toIdx = tmpl.fields.findIndex(function(f){ return f.key === targetKey; });
+    tmplDragKey = null;
+    if(fromIdx === -1 || toIdx === -1) return;
+    var moved = tmpl.fields.splice(fromIdx, 1)[0];
+    tmpl.fields.splice(toIdx, 0, moved);
+    saveDesignTemplate(tmpl);
+    renderDesignGenerateModal();
   });
   tmplGenerateOverlayEl.addEventListener("mousedown", function(e){
     if(!tmplGenerateState) return;
