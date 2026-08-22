@@ -416,6 +416,11 @@
   .photo-thumb{position:relative; border-radius:10px; overflow:hidden; border:1px solid var(--line); flex-shrink:0; line-height:0;}
   .photo-thumb img{display:block; height:120px; width:auto; max-width:220px; object-fit:contain;}
   .photo-thumb .rm{position:absolute; top:2px; left:2px; background:rgba(0,0,0,.55); color:#fff; border:none; width:18px; height:18px; border-radius:50%; font-size:12px; line-height:1; cursor:pointer; display:flex; align-items:center; justify-content:center; padding:0;}
+  .event-photo-before-after{display:flex; flex-wrap:wrap; gap:14px;}
+  .event-photo-ba-item{display:flex; flex-direction:column; gap:6px; align-items:flex-start;}
+  .event-photo-ba-lbl{font-size:11px; font-weight:700; color:var(--ink-soft); background:var(--line); border-radius:6px; padding:2px 8px;}
+  .event-photo-ba-item:last-child .event-photo-ba-lbl{background:var(--teal-tint); color:var(--teal-dark);}
+  .event-photo-ba-item .photo-thumb{background:repeating-conic-gradient(#f0f0f0 0% 25%, #fff 0% 50%) 50% / 14px 14px;}
   .photo-upload-btn{display:inline-flex; align-items:center; gap:6px; padding:8px 14px; border:1.5px dashed var(--line); border-radius:10px; font-size:12px; font-weight:500; color:var(--ink-soft); cursor:pointer;}
   .photo-upload-btn:hover{border-color:var(--teal); color:var(--teal-dark);}
   .photo-hint{font-size:10.5px; color:var(--ink-soft); margin-top:8px;}
@@ -5462,6 +5467,24 @@
   }
 
   // ----- إدخال البيانات -----
+  function eventPhotoBlockHTML(key, value, origValue, processing, processingMsg){
+    if(processing){
+      return '<p class="event-field-hint" id="eventImgProcessing-' + key + '">' + escapeHTML(processingMsg || "جارٍ المعالجة...") + '</p>';
+    }
+    if(value && origValue && origValue !== value){
+      return '<div class="event-photo-before-after">' +
+          '<div class="event-photo-ba-item"><span class="event-photo-ba-lbl">قبل التفريغ</span><div class="photo-thumb"><img src="' + origValue + '" alt=""/></div></div>' +
+          '<div class="event-photo-ba-item"><span class="event-photo-ba-lbl">بعد التفريغ</span><div class="photo-thumb"><img src="' + value + '" alt=""/></div></div>' +
+        '</div>' +
+        '<button type="button" class="btn-secondary" data-action="remove-event-image" data-key="' + key + '" style="margin-top:8px; font-size:12px; padding:6px 12px;">× حذف الصورة</button>';
+    }
+    if(value){
+      return '<div class="photo-thumb"><img src="' + value + '" alt=""/><button type="button" class="rm" data-action="remove-event-image" data-key="' + key + '">×</button></div>' +
+        '<button type="button" class="btn-secondary" data-action="remove-image-bg" data-key="' + key + '" style="margin-top:8px; font-size:12px; padding:6px 12px;">🪄 إزالة الخلفية</button>';
+    }
+    return '<input type="file" accept="image/png,image/jpeg" class="event-photo-input" data-action="event-image-input" data-key="' + key + '"/>' +
+      '<p class="event-field-hint" style="margin:4px 0 0;">الصيغ المقبولة: PNG أو JPG فقط</p>';
+  }
   function fieldInputHTML(f, value){
     if(f.type === "select"){
       return '<div class="select-wrap"><select data-field-input data-key="' + f.key + '"><option value="">اختر...</option>' +
@@ -5498,11 +5521,8 @@
     if(f.type === "date") return '<input type="date" data-field-input data-key="' + f.key + '" value="' + escapeHTML(value || "") + '"/>';
     if(f.type === "time") return '<input type="time" data-field-input data-key="' + f.key + '" value="' + escapeHTML(value || "") + '"/>';
     if(f.type === "image"){
-      if(value){
-        return '<div class="photo-thumb"><img src="' + value + '" alt=""/><button type="button" class="rm" data-action="remove-field-image" data-key="' + f.key + '">×</button></div>';
-      }
-      return '<input type="file" accept="image/png,image/jpeg" class="event-photo-input" data-action="field-image-input" data-key="' + f.key + '"/>' +
-        '<p class="event-field-hint" style="margin:4px 0 0;">الصيغ المقبولة: PNG أو JPG فقط</p>';
+      var imgProc = eventModalState.imageProcessing || {};
+      return eventPhotoBlockHTML(f.key, value, (eventModalState.draft || {})[f.key + "Orig"], !!imgProc[f.key], imgProc[f.key + "Msg"]);
     }
     if(f.type === "readonlyText"){
       if(!value) return '<p class="event-field-hint" style="margin:0;">لا يوجد — لم يُستخدم مساعد الصياغة لهذا السجل</p>';
@@ -5511,7 +5531,7 @@
     return '<input type="text" data-field-input data-key="' + f.key + '" value="' + escapeHTML(value || "") + '"/>';
   }
 
-  var eventModalState = { catKey: null, recordId: null, draft: {} };
+  var eventModalState = { catKey: null, recordId: null, draft: {}, imageProcessing: {} };
   function openEventModal(catKey, recordId){
     var cat = EVENTS_CATEGORIES.find(function(c){ return c.key === catKey; });
     if(!cat) return;
@@ -5527,7 +5547,7 @@
       if(cat.fields.some(function(f){ return f.key === "graduationMonthGregorian"; })) draft.graduationMonthGregorian = GREG_MONTHS[now.getMonth()];
       if(cat.fields.some(function(f){ return f.key === "graduationMonthHijri"; })) draft.graduationMonthHijri = HIJRI_MONTHS[nowH.month - 1];
     }
-    eventModalState = { catKey: catKey, recordId: recordId || null, draft: draft };
+    eventModalState = { catKey: catKey, recordId: recordId || null, draft: draft, imageProcessing: {} };
     renderEventModal();
     document.getElementById("eventModalOverlay").classList.add("active");
   }
@@ -5548,14 +5568,7 @@
     });
     var photoLbl = cat.photoLabel || "صورة المناسبة";
     html += '<div class="event-field full-field"><label>' + photoLbl + ' (اختياري)</label>';
-    if(eventModalState.photoProcessing){
-      html += '<p class="event-field-hint" id="eventPhotoProcessingMsg">' + escapeHTML(eventModalState.photoProcessingMsg || "جارٍ المعالجة...") + '</p>';
-    } else if(draft.photo){
-      html += '<div class="photo-thumb"><img src="' + draft.photo + '" alt=""/><button type="button" class="rm" data-action="remove-event-photo">×</button></div>' +
-        '<button type="button" class="btn-secondary" data-action="remove-photo-bg" style="margin-top:8px; font-size:12px; padding:6px 12px;">🪄 إزالة الخلفية (لاستخدامها في تصميم قالب)</button>';
-    } else {
-      html += '<input type="file" accept="image/png,image/jpeg" class="event-photo-input" id="eventPhotoInput"/>';
-    }
+    html += eventPhotoBlockHTML("photo", draft.photo, draft.photoOrig, eventModalState.photoProcessing, eventModalState.photoProcessingMsg);
     html += '<p class="event-field-hint">صورة توضيحية إن رغبتم بإرفاقها — تُضغط تلقائياً لحجم مناسب بعد الرفع — الصيغ المقبولة: PNG أو JPG فقط</p></div>';
     html += '</div>';
     html += '<div class="modal-actions" style="margin-top:20px;">' +
@@ -5593,13 +5606,21 @@
     if(eventModalState.recordId){
       var rec = all.find(function(r){ return r.id === eventModalState.recordId; });
       if(!rec) return;
-      cat.fields.forEach(function(f){ rec[f.key] = draft[f.key] || ""; });
+      cat.fields.forEach(function(f){
+        rec[f.key] = draft[f.key] || "";
+        if(f.type === "image") rec[f.key + "Orig"] = draft[f.key + "Orig"] || "";
+      });
       rec.photo = draft.photo || "";
+      rec.photoOrig = draft.photoOrig || "";
       rec.updatedAt = Date.now();
     } else {
       var newRec = { id: genEventId(), category: cat.key, createdAt: Date.now(), updatedAt: Date.now() };
-      cat.fields.forEach(function(f){ newRec[f.key] = draft[f.key] || ""; });
+      cat.fields.forEach(function(f){
+        newRec[f.key] = draft[f.key] || "";
+        if(f.type === "image") newRec[f.key + "Orig"] = draft[f.key + "Orig"] || "";
+      });
       newRec.photo = draft.photo || "";
+      newRec.photoOrig = draft.photoOrig || "";
       all.push(newRec);
     }
     var savedOk = saveEventsData(all);
@@ -6893,21 +6914,7 @@
         eventModalState.draft[soKey] = e.target.value;
       }
     }
-    if(e.target.id === "eventPhotoInput"){
-      var file = e.target.files && e.target.files[0];
-      if(!file) return;
-      if(file.size > 15 * 1024 * 1024){
-        showToast("حجم الملف كبير جداً — اختر صورة أصغر");
-        e.target.value = "";
-        return;
-      }
-      compressEventImageFile(file, 400 * 1024, function(dataUrl){
-        if(!dataUrl){ showToast("تعذّرت قراءة الصورة"); return; }
-        eventModalState.draft.photo = dataUrl;
-        renderEventModal();
-      });
-    }
-    if(e.target.matches('[data-action="field-image-input"]')){
+    if(e.target.matches('[data-action="event-image-input"]')){
       var fieldKey = e.target.dataset.key;
       var imgFile = e.target.files && e.target.files[0];
       if(!imgFile) return;
@@ -6919,6 +6926,7 @@
       compressEventImageFile(imgFile, 400 * 1024, function(dataUrl){
         if(!dataUrl){ showToast("تعذّرت قراءة الصورة"); return; }
         eventModalState.draft[fieldKey] = dataUrl;
+        eventModalState.draft[fieldKey + "Orig"] = "";
         renderEventModal();
       });
     }
@@ -6930,35 +6938,61 @@
     switch(btn.dataset.action){
       case "close-event-modal": closeEventModal(); break;
       case "save-event-record": saveEventRecordFromModal(); break;
-      case "remove-event-photo": eventModalState.draft.photo = ""; renderEventModal(); break;
-      case "remove-photo-bg": {
-        var srcPhoto = eventModalState.draft.photo;
-        if(!srcPhoto) break;
-        eventModalState.photoProcessing = true;
-        eventModalState.photoProcessingMsg = "جارٍ تحميل أداة إزالة الخلفية...";
+      case "remove-event-image": {
+        var rmKey = btn.dataset.key;
+        eventModalState.draft[rmKey] = "";
+        eventModalState.draft[rmKey + "Orig"] = "";
         renderEventModal();
-        fetch(srcPhoto).then(function(r){ return r.blob(); }).then(function(blob){
+        break;
+      }
+      case "remove-image-bg": {
+        var bgKey = btn.dataset.key;
+        var srcImg = eventModalState.draft[bgKey];
+        if(!srcImg) break;
+        if(bgKey === "photo"){
+          eventModalState.photoProcessing = true;
+          eventModalState.photoProcessingMsg = "جارٍ تحميل أداة إزالة الخلفية...";
+        } else {
+          eventModalState.imageProcessing = eventModalState.imageProcessing || {};
+          eventModalState.imageProcessing[bgKey] = true;
+          eventModalState.imageProcessing[bgKey + "Msg"] = "جارٍ تحميل أداة إزالة الخلفية...";
+        }
+        renderEventModal();
+        var origThumbUrl = null;
+        fetch(srcImg).then(function(r){ return r.blob(); }).then(function(blob){
+          return new Promise(function(resolve){
+            // نسخة "قبل التفريغ" تُخزَّن بحجم أصغر بكثير (مجرد معاينة مقارنة) لتفادي تجاوز حد فايرستور لحجم المستند عند تخزين نسختين لنفس الصورة
+            compressEventImageFile(blob, 80 * 1024, function(smallDataUrl){
+              origThumbUrl = smallDataUrl || srcImg;
+              resolve(blob);
+            });
+          });
+        }).then(function(blob){
           return removeImageBackgroundClientSide(blob, function(msg){
-            var el = document.getElementById("eventPhotoProcessingMsg");
+            if(bgKey === "photo") eventModalState.photoProcessingMsg = msg;
+            else if(eventModalState.imageProcessing) eventModalState.imageProcessing[bgKey + "Msg"] = msg;
+            var el = document.getElementById("eventImgProcessing-" + bgKey);
             if(el) el.textContent = msg;
           });
         }).then(function(cutBlob){
           compressCutoutImageFile(cutBlob, 400 * 1024, function(dataUrl){
-            eventModalState.photoProcessing = false;
+            if(bgKey === "photo") eventModalState.photoProcessing = false;
+            else if(eventModalState.imageProcessing) eventModalState.imageProcessing[bgKey] = false;
             if(!dataUrl){ showToast("تعذّرت معالجة الصورة"); renderEventModal(); return; }
-            eventModalState.draft.photo = dataUrl;
+            eventModalState.draft[bgKey + "Orig"] = origThumbUrl || srcImg;
+            eventModalState.draft[bgKey] = dataUrl;
             renderEventModal();
           });
         }).catch(function(err){
           console.error("bg removal failed", err);
-          eventModalState.photoProcessing = false;
+          if(bgKey === "photo") eventModalState.photoProcessing = false;
+          else if(eventModalState.imageProcessing) eventModalState.imageProcessing[bgKey] = false;
           var detail = (err && (err.message || err.toString())) || "خطأ غير معروف";
           showToast("تعذّرت إزالة الخلفية: " + detail);
           renderEventModal();
         });
         break;
       }
-      case "remove-field-image": eventModalState.draft[btn.dataset.key] = ""; renderEventModal(); break;
       case "grow-add-toggle": {
         var row = eventModalOverlayEl.querySelector('[data-grow-row="' + btn.dataset.fieldkey + '"]');
         if(row){
@@ -7372,13 +7406,23 @@
         var bgStatusEl = document.getElementById("tmplGenStatus");
         if(bgStatusEl) bgStatusEl.textContent = "جارٍ تحميل أداة إزالة الخلفية...";
         btn.disabled = true;
-        fetch(bgRec[bgFieldKey]).then(function(r){ return r.blob(); }).then(function(blob){
+        var bgSrcImg = bgRec[bgFieldKey];
+        var bgOrigThumbUrl = null;
+        fetch(bgSrcImg).then(function(r){ return r.blob(); }).then(function(blob){
+          return new Promise(function(resolve){
+            compressEventImageFile(blob, 80 * 1024, function(smallDataUrl){
+              bgOrigThumbUrl = smallDataUrl || bgSrcImg;
+              resolve(blob);
+            });
+          });
+        }).then(function(blob){
           return removeImageBackgroundClientSide(blob, function(msg){
             if(bgStatusEl) bgStatusEl.textContent = msg;
           });
         }).then(function(cutBlob){
           compressCutoutImageFile(cutBlob, 400 * 1024, function(dataUrl){
             if(!dataUrl){ showToast("تعذّرت معالجة الصورة"); renderDesignGenerateModal(); return; }
+            bgRec[bgFieldKey + "Orig"] = bgOrigThumbUrl || bgSrcImg;
             bgRec[bgFieldKey] = dataUrl;
             bgRec.updatedAt = Date.now();
             saveEventsData(bgAll);
