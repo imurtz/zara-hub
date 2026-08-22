@@ -5425,10 +5425,10 @@
     if(eventModalState.photoProcessing){
       html += '<p class="event-field-hint" id="eventPhotoProcessingMsg">' + escapeHTML(eventModalState.photoProcessingMsg || "جارٍ المعالجة...") + '</p>';
     } else if(draft.photo){
-      html += '<div class="photo-thumb"><img src="' + draft.photo + '" alt=""/><button type="button" class="rm" data-action="remove-event-photo">×</button></div>';
+      html += '<div class="photo-thumb"><img src="' + draft.photo + '" alt=""/><button type="button" class="rm" data-action="remove-event-photo">×</button></div>' +
+        '<button type="button" class="btn-secondary" data-action="remove-photo-bg" style="margin-top:8px; font-size:12px; padding:6px 12px;">🪄 إزالة الخلفية (لاستخدامها في تصميم قالب)</button>';
     } else {
-      html += '<input type="file" accept="image/*" class="event-photo-input" id="eventPhotoInput"/>' +
-        '<label style="display:flex; align-items:center; gap:6px; font-size:12px; margin-top:6px; cursor:pointer;"><input type="checkbox" id="eventPhotoRemoveBg" style="width:auto; margin:0;"/> 🪄 إزالة الخلفية تلقائياً (يفضّل لو الصورة بتُستخدم في تصميم قالب)</label>';
+      html += '<input type="file" accept="image/*" class="event-photo-input" id="eventPhotoInput"/>';
     }
     html += '<p class="event-field-hint">صورة توضيحية إن رغبتم بإرفاقها — تُضغط تلقائياً لحجم مناسب بعد الرفع</p></div>';
     html += '</div>';
@@ -6605,35 +6605,11 @@
         e.target.value = "";
         return;
       }
-      var removeBgBox = document.getElementById("eventPhotoRemoveBg");
-      var wantsRemoveBg = removeBgBox && removeBgBox.checked;
-      var finishPhotoUpload = function(sourceBlob, isCutout){
-        var compressFn = isCutout ? compressCutoutImageFile : compressEventImageFile;
-        compressFn(sourceBlob, 400 * 1024, function(dataUrl){
-          eventModalState.photoProcessing = false;
-          if(!dataUrl){ showToast("تعذّرت قراءة الصورة"); renderEventModal(); return; }
-          eventModalState.draft.photo = dataUrl;
-          renderEventModal();
-        });
-      };
-      if(wantsRemoveBg){
-        eventModalState.photoProcessing = true;
-        eventModalState.photoProcessingMsg = "جارٍ تحميل أداة إزالة الخلفية...";
+      compressEventImageFile(file, 400 * 1024, function(dataUrl){
+        if(!dataUrl){ showToast("تعذّرت قراءة الصورة"); return; }
+        eventModalState.draft.photo = dataUrl;
         renderEventModal();
-        removeImageBackgroundClientSide(file, function(msg){
-          var el = document.getElementById("eventPhotoProcessingMsg");
-          if(el) el.textContent = msg;
-        }).then(function(blob){
-          finishPhotoUpload(blob, true);
-        }).catch(function(err){
-          console.error("bg removal failed", err);
-          var detail = (err && (err.message || err.toString())) || "خطأ غير معروف";
-          showToast("تعذّرت إزالة الخلفية: " + detail);
-          finishPhotoUpload(file, false);
-        });
-      } else {
-        finishPhotoUpload(file, false);
-      }
+      });
     }
     if(e.target.matches('[data-action="field-image-input"]')){
       var fieldKey = e.target.dataset.key;
@@ -6659,6 +6635,33 @@
       case "close-event-modal": closeEventModal(); break;
       case "save-event-record": saveEventRecordFromModal(); break;
       case "remove-event-photo": eventModalState.draft.photo = ""; renderEventModal(); break;
+      case "remove-photo-bg": {
+        var srcPhoto = eventModalState.draft.photo;
+        if(!srcPhoto) break;
+        eventModalState.photoProcessing = true;
+        eventModalState.photoProcessingMsg = "جارٍ تحميل أداة إزالة الخلفية...";
+        renderEventModal();
+        fetch(srcPhoto).then(function(r){ return r.blob(); }).then(function(blob){
+          return removeImageBackgroundClientSide(blob, function(msg){
+            var el = document.getElementById("eventPhotoProcessingMsg");
+            if(el) el.textContent = msg;
+          });
+        }).then(function(cutBlob){
+          compressCutoutImageFile(cutBlob, 400 * 1024, function(dataUrl){
+            eventModalState.photoProcessing = false;
+            if(!dataUrl){ showToast("تعذّرت معالجة الصورة"); renderEventModal(); return; }
+            eventModalState.draft.photo = dataUrl;
+            renderEventModal();
+          });
+        }).catch(function(err){
+          console.error("bg removal failed", err);
+          eventModalState.photoProcessing = false;
+          var detail = (err && (err.message || err.toString())) || "خطأ غير معروف";
+          showToast("تعذّرت إزالة الخلفية: " + detail);
+          renderEventModal();
+        });
+        break;
+      }
       case "remove-field-image": eventModalState.draft[btn.dataset.key] = ""; renderEventModal(); break;
       case "grow-add-toggle": {
         var row = eventModalOverlayEl.querySelector('[data-grow-row="' + btn.dataset.fieldkey + '"]');
