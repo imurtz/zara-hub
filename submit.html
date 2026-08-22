@@ -107,6 +107,8 @@
     .ai-choice-divider::after{inset-inline:auto; top:0; bottom:0; height:auto; width:1px; left:50%;}
   }
   .ai-image-upload-label{display:inline-flex; align-items:center; gap:6px; font-size:12px; color:var(--teal-dark); border:1.5px dashed var(--line); border-radius:10px; padding:9px 12px; cursor:pointer; width:fit-content;}
+  .bg-remove-btn{display:inline-flex; align-items:center; gap:6px; margin-top:8px; font-size:12px; color:var(--teal-dark); background:var(--teal-tint); border:1px solid var(--line); border-radius:9px; padding:7px 12px; cursor:pointer;}
+  .bg-remove-btn:hover{border-color:var(--teal);}
   .ai-image-upload-label:hover{border-color:var(--blue);}
   .ai-image-preview{position:relative; display:inline-block; border-radius:10px; overflow:hidden; border:1px solid var(--line); line-height:0; width:fit-content;}
   .ai-image-preview img{display:block; height:90px; width:auto; max-width:100%; object-fit:contain;}
@@ -396,7 +398,7 @@
     history.replaceState(null, "", url.toString());
   }
 
-  var state = { activeCategory: getCategoryFromUrl(), photo: "", fieldImages: {}, aiSuggestion: "", aiLoading: false, aiError: "", aiConsentPolicy: false, aiConsentWording: false, aiImage: "" };
+  var state = { activeCategory: getCategoryFromUrl(), photo: "", photoProcessing: false, photoProcessingMsg: "", fieldImages: {}, fieldImagesProcessing: {}, aiSuggestion: "", aiLoading: false, aiError: "", aiConsentPolicy: false, aiConsentWording: false, aiImage: "" };
 
   var GRADIENT_PRESETS = {
     brand: "linear-gradient(120deg, var(--teal) 0%, var(--teal-dark) 55%, var(--blue-dark) 100%)",
@@ -494,6 +496,49 @@
     reader.onerror = function(){ cb(null); };
     reader.readAsDataURL(file);
   }
+  // ضغط صورة مفرّغة الخلفية — يبقى PNG دائماً (بدون تحويل لـ JPEG) حتى لا تُفقد الشفافية، ويقلّص الأبعاد بدل الجودة للوصول للحجم المطلوب
+  function compressCutoutImageFile(blobOrFile, maxStoredBytes, cb){
+    var reader = new FileReader();
+    reader.onload = function(e){
+      var img = new Image();
+      img.onload = function(){
+        var maxDim = 1200;
+        var attempts = 0;
+        var dataUrl;
+        do {
+          var w = img.width, h = img.height;
+          if(w > maxDim || h > maxDim){
+            if(w > h){ h = Math.round(h * maxDim / w); w = maxDim; }
+            else { w = Math.round(w * maxDim / h); h = maxDim; }
+          }
+          var canvas = document.createElement("canvas");
+          canvas.width = w; canvas.height = h;
+          canvas.getContext("2d").drawImage(img, 0, 0, w, h);
+          dataUrl = canvas.toDataURL("image/png");
+          maxDim = Math.round(maxDim * 0.8);
+          attempts++;
+        } while(dataUrl.length > maxStoredBytes && maxDim > 250 && attempts < 8);
+        cb(dataUrl);
+      };
+      img.onerror = function(){ cb(null); };
+      img.src = e.target.result;
+    };
+    reader.onerror = function(){ cb(null); };
+    reader.readAsDataURL(blobOrFile);
+  }
+  // إزالة خلفية صورة بالكامل داخل المتصفح (مكتبة @imgly/background-removal عبر CDN) — بدون سيرفر أو مفتاح API، تُحمَّل عند الطلب فقط
+  function removeImageBackgroundClientSide(file, onStatus){
+    return import("https://cdn.jsdelivr.net/npm/@imgly/background-removal@1.7.0/+esm").then(function(mod){
+      var removeBackground = mod.removeBackground;
+      if(onStatus) onStatus("جارٍ تحميل أداة إزالة الخلفية (أول مرة فقط على هذا الجهاز)...");
+      return removeBackground(file, {
+        model: "medium",
+        progress: function(key, current, total){
+          if(onStatus && total) onStatus("جارٍ إزالة الخلفية... " + Math.round(current / total * 100) + "%");
+        }
+      });
+    });
+  }
 
   var CATEGORY_ICON_COLORS = { graduates: "#4d6ea9", births: "#4d6ea9", marriages: "#4d6ea9", congrats: "#4d6ea9" };
   function renderCatSelect(){
@@ -548,12 +593,20 @@
   }
 
   function imageFieldHTML(key){
-    var val = state.fieldImages[key];
-    if(val){
-      return '<div class="photo-preview"><img src="' + val + '" alt=""/><button type="button" class="rm" data-action="remove-field-image" data-field-key="' + key + '">×</button></div>';
+    var inner;
+    if(state.fieldImagesProcessing[key]){
+      inner = '<p class="field-hint" id="fieldImgProcessing-' + key + '">' + escapeHTML(state.fieldImagesProcessing[key]) + '</p>';
+    } else {
+      var val = state.fieldImages[key];
+      if(val){
+        inner = '<div class="photo-preview"><img src="' + val + '" alt=""/><button type="button" class="rm" data-action="remove-field-image" data-field-key="' + key + '">×</button></div>' +
+          '<button type="button" class="bg-remove-btn" data-action="remove-field-bg" data-field-key="' + key + '">🪄 إزالة الخلفية</button>';
+      } else {
+        inner = '<input type="file" accept="image/png,image/jpeg" class="photo-input" data-action="field-image-input" data-field-key="' + key + '"/>' +
+          '<p class="field-hint" style="margin-top:4px;">الصيغ المقبولة: PNG أو JPG فقط</p>';
+      }
     }
-    return '<input type="file" accept="image/png,image/jpeg" class="photo-input" data-action="field-image-input" data-field-key="' + key + '"/>' +
-      '<p class="field-hint" style="margin-top:4px;">الصيغ المقبولة: PNG أو JPG فقط</p>';
+    return '<div id="imgFieldMount-' + key + '">' + inner + '</div>';
   }
 
   function renderForm(){
@@ -593,23 +646,27 @@
     updateSubmitButtonState();
   }
   function photoFieldHTML(){
-    if(state.photo){
-      return '<div class="photo-preview"><img src="' + state.photo + '" alt=""/><button type="button" class="rm" id="removePhotoBtn">×</button></div>';
+    var inner;
+    if(state.photoProcessing){
+      inner = '<p class="field-hint" id="photoProcessingMsg">' + escapeHTML(state.photoProcessingMsg || "جارٍ المعالجة...") + '</p>';
+    } else if(state.photo){
+      inner = '<div class="photo-preview"><img src="' + state.photo + '" alt=""/><button type="button" class="rm" id="removePhotoBtn">×</button></div>' +
+        '<button type="button" class="bg-remove-btn" id="removePhotoBgBtn">🪄 إزالة الخلفية</button>';
+    } else {
+      inner = '<input type="file" accept="image/png,image/jpeg" class="photo-input" id="photoInput"/>';
     }
-    return '<input type="file" accept="image/png,image/jpeg" class="photo-input" id="photoInput"/>';
+    return '<div id="photoFieldMount">' + inner + '</div>';
   }
   function refreshPhotoField(){
-    var wrap = document.querySelector(".field.full");
-    if(!wrap) return;
-    var mount = wrap.querySelector(".photo-preview, .photo-input");
-    if(mount) mount.outerHTML = photoFieldHTML();
+    var mount = document.getElementById("photoFieldMount");
+    if(!mount) return;
+    mount.outerHTML = photoFieldHTML();
     bindFormEvents();
   }
   function refreshFieldImage(key){
-    var input = document.querySelector('[data-action="field-image-input"][data-field-key="' + key + '"], [data-action="remove-field-image"][data-field-key="' + key + '"]');
-    var mount = input ? input.closest(".field") : null;
-    var target = mount ? mount.querySelector(".photo-preview, .photo-input") : null;
-    if(target) target.outerHTML = imageFieldHTML(key);
+    var mount = document.getElementById("imgFieldMount-" + key);
+    if(!mount) return;
+    mount.outerHTML = imageFieldHTML(key);
     bindFormEvents();
   }
   function currentDetailsValue(){
@@ -804,6 +861,33 @@
         refreshPhotoField();
       });
     }
+    var bgBtn = document.getElementById("removePhotoBgBtn");
+    if(bgBtn){
+      bgBtn.addEventListener("click", function(){
+        if(!state.photo) return;
+        state.photoProcessing = true;
+        state.photoProcessingMsg = "جارٍ تحميل أداة إزالة الخلفية...";
+        refreshPhotoField();
+        fetch(state.photo).then(function(r){ return r.blob(); }).then(function(blob){
+          return removeImageBackgroundClientSide(blob, function(msg){
+            state.photoProcessingMsg = msg;
+            var el = document.getElementById("photoProcessingMsg");
+            if(el) el.textContent = msg;
+          });
+        }).then(function(cutBlob){
+          compressCutoutImageFile(cutBlob, 400 * 1024, function(dataUrl){
+            state.photoProcessing = false;
+            if(!dataUrl){ refreshPhotoField(); return; }
+            state.photo = dataUrl;
+            refreshPhotoField();
+          });
+        }).catch(function(err){
+          console.error("bg removal failed", err);
+          state.photoProcessing = false;
+          refreshPhotoField();
+        });
+      });
+    }
     Array.prototype.forEach.call(document.querySelectorAll('[data-action="field-image-input"]'), function(fi){
       fi.addEventListener("change", function(e){
         var file = e.target.files && e.target.files[0];
@@ -829,6 +913,33 @@
         var key = rb.dataset.fieldKey;
         delete state.fieldImages[key];
         refreshFieldImage(key);
+      });
+    });
+    Array.prototype.forEach.call(document.querySelectorAll('[data-action="remove-field-bg"]'), function(bgb){
+      bgb.addEventListener("click", function(){
+        var key = bgb.dataset.fieldKey;
+        var src = state.fieldImages[key];
+        if(!src) return;
+        state.fieldImagesProcessing[key] = "جارٍ تحميل أداة إزالة الخلفية...";
+        refreshFieldImage(key);
+        fetch(src).then(function(r){ return r.blob(); }).then(function(blob){
+          return removeImageBackgroundClientSide(blob, function(msg){
+            state.fieldImagesProcessing[key] = msg;
+            var el = document.getElementById("fieldImgProcessing-" + key);
+            if(el) el.textContent = msg;
+          });
+        }).then(function(cutBlob){
+          compressCutoutImageFile(cutBlob, 400 * 1024, function(dataUrl){
+            delete state.fieldImagesProcessing[key];
+            if(!dataUrl){ refreshFieldImage(key); return; }
+            state.fieldImages[key] = dataUrl;
+            refreshFieldImage(key);
+          });
+        }).catch(function(err){
+          console.error("bg removal failed", err);
+          delete state.fieldImagesProcessing[key];
+          refreshFieldImage(key);
+        });
       });
     });
     Array.prototype.forEach.call(document.querySelectorAll('[data-action="select-other-toggle"]'), function(sel){
