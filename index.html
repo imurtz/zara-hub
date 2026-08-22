@@ -5001,8 +5001,9 @@
     });
   }
   async function renderTemplateToCanvas(canvas, template, record){
+    var warnings = [];
     var bg = await loadImageAsync(template.image);
-    if(!bg) return false;
+    if(!bg) return { ok: false, warnings: warnings };
     canvas.width = template.width;
     canvas.height = template.height;
     var ctx = canvas.getContext("2d");
@@ -5018,12 +5019,24 @@
     for(var i = 0; i < template.fields.length; i++){
       var f = template.fields[i];
       if(f.type === "image"){
-        var img = await loadImageAsync(record[f.key] || "");
-        if(img){
-          var imgStyle = tmplResolveImageStyle(f);
-          var imgGeom = tmplGeomTarget(f);
-          if(imgStyle.fit === "contain") drawImageContain(ctx, img, imgGeom.x, imgGeom.y, imgGeom.boxWidth, imgGeom.boxHeight, imgStyle.radius, imgStyle.zoom, imgStyle.offsetX, imgStyle.offsetY);
-          else drawImageCover(ctx, img, imgGeom.x, imgGeom.y, imgGeom.boxWidth, imgGeom.boxHeight, imgStyle.radius, imgStyle.zoom, imgStyle.offsetX, imgStyle.offsetY);
+        var flabel = (tmplFieldMeta(template.category, f.key) || {}).label || f.key;
+        var srcVal = record[f.key] || "";
+        var imgGeom = tmplGeomTarget(f);
+        if(!srcVal){
+          warnings.push('لا توجد صورة مرفوعة لحقل "' + flabel + '" في هذا السجل');
+        } else if(!imgGeom.boxWidth || !imgGeom.boxHeight || imgGeom.boxWidth <= 0 || imgGeom.boxHeight <= 0){
+          warnings.push('صندوق حقل "' + flabel + '" بلا مقاس (العرض/الارتفاع صفر)');
+        } else if(imgGeom.x + imgGeom.boxWidth < 0 || imgGeom.x > template.width || imgGeom.y + imgGeom.boxHeight < 0 || imgGeom.y > template.height){
+          warnings.push('موضع حقل "' + flabel + '" خارج حدود القالب');
+        } else {
+          var img = await loadImageAsync(srcVal);
+          if(img){
+            var imgStyle = tmplResolveImageStyle(f);
+            if(imgStyle.fit === "contain") drawImageContain(ctx, img, imgGeom.x, imgGeom.y, imgGeom.boxWidth, imgGeom.boxHeight, imgStyle.radius, imgStyle.zoom, imgStyle.offsetX, imgStyle.offsetY);
+            else drawImageCover(ctx, img, imgGeom.x, imgGeom.y, imgGeom.boxWidth, imgGeom.boxHeight, imgStyle.radius, imgStyle.zoom, imgStyle.offsetX, imgStyle.offsetY);
+          } else {
+            warnings.push('تعذّر تحميل صورة حقل "' + flabel + '" — قد يكون الملف تالفاً');
+          }
         }
         continue;
       }
@@ -5051,7 +5064,7 @@
       ctx.textAlign = f.align || "center";
       ctx.fillText(renderText, drawX, f.y);
     }
-    return true;
+    return { ok: true, warnings: warnings };
   }
 
   // ----- تخزين (Firestore — يتزامن فوراً بين كل الأجهزة) -----
@@ -5880,7 +5893,7 @@
       { key: "specialization", label: "التخصص" }, { key: "graduationMonthGregorian", label: "شهر التخرج (ميلادي)" },
       { key: "graduationMonthHijri", label: "شهر التخرج (هجري)" }, { key: "gregorianYear", label: "السنة الميلادية" },
       { key: "hijriYear", label: "السنة الهجرية" }, { key: "country", label: "الدولة" },
-      { key: "photo", label: "صورة الخريج", type: "image" }, { key: "universityLogo", label: "شعار الجامعة", type: "image" }
+      { key: "photo", label: "صورة الخريج", type: "image" }, { key: "universityLogo", label: "شعار الجامعة", type: "image", defaultFit: "contain" }
     ],
     births: [
       { key: "fullName", label: "اسم المولود" }, { key: "fatherName", label: "اسم الأب" },
@@ -6027,7 +6040,13 @@
     var x = Math.round(Math.min(x1, x2)), y = Math.round(Math.min(y1, y2));
     var w = Math.round(Math.max(20, Math.abs(x2 - x1)));
     var h = Math.round(Math.max(20, Math.abs(y2 - y1)));
-    tmpl.fields.push({ key: key, type: "image", x: x, y: y, boxWidth: w, boxHeight: h, fit: "cover", radiusTL: 28, radiusTR: 28, radiusBR: 28, radiusBL: 28 });
+    var meta = tmplFieldMeta(tmpl.category, key) || {};
+    var fit = meta.defaultFit || "cover";
+    var isLogoLike = fit === "contain";
+    tmpl.fields.push({
+      key: key, type: "image", x: x, y: y, boxWidth: w, boxHeight: h, fit: fit,
+      radiusTL: isLogoLike ? 0 : 28, radiusTR: isLogoLike ? 0 : 28, radiusBR: isLogoLike ? 0 : 28, radiusBL: isLogoLike ? 0 : 28
+    });
     saveDesignTemplate(tmpl);
   }
   function tmplFieldRowHTML(tmpl, f){
@@ -6219,11 +6238,15 @@
     if(!tmpl || !rec || !canvas) return;
     dlBtn.disabled = true;
     statusEl.textContent = "جارٍ التجهيز...";
-    renderTemplateToCanvas(canvas, tmpl, rec).then(function(ok){
+    renderTemplateToCanvas(canvas, tmpl, rec).then(function(result){
       if(!tmplGenerateState) return;
-      if(ok){
-        statusEl.textContent = "جاهز — يمكنك تنزيل الصورة";
+      if(result.ok){
         dlBtn.disabled = false;
+        if(result.warnings.length){
+          statusEl.innerHTML = '<span style="color:var(--danger); font-weight:700;">⚠️ ' + result.warnings.map(escapeHTML).join(' — ') + '</span>';
+        } else {
+          statusEl.textContent = "جاهز — يمكنك تنزيل الصورة";
+        }
         var genWrap = document.getElementById("tmplGenCanvasWrap");
         if(genWrap) tmplRenderMarkersOverlay(genWrap, tmpl);
       } else {
