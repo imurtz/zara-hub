@@ -1274,7 +1274,53 @@
     renderEventsHub();
     renderEventsSettingsPanel();
     document.getElementById("chatFabBtn").style.display = "flex";
+    applyHashToApp();
   }
+
+  // ===== توجيه بالرابط (Hash Routing) — كل قسم/تبويب/تصنيف له رابط خاص، يدعم الرجوع/التقدم بالمتصفح ولا يفقد الموضع الحالي عند التحديث =====
+  var suppressHashHandler = false;
+  var EVENTS_TAB_KEYS = ["dashboard", "data-entry", "publish", "templates", "reports"];
+  function syncHashFromApp(){
+    var activeTab = document.querySelector(".nav-tab.active");
+    var section = activeTab ? activeTab.dataset.section : "tasks";
+    var hash = "#/" + section;
+    if(section === "events"){
+      hash += "/" + (eventsUI.tab || "dashboard");
+      if(eventsUI.tab === "data-entry" && eventsUI.activeCategory) hash += "/" + eventsUI.activeCategory;
+    }
+    if(location.hash !== hash){
+      suppressHashHandler = true;
+      location.hash = hash;
+    }
+  }
+  function applyHashToApp(){
+    if(!currentUser) return;
+    var parts = (location.hash || "").replace(/^#\/?/, "").split("/").filter(Boolean);
+    var validSections = SECTION_DEFS.map(function(s){ return s.key; }).concat(["admin"]);
+    var topSection = parts[0] && validSections.indexOf(parts[0]) > -1 ? parts[0] : null;
+    if(topSection){
+      var tabEl = document.querySelector('.nav-tab[data-section="' + topSection + '"]');
+      if(tabEl && tabEl.style.display !== "none" && !tabEl.classList.contains("active")){
+        document.querySelectorAll(".nav-tab").forEach(function(t){ t.classList.remove("active"); });
+        tabEl.classList.add("active");
+        document.querySelectorAll(".section-view").forEach(function(v){ v.classList.remove("active"); });
+        var target = document.getElementById("view-" + topSection);
+        if(target) target.classList.add("active");
+      }
+    }
+    var activeNow = document.querySelector(".nav-tab.active");
+    var activeSectionNow = activeNow ? activeNow.dataset.section : null;
+    if(activeSectionNow === "events"){
+      var evTab = parts[1];
+      if(evTab && EVENTS_TAB_KEYS.indexOf(evTab) > -1) eventsUI.tab = evTab;
+      if(parts[2] && eventsUI.tab === "data-entry") eventsUI.activeCategory = parts[2];
+      renderEventsHub();
+    }
+  }
+  window.addEventListener("hashchange", function(){
+    if(suppressHashHandler){ suppressHashHandler = false; return; }
+    applyHashToApp();
+  });
 
   // ===== section-level permissions =====
   function empSections(emp){
@@ -1344,6 +1390,7 @@
       document.querySelectorAll(".section-view").forEach(function(v){ v.classList.remove("active"); });
       var target = document.getElementById("view-" + tab.dataset.section);
       if(target) target.classList.add("active");
+      syncHashFromApp();
     });
   });
 
@@ -6643,14 +6690,16 @@
     var btn = e.target.closest("[data-action]");
     if(!btn) return;
     switch(btn.dataset.action){
-      case "events-subnav": eventsUI.tab = btn.dataset.tab; renderEventsHub(); break;
+      case "events-subnav": eventsUI.tab = btn.dataset.tab; renderEventsHub(); syncHashFromApp(); break;
       case "events-goto-category":
         eventsUI.tab = "data-entry"; eventsUI.activeCategory = btn.dataset.cat; eventsUI.search = ""; eventsUI.sortKey = null; eventsUI.colPanelOpen = false;
         renderEventsHub();
+        syncHashFromApp();
         break;
       case "events-set-category":
         eventsUI.activeCategory = btn.dataset.cat; eventsUI.search = ""; eventsUI.sortKey = null; eventsUI.colPanelOpen = false;
         renderEventsHub();
+        syncHashFromApp();
         break;
       case "toggle-row-menu": {
         var rmWrap = btn.closest(".row-menu-wrap");
