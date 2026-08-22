@@ -566,6 +566,10 @@
   .tmpl-toolbar-legend{display:flex; flex-wrap:wrap; gap:10px; margin-top:12px; padding-top:12px; border-top:1px solid var(--line);}
   .tmpl-toolbar-legend span{display:inline-flex; align-items:center; gap:5px; font-size:11px; color:var(--ink-soft); background:var(--teal-tint); border-radius:8px; padding:4px 9px;}
   .tmpl-canvas-wrap img{display:block; max-width:100%; height:auto; user-select:none; pointer-events:none;}
+  .tmpl-guide-center-v{position:absolute; top:0; bottom:0; left:50%; width:0; border-left:1px dashed rgba(230,126,34,.55); pointer-events:none; z-index:5;}
+  .tmpl-guide-center-h{position:absolute; left:0; right:0; top:50%; height:0; border-top:1px dashed rgba(230,126,34,.55); pointer-events:none; z-index:5;}
+  .tmpl-guide-center-v.active, .tmpl-guide-center-h.active{border-color:#e67e22; border-style:solid;}
+  .tmpl-guide-dist-label{position:absolute; transform:translate(-50%,-50%); background:#e67e22; color:#fff; font-size:10px; font-weight:700; padding:1px 6px; border-radius:6px; pointer-events:none; z-index:7; white-space:nowrap; box-shadow:0 1px 3px rgba(0,0,0,.25);}
   .tmpl-marker{position:absolute; transform:translate(-50%,-100%); margin-top:-8px; background:var(--blue); color:#fff; font-size:10px; font-weight:700; padding:2px 6px; border-radius:6px; white-space:nowrap; pointer-events:auto; cursor:move; box-shadow:0 0 0 2px #fff; user-select:none; opacity:.85;}
   .tmpl-marker:hover{opacity:1;}
   .tmpl-marker::after{content:""; position:absolute; left:50%; bottom:-5px; transform:translateX(-50%); width:7px; height:7px; border-radius:50%; background:var(--blue); box-shadow:0 0 0 2px #fff;}
@@ -4661,12 +4665,24 @@
   ];
   var SPECIALIZATION_TYPES_LIST = ["الصحي","الهندسي","الإداري والأعمال","التربوي","الإنساني والأدبي","العلوم والتقني","الشرعي والقانوني","الفني والتصميم","الزراعي والبيئي","العسكري والأمني"];
   var SPECIALIZATIONS_LIST = [
-    "الطب البشري","طب الأسنان","الصيدلة","التمريض","العلاج الطبيعي","الأشعة","المختبرات الطبية",
+    "الطب البشري","طب الأسنان","الصيدلة","التمريض","العلاج الطبيعي","العلاج الوظيفي","الأشعة","المختبرات الطبية",
+    "تقنية التخدير","التغذية الإكلينيكية","الخدمات الطبية الطارئة","علاج النطق والتخاطب","البصريات","الصحة العامة","صحة المجتمع",
+    "الإدارة الصحية","تقنية الأسنان","العلوم الصحية التطبيقية","التثقيف الصحي","الصيدلة الإكلينيكية","الطب البيطري","القبالة",
+    "الإشعاع العلاجي","الفيزياء الطبية","إدارة المستشفيات",
     "الهندسة المدنية","الهندسة الكهربائية","الهندسة الميكانيكية","الهندسة الصناعية","هندسة الحاسب","علوم الحاسب","تقنية المعلومات","الأمن السيبراني",
-    "إدارة الأعمال","المحاسبة","التمويل والمصارف","التسويق","الاقتصاد","الموارد البشرية",
-    "القانون","الشريعة","العلوم السياسية","الإعلام والعلاقات العامة",
+    "الهندسة الكيميائية","هندسة البترول","هندسة المساحة","الهندسة البحرية","هندسة الطيران","هندسة الطاقة","هندسة النفط والغاز",
+    "الهندسة الطبية الحيوية","هندسة الاتصالات","هندسة النظم","هندسة التعدين","الهندسة البيئية",
+    "نظم المعلومات الإدارية","الذكاء الاصطناعي","علم البيانات","الشبكات وأمن المعلومات","هندسة البرمجيات",
+    "إدارة الأعمال","المحاسبة","التمويل والمصارف","التسويق","الاقتصاد","الموارد البشرية","ريادة الأعمال","إدارة سلاسل الإمداد","التأمين","إدارة المشاريع","السكرتارية التنفيذية",
+    "القانون","الشريعة","العلوم السياسية","الإعلام والعلاقات العامة","الأنظمة","الدراسات الإسلامية","أصول الدين","الدعوة والثقافة الإسلامية","القضاء",
     "اللغة العربية","اللغة الإنجليزية","الترجمة","التربية الخاصة","رياض الأطفال","المناهج وطرق التدريس","علم النفس","الخدمة الاجتماعية",
-    "التصميم الداخلي","العمارة","التخطيط العمراني","الرياضيات","الفيزياء","الكيمياء","الأحياء","الجيولوجيا"
+    "التاريخ","الجغرافيا","الفلسفة","علم الاجتماع","الصحافة","اللغة الفرنسية","اللغة الألمانية","اللغة الصينية","اللغويات",
+    "الإدارة التربوية","تقنيات التعليم","تعليم اللغة الإنجليزية","التعليم الابتدائي",
+    "التصميم الداخلي","العمارة","التخطيط العمراني","التصميم الجرافيكي","تصميم الأزياء","الفنون التشكيلية","التصوير الفوتوغرافي","الإعلان والتسويق الرقمي",
+    "الرياضيات","الفيزياء","الكيمياء","الأحياء","الجيولوجيا","الإحصاء","علوم البيئة","الفلك","الكيمياء الحيوية","الأحياء الدقيقة","علوم الأرصاد الجوية",
+    "العلوم الزراعية","علوم الأغذية والتغذية","الثروة السمكية","علوم التربة","البستنة",
+    "التربية البدنية وعلوم الرياضة","الإدارة الرياضية",
+    "العلوم العسكرية","العلوم الشرطية","الأمن والسلامة"
   ];
   var DEGREES_LIST = ["البكالوريوس","الماجستير","الدكتوراة","الدبلوم","الدبلوم العالي"];
   var HONORS_LIST = ["بدون","مع مرتبة شرف","مع مرتبة الشرف الأولى","مع مرتبة الشرف الثانية","مع مرتبة الشرف الثالثة"];
@@ -5224,9 +5240,19 @@
     };
     var p = _eventsOptionsCache;
     if(p){ for(var k in defaults){ if(p[k] !== undefined) defaults[k] = p[k]; } }
+    // قائمة التخصصات: نضمن ظهور القائمة المرجعية الكاملة دائماً حتى لو كانت الإضافات المخزّنة بفايرستور لا تحتوي إلا على تخصصات مخصّصة جديدة فقط
+    defaults.specializations = SPECIALIZATIONS_LIST.concat((p && Array.isArray(p.specializations) ? p.specializations : []).filter(function(s){ return SPECIALIZATIONS_LIST.indexOf(s) === -1; }));
     return defaults;
   }
   function saveEventsOptions(o){ db.collection("eventsMeta").doc("options").set(o); }
+  function mergeSpecializationIntoList(newVal){
+    var current = loadEventsOptions().specializations;
+    if(current.indexOf(newVal) > -1) return false;
+    var opts = loadEventsOptions();
+    opts.specializations = current.concat([newVal]);
+    saveEventsOptions(opts);
+    return true;
+  }
 
   var _eventsTemplatesCache = null;
   db.collection("eventsMeta").doc("templates").onSnapshot(function(doc){
@@ -5443,10 +5469,11 @@
       '</select></div>';
     }
     if(f.type === "selectOther"){
-      var isCustom = !!value && f.options.indexOf(value) === -1;
+      var soOpts = (f.key === "specialization") ? loadEventsOptions().specializations : f.options;
+      var isCustom = !!value && soOpts.indexOf(value) === -1;
       var selVal = isCustom ? "__other__" : (value || "");
       return '<div class="select-wrap"><select data-action="select-other-toggle" data-key="' + f.key + '"><option value="">اختر...</option>' +
-          f.options.map(function(o){ return '<option value="' + escapeHTML(o) + '"' + (selVal === o ? " selected" : "") + '>' + escapeHTML(o) + '</option>'; }).join("") +
+          soOpts.map(function(o){ return '<option value="' + escapeHTML(o) + '"' + (selVal === o ? " selected" : "") + '>' + escapeHTML(o) + '</option>'; }).join("") +
           '<option value="__other__"' + (selVal === "__other__" ? " selected" : "") + '>غير ذلك</option>' +
         '</select></div>' +
         '<input type="text" data-field-input data-key="' + f.key + '" data-other-input="' + f.key + '" value="' + escapeHTML(isCustom ? value : "") + '" placeholder="اكتب هنا..." style="margin-top:6px;' + (selVal === "__other__" ? "" : "display:none;") + '"/>';
@@ -5553,6 +5580,15 @@
         if(cat.dateSource.hijriDate) draft[cat.dateSource.hijriDate] = derived.hijriDateText;
       }
     }
+    var specDupNote = "";
+    var specSel = eventModalOverlayEl.querySelector('[data-action="select-other-toggle"][data-key="specialization"]');
+    if(specSel && specSel.value === "__other__"){
+      var specVal = (draft.specialization || "").trim();
+      if(specVal){
+        var added = mergeSpecializationIntoList(specVal);
+        if(!added) specDupNote = ' — تنويه: تخصص "' + specVal + '" موجود مسبقاً في القائمة';
+      }
+    }
     var all = loadEventsData();
     if(eventModalState.recordId){
       var rec = all.find(function(r){ return r.id === eventModalState.recordId; });
@@ -5571,7 +5607,7 @@
     closeEventModal();
     eventsUI.activeCategory = cat.key;
     renderEventsHub();
-    showToast(eventModalState.recordId ? "تم تحديث السجل" : "تمت إضافة السجل");
+    showToast((eventModalState.recordId ? "تم تحديث السجل" : "تمت إضافة السجل") + specDupNote);
   }
   function deleteEventRecord(id){
     var rec = findEventRecord(id);
@@ -6166,6 +6202,42 @@
       wrap.appendChild(el);
     });
   }
+  function tmplUpdateSpacingGuides(wrap, tmpl, g, isText){
+    var w = tmpl.width, h = tmpl.height;
+    var bw = isText ? 0 : g.boxWidth, bh = isText ? 0 : g.boxHeight;
+    var cx = g.x + bw / 2, cy = g.y + bh / 2;
+    var midX = w / 2, midY = h / 2;
+    var nearCenterX = Math.abs(cx - midX) < Math.max(4, w * 0.006);
+    var nearCenterY = Math.abs(cy - midY) < Math.max(4, h * 0.006);
+    var vLine = wrap.querySelector('[data-guide="v"]');
+    var hLine = wrap.querySelector('[data-guide="h"]');
+    if(vLine) vLine.classList.toggle("active", nearCenterX);
+    if(hLine) hLine.classList.toggle("active", nearCenterY);
+    var old = wrap.querySelectorAll(".tmpl-guide-dist-label");
+    for(var oi = 0; oi < old.length; oi++) old[oi].remove();
+    function addBadge(text, leftPct, topPct){
+      var b = document.createElement("div");
+      b.className = "tmpl-guide-dist-label";
+      b.style.left = leftPct + "%"; b.style.top = topPct + "%";
+      b.textContent = text;
+      wrap.appendChild(b);
+    }
+    var cyPct = Math.max(2, Math.min(98, cy / h * 100));
+    var cxPct = Math.max(2, Math.min(98, cx / w * 100));
+    addBadge(Math.round(g.x) + "px", Math.max(2, (g.x / 2) / w * 100), cyPct);
+    addBadge(Math.round(w - (g.x + bw)) + "px", Math.min(98, (g.x + bw + w) / 2 / w * 100), cyPct);
+    addBadge(Math.round(g.y) + "px", cxPct, Math.max(2, (g.y / 2) / h * 100));
+    addBadge(Math.round(h - (g.y + bh)) + "px", cxPct, Math.min(98, (g.y + bh + h) / 2 / h * 100));
+  }
+  function tmplClearGuides(wrap){
+    if(!wrap) return;
+    var vLine = wrap.querySelector('[data-guide="v"]');
+    var hLine = wrap.querySelector('[data-guide="h"]');
+    if(vLine) vLine.classList.remove("active");
+    if(hLine) hLine.classList.remove("active");
+    var old = wrap.querySelectorAll(".tmpl-guide-dist-label");
+    for(var oi = 0; oi < old.length; oi++) old[oi].remove();
+  }
   function finalizeTmplTextField(tmpl, key, pt){
     tmpl.fields.push({
       key: key, type: "text",
@@ -6365,7 +6437,7 @@
     }
     html += '</div></div>';
     html += '<div class="tmpl-canvas-col">';
-    html += '<div class="tmpl-canvas-stage" style="text-align:center;"><div class="tmpl-canvas-wrap" id="tmplCanvasWrap"><img src="' + tmpl.image + '" alt="" draggable="false"/></div>';
+    html += '<div class="tmpl-canvas-stage" style="text-align:center;"><div class="tmpl-canvas-wrap" id="tmplCanvasWrap"><img src="' + tmpl.image + '" alt="" draggable="false"/><div class="tmpl-guide-center-v" data-guide="v"></div><div class="tmpl-guide-center-h" data-guide="h"></div></div>';
     var pendingMeta = tmplEditorState.pendingKey ? tmplFieldMeta(tmpl.category, tmplEditorState.pendingKey) : null;
     if(pendingMeta){
       html += '<p class="hint" style="margin-top:10px; font-weight:700; color:var(--teal-dark);">' + (pendingMeta.type === "image" ? "✋ اسحب على القالب لتحديد مربع الصورة" : "✋ انقر على موضع النص في القالب") + '</p>';
@@ -6443,7 +6515,7 @@
     html += '</div>';
     html += '<div class="tmpl-canvas-col">';
     html += '<div class="tmpl-canvas-stage" style="text-align:center;">';
-    html += '<div class="tmpl-canvas-wrap" id="tmplGenCanvasWrap" style="display:inline-block; margin:0 auto; cursor:default;"><canvas id="tmplGenCanvas" style="max-width:100%; display:block; background:repeating-conic-gradient(#f0f0f0 0% 25%, #fff 0% 50%) 50% / 16px 16px;"></canvas></div>';
+    html += '<div class="tmpl-canvas-wrap" id="tmplGenCanvasWrap" style="display:inline-block; margin:0 auto; cursor:default;"><canvas id="tmplGenCanvas" style="max-width:100%; display:block; background:repeating-conic-gradient(#f0f0f0 0% 25%, #fff 0% 50%) 50% / 16px 16px;"></canvas><div class="tmpl-guide-center-v" data-guide="v"></div><div class="tmpl-guide-center-h" data-guide="h"></div></div>';
     html += '<p class="hint" id="tmplGenStatus" style="text-align:center; margin-top:10px; font-weight:600;">جارٍ التجهيز...</p>';
     var pendingMeta = (tmpl && tmplGenerateState.pendingKey) ? tmplFieldMeta(tmpl.category, tmplGenerateState.pendingKey) : null;
     if(pendingMeta){
@@ -7109,6 +7181,7 @@
           break;
         }
       }
+      tmplUpdateSpacingGuides(wrap, tmpl, rg, false);
       return;
     }
     if(!tmplEditorState.movingKey) return;
@@ -7126,6 +7199,7 @@
         break;
       }
     }
+    tmplUpdateSpacingGuides(wrap, tmpl, g, f.type !== "image");
   });
   tmplEditorOverlayEl.addEventListener("mouseup", function(e){
     var tmpl = tmplEditorCurrentTemplate();
@@ -7468,6 +7542,7 @@
           break;
         }
       }
+      tmplUpdateSpacingGuides(wrap, tmpl, rg, false);
       return;
     }
     if(!tmplGenerateState.movingKey) return;
@@ -7485,6 +7560,7 @@
         break;
       }
     }
+    tmplUpdateSpacingGuides(wrap, tmpl, g, f.type !== "image");
   });
   tmplGenerateOverlayEl.addEventListener("mouseup", function(e){
     if(!tmplGenerateState) return;
