@@ -6210,8 +6210,7 @@
     var body = document.getElementById("tmplEditorBody");
     var placedKeys = tmpl.fields.map(function(f){ return f.key; });
     var available = (TMPL_PLACEABLE_FIELDS[tmpl.category] || []).filter(function(f){ return placedKeys.indexOf(f.key) === -1; });
-    var catMeta = EVENTS_CATEGORIES.find(function(c){ return c.key === tmpl.category; });
-    var html = '<div class="panel-head"><h3><span style="color:' + eventCategoryColor(tmpl.category) + ';">' + (catMeta ? catMeta.icon : "") + '</span> تعديل القالب — <input type="text" id="tmplNameInput" value="' + escapeHTML(tmpl.name) + '" style="display:inline-block; width:200px; padding:4px 8px; font-size:14px; border:1px solid var(--line); border-radius:6px;"/></h3><button type="button" class="panel-close" data-action="close-tmpl-editor" title="رجوع لقائمة القوالب">✕</button></div>';
+    var html = '<div class="panel-head"><h3>تعديل القالب — <input type="text" id="tmplNameInput" value="' + escapeHTML(tmpl.name) + '" style="display:inline-block; width:200px; padding:4px 8px; font-size:14px; border:1px solid var(--line); border-radius:6px;"/></h3><button type="button" class="panel-close" data-action="close-tmpl-editor" title="رجوع لقائمة القوالب">✕</button></div>';
     html += tmplPreviewSwitcherHTML(tmpl, null);
     html += '<div class="tmpl-workspace-stack">';
     html += '<div class="tmpl-fields-col">';
@@ -6276,8 +6275,7 @@
     var body = document.getElementById("tmplGenerateBody");
     var templates = loadDesignTemplates(tmplGenerateState.catKey);
     var tmpl = findDesignTemplate(tmplGenerateState.templateId);
-    var genCatMeta = tmpl ? EVENTS_CATEGORIES.find(function(c){ return c.key === tmpl.category; }) : null;
-    var html = '<div class="panel-head"><h3>' + (genCatMeta ? '<span style="color:' + eventCategoryColor(genCatMeta.key) + ';">' + genCatMeta.icon + '</span> ' : "") + 'توليد تصميم</h3><button type="button" class="panel-close" data-action="close-tmpl-generate" title="رجوع لقائمة القوالب">✕</button></div>';
+    var html = '<div class="panel-head"><h3>توليد تصميم</h3><button type="button" class="panel-close" data-action="close-tmpl-generate" title="رجوع لقائمة القوالب">✕</button></div>';
     if(tmpl) html += tmplPreviewSwitcherHTML(tmpl, tmplGenerateState.recordId);
     if(templates.length > 1){
       html += '<select id="tmplGenSelect" style="margin-bottom:14px;">' +
