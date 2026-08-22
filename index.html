@@ -6021,6 +6021,18 @@
     }
     saveDesignTemplate(tmpl);
   }
+  // يستبدل صورة القالب فقط (مع أبعادها الجديدة) دون المساس بمصفوفة المتغيرات ومواضعها المحفوظة
+  function tmplReplaceTemplateImage(tmpl, file, cb){
+    compressTemplateImageFile(file, function(dataUrl, w, h){
+      if(!dataUrl){ showToast("تعذّرت قراءة الصورة"); cb(false); return; }
+      tmpl.image = dataUrl;
+      tmpl.width = w;
+      tmpl.height = h;
+      saveDesignTemplate(tmpl);
+      showToast("تم تحديث صورة القالب");
+      cb(true);
+    });
+  }
   function tmplCanvasPointFromEvent(e, wrap, tmpl){
     var surface = wrap.querySelector("img, canvas");
     var rect = surface.getBoundingClientRect();
@@ -6246,6 +6258,8 @@
       html += '<p class="hint" style="margin-top:10px; font-weight:700; color:var(--teal-dark);">' + (pendingMeta.type === "image" ? "✋ اسحب على القالب لتحديد مربع الصورة" : "✋ انقر على موضع النص في القالب") + '</p>';
     }
     html += '<div class="tmpl-toolbar-legend" style="justify-content:center;"><span>↔ سحب = تحريك</span><span>⤡ المقبض = تحجيم (Shift لحفظ النسبة)</span></div>';
+    html += '<div style="text-align:center; margin-top:12px;"><label class="btn-secondary" style="display:inline-flex; align-items:center; gap:6px; cursor:pointer; font-size:12px; padding:6px 12px;">🖼️ تغيير صورة القالب<input type="file" accept="image/png,image/jpeg" id="tmplReplaceImageInput" style="display:none;"/></label>' +
+      '<p class="hint" style="margin-top:4px;">يستبدل صورة القالب فقط مع الإبقاء على كل المتغيرات ومواضعها كما هي — PNG أو JPG فقط</p></div>';
     html += '</div></div>';
     html += '</div>';
     setHTML(body, html);
@@ -6312,6 +6326,8 @@
     }
     html += '<div class="tmpl-toolbar-legend" style="justify-content:center;"><span>↔ سحب = تحريك</span><span>⤡ المقبض = تحجيم</span><span>🖱️ عجلة الفأرة = تقريب/تبعيد الصورة</span></div>';
     html += '<div style="text-align:center; margin-top:14px;"><button type="button" class="btn-primary" id="tmplGenDownloadBtn" data-action="download-tmpl-design" disabled>⬇ تنزيل الصورة</button></div>';
+    html += '<div style="text-align:center; margin-top:10px;"><label class="btn-secondary" style="display:inline-flex; align-items:center; gap:6px; cursor:pointer; font-size:12px; padding:6px 12px;">🖼️ تغيير صورة القالب<input type="file" accept="image/png,image/jpeg" id="tmplReplaceImageInput" style="display:none;"/></label>' +
+      '<p class="hint" style="margin-top:4px;">يستبدل صورة القالب فقط مع الإبقاء على كل المتغيرات ومواضعها كما هي — PNG أو JPG فقط</p></div>';
     html += '</div></div>';
     html += '</div>';
     setHTML(body, html);
@@ -6972,6 +6988,12 @@
       saveDesignTemplate(tmpl);
       return;
     }
+    if(e.target.id === "tmplReplaceImageInput"){
+      var replaceFile = e.target.files && e.target.files[0];
+      if(!replaceFile) return;
+      tmplReplaceTemplateImage(tmpl, replaceFile, function(ok){ if(ok) renderTemplateEditor(); });
+      return;
+    }
     if(e.target.id === "tmplFontUploadInput"){
       var files = e.target.files;
       if(!files || !files.length) return;
@@ -7111,6 +7133,12 @@
     if(!tmpl) return;
     if(e.target.id === "tmplPreviewRecordSelect"){
       tmplSwitchWorkspace(tmpl.id, e.target.value || null);
+      return;
+    }
+    if(e.target.id === "tmplReplaceImageInput"){
+      var replaceFile2 = e.target.files && e.target.files[0];
+      if(!replaceFile2) return;
+      tmplReplaceTemplateImage(tmpl, replaceFile2, function(ok){ if(ok) renderDesignGenerateModal(); });
       return;
     }
     if(e.target.matches("[data-toggle-contain-override]")){
