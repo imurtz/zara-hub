@@ -5235,6 +5235,17 @@
   function saveDesignTemplate(tmpl){ db.collection("designTemplates").doc(tmpl.id).set(tmpl); }
   function deleteDesignTemplate(id){ db.collection("designTemplates").doc(id).delete(); }
   function genTemplateId(){ return "tmpl-" + Date.now().toString(36) + Math.random().toString(36).slice(2, 8); }
+  // ينسخ الصورة وكل المتغيرات ومواضعها إلى قالب جديد مستقل — مفيد عند الحاجة لنسخة معدّلة قليلاً (مثل قالب الإناث) بنفس تخطيط قالب موجود
+  function duplicateDesignTemplate(id){
+    var src = findDesignTemplate(id);
+    if(!src) return;
+    var copy = JSON.parse(JSON.stringify(src));
+    copy.id = genTemplateId();
+    copy.name = src.name + " (نسخة)";
+    saveDesignTemplate(copy);
+    showToast('تم إنشاء نسخة باسم "' + copy.name + '" — افتحها من "تعديل" وغيّر صورتها من "🖼️ تغيير صورة القالب"');
+    refreshTmplManager();
+  }
 
   var _designFontsCache = [];
   db.collection("designFonts").onSnapshot(function(snap){
@@ -5989,6 +6000,7 @@
           '<img src="' + t.image + '" alt=""/>' +
           '<div class="info"><b>' + escapeHTML(t.name) + '</b><div class="hint">' + t.fields.length + ' متغير محدد</div></div>' +
           '<button type="button" class="btn-secondary" data-action="edit-design-tmpl" data-id="' + t.id + '">تعديل</button>' +
+          '<button type="button" class="btn-secondary" data-action="duplicate-design-tmpl" data-id="' + t.id + '" title="ينسخ الصورة وكل المتغيرات ومواضعها لقالب جديد">📋 نسخ</button>' +
           '<button type="button" class="task-icon-btn" data-action="delete-design-tmpl" data-id="' + t.id + '" title="حذف"><span class="icon">' + ICON_DELETE + '</span></button>' +
         '</div>';
       });
@@ -6633,6 +6645,7 @@
       case "copy-publish-text": copyToClipboard(btn.dataset.text); break;
       case "set-design-tmpl-cat": eventsUI.designTmplCategory = btn.dataset.cat; refreshTmplManager(); break;
       case "edit-design-tmpl": openTemplateEditor(btn.dataset.id); break;
+      case "duplicate-design-tmpl": duplicateDesignTemplate(btn.dataset.id); break;
       case "delete-design-tmpl":
         if(confirm("حذف هذا القالب نهائياً؟")) deleteDesignTemplate(btn.dataset.id);
         break;
