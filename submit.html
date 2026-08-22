@@ -107,8 +107,6 @@
     .ai-choice-divider::after{inset-inline:auto; top:0; bottom:0; height:auto; width:1px; left:50%;}
   }
   .ai-image-upload-label{display:inline-flex; align-items:center; gap:6px; font-size:12px; color:var(--teal-dark); border:1.5px dashed var(--line); border-radius:10px; padding:9px 12px; cursor:pointer; width:fit-content;}
-  .bg-remove-btn{display:inline-flex; align-items:center; gap:6px; margin-top:8px; font-size:12px; color:var(--teal-dark); background:var(--teal-tint); border:1px solid var(--line); border-radius:9px; padding:7px 12px; cursor:pointer;}
-  .bg-remove-btn:hover{border-color:var(--teal);}
   .ai-image-upload-label:hover{border-color:var(--blue);}
   .ai-image-preview{position:relative; display:inline-block; border-radius:10px; overflow:hidden; border:1px solid var(--line); line-height:0; width:fit-content;}
   .ai-image-preview img{display:block; height:90px; width:auto; max-width:100%; object-fit:contain;}
@@ -599,8 +597,7 @@
     } else {
       var val = state.fieldImages[key];
       if(val){
-        inner = '<div class="photo-preview"><img src="' + val + '" alt=""/><button type="button" class="rm" data-action="remove-field-image" data-field-key="' + key + '">×</button></div>' +
-          '<button type="button" class="bg-remove-btn" data-action="remove-field-bg" data-field-key="' + key + '">🪄 إزالة الخلفية</button>';
+        inner = '<div class="photo-preview"><img src="' + val + '" alt=""/><button type="button" class="rm" data-action="remove-field-image" data-field-key="' + key + '">×</button></div>';
       } else {
         inner = '<input type="file" accept="image/png,image/jpeg" class="photo-input" data-action="field-image-input" data-field-key="' + key + '"/>' +
           '<p class="field-hint" style="margin-top:4px;">الصيغ المقبولة: PNG أو JPG فقط</p>';
@@ -650,8 +647,7 @@
     if(state.photoProcessing){
       inner = '<p class="field-hint" id="photoProcessingMsg">' + escapeHTML(state.photoProcessingMsg || "جارٍ المعالجة...") + '</p>';
     } else if(state.photo){
-      inner = '<div class="photo-preview"><img src="' + state.photo + '" alt=""/><button type="button" class="rm" id="removePhotoBtn">×</button></div>' +
-        '<button type="button" class="bg-remove-btn" id="removePhotoBgBtn">🪄 إزالة الخلفية</button>';
+      inner = '<div class="photo-preview"><img src="' + state.photo + '" alt=""/><button type="button" class="rm" id="removePhotoBtn">×</button></div>';
     } else {
       inner = '<input type="file" accept="image/png,image/jpeg" class="photo-input" id="photoInput"/>';
     }
@@ -668,6 +664,52 @@
     if(!mount) return;
     mount.outerHTML = imageFieldHTML(key);
     bindFormEvents();
+  }
+  function autoRemovePhotoBg(){
+    if(!state.photo) return;
+    state.photoProcessing = true;
+    state.photoProcessingMsg = "جارٍ تفريغ الخلفية تلقائياً...";
+    refreshPhotoField();
+    fetch(state.photo).then(function(r){ return r.blob(); }).then(function(blob){
+      return removeImageBackgroundClientSide(blob, function(msg){
+        state.photoProcessingMsg = msg;
+        var el = document.getElementById("photoProcessingMsg");
+        if(el) el.textContent = msg;
+      });
+    }).then(function(cutBlob){
+      compressCutoutImageFile(cutBlob, 400 * 1024, function(dataUrl){
+        state.photoProcessing = false;
+        if(dataUrl) state.photo = dataUrl;
+        refreshPhotoField();
+      });
+    }).catch(function(err){
+      console.error("bg removal failed", err);
+      state.photoProcessing = false;
+      refreshPhotoField();
+    });
+  }
+  function autoRemoveFieldBg(key){
+    var src = state.fieldImages[key];
+    if(!src) return;
+    state.fieldImagesProcessing[key] = "جارٍ تفريغ الخلفية تلقائياً...";
+    refreshFieldImage(key);
+    fetch(src).then(function(r){ return r.blob(); }).then(function(blob){
+      return removeImageBackgroundClientSide(blob, function(msg){
+        state.fieldImagesProcessing[key] = msg;
+        var el = document.getElementById("fieldImgProcessing-" + key);
+        if(el) el.textContent = msg;
+      });
+    }).then(function(cutBlob){
+      compressCutoutImageFile(cutBlob, 400 * 1024, function(dataUrl){
+        delete state.fieldImagesProcessing[key];
+        if(dataUrl) state.fieldImages[key] = dataUrl;
+        refreshFieldImage(key);
+      });
+    }).catch(function(err){
+      console.error("bg removal failed", err);
+      delete state.fieldImagesProcessing[key];
+      refreshFieldImage(key);
+    });
   }
   function currentDetailsValue(){
     var el = document.querySelector('[data-key="details"]');
@@ -851,6 +893,7 @@
           }
           state.photo = dataUrl;
           refreshPhotoField();
+          autoRemovePhotoBg();
         });
       });
     }
@@ -859,33 +902,6 @@
       rmBtn.addEventListener("click", function(){
         state.photo = "";
         refreshPhotoField();
-      });
-    }
-    var bgBtn = document.getElementById("removePhotoBgBtn");
-    if(bgBtn){
-      bgBtn.addEventListener("click", function(){
-        if(!state.photo) return;
-        state.photoProcessing = true;
-        state.photoProcessingMsg = "جارٍ تحميل أداة إزالة الخلفية...";
-        refreshPhotoField();
-        fetch(state.photo).then(function(r){ return r.blob(); }).then(function(blob){
-          return removeImageBackgroundClientSide(blob, function(msg){
-            state.photoProcessingMsg = msg;
-            var el = document.getElementById("photoProcessingMsg");
-            if(el) el.textContent = msg;
-          });
-        }).then(function(cutBlob){
-          compressCutoutImageFile(cutBlob, 400 * 1024, function(dataUrl){
-            state.photoProcessing = false;
-            if(!dataUrl){ refreshPhotoField(); return; }
-            state.photo = dataUrl;
-            refreshPhotoField();
-          });
-        }).catch(function(err){
-          console.error("bg removal failed", err);
-          state.photoProcessing = false;
-          refreshPhotoField();
-        });
       });
     }
     Array.prototype.forEach.call(document.querySelectorAll('[data-action="field-image-input"]'), function(fi){
@@ -905,6 +921,7 @@
           if(!dataUrl) return;
           state.fieldImages[key] = dataUrl;
           refreshFieldImage(key);
+          autoRemoveFieldBg(key);
         });
       });
     });
@@ -913,33 +930,6 @@
         var key = rb.dataset.fieldKey;
         delete state.fieldImages[key];
         refreshFieldImage(key);
-      });
-    });
-    Array.prototype.forEach.call(document.querySelectorAll('[data-action="remove-field-bg"]'), function(bgb){
-      bgb.addEventListener("click", function(){
-        var key = bgb.dataset.fieldKey;
-        var src = state.fieldImages[key];
-        if(!src) return;
-        state.fieldImagesProcessing[key] = "جارٍ تحميل أداة إزالة الخلفية...";
-        refreshFieldImage(key);
-        fetch(src).then(function(r){ return r.blob(); }).then(function(blob){
-          return removeImageBackgroundClientSide(blob, function(msg){
-            state.fieldImagesProcessing[key] = msg;
-            var el = document.getElementById("fieldImgProcessing-" + key);
-            if(el) el.textContent = msg;
-          });
-        }).then(function(cutBlob){
-          compressCutoutImageFile(cutBlob, 400 * 1024, function(dataUrl){
-            delete state.fieldImagesProcessing[key];
-            if(!dataUrl){ refreshFieldImage(key); return; }
-            state.fieldImages[key] = dataUrl;
-            refreshFieldImage(key);
-          });
-        }).catch(function(err){
-          console.error("bg removal failed", err);
-          delete state.fieldImagesProcessing[key];
-          refreshFieldImage(key);
-        });
       });
     });
     Array.prototype.forEach.call(document.querySelectorAll('[data-action="select-other-toggle"]'), function(sel){
