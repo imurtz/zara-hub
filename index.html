@@ -557,7 +557,9 @@
     .panel-overlay.panel-overlay-fullscreen .panel.panel-fullscreen{padding:24px 48px 48px;}
   }
 
+  .tmpl-workspace-stack{display:flex; flex-direction:column; gap:20px; max-width:760px; margin:0 auto;}
   .tmpl-canvas-stage{background:var(--white); border:1px solid var(--line); border-radius:16px; padding:16px; box-shadow:0 2px 10px rgba(0,0,0,.04);}
+  .tmpl-canvas-stage .tmpl-canvas-wrap{max-width:520px; margin:0 auto;}
   .tmpl-canvas-wrap{position:relative; display:inline-block; border:1px solid var(--line); border-radius:10px; overflow:hidden; max-width:100%; cursor:crosshair; background:repeating-conic-gradient(#f0f0f0 0% 25%, #fff 0% 50%) 50% / 16px 16px;}
   .tmpl-toolbar-legend{display:flex; flex-wrap:wrap; gap:10px; margin-top:12px; padding-top:12px; border-top:1px solid var(--line);}
   .tmpl-toolbar-legend span{display:inline-flex; align-items:center; gap:5px; font-size:11px; color:var(--ink-soft); background:var(--teal-tint); border-radius:8px; padding:4px 9px;}
@@ -580,7 +582,11 @@
   .tmpl-field-group summary::before{content:"▸"; display:inline-block; margin-inline-end:4px; transition:transform .15s;}
   .tmpl-field-group[open] summary::before{transform:rotate(90deg);}
   .tmpl-field-group .tmpl-field-controls{margin-top:8px;}
-  .tmpl-field-row-head{display:flex; align-items:center; justify-content:space-between; margin-bottom:6px;}
+  .tmpl-field-row-head{display:flex; align-items:center; justify-content:space-between; margin-bottom:6px; cursor:pointer;}
+  .tmpl-field-row-head b::before{content:"▾"; display:inline-block; margin-inline-end:6px; font-size:10px; color:var(--ink-soft); transition:transform .15s;}
+  .tmpl-field-row.collapsed .tmpl-field-row-head b::before{transform:rotate(-90deg);}
+  .tmpl-field-row.collapsed .tmpl-field-row-head{margin-bottom:0;}
+  .tmpl-field-row.collapsed .tmpl-field-body{display:none;}
   .tmpl-field-type-icon{display:inline-block; margin-inline-end:5px; font-size:12px;}
   .tmpl-field-bg-row{display:flex; align-items:center; gap:10px; background:var(--teal-tint); border:1px solid var(--line); border-radius:10px; padding:8px 10px; margin-bottom:8px;}
   .tmpl-field-bg-thumb{width:34px; height:34px; border-radius:8px; object-fit:cover; border:1px solid var(--line); background:repeating-conic-gradient(#f0f0f0 0% 25%, #fff 0% 50%) 50% / 10px 10px; flex-shrink:0;}
@@ -6076,7 +6082,8 @@
     var g = isImage ? tmplGeomTarget(f) : f;
     var typeIcon = isImage ? "🖼️" : "🔤";
     var html = '<div class="tmpl-field-row" data-field-key="' + f.key + '">' +
-      '<div class="tmpl-field-row-head"><b><span class="tmpl-field-type-icon">' + typeIcon + '</span>' + escapeHTML(meta.label) + '</b><button type="button" class="task-icon-btn" data-action="remove-tmpl-field" data-key="' + f.key + '" title="حذف الموضع"><span class="icon">' + ICON_DELETE + '</span></button></div>';
+      '<div class="tmpl-field-row-head" data-action="toggle-tmpl-field-row"><b><span class="tmpl-field-type-icon">' + typeIcon + '</span>' + escapeHTML(meta.label) + '</b><button type="button" class="task-icon-btn" data-action="remove-tmpl-field" data-key="' + f.key + '" title="حذف الموضع"><span class="icon">' + ICON_DELETE + '</span></button></div>';
+    html += '<div class="tmpl-field-body">';
     if(isImage && previewRecordId){
       var previewRec = loadEventsData().find(function(r){ return r.id === previewRecordId; });
       var previewSrc = previewRec ? previewRec[f.key] : "";
@@ -6138,7 +6145,7 @@
         '<button type="button" class="btn-secondary" data-action="copy-tmpl-field-style" data-key="' + f.key + '" style="padding:4px 10px; font-size:11px;">نسخ الإعدادات</button>' +
       '</div></details>';
     }
-    html += '</div>';
+    html += '</div></div>';
     return html;
   }
   function copyTmplFieldStyleToTarget(tmpl, key){
@@ -6198,15 +6205,14 @@
     var catMeta = EVENTS_CATEGORIES.find(function(c){ return c.key === tmpl.category; });
     var html = '<div class="panel-head"><h3><span style="color:' + eventCategoryColor(tmpl.category) + ';">' + (catMeta ? catMeta.icon : "") + '</span> تعديل القالب — <input type="text" id="tmplNameInput" value="' + escapeHTML(tmpl.name) + '" style="display:inline-block; width:200px; padding:4px 8px; font-size:14px; border:1px solid var(--line); border-radius:6px;"/></h3><button type="button" class="panel-close" data-action="close-tmpl-editor" title="رجوع لقائمة القوالب">✕</button></div>';
     html += tmplPreviewSwitcherHTML(tmpl, null);
-    html += '<div style="display:flex; gap:20px; flex-wrap:wrap; align-items:flex-start;">';
-    html += '<div style="flex:1; min-width:280px;"><div class="tmpl-canvas-stage"><div class="tmpl-canvas-wrap" id="tmplCanvasWrap"><img src="' + tmpl.image + '" alt="" draggable="false"/></div>';
+    html += '<div class="tmpl-workspace-stack">';
+    html += '<div class="tmpl-canvas-stage" style="text-align:center;"><div class="tmpl-canvas-wrap" id="tmplCanvasWrap"><img src="' + tmpl.image + '" alt="" draggable="false"/></div>';
     var pendingMeta = tmplEditorState.pendingKey ? tmplFieldMeta(tmpl.category, tmplEditorState.pendingKey) : null;
     if(pendingMeta){
       html += '<p class="hint" style="margin-top:10px; font-weight:700; color:var(--teal-dark);">' + (pendingMeta.type === "image" ? "✋ اسحب على القالب لتحديد مربع الصورة" : "✋ انقر على موضع النص في القالب") + '</p>';
     }
-    html += '<div class="tmpl-toolbar-legend"><span>↔ سحب = تحريك</span><span>⤡ المقبض = تحجيم (Shift لحفظ النسبة)</span></div>';
-    html += '</div></div>';
-    html += '<div style="flex:1; min-width:280px;">';
+    html += '<div class="tmpl-toolbar-legend" style="justify-content:center;"><span>↔ سحب = تحريك</span><span>⤡ المقبض = تحجيم (Shift لحفظ النسبة)</span></div>';
+    html += '</div>';
     var fonts = loadDesignFonts();
     html += '<div style="border:1px solid var(--line); border-radius:10px; padding:10px 12px; margin-bottom:14px; background:#fbfcfc;">' +
       '<b style="font-size:12.5px; color:var(--teal-dark); display:block; margin-bottom:8px;">🔤 الخطوط المخصصة</b>';
@@ -6232,7 +6238,7 @@
     } else {
       tmpl.fields.forEach(function(f){ html += tmplFieldRowHTML(tmpl, f); });
     }
-    html += '</div></div></div>';
+    html += '</div></div>';
     setHTML(body, html);
     var editorWrap = document.getElementById("tmplCanvasWrap");
     if(editorWrap) tmplRenderMarkersOverlay(editorWrap, tmpl);
@@ -6268,19 +6274,18 @@
         templates.map(function(t){ return '<option value="' + t.id + '"' + (t.id === tmplGenerateState.templateId ? " selected" : "") + '>' + escapeHTML(t.name) + '</option>'; }).join("") +
         '</select>';
     }
-    html += '<div style="display:flex; gap:20px; flex-wrap:wrap; align-items:flex-start;">';
-    html += '<div style="flex:1; min-width:280px;">';
-    html += '<div class="tmpl-canvas-stage">';
-    html += '<div class="tmpl-canvas-wrap" id="tmplGenCanvasWrap" style="display:block; margin:0 auto; cursor:default;"><canvas id="tmplGenCanvas" style="max-width:100%; display:block; background:repeating-conic-gradient(#f0f0f0 0% 25%, #fff 0% 50%) 50% / 16px 16px;"></canvas></div>';
+    html += '<div class="tmpl-workspace-stack">';
+    html += '<div class="tmpl-canvas-stage" style="text-align:center;">';
+    html += '<div class="tmpl-canvas-wrap" id="tmplGenCanvasWrap" style="display:inline-block; margin:0 auto; cursor:default;"><canvas id="tmplGenCanvas" style="max-width:100%; display:block; background:repeating-conic-gradient(#f0f0f0 0% 25%, #fff 0% 50%) 50% / 16px 16px;"></canvas></div>';
     html += '<p class="hint" id="tmplGenStatus" style="text-align:center; margin-top:10px; font-weight:600;">جارٍ التجهيز...</p>';
     var pendingMeta = (tmpl && tmplGenerateState.pendingKey) ? tmplFieldMeta(tmpl.category, tmplGenerateState.pendingKey) : null;
     if(pendingMeta){
       html += '<p class="hint" style="text-align:center; font-weight:700; color:var(--teal-dark);">✋ ' + (pendingMeta.type === "image" ? "اسحب على الصورة لتحديد مربع الصورة الجديد" : "انقر على موضع النص الجديد بالصورة") + '</p>';
     }
-    html += '<div class="tmpl-toolbar-legend"><span>↔ سحب = تحريك</span><span>⤡ المقبض = تحجيم</span><span>🖱️ عجلة الفأرة = تقريب/تبعيد الصورة</span></div>';
+    html += '<div class="tmpl-toolbar-legend" style="justify-content:center;"><span>↔ سحب = تحريك</span><span>⤡ المقبض = تحجيم</span><span>🖱️ عجلة الفأرة = تقريب/تبعيد الصورة</span></div>';
     html += '<div style="text-align:center; margin-top:14px;"><button type="button" class="btn-primary" id="tmplGenDownloadBtn" data-action="download-tmpl-design" disabled>⬇ تنزيل الصورة</button></div>';
-    html += '</div></div>';
-    html += '<div style="flex:1; min-width:280px;" id="tmplGenFieldsList">';
+    html += '</div>';
+    html += '<div id="tmplGenFieldsList">';
     if(tmpl){
       var placedKeys = tmpl.fields.map(function(f){ return f.key; });
       var available = (TMPL_PLACEABLE_FIELDS[tmpl.category] || []).filter(function(f){ return placedKeys.indexOf(f.key) === -1; });
@@ -6775,6 +6780,11 @@
     if(!btn) return;
     switch(btn.dataset.action){
       case "close-tmpl-editor": closeTemplateEditor(); break;
+      case "toggle-tmpl-field-row": {
+        var toggleRow = btn.closest(".tmpl-field-row");
+        if(toggleRow) toggleRow.classList.toggle("collapsed");
+        break;
+      }
       case "arm-tmpl-field": {
         var sel = document.getElementById("tmplAddFieldSelect");
         tmplEditorState.pendingKey = sel ? sel.value : "";
@@ -6973,6 +6983,11 @@
     if(!btn) return;
     switch(btn.dataset.action){
       case "close-tmpl-generate": closeDesignGenerateModal(); break;
+      case "toggle-tmpl-field-row": {
+        var toggleRow2 = btn.closest(".tmpl-field-row");
+        if(toggleRow2) toggleRow2.classList.toggle("collapsed");
+        break;
+      }
       case "arm-tmpl-gen-field": {
         var genSel = document.getElementById("tmplGenAddFieldSelect");
         tmplGenerateState.pendingKey = genSel ? genSel.value : "";
