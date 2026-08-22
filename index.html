@@ -721,7 +721,17 @@
   }
   .role-pill.admin{background:var(--tan-tint); color:var(--tan);}
   .role-pill.employee{background:var(--teal-tint); color:var(--teal-dark);}
-  .row-actions{display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-end;}
+  .row-actions{display:flex; gap:8px; justify-content:flex-end;}
+  .row-menu-wrap{position:relative; display:inline-block;}
+  .row-menu-trigger{width:30px; height:30px; border-radius:8px; border:1px solid var(--line); background:var(--white); cursor:pointer; font-size:16px; line-height:1; color:var(--ink-soft);}
+  .row-menu-trigger:hover{background:var(--teal-tint); border-color:var(--teal); color:var(--teal-dark);}
+  .row-menu-wrap.open .row-menu-trigger{background:var(--teal-tint); border-color:var(--teal); color:var(--teal-dark);}
+  .row-menu-dropdown{display:none; flex-direction:column; gap:2px; min-width:150px; background:var(--white); border:1px solid var(--line); border-radius:10px; box-shadow:0 10px 28px rgba(0,0,0,.14); z-index:200; padding:6px;}
+  .row-menu-wrap.open .row-menu-dropdown{display:flex;}
+  .row-menu-item{display:flex; align-items:center; gap:8px; padding:8px 10px; border:none; background:none; border-radius:7px; cursor:pointer; font-size:12.5px; color:var(--ink); text-align:right; width:100%;}
+  .row-menu-item:hover{background:var(--teal-tint); color:var(--teal-dark);}
+  .row-menu-item.danger:hover{background:#fbeceb; color:var(--danger);}
+  .row-menu-item .icon{width:15px; height:15px; flex-shrink:0;}
   .icon-btn{
     border:1.5px solid var(--line);
     background:var(--white);
@@ -5620,17 +5630,19 @@
             (ci === 0 && isDup ? '<span class="dup-badge" title="يوجد سجل آخر بنفس الاسم والتاريخ — راجعه قبل الاعتماد">⚠️ تكرار محتمل</span> ' : '');
           html += '<td>' + badges + escapeHTML(cellValue(cat, r, colKey)) + '</td>';
         });
-        html += '<td class="row-actions">';
+        html += '<td class="row-actions"><div class="row-menu-wrap">' +
+          '<button type="button" class="row-menu-trigger" data-action="toggle-row-menu" title="إجراءات">⋮</button>' +
+          '<div class="row-menu-dropdown">';
         if(pending && currentUser.role === "admin"){
-          html += '<button type="button" class="icon-btn" data-action="approve-event" data-id="' + r.id + '" title="قبول (مراجعة الأدمن)"><span class="icon">' + TICON.check + '</span></button>' +
-            '<button type="button" class="icon-btn danger" data-action="reject-event" data-id="' + r.id + '" title="رفض (مراجعة الأدمن)"><span class="icon" style="font-weight:700;">✕</span></button>';
+          html += '<button type="button" class="row-menu-item" data-action="approve-event" data-id="' + r.id + '"><span class="icon">' + TICON.check + '</span> قبول</button>' +
+            '<button type="button" class="row-menu-item danger" data-action="reject-event" data-id="' + r.id + '"><span class="icon" style="font-weight:700;">✕</span> رفض</button>';
         }
         if(loadDesignTemplates(cat.key).length){
-          html += '<button type="button" class="icon-btn" data-action="generate-design" data-id="' + r.id + '" title="توليد تصميم"><span class="icon">🎨</span></button>';
+          html += '<button type="button" class="row-menu-item" data-action="generate-design" data-id="' + r.id + '"><span class="icon">🎨</span> توليد تصميم</button>';
         }
-        html += '<button type="button" class="icon-btn" data-action="edit-event" data-id="' + r.id + '" title="تعديل"><span class="icon">' + ICON_EDIT + '</span></button>' +
-          '<button type="button" class="icon-btn danger" data-action="delete-event" data-id="' + r.id + '" title="حذف"><span class="icon">' + ICON_DELETE + '</span></button>' +
-        '</td></tr>';
+        html += '<button type="button" class="row-menu-item" data-action="edit-event" data-id="' + r.id + '"><span class="icon">' + ICON_EDIT + '</span> تعديل</button>' +
+          '<button type="button" class="row-menu-item danger" data-action="delete-event" data-id="' + r.id + '"><span class="icon">' + ICON_DELETE + '</span> حذف</button>' +
+        '</div></div></td></tr>';
       });
     }
     html += '</tbody></table></div>';
@@ -6640,6 +6652,28 @@
         eventsUI.activeCategory = btn.dataset.cat; eventsUI.search = ""; eventsUI.sortKey = null; eventsUI.colPanelOpen = false;
         renderEventsHub();
         break;
+      case "toggle-row-menu": {
+        var rmWrap = btn.closest(".row-menu-wrap");
+        if(!rmWrap) break;
+        var rmDropdown = rmWrap.querySelector(".row-menu-dropdown");
+        var rmWasOpen = rmWrap.classList.contains("open");
+        document.querySelectorAll(".row-menu-wrap.open").forEach(function(w){
+          w.classList.remove("open");
+          w.querySelector(".row-menu-dropdown").style.cssText = "";
+        });
+        if(!rmWasOpen){
+          rmWrap.classList.add("open");
+          var rmRect = btn.getBoundingClientRect();
+          rmDropdown.style.position = "fixed";
+          rmDropdown.style.left = rmRect.left + "px";
+          rmDropdown.style.top = (rmRect.bottom + 4) + "px";
+          var rmH = rmDropdown.offsetHeight;
+          if(rmRect.bottom + 4 + rmH > window.innerHeight){
+            rmDropdown.style.top = (rmRect.top - rmH - 4) + "px";
+          }
+        }
+        break;
+      }
       case "open-add-event": openEventModal(btn.dataset.cat, null); break;
       case "edit-event": {
         var rec = findEventRecord(btn.dataset.id);
@@ -6703,6 +6737,20 @@
       if(c) setHTML(c, eventsPublishListHTML());
     }
   });
+  // يغلق قائمة إجراءات الصف المفتوحة عند النقر خارجها أو التمرير — القائمة موضّعة بـ position:fixed فتفلت من قص التمرير داخل الجدول
+  document.addEventListener("click", function(e){
+    if(e.target.closest(".row-menu-wrap")) return;
+    document.querySelectorAll(".row-menu-wrap.open").forEach(function(w){
+      w.classList.remove("open");
+      w.querySelector(".row-menu-dropdown").style.cssText = "";
+    });
+  });
+  document.addEventListener("scroll", function(){
+    document.querySelectorAll(".row-menu-wrap.open").forEach(function(w){
+      w.classList.remove("open");
+      w.querySelector(".row-menu-dropdown").style.cssText = "";
+    });
+  }, true);
 
   var eventModalOverlayEl = document.getElementById("eventModalOverlay");
   eventModalOverlayEl.addEventListener("input", function(e){
