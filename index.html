@@ -579,6 +579,14 @@
   .tmpl-fields-panel{background:var(--white); border:1px solid var(--line); border-radius:16px; padding:16px; box-shadow:0 2px 10px rgba(0,0,0,.04);}
   .tmpl-fields-panel-head{font-size:12.5px; font-weight:700; color:var(--teal-dark); margin-bottom:10px; display:flex; align-items:center; gap:6px;}
   .tmpl-field-group{margin-top:8px; border-top:1px dashed var(--line); padding-top:6px;}
+  .tmpl-nudge-pad{display:grid; grid-template-columns:repeat(3, 26px); grid-template-rows:repeat(3, 26px); gap:2px;}
+  .tmpl-nudge-pad button{border:1px solid var(--line); background:var(--white); border-radius:6px; cursor:pointer; font-size:11px; color:var(--teal-dark); display:flex; align-items:center; justify-content:center; padding:0;}
+  .tmpl-nudge-pad button:hover{background:var(--teal-tint); border-color:var(--teal);}
+  .tmpl-nudge-up{grid-column:2; grid-row:1;}
+  .tmpl-nudge-left{grid-column:1; grid-row:2;}
+  .tmpl-nudge-center{grid-column:2; grid-row:2; color:var(--ink-soft); font-size:8px;}
+  .tmpl-nudge-right{grid-column:3; grid-row:2;}
+  .tmpl-nudge-down{grid-column:2; grid-row:3;}
   .tmpl-field-group summary{cursor:pointer; font-size:11.5px; font-weight:700; color:var(--teal-dark); padding:2px 0; list-style:none;}
   .tmpl-field-group summary::-webkit-details-marker{display:none;}
   .tmpl-field-group summary::before{content:"▸"; display:inline-block; margin-inline-end:4px; transition:transform .15s;}
@@ -4862,7 +4870,7 @@
         var canvas = document.createElement("canvas");
         canvas.width = w; canvas.height = h;
         canvas.getContext("2d").drawImage(img, 0, 0, w, h);
-        var maxBytes = 900 * 1024;
+        var maxBytes = 960 * 1024;
         var pngUrl = canvas.toDataURL("image/png");
         if(pngUrl.length <= maxBytes){
           cb(pngUrl, w, h);
@@ -5679,6 +5687,7 @@
   var tmplEditorState = null;
   var tmplGenerateState = null;
   var tmplDragKey = null;
+  var tmplActiveFieldKey = null;
   function openEventsImportModal(catKey){
     if(typeof window.XLSX === "undefined"){ showToast("مكتبة Excel غير متوفرة الآن"); return; }
     eventsImportState = { catKey: catKey, rows: null, fileName: "", error: null };
@@ -6033,6 +6042,17 @@
       cb(true);
     });
   }
+  // تحريك دقيق لمحتوى الصورة داخل صندوقها (dx/dy = 0 يعني توسيط/تصفير الإزاحة)
+  function tmplNudgePan(f, dx, dy){
+    var g = tmplGeomTarget(f);
+    var step = 0.05;
+    if(dx === 0 && dy === 0){
+      g.offsetX = 0; g.offsetY = 0;
+    } else {
+      g.offsetX = Math.max(-1, Math.min(1, (typeof g.offsetX === "number" ? g.offsetX : 0) + dx * step));
+      g.offsetY = Math.max(-1, Math.min(1, (typeof g.offsetY === "number" ? g.offsetY : 0) + dy * step));
+    }
+  }
   function tmplCanvasPointFromEvent(e, wrap, tmpl){
     var surface = wrap.querySelector("img, canvas");
     var rect = surface.getBoundingClientRect();
@@ -6142,6 +6162,16 @@
         '<label>🔍 تقريب/تبعيد<input type="number" min="1" step="0.05" data-tmpl-prop="zoom" value="' + imgStyle.zoom + '"/></label>' +
         '<label>↔ إزاحة أفقية<input type="number" min="-1" max="1" step="0.05" data-tmpl-prop="offsetX" value="' + imgStyle.offsetX + '"/></label>' +
         '<label>↕ إزاحة عمودية<input type="number" min="-1" max="1" step="0.05" data-tmpl-prop="offsetY" value="' + imgStyle.offsetY + '"/></label>' +
+        '<div style="flex-basis:100%; display:flex; align-items:center; gap:10px; margin-top:6px;">' +
+          '<span class="hint" style="margin:0;">تحريك دقيق للصورة داخل صندوقها:</span>' +
+          '<div class="tmpl-nudge-pad">' +
+            '<button type="button" class="tmpl-nudge-up" data-action="nudge-tmpl-pan" data-key="' + f.key + '" data-dx="0" data-dy="-1" title="أعلى">▲</button>' +
+            '<button type="button" class="tmpl-nudge-left" data-action="nudge-tmpl-pan" data-key="' + f.key + '" data-dx="-1" data-dy="0" title="يسار">◀</button>' +
+            '<button type="button" class="tmpl-nudge-center" data-action="nudge-tmpl-pan" data-key="' + f.key + '" data-dx="0" data-dy="0" title="توسيط">●</button>' +
+            '<button type="button" class="tmpl-nudge-right" data-action="nudge-tmpl-pan" data-key="' + f.key + '" data-dx="1" data-dy="0" title="يمين">▶</button>' +
+            '<button type="button" class="tmpl-nudge-down" data-action="nudge-tmpl-pan" data-key="' + f.key + '" data-dx="0" data-dy="1" title="أسفل">▼</button>' +
+          '</div>' +
+        '</div>' +
       '</div></details>';
     } else {
       html += '<details class="tmpl-field-group" open><summary>الخط والمحاذاة</summary><div class="tmpl-field-controls">' +
@@ -6808,7 +6838,10 @@
       case "close-tmpl-editor": closeTemplateEditor(); break;
       case "toggle-tmpl-field-row": {
         var toggleRow = btn.closest(".tmpl-field-row");
-        if(toggleRow) toggleRow.classList.toggle("collapsed");
+        if(toggleRow){
+          toggleRow.classList.toggle("collapsed");
+          tmplActiveFieldKey = toggleRow.dataset.fieldKey;
+        }
         break;
       }
       case "arm-tmpl-field": {
@@ -6831,6 +6864,14 @@
       case "copy-tmpl-field-style":
         copyTmplFieldStyleToTarget(tmpl, btn.dataset.key);
         break;
+      case "nudge-tmpl-pan": {
+        var nf = tmpl.fields.find(function(x){ return x.key === btn.dataset.key; });
+        if(!nf) break;
+        tmplNudgePan(nf, Number(btn.dataset.dx), Number(btn.dataset.dy));
+        saveDesignTemplate(tmpl);
+        renderTemplateEditor();
+        break;
+      }
     }
   });
   tmplEditorOverlayEl.addEventListener("dragstart", function(e){
@@ -6886,6 +6927,7 @@
       tmplEditorState.resizingKey = rkey;
       tmplEditorState.resizeStart = rpt;
       tmplEditorState.resizeStartSize = { w: rg.boxWidth, h: rg.boxHeight };
+      tmplActiveFieldKey = rkey;
       e.preventDefault();
       e.stopPropagation();
       return;
@@ -6899,6 +6941,7 @@
       var mpt = tmplCanvasPointFromEvent(e, wrap, tmpl);
       tmplEditorState.movingKey = mkey;
       tmplEditorState.moveOffset = { x: mpt.x - mg.x, y: mpt.y - mg.y };
+      tmplActiveFieldKey = mkey;
       e.preventDefault();
       return;
     }
@@ -7055,7 +7098,10 @@
       case "close-tmpl-generate": closeDesignGenerateModal(); break;
       case "toggle-tmpl-field-row": {
         var toggleRow2 = btn.closest(".tmpl-field-row");
-        if(toggleRow2) toggleRow2.classList.toggle("collapsed");
+        if(toggleRow2){
+          toggleRow2.classList.toggle("collapsed");
+          tmplActiveFieldKey = toggleRow2.dataset.fieldKey;
+        }
         break;
       }
       case "arm-tmpl-gen-field": {
@@ -7087,6 +7133,16 @@
         var cpTmpl = tmplGenerateState && findDesignTemplate(tmplGenerateState.templateId);
         if(!cpTmpl) return;
         copyTmplFieldStyleToTarget(cpTmpl, btn.dataset.key);
+        break;
+      }
+      case "nudge-tmpl-pan": {
+        var npTmpl = tmplGenerateState && findDesignTemplate(tmplGenerateState.templateId);
+        if(!npTmpl) return;
+        var npf = npTmpl.fields.find(function(x){ return x.key === btn.dataset.key; });
+        if(!npf) break;
+        tmplNudgePan(npf, Number(btn.dataset.dx), Number(btn.dataset.dy));
+        saveDesignTemplate(npTmpl);
+        renderDesignGenerateModal();
         break;
       }
       case "remove-field-bg": {
@@ -7215,6 +7271,7 @@
       tmplGenerateState.resizingKey = rkey;
       tmplGenerateState.resizeStart = rpt;
       tmplGenerateState.resizeStartSize = { w: rg.boxWidth, h: rg.boxHeight };
+      tmplActiveFieldKey = rkey;
       e.preventDefault();
       e.stopPropagation();
       return;
@@ -7228,6 +7285,7 @@
       var mpt = tmplCanvasPointFromEvent(e, wrap, tmpl);
       tmplGenerateState.movingKey = mkey;
       tmplGenerateState.moveOffset = { x: mpt.x - mg.x, y: mpt.y - mg.y };
+      tmplActiveFieldKey = mkey;
       e.preventDefault();
       return;
     }
@@ -7327,6 +7385,29 @@
     clearTimeout(tmplGenZoomSaveTimer);
     tmplGenZoomSaveTimer = setTimeout(function(){ saveDesignTemplate(tmpl); }, 500);
   }, { passive: false });
+  // تحريك العنصر النشط (آخر عنصر تم لمسه بالماوس أو النقر على عنوانه) بمفاتيح الأسهم — بخطوة أكبر مع Shift
+  document.addEventListener("keydown", function(e){
+    if(e.key !== "ArrowUp" && e.key !== "ArrowDown" && e.key !== "ArrowLeft" && e.key !== "ArrowRight") return;
+    var activeTag = document.activeElement && document.activeElement.tagName;
+    if(activeTag === "INPUT" || activeTag === "TEXTAREA" || activeTag === "SELECT") return;
+    if(!tmplActiveFieldKey) return;
+    var editorOpen = document.getElementById("tmplEditorOverlay").classList.contains("active");
+    var generateOpen = document.getElementById("tmplGenerateOverlay").classList.contains("active");
+    if(!editorOpen && !generateOpen) return;
+    var tmpl = editorOpen ? tmplEditorCurrentTemplate() : (tmplGenerateState && findDesignTemplate(tmplGenerateState.templateId));
+    if(!tmpl) return;
+    var f = tmpl.fields.find(function(x){ return x.key === tmplActiveFieldKey; });
+    if(!f) return;
+    e.preventDefault();
+    var g = f.type === "image" ? tmplGeomTarget(f) : f;
+    var step = e.shiftKey ? 10 : 1;
+    if(e.key === "ArrowUp") g.y = Math.max(0, g.y - step);
+    if(e.key === "ArrowDown") g.y = Math.min(tmpl.height, g.y + step);
+    if(e.key === "ArrowLeft") g.x = Math.max(0, g.x - step);
+    if(e.key === "ArrowRight") g.x = Math.min(tmpl.width, g.x + step);
+    saveDesignTemplate(tmpl);
+    if(editorOpen) renderTemplateEditor(); else renderDesignGenerateModal();
+  });
 
   var eventsSettingsRootEl = document.getElementById("eventsSettingsRoot");
   eventsSettingsRootEl.addEventListener("change", function(e){
