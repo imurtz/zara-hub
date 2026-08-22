@@ -545,7 +545,8 @@
     if(val){
       return '<div class="photo-preview"><img src="' + val + '" alt=""/><button type="button" class="rm" data-action="remove-field-image" data-field-key="' + key + '">×</button></div>';
     }
-    return '<input type="file" accept="image/*" class="photo-input" data-action="field-image-input" data-field-key="' + key + '"/>';
+    return '<input type="file" accept="image/png,image/jpeg" class="photo-input" data-action="field-image-input" data-field-key="' + key + '"/>' +
+      '<p class="field-hint" style="margin-top:4px;">الصيغ المقبولة: PNG أو JPG فقط</p>';
   }
 
   function renderForm(){
@@ -574,9 +575,10 @@
     }).join("");
     var photoIsMaleOnly = cat.photoRequired === "maleOnly";
     var photoLabel = escapeHTML(cat.photoLabel || "صورة المناسبة") + (cat.photoRequired ? ' <span class="req">*</span>' : ' (اختياري)');
-    var photoHint = photoIsMaleOnly
+    var photoHint = (photoIsMaleOnly
       ? "إلزامية للذكور فقط، واختيارية للإناث — تُضغط تلقائياً لحجم مناسب بعد الرفع"
-      : (cat.photoRequired ? "إلزامية — تُضغط تلقائياً لحجم مناسب بعد الرفع" : "صورة توضيحية إن رغبتم بإرفاقها — تُضغط تلقائياً لحجم مناسب بعد الرفع");
+      : (cat.photoRequired ? "إلزامية — تُضغط تلقائياً لحجم مناسب بعد الرفع" : "صورة توضيحية إن رغبتم بإرفاقها — تُضغط تلقائياً لحجم مناسب بعد الرفع")) +
+      " — الصيغ المقبولة: PNG أو JPG فقط";
     grid.innerHTML += '<div class="field full"><label>' + photoLabel + '</label>' + photoFieldHTML() +
       '<p class="field-hint">' + photoHint + '</p></div>';
     document.getElementById("errMsg").style.display = "none";
@@ -587,7 +589,7 @@
     if(state.photo){
       return '<div class="photo-preview"><img src="' + state.photo + '" alt=""/><button type="button" class="rm" id="removePhotoBtn">×</button></div>';
     }
-    return '<input type="file" accept="image/*" class="photo-input" id="photoInput"/>';
+    return '<input type="file" accept="image/png,image/jpeg" class="photo-input" id="photoInput"/>';
   }
   function refreshPhotoField(){
     var wrap = document.querySelector(".field.full");
@@ -620,11 +622,11 @@
     html += '<div class="ai-choice-divider"><span>أو</span></div>';
     html += '<div class="ai-choice-card">';
     html += '<b>📎 إرفاق شهادة أو صورة</b>';
-    html += '<p>صورة شهادة، جائزة، أو تكريم يخص المناسبة — نصوغ التهنئة اعتماداً على تفاصيلها</p>';
+    html += '<p>صورة شهادة، جائزة، أو تكريم يخص المناسبة — نصوغ التهنئة اعتماداً على تفاصيلها (PNG أو JPG فقط)</p>';
     if(state.aiImage){
       html += '<div class="ai-image-preview"><img src="' + state.aiImage + '" alt=""/><button type="button" class="rm" id="aiImageRemoveBtn">×</button></div>';
     } else {
-      html += '<label class="ai-image-upload-label">📷 اختر صورة<input type="file" accept="image/*" id="aiImageInput" style="display:none;"/></label>';
+      html += '<label class="ai-image-upload-label">📷 اختر صورة<input type="file" accept="image/png,image/jpeg" id="aiImageInput" style="display:none;"/></label>';
     }
     html += '</div>';
     html += '</div>';
@@ -685,7 +687,7 @@
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ fullName: fullName, gender: gender, title: title, occasionType: occasionType, details: details, image: state.aiImage || "" })
     }).then(function(res){
-      return res.json().then(function(data){ return { ok: res.ok, data: data }; });
+      return res.json().then(function(data){ return { ok: res.ok, status: res.status, data: data }; });
     }).then(function(result){
       state.aiLoading = false;
       if(result.ok && result.data && result.data.suggestion){
@@ -693,7 +695,8 @@
       } else if(result.data && result.data.error === "quota_exceeded"){
         state.aiError = "الخدمة مشغولة حالياً بسبب الضغط — حاول مرة أخرى بعد قليل";
       } else {
-        state.aiError = "تعذّر إعداد نص التهنئة";
+        var errCode = (result.data && result.data.error) || ("status=" + result.status);
+        state.aiError = "تعذّر إعداد نص التهنئة (" + errCode + ")";
       }
       refreshAiBlock();
     }).catch(function(){

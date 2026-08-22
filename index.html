@@ -3142,7 +3142,7 @@
             '<button type="button" class="task-icon-btn" data-action="delete-report-program" data-rec="' + rec.id + '" data-index="' + i + '"><span class="icon">' + ICON_DELETE + '</span></button>' +
           '</div>' +
           photoGridHTML(p.photos, "delete-program-photo", rec.id, 'data-prog="' + i + '"') +
-          '<label class="photo-upload-btn"><span class="icon">' + AICON.photo + '</span> صور البرنامج<input type="file" accept="image/*" multiple style="display:none;" data-photo-input data-photo-target="program" data-rec="' + rec.id + '" data-prog="' + i + '"/></label>' +
+          '<label class="photo-upload-btn"><span class="icon">' + AICON.photo + '</span> صور البرنامج<input type="file" accept="image/png,image/jpeg" title="PNG أو JPG فقط" multiple style="display:none;" data-photo-input data-photo-target="program" data-rec="' + rec.id + '" data-prog="' + i + '"/></label>' +
         '</div>';
       });
     } else {
@@ -3195,7 +3195,7 @@
     var html = '<div class="report-section-card"><h3><span class="icon">' + AICON.photo + '</span>صور ولقطات إضافية (المبنى، الهوية البصرية، لقطات عامة)' + (badge || "") + '</h3>';
     html += photoGridHTML(photos, "delete-general-photo", rec.id, "");
     if(!photos.length) html += '<p class="report-empty">لا توجد صور بعد</p>';
-    html += '<label class="photo-upload-btn"><span class="icon">' + AICON.photo + '</span> إضافة صور<input type="file" accept="image/*" multiple style="display:none;" data-photo-input data-photo-target="general" data-rec="' + rec.id + '"/></label>' +
+    html += '<label class="photo-upload-btn"><span class="icon">' + AICON.photo + '</span> إضافة صور<input type="file" accept="image/png,image/jpeg" title="PNG أو JPG فقط" multiple style="display:none;" data-photo-input data-photo-target="general" data-rec="' + rec.id + '"/></label>' +
       '<p class="photo-hint">الصور تُحفظ محلياً داخل هذا المتصفح فقط بجودتها الأصلية (نسخة معاينة) — يُنصح بعدد محدود لأن المساحة المحلية محدودة</p></div>';
     return html;
   }
@@ -3259,7 +3259,7 @@
             '<button type="button" class="task-icon-btn" data-action="delete-open-content" data-rec="' + rec.id + '" data-index="' + i + '"><span class="icon">' + ICON_DELETE + '</span></button>' +
           '</div>' +
           photoGridHTML(it.photos, "delete-open-content-photo", rec.id, 'data-item="' + i + '"') +
-          '<label class="photo-upload-btn"><span class="icon">' + AICON.photo + '</span> إضافة صور<input type="file" accept="image/*" multiple style="display:none;" data-photo-input data-photo-target="openContent" data-rec="' + rec.id + '" data-item="' + i + '"/></label>' +
+          '<label class="photo-upload-btn"><span class="icon">' + AICON.photo + '</span> إضافة صور<input type="file" accept="image/png,image/jpeg" title="PNG أو JPG فقط" multiple style="display:none;" data-photo-input data-photo-target="openContent" data-rec="' + rec.id + '" data-item="' + i + '"/></label>' +
         '</div>';
       });
     } else {
@@ -3299,7 +3299,7 @@
           '<span class="yr">' + r.year + '</span>' +
           '<span class="ttl">' + escapeHTML(r.title) + '</span>' +
           '<a class="open-lbl" href="assets/reports/' + encodeURIComponent(r.fileName) + '" target="_blank" rel="noopener">فتح التقرير ↗</a>' +
-          (isAdmin ? ('<label class="photo-upload-btn" style="margin-top:6px; font-size:10.5px; padding:5px 10px;"><span class="icon">' + AICON.photo + '</span> ' + (r.coverDataUrl ? "تغيير الغلاف" : "رفع غلاف") + '<input type="file" accept="image/*" style="display:none;" data-cover-input data-id="' + r.id + '"/></label>') : "") +
+          (isAdmin ? ('<label class="photo-upload-btn" style="margin-top:6px; font-size:10.5px; padding:5px 10px;"><span class="icon">' + AICON.photo + '</span> ' + (r.coverDataUrl ? "تغيير الغلاف" : "رفع غلاف") + '<input type="file" accept="image/png,image/jpeg" title="PNG أو JPG فقط" style="display:none;" data-cover-input data-id="' + r.id + '"/></label>') : "") +
         '</div>';
       });
       html += '</div>';
@@ -5392,7 +5392,8 @@
       if(value){
         return '<div class="photo-thumb"><img src="' + value + '" alt=""/><button type="button" class="rm" data-action="remove-field-image" data-key="' + f.key + '">×</button></div>';
       }
-      return '<input type="file" accept="image/*" class="event-photo-input" data-action="field-image-input" data-key="' + f.key + '"/>';
+      return '<input type="file" accept="image/png,image/jpeg" class="event-photo-input" data-action="field-image-input" data-key="' + f.key + '"/>' +
+        '<p class="event-field-hint" style="margin:4px 0 0;">الصيغ المقبولة: PNG أو JPG فقط</p>';
     }
     if(f.type === "readonlyText"){
       if(!value) return '<p class="event-field-hint" style="margin:0;">لا يوجد — لم يُستخدم مساعد الصياغة لهذا السجل</p>';
@@ -5444,9 +5445,9 @@
       html += '<div class="photo-thumb"><img src="' + draft.photo + '" alt=""/><button type="button" class="rm" data-action="remove-event-photo">×</button></div>' +
         '<button type="button" class="btn-secondary" data-action="remove-photo-bg" style="margin-top:8px; font-size:12px; padding:6px 12px;">🪄 إزالة الخلفية (لاستخدامها في تصميم قالب)</button>';
     } else {
-      html += '<input type="file" accept="image/*" class="event-photo-input" id="eventPhotoInput"/>';
+      html += '<input type="file" accept="image/png,image/jpeg" class="event-photo-input" id="eventPhotoInput"/>';
     }
-    html += '<p class="event-field-hint">صورة توضيحية إن رغبتم بإرفاقها — تُضغط تلقائياً لحجم مناسب بعد الرفع</p></div>';
+    html += '<p class="event-field-hint">صورة توضيحية إن رغبتم بإرفاقها — تُضغط تلقائياً لحجم مناسب بعد الرفع — الصيغ المقبولة: PNG أو JPG فقط</p></div>';
     html += '</div>';
     html += '<div class="modal-actions" style="margin-top:20px;">' +
       '<button type="button" class="btn-secondary" data-action="close-event-modal">إلغاء</button>' +
@@ -5976,7 +5977,8 @@
         '</div>';
       });
     }
-    html += '<label class="btn-primary" style="display:inline-flex; align-items:center; gap:6px; cursor:pointer; margin-top:10px;"><span class="icon">' + TICON.plus + '</span> رفع قالب جديد<input type="file" accept="image/*" id="newTmplUploadInput" style="display:none;"/></label>';
+    html += '<label class="btn-primary" style="display:inline-flex; align-items:center; gap:6px; cursor:pointer; margin-top:10px;"><span class="icon">' + TICON.plus + '</span> رفع قالب جديد<input type="file" accept="image/png,image/jpeg" id="newTmplUploadInput" style="display:none;"/></label>' +
+      '<p class="hint" style="margin-top:6px;">الصيغ المقبولة: PNG أو JPG فقط</p>';
     return html;
   }
   function refreshTmplManager(){
@@ -6475,8 +6477,8 @@
         if(s.image){
           html += '<div class="photo-thumb"><img src="' + s.image + '" alt="" style="max-height:80px;"/><button type="button" class="rm" data-action="banner-slide-remove-image" data-id="' + s.id + '">×</button></div>';
         } else {
-          html += '<input type="file" accept="image/*" class="event-photo-input" data-action="banner-slide-image-input" data-id="' + s.id + '"/>' +
-            '<p class="hint" style="margin-top:4px;">بنفس أبعاد البنر الحالي — تُضغط تلقائياً بعد الرفع</p>';
+          html += '<input type="file" accept="image/png,image/jpeg" class="event-photo-input" data-action="banner-slide-image-input" data-id="' + s.id + '"/>' +
+            '<p class="hint" style="margin-top:4px;">بنفس أبعاد البنر الحالي — تُضغط تلقائياً بعد الرفع — PNG أو JPG فقط</p>';
         }
       } else {
         html += '<input type="text" data-action="banner-slide-title" data-id="' + s.id + '" value="' + escapeHTML(s.title) + '" placeholder="عنوان البنر" style="width:100%; margin-bottom:6px; border:1.5px solid var(--line); border-radius:8px; padding:8px 10px; font-size:12.5px; font-weight:700; background:var(--white);"/>' +
