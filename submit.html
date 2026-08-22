@@ -106,6 +106,10 @@
     .ai-choice-divider{flex-basis:auto; margin:0; width:32px;}
     .ai-choice-divider::after{inset-inline:auto; top:0; bottom:0; height:auto; width:1px; left:50%;}
   }
+  .bg-toast{position:fixed; bottom:26px; left:50%; transform:translateX(-50%) translateY(20px); background:var(--teal-dark); color:#fff; padding:12px 22px; border-radius:12px; font-size:13.5px; font-weight:600; opacity:0; pointer-events:none; transition:all .25s; z-index:300; display:flex; align-items:center; gap:8px; max-width:90vw; text-align:center;}
+  .bg-toast.show{opacity:1; transform:translateX(-50%) translateY(0);}
+  .bg-toast .spin{width:14px; height:14px; border:2px solid rgba(255,255,255,.4); border-top-color:#fff; border-radius:50%; animation:bgToastSpin .7s linear infinite; flex-shrink:0;}
+  @keyframes bgToastSpin{to{transform:rotate(360deg);}}
   .ai-image-upload-label{display:inline-flex; align-items:center; gap:6px; font-size:12px; color:var(--teal-dark); border:1.5px dashed var(--line); border-radius:10px; padding:9px 12px; cursor:pointer; width:fit-content;}
   .ai-image-upload-label:hover{border-color:var(--blue);}
   .ai-image-preview{position:relative; display:inline-block; border-radius:10px; overflow:hidden; border:1px solid var(--line); line-height:0; width:fit-content;}
@@ -175,10 +179,12 @@
       <div style="overflow:auto; border:1px solid var(--line); border-radius:12px; padding:8px; background:#fafafa;">
         <canvas id="designPreviewCanvas" style="max-width:100%; display:block; margin:0 auto;" oncontextmenu="return false;"></canvas>
       </div>
-      <p class="field-hint" style="margin-top:8px;">النسخة النهائية عالية الجودة تصدرها الجمعية بعد اعتماد التسجيل</p>
+      <p style="margin-top:10px; background:#fff7e8; border:1px solid #f0d9a8; color:#8a5a00; border-radius:10px; padding:10px 14px; font-size:12.5px; font-weight:600; text-align:center;">⚠️ هذه نسخة غير نهائية — ستراجعها الجمعية وتُعالج عند الحاجة قبل اعتمادها ونشرها رسمياً</p>
     </div>
     <button type="button" id="sendAnotherBtn">إرسال بيانات أخرى</button>
   </div>
+
+  <div class="bg-toast" id="bgToast"><span class="spin"></span><span id="bgToastMsg"></span></div>
 
   <div class="foot-msg" id="footerMsg" style="display:none;"></div>
   <div class="foot">جمعية العوامية الخيرية</div>
@@ -665,11 +671,25 @@
     mount.outerHTML = imageFieldHTML(key);
     bindFormEvents();
   }
+  function fieldLabelByKey(key){
+    if(!state.activeCategory) return "الصورة";
+    var f = getEffectiveFields(state.activeCategory).find(function(x){ return x.key === key; });
+    return f ? f.label : "الصورة";
+  }
+  function showBgToast(msg){
+    var t = document.getElementById("bgToast");
+    document.getElementById("bgToastMsg").textContent = msg;
+    t.classList.add("show");
+  }
+  function hideBgToast(){
+    document.getElementById("bgToast").classList.remove("show");
+  }
   function autoRemovePhotoBg(){
     if(!state.photo) return;
     state.photoProcessing = true;
     state.photoProcessingMsg = "جارٍ تفريغ الخلفية تلقائياً...";
     refreshPhotoField();
+    showBgToast("🪄 يجري الآن إزالة خلفية الصورة الشخصية...");
     fetch(state.photo).then(function(r){ return r.blob(); }).then(function(blob){
       return removeImageBackgroundClientSide(blob, function(msg){
         state.photoProcessingMsg = msg;
@@ -681,11 +701,13 @@
         state.photoProcessing = false;
         if(dataUrl) state.photo = dataUrl;
         refreshPhotoField();
+        hideBgToast();
       });
     }).catch(function(err){
       console.error("bg removal failed", err);
       state.photoProcessing = false;
       refreshPhotoField();
+      hideBgToast();
     });
   }
   function autoRemoveFieldBg(key){
@@ -693,6 +715,7 @@
     if(!src) return;
     state.fieldImagesProcessing[key] = "جارٍ تفريغ الخلفية تلقائياً...";
     refreshFieldImage(key);
+    showBgToast("🪄 يجري الآن إزالة خلفية " + fieldLabelByKey(key) + "...");
     fetch(src).then(function(r){ return r.blob(); }).then(function(blob){
       return removeImageBackgroundClientSide(blob, function(msg){
         state.fieldImagesProcessing[key] = msg;
@@ -704,11 +727,13 @@
         delete state.fieldImagesProcessing[key];
         if(dataUrl) state.fieldImages[key] = dataUrl;
         refreshFieldImage(key);
+        hideBgToast();
       });
     }).catch(function(err){
       console.error("bg removal failed", err);
       delete state.fieldImagesProcessing[key];
       refreshFieldImage(key);
+      hideBgToast();
     });
   }
   function currentDetailsValue(){
