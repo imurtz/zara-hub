@@ -930,6 +930,16 @@
     .events-subnav{flex-direction:column;}
     .events-subnav button{width:100%; justify-content:center;}
   }
+
+  .print-only-title{display:none;}
+  @media print{
+    body *{visibility:hidden;}
+    #eventsReportsPrintArea, #eventsReportsPrintArea *{visibility:visible;}
+    #eventsReportsPrintArea{position:absolute; inset-block-start:0; inset-inline-start:0; width:100%; padding:0;}
+    .print-only-title{display:block; font-size:20px; color:var(--teal-dark); margin-bottom:16px;}
+    .report-section-card{break-inside:avoid; box-shadow:none; border:1px solid var(--line);}
+    .stat-card{box-shadow:none;}
+  }
 </style>
 </head>
 <body>
@@ -5472,7 +5482,9 @@
     templatesCategory: "graduates",
     designTmplCategory: "graduates",
     reportsCategory: "graduates",
-    reportsYear: ""
+    reportsYear: "",
+    reportsPeriodType: "year",
+    reportsPeriodValue: ""
   };
 
   function fieldLabel(cat, key){
@@ -6081,16 +6093,94 @@
       '<td><div class="bar-track"><div class="bar-fill" style="width:' + pct + '%;"></div></div></td>' +
       '<td style="width:80px; text-align:left; color:var(--ink-soft);">' + n + ' (' + pct + '%)</td></tr>';
   }
-  function breakdownCardHTML(title, records, fieldKey, order){
+  // ألوان محقَّقة (accessible) خاصة بالرسومات البيانية — منفصلة عن ألوان هوية الواجهة لأن الأخيرة لا تجتاز اختبار التمييز اللوني لعمى الألوان
+  var CHART_COLORS = { blue: "#2a78d6", orange: "#eb6834", aqua: "#1baf7a", yellow: "#eda100", magenta: "#e87ba4", green: "#008300", violet: "#4a3aa7", red: "#e34948" };
+  var CHART_CATEGORICAL_ORDER = ["blue", "orange", "aqua", "yellow", "magenta", "green", "violet", "red"];
+  function chartColorAt(i){ return CHART_COLORS[CHART_CATEGORICAL_ORDER[i % CHART_CATEGORICAL_ORDER.length]]; }
+  // مخطط أعمدة أفقي (مقياس/مقدار) — لون واحد ثابت، الأعمدة مرتّبة تنازلياً، تسمية القيمة عند طرف كل عمود
+  // مخطط أعمدة أفقي مبني بـHTML/CSS (لا SVG) — النصوص العربية RTL تُعرض بشكل طبيعي وصحيح دائماً بهذي الطريقة
+  function svgBarChartHTML(data){
+    if(!data.length) return "";
+    var max = Math.max.apply(null, data.map(function(d){ return d.value; })) || 1;
+    var rows = data.map(function(d){
+      var pct = Math.max(2, Math.round((d.value / max) * 100));
+      var lbl = escapeHTML(String(d.label));
+      return '<div style="display:flex; align-items:center; gap:10px; margin-bottom:11px;">' +
+        '<div style="width:132px; flex-shrink:0; font-size:12px; color:var(--ink-soft); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="' + lbl + '">' + lbl + '</div>' +
+        '<div style="flex:1; background:var(--teal-tint); border-radius:999px; height:20px; overflow:hidden; min-width:60px;">' +
+          '<div style="width:' + pct + '%; height:100%; background:' + CHART_COLORS.blue + '; border-radius:999px;" title="' + lbl + ': ' + d.value + '"></div>' +
+        '</div>' +
+        '<div style="width:32px; flex-shrink:0; font-size:12px; font-weight:700; color:var(--ink); text-align:end;">' + d.value + '</div>' +
+      '</div>';
+    }).join("");
+    return '<div style="max-width:520px;">' + rows + '</div>';
+  }
+  // مخطط دائري مفرَّغ (هوية/فئات قليلة) — لكل فئة لون مميّز محقَّق + خريطة ألوان (Legend) وتسمية نسبة مباشرة
+  function svgDonutChartHTML(data){
+    var total = data.reduce(function(s, d){ return s + d.value; }, 0) || 1;
+    var cx = 72, cy = 72, r = 60, innerR = 36;
+    var startAngle = -90;
+    var paths = "";
+    data.forEach(function(d){
+      var frac = d.value / total;
+      var angle = frac * 360;
+      if(angle <= 0) return;
+      var endAngle = Math.min(startAngle + angle, startAngle + 359.999);
+      var largeArc = angle > 180 ? 1 : 0;
+      function polar(ang){ var rad = ang * Math.PI / 180; return { x: cx + r * Math.cos(rad), y: cy + r * Math.sin(rad) }; }
+      function polarInner(ang){ var rad = ang * Math.PI / 180; return { x: cx + innerR * Math.cos(rad), y: cy + innerR * Math.sin(rad) }; }
+      var p1 = polar(startAngle), p2 = polar(endAngle), p3 = polarInner(endAngle), p4 = polarInner(startAngle);
+      var path = "M" + p1.x + "," + p1.y + " A" + r + "," + r + " 0 " + largeArc + " 1 " + p2.x + "," + p2.y +
+        " L" + p3.x + "," + p3.y + " A" + innerR + "," + innerR + " 0 " + largeArc + " 0 " + p4.x + "," + p4.y + " Z";
+      paths += '<path d="' + path + '" fill="' + d.color + '" stroke="var(--white)" stroke-width="2"><title>' + escapeHTML(String(d.label)) + ": " + d.value + " (" + Math.round(frac * 100) + "%)</title></path>";
+      startAngle = endAngle;
+    });
+    paths += '<text x="' + cx + '" y="' + (cy + 5) + '" text-anchor="middle" font-size="15" font-weight="700" fill="var(--ink)">' + total + '</text>';
+    return '<svg viewBox="0 0 144 144" width="144" height="144" style="flex-shrink:0;">' + paths + '</svg>';
+  }
+  function chartLegendHTML(items, total){
+    return '<div style="display:flex; flex-direction:column; gap:9px; min-width:150px;">' + items.map(function(it){
+      var pct = total ? Math.round((it.value / total) * 100) : 0;
+      return '<div style="display:flex; align-items:center; gap:8px; font-size:12.5px;">' +
+        '<span style="width:10px; height:10px; border-radius:3px; background:' + it.color + '; flex-shrink:0;"></span>' +
+        '<span style="color:var(--ink);">' + escapeHTML(String(it.label)) + '</span>' +
+        '<span style="color:var(--ink-soft); margin-inline-start:auto; font-weight:600;">' + it.value + ' (' + pct + '%)</span>' +
+      '</div>';
+    }).join("") + '</div>';
+  }
+  function donutCardHTML(title, records, fieldKey, order){
     var counts = {};
     records.forEach(function(r){ var v = r[fieldKey] || "غير محدد"; counts[v] = (counts[v] || 0) + 1; });
     var keys = order ? order.filter(function(k){ return counts[k]; }) : Object.keys(counts).sort(function(a, b){ return counts[b] - counts[a]; });
     if(!keys.length) return "";
     var total = records.length;
-    var html = '<div class="report-section-card"><h3>' + title + '</h3><table class="bar-table">';
-    keys.forEach(function(k){ html += barRowHTML(k, counts[k], total); });
-    html += '</table></div>';
+    var items = keys.map(function(k, i){ return { label: k, value: counts[k], color: chartColorAt(i) }; });
+    var html = '<div class="report-section-card"><h3>' + title + '</h3>' +
+      '<div style="display:flex; align-items:center; gap:26px; flex-wrap:wrap;">' + svgDonutChartHTML(items) + chartLegendHTML(items, total) + '</div></div>';
     return html;
+  }
+  function breakdownCardHTML(title, records, fieldKey, order, maxBars){
+    var counts = {};
+    records.forEach(function(r){ var v = r[fieldKey] || "غير محدد"; counts[v] = (counts[v] || 0) + 1; });
+    var keys = order ? order.filter(function(k){ return counts[k]; }) : Object.keys(counts).sort(function(a, b){ return counts[b] - counts[a]; });
+    if(!keys.length) return "";
+    var cap = maxBars || 8;
+    var shown = keys.slice(0, cap);
+    var rest = keys.slice(cap);
+    var data = shown.map(function(k){ return { label: k, value: counts[k] }; });
+    if(rest.length){
+      var otherTotal = rest.reduce(function(s, k){ return s + counts[k]; }, 0);
+      data.push({ label: "أخرى (" + rest.length + ")", value: otherTotal });
+    }
+    var html = '<div class="report-section-card"><h3>' + title + '</h3>' + svgBarChartHTML(data) + '</div>';
+    return html;
+  }
+  function trendChartCardHTML(title, records, monthFieldKey, monthsToShow){
+    var counts = {};
+    records.forEach(function(r){ var v = r[monthFieldKey]; if(v) counts[v] = (counts[v] || 0) + 1; });
+    var data = monthsToShow.map(function(m){ return { label: m, value: counts[m] || 0 }; });
+    if(!data.some(function(d){ return d.value > 0; })) return "";
+    return '<div class="report-section-card"><h3>' + title + '</h3>' + svgBarChartHTML(data) + '</div>';
   }
   // ----- قوالب التصميم -----
   var TMPL_PLACEABLE_FIELDS = {
@@ -6613,45 +6703,98 @@
     });
   }
 
+  var EVENTS_MONTH_FIELD_BY_CATEGORY = { graduates: "graduationMonthGregorian", births: "birthMonthGregorian", marriages: "contractMonthGregorian", deaths: "deathMonthGregorian", congrats: "occasionMonthGregorian" };
+  var QUARTER_MONTHS = { Q1: GREG_MONTHS.slice(0, 3), Q2: GREG_MONTHS.slice(3, 6), Q3: GREG_MONTHS.slice(6, 9), Q4: GREG_MONTHS.slice(9, 12) };
+  var HALF_MONTHS = { H1: GREG_MONTHS.slice(0, 6), H2: GREG_MONTHS.slice(6, 12) };
+  function filterRecordsByPeriod(records, monthField, periodType, periodValue){
+    if(!periodValue || periodType === "year") return records;
+    var monthsSet = periodType === "quarter" ? QUARTER_MONTHS[periodValue] : HALF_MONTHS[periodValue];
+    if(!monthsSet) return records;
+    return records.filter(function(r){ return monthsSet.indexOf(r[monthField]) > -1; });
+  }
+  function reportsPeriodSelectorHTML(){
+    if(!eventsUI.reportsYear) return "";
+    var pt = eventsUI.reportsPeriodType;
+    var html = '<label>الفترة</label><select id="reportsPeriodTypeSelect">' +
+      '<option value="year"' + (pt === "year" ? " selected" : "") + '>السنة كاملة</option>' +
+      '<option value="half"' + (pt === "half" ? " selected" : "") + '>نصف سنوي</option>' +
+      '<option value="quarter"' + (pt === "quarter" ? " selected" : "") + '>ربع سنوي</option>' +
+    '</select>';
+    if(pt === "half"){
+      html += '<select id="reportsPeriodValueSelect"><option value="">اختر النصف</option>' +
+        '<option value="H1"' + (eventsUI.reportsPeriodValue === "H1" ? " selected" : "") + '>النصف الأول (يناير–يونيو)</option>' +
+        '<option value="H2"' + (eventsUI.reportsPeriodValue === "H2" ? " selected" : "") + '>النصف الثاني (يوليو–ديسمبر)</option>' +
+      '</select>';
+    } else if(pt === "quarter"){
+      html += '<select id="reportsPeriodValueSelect"><option value="">اختر الربع</option>' +
+        ["Q1", "Q2", "Q3", "Q4"].map(function(q, i){ return '<option value="' + q + '"' + (eventsUI.reportsPeriodValue === q ? " selected" : "") + '>الربع ' + (i + 1) + '</option>'; }).join("") +
+      '</select>';
+    }
+    return html;
+  }
   function eventsReportsHTML(){
     var cat = EVENTS_CATEGORIES.find(function(c){ return c.key === eventsUI.reportsCategory; }) || EVENTS_CATEGORIES[0];
     var all = loadEventsData().filter(function(r){ return r.category === cat.key; });
     var years = uniqueSorted(all.map(function(r){ return r.gregorianYear; }).filter(Boolean));
-    var filtered = eventsUI.reportsYear ? all.filter(function(r){ return r.gregorianYear === eventsUI.reportsYear; }) : all;
+    var monthField = EVENTS_MONTH_FIELD_BY_CATEGORY[cat.key];
+    var byYear = eventsUI.reportsYear ? all.filter(function(r){ return r.gregorianYear === eventsUI.reportsYear; }) : all;
+    var filtered = filterRecordsByPeriod(byYear, monthField, eventsUI.reportsPeriodType, eventsUI.reportsPeriodValue);
+
+    var periodLabel = "";
+    if(eventsUI.reportsYear){
+      periodLabel = " — " + escapeHTML(eventsUI.reportsYear);
+      if(eventsUI.reportsPeriodType === "half" && eventsUI.reportsPeriodValue) periodLabel += " — " + (eventsUI.reportsPeriodValue === "H1" ? "النصف الأول" : "النصف الثاني");
+      if(eventsUI.reportsPeriodType === "quarter" && eventsUI.reportsPeriodValue) periodLabel += " — الربع " + eventsUI.reportsPeriodValue.replace("Q", "");
+    }
 
     var html = '<div class="dept-selector">' +
       '<label>التصنيف</label><select id="reportsCategorySelect">' + EVENTS_CATEGORIES.map(function(c){ return '<option value="' + c.key + '"' + (c.key === cat.key ? " selected" : "") + '>' + c.label + '</option>'; }).join("") + '</select>' +
       '<label>السنة</label><select id="reportsYearSelect"><option value="">كل السنوات</option>' + years.map(function(y){ return '<option value="' + escapeHTML(y) + '"' + (eventsUI.reportsYear === y ? " selected" : "") + '>' + escapeHTML(y) + '</option>'; }).join("") + '</select>' +
+      reportsPeriodSelectorHTML() +
+      '<button type="button" class="btn-secondary" data-action="print-events-report" style="margin-inline-start:auto;">🖨️ طباعة / حفظ PDF</button>' +
     '</div>';
 
-    html += '<div class="stat-card" style="cursor:default; max-width:280px; margin-bottom:20px;"><div class="num">' + filtered.length + '</div><div class="lbl">إجمالي سجلات ' + cat.label + (eventsUI.reportsYear ? " — " + escapeHTML(eventsUI.reportsYear) : "") + '</div></div>';
+    html += '<div id="eventsReportsPrintArea">';
+    html += '<h2 class="print-only-title">تقرير ' + escapeHTML(cat.label) + escapeHTML(periodLabel) + '</h2>';
+    html += '<div class="stat-card" style="cursor:default; max-width:280px; margin-bottom:20px;"><div class="num">' + filtered.length + '</div><div class="lbl">إجمالي سجلات ' + cat.label + escapeHTML(periodLabel) + '</div></div>';
 
     if(!filtered.length){
       html += '<p class="report-empty">لا توجد بيانات كافية لعرض المؤشرات بعد</p>';
+      html += '</div>';
       return html;
     }
+
+    var monthsInScope = GREG_MONTHS;
+    if(eventsUI.reportsPeriodType === "quarter" && eventsUI.reportsPeriodValue) monthsInScope = QUARTER_MONTHS[eventsUI.reportsPeriodValue];
+    else if(eventsUI.reportsPeriodType === "half" && eventsUI.reportsPeriodValue) monthsInScope = HALF_MONTHS[eventsUI.reportsPeriodValue];
 
     if(cat.key === "graduates"){
       var inside = filtered.filter(function(r){ return (r.country || "").indexOf("السعود") > -1; }).length;
       html += '<div class="report-section-card"><h3>مؤشر مكان التخرج</h3><table class="bar-table">' +
         barRowHTML("داخل السعودية", inside, filtered.length) + barRowHTML("خارج السعودية", filtered.length - inside, filtered.length) +
       '</table></div>';
-      html += breakdownCardHTML("التوزيع حسب الجنس", filtered, "gender", ["ذكر", "أنثى"]);
+      html += donutCardHTML("التوزيع حسب الجنس", filtered, "gender", ["ذكر", "أنثى"]);
       html += breakdownCardHTML("التوزيع حسب الدرجة العلمية", filtered, "degree", null);
+      html += breakdownCardHTML("أكثر الجامعات", filtered, "university", null, 8);
+      html += breakdownCardHTML("التوزيع حسب نوع التخصص", filtered, "specializationType", null, 8);
+      html += breakdownCardHTML("أكثر التخصصات الدقيقة", filtered, "specialization", null, 8);
+      html += breakdownCardHTML("التوزيع حسب مرتبة الشرف", filtered, "honor", HONORS_LIST);
+      html += trendChartCardHTML("عدد الخريجين حسب الشهر", filtered, monthField, monthsInScope);
     } else if(cat.key === "births"){
-      html += breakdownCardHTML("التوزيع حسب الجنس", filtered, "gender", ["ذكر", "أنثى"]);
-      html += breakdownCardHTML("التوزيع حسب الشهر (ميلادي)", filtered, "birthMonthGregorian", GREG_MONTHS);
+      html += donutCardHTML("التوزيع حسب الجنس", filtered, "gender", ["ذكر", "أنثى"]);
+      html += trendChartCardHTML("التوزيع حسب الشهر (ميلادي)", filtered, monthField, monthsInScope);
     } else if(cat.key === "marriages"){
-      html += breakdownCardHTML("التوزيع حسب بلد الزوج", filtered, "husbandCountry", null);
-      html += breakdownCardHTML("التوزيع حسب الشهر (ميلادي)", filtered, "contractMonthGregorian", GREG_MONTHS);
+      html += breakdownCardHTML("التوزيع حسب بلد الزوج", filtered, "husbandCountry", null, 8);
+      html += trendChartCardHTML("التوزيع حسب الشهر (ميلادي)", filtered, monthField, monthsInScope);
     } else if(cat.key === "deaths"){
-      html += breakdownCardHTML("التوزيع حسب الجنس", filtered, "gender", ["ذكر", "أنثى"]);
+      html += donutCardHTML("التوزيع حسب الجنس", filtered, "gender", ["ذكر", "أنثى"]);
       html += breakdownCardHTML("التوزيع حسب الفئة العمرية", filtered, "ageCategory", null);
-      html += breakdownCardHTML("التوزيع حسب الشهر (ميلادي)", filtered, "deathMonthGregorian", GREG_MONTHS);
+      html += trendChartCardHTML("التوزيع حسب الشهر (ميلادي)", filtered, monthField, monthsInScope);
     } else if(cat.key === "congrats"){
       html += breakdownCardHTML("التوزيع حسب نوع المناسبة", filtered, "occasionType", null);
-      html += breakdownCardHTML("التوزيع حسب الشهر (ميلادي)", filtered, "occasionMonthGregorian", GREG_MONTHS);
+      html += trendChartCardHTML("التوزيع حسب الشهر (ميلادي)", filtered, monthField, monthsInScope);
     }
+    html += '</div>';
     return html;
   }
 
@@ -6837,6 +6980,9 @@
         renderEventsHub();
         syncHashFromApp();
         break;
+      case "print-events-report":
+        window.print();
+        break;
       case "toggle-row-menu": {
         var rmWrap = btn.closest(".row-menu-wrap");
         if(!rmWrap) break;
@@ -6899,9 +7045,13 @@
       refreshEventsTable();
       refreshColToggleWrap();
     } else if(e.target.id === "reportsCategorySelect"){
-      eventsUI.reportsCategory = e.target.value; eventsUI.reportsYear = ""; renderEventsHub();
+      eventsUI.reportsCategory = e.target.value; eventsUI.reportsYear = ""; eventsUI.reportsPeriodType = "year"; eventsUI.reportsPeriodValue = ""; renderEventsHub();
     } else if(e.target.id === "reportsYearSelect"){
-      eventsUI.reportsYear = e.target.value; renderEventsHub();
+      eventsUI.reportsYear = e.target.value; eventsUI.reportsPeriodType = "year"; eventsUI.reportsPeriodValue = ""; renderEventsHub();
+    } else if(e.target.id === "reportsPeriodTypeSelect"){
+      eventsUI.reportsPeriodType = e.target.value; eventsUI.reportsPeriodValue = ""; renderEventsHub();
+    } else if(e.target.id === "reportsPeriodValueSelect"){
+      eventsUI.reportsPeriodValue = e.target.value; renderEventsHub();
     } else if(e.target.id === "newTmplUploadInput"){
       var file = e.target.files && e.target.files[0];
       if(!file) return;
