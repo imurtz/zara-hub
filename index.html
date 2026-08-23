@@ -636,6 +636,36 @@
   .bar-table td{padding:8px 4px; border:none;}
   .bar-table .bar-track{background:var(--teal-tint); border-radius:999px; height:8px; overflow:hidden; min-width:80px;}
   .bar-table .bar-fill{background:var(--blue); height:100%; border-radius:999px;}
+
+  /* ===== جداول ورسومات التقارير والإحصائيات ===== */
+  .stat-table{width:100%; border-collapse:collapse; font-size:12.5px; margin-bottom:18px;}
+  .stat-table th{text-align:start; font-size:11px; font-weight:700; color:var(--ink-soft); padding:0 6px 8px; border-bottom:1.5px solid var(--line);}
+  .stat-table td{padding:8px 6px; border-bottom:1px solid var(--line); vertical-align:middle;}
+  .stat-table-row{transition:background .12s;}
+  .stat-table-row:hover{background:var(--teal-tint);}
+  .stat-table-row:last-child td{border-bottom:none;}
+  .stat-table-lbl{max-width:180px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:var(--ink);}
+  .stat-table-num{color:var(--ink-soft); font-weight:600; width:50px;}
+  .stat-table-pct{display:flex; align-items:center; gap:8px; min-width:110px;}
+  .stat-mini-bar-track{flex:1; max-width:70px; height:7px; background:var(--teal-tint); border-radius:999px; overflow:hidden;}
+  .stat-mini-bar{height:100%; border-radius:999px; transition:width .3s;}
+  .stat-table-pct b{color:var(--ink); font-size:12px; flex-shrink:0;}
+
+  .v-chart-wrap{margin-top:6px;}
+  .v-chart-grid{position:relative; display:flex; align-items:flex-end; gap:8px; height:170px; padding-inline:2px;}
+  .v-chart-gridline{position:absolute; inset-inline:0; border-top:1px dashed var(--line); pointer-events:none;}
+  .v-bar-col{flex:1; min-width:24px; max-width:56px; display:flex; flex-direction:column; align-items:center; justify-content:flex-end; height:100%; position:relative;}
+  .v-bar-value{font-size:10.5px; font-weight:700; color:var(--ink); margin-bottom:4px;}
+  .v-bar{width:100%; border-radius:6px 6px 0 0; transition:opacity .15s, transform .15s; cursor:default;}
+  .v-bar:hover{opacity:.8; transform:scaleY(1.01);}
+  .v-chart-labels{display:flex; gap:8px; padding-inline:2px; margin-top:8px;}
+  .v-bar-label{flex:1; min-width:24px; max-width:56px; text-align:center; font-size:10px; color:var(--ink-soft); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+  .donut-slice{transition:opacity .15s;}
+  .donut-slice:hover{opacity:.82;}
+  @media (max-width:600px){
+    .stat-table-lbl{max-width:100px;}
+    .v-chart-grid{height:140px;}
+  }
   .publish-status-pill{font-size:10.5px; font-weight:600; border-radius:999px; padding:3px 10px; border:none; cursor:pointer;}
   .publish-status-pill.pending{background:var(--tan-tint); color:var(--tan);}
   .publish-status-pill.published{background:#e4f3e6; color:#3d8b4c;}
@@ -6097,25 +6127,52 @@
   var CHART_COLORS = { blue: "#2a78d6", orange: "#eb6834", aqua: "#1baf7a", yellow: "#eda100", magenta: "#e87ba4", green: "#008300", violet: "#4a3aa7", red: "#e34948" };
   var CHART_CATEGORICAL_ORDER = ["blue", "orange", "aqua", "yellow", "magenta", "green", "violet", "red"];
   function chartColorAt(i){ return CHART_COLORS[CHART_CATEGORICAL_ORDER[i % CHART_CATEGORICAL_ORDER.length]]; }
-  // مخطط أعمدة أفقي (مقياس/مقدار) — لون واحد ثابت، الأعمدة مرتّبة تنازلياً، تسمية القيمة عند طرف كل عمود
-  // مخطط أعمدة أفقي مبني بـHTML/CSS (لا SVG) — النصوص العربية RTL تُعرض بشكل طبيعي وصحيح دائماً بهذي الطريقة
-  function svgBarChartHTML(data){
-    if(!data.length) return "";
-    var max = Math.max.apply(null, data.map(function(d){ return d.value; })) || 1;
-    var rows = data.map(function(d){
-      var pct = Math.max(2, Math.round((d.value / max) * 100));
+  function reportCardHeadHTML(title){
+    return '<h3><span class="icon" style="color:var(--blue);">' + AICON.chart + '</span>' + escapeHTML(title) + '</h3>';
+  }
+  // جدول بيانات: البيان / العدد / النسبة (مع شريط تناسبي مصغّر ملوَّن داخل خلية النسبة)
+  function statTableHTML(items){
+    var max = Math.max.apply(null, items.map(function(d){ return d.value; })) || 1;
+    var total = items.reduce(function(s, d){ return s + d.value; }, 0) || 1;
+    var rows = items.map(function(d){
+      var pct = Math.round((d.value / total) * 100);
+      var barPct = Math.max(4, Math.round((d.value / max) * 100));
+      return '<tr class="stat-table-row">' +
+        '<td class="stat-table-lbl" title="' + escapeHTML(String(d.label)) + '">' + escapeHTML(String(d.label)) + '</td>' +
+        '<td class="stat-table-num">' + d.value + '</td>' +
+        '<td class="stat-table-pct"><div class="stat-mini-bar-track"><div class="stat-mini-bar" style="width:' + barPct + '%; background:' + d.color + ';"></div></div><b>' + pct + '%</b></td>' +
+      '</tr>';
+    }).join("");
+    return '<table class="stat-table"><thead><tr><th>البيان</th><th>العدد</th><th>النسبة</th></tr></thead><tbody>' + rows + '</tbody></table>';
+  }
+  // مخطط أعمدة رأسي تفاعلي (HTML/CSS) بخطوط شبكة متقطعة — ألوان فئوية حيوية لكل عمود، تلميح عند المرور بالفأرة
+  function verticalBarChartHTML(items){
+    if(!items.length) return "";
+    var max = Math.max.apply(null, items.map(function(d){ return d.value; })) || 1;
+    var bars = items.map(function(d){
+      var hPct = Math.max(4, Math.round((d.value / max) * 100));
       var lbl = escapeHTML(String(d.label));
-      return '<div style="display:flex; align-items:center; gap:10px; margin-bottom:11px;">' +
-        '<div style="width:132px; flex-shrink:0; font-size:12px; color:var(--ink-soft); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="' + lbl + '">' + lbl + '</div>' +
-        '<div style="flex:1; background:var(--teal-tint); border-radius:999px; height:20px; overflow:hidden; min-width:60px;">' +
-          '<div style="width:' + pct + '%; height:100%; background:' + CHART_COLORS.blue + '; border-radius:999px;" title="' + lbl + ': ' + d.value + '"></div>' +
-        '</div>' +
-        '<div style="width:32px; flex-shrink:0; font-size:12px; font-weight:700; color:var(--ink); text-align:end;">' + d.value + '</div>' +
+      return '<div class="v-bar-col">' +
+        '<div class="v-bar-value">' + d.value + '</div>' +
+        '<div class="v-bar" style="height:' + hPct + '%; background:' + d.color + ';" title="' + lbl + ': ' + d.value + '"></div>' +
       '</div>';
     }).join("");
-    return '<div style="max-width:520px;">' + rows + '</div>';
+    var labels = items.map(function(d){
+      var lbl = escapeHTML(String(d.label));
+      return '<div class="v-bar-label" title="' + lbl + '">' + lbl + '</div>';
+    }).join("");
+    return '<div class="v-chart-wrap">' +
+      '<div class="v-chart-grid">' +
+        '<div class="v-chart-gridline" style="inset-block-start:0;"></div>' +
+        '<div class="v-chart-gridline" style="inset-block-start:25%;"></div>' +
+        '<div class="v-chart-gridline" style="inset-block-start:50%;"></div>' +
+        '<div class="v-chart-gridline" style="inset-block-start:75%;"></div>' +
+        bars +
+      '</div>' +
+      '<div class="v-chart-labels">' + labels + '</div>' +
+    '</div>';
   }
-  // مخطط دائري مفرَّغ (هوية/فئات قليلة) — لكل فئة لون مميّز محقَّق + خريطة ألوان (Legend) وتسمية نسبة مباشرة
+  // مخطط دائري مفرَّغ (لمؤشر رئيسي واحد بارز) — ألوان فئوية محقَّقة + خريطة ألوان (Legend)
   function svgDonutChartHTML(data){
     var total = data.reduce(function(s, d){ return s + d.value; }, 0) || 1;
     var cx = 72, cy = 72, r = 60, innerR = 36;
@@ -6132,10 +6189,9 @@
       var p1 = polar(startAngle), p2 = polar(endAngle), p3 = polarInner(endAngle), p4 = polarInner(startAngle);
       var path = "M" + p1.x + "," + p1.y + " A" + r + "," + r + " 0 " + largeArc + " 1 " + p2.x + "," + p2.y +
         " L" + p3.x + "," + p3.y + " A" + innerR + "," + innerR + " 0 " + largeArc + " 0 " + p4.x + "," + p4.y + " Z";
-      paths += '<path d="' + path + '" fill="' + d.color + '" stroke="var(--white)" stroke-width="2"><title>' + escapeHTML(String(d.label)) + ": " + d.value + " (" + Math.round(frac * 100) + "%)</title></path>";
+      paths += '<path class="donut-slice" d="' + path + '" fill="' + d.color + '" stroke="var(--white)" stroke-width="2"><title>' + escapeHTML(String(d.label)) + ": " + d.value + " (" + Math.round(frac * 100) + "%)</title></path>";
       startAngle = endAngle;
     });
-    paths += '<text x="' + cx + '" y="' + (cy + 5) + '" text-anchor="middle" font-size="15" font-weight="700" fill="var(--ink)">' + total + '</text>';
     return '<svg viewBox="0 0 144 144" width="144" height="144" style="flex-shrink:0;">' + paths + '</svg>';
   }
   function chartLegendHTML(items, total){
@@ -6155,7 +6211,7 @@
     if(!keys.length) return "";
     var total = records.length;
     var items = keys.map(function(k, i){ return { label: k, value: counts[k], color: chartColorAt(i) }; });
-    var html = '<div class="report-section-card"><h3>' + title + '</h3>' +
+    var html = '<div class="report-section-card">' + reportCardHeadHTML(title) +
       '<div style="display:flex; align-items:center; gap:26px; flex-wrap:wrap;">' + svgDonutChartHTML(items) + chartLegendHTML(items, total) + '</div></div>';
     return html;
   }
@@ -6164,23 +6220,23 @@
     records.forEach(function(r){ var v = r[fieldKey] || "غير محدد"; counts[v] = (counts[v] || 0) + 1; });
     var keys = order ? order.filter(function(k){ return counts[k]; }) : Object.keys(counts).sort(function(a, b){ return counts[b] - counts[a]; });
     if(!keys.length) return "";
-    var cap = maxBars || 8;
+    var cap = maxBars || 12;
     var shown = keys.slice(0, cap);
     var rest = keys.slice(cap);
-    var data = shown.map(function(k){ return { label: k, value: counts[k] }; });
+    var data = shown.map(function(k, i){ return { label: k, value: counts[k], color: chartColorAt(i) }; });
     if(rest.length){
       var otherTotal = rest.reduce(function(s, k){ return s + counts[k]; }, 0);
-      data.push({ label: "أخرى (" + rest.length + ")", value: otherTotal });
+      data.push({ label: "أخرى (" + rest.length + ")", value: otherTotal, color: "var(--ink-soft)" });
     }
-    var html = '<div class="report-section-card"><h3>' + title + '</h3>' + svgBarChartHTML(data) + '</div>';
+    var html = '<div class="report-section-card">' + reportCardHeadHTML(title) + statTableHTML(data) + verticalBarChartHTML(data) + '</div>';
     return html;
   }
   function trendChartCardHTML(title, records, monthFieldKey, monthsToShow){
     var counts = {};
     records.forEach(function(r){ var v = r[monthFieldKey]; if(v) counts[v] = (counts[v] || 0) + 1; });
-    var data = monthsToShow.map(function(m){ return { label: m, value: counts[m] || 0 }; });
+    var data = monthsToShow.map(function(m){ return { label: m, value: counts[m] || 0, color: CHART_COLORS.blue }; });
     if(!data.some(function(d){ return d.value > 0; })) return "";
-    return '<div class="report-section-card"><h3>' + title + '</h3>' + svgBarChartHTML(data) + '</div>';
+    return '<div class="report-section-card">' + reportCardHeadHTML(title) + verticalBarChartHTML(data) + '</div>';
   }
   // ----- قوالب التصميم -----
   var TMPL_PLACEABLE_FIELDS = {
@@ -6769,25 +6825,25 @@
     else if(eventsUI.reportsPeriodType === "half" && eventsUI.reportsPeriodValue) monthsInScope = HALF_MONTHS[eventsUI.reportsPeriodValue];
 
     if(cat.key === "graduates"){
-      var inside = filtered.filter(function(r){ return (r.country || "").indexOf("السعود") > -1; }).length;
-      html += '<div class="report-section-card"><h3>مؤشر مكان التخرج</h3><table class="bar-table">' +
-        barRowHTML("داخل السعودية", inside, filtered.length) + barRowHTML("خارج السعودية", filtered.length - inside, filtered.length) +
-      '</table></div>';
-      html += donutCardHTML("التوزيع حسب الجنس", filtered, "gender", ["ذكر", "أنثى"]);
+      var insideCount = filtered.filter(function(r){ return (r.country || "").indexOf("السعود") > -1; }).length;
+      var originItems = [{ label: "داخل السعودية", value: insideCount, color: chartColorAt(0) }, { label: "خارج السعودية", value: filtered.length - insideCount, color: chartColorAt(1) }];
+      html += '<div class="report-section-card">' + reportCardHeadHTML("مؤشر مكان التخرج") +
+        '<div style="display:flex; align-items:center; gap:26px; flex-wrap:wrap;">' + svgDonutChartHTML(originItems) + chartLegendHTML(originItems, filtered.length) + '</div></div>';
+      html += breakdownCardHTML("التوزيع حسب الجنس", filtered, "gender", ["ذكر", "أنثى"]);
       html += breakdownCardHTML("التوزيع حسب الدرجة العلمية", filtered, "degree", null);
-      html += breakdownCardHTML("أكثر الجامعات", filtered, "university", null, 8);
-      html += breakdownCardHTML("التوزيع حسب نوع التخصص", filtered, "specializationType", null, 8);
-      html += breakdownCardHTML("أكثر التخصصات الدقيقة", filtered, "specialization", null, 8);
+      html += breakdownCardHTML("أكثر الجامعات", filtered, "university", null, 12);
+      html += breakdownCardHTML("التوزيع حسب نوع التخصص", filtered, "specializationType", null, 12);
+      html += breakdownCardHTML("أكثر التخصصات الدقيقة", filtered, "specialization", null, 12);
       html += breakdownCardHTML("التوزيع حسب مرتبة الشرف", filtered, "honor", HONORS_LIST);
       html += trendChartCardHTML("عدد الخريجين حسب الشهر", filtered, monthField, monthsInScope);
     } else if(cat.key === "births"){
-      html += donutCardHTML("التوزيع حسب الجنس", filtered, "gender", ["ذكر", "أنثى"]);
+      html += breakdownCardHTML("التوزيع حسب الجنس", filtered, "gender", ["ذكر", "أنثى"]);
       html += trendChartCardHTML("التوزيع حسب الشهر (ميلادي)", filtered, monthField, monthsInScope);
     } else if(cat.key === "marriages"){
-      html += breakdownCardHTML("التوزيع حسب بلد الزوج", filtered, "husbandCountry", null, 8);
+      html += breakdownCardHTML("التوزيع حسب بلد الزوج", filtered, "husbandCountry", null, 12);
       html += trendChartCardHTML("التوزيع حسب الشهر (ميلادي)", filtered, monthField, monthsInScope);
     } else if(cat.key === "deaths"){
-      html += donutCardHTML("التوزيع حسب الجنس", filtered, "gender", ["ذكر", "أنثى"]);
+      html += breakdownCardHTML("التوزيع حسب الجنس", filtered, "gender", ["ذكر", "أنثى"]);
       html += breakdownCardHTML("التوزيع حسب الفئة العمرية", filtered, "ageCategory", null);
       html += trendChartCardHTML("التوزيع حسب الشهر (ميلادي)", filtered, monthField, monthsInScope);
     } else if(cat.key === "congrats"){
