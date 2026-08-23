@@ -1234,8 +1234,36 @@
     try{ return JSON.parse(raw); }catch(e){ return [DEFAULT_ADMIN]; }
   }
   function saveEmployees(list){
+    var prevRaw = localStorage.getItem(STORAGE_KEY);
+    var prevIds = [];
+    if(prevRaw){ try{ prevIds = JSON.parse(prevRaw).map(function(e){ return e.id; }); }catch(e){} }
     localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
+    // مزامنة قائمة الموظفين مع فايرستور — كانت مخزَّنة محلياً فقط (localStorage)، فأي موظف يُضاف من جهاز
+    // لا يظهر إطلاقاً على أي جهاز آخر (بما فيه جهاز الموظف نفسه) إلى أن تتم هذي المزامنة
+    var newIds = list.map(function(e){ return e.id; });
+    prevIds.forEach(function(id){ if(newIds.indexOf(id) === -1) db.collection("employees").doc(id).delete(); });
+    list.forEach(function(emp){ db.collection("employees").doc(emp.id).set(emp); });
   }
+  var _employeesFirestoreSynced = false;
+  db.collection("employees").onSnapshot(function(snap){
+    var remote = [];
+    snap.forEach(function(doc){ remote.push(doc.data()); });
+    var local = loadEmployees();
+    var merged = local.slice();
+    remote.forEach(function(rEmp){
+      var idx = merged.findIndex(function(e){ return e.id === rEmp.id; });
+      if(idx === -1) merged.push(rEmp);
+      else merged[idx] = rEmp;
+    });
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(merged));
+    if(!_employeesFirestoreSynced){
+      // أول مزامنة بعد فتح الصفحة: نرفع أي موظفين محليين لهذا الجهاز غير موجودين بعد بفايرستور
+      // (يغطي حالة إضافة موظف من جهاز الأدمن قبل نشر هذا الإصلاح)
+      _employeesFirestoreSynced = true;
+      local.forEach(function(emp){ db.collection("employees").doc(emp.id).set(emp); });
+    }
+    if(typeof employees !== "undefined") employees = loadEmployees();
+  }, function(err){ console.error("employees snapshot error", err); });
   function getSession(){
     try{ return JSON.parse(sessionStorage.getItem(SESSION_KEY)); }catch(e){ return null; }
   }
