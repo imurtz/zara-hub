@@ -5393,12 +5393,14 @@
   function copyBannerSlide(s){
     return { id: s.id, type: s.type || "text", title: s.title || "", subtitle: s.subtitle || "", gradient: s.gradient || "brand", image: s.image || "", link: s.link || "" };
   }
+  var FOOTER_CREDIT_DEFAULT = "صُنع بحب من قبل جمعية العوامية الخيرية";
   function loadPublicFormConfig(){
-    var cfg = { footerMessage: "", banner: { enabled: BANNER_DEFAULTS.enabled, intervalSeconds: BANNER_DEFAULTS.intervalSeconds, slides: BANNER_DEFAULTS.slides.map(copyBannerSlide) } };
+    var cfg = { footerMessage: "", footerCredit: FOOTER_CREDIT_DEFAULT, banner: { enabled: BANNER_DEFAULTS.enabled, intervalSeconds: BANNER_DEFAULTS.intervalSeconds, slides: BANNER_DEFAULTS.slides.map(copyBannerSlide) } };
     EVENTS_CATEGORIES.forEach(function(c){ cfg[c.key] = { hidden: [], hints: {}, labels: {}, custom: [] }; });
     var p = _publicFormConfigCache;
     if(p){
       if(typeof p.footerMessage === "string") cfg.footerMessage = p.footerMessage;
+      if(typeof p.footerCredit === "string") cfg.footerCredit = p.footerCredit;
       if(p.banner){
         if(typeof p.banner.enabled === "boolean") cfg.banner.enabled = p.banner.enabled;
         if(typeof p.banner.intervalSeconds === "number" && p.banner.intervalSeconds >= 2) cfg.banner.intervalSeconds = p.banner.intervalSeconds;
@@ -6778,6 +6780,10 @@
       '<label style="display:block; font-size:12.5px; font-weight:700; color:var(--teal-dark); margin-bottom:6px;">رسالة أسفل صفحة التسجيل العام (تظهر لكل الزوار، بكل التصنيفات)</label>' +
       '<textarea id="publicCfgFooterMsg" rows="2" placeholder="مثال: لأي استفسار تواصلوا معنا عبر..." style="width:100%; padding:10px 12px; border:1.5px solid var(--line); border-radius:10px; font-size:13px; font-family:inherit; resize:vertical;">' + escapeHTML(cfg.footerMessage || "") + '</textarea>' +
     '</div>';
+    html += '<div style="margin-top:14px;">' +
+      '<label style="display:block; font-size:12.5px; font-weight:700; color:var(--teal-dark); margin-bottom:6px;">عبارة الشكر بجانب شعار الجمعية (أسفل الصفحة تماماً)</label>' +
+      '<input type="text" id="publicCfgFooterCredit" value="' + escapeHTML(cfg.footerCredit || "") + '" placeholder="' + escapeHTML(FOOTER_CREDIT_DEFAULT) + '" style="width:100%; padding:10px 12px; border:1.5px solid var(--line); border-radius:10px; font-size:13px; font-family:inherit;"/>' +
+    '</div>';
     html += '</div>';
     return html;
   }
@@ -7739,6 +7745,10 @@
       var pCfg3 = loadPublicFormConfig();
       pCfg3.footerMessage = e.target.value;
       savePublicFormConfig(pCfg3);
+    } else if(e.target.id === "publicCfgFooterCredit"){
+      var pCfg3b = loadPublicFormConfig();
+      pCfg3b.footerCredit = e.target.value;
+      savePublicFormConfig(pCfg3b);
     } else if(e.target.matches('[data-action="public-cfg-banner-toggle"]')){
       var pCfg5 = loadPublicFormConfig();
       pCfg5.banner.enabled = e.target.checked;
