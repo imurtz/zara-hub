@@ -64,11 +64,18 @@
   .ad-banner-dots button.active{background:#fff;}
 
   .head{text-align:center; margin-bottom:26px;}
-  .brand-logo-primary{height:120px; width:auto; max-width:70%; object-fit:contain; display:block; margin:0 auto 14px;}
+  .brand-hero{display:inline-flex; align-items:center; gap:14px; margin:0 auto 18px;}
+  .brand-hero-icon{height:60px; width:auto; object-fit:contain; flex-shrink:0;}
+  .brand-hero-text{display:flex; flex-direction:column; align-items:flex-start; gap:1px;}
+  .brand-hero-ar{font-size:21px; font-weight:700; color:var(--teal-dark); line-height:1.15;}
+  .brand-hero-en{font-size:11.5px; font-weight:600; color:var(--tan); letter-spacing:.6px;}
   .head h1{font-size:17px; color:var(--ink); font-weight:600; margin-bottom:6px;}
   .head p{font-size:13px; color:var(--ink-soft);}
   @media (max-width:420px){
-    .brand-logo-primary{height:96px;}
+    .brand-hero{gap:11px;}
+    .brand-hero-icon{height:48px;}
+    .brand-hero-ar{font-size:18px;}
+    .brand-hero-en{font-size:10px;}
   }
   .card{background:var(--white); border:1px solid var(--line); border-radius:20px; box-shadow:var(--shadow); padding:26px 22px;}
   .cat-select{display:flex; gap:8px; flex-wrap:wrap; margin-bottom:22px;}
@@ -168,7 +175,13 @@
   <div class="ad-banner-carousel" id="adBannerCarousel" style="display:none;"></div>
 
   <div class="head">
-    <img class="brand-logo-primary" src="/assets/bawabat-zara-logo.png" alt="بوابة زارة | Bawabat Zara" />
+    <div class="brand-hero">
+      <img class="brand-hero-icon" src="/assets/bawabat-zara-icon.png" alt="أيقونة بوابة زارة" />
+      <div class="brand-hero-text">
+        <span class="brand-hero-ar">بوابة زارة</span>
+        <span class="brand-hero-en">Bawabat Zara</span>
+      </div>
+    </div>
     <h1>تسجيل بيانات المناسبات الاجتماعية</h1>
     <p>شاركونا مناسبتكم الاجتماعية (تخرج، مولود، عقد قران، تهنئة) ليتم توثيقها ضمن سجلات الجمعية</p>
   </div>
