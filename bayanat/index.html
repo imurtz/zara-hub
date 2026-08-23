@@ -64,9 +64,20 @@
   .ad-banner-dots button.active{background:#fff;}
 
   .head{text-align:center; margin-bottom:26px;}
-  .head img{width:100%; max-width:220px; height:auto; margin:0 auto 10px; display:block;}
-  .head h1{font-size:18px; color:var(--teal-dark); margin-bottom:6px;}
+  .brand-lockup{display:flex; align-items:center; justify-content:center; gap:16px; margin-bottom:14px;}
+  .brand-logo{height:58px; width:auto; max-width:180px; object-fit:contain; display:block;}
+  .brand-divider{width:1px; height:38px; background:var(--line); flex-shrink:0;}
+  .brand-name{display:flex; align-items:center; justify-content:center; gap:9px; margin-bottom:16px;}
+  .brand-name-ar{font-size:16px; font-weight:700; color:var(--teal-dark); letter-spacing:.2px;}
+  .brand-name-en{font-size:11.5px; font-weight:600; color:var(--tan); border-inline-start:1px solid var(--line); padding-inline-start:9px;}
+  .head h1{font-size:17px; color:var(--ink); font-weight:600; margin-bottom:6px;}
   .head p{font-size:13px; color:var(--ink-soft);}
+  @media (max-width:420px){
+    .brand-logo{height:46px; max-width:145px;}
+    .brand-divider{height:30px;}
+    .brand-name-ar{font-size:14px;}
+    .brand-name-en{font-size:10.5px;}
+  }
   .card{background:var(--white); border:1px solid var(--line); border-radius:20px; box-shadow:var(--shadow); padding:26px 22px;}
   .cat-select{display:flex; gap:8px; flex-wrap:wrap; margin-bottom:22px;}
   .cat-select button{flex:1; min-width:120px; padding:12px 10px; border-radius:14px; border:1.5px solid var(--line); background:var(--white); color:var(--ink-soft); font-size:13px; font-weight:600; cursor:pointer; display:flex; flex-direction:column; align-items:center; gap:6px; transition:all .15s;}
@@ -164,7 +175,12 @@
   <div class="ad-banner-carousel" id="adBannerCarousel" style="display:none;"></div>
 
   <div class="head">
-    <img src="/assets/logo.png" alt="شعار جمعية العوامية الخيرية" />
+    <div class="brand-lockup">
+      <img class="brand-logo" src="/assets/logo.png" alt="شعار جمعية العوامية الخيرية" />
+      <span class="brand-divider"></span>
+      <img class="brand-logo" src="/assets/bawabat-zara-icon.png" alt="شعار بوابة زارة" />
+    </div>
+    <p class="brand-name"><span class="brand-name-ar">بوابة زارة</span><span class="brand-name-en">Bawabat Zara</span></p>
     <h1>تسجيل بيانات المناسبات الاجتماعية</h1>
     <p>شاركونا مناسبتكم الاجتماعية (تخرج، مولود، عقد قران، تهنئة) ليتم توثيقها ضمن سجلات الجمعية</p>
   </div>
