@@ -184,10 +184,55 @@
   .wa-panel h4{font-size:13px; color:var(--teal-dark); margin-bottom:6px;}
   .wa-panel p{font-size:11.5px; color:var(--ink-soft); line-height:1.6; margin-bottom:10px;}
   .wa-panel a{display:block; text-align:center; background:#25D366; color:#fff; text-decoration:none; padding:9px; border-radius:10px; font-size:12.5px; font-weight:600;}
+
+  .quick-links-row{display:flex; gap:10px; justify-content:center; flex-wrap:wrap; margin-bottom:14px;}
+  .quick-link-pill{display:inline-flex; align-items:center; gap:7px; padding:9px 16px; border-radius:999px; border:1px solid var(--line); background:var(--white); color:var(--teal-dark); font-size:12.5px; font-weight:700; text-decoration:none; cursor:pointer; box-shadow:0 2px 8px rgba(45,70,66,.06); transition:all .15s;}
+  .quick-link-pill:hover{background:var(--teal-tint); border-color:var(--teal); transform:translateY(-1px);}
+  .quick-link-pill svg{width:15px; height:15px; flex-shrink:0;}
+  .quick-link-pill.donate{color:#9c6b3f;}
+  .quick-link-pill.donate:hover{background:var(--tan-tint); border-color:var(--tan);}
+
+  .identity-modal-overlay{display:none; position:fixed; inset:0; background:rgba(30,40,38,.55); z-index:60; align-items:center; justify-content:center; padding:20px;}
+  .identity-modal-overlay.open{display:flex;}
+  .identity-modal{position:relative; background:var(--white); border-radius:18px; box-shadow:var(--shadow); padding:26px 22px; max-width:420px; width:100%; text-align:center; max-height:90vh; overflow:auto;}
+  .identity-modal-close{position:absolute; top:12px; left:12px; width:30px; height:30px; border-radius:50%; border:1px solid var(--line); background:var(--white); color:var(--ink-soft); font-size:18px; line-height:1; cursor:pointer; display:flex; align-items:center; justify-content:center; padding:0;}
+  .identity-modal-close:hover{background:var(--teal-tint); color:var(--teal-dark);}
+  .identity-modal h3{font-size:16.5px; color:var(--teal-dark); margin-bottom:6px;}
+  .identity-modal-sub{font-size:12px; color:var(--ink-soft); margin-bottom:18px; line-height:1.6;}
+  .identity-logos{display:flex; gap:14px; justify-content:center; margin-bottom:20px; flex-wrap:wrap;}
+  .identity-logo-card{display:flex; flex-direction:column; align-items:center; gap:8px; background:var(--teal-tint); border-radius:14px; padding:14px 18px; flex:1; min-width:130px;}
+  .identity-logo-card img{height:64px; width:auto; object-fit:contain;}
+  .identity-logo-card span{font-size:11.5px; font-weight:700; color:var(--teal-dark);}
+  .identity-colors{display:grid; grid-template-columns:repeat(2, 1fr); gap:10px; margin-bottom:16px;}
+  .identity-color-swatch{border-radius:12px; padding:14px 10px; color:#fff; display:flex; flex-direction:column; align-items:center; gap:4px;}
+  .identity-color-swatch span{font-size:11.5px; font-weight:700;}
+  .identity-color-swatch code{font-size:11px; opacity:.85; direction:ltr;}
+  .identity-modal-font{font-size:11.5px; color:var(--ink-soft); font-weight:600;}
+  .identity-concept-card{background:linear-gradient(180deg, var(--teal-tint), var(--white)); border:1px solid var(--line); border-radius:16px; padding:16px 18px 14px; margin-bottom:18px; display:flex; flex-direction:column; align-items:center; gap:8px;}
+  .identity-concept-card span{font-size:11px; font-weight:700; color:var(--teal-dark);}
+  .identity-story{text-align:start; border-top:1px solid var(--line); padding-top:16px; margin-top:2px; margin-bottom:16px;}
+  .identity-story-intro{font-size:12.5px; color:var(--ink-soft); line-height:1.85; margin-bottom:14px;}
+  .identity-story h4{font-size:13px; color:var(--teal-dark); margin-bottom:8px; margin-top:16px;}
+  .identity-story h4:first-of-type{margin-top:0;}
+  .identity-story ul{list-style:none; display:flex; flex-direction:column; gap:10px; margin-bottom:4px;}
+  .identity-story li{font-size:12px; color:var(--ink-soft); line-height:1.85; padding-inline-start:14px; position:relative;}
+  .identity-story li::before{content:""; position:absolute; inset-inline-start:0; top:8px; width:5px; height:5px; border-radius:50%; background:var(--tan);}
+  .identity-story li b{color:var(--ink); font-weight:700;}
+  .identity-story-plain{font-size:12px; color:var(--ink-soft); line-height:1.85;}
 </style>
 </head>
 <body>
 <div class="wrap">
+  <div class="quick-links-row">
+    <button type="button" class="quick-link-pill" id="mediaGuideBtn">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="8.5" cy="10" r="1.7"/><path d="M3 16l5-4 4 3 4-3.5 5 4.5"/></svg>
+      الدليل الإعلامي
+    </button>
+    <a class="quick-link-pill donate" href="https://www.awamiach.sa/projects/" target="_blank" rel="noopener">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-4.35-9.5-8.5C.5 8.5 3 5 6.5 5c2 0 3.5 1.2 4.5 2.5C12 6.2 13.5 5 15.5 5 19 5 21.5 8.5 21.5 12.5 19 16.65 12 21 12 21z"/></svg>
+      التبرعات
+    </a>
+  </div>
   <div class="ad-banner-carousel" id="adBannerCarousel" style="display:none;"></div>
 
   <div class="head">
@@ -267,6 +312,61 @@
   <h4>تواصل معنا عبر واتساب</h4>
   <p>لأي استفسار عن تسجيل مناسبتكم، تواصلوا معنا مباشرة عبر واتساب</p>
   <a id="waLink" href="#" target="_blank" rel="noopener">فتح واتساب</a>
+</div>
+
+<div class="identity-modal-overlay" id="identityModalOverlay">
+  <div class="identity-modal">
+    <button type="button" class="identity-modal-close" id="identityModalClose" aria-label="إغلاق">×</button>
+    <h3>الهوية البصرية لـ بوابة زارة</h3>
+    <p class="identity-modal-sub">شعار المنصة وألوانها الأساسية — للاطلاع والاستخدام المرجعي</p>
+    <div class="identity-logos">
+      <div class="identity-logo-card">
+        <img src="/assets/bawabat-zara-icon.png" alt="أيقونة بوابة زارة"/>
+        <span>الأيقونة</span>
+      </div>
+      <div class="identity-logo-card">
+        <img src="/assets/bawabat-zara-logo.png" alt="شعار بوابة زارة الكامل"/>
+        <span>الشعار الكامل</span>
+      </div>
+    </div>
+    <div class="identity-colors">
+      <div class="identity-color-swatch" style="background:#3d5b56;"><span>التيل الغامق</span><code>#3D5B56</code></div>
+      <div class="identity-color-swatch" style="background:#517771;"><span>التيل</span><code>#517771</code></div>
+      <div class="identity-color-swatch" style="background:#b8906e;"><span>التان</span><code>#B8906E</code></div>
+      <div class="identity-color-swatch" style="background:#0080ff;"><span>الأزرق المميز</span><code>#0080FF</code></div>
+    </div>
+    <div class="identity-concept-card">
+      <svg viewBox="0 0 140 170" width="128" height="155" fill="none">
+        <path d="M30 158 V62 A40 40 0 0 1 110 62 V120" stroke="#3d5b56" stroke-width="13" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+        <path d="M110 120 Q107 158 76 158" stroke="#3d5b56" stroke-width="13" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+        <circle cx="123" cy="94" r="7" fill="#3d5b56"/>
+        <rect x="47" y="120" width="13" height="38" rx="4" fill="#b9916e"/>
+        <rect x="65" y="98" width="13" height="60" rx="4" fill="#b9916e"/>
+        <rect x="83" y="74" width="13" height="84" rx="4" fill="#b9916e"/>
+        <path d="M43 149 L94 67" stroke="#0080ff" stroke-width="6" stroke-linecap="round"/>
+        <path d="M75 67 L96 63 L100 84" stroke="#0080ff" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+      </svg>
+      <span>قراءة تصميمية لمكوّنات الشعار</span>
+    </div>
+    <div class="identity-story">
+      <p class="identity-story-intro">يرتكز تصميم شعار "بوابة زارة" بنمطه المسطح (Flat Vector) على المزج الدقيق بين الإرث الجغرافي للعوامية والوظيفة التقنية للمنصة:</p>
+      <h4>التكوين البصري والرموز</h4>
+      <ul>
+        <li><b>القوس المعماري التراثي (البوابة):</b> يمثل الإطار الخارجي قنطرة تراثية مستوحاة من عمارة "زارة" القديمة، ليشير بوضوح إلى "البوابة" كمدخل رقمي مركزي موثوق لجميع خدمات الجمعية.</li>
+        <li><b>الأعمدة والمؤشرات البيانية (Data Analytics):</b> الخطوط الرأسية داخل القوس تحاكي الرسوم البيانية وقواعد البيانات، مجسدةً وظيفة المنصة الأساسية في رصد وتسجيل وتقييم البيانات الإحصائية.</li>
+        <li><b>السهم الصاعد (Growth &amp; Progress):</b> يتقاطع السهم التفاعلي مع الأعمدة ليعبر عن تحويل البيانات الخام إلى تقارير تنموية وقرارات تسهم في تطور العمل الخيري ورفع كفاءته.</li>
+        <li><b>الدمج التيبوغرافي الذكي (حرف الزاي):</b> ينحني الجزء الأيمن من الهيكل مع النقطة الدائرية ليكوّن حرف "ز"، مما يربط الشكل البصري باسم "زارة" دون إقحام نصي إضافي.</li>
+      </ul>
+      <h4>سيكولوجية ودلالات الألوان</h4>
+      <ul>
+        <li><b>الأخضر المزرق المطفي (#517771):</b> يمنح الشعار وزناً بصرياً يوحي بالاستقرار، الموثوقية، والأمان الرقمي لحفظ بيانات المستفيدين والجمعية.</li>
+        <li><b>البيج الرملي الدافئ (#B9916E):</b> يستحضر لون الطين والأرض وتاريخ بلدة زارة القديمة، مما يكسر برود التقنية بلمسة إنسانية تعكس هوية العمل الاجتماعي.</li>
+      </ul>
+      <h4>النمط التصميمي والوظيفي (Flat Design)</h4>
+      <p class="identity-story-plain">إزالة التدرجات والظلال تضمن أداءً بصرياً عالياً واستجابة كاملة (Responsive UI) للشاشات الصغيرة، الأيقونات، وأنظمة إدارة التقارير ولوحات التحكم (Dashboards).</p>
+    </div>
+    <p class="identity-modal-font">الخط الرسمي: Cairo</p>
+  </div>
 </div>
 
 <script>
@@ -1655,6 +1755,20 @@
     if(!waPanel.contains(e.target) && e.target.id !== "waFabBtn" && !e.target.closest("#waFabBtn")){
       waPanel.classList.remove("open");
     }
+  });
+
+  function closeIdentityModal(){
+    document.getElementById("identityModalOverlay").classList.remove("open");
+  }
+  document.getElementById("mediaGuideBtn").addEventListener("click", function(){
+    document.getElementById("identityModalOverlay").classList.add("open");
+  });
+  document.getElementById("identityModalClose").addEventListener("click", closeIdentityModal);
+  document.getElementById("identityModalOverlay").addEventListener("click", function(e){
+    if(e.target.id === "identityModalOverlay") closeIdentityModal();
+  });
+  document.addEventListener("keydown", function(e){
+    if(e.key === "Escape") closeIdentityModal();
   });
 
   var EVENTS_OPTIONS_DEFAULTS = {
