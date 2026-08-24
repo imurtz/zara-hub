@@ -126,16 +126,21 @@
   .bg-toast.show{opacity:1; transform:translateX(-50%) translateY(0);}
   .bg-toast .spin{width:14px; height:14px; border:2px solid rgba(255,255,255,.4); border-top-color:#fff; border-radius:50%; animation:bgToastSpin .7s linear infinite; flex-shrink:0;}
   @keyframes bgToastSpin{to{transform:rotate(360deg);}}
-  .pan-nudge-pad{display:grid; grid-template-columns:repeat(3,30px); grid-template-rows:repeat(3,30px); gap:3px;}
-  .pan-nudge-pad button{border:1px solid var(--line); background:var(--white); border-radius:7px; cursor:pointer; font-size:12px; color:var(--teal-dark); display:flex; align-items:center; justify-content:center; padding:0;}
-  .pan-nudge-pad button:hover{background:var(--teal-tint); border-color:var(--teal);}
+  .pan-nudge-pad{display:grid; grid-template-columns:repeat(3,34px); grid-template-rows:repeat(3,34px); gap:4px;}
+  #photoPanControls .pan-nudge-pad button{margin:0; border:1px solid var(--line); background:var(--white); border-radius:8px; cursor:pointer; color:var(--teal-dark); display:flex; align-items:center; justify-content:center; padding:0; transition:all .12s; box-shadow:0 1px 2px rgba(0,0,0,.04);}
+  #photoPanControls .pan-nudge-pad button svg{width:16px; height:16px; flex-shrink:0;}
+  #photoPanControls .pan-nudge-pad button:hover{background:var(--teal); border-color:var(--teal); color:#fff; transform:translateY(-1px);}
+  #photoPanControls .pan-nudge-pad button:active{transform:translateY(0);}
   .pan-nudge-up{grid-column:2; grid-row:1;}
-  .pan-nudge-left{grid-column:1; grid-row:2;}
-  .pan-nudge-center{grid-column:2; grid-row:2; color:var(--ink-soft); font-size:9px;}
-  .pan-nudge-right{grid-column:3; grid-row:2;}
+  .pan-nudge-left{grid-column:3; grid-row:2;}
+  .pan-nudge-center{grid-column:2; grid-row:2; color:var(--tan);}
+  #photoPanControls .pan-nudge-center svg{width:14px; height:14px;}
+  .pan-nudge-right{grid-column:1; grid-row:2;}
   .pan-nudge-down{grid-column:2; grid-row:3;}
-  .pan-zoom-btn{width:30px; height:30px; border:1px solid var(--line); background:var(--white); border-radius:7px; cursor:pointer; font-size:16px; font-weight:700; color:var(--teal-dark);}
-  .pan-zoom-btn:hover{background:var(--teal-tint); border-color:var(--teal);}
+  #photoPanControls .pan-zoom-btn{margin:0; width:34px; height:34px; border:1px solid var(--line); background:var(--white); border-radius:8px; cursor:pointer; color:var(--teal-dark); display:inline-flex; align-items:center; justify-content:center; padding:0; transition:all .12s; box-shadow:0 1px 2px rgba(0,0,0,.04);}
+  #photoPanControls .pan-zoom-btn svg{width:16px; height:16px; flex-shrink:0;}
+  .pan-zoom-btn:hover{background:var(--teal); border-color:var(--teal); color:#fff; transform:translateY(-1px);}
+  .pan-zoom-btn:active{transform:translateY(0);}
   .ai-image-upload-label{display:inline-flex; align-items:center; gap:6px; font-size:12px; color:var(--teal-dark); border:1.5px dashed var(--line); border-radius:10px; padding:9px 12px; cursor:pointer; width:fit-content;}
   .ai-image-upload-label:hover{border-color:var(--blue);}
   .ai-image-preview{position:relative; display:inline-block; border-radius:10px; overflow:hidden; border:1px solid var(--line); line-height:0; width:fit-content;}
@@ -209,27 +214,27 @@
     <p>شكراً لمشاركتكم — سيتم مراجعة البيانات من قبل الجمعية قبل اعتمادها ضمن السجلات.</p>
     <div id="designPreviewSection" style="display:none; margin-top:18px;">
       <p class="field-hint" style="margin-bottom:8px;">معاينة أولية لتصميم مناسبتكم (للاطلاع فقط):</p>
-      <div style="overflow:auto; border:1px solid var(--line); border-radius:12px; padding:8px; background:#fafafa;">
-        <canvas id="designPreviewCanvas" style="max-width:100%; display:block; margin:0 auto;" oncontextmenu="return false;"></canvas>
-      </div>
-      <div id="photoPanControls" style="display:none; margin-top:12px; background:var(--teal-tint); border-radius:12px; padding:12px 14px; text-align:center;">
-        <p class="field-hint" style="margin:0 0 10px; font-weight:700; color:var(--teal-dark);">مو راضين عن موضع صورتكم داخل التصميم؟ عدّلوها بأنفسكم:</p>
+      <div id="photoPanControls" style="display:none; margin-bottom:12px; background:var(--teal-tint); border-radius:12px; padding:12px 14px; text-align:center;">
+        <p class="field-hint" id="photoPanPromptText" style="margin:0 0 10px; font-weight:700; color:var(--teal-dark);"></p>
         <div style="display:flex; align-items:center; justify-content:center; gap:22px; flex-wrap:wrap;">
           <div class="pan-nudge-pad">
-            <button type="button" class="pan-nudge-up" data-pan-action="up" title="أعلى">▲</button>
-            <button type="button" class="pan-nudge-left" data-pan-action="left" title="يسار">◀</button>
-            <button type="button" class="pan-nudge-center" data-pan-action="center" title="توسيط">●</button>
-            <button type="button" class="pan-nudge-right" data-pan-action="right" title="يمين">▶</button>
-            <button type="button" class="pan-nudge-down" data-pan-action="down" title="أسفل">▼</button>
+            <button type="button" class="pan-nudge-up" data-pan-action="up" title="أعلى"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg></button>
+            <button type="button" class="pan-nudge-left" data-pan-action="left" title="يسار"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 5l-7 7 7 7"/></svg></button>
+            <button type="button" class="pan-nudge-center" data-pan-action="center" title="توسيط"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="2.6"/><path d="M12 2.5v4M12 17.5v4M2.5 12h4M17.5 12h4"/></svg></button>
+            <button type="button" class="pan-nudge-right" data-pan-action="right" title="يمين"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg></button>
+            <button type="button" class="pan-nudge-down" data-pan-action="down" title="أسفل"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12l7 7 7-7"/></svg></button>
           </div>
           <div style="display:flex; align-items:center; gap:8px;">
-            <button type="button" class="pan-zoom-btn" data-pan-action="zoomOut" title="تبعيد">−</button>
+            <button type="button" class="pan-zoom-btn" data-pan-action="zoomOut" title="تبعيد"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M21 21l-4.8-4.8M8 10.5h5"/></svg></button>
             <span style="font-size:12px; color:var(--ink-soft);">تقريب/تبعيد</span>
-            <button type="button" class="pan-zoom-btn" data-pan-action="zoomIn" title="تقريب">+</button>
+            <button type="button" class="pan-zoom-btn" data-pan-action="zoomIn" title="تقريب"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M21 21l-4.8-4.8M10.5 8v5M8 10.5h5"/></svg></button>
           </div>
         </div>
         <button type="button" id="savePhotoPositionBtn" class="btn-secondary" style="margin-top:12px; width:100%;">✅ حفظ الموضع</button>
         <p id="photoPositionSavedMsg" style="display:none; font-size:11.5px; color:#2e7d32; margin-top:6px; font-weight:600;">✔ تم حفظ الموضع بنجاح</p>
+      </div>
+      <div style="overflow:auto; border:1px solid var(--line); border-radius:12px; padding:8px; background:#fafafa;">
+        <canvas id="designPreviewCanvas" style="max-width:100%; display:block; margin:0 auto;" oncontextmenu="return false;"></canvas>
       </div>
       <p style="margin-top:10px; background:#fff7e8; border:1px solid #f0d9a8; color:#8a5a00; border-radius:10px; padding:10px 14px; font-size:12.5px; font-weight:600; text-align:center;">⚠️ هذه نسخة غير نهائية — ستراجعها الجمعية وتُعالج عند الحاجة قبل اعتمادها ونشرها رسمياً</p>
     </div>
@@ -487,14 +492,16 @@
     return { id: s.id, type: s.type || "text", title: s.title || "", subtitle: s.subtitle || "", gradient: s.gradient || "brand", image: s.image || "", link: s.link || "" };
   }
   var FOOTER_CREDIT_DEFAULT = "صُنع بحب من قبل جمعية العوامية الخيرية";
+  var PHOTO_PAN_PROMPT_DEFAULT = "مو راضين عن موضع صورتكم داخل التصميم؟ عدّلوها بأنفسكم:";
   var _publicFormConfigCache = null;
   function loadPublicFormConfig(){
-    var cfg = { footerMessage: "", footerCredit: FOOTER_CREDIT_DEFAULT, banner: { enabled: BANNER_DEFAULTS.enabled, intervalSeconds: BANNER_DEFAULTS.intervalSeconds, slides: BANNER_DEFAULTS.slides.map(copyBannerSlide) } };
+    var cfg = { footerMessage: "", footerCredit: FOOTER_CREDIT_DEFAULT, photoPanPrompt: PHOTO_PAN_PROMPT_DEFAULT, banner: { enabled: BANNER_DEFAULTS.enabled, intervalSeconds: BANNER_DEFAULTS.intervalSeconds, slides: BANNER_DEFAULTS.slides.map(copyBannerSlide) } };
     CATEGORIES.forEach(function(c){ cfg[c.key] = { hidden: [], hints: {}, labels: {}, custom: [] }; });
     var p = _publicFormConfigCache;
     if(p){
       if(typeof p.footerMessage === "string") cfg.footerMessage = p.footerMessage;
       if(typeof p.footerCredit === "string") cfg.footerCredit = p.footerCredit;
+      if(typeof p.photoPanPrompt === "string") cfg.photoPanPrompt = p.photoPanPrompt;
       if(p.banner){
         if(typeof p.banner.enabled === "boolean") cfg.banner.enabled = p.banner.enabled;
         if(typeof p.banner.intervalSeconds === "number" && p.banner.intervalSeconds >= 2) cfg.banner.intervalSeconds = p.banner.intervalSeconds;
@@ -1343,6 +1350,8 @@
         if(hasPhotoField && rec.photo){
           _panState = { rec: rec, tmpl: tmpl, canvas: canvas };
           if(panControls) panControls.style.display = "block";
+          var promptEl = document.getElementById("photoPanPromptText");
+          if(promptEl) promptEl.textContent = loadPublicFormConfig().photoPanPrompt || PHOTO_PAN_PROMPT_DEFAULT;
         } else {
           _panState = null;
           if(panControls) panControls.style.display = "none";

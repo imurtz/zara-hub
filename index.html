@@ -607,9 +607,9 @@
   .tmpl-nudge-pad button{border:1px solid var(--line); background:var(--white); border-radius:6px; cursor:pointer; font-size:11px; color:var(--teal-dark); display:flex; align-items:center; justify-content:center; padding:0;}
   .tmpl-nudge-pad button:hover{background:var(--teal-tint); border-color:var(--teal);}
   .tmpl-nudge-up{grid-column:2; grid-row:1;}
-  .tmpl-nudge-left{grid-column:1; grid-row:2;}
+  .tmpl-nudge-left{grid-column:3; grid-row:2;}
   .tmpl-nudge-center{grid-column:2; grid-row:2; color:var(--ink-soft); font-size:8px;}
-  .tmpl-nudge-right{grid-column:3; grid-row:2;}
+  .tmpl-nudge-right{grid-column:1; grid-row:2;}
   .tmpl-nudge-down{grid-column:2; grid-row:3;}
   .tmpl-field-group summary{cursor:pointer; font-size:11.5px; font-weight:700; color:var(--teal-dark); padding:2px 0; list-style:none;}
   .tmpl-field-group summary::-webkit-details-marker{display:none;}
@@ -5545,13 +5545,15 @@
     return { id: s.id, type: s.type || "text", title: s.title || "", subtitle: s.subtitle || "", gradient: s.gradient || "brand", image: s.image || "", link: s.link || "" };
   }
   var FOOTER_CREDIT_DEFAULT = "صُنع بحب من قبل جمعية العوامية الخيرية";
+  var PHOTO_PAN_PROMPT_DEFAULT = "مو راضين عن موضع صورتكم داخل التصميم؟ عدّلوها بأنفسكم:";
   function loadPublicFormConfig(){
-    var cfg = { footerMessage: "", footerCredit: FOOTER_CREDIT_DEFAULT, banner: { enabled: BANNER_DEFAULTS.enabled, intervalSeconds: BANNER_DEFAULTS.intervalSeconds, slides: BANNER_DEFAULTS.slides.map(copyBannerSlide) } };
+    var cfg = { footerMessage: "", footerCredit: FOOTER_CREDIT_DEFAULT, photoPanPrompt: PHOTO_PAN_PROMPT_DEFAULT, banner: { enabled: BANNER_DEFAULTS.enabled, intervalSeconds: BANNER_DEFAULTS.intervalSeconds, slides: BANNER_DEFAULTS.slides.map(copyBannerSlide) } };
     EVENTS_CATEGORIES.forEach(function(c){ cfg[c.key] = { hidden: [], hints: {}, labels: {}, custom: [] }; });
     var p = _publicFormConfigCache;
     if(p){
       if(typeof p.footerMessage === "string") cfg.footerMessage = p.footerMessage;
       if(typeof p.footerCredit === "string") cfg.footerCredit = p.footerCredit;
+      if(typeof p.photoPanPrompt === "string") cfg.photoPanPrompt = p.photoPanPrompt;
       if(p.banner){
         if(typeof p.banner.enabled === "boolean") cfg.banner.enabled = p.banner.enabled;
         if(typeof p.banner.intervalSeconds === "number" && p.banner.intervalSeconds >= 2) cfg.banner.intervalSeconds = p.banner.intervalSeconds;
@@ -7134,6 +7136,10 @@
       '<label style="display:block; font-size:12.5px; font-weight:700; color:var(--teal-dark); margin-bottom:6px;">عبارة الشكر بجانب شعار الجمعية (أسفل الصفحة تماماً)</label>' +
       '<input type="text" id="publicCfgFooterCredit" value="' + escapeHTML(cfg.footerCredit || "") + '" placeholder="' + escapeHTML(FOOTER_CREDIT_DEFAULT) + '" style="width:100%; padding:10px 12px; border:1.5px solid var(--line); border-radius:10px; font-size:13px; font-family:inherit;"/>' +
     '</div>';
+    html += '<div style="margin-top:14px;">' +
+      '<label style="display:block; font-size:12.5px; font-weight:700; color:var(--teal-dark); margin-bottom:6px;">عبارة دعوة تعديل موضع الصورة (تظهر أعلى معاينة التصميم بعد التسجيل)</label>' +
+      '<input type="text" id="publicCfgPhotoPanPrompt" value="' + escapeHTML(cfg.photoPanPrompt || "") + '" placeholder="' + escapeHTML(PHOTO_PAN_PROMPT_DEFAULT) + '" style="width:100%; padding:10px 12px; border:1.5px solid var(--line); border-radius:10px; font-size:13px; font-family:inherit;"/>' +
+    '</div>';
     html += '</div>';
     return html;
   }
@@ -8115,6 +8121,10 @@
       var pCfg3b = loadPublicFormConfig();
       pCfg3b.footerCredit = e.target.value;
       savePublicFormConfig(pCfg3b);
+    } else if(e.target.id === "publicCfgPhotoPanPrompt"){
+      var pCfg3c = loadPublicFormConfig();
+      pCfg3c.photoPanPrompt = e.target.value;
+      savePublicFormConfig(pCfg3c);
     } else if(e.target.matches('[data-action="public-cfg-banner-toggle"]')){
       var pCfg5 = loadPublicFormConfig();
       pCfg5.banner.enabled = e.target.checked;
