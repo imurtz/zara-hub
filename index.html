@@ -5163,7 +5163,18 @@
     if(f.type === "image" && f.fit === "contain" && f.containOverride) return f.containOverride;
     return f;
   }
-  function tmplResolveImageStyle(f){
+  // تعديل موضع/تقريب اختياري خاص بسجل بعينه — يُضاف فوق إعداد الحقل الأساسي بالقالب (المشترك بين كل السجلات)
+  // هذا يسمح لصاحب التسجيل بضبط موضع صورته بنفسه من صفحة التسجيل العامة دون التأثير على بقية السجلات التي تستخدم نفس القالب
+  function tmplRecordPanAdjust(f, record){
+    if(!record || f.type !== "image") return { dx: 0, dy: 0, zoomMul: 1 };
+    var dx = record[f.key + "PanX"], dy = record[f.key + "PanY"], zm = record[f.key + "ZoomAdj"];
+    return {
+      dx: typeof dx === "number" ? dx : 0,
+      dy: typeof dy === "number" ? dy : 0,
+      zoomMul: (typeof zm === "number" && zm > 0) ? zm : 1
+    };
+  }
+  function tmplResolveImageStyle(f, record){
     var fit = f.fit || (f.shape === "transparent" ? "contain" : "cover");
     var radius;
     if(f.radiusTL != null || f.radiusTR != null || f.radiusBR != null || f.radiusBL != null){
@@ -5176,12 +5187,16 @@
       radius = { tl: 28, tr: 28, br: 28, bl: 28 };
     }
     var g = tmplGeomTarget(f);
+    var baseZoom = (typeof g.zoom === "number" && g.zoom > 0) ? g.zoom : 1;
+    var baseOffsetX = typeof g.offsetX === "number" ? g.offsetX : 0;
+    var baseOffsetY = typeof g.offsetY === "number" ? g.offsetY : 0;
+    var adj = tmplRecordPanAdjust(f, record);
     return {
       fit: fit,
       radius: radius,
-      zoom: (typeof g.zoom === "number" && g.zoom > 0) ? g.zoom : 1,
-      offsetX: typeof g.offsetX === "number" ? g.offsetX : 0,
-      offsetY: typeof g.offsetY === "number" ? g.offsetY : 0
+      zoom: baseZoom * adj.zoomMul,
+      offsetX: Math.max(-1, Math.min(1, baseOffsetX + adj.dx)),
+      offsetY: Math.max(-1, Math.min(1, baseOffsetY + adj.dy))
     };
   }
   function loadImageAsync(src){
@@ -5224,7 +5239,7 @@
         } else {
           var img = await loadImageAsync(srcVal);
           if(img){
-            var imgStyle = tmplResolveImageStyle(f);
+            var imgStyle = tmplResolveImageStyle(f, record);
             if(imgStyle.fit === "contain") drawImageContain(ctx, img, imgGeom.x, imgGeom.y, imgGeom.boxWidth, imgGeom.boxHeight, imgStyle.radius, imgStyle.zoom, imgStyle.offsetX, imgStyle.offsetY);
             else drawImageCover(ctx, img, imgGeom.x, imgGeom.y, imgGeom.boxWidth, imgGeom.boxHeight, imgStyle.radius, imgStyle.zoom, imgStyle.offsetX, imgStyle.offsetY);
           } else {
