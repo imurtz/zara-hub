@@ -3,6 +3,7 @@
 // مفتاح GEMINI_API_KEY يُحفظ كسر (secret) في إعدادات الـ Worker على Cloudflare — لا يظهر هنا إطلاقاً.
 
 const ALLOWED_ORIGINS = [
+  "https://gzara.org",
   "https://imurtz.github.io",
   "http://localhost:3000" // للاختبار المحلي فقط
 ];
