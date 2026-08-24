@@ -418,14 +418,6 @@
   .stat-pill-row .val{font-size:16px; font-weight:600; color:var(--teal-dark); direction:ltr;}
   .stat-pill-row .lbl{flex:1; font-size:12.5px; font-weight:500; color:var(--ink);}
   .report-empty{color:var(--ink-soft); font-size:12.5px; text-align:center; padding:10px 0;}
-  .media-grid{display:grid; grid-template-columns:repeat(auto-fill, minmax(210px, 1fr)); gap:16px;}
-  .media-card{background:var(--white); border:1px solid var(--line); border-radius:14px; overflow:hidden; box-shadow:var(--shadow); display:flex; flex-direction:column;}
-  .media-card img{width:100%; height:130px; object-fit:cover; display:block;}
-  .media-card-noimg{width:100%; height:130px; background:var(--teal-tint); display:flex; align-items:center; justify-content:center; color:var(--teal);}
-  .media-card-noimg .icon{width:34px; height:34px;}
-  .media-card-body{padding:12px; display:flex; flex-direction:column; gap:6px;}
-  .media-card-body b{font-size:13px; color:var(--ink);}
-  .media-card-body p{font-size:11.5px; color:var(--ink-soft); margin:0; line-height:1.5;}
   .photo-grid{display:flex; flex-wrap:wrap; align-items:flex-end; gap:8px; margin:8px 0;}
   .photo-thumb{position:relative; border-radius:10px; overflow:hidden; border:1px solid var(--line); flex-shrink:0; line-height:0;}
   .photo-thumb img{display:block; height:120px; width:auto; max-width:220px; object-fit:contain;}
@@ -1037,14 +1029,6 @@
       <span class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="9" width="16" height="11" rx="1.5"/><path d="M4 13h16M12 9v11"/><path d="M12 9c0-2.2-1.6-4-3.5-4S6 6.3 6 7.8 7.6 9 9.5 9H12zM12 9c0-2.2 1.6-4 3.5-4S18 6.3 18 7.8 16.4 9 14.5 9H12z"/></svg></span>
       المناسبات الاجتماعية
     </div>
-    <div class="nav-tab" data-section="media">
-      <span class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="8.5" cy="10" r="1.7"/><path d="M3 16l5-4 4 3 4-3.5 5 4.5"/></svg></span>
-      الدليل الإعلامي
-    </div>
-    <div class="nav-tab" data-section="donations">
-      <span class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-4.35-9.5-8.5C.5 8.5 3 5 6.5 5c2 0 3.5 1.2 4.5 2.5C12 6.2 13.5 5 15.5 5 19 5 21.5 8.5 21.5 12.5 19 16.65 12 21 12 21z"/></svg></span>
-      التبرعات
-    </div>
     <div class="nav-tab admin-tab" data-section="admin" id="adminTabBtn" style="display:none;">
       <span class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3.2"/><path d="M12 2.5v3M12 18.5v3M21.5 12h-3M5.5 12h-3M18.5 5.5l-2 2M7.5 16.5l-2 2M18.5 18.5l-2-2M7.5 7.5l-2-2"/></svg></span>
       لوحة التحكم
@@ -1064,13 +1048,6 @@
     <div class="section-view" id="view-events">
       <div id="eventsRoot"></div>
     </div>
-    <div class="section-view" id="view-media">
-      <div id="mediaLibraryRoot"></div>
-    </div>
-    <div class="section-view" id="view-donations">
-      <div id="donationsRoot"></div>
-    </div>
-
     <!-- ===== Admin section ===== -->
     <div class="section-view" id="view-admin">
       <div class="admin-accordion" id="adminAccordion">
@@ -1271,9 +1248,7 @@
     { key: "tasks", label: "المهام الوظيفية" },
     { key: "annual", label: "التقرير السنوي" },
     { key: "executive", label: "التقرير التنفيذي" },
-    { key: "events", label: "المناسبات الاجتماعية" },
-    { key: "media", label: "الدليل الإعلامي" },
-    { key: "donations", label: "التبرعات" }
+    { key: "events", label: "المناسبات الاجتماعية" }
   ];
 
   var DEFAULT_ADMIN = {
@@ -1381,8 +1356,6 @@
     renderExecSettingsPanel();
     renderEventsHub();
     renderEventsSettingsPanel();
-    renderMediaLibrary();
-    renderDonations();
     document.getElementById("chatFabBtn").style.display = "flex";
     applyHashToApp();
   }
@@ -8324,266 +8297,6 @@
   chatPanelEl.addEventListener("keydown", function(e){
     if(e.key === "Enter" && e.target.id === "chatMessageInput"){ e.preventDefault(); sendChatMessage(); }
   });
-
-  // ===== التبرعات =====
-  var _donationsCache = [];
-  db.collection("donations").onSnapshot(function(snap){
-    _donationsCache = snap.docs.map(function(d){ return d.data(); });
-    if(currentUser) renderDonations();
-  }, function(err){ console.error("donations snapshot error", err); });
-  function loadDonations(){ return _donationsCache; }
-  function genDonationId(){ return "don-" + Date.now().toString(36) + Math.random().toString(36).slice(2, 8); }
-  var DONATION_METHODS = ["نقدي", "تحويل بنكي", "بطاقة ائتمان", "أخرى"];
-  var donationsUI = { formOpen: false, editId: null, search: "" };
-
-  function donationFormFieldsHTML(d){
-    d = d || {};
-    return '<div class="event-form-grid">' +
-      '<div class="event-field"><label>اسم المتبرع</label><input type="text" id="donDonorName" value="' + escapeHTML(d.donorName || "") + '" placeholder="اسم المتبرع (أو اتركه فارغاً لمتبرع مجهول)"/></div>' +
-      '<div class="event-field"><label>المبلغ (ريال)</label><input type="number" id="donAmount" min="0" step="0.01" value="' + (d.amount != null ? d.amount : "") + '"/></div>' +
-      '<div class="event-field"><label>التاريخ</label><input type="date" id="donDate" value="' + escapeHTML(d.date || new Date().toISOString().slice(0, 10)) + '"/></div>' +
-      '<div class="event-field"><label>طريقة التبرع</label><div class="select-wrap"><select id="donMethod">' + DONATION_METHODS.map(function(m){ return '<option value="' + m + '"' + (d.method === m ? " selected" : "") + '>' + m + '</option>'; }).join("") + '</select></div></div>' +
-      '<div class="event-field"><label>الغرض/المشروع (اختياري)</label><input type="text" id="donCampaign" value="' + escapeHTML(d.campaign || "") + '" placeholder="مثال: كسوة الشتاء"/></div>' +
-      '<div class="event-field"><label>رقم التواصل (اختياري)</label><input type="text" id="donPhone" value="' + escapeHTML(d.phone || "") + '"/></div>' +
-      '<div class="event-field full-field"><label>ملاحظات (اختياري)</label><textarea id="donNotes" rows="2">' + escapeHTML(d.notes || "") + '</textarea></div>' +
-    '</div>';
-  }
-  function renderDonationForm(){
-    var wrap = document.getElementById("donFormWrap");
-    if(!wrap) return;
-    var editing = donationsUI.editId ? loadDonations().find(function(d){ return d.id === donationsUI.editId; }) : null;
-    var html = '<div class="report-section-card" style="margin-bottom:18px;"><h3>' + (editing ? "تعديل تبرع" : "إضافة تبرع جديد") + '</h3>' +
-      donationFormFieldsHTML(editing) +
-      '<div class="modal-actions" style="margin-top:16px;"><button type="button" class="btn-secondary" data-action="don-cancel">إلغاء</button><button type="button" class="btn-primary" data-action="don-save">حفظ</button></div>' +
-    '</div>';
-    setHTML(wrap, html);
-  }
-  function saveDonationFromForm(){
-    var donorName = document.getElementById("donDonorName").value.trim();
-    var amount = parseFloat(document.getElementById("donAmount").value);
-    var date = document.getElementById("donDate").value;
-    var method = document.getElementById("donMethod").value;
-    var campaign = document.getElementById("donCampaign").value.trim();
-    var phone = document.getElementById("donPhone").value.trim();
-    var notes = document.getElementById("donNotes").value.trim();
-    if(!amount || amount <= 0){ showToast("أدخل مبلغاً صحيحاً"); return; }
-    if(!date){ showToast("حدد تاريخ التبرع"); return; }
-    var all = loadDonations();
-    if(donationsUI.editId){
-      var rec = all.find(function(d){ return d.id === donationsUI.editId; });
-      if(rec){
-        rec.donorName = donorName; rec.amount = amount; rec.date = date; rec.method = method; rec.campaign = campaign; rec.phone = phone; rec.notes = notes; rec.updatedAt = Date.now();
-        db.collection("donations").doc(rec.id).set(rec);
-      }
-    } else {
-      var newRec = { id: genDonationId(), donorName: donorName, amount: amount, date: date, method: method, campaign: campaign, phone: phone, notes: notes, createdAt: Date.now(), createdByName: currentUser.name };
-      db.collection("donations").doc(newRec.id).set(newRec);
-    }
-    donationsUI.formOpen = false;
-    donationsUI.editId = null;
-    showToast("تم الحفظ");
-  }
-  function bindDonationsEvents(){
-    var root = document.getElementById("donationsRoot");
-    if(!root || root._bound) return;
-    root._bound = true;
-    root.addEventListener("click", function(e){
-      var btn = e.target.closest("[data-action]");
-      if(!btn) return;
-      switch(btn.dataset.action){
-        case "don-add-open": donationsUI.formOpen = true; donationsUI.editId = null; renderDonationForm(); break;
-        case "don-edit": donationsUI.formOpen = true; donationsUI.editId = btn.dataset.id; renderDonationForm(); break;
-        case "don-cancel": donationsUI.formOpen = false; donationsUI.editId = null; renderDonations(); break;
-        case "don-save": saveDonationFromForm(); renderDonations(); break;
-        case "don-delete":
-          if(confirm("حذف هذا التبرع نهائياً؟")){
-            db.collection("donations").doc(btn.dataset.id).delete();
-            showToast("تم الحذف");
-          }
-          break;
-      }
-    });
-    root.addEventListener("input", function(e){
-      if(e.target.id === "donSearchInput"){ donationsUI.search = e.target.value; renderDonations(); }
-    });
-  }
-  function renderDonations(){
-    var root = document.getElementById("donationsRoot");
-    if(!root || !currentUser) return;
-    var all = loadDonations().slice().sort(function(a, b){ return (b.date || "").localeCompare(a.date || ""); });
-    var totalAmount = all.reduce(function(s, d){ return s + (Number(d.amount) || 0); }, 0);
-    var thisMonthKey = new Date().toISOString().slice(0, 7);
-    var thisMonthTotal = all.filter(function(d){ return (d.date || "").slice(0, 7) === thisMonthKey; }).reduce(function(s, d){ return s + (Number(d.amount) || 0); }, 0);
-
-    var html = '<div class="stat-card-grid" style="margin-bottom:20px;">' +
-      '<div class="stat-card" style="cursor:default;"><div class="num">' + all.length + '</div><div class="lbl">إجمالي عدد التبرعات</div></div>' +
-      '<div class="stat-card" style="cursor:default;"><div class="num">' + totalAmount.toLocaleString("ar-SA") + '</div><div class="lbl">إجمالي المبالغ (ريال)</div></div>' +
-      '<div class="stat-card" style="cursor:default;"><div class="num">' + thisMonthTotal.toLocaleString("ar-SA") + '</div><div class="lbl">تبرعات هذا الشهر (ريال)</div></div>' +
-    '</div>';
-
-    html += '<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; flex-wrap:wrap; gap:10px;">' +
-      '<input type="text" id="donSearchInput" class="events-search" placeholder="بحث بالاسم..." value="' + escapeHTML(donationsUI.search) + '" style="max-width:260px;"/>' +
-      '<button type="button" class="btn-primary" data-action="don-add-open">+ إضافة تبرع</button>' +
-    '</div>';
-
-    html += '<div id="donFormWrap"></div>';
-
-    var filtered = donationsUI.search ? all.filter(function(d){ return (d.donorName || "").indexOf(donationsUI.search) > -1; }) : all;
-    if(!filtered.length){
-      html += '<p class="report-empty">لا توجد تبرعات مسجّلة بعد</p>';
-    } else {
-      html += '<div class="events-table-wrap"><table class="events-table"><thead><tr><th>التاريخ</th><th>المتبرع</th><th>المبلغ</th><th>الطريقة</th><th>الغرض</th><th>إجراءات</th></tr></thead><tbody>';
-      filtered.forEach(function(d){
-        html += '<tr>' +
-          '<td>' + escapeHTML(d.date || "—") + '</td>' +
-          '<td>' + escapeHTML(d.donorName || "متبرع مجهول") + '</td>' +
-          '<td style="font-weight:700; color:var(--teal-dark);">' + (Number(d.amount) || 0).toLocaleString("ar-SA") + ' ﷼</td>' +
-          '<td>' + escapeHTML(d.method || "—") + '</td>' +
-          '<td>' + escapeHTML(d.campaign || "—") + '</td>' +
-          '<td class="row-actions">' +
-            '<button type="button" class="icon-btn" data-action="don-edit" data-id="' + d.id + '" title="تعديل"><span class="icon">✏️</span></button>' +
-            '<button type="button" class="icon-btn danger" data-action="don-delete" data-id="' + d.id + '" title="حذف"><span class="icon">' + ICON_DELETE + '</span></button>' +
-          '</td>' +
-        '</tr>';
-      });
-      html += '</tbody></table></div>';
-    }
-    setHTML(root, html);
-    if(donationsUI.formOpen) renderDonationForm();
-    bindDonationsEvents();
-  }
-
-  // ===== الدليل الإعلامي =====
-  var _mediaLibraryCache = [];
-  db.collection("mediaLibrary").onSnapshot(function(snap){
-    _mediaLibraryCache = snap.docs.map(function(d){ return d.data(); });
-    if(currentUser) renderMediaLibrary();
-  }, function(err){ console.error("mediaLibrary snapshot error", err); });
-  function loadMediaLibrary(){ return _mediaLibraryCache; }
-  function genMediaId(){ return "media-" + Date.now().toString(36) + Math.random().toString(36).slice(2, 8); }
-  var MEDIA_CATEGORIES_DEFAULT = ["شعارات", "صور فعاليات", "فيديوهات", "ملفات صحفية", "أخرى"];
-  var mediaUI = { formOpen: false, editId: null, categoryFilter: "", draftImage: "" };
-
-  function mediaCategoriesInUse(){
-    var cats = loadMediaLibrary().map(function(m){ return m.category; }).filter(Boolean);
-    return MEDIA_CATEGORIES_DEFAULT.concat(cats.filter(function(c){ return MEDIA_CATEGORIES_DEFAULT.indexOf(c) === -1; }));
-  }
-  function renderMediaForm(){
-    var wrap = document.getElementById("mediaFormWrap");
-    if(!wrap) return;
-    var editing = mediaUI.editId ? loadMediaLibrary().find(function(m){ return m.id === mediaUI.editId; }) : null;
-    if(editing && !mediaUI.draftImage) mediaUI.draftImage = editing.image || "";
-    var cats = mediaCategoriesInUse();
-    var html = '<div class="report-section-card" style="margin-bottom:18px;"><h3>' + (editing ? "تعديل عنصر" : "إضافة عنصر جديد") + '</h3>' +
-      '<div class="event-form-grid">' +
-        '<div class="event-field"><label>العنوان</label><input type="text" id="mediaTitle" value="' + escapeHTML(editing ? editing.title || "" : "") + '" placeholder="عنوان العنصر"/></div>' +
-        '<div class="event-field"><label>التصنيف</label><input type="text" id="mediaCategory" list="mediaCategoryList" value="' + escapeHTML(editing ? editing.category || "" : "") + '" placeholder="اختر أو اكتب تصنيفاً جديداً"/>' +
-          '<datalist id="mediaCategoryList">' + cats.map(function(c){ return '<option value="' + escapeHTML(c) + '">'; }).join("") + '</datalist>' +
-        '</div>' +
-        '<div class="event-field full-field"><label>الوصف (اختياري)</label><textarea id="mediaDescription" rows="2">' + escapeHTML(editing ? editing.description || "" : "") + '</textarea></div>' +
-        '<div class="event-field full-field"><label>الصورة (اختياري)</label>' +
-          (mediaUI.draftImage ? '<div class="photo-thumb"><img src="' + mediaUI.draftImage + '" alt=""/><button type="button" class="rm" data-action="media-remove-image">×</button></div>' : '<input type="file" accept="image/png,image/jpeg" id="mediaImageInput"/>') +
-        '</div>' +
-      '</div>' +
-      '<div class="modal-actions" style="margin-top:16px;"><button type="button" class="btn-secondary" data-action="media-cancel">إلغاء</button><button type="button" class="btn-primary" data-action="media-save">حفظ</button></div>' +
-    '</div>';
-    setHTML(wrap, html);
-  }
-  function saveMediaFromForm(){
-    var title = document.getElementById("mediaTitle").value.trim();
-    var category = document.getElementById("mediaCategory").value.trim();
-    var description = document.getElementById("mediaDescription").value.trim();
-    if(!title){ showToast("أدخل عنواناً للعنصر"); return; }
-    var all = loadMediaLibrary();
-    if(mediaUI.editId){
-      var rec = all.find(function(m){ return m.id === mediaUI.editId; });
-      if(rec){
-        rec.title = title; rec.category = category; rec.description = description; rec.image = mediaUI.draftImage || ""; rec.updatedAt = Date.now();
-        db.collection("mediaLibrary").doc(rec.id).set(rec);
-      }
-    } else {
-      var newRec = { id: genMediaId(), title: title, category: category, description: description, image: mediaUI.draftImage || "", createdAt: Date.now(), createdByName: currentUser.name };
-      db.collection("mediaLibrary").doc(newRec.id).set(newRec);
-    }
-    mediaUI.formOpen = false;
-    mediaUI.editId = null;
-    mediaUI.draftImage = "";
-    showToast("تم الحفظ");
-  }
-  function bindMediaEvents(){
-    var root = document.getElementById("mediaLibraryRoot");
-    if(!root || root._bound) return;
-    root._bound = true;
-    root.addEventListener("click", function(e){
-      var btn = e.target.closest("[data-action]");
-      if(!btn) return;
-      switch(btn.dataset.action){
-        case "media-add-open": mediaUI.formOpen = true; mediaUI.editId = null; mediaUI.draftImage = ""; renderMediaForm(); break;
-        case "media-edit": mediaUI.formOpen = true; mediaUI.editId = btn.dataset.id; mediaUI.draftImage = ""; renderMediaForm(); break;
-        case "media-cancel": mediaUI.formOpen = false; mediaUI.editId = null; mediaUI.draftImage = ""; renderMediaLibrary(); break;
-        case "media-save": saveMediaFromForm(); renderMediaLibrary(); break;
-        case "media-remove-image": mediaUI.draftImage = ""; renderMediaForm(); break;
-        case "media-delete":
-          if(confirm("حذف هذا العنصر نهائياً؟")){
-            db.collection("mediaLibrary").doc(btn.dataset.id).delete();
-            showToast("تم الحذف");
-          }
-          break;
-      }
-    });
-    root.addEventListener("change", function(e){
-      if(e.target.id === "mediaCategoryFilter"){ mediaUI.categoryFilter = e.target.value; renderMediaLibrary(); }
-      if(e.target.id === "mediaImageInput"){
-        var file = e.target.files && e.target.files[0];
-        if(!file) return;
-        if(file.size > 15 * 1024 * 1024){ showToast("حجم الملف كبير جداً"); return; }
-        compressEventImageFile(file, 400 * 1024, function(dataUrl){
-          if(!dataUrl){ showToast("تعذّرت قراءة الصورة"); return; }
-          mediaUI.draftImage = dataUrl;
-          renderMediaForm();
-        });
-      }
-    });
-  }
-  function renderMediaLibrary(){
-    var root = document.getElementById("mediaLibraryRoot");
-    if(!root || !currentUser) return;
-    var all = loadMediaLibrary().slice().sort(function(a, b){ return (b.createdAt || 0) - (a.createdAt || 0); });
-    var cats = mediaCategoriesInUse();
-
-    var html = '<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; flex-wrap:wrap; gap:10px;">' +
-      '<div class="dept-selector" style="margin:0;"><label>التصنيف</label><select id="mediaCategoryFilter"><option value="">الكل</option>' + cats.map(function(c){ return '<option value="' + escapeHTML(c) + '"' + (mediaUI.categoryFilter === c ? " selected" : "") + '>' + escapeHTML(c) + '</option>'; }).join("") + '</select></div>' +
-      '<button type="button" class="btn-primary" data-action="media-add-open">+ إضافة عنصر</button>' +
-    '</div>';
-
-    html += '<div id="mediaFormWrap"></div>';
-
-    var filtered = mediaUI.categoryFilter ? all.filter(function(m){ return m.category === mediaUI.categoryFilter; }) : all;
-    if(!filtered.length){
-      html += '<p class="report-empty">لا توجد عناصر في الدليل الإعلامي بعد</p>';
-    } else {
-      html += '<div class="media-grid">';
-      filtered.forEach(function(m){
-        html += '<div class="media-card">' +
-          (m.image ? '<img src="' + m.image + '" alt=""/>' : '<div class="media-card-noimg"><span class="icon">' + AICON.photo + '</span></div>') +
-          '<div class="media-card-body">' +
-            '<b>' + escapeHTML(m.title || "بدون عنوان") + '</b>' +
-            (m.category ? '<span class="prog-type-badge permanent" style="width:fit-content;">' + escapeHTML(m.category) + '</span>' : "") +
-            (m.description ? '<p>' + escapeHTML(m.description) + '</p>' : "") +
-            '<div class="row-actions" style="margin-top:8px;">' +
-              (m.image ? '<a class="icon-btn" href="' + m.image + '" download="' + escapeHTML(m.title || "media") + '.jpg" title="تنزيل"><span class="icon">⬇️</span></a>' : "") +
-              '<button type="button" class="icon-btn" data-action="media-edit" data-id="' + m.id + '" title="تعديل"><span class="icon">✏️</span></button>' +
-              '<button type="button" class="icon-btn danger" data-action="media-delete" data-id="' + m.id + '" title="حذف"><span class="icon">' + ICON_DELETE + '</span></button>' +
-            '</div>' +
-          '</div>' +
-        '</div>';
-      });
-      html += '</div>';
-    }
-    setHTML(root, html);
-    if(mediaUI.formOpen) renderMediaForm();
-    bindMediaEvents();
-  }
 
   // ===== restore session on load =====
   var session = getSession();
