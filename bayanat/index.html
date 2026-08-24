@@ -1287,6 +1287,36 @@
     }
     return true;
   }
+  // إضعاف جودة المعاينة بشكل غير قابل للاسترجاع: تصغير الدقة ثم تقليل مستويات الألوان (posterize) قبل التكبير مجدداً —
+  // يبقى التصميم والصورة والاسم واضحين للعين المجردة، لكن التفاصيل الدقيقة (ملامح الوجه، حواف النص) تُفقد فعلياً من بيانات البكسل
+  // نفسها (وليس مجرد طبقة شفافة فوقها)، فلا توجد إشارة أصلية نظيفة لأي أداة ذكاء اصطناعي لاستعادتها أو "تنظيفها".
+  function degradePreviewCanvas(canvas){
+    var w = canvas.width, h = canvas.height;
+    if(!w || !h) return;
+    var scale = Math.max(0.16, Math.min(0.30, 360 / Math.max(w, h)));
+    var sw = Math.max(1, Math.round(w * scale)), sh = Math.max(1, Math.round(h * scale));
+    var small = document.createElement("canvas");
+    small.width = sw; small.height = sh;
+    var sctx = small.getContext("2d");
+    sctx.imageSmoothingEnabled = true;
+    sctx.imageSmoothingQuality = "medium";
+    sctx.drawImage(canvas, 0, 0, sw, sh);
+    var levels = 6;
+    var step = 255 / (levels - 1);
+    var imgData = sctx.getImageData(0, 0, sw, sh);
+    var d = imgData.data;
+    for(var i = 0; i < d.length; i += 4){
+      d[i]   = Math.round(Math.round(d[i]   / step) * step);
+      d[i+1] = Math.round(Math.round(d[i+1] / step) * step);
+      d[i+2] = Math.round(Math.round(d[i+2] / step) * step);
+    }
+    sctx.putImageData(imgData, 0, 0);
+    var ctx = canvas.getContext("2d");
+    ctx.clearRect(0, 0, w, h);
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = "low";
+    ctx.drawImage(small, 0, 0, w, h);
+  }
   // علامة مائية متكررة بطبقتين متقاطعتين بزوايا وأحجام مختلفة — تصعّب الاستخلاص النظيف حتى بلقطة شاشة
   function drawPreviewWatermark(ctx, w, h){
     ctx.save();
@@ -1343,6 +1373,7 @@
       if(!tmpl) return;
       return renderTemplateToCanvasPublic(canvas, tmpl, rec).then(function(ok){
         if(!ok) return;
+        degradePreviewCanvas(canvas);
         drawPreviewWatermark(canvas.getContext("2d"), canvas.width, canvas.height);
         section.style.display = "block";
         var panControls = document.getElementById("photoPanControls");
@@ -1362,7 +1393,9 @@
   function rerenderPanPreview(){
     if(!_panState) return;
     renderTemplateToCanvasPublic(_panState.canvas, _panState.tmpl, _panState.rec).then(function(ok){
-      if(ok) drawPreviewWatermark(_panState.canvas.getContext("2d"), _panState.canvas.width, _panState.canvas.height);
+      if(!ok) return;
+      degradePreviewCanvas(_panState.canvas);
+      drawPreviewWatermark(_panState.canvas.getContext("2d"), _panState.canvas.width, _panState.canvas.height);
     });
   }
   function adjustPhotoPan(dx, dy){
