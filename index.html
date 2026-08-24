@@ -1363,7 +1363,7 @@
 
   // ===== توجيه بالرابط (Hash Routing) — كل قسم/تبويب/تصنيف له رابط خاص، يدعم الرجوع/التقدم بالمتصفح ولا يفقد الموضع الحالي عند التحديث =====
   var suppressHashHandler = false;
-  var EVENTS_TAB_KEYS = ["dashboard", "data-entry", "publish", "templates", "reports"];
+  var EVENTS_TAB_KEYS = ["dashboard", "data-entry", "publish", "templates", "reports", "trash"];
   function syncHashFromApp(){
     var activeTab = document.querySelector(".nav-tab.active");
     var section = activeTab ? activeTab.dataset.section : "tasks";
@@ -5293,6 +5293,48 @@
     return loadEventsData().find(function(r){ return r.id === id; });
   }
 
+  // ----- سلة مهملات المناسبات الاجتماعية — أي حذف (سجل مفرد، رفض، أو تفريغ تصنيف كامل) يُنقل هنا أولاً بدل الحذف الفوري -----
+  var _eventsTrashCache = [];
+  db.collection("eventsTrash").onSnapshot(function(snap){
+    _eventsTrashCache = snap.docs.map(function(d){ return d.data(); });
+    eventsFirestoreRefresh();
+  }, function(err){ console.error("eventsTrash snapshot error", err); });
+  function loadEventsTrash(){ return _eventsTrashCache; }
+  function trashEventRecords(records){
+    records.forEach(function(rec){
+      var trashRec = shallowCopy(rec);
+      trashRec.deletedAt = Date.now();
+      trashRec.deletedByName = currentUser ? currentUser.name : "";
+      db.collection("eventsTrash").doc(rec.id).set(trashRec);
+    });
+  }
+  function restoreEventFromTrash(id){
+    var rec = _eventsTrashCache.find(function(r){ return r.id === id; });
+    if(!rec) return;
+    var restored = shallowCopy(rec);
+    delete restored.deletedAt;
+    delete restored.deletedByName;
+    var all = loadEventsData();
+    all.push(restored);
+    saveEventsData(all);
+    db.collection("eventsTrash").doc(id).delete();
+    renderEventsHub();
+    showToast("تم استرجاع السجل");
+  }
+  function permanentlyDeleteFromTrash(id){
+    if(!confirm("حذف هذا السجل نهائياً؟ لا يمكن التراجع عن هذا الإجراء.")) return;
+    db.collection("eventsTrash").doc(id).delete();
+    renderEventsHub();
+    showToast("تم الحذف النهائي");
+  }
+  function emptyEventsTrash(){
+    if(!_eventsTrashCache.length) return;
+    if(!confirm("إفراغ سلة المهملات نهائياً؟ سيُحذف كل ما بها ولا يمكن التراجع عن ذلك.")) return;
+    _eventsTrashCache.forEach(function(r){ db.collection("eventsTrash").doc(r.id).delete(); });
+    renderEventsHub();
+    showToast("تم إفراغ سلة المهملات");
+  }
+
   var _eventsOptionsCache = null;
   db.collection("eventsMeta").doc("options").onSnapshot(function(doc){
     _eventsOptionsCache = doc.exists ? doc.data() : null;
@@ -5711,11 +5753,12 @@
   function deleteEventRecord(id){
     var rec = findEventRecord(id);
     if(!rec) return;
-    if(!confirm("حذف هذا السجل؟")) return;
+    if(!confirm("نقل هذا السجل لسلة المهملات؟ يمكن استرجاعه منها لاحقاً.")) return;
+    trashEventRecords([rec]);
     var all = loadEventsData().filter(function(r){ return r.id !== id; });
     saveEventsData(all);
     refreshEventsTable();
-    showToast("تم الحذف");
+    showToast("تم نقل السجل لسلة المهملات");
   }
   function approveEventRecord(id){
     if(!currentUser || currentUser.role !== "admin") return;
@@ -5737,20 +5780,23 @@
     if(!currentUser || currentUser.role !== "admin") return;
     var rec = findEventRecord(id);
     if(!rec) return;
-    if(!confirm("رفض وحذف هذا السجل المُرسل من الصفحة العامة؟")) return;
+    if(!confirm("رفض هذا السجل ونقله لسلة المهملات؟")) return;
+    trashEventRecords([rec]);
     var all = loadEventsData().filter(function(r){ return r.id !== id; });
     saveEventsData(all);
     renderEventsHub();
-    showToast("تم رفض السجل وحذفه");
+    showToast("تم رفض السجل ونقله لسلة المهملات");
   }
   function deleteAllEventsForCategory(catKey){
     var cat = EVENTS_CATEGORIES.find(function(c){ return c.key === catKey; });
     if(!cat) return;
-    if(!confirm('حذف جميع سجلات "' + cat.label + '"؟ هذا الإجراء لا يمكن التراجع عنه.')) return;
+    if(!confirm('نقل جميع سجلات "' + cat.label + '" لسلة المهملات؟')) return;
+    var toTrash = loadEventsData().filter(function(r){ return r.category === catKey; });
+    trashEventRecords(toTrash);
     var all = loadEventsData().filter(function(r){ return r.category !== catKey; });
     saveEventsData(all);
     refreshEventsTable();
-    showToast("تم حذف جميع السجلات");
+    showToast("تم نقل جميع السجلات لسلة المهملات");
   }
 
   function colTogglePanelHTML(cat){
@@ -6854,6 +6900,40 @@
     return html;
   }
 
+  function eventTrashRecordDisplayName(r){
+    return r.fullName || r.husbandName || r.deceasedName || "(بدون اسم)";
+  }
+  function eventsTrashHTML(){
+    var trash = loadEventsTrash().slice().sort(function(a, b){ return (b.deletedAt || 0) - (a.deletedAt || 0); });
+    var html = '<div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:16px; flex-wrap:wrap; gap:10px;">' +
+      '<p class="hint" style="margin:0;">السجلات هنا محذوفة ومنقولة لسلة المهملات — تقدر تسترجعها أو تحذفها نهائياً. لا تُحذف تلقائياً بعد فترة حالياً.</p>' +
+      (trash.length ? '<button type="button" class="btn-secondary" data-action="empty-events-trash" style="color:var(--danger); border-color:var(--danger); flex-shrink:0;">🗑️ إفراغ السلة نهائياً (' + trash.length + ')</button>' : '') +
+    '</div>';
+    if(!trash.length){
+      html += '<p class="report-empty">سلة المهملات فارغة</p>';
+      return html;
+    }
+    html += '<div class="events-table-wrap"><table class="events-table"><thead><tr>' +
+      '<th>التصنيف</th><th>الاسم</th><th>تاريخ الحذف</th><th>حُذف بواسطة</th><th>إجراءات</th>' +
+    '</tr></thead><tbody>';
+    trash.forEach(function(r){
+      var cat = EVENTS_CATEGORIES.find(function(c){ return c.key === r.category; });
+      var dateStr = r.deletedAt ? new Date(r.deletedAt).toLocaleString("ar-SA-u-ca-gregory", { year: "numeric", month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" }) : "—";
+      html += '<tr>' +
+        '<td><span class="prog-type-badge" style="background:' + eventCategoryColor(r.category) + '22; color:' + eventCategoryColor(r.category) + ';">' + escapeHTML(cat ? cat.label : r.category) + '</span></td>' +
+        '<td>' + escapeHTML(eventTrashRecordDisplayName(r)) + '</td>' +
+        '<td style="color:var(--ink-soft); font-size:12px;">' + escapeHTML(dateStr) + '</td>' +
+        '<td style="color:var(--ink-soft); font-size:12px;">' + escapeHTML(r.deletedByName || "—") + '</td>' +
+        '<td class="row-actions">' +
+          '<button type="button" class="icon-btn" data-action="restore-event-trash" data-id="' + r.id + '" title="استرجاع"><span class="icon">↩️</span></button>' +
+          '<button type="button" class="icon-btn danger" data-action="permanent-delete-event-trash" data-id="' + r.id + '" title="حذف نهائي"><span class="icon">' + ICON_DELETE + '</span></button>' +
+        '</td>' +
+      '</tr>';
+    });
+    html += '</tbody></table></div>';
+    return html;
+  }
+
   // ----- الموزّع الرئيسي -----
   function eventsSubnavBtnHTML(key, label, icon){
     return '<button type="button" data-action="events-subnav" data-tab="' + key + '" class="' + (eventsUI.tab === key ? "active" : "") + '"><span class="icon">' + icon + '</span>' + label + '</button>';
@@ -6867,6 +6947,7 @@
       eventsSubnavBtnHTML("publish", "مهام النشر", AICON.megaphone) +
       eventsSubnavBtnHTML("templates", "قوالب التصميم", EVICON.grad) +
       eventsSubnavBtnHTML("reports", "التقارير والإحصائيات", AICON.chart) +
+      eventsSubnavBtnHTML("trash", "سلة المهملات" + (loadEventsTrash().length ? " (" + loadEventsTrash().length + ")" : ""), ICON_DELETE) +
     '</div><div id="eventsSubRoot"></div>';
     setHTML(root, html);
     var subRoot = document.getElementById("eventsSubRoot");
@@ -6874,6 +6955,7 @@
     else if(eventsUI.tab === "publish") setHTML(subRoot, eventsPublishHTML());
     else if(eventsUI.tab === "templates") setHTML(subRoot, tmplManagerHTML());
     else if(eventsUI.tab === "reports") setHTML(subRoot, eventsReportsHTML());
+    else if(eventsUI.tab === "trash") setHTML(subRoot, eventsTrashHTML());
     else setHTML(subRoot, eventsDashboardHTML());
   }
 
@@ -7038,6 +7120,15 @@
         break;
       case "print-events-report":
         window.print();
+        break;
+      case "empty-events-trash":
+        emptyEventsTrash();
+        break;
+      case "restore-event-trash":
+        restoreEventFromTrash(btn.dataset.id);
+        break;
+      case "permanent-delete-event-trash":
+        permanentlyDeleteFromTrash(btn.dataset.id);
         break;
       case "toggle-row-menu": {
         var rmWrap = btn.closest(".row-menu-wrap");
