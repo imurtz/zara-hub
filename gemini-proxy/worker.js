@@ -21,6 +21,16 @@ const WORDING_POLICY = `أنت مساعد صياغة لجمعية العوامي
 مثال توضيحي (مذكر) على الشكل المطلوب وعلى طول يقع داخل النطاق المسموح (210 حرفاً تقريباً):
 "وذلك بمناسبة حصوله على شهادة مدرّب معتمد من مؤسسة الملك عبدالعزيز ورجاله للموهبة، لتدريب الطلاب في أولمبياد نسمو بتخصص الأحياء، وكذلك برنامج الأولمبياد العالمي للأحياء (iBO)، على المستويين المحلي والدولي."`;
 
+const EXTRACT_POLICY = `أنت مساعد استخراج بيانات لنموذج تسجيل مناسبات اجتماعية بجمعية خيرية. تُعطى قائمة حقول النموذج (المفتاح key، التسمية label، النوع type، وخيارات options إن وُجدت)، ونصاً خاماً غير منظم (رسالة واتساب أو ملاحظة مثلاً) يحتوي بيانات شخص أو مناسبة.
+
+قواعد صارمة يجب الالتزام بها دائماً:
+1. أعد كائن JSON فقط لا غير، بلا أي نص أو شرح خارجه. مفاتيح الكائن هي بالضبط قيم key المُعطاة لكل حقل، والقيم نصوص.
+2. لا تخترع أي معلومة غير موجودة صراحة أو بوضوح تام في النص. إن لم تجد قيمة واضحة وموثوقة لحقل معيّن، لا تُدرج مفتاحه في الكائن إطلاقاً — لا نص فارغ ولا تخمين.
+3. للحقول من نوع select أو selectOther التي معها options: اختر القيمة الأقرب من القائمة بالضبط كما هي مكتوبة حرفياً إن وُجدت مطابقة معقولة. إن كان النوع selectOther ولم توجد مطابقة ضمن options، أعد النص المستخرج من الرسالة كما هو (بدون تعديل).
+4. للحقول من نوع date: أعد التاريخ بصيغة YYYY-MM-DD حصراً إن استطعت تحديده بثقة (حوّل أي صيغة تاريخ واردة في النص لهذه الصيغة)، وإلا لا تُدرج الحقل.
+5. للحقول الشبيهة بـ"الجنس" ذات خيارين (ذكر/أنثى): استنتج من السياق (الاسم، صيغة الأفعال والضمائر) إن كان واضحاً.
+6. حقول الصور والملفات ليست ضمن القائمة المُعطاة أصلاً — تجاهل أي ذكر لصور في النص.`;
+
 function corsHeaders(origin) {
   const allowed = ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0];
   return {
@@ -51,6 +61,10 @@ export default {
       body = await request.json();
     } catch (e) {
       return json({ error: "invalid_json" }, 400, headers);
+    }
+
+    if (body.action === "extract") {
+      return handleExtract(body, env, headers);
     }
 
     const fullName = clean(body.fullName, 200);
@@ -136,6 +150,66 @@ async function callGemini(env, promptText, image) {
     data.candidates[0].content.parts && data.candidates[0].content.parts[0] &&
     data.candidates[0].content.parts[0].text ? data.candidates[0].content.parts[0].text.trim() : "";
   return text;
+}
+async function handleExtract(body, env, headers) {
+  const pastedText = clean(body.pastedText, 4000);
+  const fields = Array.isArray(body.fields) ? body.fields.slice(0, 40) : [];
+  if (!pastedText || !fields.length) {
+    return json({ error: "missing_input" }, 400, headers);
+  }
+
+  const fieldsDesc = fields.map(function (f) {
+    var line = "- key: \"" + f.key + "\", label: \"" + f.label + "\", type: \"" + f.type + "\"";
+    if (Array.isArray(f.options) && f.options.length) {
+      line += ", options: [" + f.options.slice(0, 80).map(function (o) { return "\"" + o + "\""; }).join(", ") + "]";
+    }
+    return line;
+  }).join("\n");
+
+  const prompt = "حقول النموذج:\n" + fieldsDesc + "\n\nالنص المطلوب استخراج البيانات منه:\n\"\"\"\n" + pastedText + "\n\"\"\"";
+
+  let extracted;
+  try {
+    extracted = await callGeminiExtract(env, prompt);
+  } catch (e) {
+    const isQuota = e.message === "quota_exceeded";
+    return json({ error: isQuota ? "quota_exceeded" : "gemini_error" }, isQuota ? 429 : 502, headers);
+  }
+
+  if (!extracted) {
+    return json({ error: "empty_extraction" }, 502, headers);
+  }
+  return json({ fields: extracted }, 200, headers);
+}
+
+async function callGeminiExtract(env, promptText) {
+  const geminiRes = await fetch(
+    "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=" + env.GEMINI_API_KEY,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        contents: [{ parts: [{ text: promptText }] }],
+        systemInstruction: { parts: [{ text: EXTRACT_POLICY }] },
+        generationConfig: { temperature: 0.2, maxOutputTokens: 1024, responseMimeType: "application/json" }
+      })
+    }
+  );
+  if (!geminiRes.ok) {
+    throw new Error(geminiRes.status === 429 ? "quota_exceeded" : "gemini_bad_status");
+  }
+  const data = await geminiRes.json();
+  const text = data && data.candidates && data.candidates[0] && data.candidates[0].content &&
+    data.candidates[0].content.parts && data.candidates[0].content.parts[0] &&
+    data.candidates[0].content.parts[0].text ? data.candidates[0].content.parts[0].text.trim() : "";
+  if (!text) return null;
+  try {
+    const parsed = JSON.parse(text);
+    if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) return parsed;
+    return null;
+  } catch (e) {
+    return null;
+  }
 }
 // يحوّل data URL (data:image/jpeg;base64,....) إلى {mimeType, base64} لإرساله لجيمناي — أو null إن كان غير صالح
 function parseImageDataUrl(v) {
