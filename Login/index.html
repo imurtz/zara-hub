@@ -471,6 +471,11 @@
   .panel-close{background:none; border:none; font-size:20px; color:var(--ink-soft); cursor:pointer; line-height:1;}
   .panel input, .panel textarea, .panel select{width:100%; padding:10px 12px; border:1.5px solid var(--line); border-radius:10px; font-size:13px; background:#fbfcfc; color:var(--ink); margin-bottom:10px; font-family:inherit;}
   .panel textarea{resize:vertical;}
+  .event-smart-paste-box{background:var(--blue-tint); border:1.5px solid #cfe4fb; border-radius:14px; padding:14px 16px; margin-bottom:18px;}
+  .event-smart-paste-box .smart-paste-head{display:flex; align-items:center; gap:7px; font-size:13.5px; font-weight:700; color:var(--blue-dark); margin-bottom:4px;}
+  .event-smart-paste-box .smart-paste-head svg{width:16px; height:16px; flex-shrink:0;}
+  .event-smart-paste-box p{margin:0 0 10px; font-size:11.5px; color:var(--ink-soft); line-height:1.6;}
+  .event-smart-paste-box textarea{min-height:64px; margin-bottom:0 !important;}
   .status-choice-row{display:flex; gap:6px; margin-bottom:10px;}
   .status-choice{flex:1; border-radius:8px; padding:7px 0; font-size:12px; font-weight:500; cursor:pointer; text-align:center; background:var(--white);}
   .panel-sub-title{font-size:12.5px; font-weight:600; color:var(--teal-dark); margin-bottom:8px; display:flex; align-items:center; gap:6px;}
@@ -1242,6 +1247,8 @@
   };
   firebase.initializeApp(firebaseConfig);
   var db = firebase.firestore();
+
+  var GEMINI_PROXY_URL = "https://zara-gemini-proxy.murtada-ud.workers.dev/";
 
   var STORAGE_KEY = "zaraHub.employees";
   var SESSION_KEY = "zaraHub.session";
@@ -5669,6 +5676,64 @@
     return '<input type="text" data-field-input data-key="' + f.key + '" value="' + escapeHTML(value || "") + '"/>';
   }
 
+  // ===== تعبئة تلقائية ذكية لنموذج إضافة/تعديل سجل مناسبة — نفس فكرة مساعد صياغة التهنئة، عبر نفس بروكسي جيمناي =====
+  function eventSmartFillFieldsSchema(cat){
+    return cat.fields.filter(function(f){
+      return !f.derived && f.type !== "image" && f.type !== "readonlyText" && !(f.auto && f.locked);
+    }).map(function(f){
+      var out = { key: f.key, label: f.label, type: (f.type === "growSelect" ? "select" : f.type) };
+      if(f.type === "select") out.options = f.options || [];
+      else if(f.type === "growSelect") out.options = loadEventsOptions()[f.optKey] || [];
+      else if(f.type === "selectOther") out.options = (f.key === "specialization") ? loadEventsOptions().specializations : (f.options || []);
+      return out;
+    });
+  }
+  function applyEventSmartFillDraft(cat, extracted){
+    var draft = eventModalState.draft;
+    var schema = eventSmartFillFieldsSchema(cat);
+    var filled = 0;
+    schema.forEach(function(f){
+      var val = extracted[f.key];
+      if(val == null) return;
+      val = String(val).trim();
+      if(!val) return;
+      if(f.type === "select" && (f.options || []).indexOf(val) === -1) return;
+      if(f.type === "date" && !/^\d{4}-\d{2}-\d{2}$/.test(val)) return;
+      draft[f.key] = val;
+      filled++;
+    });
+    return filled;
+  }
+  function triggerEventSmartFill(pastedText){
+    if(!pastedText || !pastedText.trim()) return;
+    var cat = EVENTS_CATEGORIES.find(function(c){ return c.key === eventModalState.catKey; });
+    if(!cat) return;
+    var input = document.getElementById("eventSmartPasteInput");
+    if(input) input.disabled = true;
+    var fields = eventSmartFillFieldsSchema(cat);
+    fetch(GEMINI_PROXY_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "extract", pastedText: pastedText.trim().slice(0, 4000), fields: fields })
+    }).then(function(res){
+      return res.json().then(function(data){ return { ok: res.ok, status: res.status, data: data }; });
+    }).then(function(result){
+      if(result.ok && result.data && result.data.fields && typeof result.data.fields === "object"){
+        var filled = applyEventSmartFillDraft(cat, result.data.fields);
+        renderEventModal();
+        showToast(filled ? ("✔ تمت تعبئة " + filled + " حقلاً — راجعها قبل الحفظ") : "لم نتمكن من استخراج بيانات واضحة من هذا النص");
+      } else if(result.data && result.data.error === "quota_exceeded"){
+        if(input) input.disabled = false;
+        showToast("الخدمة مشغولة حالياً بسبب الضغط — حاول مرة أخرى بعد قليل");
+      } else {
+        if(input) input.disabled = false;
+        showToast("تعذّرت التعبئة التلقائية — عبّئ الحقول يدوياً");
+      }
+    }).catch(function(){
+      if(input) input.disabled = false;
+      showToast("تعذّر الاتصال — تأكد من اتصالك بالإنترنت");
+    });
+  }
   var eventModalState = { catKey: null, recordId: null, draft: {}, imageProcessing: {} };
   function openEventModal(catKey, recordId){
     var cat = EVENTS_CATEGORIES.find(function(c){ return c.key === catKey; });
@@ -5698,6 +5763,14 @@
     var draft = eventModalState.draft;
     var body = document.getElementById("eventModalBody");
     var html = '<div class="panel-head"><h3>' + (eventModalState.recordId ? "تعديل" : "إضافة") + ' — ' + cat.label + '</h3><button type="button" class="panel-close" data-action="close-event-modal">✕</button></div>';
+    html += '<div class="event-smart-paste-box">' +
+      '<div class="smart-paste-head">' +
+        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.8 4.6L18 9l-4.2 1.4L12 15l-1.8-4.6L6 9l4.2-1.4L12 3z"/><path d="M19 15l.9 2.1L22 18l-2.1.9L19 21l-.9-2.1L16 18l2.1-.9L19 15z"/></svg>' +
+        'تعبئة تلقائية ذكية' +
+      '</div>' +
+      '<p>الصق أي نص يحتوي بيانات هذا السجل (رسالة واتساب مثلاً) وسنعبّئ الحقول المناسبة أدناه تلقائياً لمراجعتها قبل الحفظ</p>' +
+      '<textarea id="eventSmartPasteInput" placeholder="الصق النص هنا..."></textarea>' +
+    '</div>';
     html += '<div class="event-form-grid">';
     cat.fields.forEach(function(f){
       if(f.derived) return;
@@ -7257,6 +7330,11 @@
   }, true);
 
   var eventModalOverlayEl = document.getElementById("eventModalOverlay");
+  eventModalOverlayEl.addEventListener("paste", function(e){
+    if(e.target.id !== "eventSmartPasteInput") return;
+    var text = (e.clipboardData || window.clipboardData).getData("text/plain");
+    setTimeout(function(){ triggerEventSmartFill(text); }, 0);
+  });
   eventModalOverlayEl.addEventListener("input", function(e){
     if(e.target.matches("[data-field-input]")) eventModalState.draft[e.target.dataset.key] = e.target.value;
   });
