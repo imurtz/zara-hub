@@ -1213,6 +1213,9 @@
 <div class="panel-overlay panel-overlay-fullscreen" id="tmplGenerateOverlay">
   <div class="panel panel-wide panel-fullscreen" id="tmplGenerateBody"></div>
 </div>
+<div class="panel-overlay" id="tmplCopyOverlay">
+  <div class="panel" id="tmplCopyBody"></div>
+</div>
 
 <!-- ===== دردشة الموظفين (معاينة تصميم) ===== -->
 <button type="button" class="chat-fab" id="chatFabBtn" title="دردشة الموظفين">
@@ -5463,16 +5466,72 @@
   function saveDesignTemplate(tmpl){ db.collection("designTemplates").doc(tmpl.id).set(tmpl); }
   function deleteDesignTemplate(id){ db.collection("designTemplates").doc(id).delete(); }
   function genTemplateId(){ return "tmpl-" + Date.now().toString(36) + Math.random().toString(36).slice(2, 8); }
-  // ينسخ الصورة وكل المتغيرات ومواضعها إلى قالب جديد مستقل — مفيد عند الحاجة لنسخة معدّلة قليلاً (مثل قالب الإناث) بنفس تخطيط قالب موجود
-  function duplicateDesignTemplate(id){
+  // ينسخ الصورة وكل المتغيرات ومواضعها إلى قالب جديد مستقل — إما لنفس التصنيف (نسخة معدّلة، مثل قالب الإناث)
+  // أو لتصنيف آخر تماماً (يحتفظ بالمتغيرات المشتركة فقط بين التصنيفين، ويحذف ما لا ينطبق من الوجهة الجديدة)
+  var tmplCopyState = { templateId: null };
+  function openTmplCopyModal(id){
     var src = findDesignTemplate(id);
     if(!src) return;
+    tmplCopyState = { templateId: id };
+    renderTmplCopyModal();
+    document.getElementById("tmplCopyOverlay").classList.add("active");
+  }
+  function closeTmplCopyModal(){
+    document.getElementById("tmplCopyOverlay").classList.remove("active");
+  }
+  function renderTmplCopyModal(){
+    var src = findDesignTemplate(tmplCopyState.templateId);
+    var body = document.getElementById("tmplCopyBody");
+    if(!src || !body) return;
+    var html = '<div class="panel-head"><h3>نسخ القالب</h3><button type="button" class="panel-close" data-action="close-tmpl-copy">✕</button></div>';
+    html += '<p class="hint" style="margin-bottom:12px;">نسخ قالب "' + escapeHTML(src.name) + '" إلى تصنيف:</p>';
+    html += '<div class="select-wrap"><select id="tmplCopyDestSelect">' +
+      EVENTS_CATEGORIES.map(function(c){ return '<option value="' + c.key + '"' + (c.key === src.category ? " selected" : "") + '>' + escapeHTML(c.label) + (c.key === src.category ? " (نفس تصنيف القالب)" : "") + '</option>'; }).join("") +
+    '</select></div>';
+    html += '<p class="hint" id="tmplCopyWarning" style="margin-top:10px; display:none; color:#8a5a00;"></p>';
+    html += '<div class="modal-actions" style="margin-top:18px;">' +
+      '<button type="button" class="btn-secondary" data-action="close-tmpl-copy">إلغاء</button>' +
+      '<button type="button" class="btn-primary" data-action="confirm-tmpl-copy">نسخ القالب</button>' +
+    '</div>';
+    setHTML(body, html);
+    updateTmplCopyWarning();
+  }
+  function updateTmplCopyWarning(){
+    var src = findDesignTemplate(tmplCopyState.templateId);
+    var sel = document.getElementById("tmplCopyDestSelect");
+    var warn = document.getElementById("tmplCopyWarning");
+    if(!src || !sel || !warn) return;
+    var destKey = sel.value;
+    if(destKey === src.category){ warn.style.display = "none"; return; }
+    var destKeys = (TMPL_PLACEABLE_FIELDS[destKey] || []).map(function(f){ return f.key; });
+    var compatible = src.fields.filter(function(f){ return destKeys.indexOf(f.key) > -1; }).length;
+    var dropped = src.fields.length - compatible;
+    warn.style.display = "block";
+    warn.textContent = dropped > 0
+      ? "⚠️ " + dropped + " من أصل " + src.fields.length + " متغيراً محدداً غير متوفر بهذا التصنيف وسيُحذف من النسخة — يمكنك إضافة متغيرات التصنيف الجديد يدوياً بعد النسخ من (تعديل)."
+      : "✔ كل المتغيرات المحددة متوافقة مع هذا التصنيف.";
+  }
+  function confirmTmplCopy(){
+    var src = findDesignTemplate(tmplCopyState.templateId);
+    var sel = document.getElementById("tmplCopyDestSelect");
+    if(!src || !sel) return;
+    var destKey = sel.value;
+    var destCat = EVENTS_CATEGORIES.find(function(c){ return c.key === destKey; });
     var copy = JSON.parse(JSON.stringify(src));
     copy.id = genTemplateId();
-    copy.name = src.name + " (نسخة)";
+    copy.category = destKey;
+    if(destKey === src.category){
+      copy.name = src.name + " (نسخة)";
+    } else {
+      var destKeys = (TMPL_PLACEABLE_FIELDS[destKey] || []).map(function(f){ return f.key; });
+      copy.fields = copy.fields.filter(function(f){ return destKeys.indexOf(f.key) > -1; });
+      copy.name = src.name + " (نسخة — " + (destCat ? destCat.label : destKey) + ")";
+    }
     saveDesignTemplate(copy);
-    showToast('تم إنشاء نسخة باسم "' + copy.name + '" — افتحها من "تعديل" وغيّر صورتها من "🖼️ تغيير صورة القالب"');
+    closeTmplCopyModal();
+    eventsUI.designTmplCategory = destKey;
     refreshTmplManager();
+    showToast('تم إنشاء نسخة باسم "' + copy.name + '"' + (destKey !== src.category ? " — راجع مواضع المتغيرات من \"تعديل\"" : " — افتحها من \"تعديل\" وغيّر صورتها من \"🖼️ تغيير صورة القالب\""));
   }
 
   var _designFontsCache = [];
@@ -6436,7 +6495,7 @@
           '<img src="' + t.image + '" alt=""/>' +
           '<div class="info"><b>' + escapeHTML(t.name) + (t.gender ? ' <span class="hint" style="font-weight:400;">(' + (t.gender === "ذكر" ? "♂ ذكور" : "♀ إناث") + ')</span>' : '') + '</b><div class="hint">' + t.fields.length + ' متغير محدد</div></div>' +
           '<button type="button" class="btn-secondary" data-action="edit-design-tmpl" data-id="' + t.id + '">تعديل</button>' +
-          '<button type="button" class="btn-secondary" data-action="duplicate-design-tmpl" data-id="' + t.id + '" title="ينسخ الصورة وكل المتغيرات ومواضعها لقالب جديد">📋 نسخ</button>' +
+          '<button type="button" class="btn-secondary" data-action="open-tmpl-copy" data-id="' + t.id + '" title="ينسخ الصورة والمتغيرات لقالب جديد — بنفس التصنيف أو تصنيف آخر">📋 نسخ</button>' +
           '<button type="button" class="task-icon-btn" data-action="delete-design-tmpl" data-id="' + t.id + '" title="حذف"><span class="icon">' + ICON_DELETE + '</span></button>' +
         '</div>';
       });
@@ -7272,7 +7331,7 @@
       case "copy-publish-text": copyToClipboard(btn.dataset.text); break;
       case "set-design-tmpl-cat": eventsUI.designTmplCategory = btn.dataset.cat; refreshTmplManager(); break;
       case "edit-design-tmpl": openTemplateEditor(btn.dataset.id); break;
-      case "duplicate-design-tmpl": duplicateDesignTemplate(btn.dataset.id); break;
+      case "open-tmpl-copy": openTmplCopyModal(btn.dataset.id); break;
       case "delete-design-tmpl":
         if(confirm("حذف هذا القالب نهائياً؟")) deleteDesignTemplate(btn.dataset.id);
         break;
@@ -7329,6 +7388,19 @@
     });
   }, true);
 
+  var tmplCopyOverlayEl = document.getElementById("tmplCopyOverlay");
+  tmplCopyOverlayEl.addEventListener("change", function(e){
+    if(e.target.id === "tmplCopyDestSelect") updateTmplCopyWarning();
+  });
+  tmplCopyOverlayEl.addEventListener("click", function(e){
+    if(e.target === tmplCopyOverlayEl){ closeTmplCopyModal(); return; }
+    var tcBtn = e.target.closest("[data-action]");
+    if(!tcBtn) return;
+    switch(tcBtn.dataset.action){
+      case "close-tmpl-copy": closeTmplCopyModal(); break;
+      case "confirm-tmpl-copy": confirmTmplCopy(); break;
+    }
+  });
   var eventModalOverlayEl = document.getElementById("eventModalOverlay");
   eventModalOverlayEl.addEventListener("paste", function(e){
     if(e.target.id !== "eventSmartPasteInput") return;
