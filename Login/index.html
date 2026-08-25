@@ -5299,21 +5299,28 @@
     eventsFirestoreRefresh();
   }, function(err){ console.error("events snapshot error", err); });
 
-  function loadEventsData(){ return _eventsRecordsCache; }
+  function loadEventsData(){ return _eventsRecordsCache.slice(); }
+  // يرجع Promise دائماً — الكاش المحلي (وبالتالي الواجهة) لا يتحدث إلا بعد تأكد نجاح الكتابة الفعلية في Firestore،
+  // حتى لا تظهر بيانات "محفوظة" وهمياً بينما فشلت الكتابة فعلياً في الخلفية دون أي تنبيه (كان هذا يحدث بصمت قبل هذا التعديل)
   function saveEventsData(list){
-    try{
-      var oldIds = _eventsRecordsCache.map(function(r){ return r.id; });
-      var newIds = list.map(function(r){ return r.id; });
-      oldIds.forEach(function(id){
-        if(newIds.indexOf(id) === -1) db.collection("events").doc(id).delete();
-      });
-      list.forEach(function(rec){
-        var old = _eventsRecordsCache.find(function(r){ return r.id === rec.id; });
-        if(!old || JSON.stringify(old) !== JSON.stringify(rec)) db.collection("events").doc(rec.id).set(rec);
-      });
+    var oldIds = _eventsRecordsCache.map(function(r){ return r.id; });
+    var newIds = list.map(function(r){ return r.id; });
+    var ops = [];
+    oldIds.forEach(function(id){
+      if(newIds.indexOf(id) === -1) ops.push(db.collection("events").doc(id).delete());
+    });
+    list.forEach(function(rec){
+      var old = _eventsRecordsCache.find(function(r){ return r.id === rec.id; });
+      if(!old || JSON.stringify(old) !== JSON.stringify(rec)) ops.push(db.collection("events").doc(rec.id).set(rec));
+    });
+    return Promise.all(ops).then(function(){
       _eventsRecordsCache = list;
       return true;
-    }catch(e){ showToast("تعذّر الحفظ"); return false; }
+    }).catch(function(err){
+      console.error("saveEventsData failed", err);
+      showToast("⚠️ تعذّر حفظ التغييرات في القاعدة — تحقق من اتصالك وحاول مرة أخرى. لم يُفقد شيء، فقط لم يُحفظ.");
+      return false;
+    });
   }
   function findEventRecord(id){
     return loadEventsData().find(function(r){ return r.id === id; });
@@ -5326,13 +5333,16 @@
     eventsFirestoreRefresh();
   }, function(err){ console.error("eventsTrash snapshot error", err); });
   function loadEventsTrash(){ return _eventsTrashCache; }
+  // يرجع Promise يكتمل فقط بعد تأكد وصول كل السجلات لسلة المهملات فعلياً — أي كود يحذف من events بعدها
+  // يجب أن ينتظر هذا الـ Promise أولاً، حتى لا يُحذف سجل من events قبل التأكد من وجود نسخة آمنة منه بالسلة
   function trashEventRecords(records){
-    records.forEach(function(rec){
+    var ops = records.map(function(rec){
       var trashRec = shallowCopy(rec);
       trashRec.deletedAt = Date.now();
       trashRec.deletedByName = currentUser ? currentUser.name : "";
-      db.collection("eventsTrash").doc(rec.id).set(trashRec);
+      return db.collection("eventsTrash").doc(rec.id).set(trashRec);
     });
+    return Promise.all(ops);
   }
   function restoreEventFromTrash(id){
     var rec = _eventsTrashCache.find(function(r){ return r.id === id; });
@@ -5342,10 +5352,14 @@
     delete restored.deletedByName;
     var all = loadEventsData();
     all.push(restored);
-    saveEventsData(all);
-    db.collection("eventsTrash").doc(id).delete();
-    renderEventsHub();
-    showToast("تم استرجاع السجل");
+    saveEventsData(all).then(function(ok){
+      if(!ok) return;
+      db.collection("eventsTrash").doc(id).delete().catch(function(err){
+        console.error("trash cleanup after restore failed", err);
+      });
+      renderEventsHub();
+      showToast("تم استرجاع السجل");
+    });
   }
   function permanentlyDeleteFromTrash(id){
     if(!confirm("حذف هذا السجل نهائياً؟ لا يمكن التراجع عن هذا الإجراء.")) return;
@@ -5874,8 +5888,11 @@
     }
     var all = loadEventsData();
     if(eventModalState.recordId){
-      var rec = all.find(function(r){ return r.id === eventModalState.recordId; });
-      if(!rec) return;
+      // نبني نسخة جديدة بدل تعديل السجل الموجود في مكانه — التعديل المباشر على الكائن المرجعي
+      // يخلي فحص التغيير بداخل saveEventsData يقارن الكائن بنفسه فيظن دائماً إنه ما تغيّر، فتُتجاهل الكتابة بصمت
+      var recIdx = all.findIndex(function(r){ return r.id === eventModalState.recordId; });
+      if(recIdx === -1) return;
+      var rec = shallowCopy(all[recIdx]);
       cat.fields.forEach(function(f){
         rec[f.key] = draft[f.key] || "";
         if(f.type === "image") rec[f.key + "Orig"] = draft[f.key + "Orig"] || "";
@@ -5883,6 +5900,7 @@
       rec.photo = draft.photo || "";
       rec.photoOrig = draft.photoOrig || "";
       rec.updatedAt = Date.now();
+      all[recIdx] = rec;
     } else {
       var newRec = { id: genEventId(), category: cat.key, createdAt: Date.now(), updatedAt: Date.now() };
       cat.fields.forEach(function(f){
@@ -5893,60 +5911,83 @@
       newRec.photoOrig = draft.photoOrig || "";
       all.push(newRec);
     }
-    var savedOk = saveEventsData(all);
-    if(!savedOk) return;
-    closeEventModal();
-    eventsUI.activeCategory = cat.key;
-    renderEventsHub();
-    showToast((eventModalState.recordId ? "تم تحديث السجل" : "تمت إضافة السجل") + specDupNote);
+    saveEventsData(all).then(function(savedOk){
+      if(!savedOk) return;
+      closeEventModal();
+      eventsUI.activeCategory = cat.key;
+      renderEventsHub();
+      showToast((eventModalState.recordId ? "تم تحديث السجل" : "تمت إضافة السجل") + specDupNote);
+    });
   }
   function deleteEventRecord(id){
     var rec = findEventRecord(id);
     if(!rec) return;
     if(!confirm("نقل هذا السجل لسلة المهملات؟ يمكن استرجاعه منها لاحقاً.")) return;
-    trashEventRecords([rec]);
-    var all = loadEventsData().filter(function(r){ return r.id !== id; });
-    saveEventsData(all);
-    refreshEventsTable();
-    showToast("تم نقل السجل لسلة المهملات");
+    trashEventRecords([rec]).then(function(){
+      var all = loadEventsData().filter(function(r){ return r.id !== id; });
+      return saveEventsData(all);
+    }).then(function(ok){
+      if(!ok) return;
+      refreshEventsTable();
+      showToast("تم نقل السجل لسلة المهملات");
+    }).catch(function(err){
+      console.error("delete-to-trash failed", err);
+      showToast("⚠️ تعذّر نقل السجل لسلة المهملات — لم يُحذف شيء، حاول مرة أخرى");
+    });
   }
   function approveEventRecord(id){
     if(!currentUser || currentUser.role !== "admin") return;
     var all = loadEventsData();
-    var rec = all.find(function(r){ return r.id === id; });
-    if(!rec) return;
-    var cat = EVENTS_CATEGORIES.find(function(c){ return c.key === rec.category; });
+    var idx = all.findIndex(function(r){ return r.id === id; });
+    if(idx === -1) return;
+    var cat = EVENTS_CATEGORIES.find(function(c){ return c.key === all[idx].category; });
     if(cat){
       var dupIds = findEventDuplicates(cat, all.filter(function(r){ return r.category === cat.key; }));
       if(dupIds[id] && !confirm("⚠️ هذا السجل يشبه سجلاً آخر موجوداً بنفس الاسم والتاريخ — يبدو أنه تكرار. هل تريد اعتماده رغم ذلك؟")) return;
     }
+    var rec = shallowCopy(all[idx]);
     delete rec.status;
     rec.updatedAt = Date.now();
-    saveEventsData(all);
-    renderEventsHub();
-    showToast("تم قبول السجل وإضافته للبيانات المعتمدة");
+    all[idx] = rec;
+    saveEventsData(all).then(function(ok){
+      if(!ok) return;
+      renderEventsHub();
+      showToast("تم قبول السجل وإضافته للبيانات المعتمدة");
+    });
   }
   function rejectEventRecord(id){
     if(!currentUser || currentUser.role !== "admin") return;
     var rec = findEventRecord(id);
     if(!rec) return;
     if(!confirm("رفض هذا السجل ونقله لسلة المهملات؟")) return;
-    trashEventRecords([rec]);
-    var all = loadEventsData().filter(function(r){ return r.id !== id; });
-    saveEventsData(all);
-    renderEventsHub();
-    showToast("تم رفض السجل ونقله لسلة المهملات");
+    trashEventRecords([rec]).then(function(){
+      var all = loadEventsData().filter(function(r){ return r.id !== id; });
+      return saveEventsData(all);
+    }).then(function(ok){
+      if(!ok) return;
+      renderEventsHub();
+      showToast("تم رفض السجل ونقله لسلة المهملات");
+    }).catch(function(err){
+      console.error("reject-to-trash failed", err);
+      showToast("⚠️ تعذّر رفض السجل — لم يُحذف شيء، حاول مرة أخرى");
+    });
   }
   function deleteAllEventsForCategory(catKey){
     var cat = EVENTS_CATEGORIES.find(function(c){ return c.key === catKey; });
     if(!cat) return;
     if(!confirm('نقل جميع سجلات "' + cat.label + '" لسلة المهملات؟')) return;
     var toTrash = loadEventsData().filter(function(r){ return r.category === catKey; });
-    trashEventRecords(toTrash);
-    var all = loadEventsData().filter(function(r){ return r.category !== catKey; });
-    saveEventsData(all);
-    refreshEventsTable();
-    showToast("تم نقل جميع السجلات لسلة المهملات");
+    trashEventRecords(toTrash).then(function(){
+      var all = loadEventsData().filter(function(r){ return r.category !== catKey; });
+      return saveEventsData(all);
+    }).then(function(ok){
+      if(!ok) return;
+      refreshEventsTable();
+      showToast("تم نقل جميع السجلات لسلة المهملات");
+    }).catch(function(err){
+      console.error("delete-all-to-trash failed", err);
+      showToast("⚠️ تعذّر نقل السجلات لسلة المهملات — لم يُحذف شيء، حاول مرة أخرى");
+    });
   }
 
   function colTogglePanelHTML(cat){
@@ -6160,12 +6201,14 @@
       if(hasAny){ all.push(rec); added++; }
     });
     saveEventsOptions(opts);
-    saveEventsData(all);
-    closeEventsImportModal();
-    eventsUI.activeCategory = cat.key;
-    eventsUI.tab = "data-entry";
-    renderEventsHub();
-    showToast("تم استيراد " + added + " سجل");
+    saveEventsData(all).then(function(ok){
+      if(!ok) return;
+      closeEventsImportModal();
+      eventsUI.activeCategory = cat.key;
+      eventsUI.tab = "data-entry";
+      renderEventsHub();
+      showToast("تم استيراد " + added + " سجل");
+    });
   }
 
   // ----- مهام النشر (قوالب تهنئة/تعازي) -----
@@ -7909,13 +7952,12 @@
       case "remove-field-bg": {
         if(!tmplGenerateState) return;
         var bgFieldKey = btn.dataset.key;
-        var bgAll = loadEventsData();
-        var bgRec = bgAll.find(function(r){ return r.id === tmplGenerateState.recordId; });
-        if(!bgRec || !bgRec[bgFieldKey]){ showToast("لا توجد صورة لهذا الحقل"); return; }
+        var bgSrcRec = findEventRecord(tmplGenerateState.recordId);
+        if(!bgSrcRec || !bgSrcRec[bgFieldKey]){ showToast("لا توجد صورة لهذا الحقل"); return; }
         var bgStatusEl = document.getElementById("tmplGenStatus");
         if(bgStatusEl) bgStatusEl.textContent = "جارٍ تحميل أداة إزالة الخلفية...";
         btn.disabled = true;
-        var bgSrcImg = bgRec[bgFieldKey];
+        var bgSrcImg = bgSrcRec[bgFieldKey];
         var bgOrigThumbUrl = null;
         fetch(bgSrcImg).then(function(r){ return r.blob(); }).then(function(blob){
           return new Promise(function(resolve){
@@ -7931,12 +7973,20 @@
         }).then(function(cutBlob){
           compressCutoutImageFile(cutBlob, 400 * 1024, function(dataUrl){
             if(!dataUrl){ showToast("تعذّرت معالجة الصورة"); renderDesignGenerateModal(); return; }
-            bgRec[bgFieldKey + "Orig"] = bgOrigThumbUrl || bgSrcImg;
-            bgRec[bgFieldKey] = dataUrl;
-            bgRec.updatedAt = Date.now();
-            saveEventsData(bgAll);
-            showToast("تم تفريغ الخلفية");
-            renderDesignGenerateModal();
+            // نبني نسخة جديدة من السجل بدل تعديله في مكانه — تعديل الكائن المرجعي مباشرة يخلي فحص "هل تغيّر شيء؟"
+            // بداخل saveEventsData يقارن الكائن بنفسه (نفس المرجع) فيظن دائماً إنه ما تغيّر، فتُتجاهل الكتابة بصمت
+            var bgAll = loadEventsData();
+            var bgIdx = bgAll.findIndex(function(r){ return r.id === tmplGenerateState.recordId; });
+            if(bgIdx === -1){ showToast("تعذّر إيجاد السجل — رُبما حُذف"); renderDesignGenerateModal(); return; }
+            var bgUpdated = shallowCopy(bgAll[bgIdx]);
+            bgUpdated[bgFieldKey + "Orig"] = bgOrigThumbUrl || bgSrcImg;
+            bgUpdated[bgFieldKey] = dataUrl;
+            bgUpdated.updatedAt = Date.now();
+            bgAll[bgIdx] = bgUpdated;
+            saveEventsData(bgAll).then(function(ok){
+              if(ok) showToast("تم تفريغ الخلفية");
+              renderDesignGenerateModal();
+            });
           });
         }).catch(function(err){
           console.error("bg removal failed", err);
