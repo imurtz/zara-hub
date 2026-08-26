@@ -1263,26 +1263,15 @@
     { key: "events", label: "المناسبات الاجتماعية" }
   ];
 
-  var DEFAULT_ADMIN = {
-    id: "admin-1",
-    name: "مرتضى الدبيسي",
-    email: "murtada.ud@gmail.com",
-    password: "Awamia@2026",
-    role: "admin",
-    dept: "الإدارة",
-    sections: ["tasks", "annual", "executive", "events"]
-  };
-
   var currentUser = null;
 
+  // لا يوجد بذر (seed) محلي لحساب افتراضي هنا عمداً — قائمة الموظفين الحقيقية تصل من Firestore
+  // خلال لحظات من تحميل الصفحة (db.collection("employees").onSnapshot أدناه)؛ أي حساب افتراضي
+  // مكتوب هنا بكلمة مرور صريحة سيكون مقروءاً للعموم في الكود المصدري المنشور علناً على GitHub
   function loadEmployees(){
     var raw = localStorage.getItem(STORAGE_KEY);
-    if(!raw){
-      var seed = [DEFAULT_ADMIN];
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(seed));
-      return seed;
-    }
-    try{ return JSON.parse(raw); }catch(e){ return [DEFAULT_ADMIN]; }
+    if(!raw) return [];
+    try{ return JSON.parse(raw); }catch(e){ return []; }
   }
   function saveEmployees(list){
     var prevRaw = localStorage.getItem(STORAGE_KEY);
