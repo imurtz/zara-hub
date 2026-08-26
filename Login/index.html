@@ -21,6 +21,7 @@
 <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
 <style>
   :root{
     --teal:#517771;
@@ -1084,6 +1085,7 @@
                     <th>الصلاحية</th>
                     <th>القسم</th>
                     <th>الأقسام المتاحة</th>
+                    <th title="هل انتقل هذا الموظف لتسجيل دخول آمن عبر Firebase بعد آخر تحديث؟">الدخول الآمن</th>
                     <th></th>
                   </tr>
                 </thead>
@@ -1438,21 +1440,47 @@
     }).join("");
   }
 
+  // تسجيل دخول مزدوج المسار أثناء الانتقال لـ Firebase Authentication الحقيقي:
+  // 1) يجرّب أولاً تسجيل الدخول الآمن عبر Firebase — يعمل فوراً لأي موظف سبق وهاجر حسابه.
+  // 2) إن فشل (الحساب لم يُهاجَر بعد، أو خدمة Firebase Auth غير مفعّلة أصلاً من إعدادات المشروع)،
+  //    يرجع للتحقق القديم من كلمة المرور المخزّنة كنص صريح بسجل الموظف — بلا أي تغيير في السلوك الحالي —
+  //    وإن نجح، يُنشئ بصمت حساب Firebase Auth حقيقي لنفس البيانات استعداداً للمرة القادمة.
+  // النتيجة: يعمل بأمان بغض النظر عن تفعيل الخدمة من عدمه، ويُهاجر كل موظف تلقائياً في أول دخول له بعد التفعيل.
+  function attemptLogin(email, password){
+    var legacyCheck = function(){
+      var emp = employees.find(function(e){ return e.email.toLowerCase() === email && e.password === password; });
+      if(!emp) return Promise.resolve(null);
+      return firebase.auth().createUserWithEmailAndPassword(email, password).then(function(cred){
+        return db.collection("employees").doc(emp.id).update({ authMigrated: true, authUid: cred.user.uid }).catch(function(){}).then(function(){ return emp; });
+      }).catch(function(){
+        return emp; // فشلت الهجرة الصامتة (مثلاً الخدمة غير مفعّلة) — سجّل دخوله بالطريقة القديمة كما كان يعمل دائماً
+      });
+    };
+    var authAttempt;
+    try{ authAttempt = firebase.auth().signInWithEmailAndPassword(email, password); }
+    catch(e){ authAttempt = Promise.reject(e); }
+    return authAttempt.then(function(){
+      var emp = employees.find(function(e){ return e.email.toLowerCase() === email; });
+      return emp || legacyCheck();
+    }).catch(legacyCheck);
+  }
   loginForm.addEventListener("submit", function(e){
     e.preventDefault();
     var email = document.getElementById("loginEmail").value.trim().toLowerCase();
     var password = document.getElementById("loginPassword").value;
     employees = loadEmployees();
-    var match = employees.find(function(emp){
-      return emp.email.toLowerCase() === email && emp.password === password;
+    var submitBtn = loginForm.querySelector(".login-btn");
+    if(submitBtn) submitBtn.disabled = true;
+    attemptLogin(email, password).then(function(match){
+      if(submitBtn) submitBtn.disabled = false;
+      if(match){
+        loginError.textContent = "";
+        setSession(match);
+        enterApp(match);
+      } else {
+        loginError.textContent = "البريد الإلكتروني أو الرقم السري غير صحيح";
+      }
     });
-    if(match){
-      loginError.textContent = "";
-      setSession(match);
-      enterApp(match);
-    } else {
-      loginError.textContent = "البريد الإلكتروني أو الرقم السري غير صحيح";
-    }
   });
 
   document.getElementById("logoutBtn").addEventListener("click", function(){
@@ -1529,6 +1557,7 @@
         '<td><span class="role-pill ' + emp.role + '">' + roleLabel(emp.role) + '</span></td>' +
         '<td>' + escapeHTML(emp.dept || "—") + '</td>' +
         '<td>' + secBadges + '</td>' +
+        '<td>' + (emp.authMigrated ? '<span class="role-pill admin" title="سجّل دخوله عبر النظام الآمن الجديد">✔ آمن</span>' : '<span class="role-pill employee" title="لم يسجّل دخوله بعد منذ تفعيل النظام الآمن">⏳ بانتظار أول دخول</span>') + '</td>' +
         '<td><div class="row-actions">' +
           '<button class="icon-btn edit-btn" data-id="' + emp.id + '" title="تعديل"><span class="icon">' + ICON_EDIT + '</span></button>' +
           '<button class="icon-btn danger del-btn" data-id="' + emp.id + '" title="حذف"><span class="icon">' + ICON_DELETE + '</span></button>' +
