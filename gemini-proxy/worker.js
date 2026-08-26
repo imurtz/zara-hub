@@ -168,16 +168,24 @@ async function handleExtract(body, env, headers) {
 
   const prompt = "حقول النموذج:\n" + fieldsDesc + "\n\nالنص المطلوب استخراج البيانات منه:\n\"\"\"\n" + pastedText + "\n\"\"\"";
 
-  let extracted;
-  try {
-    extracted = await callGeminiExtract(env, prompt);
-  } catch (e) {
-    const isQuota = e.message === "quota_exceeded";
-    return json({ error: isQuota ? "quota_exceeded" : "gemini_error" }, isQuota ? 429 : 502, headers);
+  // محاولة واحدة إضافية عند فشل عابر (خطأ شبكة لحظي، أو رد لا يوازي JSON صالحاً) قبل الاستسلام —
+  // نفس فكرة إعادة المحاولة المستخدمة أصلاً في صياغة التهنئة، لتقليل حالات "تعذّرت التعبئة" العابرة
+  let extracted = null;
+  let lastErr = null;
+  for (let attempt = 0; attempt < 2 && !extracted; attempt++) {
+    try {
+      extracted = await callGeminiExtract(env, prompt);
+    } catch (e) {
+      lastErr = e;
+      if (e.message === "quota_exceeded") break; // لا فائدة من إعادة المحاولة فوراً عند تجاوز الحصة
+    }
   }
 
   if (!extracted) {
-    return json({ error: "empty_extraction" }, 502, headers);
+    if (lastErr && lastErr.message === "quota_exceeded") {
+      return json({ error: "quota_exceeded" }, 429, headers);
+    }
+    return json({ error: lastErr ? "gemini_error" : "empty_extraction" }, 502, headers);
   }
   return json({ fields: extracted }, 200, headers);
 }
