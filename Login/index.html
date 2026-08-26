@@ -687,6 +687,23 @@
   .copy-field:hover{background:var(--teal-tint);}
   .publish-type-chip{padding:6px 14px; border-radius:999px; border:1.5px solid var(--line); background:var(--white); color:var(--ink-soft); font-size:12px; font-weight:500; cursor:pointer;}
   .publish-type-chip.active{background:var(--teal-tint); border-color:var(--teal); color:var(--teal-dark);}
+  .publish-row-head{display:flex; align-items:center; gap:12px; flex-wrap:wrap; cursor:pointer;}
+  .publish-row-chevron{width:14px; height:14px; color:var(--ink-soft); transition:transform .15s; flex-shrink:0;}
+  .publish-row-chevron.open{transform:rotate(180deg);}
+  .publish-row-title{flex:1; min-width:180px;}
+  .publish-row-time{font-size:11.5px; color:var(--ink-soft); white-space:nowrap;}
+  .publish-row-actions{display:flex; gap:6px; flex-wrap:wrap;}
+  .publish-detail-grid{display:grid; grid-template-columns:repeat(3, 1fr); gap:10px; margin-top:14px; padding-top:14px; border-top:1px solid var(--line);}
+  @media (max-width:700px){ .publish-detail-grid{grid-template-columns:1fr 1fr;} }
+  .publish-detail-item{display:flex; flex-direction:column; gap:2px;}
+  .publish-detail-label{font-size:10.5px; color:var(--ink-soft); font-weight:600;}
+  .publish-detail-value{font-size:13px; color:var(--ink); display:flex; align-items:center; gap:6px;}
+  .publish-detail-copy-btn{background:none; border:none; padding:2px; cursor:pointer; color:var(--ink-soft); display:inline-flex; flex-shrink:0;}
+  .publish-detail-copy-btn:hover{color:var(--teal-dark);}
+  .publish-detail-copy-btn .icon{width:13px; height:13px;}
+  .publish-detail-footer{display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap; margin-top:14px; padding-top:12px; border-top:1px solid var(--line); font-size:11.5px; color:var(--ink-soft);}
+  .publish-detail-footer .btn-secondary{padding:6px 14px; font-size:12px; display:inline-flex; align-items:center; gap:6px;}
+  .publish-detail-footer .btn-secondary .icon{width:14px; height:14px;}
   .template-card{background:var(--white); border:1px solid var(--line); border-radius:12px; padding:14px 16px; margin-bottom:10px;}
   .template-card textarea{width:100%; padding:9px 11px; border:1.5px solid var(--line); border-radius:9px; font-size:12.5px; font-family:inherit; resize:vertical; margin-bottom:8px;}
   .template-placeholders{font-size:11px; color:var(--ink-soft); margin-bottom:10px; line-height:1.8;}
@@ -1528,6 +1545,7 @@
   // ===== admin: employee table =====
   var ICON_EDIT = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20l4.2-.9L19 8.3a1.5 1.5 0 0 0 0-2.1l-1.2-1.2a1.5 1.5 0 0 0-2.1 0L4.9 15.8 4 20z"/><path d="M14.5 6.5l3 3"/></svg>';
   var ICON_DELETE = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 7h14M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2M6 7l1 13a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1l1-13"/><path d="M10 11v6M14 11v6"/></svg>';
+  var ICON_COPY = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"/></svg>';
   function roleLabel(role){ return role === "admin" ? "أدمن" : "موظف"; }
   function escapeHTML(s){
     return String(s == null ? "" : s).replace(/[&<>"']/g, function(c){
@@ -5721,6 +5739,7 @@
     colPanelOpen: false,
     publishTypeFilter: "all",
     publishSearch: "",
+    expandedPublishIds: {},
     templatesCategory: "graduates",
     designTmplCategory: "graduates",
     reportsCategory: "graduates",
@@ -6326,6 +6345,36 @@
     statuses[id] = status;
     saveEventsPublish(statuses);
   }
+  // "قبل ٤ أشهر" ونحوها — فرق زمني تقريبي منذ إدخال السجل
+  function timeAgoAr(ts){
+    if(!ts) return "—";
+    var diffSec = Math.max(0, (Date.now() - ts) / 1000);
+    var units = [
+      [31536000, "سنة", "سنتين", "سنوات"],
+      [2592000, "شهر", "شهرين", "أشهر"],
+      [86400, "يوم", "يومين", "أيام"],
+      [3600, "ساعة", "ساعتين", "ساعات"],
+      [60, "دقيقة", "دقيقتين", "دقائق"]
+    ];
+    for(var i = 0; i < units.length; i++){
+      var n = Math.floor(diffSec / units[i][0]);
+      if(n >= 1){
+        var label = n === 1 ? units[i][1] : (n === 2 ? units[i][2] : units[i][3]);
+        return "قبل " + (n > 2 ? n + " " : "") + label;
+      }
+    }
+    return "قبل لحظات";
+  }
+  function eventFieldsForCopy(cat){
+    return cat.fields.filter(function(f){ return !f.derived && f.type !== "image"; });
+  }
+  // نص السجل كاملاً بصيغة "التسمية: القيمة" سطراً سطراً — جاهز للصق بأي مكان (رسالة، مستند...)
+  function recordFullTextForCopy(cat, rec){
+    return eventFieldsForCopy(cat).map(function(f){
+      var v = rec[f.key];
+      return f.label + ": " + (v != null && v !== "" ? v : "—");
+    }).join("\n");
+  }
   function statCardStaticHTML(num, label){
     return '<div class="stat-card" style="cursor:default;"><div class="num">' + num + '</div><div class="lbl">' + label + '</div></div>';
   }
@@ -6349,18 +6398,44 @@
       var tpl = (templates[r.category] || [])[0];
       var text = tpl ? renderTemplateText(tpl.text, r) : "";
       var title = cat.fields.slice(0, 3).map(function(f){ return r[f.key]; }).filter(Boolean).join(" — ") || "(بدون بيانات)";
-      return '<div class="report-section-card">' +
-        '<div style="display:flex; justify-content:space-between; align-items:flex-start; gap:10px; flex-wrap:wrap;">' +
-          '<div><span class="sec-badge">' + cat.label + '</span> <b style="font-size:13.5px;">' + escapeHTML(title) + '</b></div>' +
-          '<div style="display:flex; gap:6px; flex-wrap:wrap;">' +
+      var expanded = !!eventsUI.expandedPublishIds[r.id];
+      var html = '<div class="report-section-card publish-row">' +
+        '<div class="publish-row-head" data-action="toggle-publish-row" data-id="' + r.id + '">' +
+          '<span class="publish-row-chevron' + (expanded ? " open" : "") + '"><span class="icon">' + TICON.chevron + '</span></span>' +
+          '<div class="publish-row-title"><span class="sec-badge">' + cat.label + '</span> <b style="font-size:13.5px;">' + escapeHTML(title) + '</b></div>' +
+          '<span class="publish-row-time">' + timeAgoAr(r.createdAt) + '</span>' +
+          '<div class="publish-row-actions">' +
             '<button type="button" class="publish-status-pill' + (status === "published" ? " published" : "") + '" data-action="set-publish-status" data-id="' + r.id + '" data-status="published">تم النشر</button>' +
             '<button type="button" class="publish-status-pill' + (status === "wontPublish" ? " wontPublish" : "") + '" data-action="set-publish-status" data-id="' + r.id + '" data-status="wontPublish">لن يُنشر</button>' +
             '<button type="button" class="publish-status-pill' + (status === "pending" ? " pending" : "") + '" data-action="set-publish-status" data-id="' + r.id + '" data-status="pending">معلق</button>' +
           '</div>' +
         '</div>' +
-        (text ? '<p class="copy-field" data-action="copy-publish-text" data-text="' + escapeHTML(text) + '" style="margin-top:10px; font-size:12.5px; line-height:1.8; white-space:pre-wrap;" title="اضغط للنسخ">' + escapeHTML(text) + '</p>' : '<p class="report-empty">لا يوجد قالب تهنئة/تعزية لهذا التصنيف بعد</p>') +
-      '</div>';
+        (text ? '<p class="copy-field" data-action="copy-publish-text" data-text="' + escapeHTML(text) + '" style="margin-top:10px; font-size:12.5px; line-height:1.8; white-space:pre-wrap;" title="اضغط للنسخ">' + escapeHTML(text) + '</p>' : '<p class="report-empty">لا يوجد قالب تهنئة/تعزية لهذا التصنيف بعد</p>');
+      if(expanded){
+        html += '<div class="publish-detail-grid">' +
+          eventFieldsForCopy(cat).map(function(f){
+            var v = r[f.key];
+            var display = (v != null && v !== "") ? v : "—";
+            return '<div class="publish-detail-item">' +
+              '<span class="publish-detail-label">' + escapeHTML(f.label) + '</span>' +
+              '<span class="publish-detail-value">' + escapeHTML(String(display)) +
+                (v ? '<button type="button" class="publish-detail-copy-btn" data-action="copy-field-value" data-text="' + escapeHTML(String(v)) + '" title="نسخ"><span class="icon">' + ICON_COPY + '</span></button>' : "") +
+              '</span>' +
+            '</div>';
+          }).join("") +
+        '</div>';
+        html += '<div class="publish-detail-footer">' +
+          '<span>أُدخل: ' + escapeHTML(new Date(r.createdAt || Date.now()).toLocaleString("ar-SA")) + (r.source === "public" ? " — عبر التسجيل العام" : " — أُدخل يدوياً") + '</span>' +
+          '<button type="button" class="btn-secondary" data-action="copy-full-record" data-id="' + r.id + '"><span class="icon">' + ICON_COPY + '</span> نسخ السجل كاملاً</button>' +
+        '</div>';
+      }
+      html += '</div>';
+      return html;
     }).join("");
+  }
+  function refreshEventsPublishList(){
+    var c = document.getElementById("eventsPublishListContainer");
+    if(c) setHTML(c, eventsPublishListHTML());
   }
   function eventsPublishHTML(){
     var all = loadEventsData();
@@ -7489,6 +7564,22 @@
       case "publish-type-filter": eventsUI.publishTypeFilter = btn.dataset.type; renderEventsHub(); break;
       case "set-publish-status": setEventPublishStatus(btn.dataset.id, btn.dataset.status); renderEventsHub(); break;
       case "copy-publish-text": copyToClipboard(btn.dataset.text); break;
+      case "toggle-publish-row": {
+        var togId = btn.dataset.id;
+        if(eventsUI.expandedPublishIds[togId]) delete eventsUI.expandedPublishIds[togId];
+        else eventsUI.expandedPublishIds[togId] = true;
+        refreshEventsPublishList();
+        break;
+      }
+      case "copy-field-value": copyToClipboard(btn.dataset.text); break;
+      case "copy-full-record": {
+        var copyRec = findEventRecord(btn.dataset.id);
+        if(!copyRec) return;
+        var copyCat = EVENTS_CATEGORIES.find(function(c){ return c.key === copyRec.category; });
+        if(!copyCat) return;
+        copyToClipboard(recordFullTextForCopy(copyCat, copyRec));
+        break;
+      }
       case "set-design-tmpl-cat": eventsUI.designTmplCategory = btn.dataset.cat; refreshTmplManager(); break;
       case "edit-design-tmpl": openTemplateEditor(btn.dataset.id); break;
       case "open-tmpl-copy": openTmplCopyModal(btn.dataset.id); break;
