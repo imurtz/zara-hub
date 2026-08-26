@@ -425,6 +425,11 @@
   .photo-thumb{position:relative; border-radius:10px; overflow:hidden; border:1px solid var(--line); flex-shrink:0; line-height:0;}
   .photo-thumb img{display:block; height:120px; width:auto; max-width:220px; object-fit:contain;}
   .photo-thumb .rm{position:absolute; top:2px; left:2px; background:rgba(0,0,0,.55); color:#fff; border:none; width:18px; height:18px; border-radius:50%; font-size:12px; line-height:1; cursor:pointer; display:flex; align-items:center; justify-content:center; padding:0;}
+  .female-photo-choice{display:flex; gap:10px; flex-wrap:wrap;}
+  .female-photo-choice-btn{flex:1; min-width:130px; display:flex; flex-direction:column; align-items:center; gap:8px; padding:14px 10px; border:1.5px solid var(--line); border-radius:12px; background:var(--white); cursor:pointer; transition:all .15s; font-size:12.5px; font-weight:600; color:var(--ink);}
+  .female-photo-choice-btn:hover{border-color:var(--teal); background:var(--teal-tint);}
+  .female-photo-choice-btn img{height:64px; width:64px; object-fit:cover; border-radius:50%; border:1px solid var(--line);}
+  .female-photo-choice-icon{font-size:26px; line-height:1;}
   .event-photo-before-after{display:flex; flex-wrap:wrap; gap:14px;}
   .event-photo-ba-item{display:flex; flex-direction:column; gap:6px; align-items:flex-start;}
   .event-photo-ba-lbl{font-size:11px; font-weight:700; color:var(--ink-soft); background:var(--line); border-radius:6px; padding:2px 8px;}
@@ -5844,7 +5849,7 @@
       showToast("تعذّر الاتصال — تأكد من اتصالك بالإنترنت");
     });
   }
-  var eventModalState = { catKey: null, recordId: null, draft: {}, imageProcessing: {} };
+  var eventModalState = { catKey: null, recordId: null, draft: {}, imageProcessing: {}, femalePhotoChoice: "" };
   function openEventModal(catKey, recordId){
     var cat = EVENTS_CATEGORIES.find(function(c){ return c.key === catKey; });
     if(!cat) return;
@@ -5860,7 +5865,12 @@
       if(cat.fields.some(function(f){ return f.key === "graduationMonthGregorian"; })) draft.graduationMonthGregorian = GREG_MONTHS[now.getMonth()];
       if(cat.fields.some(function(f){ return f.key === "graduationMonthHijri"; })) draft.graduationMonthHijri = HIJRI_MONTHS[nowH.month - 1];
     }
-    eventModalState = { catKey: catKey, recordId: recordId || null, draft: draft, imageProcessing: {} };
+    var initialFemaleChoice = "";
+    if(draft.photo){
+      var defaultPhotoForInit = loadPublicFormConfig().defaultFemaleGraduatePhoto || "";
+      initialFemaleChoice = (defaultPhotoForInit && draft.photo === defaultPhotoForInit) ? "default" : "own";
+    }
+    eventModalState = { catKey: catKey, recordId: recordId || null, draft: draft, imageProcessing: {}, femalePhotoChoice: initialFemaleChoice };
     renderEventModal();
     document.getElementById("eventModalOverlay").classList.add("active");
   }
@@ -5889,7 +5899,26 @@
     });
     var photoLbl = cat.photoLabel || "صورة المناسبة";
     html += '<div class="event-field full-field"><label>' + photoLbl + ' (اختياري)</label>';
-    html += eventPhotoBlockHTML("photo", draft.photo, draft.photoOrig, eventModalState.photoProcessing, eventModalState.photoProcessingMsg);
+    var isFemaleGraduateAdmin = cat.key === "graduates" && draft.gender === "أنثى";
+    var defaultPhotoAdmin = isFemaleGraduateAdmin ? (loadPublicFormConfig().defaultFemaleGraduatePhoto || "") : "";
+    if(isFemaleGraduateAdmin && defaultPhotoAdmin && !eventModalState.femalePhotoChoice){
+      html += '<div class="female-photo-choice">' +
+        '<button type="button" class="female-photo-choice-btn" data-action="choose-female-photo-admin" data-choice="default">' +
+          '<img src="' + defaultPhotoAdmin + '" alt=""/>' +
+          '<span>استخدام صورة افتراضية</span>' +
+        '</button>' +
+        '<button type="button" class="female-photo-choice-btn" data-action="choose-female-photo-admin" data-choice="own">' +
+          '<span class="female-photo-choice-icon">📷</span>' +
+          '<span>رفع صورة خاصة</span>' +
+        '</button>' +
+      '</div>';
+    } else if(isFemaleGraduateAdmin && eventModalState.femalePhotoChoice === "default"){
+      html += '<div class="photo-thumb"><img src="' + defaultPhotoAdmin + '" alt=""/></div>' +
+        '<button type="button" class="btn-secondary" data-action="change-female-photo-choice-admin" style="margin-top:8px; font-size:12px; padding:6px 12px;">تغيير الاختيار</button>';
+    } else {
+      html += eventPhotoBlockHTML("photo", draft.photo, draft.photoOrig, eventModalState.photoProcessing, eventModalState.photoProcessingMsg);
+      if(isFemaleGraduateAdmin && defaultPhotoAdmin) html += '<button type="button" class="btn-secondary" data-action="change-female-photo-choice-admin" style="margin-top:8px; font-size:12px; padding:6px 12px;">تغيير الاختيار</button>';
+    }
     html += '<p class="event-field-hint">صورة توضيحية إن رغبتم بإرفاقها — تُضغط تلقائياً لحجم مناسب بعد الرفع — الصيغ المقبولة: PNG أو JPG فقط</p></div>';
     html += '</div>';
     html += '<div class="modal-actions" style="margin-top:20px;">' +
@@ -7512,6 +7541,11 @@
   });
   eventModalOverlayEl.addEventListener("change", function(e){
     if(e.target.matches("[data-field-input]")) eventModalState.draft[e.target.dataset.key] = e.target.value;
+    if(e.target.matches('[data-field-input][data-key="gender"]') && eventModalState.catKey === "graduates"){
+      eventModalState.femalePhotoChoice = "";
+      renderEventModal();
+      return;
+    }
     if(e.target.matches('[data-action="select-other-toggle"]')){
       var soKey = e.target.dataset.key;
       var otherInput = eventModalOverlayEl.querySelector('[data-other-input="' + soKey + '"]');
@@ -7547,6 +7581,25 @@
     switch(btn.dataset.action){
       case "close-event-modal": closeEventModal(); break;
       case "save-event-record": saveEventRecordFromModal(); break;
+      case "choose-female-photo-admin": {
+        eventModalState.femalePhotoChoice = btn.dataset.choice;
+        if(btn.dataset.choice === "default"){
+          eventModalState.draft.photo = loadPublicFormConfig().defaultFemaleGraduatePhoto || "";
+          eventModalState.draft.photoOrig = "";
+        } else {
+          eventModalState.draft.photo = "";
+          eventModalState.draft.photoOrig = "";
+        }
+        renderEventModal();
+        break;
+      }
+      case "change-female-photo-choice-admin": {
+        eventModalState.femalePhotoChoice = "";
+        eventModalState.draft.photo = "";
+        eventModalState.draft.photoOrig = "";
+        renderEventModal();
+        break;
+      }
       case "remove-event-image": {
         var rmKey = btn.dataset.key;
         eventModalState.draft[rmKey] = "";
