@@ -4844,7 +4844,7 @@
         { key: "university", label: "الجامعة", type: "selectOther", options: SAUDI_UNIVERSITIES, hint: "اختر من القائمة، أو \"غير ذلك\" لكتابة اسم الجامعة/الكلية/المعهد" },
         { key: "universityLogo", label: "شعار الجامعة", type: "image", hint: "شعار الجامعة الرسمي — اختياري، يُستخدم عند تجهيز منشور التهنئة" },
         { key: "specializationType", label: "نوع التخصص", type: "selectOther", options: SPECIALIZATION_TYPES_LIST, hint: "التصنيف العام للتخصص — اختر من القائمة أو \"غير ذلك\"" },
-        { key: "degree", label: "الدرجة", type: "selectOther", options: DEGREES_LIST, hint: "الدرجة العلمية المُحصّلة — اختر من القائمة أو \"غير ذلك\"" },
+        { key: "degree", label: "الدرجة", type: "growSelect", optKey: "degrees", hint: "الدرجة العلمية المُحصّلة — اختر من القائمة أو أضف درجة جديدة بزر +" },
         { key: "honor", label: "مرتبة الشرف", type: "select", options: HONORS_LIST, hint: "اختر مرتبة الشرف إن وجدت" },
         { key: "specialization", label: "التخصص", type: "selectOther", options: SPECIALIZATIONS_LIST, hint: "التخصص الدقيق — اختر من القائمة أو \"غير ذلك\"" },
         { key: "phone", label: "رقم الهاتف", type: "text", hint: "رقم للتواصل عند الحاجة" },
@@ -5339,7 +5339,8 @@
         var ownNatural = naturalWidths[f.key] != null ? naturalWidths[f.key] : ctx.measureText(text).width;
         kashidaTarget = Math.max(ownNatural, naturalWidths[f.matchWidthKey]);
       }
-      if(f.kashida && kashidaTarget) renderText = kashidaJustifyText(ctx, text, kashidaTarget);
+      var kashidaApplies = f.kashida && (!f.kashidaValue || String(record[f.key] || "").trim() === String(f.kashidaValue).trim());
+      if(kashidaApplies && kashidaTarget) renderText = kashidaJustifyText(ctx, text, kashidaTarget);
       var w = ctx.measureText(renderText).width;
       if(f.maxWidth && w > f.maxWidth){
         var fs = f.fontSize;
@@ -6871,6 +6872,7 @@
         '<label>أقصى عرض<input type="number" min="20" data-tmpl-prop="maxWidth" value="' + (f.maxWidth || "") + '"/></label>' +
         '<label><input type="checkbox" data-tmpl-prop="bold"' + (f.bold ? " checked" : "") + '/> عريض</label>' +
         '<label><input type="checkbox" data-tmpl-prop="kashida"' + (f.kashida ? " checked" : "") + '/> تمديد كشيدة</label>' +
+        '<label>تمديد الكشيدة يطبَّق فقط عند القيمة (اتركه فارغاً ليُطبَّق دائماً)<input type="text" data-tmpl-prop="kashidaValue" placeholder="مثال: الماجستير" value="' + escapeHTML(f.kashidaValue || "") + '" style="width:150px;"/></label>' +
         '<label style="flex-basis:100%;">إخفاء عند القيمة (افصل بفاصلة)<input type="text" data-tmpl-prop="hideValues" placeholder="مثال: بدون" value="' + escapeHTML((f.hideValues || []).join("، ")) + '" style="width:200px;"/></label>' +
         '<label>نص قبل القيمة<input type="text" data-tmpl-prop="prefix" placeholder="مثال: كريمة " value="' + escapeHTML(f.prefix || "") + '" style="width:150px;"/></label>' +
         '<label>نص بعد القيمة<input type="text" data-tmpl-prop="suffix" placeholder="مثال: حفظه الله" value="' + escapeHTML(f.suffix || "") + '" style="width:150px;"/></label>' +

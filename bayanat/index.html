@@ -1523,7 +1523,8 @@
         var ownNatural = naturalWidths[f.key] != null ? naturalWidths[f.key] : ctx.measureText(text).width;
         kashidaTarget = Math.max(ownNatural, naturalWidths[f.matchWidthKey]);
       }
-      if(f.kashida && kashidaTarget) renderText = kashidaJustifyText(ctx, text, kashidaTarget);
+      var kashidaApplies = f.kashida && (!f.kashidaValue || String(record[f.key] || "").trim() === String(f.kashidaValue).trim());
+      if(kashidaApplies && kashidaTarget) renderText = kashidaJustifyText(ctx, text, kashidaTarget);
       var w = ctx.measureText(renderText).width;
       if(f.maxWidth && w > f.maxWidth){
         var fs = f.fontSize;
