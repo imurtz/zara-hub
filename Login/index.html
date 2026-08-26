@@ -5638,13 +5638,14 @@
   var FOOTER_CREDIT_DEFAULT = "صُنع بحب من قبل جمعية العوامية الخيرية";
   var PHOTO_PAN_PROMPT_DEFAULT = "مو راضين عن موضع صورتكم داخل التصميم؟ عدّلوها بأنفسكم:";
   function loadPublicFormConfig(){
-    var cfg = { footerMessage: "", footerCredit: FOOTER_CREDIT_DEFAULT, photoPanPrompt: PHOTO_PAN_PROMPT_DEFAULT, banner: { enabled: BANNER_DEFAULTS.enabled, intervalSeconds: BANNER_DEFAULTS.intervalSeconds, slides: BANNER_DEFAULTS.slides.map(copyBannerSlide) } };
+    var cfg = { footerMessage: "", footerCredit: FOOTER_CREDIT_DEFAULT, photoPanPrompt: PHOTO_PAN_PROMPT_DEFAULT, defaultFemaleGraduatePhoto: "", banner: { enabled: BANNER_DEFAULTS.enabled, intervalSeconds: BANNER_DEFAULTS.intervalSeconds, slides: BANNER_DEFAULTS.slides.map(copyBannerSlide) } };
     EVENTS_CATEGORIES.forEach(function(c){ cfg[c.key] = { hidden: [], hints: {}, labels: {}, custom: [] }; });
     var p = _publicFormConfigCache;
     if(p){
       if(typeof p.footerMessage === "string") cfg.footerMessage = p.footerMessage;
       if(typeof p.footerCredit === "string") cfg.footerCredit = p.footerCredit;
       if(typeof p.photoPanPrompt === "string") cfg.photoPanPrompt = p.photoPanPrompt;
+      if(typeof p.defaultFemaleGraduatePhoto === "string") cfg.defaultFemaleGraduatePhoto = p.defaultFemaleGraduatePhoto;
       if(p.banner){
         if(typeof p.banner.enabled === "boolean") cfg.banner.enabled = p.banner.enabled;
         if(typeof p.banner.intervalSeconds === "number" && p.banner.intervalSeconds >= 2) cfg.banner.intervalSeconds = p.banner.intervalSeconds;
@@ -7339,6 +7340,13 @@
       '<label style="display:block; font-size:12.5px; font-weight:700; color:var(--teal-dark); margin-bottom:6px;">عبارة دعوة تعديل موضع الصورة (تظهر أعلى معاينة التصميم بعد التسجيل)</label>' +
       '<input type="text" id="publicCfgPhotoPanPrompt" value="' + escapeHTML(cfg.photoPanPrompt || "") + '" placeholder="' + escapeHTML(PHOTO_PAN_PROMPT_DEFAULT) + '" style="width:100%; padding:10px 12px; border:1.5px solid var(--line); border-radius:10px; font-size:13px; font-family:inherit;"/>' +
     '</div>';
+    html += '<div style="margin-top:14px;">' +
+      '<label style="display:block; font-size:12.5px; font-weight:700; color:var(--teal-dark); margin-bottom:6px;">صورة افتراضية للخريجات (تُعرض كخيار بدل رفع صورة شخصية عند اختيار "أنثى" في نموذج الخريجين العام)</label>' +
+      (cfg.defaultFemaleGraduatePhoto
+        ? '<div class="photo-thumb"><img src="' + cfg.defaultFemaleGraduatePhoto + '" alt=""/><button type="button" class="rm" data-action="remove-default-female-photo">×</button></div>'
+        : '<input type="file" accept="image/png,image/jpeg" class="event-photo-input" data-action="default-female-photo-input"/>') +
+      '<p class="hint" style="margin-top:4px;">إن لم تُرفع صورة هنا، لن يظهر خيار "صورة افتراضية" للخريجات — يبقى الرفع الشخصي اختيارياً كما هو حالياً</p>' +
+    '</div>';
     html += '</div>';
     return html;
   }
@@ -8378,6 +8386,16 @@
       var iv = parseInt(e.target.value, 10);
       pCfgIv.banner.intervalSeconds = (iv >= 2 && iv <= 30) ? iv : BANNER_DEFAULTS.intervalSeconds;
       savePublicFormConfig(pCfgIv);
+    } else if(e.target.matches('[data-action="default-female-photo-input"]')){
+      var femPhotoFile = e.target.files && e.target.files[0];
+      if(!femPhotoFile) return;
+      compressEventImageFile(femPhotoFile, 400 * 1024, function(dataUrl){
+        if(!dataUrl) return;
+        var pCfgFem = loadPublicFormConfig();
+        pCfgFem.defaultFemaleGraduatePhoto = dataUrl;
+        savePublicFormConfig(pCfgFem);
+        renderEventsSettingsPanel();
+      });
     } else if(e.target.matches('[data-action="banner-slide-image-input"]')){
       var file = e.target.files && e.target.files[0];
       if(!file) return;
@@ -8395,6 +8413,13 @@
     if(!btn) return;
     switch(btn.dataset.action){
       case "admin-clear-events-cat": adminClearEventsCategory(btn.dataset.cat); break;
+      case "remove-default-female-photo": {
+        var pCfgRmFem = loadPublicFormConfig();
+        pCfgRmFem.defaultFemaleGraduatePhoto = "";
+        savePublicFormConfig(pCfgRmFem);
+        renderEventsSettingsPanel();
+        break;
+      }
       case "public-cfg-set-cat": publicConfigUI.category = btn.dataset.cat; renderEventsSettingsPanel(); break;
       case "public-cfg-add-custom": {
         var labelInput = document.getElementById("publicCfgNewFieldLabel");

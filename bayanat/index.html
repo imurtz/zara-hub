@@ -166,6 +166,12 @@
   .photo-preview{position:relative; display:inline-block; border-radius:10px; overflow:hidden; border:1px solid var(--line); line-height:0;}
   .photo-preview img{display:block; height:110px; width:auto; max-width:100%; object-fit:contain;}
   .photo-preview .rm{position:absolute; top:4px; left:4px; background:rgba(0,0,0,.55); color:#fff; border:none; width:22px; height:22px; border-radius:50%; font-size:13px; cursor:pointer;}
+  .female-photo-choice{display:flex; gap:10px; flex-wrap:wrap;}
+  .female-photo-choice-btn{flex:1; min-width:130px; display:flex; flex-direction:column; align-items:center; gap:8px; padding:14px 10px; border:1.5px solid var(--line); border-radius:12px; background:var(--white); cursor:pointer; transition:all .15s; font-size:12.5px; font-weight:600; color:var(--ink);}
+  .female-photo-choice-btn:hover{border-color:var(--teal); background:var(--teal-tint);}
+  .female-photo-choice-btn img{height:64px; width:64px; object-fit:cover; border-radius:50%; border:1px solid var(--line);}
+  .female-photo-choice-icon{font-size:26px; line-height:1;}
+  .female-photo-change-btn{margin-top:8px; display:block; font-size:11.5px; padding:6px 12px;}
   .submit-btn{width:100%; margin-top:22px; padding:14px; border:none; border-radius:12px; background:var(--teal); color:#fff; font-size:14.5px; font-weight:600; cursor:pointer; transition:all .15s;}
   .submit-btn:hover{background:var(--teal-dark);}
   .err-msg{color:var(--danger); font-size:12.5px; margin-top:10px; display:none;}
@@ -586,7 +592,7 @@
     history.replaceState(null, "", url.toString());
   }
 
-  var state = { activeCategory: getCategoryFromUrl(), photo: "", photoProcessing: false, photoProcessingMsg: "", fieldImages: {}, fieldImagesProcessing: {}, aiSuggestion: "", aiLoading: false, aiError: "", aiConsentPolicy: false, aiConsentWording: false, aiImage: "" };
+  var state = { activeCategory: getCategoryFromUrl(), photo: "", photoProcessing: false, photoProcessingMsg: "", femalePhotoChoice: "", fieldImages: {}, fieldImagesProcessing: {}, aiSuggestion: "", aiLoading: false, aiError: "", aiConsentPolicy: false, aiConsentWording: false, aiImage: "" };
 
   var GRADIENT_PRESETS = {
     brand: "linear-gradient(120deg, var(--teal) 0%, var(--teal-dark) 55%, var(--blue-dark) 100%)",
@@ -813,6 +819,7 @@
     var cat = CATEGORIES.find(function(c){ return c.key === state.activeCategory; });
     var effectiveFields = getEffectiveFields(cat.key);
     state.photo = "";
+    state.femalePhotoChoice = "";
     state.fieldImages = {};
     state.aiSuggestion = ""; state.aiLoading = false; state.aiError = ""; state.aiConsentPolicy = false; state.aiConsentWording = false; state.aiImage = "";
     grid.innerHTML = effectiveFields.map(function(f){
@@ -836,14 +843,44 @@
     bindFormEvents();
     updateSubmitButtonState();
   }
+  function currentGenderValue(){
+    var el = document.querySelector('[data-key="gender"]');
+    return el ? el.value : "";
+  }
+  // للخريجات تحديداً: إن رفعت الإدارة صورة افتراضية، نعرض خيارَين بدل رفع مباشر —
+  // صورة افتراضية جاهزة، أو رفع صورة شخصية كالمعتاد — بدل ما يُترك حقل الصورة فارغاً بالكامل
+  function isFemaleGraduateChoiceActive(){
+    var cat = CATEGORIES.find(function(c){ return c.key === state.activeCategory; });
+    if(!cat || cat.key !== "graduates") return false;
+    if(currentGenderValue() !== "أنثى") return false;
+    return !!(loadPublicFormConfig().defaultFemaleGraduatePhoto);
+  }
   function photoFieldHTML(){
     var inner;
-    if(state.photoProcessing){
+    var femaleChoiceActive = isFemaleGraduateChoiceActive();
+    var defaultPhoto = femaleChoiceActive ? loadPublicFormConfig().defaultFemaleGraduatePhoto : "";
+    if(femaleChoiceActive && !state.femalePhotoChoice){
+      inner = '<div class="female-photo-choice">' +
+        '<button type="button" class="female-photo-choice-btn" data-action="choose-female-photo" data-choice="default">' +
+          '<img src="' + defaultPhoto + '" alt=""/>' +
+          '<span>استخدام صورة افتراضية</span>' +
+        '</button>' +
+        '<button type="button" class="female-photo-choice-btn" data-action="choose-female-photo" data-choice="own">' +
+          '<span class="female-photo-choice-icon">📷</span>' +
+          '<span>رفع صورتي الخاصة</span>' +
+        '</button>' +
+      '</div>';
+    } else if(femaleChoiceActive && state.femalePhotoChoice === "default"){
+      inner = '<div class="photo-preview"><img src="' + defaultPhoto + '" alt=""/></div>' +
+        '<button type="button" class="btn-secondary female-photo-change-btn" data-action="change-female-photo-choice">تغيير الاختيار</button>';
+    } else if(state.photoProcessing){
       inner = '<p class="field-hint" id="photoProcessingMsg">' + escapeHTML(state.photoProcessingMsg || "جارٍ المعالجة...") + '</p>';
     } else if(state.photo){
-      inner = '<div class="photo-preview"><img src="' + state.photo + '" alt=""/><button type="button" class="rm" id="removePhotoBtn">×</button></div>';
+      inner = '<div class="photo-preview"><img src="' + state.photo + '" alt=""/><button type="button" class="rm" id="removePhotoBtn">×</button></div>' +
+        (femaleChoiceActive ? '<button type="button" class="btn-secondary female-photo-change-btn" data-action="change-female-photo-choice">تغيير الاختيار</button>' : "");
     } else {
-      inner = '<input type="file" accept="image/png,image/jpeg" class="photo-input" id="photoInput"/>';
+      inner = '<input type="file" accept="image/png,image/jpeg" class="photo-input" id="photoInput"/>' +
+        (femaleChoiceActive ? '<button type="button" class="btn-secondary female-photo-change-btn" data-action="change-female-photo-choice">رجوع لخيارات الصورة</button>' : "");
     }
     return '<div id="photoFieldMount">' + inner + '</div>';
   }
@@ -1084,6 +1121,33 @@
           if(state.aiSuggestion) fetchAiSuggestion();
         });
       }
+    }
+    if(activeCat && activeCat.key === "graduates"){
+      var gradGenderSelect = document.querySelector('[data-key="gender"]');
+      if(gradGenderSelect && !gradGenderSelect.dataset.femPhotoBound){
+        gradGenderSelect.dataset.femPhotoBound = "1";
+        gradGenderSelect.addEventListener("change", function(){
+          state.femalePhotoChoice = "";
+          state.photo = "";
+          refreshPhotoField();
+        });
+      }
+    }
+    Array.prototype.forEach.call(document.querySelectorAll('[data-action="choose-female-photo"]'), function(btn){
+      btn.addEventListener("click", function(){
+        state.femalePhotoChoice = btn.dataset.choice;
+        if(btn.dataset.choice === "default") state.photo = loadPublicFormConfig().defaultFemaleGraduatePhoto || "";
+        else state.photo = "";
+        refreshPhotoField();
+      });
+    });
+    var femPhotoChangeBtn = document.querySelector('[data-action="change-female-photo-choice"]');
+    if(femPhotoChangeBtn){
+      femPhotoChangeBtn.addEventListener("click", function(){
+        state.femalePhotoChoice = "";
+        state.photo = "";
+        refreshPhotoField();
+      });
     }
     var input = document.getElementById("photoInput");
     if(input){
