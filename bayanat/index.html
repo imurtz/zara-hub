@@ -694,6 +694,35 @@
     reader.onerror = function(){ cb(null); };
     reader.readAsDataURL(file);
   }
+  // يفحص إن كانت الصورة المرفوعة PNG مفرّغة الخلفية أصلاً (شفافية حقيقية بنسبة معتبرة من البكسلات)،
+  // حتى لا نعيد تشغيل أداة إزالة الخلفية على صورة مفرّغة سلفاً — إعادة معالجتها أحياناً تُفسد نتيجة كانت صحيحة أصلاً
+  function detectImageTransparency(file, cb){
+    if(!file || file.type !== "image/png"){ cb(false); return; }
+    var reader = new FileReader();
+    reader.onload = function(e){
+      var img = new Image();
+      img.onload = function(){
+        var maxCheck = 200;
+        var w = img.width, h = img.height;
+        var scale = Math.min(1, maxCheck / Math.max(w, h));
+        var cw = Math.max(1, Math.round(w * scale)), ch = Math.max(1, Math.round(h * scale));
+        var canvas = document.createElement("canvas");
+        canvas.width = cw; canvas.height = ch;
+        var ctx = canvas.getContext("2d");
+        ctx.drawImage(img, 0, 0, cw, ch);
+        var data;
+        try{ data = ctx.getImageData(0, 0, cw, ch).data; }catch(err){ cb(false); return; }
+        var transparent = 0;
+        var total = cw * ch;
+        for(var i = 3; i < data.length; i += 4){ if(data[i] < 250) transparent++; }
+        cb((transparent / total) > 0.03);
+      };
+      img.onerror = function(){ cb(false); };
+      img.src = e.target.result;
+    };
+    reader.onerror = function(){ cb(false); };
+    reader.readAsDataURL(file);
+  }
   // ضغط صورة مفرّغة الخلفية — يبقى PNG دائماً (بدون تحويل لـ JPEG) حتى لا تُفقد الشفافية، ويقلّص الأبعاد بدل الجودة للوصول للحجم المطلوب
   function compressCutoutImageFile(blobOrFile, maxStoredBytes, cb){
     var reader = new FileReader();
@@ -1162,15 +1191,31 @@
           return;
         }
         errEl.style.display = "none";
-        compressImageFile(file, 400 * 1024, function(dataUrl){
-          if(!dataUrl){
-            errEl.textContent = "تعذّرت قراءة الصورة — جرّب صورة أخرى";
-            errEl.style.display = "block";
+        detectImageTransparency(file, function(alreadyTransparent){
+          if(alreadyTransparent){
+            compressCutoutImageFile(file, 400 * 1024, function(dataUrl){
+              if(!dataUrl){
+                errEl.textContent = "تعذّرت قراءة الصورة — جرّب صورة أخرى";
+                errEl.style.display = "block";
+                return;
+              }
+              state.photo = dataUrl;
+              refreshPhotoField();
+              showBgToast("✔ الصورة مفرّغة الخلفية مسبقاً — لن نعيد معالجتها");
+              setTimeout(hideBgToast, 2200);
+            });
             return;
           }
-          state.photo = dataUrl;
-          refreshPhotoField();
-          autoRemovePhotoBg();
+          compressImageFile(file, 400 * 1024, function(dataUrl){
+            if(!dataUrl){
+              errEl.textContent = "تعذّرت قراءة الصورة — جرّب صورة أخرى";
+              errEl.style.display = "block";
+              return;
+            }
+            state.photo = dataUrl;
+            refreshPhotoField();
+            autoRemovePhotoBg();
+          });
         });
       });
     }
@@ -1194,11 +1239,23 @@
           return;
         }
         errEl.style.display = "none";
-        compressImageFile(file, 400 * 1024, function(dataUrl){
-          if(!dataUrl) return;
-          state.fieldImages[key] = dataUrl;
-          refreshFieldImage(key);
-          autoRemoveFieldBg(key);
+        detectImageTransparency(file, function(alreadyTransparent){
+          if(alreadyTransparent){
+            compressCutoutImageFile(file, 400 * 1024, function(dataUrl){
+              if(!dataUrl) return;
+              state.fieldImages[key] = dataUrl;
+              refreshFieldImage(key);
+              showBgToast("✔ الصورة مفرّغة الخلفية مسبقاً — لن نعيد معالجتها");
+              setTimeout(hideBgToast, 2200);
+            });
+            return;
+          }
+          compressImageFile(file, 400 * 1024, function(dataUrl){
+            if(!dataUrl) return;
+            state.fieldImages[key] = dataUrl;
+            refreshFieldImage(key);
+            autoRemoveFieldBg(key);
+          });
         });
       });
     });
