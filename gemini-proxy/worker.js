@@ -182,10 +182,11 @@ async function handleExtract(body, env, headers) {
   }
 
   if (!extracted) {
+    // detail هنا مؤقت لتشخيص مشكلة quota_exceeded الحالية — نص خطأ جوجل الفعلي، لا يحتوي أي بيانات حساسة
     if (lastErr && lastErr.message === "quota_exceeded") {
-      return json({ error: "quota_exceeded" }, 429, headers);
+      return json({ error: "quota_exceeded", detail: lastErr.detail || "" }, 429, headers);
     }
-    return json({ error: lastErr ? "gemini_error" : "empty_extraction" }, 502, headers);
+    return json({ error: lastErr ? "gemini_error" : "empty_extraction", detail: (lastErr && lastErr.detail) || "" }, 502, headers);
   }
   return json({ fields: extracted }, 200, headers);
 }
@@ -204,7 +205,12 @@ async function callGeminiExtract(env, promptText) {
     }
   );
   if (!geminiRes.ok) {
-    throw new Error(geminiRes.status === 429 ? "quota_exceeded" : "gemini_bad_status");
+    let bodyText = "";
+    try { bodyText = await geminiRes.text(); } catch (e) {}
+    const err = new Error(geminiRes.status === 429 ? "quota_exceeded" : "gemini_bad_status");
+    err.detail = bodyText.slice(0, 500);
+    err.status = geminiRes.status;
+    throw err;
   }
   const data = await geminiRes.json();
   const text = data && data.candidates && data.candidates[0] && data.candidates[0].content &&
