@@ -5235,6 +5235,19 @@
     for(var fi = 0; fi < uniqueFontIds.length; fi++){
       fontFamMap[uniqueFontIds[fi]] = await loadCustomFont(uniqueFontIds[fi]);
     }
+    // تمريرة أولى لقياس العرض الطبيعي (بدون كشيدة) لكل حقل نصي — تُستخدم لخاصية "طابق العرض مع سطر آخر"
+    var naturalWidths = {};
+    template.fields.forEach(function(nf){
+      if(nf.type === "image") return;
+      var nText = templateFieldValue(nf, record, null);
+      if(!nText) return;
+      var nWeight = nf.bold ? "700" : "400";
+      var nFam = "Cairo";
+      if(nf.font && nf.font.indexOf("custom:") === 0) nFam = fontFamMap[nf.font.slice(7)] || "Cairo";
+      else if(nf.font) nFam = nf.font;
+      ctx.font = nWeight + ' ' + nf.fontSize + 'px "' + nFam + '", sans-serif';
+      naturalWidths[nf.key] = ctx.measureText(nText).width;
+    });
     for(var i = 0; i < template.fields.length; i++){
       var f = template.fields[i];
       if(f.type === "image"){
@@ -5269,7 +5282,12 @@
       ctx.fillStyle = f.color || "#000000";
       ctx.textBaseline = "middle";
       var renderText = text;
-      if(f.kashida && f.maxWidth) renderText = kashidaJustifyText(ctx, text, f.maxWidth);
+      var kashidaTarget = f.maxWidth;
+      if(f.matchWidthKey && naturalWidths[f.matchWidthKey] != null){
+        var ownNatural = naturalWidths[f.key] != null ? naturalWidths[f.key] : ctx.measureText(text).width;
+        kashidaTarget = Math.max(ownNatural, naturalWidths[f.matchWidthKey]);
+      }
+      if(f.kashida && kashidaTarget) renderText = kashidaJustifyText(ctx, text, kashidaTarget);
       var w = ctx.measureText(renderText).width;
       if(f.maxWidth && w > f.maxWidth){
         var fs = f.fontSize;
@@ -6522,6 +6540,10 @@
     var list = TMPL_PLACEABLE_FIELDS[catKey] || [];
     return list.find(function(f){ return f.key === fieldKey; });
   }
+  // كل الحقول النصية الأخرى المحدد موضعها بنفس القالب (يستثني نفس الحقل وحقول الصور) — لاختيار "طابق العرض مع"
+  function tmplOtherTextFields(tmpl, excludeKey){
+    return tmpl.fields.filter(function(f){ return f.key !== excludeKey && f.type !== "image"; });
+  }
   function tmplManagerHTML(){
     var cat = eventsUI.designTmplCategory;
     var templates = loadDesignTemplates(cat);
@@ -6773,6 +6795,15 @@
         '<label><input type="checkbox" data-tmpl-prop="bold"' + (f.bold ? " checked" : "") + '/> عريض</label>' +
         '<label><input type="checkbox" data-tmpl-prop="kashida"' + (f.kashida ? " checked" : "") + '/> تمديد كشيدة</label>' +
         '<label style="flex-basis:100%;">إخفاء عند القيمة (افصل بفاصلة)<input type="text" data-tmpl-prop="hideValues" placeholder="مثال: بدون" value="' + escapeHTML((f.hideValues || []).join("، ")) + '" style="width:200px;"/></label>' +
+        '<label>نص قبل القيمة<input type="text" data-tmpl-prop="prefix" placeholder="مثال: كريمة " value="' + escapeHTML(f.prefix || "") + '" style="width:150px;"/></label>' +
+        '<label>نص بعد القيمة<input type="text" data-tmpl-prop="suffix" placeholder="مثال: حفظه الله" value="' + escapeHTML(f.suffix || "") + '" style="width:150px;"/></label>' +
+        '<p class="hint" style="flex-basis:100%; margin:0 0 -4px;">النص هنا يظهر في التصميم فقط — القيمة المحفوظة بالسجل نفسها لا تتغيّر</p>' +
+        (tmplOtherTextFields(tmpl, f.key).length ?
+          '<label style="flex-basis:100%;">طابق عرض هذا السطر مع<select data-tmpl-prop="matchWidthKey"><option value="">بدون</option>' +
+            tmplOtherTextFields(tmpl, f.key).map(function(of){ return '<option value="' + of.key + '"' + (f.matchWidthKey === of.key ? " selected" : "") + '>' + escapeHTML((tmplFieldMeta(tmpl.category, of.key) || {}).label || of.key) + '</option>'; }).join("") +
+          '</select></label>' +
+          '<p class="hint" style="flex-basis:100%; margin:0;">مع تفعيل "تمديد كشيدة": يمتد هذا السطر تلقائياً (أو يبقى كما هو إن كان أطول) ليتساوى بصرياً مع عرض السطر المختار — فعّلها على السطرين معاً لتطابق تام بينهما</p>'
+        : "") +
       '</div></details>';
     }
     var otherTmpls = _designTemplatesCache.filter(function(t){ return t.id !== tmpl.id && t.category === tmpl.category; });
