@@ -4969,6 +4969,35 @@
   function genEventId(){ return "evt-" + Date.now().toString(36) + Math.random().toString(36).slice(2, 8); }
 
   // يضغط صور المناسبات (تصغير الأبعاد + تقليل الجودة تدريجياً) حتى تكون آمنة ضمن حد المستند الواحد بقاعدة بيانات Firestore (1 ميقابايت) — لا يُستخدم لصور التقرير السنوي (تبقى بجودتها الكاملة محلياً)
+  // يفحص إن كانت الصورة المرفوعة PNG مفرّغة الخلفية أصلاً (شفافية حقيقية بنسبة معتبرة من البكسلات) —
+  // بدونه كانت كل صورة تتحول لـ JPEG فوراً (compressEventImageFile) فتفقد شفافيتها وتظهر خلفيتها سوداء
+  function detectImageTransparency(file, cb){
+    if(!file || file.type !== "image/png"){ cb(false); return; }
+    var reader = new FileReader();
+    reader.onload = function(e){
+      var img = new Image();
+      img.onload = function(){
+        var maxCheck = 200;
+        var w = img.width, h = img.height;
+        var scale = Math.min(1, maxCheck / Math.max(w, h));
+        var cw = Math.max(1, Math.round(w * scale)), ch = Math.max(1, Math.round(h * scale));
+        var canvas = document.createElement("canvas");
+        canvas.width = cw; canvas.height = ch;
+        var ctx = canvas.getContext("2d");
+        ctx.drawImage(img, 0, 0, cw, ch);
+        var data;
+        try{ data = ctx.getImageData(0, 0, cw, ch).data; }catch(err){ cb(false); return; }
+        var transparent = 0;
+        var total = cw * ch;
+        for(var i = 3; i < data.length; i += 4){ if(data[i] < 250) transparent++; }
+        cb((transparent / total) > 0.03);
+      };
+      img.onerror = function(){ cb(false); };
+      img.src = e.target.result;
+    };
+    reader.onerror = function(){ cb(false); };
+    reader.readAsDataURL(file);
+  }
   function compressEventImageFile(file, maxStoredBytes, cb){
     var reader = new FileReader();
     reader.onload = function(e){
@@ -7566,11 +7595,23 @@
         e.target.value = "";
         return;
       }
-      compressEventImageFile(imgFile, 400 * 1024, function(dataUrl){
-        if(!dataUrl){ showToast("تعذّرت قراءة الصورة"); return; }
-        eventModalState.draft[fieldKey] = dataUrl;
-        eventModalState.draft[fieldKey + "Orig"] = "";
-        renderEventModal();
+      detectImageTransparency(imgFile, function(alreadyTransparent){
+        if(alreadyTransparent){
+          compressCutoutImageFile(imgFile, 400 * 1024, function(dataUrl){
+            if(!dataUrl){ showToast("تعذّرت قراءة الصورة"); return; }
+            eventModalState.draft[fieldKey] = dataUrl;
+            eventModalState.draft[fieldKey + "Orig"] = "";
+            renderEventModal();
+            showToast("✔ الصورة مفرّغة الخلفية مسبقاً — لن نعيد معالجتها");
+          });
+          return;
+        }
+        compressEventImageFile(imgFile, 400 * 1024, function(dataUrl){
+          if(!dataUrl){ showToast("تعذّرت قراءة الصورة"); return; }
+          eventModalState.draft[fieldKey] = dataUrl;
+          eventModalState.draft[fieldKey + "Orig"] = "";
+          renderEventModal();
+        });
       });
     }
   });
