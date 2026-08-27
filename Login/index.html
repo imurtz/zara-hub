@@ -5555,13 +5555,10 @@
     var key = String(name || "").trim();
     return (key && _uniLogosCache[key]) ? _uniLogosCache[key] : null;
   }
-  // أسماء الجامعات المرشّحة لإدارة شعاراتها: القائمة الثابتة + أي اسم جامعة "غير ذلك" مخصص فعلاً بسجلات خريجين حقيقية
+  // أسماء الجامعات المرشّحة لإدارة شعاراتها: القائمة الثابتة (SAUDI_UNIVERSITIES) فقط —
+  // لا تُضاف أي جامعة "غير ذلك" مخصصة من سجلات فعلية، حتى تبقى القائمة موحّدة ومطابقة تماماً لما أُعِدَّ بالنظام
   function allUniversityNamesForLogos(){
-    var names = SAUDI_UNIVERSITIES.slice();
-    loadEventsData().forEach(function(r){
-      if(r.category === "graduates" && r.university && names.indexOf(r.university) === -1) names.push(r.university);
-    });
-    return names;
+    return SAUDI_UNIVERSITIES.slice();
   }
   function openUniLogosModal(){
     eventsUI.uniLogosSearch = "";
