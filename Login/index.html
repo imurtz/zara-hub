@@ -6230,16 +6230,23 @@
     if(!cat) return;
     var recs = loadEventsData().filter(function(r){ return r.category === catKey; });
     if(!recs.length){ showToast("لا توجد سجلات لتصديرها"); return; }
-    var rows = recs.map(function(r){
-      var row = {};
-      cat.fields.forEach(function(f){ row[f.label] = r[f.key] || ""; });
-      row["تاريخ الإدخال"] = r.createdAt ? toISODate(new Date(r.createdAt)) : "";
-      return row;
-    });
-    var ws = window.XLSX.utils.json_to_sheet(rows);
-    var wb = window.XLSX.utils.book_new();
-    window.XLSX.utils.book_append_sheet(wb, ws, cat.label);
-    window.XLSX.writeFile(wb, cat.label + "-" + toISODate(new Date()) + ".xlsx");
+    // نستثني حقول الصور (type: "image") — قيمتها base64 طويلة جداً (أحياناً بالميغابايت)
+    // تتجاوز الحد الأقصى لطول خلية في إكسل (32,767 حرف) وتُسقط التصدير بصمت بدون أي رسالة خطأ
+    var exportFields = cat.fields.filter(function(f){ return f.type !== "image"; });
+    try {
+      var rows = recs.map(function(r){
+        var row = {};
+        exportFields.forEach(function(f){ row[f.label] = r[f.key] || ""; });
+        row["تاريخ الإدخال"] = r.createdAt ? toISODate(new Date(r.createdAt)) : "";
+        return row;
+      });
+      var ws = window.XLSX.utils.json_to_sheet(rows);
+      var wb = window.XLSX.utils.book_new();
+      window.XLSX.utils.book_append_sheet(wb, ws, cat.label);
+      window.XLSX.writeFile(wb, cat.label + "-" + toISODate(new Date()) + ".xlsx");
+    } catch(err) {
+      showToast("تعذّر تصدير الملف — " + (err && err.message ? err.message : "خطأ غير متوقع"));
+    }
   }
 
   var eventsImportState = { catKey: null, rows: null, fileName: "", error: null };
