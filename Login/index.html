@@ -5311,6 +5311,10 @@
     for(var fi = 0; fi < uniqueFontIds.length; fi++){
       fontFamMap[uniqueFontIds[fi]] = await loadCustomFont(uniqueFontIds[fi]);
     }
+    // انتظار إضافي بعد تحميل أي خط مخصص: بعض المتصفحات تُنهي وعد FontFace.load() قبل أن يصبح الخط
+    // متاحاً فعلياً لكل سياقات الرسم (خاصة كانفس غير ملحق بالصفحة بعد) — فيرتسم النص بخط احتياطي
+    // لا يدعم تشكيل/اتصال الحروف العربية بشكل صحيح. document.fonts.ready يضمن استقرار الخط فعلياً
+    if(uniqueFontIds.length && document.fonts && document.fonts.ready) await document.fonts.ready;
     // تمريرة أولى لقياس العرض الطبيعي (بدون كشيدة) لكل حقل نصي — تُستخدم لخاصية "طابق العرض مع سطر آخر"
     var naturalWidths = {};
     template.fields.forEach(function(nf){
@@ -6366,6 +6370,20 @@
   }
 
   // ----- مهام النشر (قوالب تهنئة/تعازي) -----
+  // يختار أنسب قالب نصي للسجل من بين عدة قوالب بنفس التصنيف — بدون هذا كان النظام يستخدم دائماً
+  // أول قالب بالقائمة بغضّ النظر عن بيانات السجل (مثلاً قالب فيه {honor} لا يُستخدم أبداً لأنه ليس الأول)
+  function pickBestTextTemplateForRecord(list, rec){
+    if(!list || !list.length) return null;
+    var conditioned = list.find(function(t){
+      if(!t.condFieldKey) return false;
+      var v = String((rec && rec[t.condFieldKey]) || "").trim();
+      return v !== "" && v !== "بدون";
+    });
+    if(conditioned) return conditioned;
+    var general = list.find(function(t){ return !t.condFieldKey; });
+    if(general) return general;
+    return list[0];
+  }
   function renderTemplateText(text, rec){
     return String(text || "").replace(/\{(\w+)\}/g, function(m, key){ return (rec[key] != null && rec[key] !== "") ? rec[key] : ""; });
   }
@@ -6434,7 +6452,7 @@
     return filtered.map(function(r){
       var cat = EVENTS_CATEGORIES.find(function(c){ return c.key === r.category; });
       var status = statuses[r.id] || "pending";
-      var tpl = (templates[r.category] || [])[0];
+      var tpl = pickBestTextTemplateForRecord(templates[r.category] || [], r);
       var text = tpl ? renderTemplateText(tpl.text, r) : "";
       var title = cat.fields.slice(0, 3).map(function(f){ return r[f.key]; }).filter(Boolean).join(" — ") || "(بدون بيانات)";
       var expanded = !!eventsUI.expandedPublishIds[r.id];
@@ -6521,10 +6539,18 @@
     }).join("") + '</div>';
     html += '<div class="template-placeholders">المتغيرات المتاحة: ' + cat.fields.map(function(f){ return '<code>{' + f.key + '}</code>'; }).join(" ") + '</div>';
     if(!list.length) html += '<p class="report-empty">لا توجد قوالب بعد لهذا التصنيف</p>';
+    var condHint = list.length > 1 ? '<p class="hint" style="margin:0 0 10px;">عند وجود أكثر من قالب لنفس التصنيف: القالب المشروط بحقل يُستخدم فقط إذا كانت قيمة ذلك الحقل بالسجل معبأة (وليست "بدون")، وإلا يُستخدم القالب غير المشروط كافتراضي.</p>' : '';
+    html += condHint;
     list.forEach(function(t){
       html += '<div class="template-card">' +
         '<textarea rows="3" data-template-input data-id="' + t.id + '">' + escapeHTML(t.text) + '</textarea>' +
-        '<div style="display:flex; gap:8px;">' +
+        '<label style="display:block; font-size:11.5px; color:var(--ink-soft); margin:8px 0 2px;">يُستخدم فقط إذا كان الحقل التالي معبأ بالسجل (اتركه فارغاً ليكون القالب الافتراضي)' +
+          '<select data-template-cond data-id="' + t.id + '" style="margin-top:4px;">' +
+            '<option value=""' + (!t.condFieldKey ? " selected" : "") + '>بدون شرط (افتراضي)</option>' +
+            cat.fields.map(function(f){ return '<option value="' + f.key + '"' + (t.condFieldKey === f.key ? " selected" : "") + '>' + escapeHTML(f.label) + '</option>'; }).join("") +
+          '</select>' +
+        '</label>' +
+        '<div style="display:flex; gap:8px; margin-top:6px;">' +
           '<button type="button" class="btn-primary" style="padding:8px 16px;" data-action="save-template" data-id="' + t.id + '">حفظ</button>' +
           '<button type="button" class="danger-btn" data-action="delete-template" data-id="' + t.id + '">حذف</button>' +
         '</div>' +
@@ -7131,6 +7157,14 @@
     if(unisex) return unisex;
     return templates[0];
   }
+  // يتحقق إذا كان القالب المُختار تلقائياً (عبر pickBestTemplateForRecord) لا يطابق جنس السجل فعلياً —
+  // يعني ما فيه قالب مخصص لهذا الجنس ولا قالب عام، فوقع الاختيار (احتياطياً) على قالب مخصص للجنس الآخر.
+  // يُستخدم لتنبيه الأدمن بدل الاختيار الصامت لقالب قد يكون محتواه غير مناسب إطلاقاً لهذا السجل
+  function templateGenderMismatchWarning(tmpl, rec){
+    var g = rec && rec.gender;
+    if(!g || !tmpl || !tmpl.gender || tmpl.gender === g) return null;
+    return "⚠️ لا يوجد قالب تصميم مخصص لـ\"" + g + "\" بهذا التصنيف — استُخدم مؤقتاً قالب مخصص لـ\"" + tmpl.gender + "\". تحقق من اختيار القالب الصحيح يدوياً، أو أضف قالباً مخصصاً لهذا الجنس.";
+  }
   // مشاركة السجل عبر واتساب: النص + صورة التصميم معاً في خطوة واحدة — يعمل هكذا فقط على الجوال عبر Web Share API
   // (نفس الآلية اللي يستخدمها زر "مشاركة" بأي تطبيق جوال). واتساب على الحاسوب لا يوفر أي طريقة برمجية لإرفاق صورة
   // تلقائياً برسالة عبر رابط — قيد حقيقي بمنصة واتساب نفسها، فعلى الحاسوب ننسخ النص ونُنزّل الصورة كأفضل بديل متاح
@@ -7151,9 +7185,17 @@
       finish();
       return;
     }
+    var mismatchWarn = templateGenderMismatchWarning(tmpl, rec);
+    if(mismatchWarn) showToast(mismatchWarn);
+    // نُلحق الكانفس بالـ DOM (مخفياً خارج الشاشة) قبل الرسم ونزيله بعدها — بعض المتصفحات لا تُطبّق خطوطاً
+    // مخصصة (custom FontFace) بشكل موثوق على كانفس منفصل تماماً عن الصفحة (detached)، فيظهر النص العربي
+    // مقطّعاً/غير متصل الحروف بخط احتياطي لا يدعم تشكيل الحروف العربية بدل الخط المطلوب
     var offCanvas = document.createElement("canvas");
+    offCanvas.style.cssText = "position:fixed; left:-9999px; top:0;";
+    document.body.appendChild(offCanvas);
     renderTemplateToCanvas(offCanvas, tmpl, rec).then(function(result){
       if(!result.ok){
+        document.body.removeChild(offCanvas);
         copyToClipboard(shareText);
         showToast("تعذّر تجهيز الصورة — تم نسخ النص فقط");
         window.open("https://wa.me/?text=" + encodeURIComponent(shareText), "_blank");
@@ -7161,6 +7203,7 @@
         return;
       }
       offCanvas.toBlob(function(blob){
+        document.body.removeChild(offCanvas);
         finish();
         if(!blob){
           copyToClipboard(shareText);
@@ -7195,7 +7238,12 @@
     if(!cat) return;
     var templates = loadDesignTemplates(cat.key);
     if(!templates.length) return;
-    var tid = (preferredTemplateId && templates.some(function(t){ return t.id === preferredTemplateId; })) ? preferredTemplateId : pickBestTemplateForRecord(templates, rec).id;
+    var autoPicked = pickBestTemplateForRecord(templates, rec);
+    var tid = (preferredTemplateId && templates.some(function(t){ return t.id === preferredTemplateId; })) ? preferredTemplateId : autoPicked.id;
+    if(!preferredTemplateId){
+      var mismatchWarn = templateGenderMismatchWarning(autoPicked, rec);
+      if(mismatchWarn) showToast(mismatchWarn);
+    }
     tmplGenerateState = { recordId: recordId, catKey: cat.key, templateId: tid, pendingKey: "" };
     renderDesignGenerateModal();
     document.getElementById("tmplGenerateOverlay").classList.add("active");
@@ -7921,6 +7969,18 @@
   });
 
   var eventTemplatesOverlayEl = document.getElementById("eventTemplatesOverlay");
+  eventTemplatesOverlayEl.addEventListener("change", function(e){
+    if(e.target.matches("[data-template-cond]")){
+      var condTplId = e.target.dataset.id;
+      var condTemplates = loadEventsTemplates();
+      var condCatKey = eventsUI.templatesCategory;
+      var condTpl = (condTemplates[condCatKey] || []).find(function(t){ return t.id === condTplId; });
+      if(!condTpl) return;
+      condTpl.condFieldKey = e.target.value || null;
+      saveEventsTemplates(condTemplates);
+      showToast("تم حفظ الشرط");
+    }
+  });
   eventTemplatesOverlayEl.addEventListener("click", function(e){
     if(e.target === eventTemplatesOverlayEl){ closeEventTemplatesModal(); return; }
     var btn = e.target.closest("[data-action]");

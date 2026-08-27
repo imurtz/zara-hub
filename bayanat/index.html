@@ -1480,6 +1480,9 @@
     for(var fi = 0; fi < uniqueFontIds.length; fi++){
       fontFamMap[uniqueFontIds[fi]] = await loadCustomFontOncePublic(uniqueFontIds[fi]);
     }
+    // انتظار إضافي بعد تحميل أي خط مخصص لضمان استقراره فعلياً قبل الرسم — يمنع ارتسام النص العربي
+    // بخط احتياطي لا يدعم تشكيل/اتصال الحروف بشكل صحيح
+    if(uniqueFontIds.length && document.fonts && document.fonts.ready) await document.fonts.ready;
     // تمريرة أولى لقياس العرض الطبيعي (بدون كشيدة) لكل حقل نصي — تُستخدم لخاصية "طابق العرض مع سطر آخر"
     var naturalWidths = {};
     template.fields.forEach(function(nf){
