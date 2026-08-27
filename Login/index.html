@@ -708,6 +708,12 @@
   .template-card textarea{width:100%; padding:9px 11px; border:1.5px solid var(--line); border-radius:9px; font-size:12.5px; font-family:inherit; resize:vertical; margin-bottom:8px;}
   .template-placeholders{font-size:11px; color:var(--ink-soft); margin-bottom:10px; line-height:1.8;}
   .template-placeholders code{background:var(--teal-tint); color:var(--teal-dark); border-radius:5px; padding:1px 6px; margin-inline-end:4px;}
+  .uni-logos-grid{display:grid; grid-template-columns:repeat(auto-fill, minmax(160px, 1fr)); gap:12px;}
+  .uni-logo-card{background:var(--white); border:1px solid var(--line); border-radius:12px; padding:12px; display:flex; flex-direction:column; align-items:center; gap:6px; text-align:center;}
+  .uni-logo-thumb{width:70px; height:70px; object-fit:contain; border-radius:8px; background:repeating-conic-gradient(#f0f0f0 0% 25%, #fff 0% 50%) 50% / 12px 12px;}
+  .uni-logo-placeholder{display:flex; align-items:center; justify-content:center; font-size:10px; color:var(--ink-soft); border:1.5px dashed var(--line);}
+  .uni-logo-name{font-size:11.5px; font-weight:600; line-height:1.4; min-height:30px; display:flex; align-items:center;}
+  .uni-logo-card .btn-secondary, .uni-logo-card .danger-btn{width:100%; justify-content:center;}
 
   /* ===== Task settings (admin) ===== */
   .settings-card{background:var(--white); border:1px solid var(--line); border-radius:16px; padding:20px 22px; margin-bottom:20px; box-shadow:var(--shadow);}
@@ -1227,6 +1233,9 @@
 </div>
 <div class="panel-overlay" id="eventTemplatesOverlay">
   <div class="panel" id="eventTemplatesBody"></div>
+</div>
+<div class="panel-overlay" id="uniLogosOverlay">
+  <div class="panel panel-wide" id="uniLogosBody"></div>
 </div>
 <div class="panel-overlay" id="eventsImportOverlay">
   <div class="panel" id="eventsImportBody"></div>
@@ -5533,6 +5542,81 @@
   }
   function saveEventsTemplates(t){ db.collection("eventsMeta").doc("templates").set(t); }
 
+  // ----- مكتبة شعارات الجامعات: تُرفع مرة واحدة لكل جامعة، وتُعبّأ تلقائياً في حقل "شعار الجامعة"
+  // لأي سجل خريج من نفس الجامعة (ما لم يُرفع شعار خاص بذلك السجل يدوياً) — بدل رفع الشعار يدوياً كل مرة -----
+  var _uniLogosCache = {};
+  db.collection("eventsMeta").doc("universityLogos").onSnapshot(function(doc){
+    _uniLogosCache = doc.exists ? doc.data() : {};
+    if(document.getElementById("uniLogosOverlay").classList.contains("active")) renderUniLogosPanel();
+  }, function(err){ console.error("universityLogos snapshot error", err); });
+  function loadUniversityLogos(){ return _uniLogosCache; }
+  function saveUniversityLogos(map){ db.collection("eventsMeta").doc("universityLogos").set(map); }
+  function findUniversityLogo(name){
+    var key = String(name || "").trim();
+    return (key && _uniLogosCache[key]) ? _uniLogosCache[key] : null;
+  }
+  // أسماء الجامعات المرشّحة لإدارة شعاراتها: القائمة الثابتة + أي اسم جامعة "غير ذلك" مخصص فعلاً بسجلات خريجين حقيقية
+  function allUniversityNamesForLogos(){
+    var names = SAUDI_UNIVERSITIES.slice();
+    loadEventsData().forEach(function(r){
+      if(r.category === "graduates" && r.university && names.indexOf(r.university) === -1) names.push(r.university);
+    });
+    return names;
+  }
+  function openUniLogosModal(){
+    eventsUI.uniLogosSearch = "";
+    renderUniLogosPanel();
+    document.getElementById("uniLogosOverlay").classList.add("active");
+  }
+  function closeUniLogosModal(){ document.getElementById("uniLogosOverlay").classList.remove("active"); }
+  function renderUniLogosPanel(){
+    var body = document.getElementById("uniLogosBody");
+    var logos = loadUniversityLogos();
+    var q = (eventsUI.uniLogosSearch || "").trim();
+    var names = allUniversityNamesForLogos()
+      .filter(function(n){ return !q || n.indexOf(q) > -1; })
+      .sort(function(a, b){ return String(a).localeCompare(String(b), "ar"); });
+    var html = '<div class="panel-head"><h3>شعارات الجامعات</h3><button type="button" class="panel-close" data-action="close-uni-logos">✕</button></div>';
+    html += '<p class="hint" style="margin-bottom:12px;">ارفع شعار كل جامعة مرة واحدة هنا، ويُعبّأ تلقائياً في حقل "شعار الجامعة" لأي سجل خريج من نفس الجامعة (ما لم يُرفع شعار خاص بذلك السجل يدوياً — من لوحة التحكم أو من نموذج التسجيل العام). الجامعات غير المدرجة بالمكتبة تبقى تُرفع يدوياً بكل سجل كالمعتاد.</p>';
+    html += '<input type="text" class="events-search" id="uniLogosSearchInput" placeholder="بحث عن جامعة..." value="' + escapeHTML(eventsUI.uniLogosSearch || "") + '" style="margin-bottom:14px;"/>';
+    if(!names.length) html += '<p class="report-empty">لا توجد نتائج مطابقة</p>';
+    html += '<div class="uni-logos-grid">';
+    names.forEach(function(name){
+      var logo = logos[name];
+      html += '<div class="uni-logo-card">' +
+        (logo ? '<img src="' + logo + '" class="uni-logo-thumb"/>' : '<div class="uni-logo-thumb uni-logo-placeholder">لا يوجد شعار</div>') +
+        '<div class="uni-logo-name">' + escapeHTML(name) + '</div>' +
+        '<label class="btn-secondary" style="cursor:pointer; font-size:11.5px; padding:6px 10px;">' + (logo ? "استبدال" : "رفع شعار") +
+          '<input type="file" accept="image/png,image/jpeg" data-action="uni-logo-upload" data-uni="' + escapeHTML(name) + '" style="display:none;"/></label>' +
+        (logo ? '<button type="button" class="danger-btn" style="font-size:11.5px; padding:6px 10px;" data-action="remove-uni-logo" data-uni="' + escapeHTML(name) + '">إزالة</button>' : '') +
+      '</div>';
+    });
+    html += '</div>';
+    setHTML(body, html);
+  }
+  function uploadUniversityLogo(name, file){
+    if(!file) return;
+    if(file.size > 15 * 1024 * 1024){ showToast("حجم الملف كبير جداً — اختر صورة أصغر"); return; }
+    detectImageTransparency(file, function(transparent){
+      var compressFn = transparent ? compressCutoutImageFile : compressEventImageFile;
+      compressFn(file, 300 * 1024, function(dataUrl){
+        if(!dataUrl){ showToast("تعذّرت قراءة الصورة"); return; }
+        var logos = loadUniversityLogos();
+        logos[name] = dataUrl;
+        saveUniversityLogos(logos);
+        showToast('تم حفظ شعار "' + name + '"');
+        renderUniLogosPanel();
+      });
+    });
+  }
+  function removeUniversityLogo(name){
+    if(!confirm('إزالة شعار "' + name + '"؟ (سجلات الخريجين اللي عبّت تلقائياً منه سابقاً تبقى صورتها كما هي، هذا يمنع التعبئة التلقائية مستقبلاً فقط)')) return;
+    var logos = loadUniversityLogos();
+    delete logos[name];
+    saveUniversityLogos(logos);
+    renderUniLogosPanel();
+  }
+
   var _eventsPublishCache = {};
   db.collection("eventsMeta").doc("publish").onSnapshot(function(doc){
     _eventsPublishCache = doc.exists ? doc.data() : {};
@@ -6511,6 +6595,7 @@
     '</div>';
     html += '<div class="events-toolbar">' +
       '<button type="button" class="btn-secondary" data-action="open-event-templates"><span class="icon">' + AICON.note + '</span> قوالب التهنئة والتعازي</button>' +
+      '<button type="button" class="btn-secondary" data-action="open-uni-logos"><span class="icon">' + TICON.upload + '</span> شعارات الجامعات</button>' +
       '<div class="events-search-wrap"><input type="text" class="events-search" id="publishSearchInput" placeholder="بحث في كل الحقول..." value="' + escapeHTML(eventsUI.publishSearch || "") + '"/></div>' +
     '</div>';
     html += '<div class="cat-tabs">' +
@@ -7706,6 +7791,7 @@
         break;
       }
       case "open-event-templates": openEventTemplatesModal(); break;
+      case "open-uni-logos": openUniLogosModal(); break;
       case "publish-type-filter": eventsUI.publishTypeFilter = btn.dataset.type; renderEventsHub(); break;
       case "set-publish-status": setEventPublishStatus(btn.dataset.id, btn.dataset.status); renderEventsHub(); break;
       case "copy-publish-text": copyToClipboard(btn.dataset.text); break;
@@ -7823,6 +7909,17 @@
       } else {
         if(otherInput){ otherInput.style.display = "none"; otherInput.value = ""; }
         eventModalState.draft[soKey] = e.target.value;
+        // تعبئة تلقائية لشعار الجامعة من المكتبة عند اختيار جامعة لها شعار محفوظ — فقط إذا ما فيه شعار مرفوع مسبقاً لهذا السجل تحديداً
+        if(soKey === "university" && eventModalState.catKey === "graduates" && !eventModalState.draft.universityLogo){
+          var libLogo = findUniversityLogo(e.target.value);
+          if(libLogo){
+            eventModalState.draft.universityLogo = libLogo;
+            eventModalState.draft.universityLogoOrig = "";
+            renderEventModal();
+            showToast("✔ تم تعبئة شعار الجامعة تلقائياً من المكتبة");
+            return;
+          }
+        }
       }
     }
     if(e.target.matches('[data-action="event-image-input"]')){
@@ -7991,6 +8088,30 @@
       case "add-template": addTemplate(); break;
       case "save-template": saveTemplate(btn.dataset.id); break;
       case "delete-template": deleteTemplate(btn.dataset.id); break;
+    }
+  });
+
+  var uniLogosOverlayEl = document.getElementById("uniLogosOverlay");
+  uniLogosOverlayEl.addEventListener("change", function(e){
+    if(e.target.matches("[data-action=\"uni-logo-upload\"]")){
+      uploadUniversityLogo(e.target.dataset.uni, e.target.files && e.target.files[0]);
+    }
+  });
+  uniLogosOverlayEl.addEventListener("input", function(e){
+    if(e.target.id === "uniLogosSearchInput"){
+      eventsUI.uniLogosSearch = e.target.value;
+      renderUniLogosPanel();
+      var refocus = document.getElementById("uniLogosSearchInput");
+      if(refocus){ refocus.focus(); refocus.selectionStart = refocus.selectionEnd = refocus.value.length; }
+    }
+  });
+  uniLogosOverlayEl.addEventListener("click", function(e){
+    if(e.target === uniLogosOverlayEl){ closeUniLogosModal(); return; }
+    var btn = e.target.closest("[data-action]");
+    if(!btn) return;
+    switch(btn.dataset.action){
+      case "close-uni-logos": closeUniLogosModal(); break;
+      case "remove-uni-logo": removeUniversityLogo(btn.dataset.uni); break;
     }
   });
 

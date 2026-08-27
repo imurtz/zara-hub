@@ -612,6 +612,11 @@
   var FOOTER_CREDIT_DEFAULT = "صُنع بحب من قبل جمعية العوامية الخيرية";
   var PHOTO_PAN_PROMPT_DEFAULT = "مو راضين عن موضع صورتكم داخل التصميم؟ عدّلوها بأنفسكم:";
   var _publicFormConfigCache = null;
+  var _uniLogosCachePublic = {};
+  function findUniversityLogoPublic(name){
+    var key = String(name || "").trim();
+    return (key && _uniLogosCachePublic[key]) ? _uniLogosCachePublic[key] : null;
+  }
   function loadPublicFormConfig(){
     var cfg = { footerMessage: "", footerCredit: FOOTER_CREDIT_DEFAULT, photoPanPrompt: PHOTO_PAN_PROMPT_DEFAULT, banner: { enabled: BANNER_DEFAULTS.enabled, intervalSeconds: BANNER_DEFAULTS.intervalSeconds, slides: BANNER_DEFAULTS.slides.map(copyBannerSlide) } };
     CATEGORIES.forEach(function(c){ cfg[c.key] = { hidden: [], hints: {}, labels: {}, custom: [] }; });
@@ -1270,6 +1275,10 @@
       sel.addEventListener("change", function(){
         var key = sel.dataset.key;
         var otherInput = document.querySelector('[data-other-input="' + key + '"]');
+        if(key === "university" && sel.value !== "__other__" && !state.fieldImages.universityLogo){
+          var libLogo = findUniversityLogoPublic(sel.value);
+          if(libLogo){ state.fieldImages.universityLogo = libLogo; refreshFieldImage("universityLogo"); }
+        }
         if(!otherInput) return;
         if(sel.value === "__other__"){
           otherInput.style.display = "block";
@@ -1957,6 +1966,9 @@
       renderCatSelect();
     }
   }).catch(function(err){ console.error("settings fetch error", err); });
+  db.collection("eventsMeta").doc("universityLogos").get().then(function(doc){
+    _uniLogosCachePublic = doc.exists ? doc.data() : {};
+  }).catch(function(err){ console.error("universityLogos fetch error", err); });
 })();
 </script>
 </body>
