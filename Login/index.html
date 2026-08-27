@@ -4871,7 +4871,8 @@
         { key: "notes", label: "ملاحظات", type: "text", hint: "أي ملاحظات إضافية — اختياري" }
       ],
       photoLabel: "صورة الخريج",
-      columns: ["fullName", "university", "specialization", "degree", "gregorianYear", "gender"]
+      columns: ["fullName", "university", "specialization", "degree", "gregorianYear", "gender"],
+      dedupKeys: ["fullName", "university", "degree", "gregorianYear"]
     },
     {
       key: "births", label: "المواليد", icon: EVICON.baby, color: "#4d6ea9",
@@ -4890,7 +4891,8 @@
       ],
       photoLabel: "صورة الأب",
       dateSource: { field: "birthDateGregorian", hijriDate: "birthDateHijri", monthGreg: "birthMonthGregorian", monthHijri: "birthMonthHijri" },
-      columns: ["fullName", "gender", "fatherName", "motherName", "gregorianYear", "birthMonthGregorian"]
+      columns: ["fullName", "gender", "fatherName", "motherName", "gregorianYear", "birthMonthGregorian"],
+      dedupKeys: ["fullName", "fatherName", "birthDateGregorian"]
     },
     {
       key: "marriages", label: "عقود القران", icon: EVICON.rings, color: "#4d6ea9",
@@ -4909,7 +4911,8 @@
       ],
       photoLabel: "صورة الزوج",
       dateSource: { field: "contractDateGregorian", hijriDate: "contractDateHijri", monthGreg: "contractMonthGregorian", monthHijri: "contractMonthHijri" },
-      columns: ["husbandName", "wifeGuardian", "husbandDistrict", "gregorianYear", "contractMonthGregorian"]
+      columns: ["husbandName", "wifeGuardian", "husbandDistrict", "gregorianYear", "contractMonthGregorian"],
+      dedupKeys: ["husbandName", "wifeGuardian", "contractDateGregorian"]
     },
     {
       key: "deaths", label: "الوفيات", icon: EVICON.memorial, color: "#4d6ea9",
@@ -4928,7 +4931,8 @@
         { key: "funeralTime", label: "وقت التشييع", type: "time", hint: "الوقت المحدد لصلاة الجنازة والتشييع" },
         { key: "notes", label: "ملاحظات", type: "text", hint: "أي ملاحظات إضافية — اختياري" }
       ],
-      columns: ["deceasedName", "deceasedFamily", "gender", "ageCategory", "gregorianYear", "deathMonthGregorian"]
+      columns: ["deceasedName", "deceasedFamily", "gender", "ageCategory", "gregorianYear", "deathMonthGregorian"],
+      dedupKeys: ["deceasedName", "deceasedFamily", "deathDateGregorian"]
     },
     {
       key: "congrats", label: "تهنئات", icon: EVICON.gift, color: "#4d6ea9",
@@ -4948,7 +4952,8 @@
       ],
       photoLabel: "صورة صاحب التهنئة",
       dateSource: { field: "occasionDateGregorian", hijriDate: null, monthGreg: "occasionMonthGregorian", monthHijri: "occasionMonthHijri" },
-      columns: ["fullName", "occasionType", "gregorianYear", "occasionMonthGregorian"]
+      columns: ["fullName", "occasionType", "gregorianYear", "occasionMonthGregorian"],
+      dedupKeys: ["fullName", "occasionType", "occasionDateGregorian"]
     }
   ];
 
@@ -6211,6 +6216,7 @@
       '<button type="button" class="btn-primary" data-action="open-add-event" data-cat="' + cat.key + '"><span class="icon">' + TICON.plus + '</span> إضافة ' + eventsSingularLabel(cat.key) + '</button>';
     if(settings.excelEnabled !== false){
       html += '<button type="button" class="btn-secondary" data-action="open-events-import" data-cat="' + cat.key + '"><span class="icon">' + TICON.upload + '</span> استيراد من إكسل</button>';
+      html += '<button type="button" class="btn-secondary" data-action="open-events-import-update" data-cat="' + cat.key + '" title="يضيف السجلات الجديدة فقط، ويتجاهل ما هو مطابق لسجل موجود"><span class="icon">' + TICON.upload + '</span> تحديث من إكسل</button>';
       html += '<button type="button" class="btn-secondary" data-action="export-events-excel" data-cat="' + cat.key + '"><span class="icon">' + TICON.download + '</span> تصدير إكسل</button>';
     }
     html += '<button type="button" class="danger-btn" data-action="delete-all-events" data-cat="' + cat.key + '"><span class="icon">' + ICON_DELETE + '</span> حذف الكل</button>';
@@ -6250,33 +6256,35 @@
     }
   }
 
-  var eventsImportState = { catKey: null, rows: null, fileName: "", error: null };
+  var eventsImportState = { catKey: null, mode: "add", rows: null, fileName: "", error: null };
   var tmplEditorState = null;
   var tmplGenerateState = null;
   var tmplDragKey = null;
   var tmplActiveFieldKey = null;
   var tmplExpandedFieldKeys = {};
-  function openEventsImportModal(catKey){
+  function openEventsImportModal(catKey, mode){
     if(typeof window.XLSX === "undefined"){ showToast("مكتبة Excel غير متوفرة الآن"); return; }
-    eventsImportState = { catKey: catKey, rows: null, fileName: "", error: null };
+    eventsImportState = { catKey: catKey, mode: mode || "add", rows: null, fileName: "", error: null };
     renderEventsImportPanel();
     document.getElementById("eventsImportOverlay").classList.add("active");
   }
   function closeEventsImportModal(){ document.getElementById("eventsImportOverlay").classList.remove("active"); }
   function renderEventsImportPanel(){
     var cat = EVENTS_CATEGORIES.find(function(c){ return c.key === eventsImportState.catKey; });
+    var isUpdate = eventsImportState.mode === "update";
     var body = document.getElementById("eventsImportBody");
-    var html = '<div class="panel-head"><h3>استيراد ' + (cat ? cat.label : "") + ' من Excel</h3><button type="button" class="panel-close" data-action="close-events-import">✕</button></div>';
+    var html = '<div class="panel-head"><h3>' + (isUpdate ? "تحديث " : "استيراد ") + (cat ? cat.label : "") + ' من Excel</h3><button type="button" class="panel-close" data-action="close-events-import">✕</button></div>';
+    if(isUpdate) html += '<p style="font-size:12px; color:var(--teal-dark); background:var(--teal-tint); border:1px solid var(--line); border-radius:8px; padding:8px 12px; margin-bottom:10px;">وضع التحديث: يُضاف كل صف غير موجود، ويُتجاهل أي صف تطابق بياناته الأساسية سجلاً موجوداً بالفعل — بدون تكرار.</p>';
     if(!eventsImportState.rows){
       html += '<p style="font-size:12px; color:var(--ink-soft); margin-bottom:10px;">يجب أن تطابق عناوين أعمدة الملف أسماء الحقول (صدّر قالباً فارغاً أولاً بزر "تصدير إكسل" لمعرفة العناوين الصحيحة).</p>';
       html += '<label class="import-drop"><span class="icon">' + TICON.upload + '</span><span style="font-size:13px; font-weight:500; color:var(--ink-soft);">اضغط لاختيار ملف Excel أو CSV</span>' +
         '<input type="file" accept=".xlsx,.xls,.csv" id="eventsImportFileInput" style="display:none;"/></label>';
       if(eventsImportState.error) html += '<p style="color:var(--danger); font-size:12.5px; margin-top:10px;">' + escapeHTML(eventsImportState.error) + '</p>';
     } else {
-      html += '<p style="font-size:12.5px; color:var(--ink-soft); margin-bottom:14px;">' + escapeHTML(eventsImportState.fileName) + ' — سيتم استيراد ' + eventsImportState.rows.length + ' صف بمطابقة عناوين الأعمدة تلقائياً.</p>';
+      html += '<p style="font-size:12.5px; color:var(--ink-soft); margin-bottom:14px;">' + escapeHTML(eventsImportState.fileName) + ' — سيتم ' + (isUpdate ? "فحص" : "استيراد") + ' ' + eventsImportState.rows.length + ' صف بمطابقة عناوين الأعمدة تلقائياً.</p>';
       html += '<div class="modal-actions">' +
         '<button type="button" class="btn-secondary" data-action="events-import-another">ملف آخر</button>' +
-        '<button type="button" class="btn-primary" data-action="do-events-import">استيراد ' + eventsImportState.rows.length + ' صف</button>' +
+        '<button type="button" class="btn-primary" data-action="do-events-import">' + (isUpdate ? "تحديث (إضافة الجديد فقط)" : ("استيراد " + eventsImportState.rows.length + " صف")) + '</button>' +
       '</div>';
     }
     setHTML(body, html);
@@ -6301,12 +6309,25 @@
     };
     reader.readAsArrayBuffer(file);
   }
+  // يقارن سجلاً مُستورَداً بسجل موجود عبر حقول الهوية (dedupKeys) الخاصة بالتصنيف — تطابق فقط إذا
+  // كانت كل حقول الهوية معبأة ومتطابقة نصياً (بعد trim) في السجلين؛ أي حقل هوية فارغ في أحدهما يمنع اعتبارهما تطابقاً
+  function eventRecordsMatchByIdentity(cat, a, b){
+    var keys = cat.dedupKeys;
+    if(!keys || !keys.length) return false;
+    return keys.every(function(k){
+      var av = String((a[k] == null ? "" : a[k])).trim();
+      var bv = String((b[k] == null ? "" : b[k])).trim();
+      return av !== "" && bv !== "" && av === bv;
+    });
+  }
   function doEventsImport(){
     var cat = EVENTS_CATEGORIES.find(function(c){ return c.key === eventsImportState.catKey; });
     if(!cat || !eventsImportState.rows) return;
+    var isUpdate = eventsImportState.mode === "update";
     var all = loadEventsData();
+    var existingInCat = isUpdate ? all.filter(function(r){ return r.category === cat.key; }) : [];
     var opts = loadEventsOptions();
-    var added = 0;
+    var added = 0, skipped = 0;
     eventsImportState.rows.forEach(function(row){
       var rec = { id: genEventId(), category: cat.key, createdAt: Date.now(), updatedAt: Date.now() };
       var hasAny = false;
@@ -6317,12 +6338,21 @@
         v = String(v).trim();
         rec[f.key] = v;
         if(v) hasAny = true;
-        if(f.type === "growSelect" && v){
+      });
+      if(!hasAny) return;
+      if(isUpdate && existingInCat.some(function(ex){ return eventRecordsMatchByIdentity(cat, ex, rec); })){
+        skipped++;
+        return;
+      }
+      cat.fields.forEach(function(f){
+        if(f.type === "growSelect" && rec[f.key]){
           opts[f.optKey] = opts[f.optKey] || [];
-          if(opts[f.optKey].indexOf(v) === -1) opts[f.optKey].push(v);
+          if(opts[f.optKey].indexOf(rec[f.key]) === -1) opts[f.optKey].push(rec[f.key]);
         }
       });
-      if(hasAny){ all.push(rec); added++; }
+      all.push(rec);
+      if(isUpdate) existingInCat.push(rec); // يمنع تكرار صفين متطابقين داخل نفس الملف المستورد أيضاً
+      added++;
     });
     saveEventsOptions(opts);
     saveEventsData(all).then(function(ok){
@@ -6331,7 +6361,7 @@
       eventsUI.activeCategory = cat.key;
       eventsUI.tab = "data-entry";
       renderEventsHub();
-      showToast("تم استيراد " + added + " سجل");
+      showToast(isUpdate ? ("تم التحديث — أُضيف " + added + " سجل جديد، وتم تجاهل " + skipped + " سجل مكرر") : ("تم استيراد " + added + " سجل"));
     });
   }
 
@@ -7618,7 +7648,8 @@
       case "reject-event": rejectEventRecord(btn.dataset.id); break;
       case "delete-all-events": deleteAllEventsForCategory(btn.dataset.cat); break;
       case "export-events-excel": exportEventsExcel(btn.dataset.cat); break;
-      case "open-events-import": openEventsImportModal(btn.dataset.cat); break;
+      case "open-events-import": openEventsImportModal(btn.dataset.cat, "add"); break;
+      case "open-events-import-update": openEventsImportModal(btn.dataset.cat, "update"); break;
       case "toggle-col-panel": eventsUI.colPanelOpen = !eventsUI.colPanelOpen; refreshColToggleWrap(); break;
       case "sort-events-col": {
         var col = btn.dataset.col;
@@ -7913,7 +7944,7 @@
     if(!btn) return;
     switch(btn.dataset.action){
       case "close-events-import": closeEventsImportModal(); break;
-      case "events-import-another": eventsImportState = { catKey: eventsImportState.catKey, rows: null, fileName: "", error: null }; renderEventsImportPanel(); break;
+      case "events-import-another": eventsImportState = { catKey: eventsImportState.catKey, mode: eventsImportState.mode, rows: null, fileName: "", error: null }; renderEventsImportPanel(); break;
       case "do-events-import": doEventsImport(); break;
     }
   });
