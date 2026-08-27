@@ -4857,7 +4857,7 @@
         { key: "graduationMonthGregorian", label: "شهر التخرج (ميلادي)", type: "select", options: GREG_MONTHS, auto: true, locked: true, hint: "يُحدَّد تلقائياً بشهر التسجيل" },
         { key: "graduationMonthHijri", label: "شهر التخرج (هجري)", type: "select", options: HIJRI_MONTHS, auto: true, locked: true, hint: "يُحدَّد تلقائياً بشهر التسجيل" },
         { key: "fullName", label: "الاسم الكامل", type: "text", hint: "الاسم الثلاثي أو الرباعي كاملاً كما في الهوية" },
-        { key: "jobTitle", label: "اللقب الوظيفي", type: "growSelect", optKey: "graduateJobTitles", hint: "اختر من القائمة، أو اترك فارغاً إذا لا ينطبق" },
+        { key: "jobTitle", label: "اللقب الوظيفي", type: "growSelect", optKey: "graduateJobTitles", hint: "اختر من القائمة، أو اترك فارغاً إذا لا ينطبق", excludeFromExport: true },
         { key: "gender", label: "الجنس", type: "select", options: ["ذكر", "أنثى"], hint: "حدد جنس الخريج" },
         { key: "country", label: "الدولة", type: "growSelect", optKey: "countries", hint: "الدولة التي تخرّج منها الطالب" },
         { key: "university", label: "الجامعة", type: "selectOther", options: SAUDI_UNIVERSITIES, hint: "اختر من القائمة، أو \"غير ذلك\" لكتابة اسم الجامعة/الكلية/المعهد" },
@@ -6232,7 +6232,8 @@
     if(!recs.length){ showToast("لا توجد سجلات لتصديرها"); return; }
     // نستثني حقول الصور (type: "image") — قيمتها base64 طويلة جداً (أحياناً بالميغابايت)
     // تتجاوز الحد الأقصى لطول خلية في إكسل (32,767 حرف) وتُسقط التصدير بصمت بدون أي رسالة خطأ
-    var exportFields = cat.fields.filter(function(f){ return f.type !== "image"; });
+    // وكذلك أي حقل مُعلَّم صراحةً excludeFromExport (أعمدة غير مرغوب فيها بملف الإكسل)
+    var exportFields = cat.fields.filter(function(f){ return f.type !== "image" && !f.excludeFromExport; });
     try {
       var rows = recs.map(function(r){
         var row = {};
