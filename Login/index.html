@@ -6452,15 +6452,22 @@
   }
 
   // ----- مهام النشر (قوالب تهنئة/تعازي) -----
+  // يتحقق إذا كان شرط القالب يطابق السجل. وضعان:
+  // - "equals" (condValue محدد): يطابق فقط إذا كانت قيمة الحقل تساوي condValue بالضبط — يفيد لحقل له قيم متمايزة
+  //   بلا "افتراضي" واضح، مثل الجنس (ذكر/أنثى) حيث كل سجل معبأ دائماً بقيمة ما فما فيه معنى لـ"موجود/غير موجود"
+  // - "hasValue" (condValue فارغ): يطابق إذا كانت قيمة الحقل معبأة وليست "بدون" — يفيد لحقل اختياري بمعنى "موجود أصلاً"، مثل مرتبة الشرف
+  function templateConditionMatches(t, rec){
+    if(!t.condFieldKey) return false;
+    var v = String((rec && rec[t.condFieldKey]) || "").trim();
+    if(t.condValue) return v === String(t.condValue).trim();
+    return v !== "" && v !== "بدون";
+  }
   // يختار أنسب قالب نصي للسجل من بين عدة قوالب بنفس التصنيف — بدون هذا كان النظام يستخدم دائماً
-  // أول قالب بالقائمة بغضّ النظر عن بيانات السجل (مثلاً قالب فيه {honor} لا يُستخدم أبداً لأنه ليس الأول)
+  // أول قالب بالقائمة بغضّ النظر عن بيانات السجل (مثلاً قالب فيه {honor} لا يُستخدم أبداً لأنه ليس الأول،
+  // أو قالبا تهنئة مولود/مولودة كلاهما "بدون شرط" فيُختار أحدهما عشوائياً بحكم الترتيب بغضّ النظر عن الجنس الفعلي)
   function pickBestTextTemplateForRecord(list, rec){
     if(!list || !list.length) return null;
-    var conditioned = list.find(function(t){
-      if(!t.condFieldKey) return false;
-      var v = String((rec && rec[t.condFieldKey]) || "").trim();
-      return v !== "" && v !== "بدون";
-    });
+    var conditioned = list.find(function(t){ return templateConditionMatches(t, rec); });
     if(conditioned) return conditioned;
     var general = list.find(function(t){ return !t.condFieldKey; });
     if(general) return general;
@@ -6603,6 +6610,14 @@
     return html;
   }
 
+  // القيم الممكنة لحقل شرط قالب نصي — تُستخدم لعرض خيار "يساوي: X" لكل قيمة ممكنة (مثل ذكر/أنثى للجنس)
+  function templateCondFieldOptions(cat, fieldKey){
+    var f = cat.fields.find(function(x){ return x.key === fieldKey; });
+    if(!f) return [];
+    if(f.type === "select" || f.type === "selectOther") return f.options || [];
+    if(f.type === "growSelect") return loadEventsOptions()[f.optKey] || [];
+    return [];
+  }
   function openEventTemplatesModal(){
     renderEventTemplatesPanel();
     document.getElementById("eventTemplatesOverlay").classList.add("active");
@@ -6621,17 +6636,26 @@
     }).join("") + '</div>';
     html += '<div class="template-placeholders">المتغيرات المتاحة: ' + cat.fields.map(function(f){ return '<code>{' + f.key + '}</code>'; }).join(" ") + '</div>';
     if(!list.length) html += '<p class="report-empty">لا توجد قوالب بعد لهذا التصنيف</p>';
-    var condHint = list.length > 1 ? '<p class="hint" style="margin:0 0 10px;">عند وجود أكثر من قالب لنفس التصنيف: القالب المشروط بحقل يُستخدم فقط إذا كانت قيمة ذلك الحقل بالسجل معبأة (وليست "بدون")، وإلا يُستخدم القالب غير المشروط كافتراضي.</p>' : '';
+    var condHint = list.length > 1 ? '<p class="hint" style="margin:0 0 10px;">عند وجود أكثر من قالب لنفس التصنيف: اختر حقل الشرط، ثم إما "أي قيمة معبأة" (يُستخدم القالب إذا كان الحقل معبأ وليس "بدون" — مثل مرتبة الشرف) أو قيمة محددة (يُستخدم فقط إذا ساوت قيمة الحقل هذه بالضبط — مثل الجنس ذكر/أنثى). القالب غير المشروط يُستخدم كافتراضي إذا ما طابق أي قالب مشروط.</p>' : '';
     html += condHint;
     list.forEach(function(t){
+      var condOptions = t.condFieldKey ? templateCondFieldOptions(cat, t.condFieldKey) : [];
       html += '<div class="template-card">' +
         '<textarea rows="3" data-template-input data-id="' + t.id + '">' + escapeHTML(t.text) + '</textarea>' +
-        '<label style="display:block; font-size:11.5px; color:var(--ink-soft); margin:8px 0 2px;">يُستخدم فقط إذا كان الحقل التالي معبأ بالسجل (اتركه فارغاً ليكون القالب الافتراضي)' +
+        '<label style="display:block; font-size:11.5px; color:var(--ink-soft); margin:8px 0 2px;">يُستخدم فقط إذا كان الحقل التالي مطابقاً بالسجل (اتركه فارغاً ليكون القالب الافتراضي)' +
           '<select data-template-cond data-id="' + t.id + '" style="margin-top:4px;">' +
             '<option value=""' + (!t.condFieldKey ? " selected" : "") + '>بدون شرط (افتراضي)</option>' +
             cat.fields.map(function(f){ return '<option value="' + f.key + '"' + (t.condFieldKey === f.key ? " selected" : "") + '>' + escapeHTML(f.label) + '</option>'; }).join("") +
           '</select>' +
         '</label>' +
+        (t.condFieldKey && condOptions.length ? (
+          '<label style="display:block; font-size:11.5px; color:var(--ink-soft); margin:6px 0 2px;">القيمة المطلوبة' +
+            '<select data-template-condvalue data-id="' + t.id + '" style="margin-top:4px;">' +
+              '<option value=""' + (!t.condValue ? " selected" : "") + '>أي قيمة معبأة (غير "بدون")</option>' +
+              condOptions.map(function(o){ return '<option value="' + escapeHTML(o) + '"' + (t.condValue === o ? " selected" : "") + '>يساوي: ' + escapeHTML(o) + '</option>'; }).join("") +
+            '</select>' +
+          '</label>'
+        ) : "") +
         '<div style="display:flex; gap:8px; margin-top:6px;">' +
           '<button type="button" class="btn-primary" style="padding:8px 16px;" data-action="save-template" data-id="' + t.id + '">حفظ</button>' +
           '<button type="button" class="danger-btn" data-action="delete-template" data-id="' + t.id + '">حذف</button>' +
@@ -8071,7 +8095,19 @@
       var condTpl = (condTemplates[condCatKey] || []).find(function(t){ return t.id === condTplId; });
       if(!condTpl) return;
       condTpl.condFieldKey = e.target.value || null;
+      condTpl.condValue = null; // تغيير حقل الشرط يُلغي القيمة المحددة سابقاً — قد لا تكون صالحة للحقل الجديد
       saveEventsTemplates(condTemplates);
+      showToast("تم حفظ الشرط");
+      renderEventTemplatesPanel();
+    }
+    if(e.target.matches("[data-template-condvalue]")){
+      var valTplId = e.target.dataset.id;
+      var valTemplates = loadEventsTemplates();
+      var valCatKey = eventsUI.templatesCategory;
+      var valTpl = (valTemplates[valCatKey] || []).find(function(t){ return t.id === valTplId; });
+      if(!valTpl) return;
+      valTpl.condValue = e.target.value || null;
+      saveEventsTemplates(valTemplates);
       showToast("تم حفظ الشرط");
     }
   });
