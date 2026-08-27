@@ -6307,6 +6307,7 @@
       html += '<button type="button" class="btn-secondary" data-action="open-events-import-update" data-cat="' + cat.key + '" title="يضيف السجلات الجديدة فقط، ويتجاهل ما هو مطابق لسجل موجود"><span class="icon">' + TICON.upload + '</span> تحديث من إكسل</button>';
       html += '<button type="button" class="btn-secondary" data-action="export-events-excel" data-cat="' + cat.key + '"><span class="icon">' + TICON.download + '</span> تصدير إكسل</button>';
     }
+    if(cat.key === "graduates") html += '<button type="button" class="btn-secondary" data-action="open-uni-logos"><span class="icon">' + TICON.upload + '</span> شعارات الجامعات</button>';
     html += '<button type="button" class="danger-btn" data-action="delete-all-events" data-cat="' + cat.key + '"><span class="icon">' + ICON_DELETE + '</span> حذف الكل</button>';
     html += '<div class="events-search-wrap">' +
       '<div class="col-toggle-wrap" id="colToggleWrapInner">' + colToggleWrapContentHTML(cat) + '</div>' +
@@ -6595,7 +6596,6 @@
     '</div>';
     html += '<div class="events-toolbar">' +
       '<button type="button" class="btn-secondary" data-action="open-event-templates"><span class="icon">' + AICON.note + '</span> قوالب التهنئة والتعازي</button>' +
-      '<button type="button" class="btn-secondary" data-action="open-uni-logos"><span class="icon">' + TICON.upload + '</span> شعارات الجامعات</button>' +
       '<div class="events-search-wrap"><input type="text" class="events-search" id="publishSearchInput" placeholder="بحث في كل الحقول..." value="' + escapeHTML(eventsUI.publishSearch || "") + '"/></div>' +
     '</div>';
     html += '<div class="cat-tabs">' +
