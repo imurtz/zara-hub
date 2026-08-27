@@ -521,6 +521,11 @@
   .stat-card .icon-lg{color:var(--tan);}
   .stat-card .num{font-size:30px; font-weight:600; color:var(--teal-dark);}
   .stat-card .lbl{font-size:13px; font-weight:500; color:var(--ink-soft);}
+  .stat-card.active{border-color:var(--teal); box-shadow:0 12px 26px rgba(20,150,140,.18);}
+  .stat-card.active .lbl{color:var(--teal-dark); font-weight:600;}
+  .stat-card.stat-pending .num{color:var(--tan);}
+  .stat-card.stat-published .num{color:#3d8b4c;}
+  .stat-card.stat-wontpublish .num{color:var(--ink-soft);}
 
   .cat-tabs{display:flex; gap:8px; flex-wrap:wrap; margin-bottom:16px;}
   .cat-tab{padding:9px 16px; border-radius:999px; border:1.5px solid var(--line); background:var(--white); color:var(--ink-soft); font-size:12.5px; font-weight:500; cursor:pointer; display:flex; align-items:center; gap:6px; transition:all .15s;}
@@ -679,10 +684,13 @@
     .stat-table-lbl{max-width:100px;}
     .v-chart-grid{height:140px;}
   }
-  .publish-status-pill{font-size:10.5px; font-weight:600; border-radius:999px; padding:3px 10px; border:none; cursor:pointer;}
-  .publish-status-pill.pending{background:var(--tan-tint); color:var(--tan);}
-  .publish-status-pill.published{background:#e4f3e6; color:#3d8b4c;}
-  .publish-status-pill.wontPublish{background:#f1f1f1; color:var(--ink-soft);}
+  .publish-status-pill{font-size:10.5px; font-weight:600; border-radius:999px; padding:3px 10px; cursor:pointer; background:var(--white); border:1.5px solid var(--line); transition:all .15s;}
+  .publish-status-pill.pending{color:var(--tan); border-color:var(--tan-tint);}
+  .publish-status-pill.pending.active{background:var(--tan-tint); border-color:var(--tan);}
+  .publish-status-pill.published{color:#3d8b4c; border-color:#bfe3c4;}
+  .publish-status-pill.published.active{background:#e4f3e6; border-color:#3d8b4c;}
+  .publish-status-pill.wontPublish{color:var(--ink-soft); border-color:#d8d8d8;}
+  .publish-status-pill.wontPublish.active{background:#f1f1f1; border-color:#8d8d8d;}
   .copy-field{cursor:pointer; padding:3px 6px; border-radius:6px;}
   .copy-field:hover{background:var(--teal-tint);}
   .publish-type-chip{padding:6px 14px; border-radius:999px; border:1.5px solid var(--line); background:var(--white); color:var(--ink-soft); font-size:12px; font-weight:500; cursor:pointer;}
@@ -5829,6 +5837,7 @@
     visibleCols: {},
     colPanelOpen: false,
     publishTypeFilter: "all",
+    publishStatusFilter: "all",
     publishSearch: "",
     expandedPublishIds: {},
     templatesCategory: "graduates",
@@ -6524,6 +6533,11 @@
   function statCardStaticHTML(num, label){
     return '<div class="stat-card" style="cursor:default;"><div class="num">' + num + '</div><div class="lbl">' + label + '</div></div>';
   }
+  // بطاقة إحصائية قابلة للنقر تعمل كفلتر حالة نشر — النقر عليها يعرض فقط السجلات بهذه الحالة
+  function statCardFilterHTML(num, label, statusVal, extraClass){
+    var active = eventsUI.publishStatusFilter === statusVal;
+    return '<div class="stat-card' + (extraClass ? " " + extraClass : "") + (active ? " active" : "") + '" data-action="publish-status-filter" data-status="' + statusVal + '"><div class="num">' + num + '</div><div class="lbl">' + label + '</div></div>';
+  }
   function eventsPublishListHTML(){
     var all = loadEventsData();
     var statuses = loadEventsPublish();
@@ -6531,6 +6545,10 @@
     var q = (eventsUI.publishSearch || "").trim().toLowerCase();
     var filtered = all.filter(function(r){
       if(eventsUI.publishTypeFilter !== "all" && r.category !== eventsUI.publishTypeFilter) return false;
+      if(eventsUI.publishStatusFilter && eventsUI.publishStatusFilter !== "all"){
+        var st = statuses[r.id] || "pending";
+        if(st !== eventsUI.publishStatusFilter) return false;
+      }
       if(!q) return true;
       var cat = EVENTS_CATEGORIES.find(function(c){ return c.key === r.category; });
       return cat && cat.fields.some(function(f){ return String(r[f.key] || "").toLowerCase().indexOf(q) > -1; });
@@ -6551,9 +6569,9 @@
           '<div class="publish-row-title"><span class="sec-badge">' + cat.label + '</span> <b style="font-size:13.5px;">' + escapeHTML(title) + '</b></div>' +
           '<span class="publish-row-time">' + timeAgoAr(r.createdAt) + '</span>' +
           '<div class="publish-row-actions">' +
-            '<button type="button" class="publish-status-pill' + (status === "published" ? " published" : "") + '" data-action="set-publish-status" data-id="' + r.id + '" data-status="published">تم النشر</button>' +
-            '<button type="button" class="publish-status-pill' + (status === "wontPublish" ? " wontPublish" : "") + '" data-action="set-publish-status" data-id="' + r.id + '" data-status="wontPublish">لن يُنشر</button>' +
-            '<button type="button" class="publish-status-pill' + (status === "pending" ? " pending" : "") + '" data-action="set-publish-status" data-id="' + r.id + '" data-status="pending">معلق</button>' +
+            '<button type="button" class="publish-status-pill published' + (status === "published" ? " active" : "") + '" data-action="set-publish-status" data-id="' + r.id + '" data-status="published">تم النشر</button>' +
+            '<button type="button" class="publish-status-pill wontPublish' + (status === "wontPublish" ? " active" : "") + '" data-action="set-publish-status" data-id="' + r.id + '" data-status="wontPublish">لن يُنشر</button>' +
+            '<button type="button" class="publish-status-pill pending' + (status === "pending" ? " active" : "") + '" data-action="set-publish-status" data-id="' + r.id + '" data-status="pending">معلق</button>' +
           '</div>' +
         '</div>' +
         (text ? '<p class="copy-field" data-action="copy-publish-text" data-text="' + escapeHTML(text) + '" style="margin-top:10px; font-size:12.5px; line-height:1.8; white-space:pre-wrap;" title="اضغط للنسخ">' + escapeHTML(text) + '</p>' : '<p class="report-empty">لا يوجد قالب تهنئة/تعزية لهذا التصنيف بعد</p>') +
@@ -6593,10 +6611,10 @@
       counts[s] = (counts[s] || 0) + 1;
     });
     var html = '<div class="stat-card-grid">' +
-      statCardStaticHTML(counts.total, "الإجمالي") +
-      statCardStaticHTML(counts.wontPublish || 0, "لن يُنشر") +
-      statCardStaticHTML(counts.published || 0, "تم النشر") +
-      statCardStaticHTML(counts.pending || 0, "معلق") +
+      statCardFilterHTML(counts.total, "الإجمالي", "all", "") +
+      statCardFilterHTML(counts.pending || 0, "معلق", "pending", "stat-pending") +
+      statCardFilterHTML(counts.published || 0, "تم النشر", "published", "stat-published") +
+      statCardFilterHTML(counts.wontPublish || 0, "لن يُنشر", "wontPublish", "stat-wontpublish") +
     '</div>';
     html += '<div class="events-toolbar">' +
       '<button type="button" class="btn-secondary" data-action="open-event-templates"><span class="icon">' + AICON.note + '</span> قوالب التهنئة والتعازي</button>' +
@@ -7814,6 +7832,7 @@
       case "open-event-templates": openEventTemplatesModal(); break;
       case "open-uni-logos": openUniLogosModal(); break;
       case "publish-type-filter": eventsUI.publishTypeFilter = btn.dataset.type; renderEventsHub(); break;
+      case "publish-status-filter": eventsUI.publishStatusFilter = btn.dataset.status; renderEventsHub(); break;
       case "set-publish-status": setEventPublishStatus(btn.dataset.id, btn.dataset.status); renderEventsHub(); break;
       case "copy-publish-text": copyToClipboard(btn.dataset.text); break;
       case "share-publish-whatsapp": shareRecordToWhatsApp(btn.dataset.id, btn.dataset.text, btn); break;
