@@ -771,6 +771,27 @@
       });
     });
   }
+  // رابط خدمة إزالة الخلفية على السيرفر (rembg عبر Cloud Run) — يُعبَّأ بعد النشر، انظر bg-removal-service/README.md
+  var BG_REMOVAL_ENDPOINT = "";
+  function removeImageBackgroundViaServer(file){
+    var fd = new FormData();
+    fd.append("image", file, (file && file.name) || "photo.png");
+    return fetch(BG_REMOVAL_ENDPOINT + "/remove-bg", { method: "POST", body: fd }).then(function(res){
+      if(!res.ok) throw new Error("server_bg_removal_failed_" + res.status);
+      return res.blob();
+    });
+  }
+  // نجرّب أولاً خدمة السيرفر (أسرع وأدق وما يحمّل جهاز الزائر أي شيء)، وعند أي فشل — الخدمة
+  // معطّلة، لا اتصال، أو لم تُهيَّأ بعد (BG_REMOVAL_ENDPOINT فارغ) — نتراجع تلقائياً للمعالجة
+  // داخل المتصفح كخط دفاع ثانٍ يبقي الميزة شغالة دائماً مهما صار
+  function removeImageBackground(file, onStatus){
+    if(!BG_REMOVAL_ENDPOINT) return removeImageBackgroundClientSide(file, onStatus);
+    if(onStatus) onStatus("جارٍ إزالة الخلفية...");
+    return removeImageBackgroundViaServer(file).catch(function(err){
+      console.warn("server bg removal failed, falling back to client-side", err);
+      return removeImageBackgroundClientSide(file, onStatus);
+    });
+  }
 
   var CATEGORY_ICON_COLORS = { graduates: "#4d6ea9", births: "#4d6ea9", marriages: "#4d6ea9", congrats: "#4d6ea9" };
   function renderCatSelect(){
@@ -950,7 +971,7 @@
     refreshPhotoField();
     showBgToast("🪄 يجري الآن إزالة خلفية الصورة الشخصية...");
     fetch(state.photo).then(function(r){ return r.blob(); }).then(function(blob){
-      return removeImageBackgroundClientSide(blob, function(msg){
+      return removeImageBackground(blob, function(msg){
         state.photoProcessingMsg = msg;
         var el = document.getElementById("photoProcessingMsg");
         if(el) el.textContent = msg;
@@ -976,7 +997,7 @@
     refreshFieldImage(key);
     showBgToast("🪄 يجري الآن إزالة خلفية " + fieldLabelByKey(key) + "...");
     fetch(src).then(function(r){ return r.blob(); }).then(function(blob){
-      return removeImageBackgroundClientSide(blob, function(msg){
+      return removeImageBackground(blob, function(msg){
         state.fieldImagesProcessing[key] = msg;
         var el = document.getElementById("fieldImgProcessing-" + key);
         if(el) el.textContent = msg;
@@ -1686,7 +1707,7 @@
       rerenderPanPreview();
       showBgToast("🪄 يجري الآن إزالة خلفية الصورة الجديدة...");
       fetch(dataUrl).then(function(r){ return r.blob(); }).then(function(blob){
-        return removeImageBackgroundClientSide(blob, function(){});
+        return removeImageBackground(blob, function(){});
       }).then(function(cutBlob){
         compressCutoutImageFile(cutBlob, 400 * 1024, function(finalDataUrl){
           hideBgToast();

@@ -5112,6 +5112,27 @@
       });
     });
   }
+  // رابط خدمة إزالة الخلفية على السيرفر (rembg عبر Cloud Run) — يُعبَّأ بعد النشر، انظر bg-removal-service/README.md
+  var BG_REMOVAL_ENDPOINT = "";
+  function removeImageBackgroundViaServer(file){
+    var fd = new FormData();
+    fd.append("image", file, (file && file.name) || "photo.png");
+    return fetch(BG_REMOVAL_ENDPOINT + "/remove-bg", { method: "POST", body: fd }).then(function(res){
+      if(!res.ok) throw new Error("server_bg_removal_failed_" + res.status);
+      return res.blob();
+    });
+  }
+  // نجرّب أولاً خدمة السيرفر (أسرع وأدق وما يحمّل جهاز المستخدم أي شيء)، وعند أي فشل — الخدمة
+  // معطّلة، لا اتصال، أو لم تُهيَّأ بعد (BG_REMOVAL_ENDPOINT فارغ) — نتراجع تلقائياً للمعالجة
+  // داخل المتصفح كخط دفاع ثانٍ يبقي الميزة شغالة دائماً مهما صار
+  function removeImageBackground(file, onStatus){
+    if(!BG_REMOVAL_ENDPOINT) return removeImageBackgroundClientSide(file, onStatus);
+    if(onStatus) onStatus("جارٍ إزالة الخلفية...");
+    return removeImageBackgroundViaServer(file).catch(function(err){
+      console.warn("server bg removal failed, falling back to client-side", err);
+      return removeImageBackgroundClientSide(file, onStatus);
+    });
+  }
   // ضغط صورة قالب التصميم — جودة أعلى من صور المناسبات العادية لأن القالب يحتوي نصوصاً دقيقة، لكن يبقى ضمن حد المستند الواحد بـ Firestore (1 ميقابايت)
   function compressTemplateImageFile(file, cb){
     var reader = new FileReader();
@@ -8047,7 +8068,7 @@
             });
           });
         }).then(function(blob){
-          return removeImageBackgroundClientSide(blob, function(msg){
+          return removeImageBackground(blob, function(msg){
             if(bgKey === "photo") eventModalState.photoProcessingMsg = msg;
             else if(eventModalState.imageProcessing) eventModalState.imageProcessing[bgKey + "Msg"] = msg;
             var el = document.getElementById("eventImgProcessing-" + bgKey);
@@ -8542,7 +8563,7 @@
             });
           });
         }).then(function(blob){
-          return removeImageBackgroundClientSide(blob, function(msg){
+          return removeImageBackground(blob, function(msg){
             if(bgStatusEl) bgStatusEl.textContent = msg;
           });
         }).then(function(cutBlob){
