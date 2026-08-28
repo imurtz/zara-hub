@@ -17,6 +17,13 @@ RUN python -c "from rembg import new_session; new_session('u2net_human_seg')"
 
 COPY main.py .
 
+# تقليل عدد خيوط المعالجة (threads) لـ onnxruntime — يقلل الذاكرة الإضافية الناتجة عن
+# مخازن مؤقتة لكل خيط، مفيد على بيئات محدودة الرام. لا يلغي الحاجة لرام كافية للنموذج
+# نفسه، لكنه يقلل الاستهلاك الجانبي الزائد قدر الإمكان
+ENV OMP_NUM_THREADS=1
+ENV OMP_WAIT_POLICY=PASSIVE
+ENV ORT_NUM_THREADS=1
+
 ENV PORT=8080
 EXPOSE 8080
 
