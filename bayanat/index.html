@@ -773,7 +773,7 @@
   }
   // رابط بروكسي إزالة الخلفية (Cloudflare Worker — ميزة Images Transformations، نموذج BiRefNet)
   // يُعبَّأ بعد النشر، انظر bg-removal-worker/README.md
-  var BG_REMOVAL_ENDPOINT = "";
+  var BG_REMOVAL_ENDPOINT = "https://zara-bg-removal.murtada-ud.workers.dev/";
   function removeImageBackgroundViaServer(file){
     var mime = (file && file.type) || "image/png";
     return fetch(BG_REMOVAL_ENDPOINT, { method: "POST", headers: { "Content-Type": mime }, body: file }).then(function(res){
