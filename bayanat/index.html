@@ -771,12 +771,12 @@
       });
     });
   }
-  // رابط خدمة إزالة الخلفية على السيرفر (rembg عبر Cloud Run) — يُعبَّأ بعد النشر، انظر bg-removal-service/README.md
+  // رابط بروكسي إزالة الخلفية (Cloudflare Worker — ميزة Images Transformations، نموذج BiRefNet)
+  // يُعبَّأ بعد النشر، انظر bg-removal-worker/README.md
   var BG_REMOVAL_ENDPOINT = "";
   function removeImageBackgroundViaServer(file){
-    var fd = new FormData();
-    fd.append("image", file, (file && file.name) || "photo.png");
-    return fetch(BG_REMOVAL_ENDPOINT + "/remove-bg", { method: "POST", body: fd }).then(function(res){
+    var mime = (file && file.type) || "image/png";
+    return fetch(BG_REMOVAL_ENDPOINT, { method: "POST", headers: { "Content-Type": mime }, body: file }).then(function(res){
       if(!res.ok) throw new Error("server_bg_removal_failed_" + res.status);
       return res.blob();
     });
