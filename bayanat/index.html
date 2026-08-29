@@ -592,7 +592,7 @@
     history.replaceState(null, "", url.toString());
   }
 
-  var state = { activeCategory: getCategoryFromUrl(), photo: "", photoProcessing: false, photoProcessingMsg: "", femalePhotoChoice: "", fieldImages: {}, fieldImagesProcessing: {}, aiSuggestion: "", aiLoading: false, aiError: "", aiConsentPolicy: false, aiConsentWording: false, aiImage: "" };
+  var state = { activeCategory: getCategoryFromUrl(), photo: "", photoOrig: "", photoProcessing: false, photoProcessingMsg: "", femalePhotoChoice: "", fieldImages: {}, fieldImagesOrig: {}, fieldImagesProcessing: {}, aiSuggestion: "", aiLoading: false, aiError: "", aiConsentPolicy: false, aiConsentWording: false, aiImage: "" };
 
   var GRADIENT_PRESETS = {
     brand: "linear-gradient(120deg, var(--teal) 0%, var(--teal-dark) 55%, var(--blue-dark) 100%)",
@@ -874,8 +874,10 @@
     var cat = CATEGORIES.find(function(c){ return c.key === state.activeCategory; });
     var effectiveFields = getEffectiveFields(cat.key);
     state.photo = "";
+    state.photoOrig = "";
     state.femalePhotoChoice = "";
     state.fieldImages = {};
+    state.fieldImagesOrig = {};
     state.aiSuggestion = ""; state.aiLoading = false; state.aiError = ""; state.aiConsentPolicy = false; state.aiConsentWording = false; state.aiImage = "";
     grid.innerHTML = effectiveFields.map(function(f){
       if(f.derived) return "";
@@ -970,7 +972,17 @@
     state.photoProcessingMsg = "جارٍ تفريغ الخلفية تلقائياً...";
     refreshPhotoField();
     showBgToast("🪄 يجري الآن إزالة خلفية الصورة الشخصية...");
+    var origThumbUrl = null;
     fetch(state.photo).then(function(r){ return r.blob(); }).then(function(blob){
+      return new Promise(function(resolve){
+        // نحتفظ بنسخة "قبل التفريغ" (بحجم أصغر من النهائية لتفادي حد فايرستور) — تصل مع
+        // السجل المُرسَل عشان الأدمن يقدر يراجعها ويختار بينها وبين النسخة المفرّغة لاحقاً
+        compressImageFile(blob, 200 * 1024, function(smallDataUrl){
+          origThumbUrl = smallDataUrl || state.photo;
+          resolve(blob);
+        });
+      });
+    }).then(function(blob){
       return removeImageBackground(blob, function(msg){
         state.photoProcessingMsg = msg;
         var el = document.getElementById("photoProcessingMsg");
@@ -979,7 +991,7 @@
     }).then(function(cutBlob){
       compressCutoutImageFile(cutBlob, 400 * 1024, function(dataUrl){
         state.photoProcessing = false;
-        if(dataUrl) state.photo = dataUrl;
+        if(dataUrl){ state.photo = dataUrl; state.photoOrig = origThumbUrl || ""; }
         refreshPhotoField();
         hideBgToast();
       });
@@ -996,7 +1008,15 @@
     state.fieldImagesProcessing[key] = "جارٍ تفريغ الخلفية تلقائياً...";
     refreshFieldImage(key);
     showBgToast("🪄 يجري الآن إزالة خلفية " + fieldLabelByKey(key) + "...");
+    var fieldOrigThumbUrl = null;
     fetch(src).then(function(r){ return r.blob(); }).then(function(blob){
+      return new Promise(function(resolve){
+        compressImageFile(blob, 200 * 1024, function(smallDataUrl){
+          fieldOrigThumbUrl = smallDataUrl || src;
+          resolve(blob);
+        });
+      });
+    }).then(function(blob){
       return removeImageBackground(blob, function(msg){
         state.fieldImagesProcessing[key] = msg;
         var el = document.getElementById("fieldImgProcessing-" + key);
@@ -1005,7 +1025,7 @@
     }).then(function(cutBlob){
       compressCutoutImageFile(cutBlob, 400 * 1024, function(dataUrl){
         delete state.fieldImagesProcessing[key];
-        if(dataUrl) state.fieldImages[key] = dataUrl;
+        if(dataUrl){ state.fieldImages[key] = dataUrl; state.fieldImagesOrig[key] = fieldOrigThumbUrl || ""; }
         refreshFieldImage(key);
         hideBgToast();
       });
@@ -1184,6 +1204,7 @@
         gradGenderSelect.addEventListener("change", function(){
           state.femalePhotoChoice = "";
           state.photo = "";
+          state.photoOrig = "";
           refreshPhotoField();
         });
       }
@@ -1193,6 +1214,7 @@
         state.femalePhotoChoice = btn.dataset.choice;
         if(btn.dataset.choice === "default") state.photo = loadPublicFormConfig().defaultFemaleGraduatePhoto || "";
         else state.photo = "";
+        state.photoOrig = "";
         refreshPhotoField();
       });
     });
@@ -1201,6 +1223,7 @@
       femPhotoChangeBtn.addEventListener("click", function(){
         state.femalePhotoChoice = "";
         state.photo = "";
+        state.photoOrig = "";
         refreshPhotoField();
       });
     }
@@ -1226,6 +1249,7 @@
                 return;
               }
               state.photo = dataUrl;
+              state.photoOrig = "";
               refreshPhotoField();
               showBgToast("✔ الصورة مفرّغة الخلفية مسبقاً — لن نعيد معالجتها");
               setTimeout(hideBgToast, 2200);
@@ -1239,6 +1263,7 @@
               return;
             }
             state.photo = dataUrl;
+            state.photoOrig = "";
             refreshPhotoField();
             autoRemovePhotoBg();
           });
@@ -1249,6 +1274,7 @@
     if(rmBtn){
       rmBtn.addEventListener("click", function(){
         state.photo = "";
+        state.photoOrig = "";
         refreshPhotoField();
       });
     }
@@ -1270,6 +1296,7 @@
             compressCutoutImageFile(file, 400 * 1024, function(dataUrl){
               if(!dataUrl) return;
               state.fieldImages[key] = dataUrl;
+              delete state.fieldImagesOrig[key];
               refreshFieldImage(key);
               showBgToast("✔ الصورة مفرّغة الخلفية مسبقاً — لن نعيد معالجتها");
               setTimeout(hideBgToast, 2200);
@@ -1279,6 +1306,7 @@
           compressImageFile(file, 400 * 1024, function(dataUrl){
             if(!dataUrl) return;
             state.fieldImages[key] = dataUrl;
+            delete state.fieldImagesOrig[key];
             refreshFieldImage(key);
             autoRemoveFieldBg(key);
           });
@@ -1289,6 +1317,7 @@
       rb.addEventListener("click", function(){
         var key = rb.dataset.fieldKey;
         delete state.fieldImages[key];
+        delete state.fieldImagesOrig[key];
         refreshFieldImage(key);
       });
     });
@@ -1795,7 +1824,9 @@
       if(cat.dateSource.hijriDate) rec[cat.dateSource.hijriDate] = draft[cat.dateSource.hijriDate] || "";
     }
     rec.photo = state.photo || "";
+    rec.photoOrig = state.photoOrig || "";
     Object.keys(state.fieldImages).forEach(function(k){ rec[k] = state.fieldImages[k]; });
+    Object.keys(state.fieldImagesOrig).forEach(function(k){ rec[k + "Orig"] = state.fieldImagesOrig[k]; });
     var specSel = document.querySelector('[data-action="select-other-toggle"][data-key="specialization"]');
     if(specSel && specSel.value === "__other__" && draft.specialization){
       db.collection("eventsMeta").doc("options").set({ specializations: firebase.firestore.FieldValue.arrayUnion(draft.specialization) }, { merge: true })

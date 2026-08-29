@@ -5904,9 +5904,12 @@
     if(value && origValue && origValue !== value){
       return '<div class="event-photo-before-after">' +
           '<div class="event-photo-ba-item"><span class="event-photo-ba-lbl">قبل التفريغ</span><div class="photo-thumb"><img src="' + origValue + '" alt=""/></div></div>' +
-          '<div class="event-photo-ba-item"><span class="event-photo-ba-lbl">بعد التفريغ</span><div class="photo-thumb"><img src="' + value + '" alt=""/></div></div>' +
+          '<div class="event-photo-ba-item"><span class="event-photo-ba-lbl">بعد التفريغ (المستخدمة حالياً)</span><div class="photo-thumb"><img src="' + value + '" alt=""/></div></div>' +
         '</div>' +
-        '<button type="button" class="btn-secondary" data-action="remove-event-image" data-key="' + key + '" style="margin-top:8px; font-size:12px; padding:6px 12px;">× حذف الصورة</button>';
+        '<div style="display:flex; gap:8px; margin-top:8px; flex-wrap:wrap;">' +
+          '<button type="button" class="btn-secondary" data-action="swap-event-image" data-key="' + key + '" style="font-size:12px; padding:6px 12px;">🔄 استخدام الصورة الأصلية بدلاً منها</button>' +
+          '<button type="button" class="btn-secondary" data-action="remove-event-image" data-key="' + key + '" style="font-size:12px; padding:6px 12px;">× حذف الصورة</button>' +
+        '</div>';
     }
     if(value){
       return '<div class="photo-thumb"><img src="' + value + '" alt=""/><button type="button" class="rm" data-action="remove-event-image" data-key="' + key + '">×</button></div>' +
@@ -8045,6 +8048,16 @@
         renderEventModal();
         break;
       }
+      // يبدّل بين الصورة "قبل التفريغ" و"بعد التفريغ" — يقدر الأدمن يرجع لأي منهم في أي وقت،
+      // مو قرار نهائي باتجاه واحد فقط
+      case "swap-event-image": {
+        var swapKey = btn.dataset.key;
+        var swapTmp = eventModalState.draft[swapKey];
+        eventModalState.draft[swapKey] = eventModalState.draft[swapKey + "Orig"];
+        eventModalState.draft[swapKey + "Orig"] = swapTmp;
+        renderEventModal();
+        break;
+      }
       case "remove-image-bg": {
         var bgKey = btn.dataset.key;
         var srcImg = eventModalState.draft[bgKey];
@@ -8061,8 +8074,10 @@
         var origThumbUrl = null;
         fetch(srcImg).then(function(r){ return r.blob(); }).then(function(blob){
           return new Promise(function(resolve){
-            // نسخة "قبل التفريغ" تُخزَّن بحجم أصغر بكثير (مجرد معاينة مقارنة) لتفادي تجاوز حد فايرستور لحجم المستند عند تخزين نسختين لنفس الصورة
-            compressEventImageFile(blob, 80 * 1024, function(smallDataUrl){
+            // نسخة "قبل التفريغ" تُخزَّن بحجم أصغر من النسخة النهائية (200 كيلوبايت بدل 400) لتفادي
+            // تجاوز حد فايرستور لحجم المستند عند تخزين نسختين لنفس الصورة — لكنها تبقى بجودة
+            // كافية للاستخدام الفعلي (مو مجرد معاينة صغيرة)، لأن الأدمن يقدر يختارها كصورة نهائية
+            compressEventImageFile(blob, 200 * 1024, function(smallDataUrl){
               origThumbUrl = smallDataUrl || srcImg;
               resolve(blob);
             });
@@ -8557,7 +8572,7 @@
         var bgOrigThumbUrl = null;
         fetch(bgSrcImg).then(function(r){ return r.blob(); }).then(function(blob){
           return new Promise(function(resolve){
-            compressEventImageFile(blob, 80 * 1024, function(smallDataUrl){
+            compressEventImageFile(blob, 200 * 1024, function(smallDataUrl){
               bgOrigThumbUrl = smallDataUrl || bgSrcImg;
               resolve(blob);
             });
