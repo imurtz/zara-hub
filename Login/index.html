@@ -878,6 +878,7 @@
     transition:all .15s;
   }
   .btn-secondary:hover{border-color:var(--blue); color:var(--blue-dark); background:var(--blue-tint);}
+  .btn-secondary.active{border-color:var(--teal); color:var(--teal-dark); background:var(--teal-tint);}
   .modal .btn-primary{flex:1;}
 
   /* ===== دردشة الموظفين (معاينة تصميم — بدون تزامن حقيقي بعد) ===== */
@@ -5591,19 +5592,86 @@
   }
   function openUniLogosModal(){
     eventsUI.uniLogosSearch = "";
+    uniLogosBulkState = null;
     renderUniLogosPanel();
     document.getElementById("uniLogosOverlay").classList.add("active");
   }
   function closeUniLogosModal(){ document.getElementById("uniLogosOverlay").classList.remove("active"); }
+  // اسم الملف بدون الامتداد، بعد إزالة الفراغات الزائدة — يُطابَق مباشرة مع أسماء الجامعات المعروفة
+  function baseFileNameForMatch(fileName){
+    return String(fileName || "").replace(/\.[^.]+$/, "").trim();
+  }
+  // رفع مجلد كامل من شعارات الجامعات دفعة واحدة — كل ملف يُطابَق تلقائياً باسمه (بدون الامتداد)
+  // مع اسم الجامعة بالقائمة، ويُعرض للمراجعة قبل الحفظ الفعلي بدل الحفظ الأعمى
+  var uniLogosBulkState = null; // { matched: [{name, file}], unmatched: [fileName] } أو null خارج وضع المراجعة
+  function handleUniLogosFolderSelect(fileList){
+    var files = Array.prototype.filter.call(fileList || [], function(f){ return /^image\/(png|jpeg)$/.test(f.type); });
+    if(!files.length){ showToast("ما لقينا صور PNG/JPG داخل المجلد المختار"); return; }
+    var allNames = allUniversityNamesForLogos();
+    var matched = [], unmatched = [];
+    files.forEach(function(f){
+      var base = baseFileNameForMatch(f.name);
+      var hit = allNames.find(function(n){ return n === base; });
+      if(hit) matched.push({ name: hit, file: f });
+      else unmatched.push(f.name);
+    });
+    uniLogosBulkState = { matched: matched, unmatched: unmatched };
+    renderUniLogosPanel();
+  }
+  function confirmUniLogosBulkUpload(){
+    if(!uniLogosBulkState || !uniLogosBulkState.matched.length) return;
+    var items = uniLogosBulkState.matched;
+    var total = items.length, done = 0, failed = 0;
+    // نجمّع كل الشعارات المُعالَجة بنسخة واحدة بالذاكرة ونحفظها بكتابة واحدة أخيرة — بدل قراءة/كتابة
+    // متكررة لنفس مستند Firestore لكل شعار، والذي قد يفقد شعارات رُفعت للتو بنفس الدفعة بسبب
+    // تأخر مزامنة الكاش المحلي (onSnapshot) مع الكتابة الفعلية بين كل رفعة والتالية
+    var logos = loadUniversityLogos();
+    showToast("جارٍ رفع " + total + " شعار...");
+    function next(i){
+      if(i >= items.length){
+        saveUniversityLogos(logos);
+        uniLogosBulkState = null;
+        renderUniLogosPanel();
+        showToast("تم رفع " + done + " شعار" + (failed ? (" — تعذّر " + failed) : ""));
+        return;
+      }
+      processUniLogoFile(items[i].file, function(dataUrl){
+        if(dataUrl){ logos[items[i].name] = dataUrl; done++; } else failed++;
+        next(i + 1);
+      });
+    }
+    next(0);
+  }
   function renderUniLogosPanel(){
     var body = document.getElementById("uniLogosBody");
     var logos = loadUniversityLogos();
+    var html = '<div class="panel-head"><h3>شعارات الجامعات</h3><button type="button" class="panel-close" data-action="close-uni-logos">✕</button></div>';
+    if(uniLogosBulkState){
+      var st = uniLogosBulkState;
+      html += '<p class="hint" style="margin-bottom:12px;">راجع نتيجة المطابقة قبل الرفع الفعلي — كل ملف يُطابَق باسمه (بدون الامتداد) مع اسم الجامعة بالضبط.</p>';
+      html += '<p style="font-weight:600; color:var(--teal-dark); margin-bottom:8px;">✔ ' + st.matched.length + ' ملف تم التعرف عليه:</p>';
+      html += '<div class="uni-logos-grid" style="margin-bottom:16px;">' + st.matched.map(function(m){
+        return '<div class="uni-logo-card"><div class="uni-logo-thumb uni-logo-placeholder">✔</div><div class="uni-logo-name">' + escapeHTML(m.name) + '</div></div>';
+      }).join("") + '</div>';
+      if(st.unmatched.length){
+        html += '<p style="font-weight:600; color:var(--danger); margin-bottom:8px;">✕ ' + st.unmatched.length + ' ملف لم يُتعرَّف عليه (اسم الملف لا يطابق أي جامعة بالقائمة بالضبط):</p>';
+        html += '<ul style="margin:0 0 16px; padding-inline-start:20px; font-size:12.5px; color:var(--ink-soft);">' + st.unmatched.map(function(n){ return '<li>' + escapeHTML(n) + '</li>'; }).join("") + '</ul>';
+      }
+      html += '<div style="display:flex; gap:8px;">' +
+        '<button type="button" class="btn-primary" data-action="confirm-uni-logos-bulk"' + (st.matched.length ? "" : " disabled") + '>رفع ' + st.matched.length + ' شعار</button>' +
+        '<button type="button" class="btn-secondary" data-action="cancel-uni-logos-bulk">إلغاء</button>' +
+      '</div>';
+      setHTML(body, html);
+      return;
+    }
     var q = (eventsUI.uniLogosSearch || "").trim();
     var names = allUniversityNamesForLogos()
       .filter(function(n){ return !q || n.indexOf(q) > -1; })
       .sort(function(a, b){ return String(a).localeCompare(String(b), "ar"); });
-    var html = '<div class="panel-head"><h3>شعارات الجامعات</h3><button type="button" class="panel-close" data-action="close-uni-logos">✕</button></div>';
     html += '<p class="hint" style="margin-bottom:12px;">ارفع شعار كل جامعة مرة واحدة هنا، ويُعبّأ تلقائياً في حقل "شعار الجامعة" لأي سجل خريج من نفس الجامعة (ما لم يُرفع شعار خاص بذلك السجل يدوياً — من لوحة التحكم أو من نموذج التسجيل العام). الجامعات غير المدرجة بالمكتبة تبقى تُرفع يدوياً بكل سجل كالمعتاد.</p>';
+    html += '<label class="btn-secondary" style="cursor:pointer; display:inline-flex; align-items:center; gap:6px; margin-bottom:14px;">📁 رفع مجلد شعارات دفعة واحدة' +
+      '<input type="file" webkitdirectory multiple id="uniLogosFolderInput" style="display:none;"/></label>' +
+      '<p class="hint" style="margin:-8px 0 14px;">اختر مجلداً فيه صور بأسماء ملفات مطابقة تماماً لأسماء الجامعات (مثال: <code>جامعة الملك سعود.png</code>) — تُطابَق تلقائياً وتُعرض للمراجعة قبل الحفظ.</p>';
     html += '<input type="text" class="events-search" id="uniLogosSearchInput" placeholder="بحث عن جامعة..." value="' + escapeHTML(eventsUI.uniLogosSearch || "") + '" style="margin-bottom:14px;"/>';
     if(!names.length) html += '<p class="report-empty">لا توجد نتائج مطابقة</p>';
     html += '<div class="uni-logos-grid">';
@@ -5620,19 +5688,33 @@
     html += '</div>';
     setHTML(body, html);
   }
-  function uploadUniversityLogo(name, file){
-    if(!file) return;
-    if(file.size > 15 * 1024 * 1024){ showToast("حجم الملف كبير جداً — اختر صورة أصغر"); return; }
+  // يعالج ملف شعار (كشف شفافية + ضغط) بدون أي كتابة لقاعدة البيانات — فصل المعالجة عن الحفظ
+  // يسمح بتجميع عدة شعارات بالذاكرة وحفظها بكتابة واحدة (مهم للرفع الجماعي، انظر الملاحظة أدناه)
+  function processUniLogoFile(file, cb){
+    if(!file){ cb(null); return; }
+    if(file.size > 15 * 1024 * 1024){ showToast("حجم الملف كبير جداً — اختر صورة أصغر"); cb(null); return; }
     detectImageTransparency(file, function(transparent){
       var compressFn = transparent ? compressCutoutImageFile : compressEventImageFile;
-      compressFn(file, 300 * 1024, function(dataUrl){
-        if(!dataUrl){ showToast("تعذّرت قراءة الصورة"); return; }
-        var logos = loadUniversityLogos();
-        logos[name] = dataUrl;
-        saveUniversityLogos(logos);
-        showToast('تم حفظ شعار "' + name + '"');
-        renderUniLogosPanel();
-      });
+      compressFn(file, 300 * 1024, function(dataUrl){ cb(dataUrl || null); });
+    });
+  }
+  function uploadUniversityLogo(name, file, doneCb){
+    processUniLogoFile(file, function(dataUrl){
+      if(!dataUrl){
+        showToast("تعذّرت قراءة الصورة");
+        if(doneCb) doneCb(false);
+        return;
+      }
+      // نقرأ الكاش الحالي فقط لرفعة مفردة (تعديل واحد بمعزل عن أي رفعة أخرى) — الرفع الجماعي
+      // لا يستدعي هذه الدالة أصلاً؛ يجمّع كل الشعارات بالذاكرة ويحفظها بكتابة واحدة (انظر
+      // confirmUniLogosBulkUpload) تفادياً لتضارب قراءة/كتابة متكررة على نفس المستند قد يفقد
+      // شعارات رُفعت للتو ضمن نفس الدفعة بسبب تأخر مزامنة الكاش المحلي مع Firestore
+      var logos = loadUniversityLogos();
+      logos[name] = dataUrl;
+      saveUniversityLogos(logos);
+      showToast('تم حفظ شعار "' + name + '"');
+      renderUniLogosPanel();
+      if(doneCb) doneCb(true);
     });
   }
   function removeUniversityLogo(name){
@@ -5853,8 +5935,8 @@
     tab: "dashboard",
     activeCategory: "graduates",
     search: "",
-    sortKey: null,
-    sortDir: 1,
+    sortKey: "createdAt", // افتراضياً: الأحدث إدخالاً أولاً — بدل ترتيب Firestore الخام (يبدو عشوائياً للمستخدم)
+    sortDir: -1,
     visibleCols: {},
     colPanelOpen: false,
     publishTypeFilter: "all",
@@ -6330,8 +6412,10 @@
 
     html += '<div style="font-size:12px; color:var(--ink-soft); margin-bottom:12px;">سجلات <b style="color:var(--teal-dark);">' + cat.label + '</b> — بيانات مشتركة يشترك في تعبئتها كل من لديه صلاحية الوصول لهذا القسم' + eventsRespBadgeHTML(cat.key) + '</div>';
 
+    var isLatestSort = eventsUI.sortKey === "createdAt" && eventsUI.sortDir === -1;
     html += '<div class="events-toolbar">' +
-      '<button type="button" class="btn-primary" data-action="open-add-event" data-cat="' + cat.key + '"><span class="icon">' + TICON.plus + '</span> إضافة ' + eventsSingularLabel(cat.key) + '</button>';
+      '<button type="button" class="btn-primary" data-action="open-add-event" data-cat="' + cat.key + '"><span class="icon">' + TICON.plus + '</span> إضافة ' + eventsSingularLabel(cat.key) + '</button>' +
+      '<button type="button" class="btn-secondary' + (isLatestSort ? " active" : "") + '" data-action="sort-latest-first" title="ترتيب القائمة بحيث يظهر آخر سجل أُدخل أولاً">🕐 الأحدث إدخالاً أولاً' + (isLatestSort ? " ✓" : "") + '</button>';
     if(settings.excelEnabled !== false){
       html += '<button type="button" class="btn-secondary" data-action="open-events-import" data-cat="' + cat.key + '"><span class="icon">' + TICON.upload + '</span> استيراد من إكسل</button>';
       html += '<button type="button" class="btn-secondary" data-action="open-events-import-update" data-cat="' + cat.key + '" title="يضيف السجلات الجديدة فقط، ويتجاهل ما هو مطابق لسجل موجود"><span class="icon">' + TICON.upload + '</span> تحديث من إكسل</button>';
@@ -7790,12 +7874,12 @@
     switch(btn.dataset.action){
       case "events-subnav": eventsUI.tab = btn.dataset.tab; renderEventsHub(); syncHashFromApp(); break;
       case "events-goto-category":
-        eventsUI.tab = "data-entry"; eventsUI.activeCategory = btn.dataset.cat; eventsUI.search = ""; eventsUI.sortKey = null; eventsUI.colPanelOpen = false;
+        eventsUI.tab = "data-entry"; eventsUI.activeCategory = btn.dataset.cat; eventsUI.search = ""; eventsUI.sortKey = "createdAt"; eventsUI.sortDir = -1; eventsUI.colPanelOpen = false;
         renderEventsHub();
         syncHashFromApp();
         break;
       case "events-set-category":
-        eventsUI.activeCategory = btn.dataset.cat; eventsUI.search = ""; eventsUI.sortKey = null; eventsUI.colPanelOpen = false;
+        eventsUI.activeCategory = btn.dataset.cat; eventsUI.search = ""; eventsUI.sortKey = "createdAt"; eventsUI.sortDir = -1; eventsUI.colPanelOpen = false;
         renderEventsHub();
         syncHashFromApp();
         break;
@@ -7853,6 +7937,7 @@
         refreshEventsTable();
         break;
       }
+      case "sort-latest-first": eventsUI.sortKey = "createdAt"; eventsUI.sortDir = -1; renderEventsHub(); break;
       case "open-event-templates": openEventTemplatesModal(); break;
       case "open-uni-logos": openUniLogosModal(); break;
       case "publish-type-filter": eventsUI.publishTypeFilter = btn.dataset.type; renderEventsHub(); break;
@@ -8184,6 +8269,9 @@
     if(e.target.matches("[data-action=\"uni-logo-upload\"]")){
       uploadUniversityLogo(e.target.dataset.uni, e.target.files && e.target.files[0]);
     }
+    if(e.target.id === "uniLogosFolderInput"){
+      handleUniLogosFolderSelect(e.target.files);
+    }
   });
   uniLogosOverlayEl.addEventListener("input", function(e){
     if(e.target.id === "uniLogosSearchInput"){
@@ -8200,6 +8288,8 @@
     switch(btn.dataset.action){
       case "close-uni-logos": closeUniLogosModal(); break;
       case "remove-uni-logo": removeUniversityLogo(btn.dataset.uni); break;
+      case "confirm-uni-logos-bulk": confirmUniLogosBulkUpload(); break;
+      case "cancel-uni-logos-bulk": uniLogosBulkState = null; renderUniLogosPanel(); break;
     }
   });
 
