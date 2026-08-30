@@ -225,10 +225,14 @@
   .identity-explorer-head{font-size:13px; color:var(--teal-dark); font-weight:700; margin-bottom:12px; display:flex; align-items:center; gap:6px;}
   .identity-explorer-body{display:flex; flex-direction:column; gap:16px;}
   .identity-explorer-svg-wrap{background:linear-gradient(180deg, var(--teal-tint), var(--white)); border:1px solid var(--line); border-radius:16px; padding:18px; display:flex; align-items:center; justify-content:center;}
-  .identity-explorer-svg{width:150px; height:auto; overflow:visible;}
-  .id-part{transition:opacity .35s ease, filter .35s ease; cursor:pointer;}
-  .id-part.id-dimmed{opacity:.15;}
-  .id-part.id-spotlit{filter:drop-shadow(0 0 7px rgba(0,128,255,.55));}
+  /* الصورة الأساسية هي ملف الشعار الحقيقي نفسه (لا رسم بديل) — الأجزاء المُسلَّط عليها الضوء
+     مقصوصة مباشرة من بيانات بكسل نفس الملف (انظر assets/identity-part-*.png)، فتطابق الشعار
+     الفعلي تماماً بدل تقريب مرسوم يدوياً */
+  .identity-logo-stack{position:relative; width:150px; aspect-ratio:889/918;}
+  .identity-logo-layer{position:absolute; inset:0; width:100%; height:100%; object-fit:contain; pointer-events:none;}
+  .identity-logo-base{opacity:.16; filter:grayscale(35%);}
+  .identity-logo-part{opacity:0; transition:opacity .35s ease, filter .35s ease;}
+  .identity-logo-part.id-spotlit{opacity:1; filter:drop-shadow(0 0 8px rgba(75,112,113,.55));}
   .identity-parts-grid{display:grid; grid-template-columns:1fr 1fr; gap:8px;}
   .identity-part-btn{display:flex; align-items:center; gap:8px; padding:10px 12px; border-radius:12px; border:1.5px solid var(--line); background:var(--white); cursor:pointer; text-align:start; transition:all .15s; font-family:inherit;}
   .identity-part-btn:hover{border-color:var(--blue); background:var(--blue-tint);}
@@ -242,7 +246,7 @@
   @media (min-width:520px){
     .identity-explorer-body{flex-direction:row; align-items:flex-start;}
     .identity-explorer-svg-wrap{flex:0 0 200px;}
-    .identity-explorer-svg{width:170px;}
+    .identity-logo-stack{width:170px;}
     .identity-explorer-side{flex:1; display:flex; flex-direction:column; gap:10px;}
   }
   .identity-story{text-align:start; border-top:1px solid var(--line); padding-top:16px; margin-top:2px; margin-bottom:16px;}
@@ -365,33 +369,20 @@
       </div>
     </div>
     <div class="identity-colors">
-      <div class="identity-color-swatch" style="background:#3d5b56;"><span>التيل الغامق</span><code>#3D5B56</code></div>
-      <div class="identity-color-swatch" style="background:#517771;"><span>التيل</span><code>#517771</code></div>
-      <div class="identity-color-swatch" style="background:#b8906e;"><span>التان</span><code>#B8906E</code></div>
-      <div class="identity-color-swatch" style="background:#0080ff;"><span>الأزرق المميز</span><code>#0080FF</code></div>
+      <div class="identity-color-swatch" style="background:#4b7071;"><span>التيل</span><code>#4B7071</code></div>
+      <div class="identity-color-swatch" style="background:#b88d66;"><span>التان</span><code>#B88D66</code></div>
     </div>
     <div class="identity-explorer">
       <p class="identity-explorer-intro">يرتكز تصميم شعار "بوابة زارة" بنمطه المسطح (Flat Vector) على المزج الدقيق بين الإرث الجغرافي للعوامية والوظيفة التقنية للمنصة. انقر أي جزء لتكتشف سبب وجوده:</p>
       <div class="identity-explorer-body">
         <div class="identity-explorer-svg-wrap">
-          <svg viewBox="0 0 140 170" class="identity-explorer-svg" fill="none" id="identityExplorerSvg">
-            <g class="id-part" data-part="gate">
-              <path d="M30 158 V62 A40 40 0 0 1 110 62 V120" stroke="#3d5b56" stroke-width="13" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
-            </g>
-            <g class="id-part" data-part="bars">
-              <rect x="47" y="120" width="13" height="38" rx="4" fill="#b9916e"/>
-              <rect x="65" y="98" width="13" height="60" rx="4" fill="#b9916e"/>
-              <rect x="83" y="74" width="13" height="84" rx="4" fill="#b9916e"/>
-            </g>
-            <g class="id-part" data-part="arrow">
-              <path d="M43 149 L94 67" stroke="#0080ff" stroke-width="6" stroke-linecap="round"/>
-              <path d="M75 67 L96 63 L100 84" stroke="#0080ff" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
-            </g>
-            <g class="id-part" data-part="zayn">
-              <path d="M110 120 Q107 158 76 158" stroke="#3d5b56" stroke-width="13" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
-              <circle cx="123" cy="94" r="7" fill="#3d5b56"/>
-            </g>
-          </svg>
+          <div class="identity-logo-stack" id="identityLogoStack">
+            <img src="/assets/bawabat-zara-icon.png" class="identity-logo-layer identity-logo-base" alt=""/>
+            <img src="/assets/identity-part-gate.png" class="identity-logo-layer identity-logo-part" data-part="gate" alt=""/>
+            <img src="/assets/identity-part-bars.png" class="identity-logo-layer identity-logo-part" data-part="bars" alt=""/>
+            <img src="/assets/identity-part-arrow.png" class="identity-logo-layer identity-logo-part" data-part="arrow" alt=""/>
+            <img src="/assets/identity-part-zayn.png" class="identity-logo-layer identity-logo-part" data-part="zayn" alt=""/>
+          </div>
         </div>
         <div class="identity-explorer-side">
           <div class="identity-parts-grid" id="identityPartsGrid">
@@ -407,8 +398,8 @@
     <div class="identity-story">
       <h4>سيكولوجية ودلالات الألوان</h4>
       <ul>
-        <li><b>الأخضر المزرق المطفي (#517771):</b> يمنح الشعار وزناً بصرياً يوحي بالاستقرار، الموثوقية، والأمان الرقمي لحفظ بيانات المستفيدين والجمعية.</li>
-        <li><b>البيج الرملي الدافئ (#B9916E):</b> يستحضر لون الطين والأرض وتاريخ بلدة زارة القديمة، مما يكسر برود التقنية بلمسة إنسانية تعكس هوية العمل الاجتماعي.</li>
+        <li><b>الأخضر المزرق المطفي (#4B7071):</b> يمنح الشعار وزناً بصرياً يوحي بالاستقرار، الموثوقية، والأمان الرقمي لحفظ بيانات المستفيدين والجمعية.</li>
+        <li><b>البيج الرملي الدافئ (#B88D66):</b> يستحضر لون الطين والأرض وتاريخ بلدة زارة القديمة، مما يكسر برود التقنية بلمسة إنسانية تعكس هوية العمل الاجتماعي.</li>
       </ul>
       <h4>النمط التصميمي والوظيفي (Flat Design)</h4>
       <p class="identity-story-plain">إزالة التدرجات والظلال تضمن أداءً بصرياً عالياً واستجابة كاملة (Responsive UI) للشاشات الصغيرة، الأيقونات، وأنظمة إدارة التقارير ولوحات التحكم (Dashboards).</p>
@@ -2079,12 +2070,11 @@
     { key: "zayn", title: "حرف الزاي المدمج", text: 'ينحني الجزء الأيمن من الهيكل مع النقطة الدائرية ليكوّن حرف "ز"، مما يربط الشكل البصري باسم "زارة" دون إقحام نصي إضافي.' }
   ];
   function selectIdentityPart(key){
-    var svg = document.getElementById("identityExplorerSvg");
-    if(svg){
-      Array.prototype.forEach.call(svg.querySelectorAll(".id-part"), function(g){
-        var match = g.getAttribute("data-part") === key;
-        g.classList.toggle("id-dimmed", !match);
-        g.classList.toggle("id-spotlit", match);
+    var stack = document.getElementById("identityLogoStack");
+    if(stack){
+      Array.prototype.forEach.call(stack.querySelectorAll(".identity-logo-part"), function(img){
+        var match = img.getAttribute("data-part") === key;
+        img.classList.toggle("id-spotlit", match);
       });
     }
     var grid = document.getElementById("identityPartsGrid");
