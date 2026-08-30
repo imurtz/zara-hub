@@ -5247,6 +5247,55 @@
     }
     return result;
   }
+  // ===== فقرة متعددة الأسطر داخل صندوق ثابت (مثل فقرة "بمناسبة حصوله على جائزة..." أسفل الاسم
+  // بقوالب التهنئة): تلتف تلقائياً على عرض الصندوق، وإن فُعِّلت الكشيدة تُمدَّد كل سطر ليملأ عرض
+  // الصندوق تماماً — إلا سطراً أخيراً قصيراً جداً (أقل من ٥٥٪ من العرض) فيُترك بلا تمديد حتى لا
+  // تظهر فجوات كشيدة سخيفة على كلمتين أو ثلاث فقط =====
+  function wrapParagraphLines(ctx, text, boxWidth){
+    var words = String(text).split(/\s+/).filter(Boolean);
+    var lines = [];
+    var current = "";
+    for(var i = 0; i < words.length; i++){
+      var test = current ? current + " " + words[i] : words[i];
+      if(!current || ctx.measureText(test).width <= boxWidth){
+        current = test;
+      } else {
+        lines.push(current);
+        current = words[i];
+      }
+    }
+    if(current) lines.push(current);
+    return lines;
+  }
+  function drawParagraphField(ctx, f, text, fam, weight, applyKashida){
+    var boxWidth = f.maxWidth || 500;
+    var fs = f.fontSize;
+    var lines = [];
+    var safety = 0;
+    function setFont(size){ ctx.font = weight + ' ' + size + 'px "' + fam + '", sans-serif'; }
+    while(true){
+      setFont(fs);
+      lines = wrapParagraphLines(ctx, text, boxWidth);
+      var lh = f.lineHeight || Math.round(fs * 1.65);
+      var totalH = lines.length * lh;
+      if(!f.boxHeight || totalH <= f.boxHeight || fs <= 10 || safety >= 40) break;
+      fs -= 1;
+      safety++;
+    }
+    setFont(fs);
+    var lineHeight = f.lineHeight || Math.round(fs * 1.65);
+    ctx.textAlign = f.align || "center";
+    ctx.textBaseline = "middle";
+    var startY = f.y + lineHeight / 2;
+    lines.forEach(function(line, idx){
+      var renderLine = line;
+      if(applyKashida){
+        var lw = ctx.measureText(line).width;
+        if(lw >= boxWidth * 0.55) renderLine = kashidaJustifyText(ctx, line, boxWidth);
+      }
+      ctx.fillText(renderLine, f.x, startY + idx * lineHeight);
+    });
+  }
 
   // ===== محرك رسم القالب: يركّب بيانات سجل حقيقي فوق قالب جاهز داخل Canvas =====
   function templateFieldValue(field, record, cat){
@@ -5433,6 +5482,12 @@
       var fam = "Cairo";
       if(f.font && f.font.indexOf("custom:") === 0) fam = fontFamMap[f.font.slice(7)] || "Cairo";
       else if(f.font) fam = f.font;
+      if(f.multiline){
+        ctx.fillStyle = f.color || "#000000";
+        var paraKashidaApplies = f.kashida && (!f.kashidaValue || String(record[f.key] || "").trim() === String(f.kashidaValue).trim());
+        drawParagraphField(ctx, f, text, fam, weight, paraKashidaApplies);
+        continue;
+      }
       ctx.font = weight + ' ' + f.fontSize + 'px "' + fam + '", sans-serif';
       ctx.fillStyle = f.color || "#000000";
       ctx.textBaseline = "middle";
@@ -7209,7 +7264,7 @@
       x: Math.round(pt.x), y: Math.round(pt.y),
       fontSize: 28, font: "Cairo", bold: false, color: "#000000",
       align: "center", maxWidth: Math.round(tmpl.width * 0.6),
-      kashida: false, hideValues: []
+      kashida: false, hideValues: [], multiline: false, lineHeight: null, boxHeight: null
     });
     saveDesignTemplate(tmpl);
   }
@@ -7292,9 +7347,18 @@
           loadDesignFonts().map(function(df){ return '<option value="custom:' + df.id + '"' + (f.font === "custom:" + df.id ? " selected" : "") + '>🔤 ' + escapeHTML(df.name) + '</option>'; }).join("") +
         '</select></label>' +
         '<label>المحاذاة<select data-tmpl-prop="align"><option value="right"' + (f.align === "right" ? " selected" : "") + '>يمين</option><option value="center"' + (f.align === "center" ? " selected" : "") + '>وسط</option><option value="left"' + (f.align === "left" ? " selected" : "") + '>يسار</option></select></label>' +
-        '<label>أقصى عرض<input type="number" min="20" data-tmpl-prop="maxWidth" value="' + (f.maxWidth || "") + '"/></label>' +
+        '<label>أقصى عرض' + (f.multiline ? " (عرض صندوق الفقرة)" : "") + '<input type="number" min="20" data-tmpl-prop="maxWidth" value="' + (f.maxWidth || "") + '"/></label>' +
         '<label><input type="checkbox" data-tmpl-prop="bold"' + (f.bold ? " checked" : "") + '/> عريض</label>' +
+        '<label><input type="checkbox" data-tmpl-prop="multiline"' + (f.multiline ? " checked" : "") + '/> فقرة متعددة الأسطر (تلتف تلقائياً داخل الصندوق)</label>' +
+        (f.multiline ?
+          '<label>ارتفاع السطر (اتركه فارغاً للتلقائي)<input type="number" min="10" data-tmpl-prop="lineHeight" value="' + (f.lineHeight || "") + '"/></label>' +
+          '<label>أقصى ارتفاع للصندوق (اختياري — يصغّر الخط تلقائياً ليتسع، اتركه فارغاً لتعطيله)<input type="number" min="20" data-tmpl-prop="boxHeight" value="' + (f.boxHeight || "") + '"/></label>' +
+          '<p class="hint" style="flex-basis:100%; margin:0;">مع "Y" أعلى تصبح موضع أعلى الصندوق (لا وسطه)، والنص يلتف تلقائياً على عدة أسطر بعرض "أقصى عرض"</p>'
+        : "") +
         '<label><input type="checkbox" data-tmpl-prop="kashida"' + (f.kashida ? " checked" : "") + '/> تمديد كشيدة</label>' +
+        (f.multiline ?
+          '<p class="hint" style="flex-basis:100%; margin:0;">مع الفقرة متعددة الأسطر: يُمدَّد كل سطر تلقائياً ليملأ عرض الصندوق (مثل التبرير الكامل بمحرري النصوص) — يُستثنى سطر أخير قصير جداً حتى لا تظهر فجوات كشيدة كبيرة على كلمتين فقط</p>'
+        : "") +
         '<label>تمديد الكشيدة يطبَّق فقط عند القيمة (اتركه فارغاً ليُطبَّق دائماً)<input type="text" data-tmpl-prop="kashidaValue" placeholder="مثال: الماجستير" value="' + escapeHTML(f.kashidaValue || "") + '" style="width:150px;"/></label>' +
         '<label style="flex-basis:100%;">إخفاء عند القيمة (افصل بفاصلة)<input type="text" data-tmpl-prop="hideValues" placeholder="مثال: بدون" value="' + escapeHTML((f.hideValues || []).join("، ")) + '" style="width:200px;"/></label>' +
         '<label>نص قبل القيمة (ثابت لكل السجلات)<input type="text" data-tmpl-prop="prefix" placeholder="مثال: كريمة " value="' + escapeHTML(f.prefix || "") + '"' + (f.dynamicPrefixKey ? " disabled" : "") + ' style="width:150px;"/></label>' +
@@ -7306,7 +7370,7 @@
           '</select></label>' +
           '<p class="hint" style="flex-basis:100%; margin:0;">مثال: اختر حقل "صيغة ذكر الأم" — كل سجل يظهر بالصيغة اللي اختارها مُدخِل البيانات نفسه (وحرمه / وكريمة الحاج...) بدل صيغة واحدة ثابتة لكل السجلات</p>'
         : "") +
-        (tmplOtherTextFields(tmpl, f.key).length ?
+        (!f.multiline && tmplOtherTextFields(tmpl, f.key).length ?
           '<label style="flex-basis:100%;">طابق عرض هذا السطر مع<select data-tmpl-prop="matchWidthKey"><option value="">بدون</option>' +
             tmplOtherTextFields(tmpl, f.key).map(function(of){ return '<option value="' + of.key + '"' + (f.matchWidthKey === of.key ? " selected" : "") + '>' + escapeHTML((tmplFieldMeta(tmpl.category, of.key) || {}).label || of.key) + '</option>'; }).join("") +
           '</select></label>' +

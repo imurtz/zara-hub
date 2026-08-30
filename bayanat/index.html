@@ -1483,6 +1483,53 @@
     }
     return result;
   }
+  // ===== فقرة متعددة الأسطر داخل صندوق ثابت — نفس منطق النسخة الإدارية بالضبط، انظر
+  // drawParagraphField في Login/index.html =====
+  function wrapParagraphLines(ctx, text, boxWidth){
+    var words = String(text).split(/\s+/).filter(Boolean);
+    var lines = [];
+    var current = "";
+    for(var i = 0; i < words.length; i++){
+      var test = current ? current + " " + words[i] : words[i];
+      if(!current || ctx.measureText(test).width <= boxWidth){
+        current = test;
+      } else {
+        lines.push(current);
+        current = words[i];
+      }
+    }
+    if(current) lines.push(current);
+    return lines;
+  }
+  function drawParagraphFieldPublic(ctx, f, text, fam, weight, applyKashida){
+    var boxWidth = f.maxWidth || 500;
+    var fs = f.fontSize;
+    var lines = [];
+    var safety = 0;
+    function setFont(size){ ctx.font = weight + ' ' + size + 'px "' + fam + '", sans-serif'; }
+    while(true){
+      setFont(fs);
+      lines = wrapParagraphLines(ctx, text, boxWidth);
+      var lh = f.lineHeight || Math.round(fs * 1.65);
+      var totalH = lines.length * lh;
+      if(!f.boxHeight || totalH <= f.boxHeight || fs <= 10 || safety >= 40) break;
+      fs -= 1;
+      safety++;
+    }
+    setFont(fs);
+    var lineHeight = f.lineHeight || Math.round(fs * 1.65);
+    ctx.textAlign = f.align || "center";
+    ctx.textBaseline = "middle";
+    var startY = f.y + lineHeight / 2;
+    lines.forEach(function(line, idx){
+      var renderLine = line;
+      if(applyKashida){
+        var lw = ctx.measureText(line).width;
+        if(lw >= boxWidth * 0.55) renderLine = kashidaJustifyText(ctx, line, boxWidth);
+      }
+      ctx.fillText(renderLine, f.x, startY + idx * lineHeight);
+    });
+  }
   function templateFieldValuePublic(field, record){
     var v = record[field.key];
     if(field.key === "photo") v = record.photo;
@@ -1665,6 +1712,12 @@
       var fam = "Cairo";
       if(f.font && f.font.indexOf("custom:") === 0) fam = fontFamMap[f.font.slice(7)] || "Cairo";
       else if(f.font) fam = f.font;
+      if(f.multiline){
+        ctx.fillStyle = f.color || "#000000";
+        var paraKashidaApplies = f.kashida && (!f.kashidaValue || String(record[f.key] || "").trim() === String(f.kashidaValue).trim());
+        drawParagraphFieldPublic(ctx, f, text, fam, weight, paraKashidaApplies);
+        continue;
+      }
       ctx.font = weight + ' ' + f.fontSize + 'px "' + fam + '", sans-serif';
       ctx.fillStyle = f.color || "#000000";
       ctx.textBaseline = "middle";
