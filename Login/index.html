@@ -5329,6 +5329,10 @@
     return new Promise(function(resolve){
       if(!src){ resolve(null); return; }
       var img = new Image();
+      // مهم لصور مستضافة على نطاق آخر (مثل R2): بدون crossOrigin يصير الكانفس "ملوّثاً" (tainted)
+      // بمجرد رسم صورة من نطاق مختلف عليه، ويفشل toDataURL()/toBlob() باستثناء أمني — حتى لو
+      // كان السيرفر يرسل رؤوس CORS صحيحة، لازم الطرفين (المتصفح والسيرفر) يتعاونا معاً
+      img.crossOrigin = "anonymous";
       img.onload = function(){ resolve(img); };
       img.onerror = function(){ resolve(null); };
       img.src = src;
