@@ -5136,6 +5136,30 @@
       return removeImageBackgroundClientSide(file, onStatus);
     });
   }
+  // رابط بروكسي رفع الصور إلى Cloudflare R2 — يُعبَّأ بعد النشر، انظر media-upload-worker/README.md
+  var MEDIA_UPLOAD_ENDPOINT = "https://zara-media-upload.murtada-ud.workers.dev/";
+  // يحوّل dataURL (نتيجة دوال الضغط الحالية) لملف حقيقي ويرفعه لـR2، ويرجّع رابطه بدل النص
+  // الطويل نفسه — هذا ما يقلّص حجم مستندات Firestore فعلياً (كانت تصل لعشرات الميقابايتات).
+  // عند أي فشل (السيرفر غير مهيّأ بعد، تعطّل، لا اتصال) نتراجع لتخزين dataURL كما كان قبل هذا
+  // التعديل — الميزة تبقى شغالة دائماً حتى لو تعطّلت خدمة الرفع، فقط بدون فائدة تقليص الحجم
+  function uploadDataUrlToR2(dataUrl, folder, cb){
+    if(!MEDIA_UPLOAD_ENDPOINT || !dataUrl){ cb(dataUrl); return; }
+    fetch(dataUrl).then(function(r){ return r.blob(); }).then(function(blob){
+      return fetch(MEDIA_UPLOAD_ENDPOINT, {
+        method: "POST",
+        headers: { "Content-Type": blob.type || "image/png", "X-Folder": folder },
+        body: blob
+      });
+    }).then(function(res){
+      if(!res.ok) throw new Error("media_upload_failed_" + res.status);
+      return res.json();
+    }).then(function(data){
+      cb(data && data.url ? data.url : dataUrl);
+    }).catch(function(err){
+      console.warn("R2 upload failed, keeping embedded data URL", err);
+      cb(dataUrl);
+    });
+  }
   // ضغط صورة قالب التصميم — جودة أعلى من صور المناسبات العادية لأن القالب يحتوي نصوصاً دقيقة، لكن يبقى ضمن حد المستند الواحد بـ Firestore (1 ميقابايت)
   function compressTemplateImageFile(file, cb){
     var reader = new FileReader();
@@ -5707,7 +5731,10 @@
     if(file.size > 15 * 1024 * 1024){ showToast("حجم الملف كبير جداً — اختر صورة أصغر"); cb(null); return; }
     detectImageTransparency(file, function(transparent){
       var compressFn = transparent ? compressCutoutImageFile : compressEventImageFile;
-      compressFn(file, 300 * 1024, function(dataUrl){ cb(dataUrl || null); });
+      compressFn(file, 300 * 1024, function(dataUrl){
+        if(!dataUrl){ cb(null); return; }
+        uploadDataUrlToR2(dataUrl, "logos", function(finalUrl){ cb(finalUrl); });
+      });
     });
   }
   function uploadUniversityLogo(name, file, doneCb){
@@ -7077,12 +7104,14 @@
   function tmplReplaceTemplateImage(tmpl, file, cb){
     compressTemplateImageFile(file, function(dataUrl, w, h){
       if(!dataUrl){ showToast("تعذّرت قراءة الصورة"); cb(false); return; }
-      tmpl.image = dataUrl;
-      tmpl.width = w;
-      tmpl.height = h;
-      saveDesignTemplate(tmpl);
-      showToast("تم تحديث صورة القالب");
-      cb(true);
+      uploadDataUrlToR2(dataUrl, "templates", function(finalUrl){
+        tmpl.image = finalUrl;
+        tmpl.width = w;
+        tmpl.height = h;
+        saveDesignTemplate(tmpl);
+        showToast("تم تحديث صورة القالب");
+        cb(true);
+      });
     });
   }
   // تحريك دقيق لمحتوى الصورة داخل صندوقها (dx/dy = 0 يعني توسيط/تصفير الإزاحة)
@@ -8015,9 +8044,11 @@
       if(!file) return;
       compressTemplateImageFile(file, function(dataUrl, w, h){
         if(!dataUrl){ showToast("تعذّرت قراءة الصورة"); return; }
-        var tmpl = { id: genTemplateId(), category: eventsUI.designTmplCategory, name: "قالب جديد", image: dataUrl, width: w, height: h, fields: [] };
-        saveDesignTemplate(tmpl);
-        openTemplateEditor(tmpl.id);
+        uploadDataUrlToR2(dataUrl, "templates", function(finalUrl){
+          var tmpl = { id: genTemplateId(), category: eventsUI.designTmplCategory, name: "قالب جديد", image: finalUrl, width: w, height: h, fields: [] };
+          saveDesignTemplate(tmpl);
+          openTemplateEditor(tmpl.id);
+        });
       });
     }
   });
@@ -8109,18 +8140,22 @@
         if(alreadyTransparent){
           compressCutoutImageFile(imgFile, 400 * 1024, function(dataUrl){
             if(!dataUrl){ showToast("تعذّرت قراءة الصورة"); return; }
-            eventModalState.draft[fieldKey] = dataUrl;
-            eventModalState.draft[fieldKey + "Orig"] = "";
-            renderEventModal();
-            showToast("✔ الصورة مفرّغة الخلفية مسبقاً — لن نعيد معالجتها");
+            uploadDataUrlToR2(dataUrl, "events", function(finalUrl){
+              eventModalState.draft[fieldKey] = finalUrl;
+              eventModalState.draft[fieldKey + "Orig"] = "";
+              renderEventModal();
+              showToast("✔ الصورة مفرّغة الخلفية مسبقاً — لن نعيد معالجتها");
+            });
           });
           return;
         }
         compressEventImageFile(imgFile, 400 * 1024, function(dataUrl){
           if(!dataUrl){ showToast("تعذّرت قراءة الصورة"); return; }
-          eventModalState.draft[fieldKey] = dataUrl;
-          eventModalState.draft[fieldKey + "Orig"] = "";
-          renderEventModal();
+          uploadDataUrlToR2(dataUrl, "events", function(finalUrl){
+            eventModalState.draft[fieldKey] = finalUrl;
+            eventModalState.draft[fieldKey + "Orig"] = "";
+            renderEventModal();
+          });
         });
       });
     }
@@ -8188,8 +8223,10 @@
             // تجاوز حد فايرستور لحجم المستند عند تخزين نسختين لنفس الصورة — لكنها تبقى بجودة
             // كافية للاستخدام الفعلي (مو مجرد معاينة صغيرة)، لأن الأدمن يقدر يختارها كصورة نهائية
             compressEventImageFile(blob, 200 * 1024, function(smallDataUrl){
-              origThumbUrl = smallDataUrl || srcImg;
-              resolve(blob);
+              uploadDataUrlToR2(smallDataUrl || srcImg, "events", function(finalOrigUrl){
+                origThumbUrl = finalOrigUrl;
+                resolve(blob);
+              });
             });
           });
         }).then(function(blob){
@@ -8201,12 +8238,18 @@
           });
         }).then(function(cutBlob){
           compressCutoutImageFile(cutBlob, 400 * 1024, function(dataUrl){
-            if(bgKey === "photo") eventModalState.photoProcessing = false;
-            else if(eventModalState.imageProcessing) eventModalState.imageProcessing[bgKey] = false;
-            if(!dataUrl){ showToast("تعذّرت معالجة الصورة"); renderEventModal(); return; }
-            eventModalState.draft[bgKey + "Orig"] = origThumbUrl || srcImg;
-            eventModalState.draft[bgKey] = dataUrl;
-            renderEventModal();
+            if(!dataUrl){
+              if(bgKey === "photo") eventModalState.photoProcessing = false;
+              else if(eventModalState.imageProcessing) eventModalState.imageProcessing[bgKey] = false;
+              showToast("تعذّرت معالجة الصورة"); renderEventModal(); return;
+            }
+            uploadDataUrlToR2(dataUrl, "events", function(finalUrl){
+              if(bgKey === "photo") eventModalState.photoProcessing = false;
+              else if(eventModalState.imageProcessing) eventModalState.imageProcessing[bgKey] = false;
+              eventModalState.draft[bgKey + "Orig"] = origThumbUrl || srcImg;
+              eventModalState.draft[bgKey] = finalUrl;
+              renderEventModal();
+            });
           });
         }).catch(function(err){
           console.error("bg removal failed", err);
@@ -8688,8 +8731,10 @@
         fetch(bgSrcImg).then(function(r){ return r.blob(); }).then(function(blob){
           return new Promise(function(resolve){
             compressEventImageFile(blob, 200 * 1024, function(smallDataUrl){
-              bgOrigThumbUrl = smallDataUrl || bgSrcImg;
-              resolve(blob);
+              uploadDataUrlToR2(smallDataUrl || bgSrcImg, "events", function(finalOrigUrl){
+                bgOrigThumbUrl = finalOrigUrl;
+                resolve(blob);
+              });
             });
           });
         }).then(function(blob){
@@ -8699,19 +8744,21 @@
         }).then(function(cutBlob){
           compressCutoutImageFile(cutBlob, 400 * 1024, function(dataUrl){
             if(!dataUrl){ showToast("تعذّرت معالجة الصورة"); renderDesignGenerateModal(); return; }
-            // نبني نسخة جديدة من السجل بدل تعديله في مكانه — تعديل الكائن المرجعي مباشرة يخلي فحص "هل تغيّر شيء؟"
-            // بداخل saveEventsData يقارن الكائن بنفسه (نفس المرجع) فيظن دائماً إنه ما تغيّر، فتُتجاهل الكتابة بصمت
-            var bgAll = loadEventsData();
-            var bgIdx = bgAll.findIndex(function(r){ return r.id === tmplGenerateState.recordId; });
-            if(bgIdx === -1){ showToast("تعذّر إيجاد السجل — رُبما حُذف"); renderDesignGenerateModal(); return; }
-            var bgUpdated = shallowCopy(bgAll[bgIdx]);
-            bgUpdated[bgFieldKey + "Orig"] = bgOrigThumbUrl || bgSrcImg;
-            bgUpdated[bgFieldKey] = dataUrl;
-            bgUpdated.updatedAt = Date.now();
-            bgAll[bgIdx] = bgUpdated;
-            saveEventsData(bgAll).then(function(ok){
-              if(ok) showToast("تم تفريغ الخلفية");
-              renderDesignGenerateModal();
+            uploadDataUrlToR2(dataUrl, "events", function(finalUrl){
+              // نبني نسخة جديدة من السجل بدل تعديله في مكانه — تعديل الكائن المرجعي مباشرة يخلي فحص "هل تغيّر شيء؟"
+              // بداخل saveEventsData يقارن الكائن بنفسه (نفس المرجع) فيظن دائماً إنه ما تغيّر، فتُتجاهل الكتابة بصمت
+              var bgAll = loadEventsData();
+              var bgIdx = bgAll.findIndex(function(r){ return r.id === tmplGenerateState.recordId; });
+              if(bgIdx === -1){ showToast("تعذّر إيجاد السجل — رُبما حُذف"); renderDesignGenerateModal(); return; }
+              var bgUpdated = shallowCopy(bgAll[bgIdx]);
+              bgUpdated[bgFieldKey + "Orig"] = bgOrigThumbUrl || bgSrcImg;
+              bgUpdated[bgFieldKey] = finalUrl;
+              bgUpdated.updatedAt = Date.now();
+              bgAll[bgIdx] = bgUpdated;
+              saveEventsData(bgAll).then(function(ok){
+                if(ok) showToast("تم تفريغ الخلفية");
+                renderDesignGenerateModal();
+              });
             });
           });
         }).catch(function(err){

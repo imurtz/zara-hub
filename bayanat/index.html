@@ -794,6 +794,29 @@
       return removeImageBackgroundClientSide(file, onStatus);
     });
   }
+  // رابط بروكسي رفع الصور إلى Cloudflare R2 — يُعبَّأ بعد النشر، انظر media-upload-worker/README.md
+  var MEDIA_UPLOAD_ENDPOINT = "https://zara-media-upload.murtada-ud.workers.dev/";
+  // يحوّل dataURL (نتيجة دوال الضغط الحالية) لملف حقيقي ويرفعه لـR2، ويرجّع رابطه بدل النص الطويل
+  // نفسه — هذا ما يقلّص حجم مستندات Firestore فعلياً. عند أي فشل نتراجع لتخزين dataURL كما كان —
+  // النموذج يبقى شغالاً دائماً حتى لو تعطّلت خدمة الرفع، فقط بدون فائدة تقليص الحجم
+  function uploadDataUrlToR2(dataUrl, folder, cb){
+    if(!MEDIA_UPLOAD_ENDPOINT || !dataUrl){ cb(dataUrl); return; }
+    fetch(dataUrl).then(function(r){ return r.blob(); }).then(function(blob){
+      return fetch(MEDIA_UPLOAD_ENDPOINT, {
+        method: "POST",
+        headers: { "Content-Type": blob.type || "image/png", "X-Folder": folder },
+        body: blob
+      });
+    }).then(function(res){
+      if(!res.ok) throw new Error("media_upload_failed_" + res.status);
+      return res.json();
+    }).then(function(data){
+      cb(data && data.url ? data.url : dataUrl);
+    }).catch(function(err){
+      console.warn("R2 upload failed, keeping embedded data URL", err);
+      cb(dataUrl);
+    });
+  }
 
   var CATEGORY_ICON_COLORS = { graduates: "#4d6ea9", births: "#4d6ea9", marriages: "#4d6ea9", congrats: "#4d6ea9" };
   function renderCatSelect(){
@@ -980,8 +1003,10 @@
         // نحتفظ بنسخة "قبل التفريغ" (بحجم أصغر من النهائية لتفادي حد فايرستور) — تصل مع
         // السجل المُرسَل عشان الأدمن يقدر يراجعها ويختار بينها وبين النسخة المفرّغة لاحقاً
         compressImageFile(blob, 200 * 1024, function(smallDataUrl){
-          origThumbUrl = smallDataUrl || state.photo;
-          resolve(blob);
+          uploadDataUrlToR2(smallDataUrl || state.photo, "events", function(finalOrigUrl){
+            origThumbUrl = finalOrigUrl;
+            resolve(blob);
+          });
         });
       });
     }).then(function(blob){
@@ -992,10 +1017,19 @@
       });
     }).then(function(cutBlob){
       compressCutoutImageFile(cutBlob, 400 * 1024, function(dataUrl){
-        state.photoProcessing = false;
-        if(dataUrl){ state.photo = dataUrl; state.photoOrig = origThumbUrl || ""; }
-        refreshPhotoField();
-        hideBgToast();
+        if(!dataUrl){
+          state.photoProcessing = false;
+          refreshPhotoField();
+          hideBgToast();
+          return;
+        }
+        uploadDataUrlToR2(dataUrl, "events", function(finalUrl){
+          state.photoProcessing = false;
+          state.photo = finalUrl;
+          state.photoOrig = origThumbUrl || "";
+          refreshPhotoField();
+          hideBgToast();
+        });
       });
     }).catch(function(err){
       console.error("bg removal failed", err);
@@ -1014,8 +1048,10 @@
     fetch(src).then(function(r){ return r.blob(); }).then(function(blob){
       return new Promise(function(resolve){
         compressImageFile(blob, 200 * 1024, function(smallDataUrl){
-          fieldOrigThumbUrl = smallDataUrl || src;
-          resolve(blob);
+          uploadDataUrlToR2(smallDataUrl || src, "events", function(finalOrigUrl){
+            fieldOrigThumbUrl = finalOrigUrl;
+            resolve(blob);
+          });
         });
       });
     }).then(function(blob){
@@ -1026,10 +1062,19 @@
       });
     }).then(function(cutBlob){
       compressCutoutImageFile(cutBlob, 400 * 1024, function(dataUrl){
-        delete state.fieldImagesProcessing[key];
-        if(dataUrl){ state.fieldImages[key] = dataUrl; state.fieldImagesOrig[key] = fieldOrigThumbUrl || ""; }
-        refreshFieldImage(key);
-        hideBgToast();
+        if(!dataUrl){
+          delete state.fieldImagesProcessing[key];
+          refreshFieldImage(key);
+          hideBgToast();
+          return;
+        }
+        uploadDataUrlToR2(dataUrl, "events", function(finalUrl){
+          delete state.fieldImagesProcessing[key];
+          state.fieldImages[key] = finalUrl;
+          state.fieldImagesOrig[key] = fieldOrigThumbUrl || "";
+          refreshFieldImage(key);
+          hideBgToast();
+        });
       });
     }).catch(function(err){
       console.error("bg removal failed", err);
@@ -1250,11 +1295,13 @@
                 errEl.style.display = "block";
                 return;
               }
-              state.photo = dataUrl;
-              state.photoOrig = "";
-              refreshPhotoField();
-              showBgToast("✔ الصورة مفرّغة الخلفية مسبقاً — لن نعيد معالجتها");
-              setTimeout(hideBgToast, 2200);
+              uploadDataUrlToR2(dataUrl, "events", function(finalUrl){
+                state.photo = finalUrl;
+                state.photoOrig = "";
+                refreshPhotoField();
+                showBgToast("✔ الصورة مفرّغة الخلفية مسبقاً — لن نعيد معالجتها");
+                setTimeout(hideBgToast, 2200);
+              });
             });
             return;
           }
@@ -1297,11 +1344,13 @@
           if(alreadyTransparent){
             compressCutoutImageFile(file, 400 * 1024, function(dataUrl){
               if(!dataUrl) return;
-              state.fieldImages[key] = dataUrl;
-              delete state.fieldImagesOrig[key];
-              refreshFieldImage(key);
-              showBgToast("✔ الصورة مفرّغة الخلفية مسبقاً — لن نعيد معالجتها");
-              setTimeout(hideBgToast, 2200);
+              uploadDataUrlToR2(dataUrl, "events", function(finalUrl){
+                state.fieldImages[key] = finalUrl;
+                delete state.fieldImagesOrig[key];
+                refreshFieldImage(key);
+                showBgToast("✔ الصورة مفرّغة الخلفية مسبقاً — لن نعيد معالجتها");
+                setTimeout(hideBgToast, 2200);
+              });
             });
             return;
           }
@@ -1739,24 +1788,33 @@
         showPanStatus("تعذّرت قراءة الصورة — جرّب صورة أخرى", true);
         return;
       }
-      var rec = _panState.rec;
-      rec.photo = dataUrl;
-      rec.photoPanX = 0; rec.photoPanY = 0; rec.photoZoomAdj = 1;
-      rerenderPanPreview();
-      showBgToast("🪄 يجري الآن إزالة خلفية الصورة الجديدة...");
-      fetch(dataUrl).then(function(r){ return r.blob(); }).then(function(blob){
-        return removeImageBackground(blob, function(){});
-      }).then(function(cutBlob){
-        compressCutoutImageFile(cutBlob, 400 * 1024, function(finalDataUrl){
+      uploadDataUrlToR2(dataUrl, "events", function(uploadedUrl){
+        var rec = _panState.rec;
+        rec.photo = uploadedUrl;
+        rec.photoPanX = 0; rec.photoPanY = 0; rec.photoZoomAdj = 1;
+        rerenderPanPreview();
+        showBgToast("🪄 يجري الآن إزالة خلفية الصورة الجديدة...");
+        fetch(uploadedUrl).then(function(r){ return r.blob(); }).then(function(blob){
+          return removeImageBackground(blob, function(){});
+        }).then(function(cutBlob){
+          compressCutoutImageFile(cutBlob, 400 * 1024, function(finalDataUrl){
+            if(!finalDataUrl){
+              hideBgToast();
+              savePanPhotoToFirestore(rec);
+              return;
+            }
+            uploadDataUrlToR2(finalDataUrl, "events", function(finalUploadedUrl){
+              hideBgToast();
+              rec.photo = finalUploadedUrl;
+              rerenderPanPreview();
+              savePanPhotoToFirestore(rec);
+            });
+          });
+        }).catch(function(err){
+          console.error("bg removal failed (change photo)", err);
           hideBgToast();
-          if(finalDataUrl) rec.photo = finalDataUrl;
-          rerenderPanPreview();
           savePanPhotoToFirestore(rec);
         });
-      }).catch(function(err){
-        console.error("bg removal failed (change photo)", err);
-        hideBgToast();
-        savePanPhotoToFirestore(rec);
       });
     });
   }
