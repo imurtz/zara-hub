@@ -8319,24 +8319,28 @@
         renderEventModal();
         var origThumbUrl = null;
         fetch(srcImg).then(function(r){ return r.blob(); }).then(function(blob){
-          return new Promise(function(resolve){
+          // نرفع النسخة "قبل التفريغ" لـR2 بالتوازي مع طلب إزالة الخلفية نفسه بدل تتابعهما —
+          // العمليتان مستقلتان (كلتاهما تحتاج فقط blob الأصلي)، فتشغيلهما معاً يوفّر ثانية إلى
+          // ثانيتين من زمن كل رفع صورة بدل انتظار كل عملية على حدة
+          var origUploadPromise = new Promise(function(resolve){
             // نسخة "قبل التفريغ" — تُرفع لـR2 بنفس جودة النسخة النهائية تقريباً (لم تعد مقيّدة
             // بحد فايرستور بعد الآن)، لأن الأدمن يقدر يختارها كصورة نهائية بدل المفرّغة
             compressEventImageFile(blob, 1000 * 1024, function(smallDataUrl){
               uploadDataUrlToR2(smallDataUrl || srcImg, "events", function(finalOrigUrl){
-                origThumbUrl = finalOrigUrl;
-                resolve(blob);
+                resolve(finalOrigUrl);
               });
             });
           });
-        }).then(function(blob){
-          return removeImageBackground(blob, function(msg){
+          var bgRemovalPromise = removeImageBackground(blob, function(msg){
             if(bgKey === "photo") eventModalState.photoProcessingMsg = msg;
             else if(eventModalState.imageProcessing) eventModalState.imageProcessing[bgKey + "Msg"] = msg;
             var el = document.getElementById("eventImgProcessing-" + bgKey);
             if(el) el.textContent = msg;
           });
-        }).then(function(cutBlob){
+          return Promise.all([origUploadPromise, bgRemovalPromise]);
+        }).then(function(results){
+          origThumbUrl = results[0];
+          var cutBlob = results[1];
           compressCutoutImageFile(cutBlob, 1200 * 1024, function(dataUrl){
             if(!dataUrl){
               if(bgKey === "photo") eventModalState.photoProcessing = false;
@@ -8829,19 +8833,22 @@
         var bgSrcImg = bgSrcRec[bgFieldKey];
         var bgOrigThumbUrl = null;
         fetch(bgSrcImg).then(function(r){ return r.blob(); }).then(function(blob){
-          return new Promise(function(resolve){
+          // رفع النسخة الأصلية وإزالة الخلفية بالتوازي بدل تتابعهما — نفس منطق حقل الصورة بنموذج
+          // الإدخال (يوفّر ثانية إلى ثانيتين من كل عملية)
+          var origUploadPromise = new Promise(function(resolve){
             compressEventImageFile(blob, 1000 * 1024, function(smallDataUrl){
               uploadDataUrlToR2(smallDataUrl || bgSrcImg, "events", function(finalOrigUrl){
-                bgOrigThumbUrl = finalOrigUrl;
-                resolve(blob);
+                resolve(finalOrigUrl);
               });
             });
           });
-        }).then(function(blob){
-          return removeImageBackground(blob, function(msg){
+          var bgRemovalPromise = removeImageBackground(blob, function(msg){
             if(bgStatusEl) bgStatusEl.textContent = msg;
           });
-        }).then(function(cutBlob){
+          return Promise.all([origUploadPromise, bgRemovalPromise]);
+        }).then(function(results){
+          bgOrigThumbUrl = results[0];
+          var cutBlob = results[1];
           compressCutoutImageFile(cutBlob, 1200 * 1024, function(dataUrl){
             if(!dataUrl){ showToast("تعذّرت معالجة الصورة"); renderDesignGenerateModal(); return; }
             uploadDataUrlToR2(dataUrl, "events", function(finalUrl){

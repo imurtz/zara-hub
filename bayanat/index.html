@@ -1032,23 +1032,27 @@
     showBgToast("🪄 يجري الآن إزالة خلفية الصورة الشخصية...");
     var origThumbUrl = null;
     fetch(state.photo).then(function(r){ return r.blob(); }).then(function(blob){
-      return new Promise(function(resolve){
+      // نرفع النسخة "قبل التفريغ" لـR2 بالتوازي مع طلب إزالة الخلفية نفسه بدل تتابعهما —
+      // العمليتان مستقلتان (كلتاهما تحتاج فقط blob الأصلي)، فتشغيلهما معاً يوفّر ثانية إلى
+      // ثانيتين من زمن كل رفع صورة
+      var origUploadPromise = new Promise(function(resolve){
         // نحتفظ بنسخة "قبل التفريغ" — تُرفع لـR2 بنفس جودة النسخة النهائية تقريباً (لم تعد
         // مقيّدة بحد فايرستور) — تصل مع السجل عشان الأدمن يقدر يراجعها ويختارها بدل المفرّغة
         compressImageFile(blob, 1000 * 1024, function(smallDataUrl){
           uploadDataUrlToR2(smallDataUrl || state.photo, "events", function(finalOrigUrl){
-            origThumbUrl = finalOrigUrl;
-            resolve(blob);
+            resolve(finalOrigUrl);
           });
         });
       });
-    }).then(function(blob){
-      return removeImageBackground(blob, function(msg){
+      var bgRemovalPromise = removeImageBackground(blob, function(msg){
         state.photoProcessingMsg = msg;
         var el = document.getElementById("photoProcessingMsg");
         if(el) el.textContent = msg;
       });
-    }).then(function(cutBlob){
+      return Promise.all([origUploadPromise, bgRemovalPromise]);
+    }).then(function(results){
+      origThumbUrl = results[0];
+      var cutBlob = results[1];
       compressCutoutImageFile(cutBlob, 1200 * 1024, function(dataUrl){
         if(!dataUrl){
           state.photoProcessing = false;
@@ -1079,21 +1083,23 @@
     showBgToast("🪄 يجري الآن إزالة خلفية " + fieldLabelByKey(key) + "...");
     var fieldOrigThumbUrl = null;
     fetch(src).then(function(r){ return r.blob(); }).then(function(blob){
-      return new Promise(function(resolve){
+      // نفس منطق autoRemovePhotoBg أعلاه: رفع النسخة الأصلية وإزالة الخلفية بالتوازي بدل تتابعهما
+      var origUploadPromise = new Promise(function(resolve){
         compressImageFile(blob, 1000 * 1024, function(smallDataUrl){
           uploadDataUrlToR2(smallDataUrl || src, "events", function(finalOrigUrl){
-            fieldOrigThumbUrl = finalOrigUrl;
-            resolve(blob);
+            resolve(finalOrigUrl);
           });
         });
       });
-    }).then(function(blob){
-      return removeImageBackground(blob, function(msg){
+      var bgRemovalPromise = removeImageBackground(blob, function(msg){
         state.fieldImagesProcessing[key] = msg;
         var el = document.getElementById("fieldImgProcessing-" + key);
         if(el) el.textContent = msg;
       });
-    }).then(function(cutBlob){
+      return Promise.all([origUploadPromise, bgRemovalPromise]);
+    }).then(function(results){
+      fieldOrigThumbUrl = results[0];
+      var cutBlob = results[1];
       compressCutoutImageFile(cutBlob, 1200 * 1024, function(dataUrl){
         if(!dataUrl){
           delete state.fieldImagesProcessing[key];
