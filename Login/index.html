@@ -5178,9 +5178,10 @@
         canvas.width = w; canvas.height = h;
         canvas.getContext("2d").drawImage(img, 0, 0, w, h);
         var maxBytes = 8 * 1024 * 1024;
+        var previewUrl = makeEditorPreviewDataUrl(img);
         var pngUrl = canvas.toDataURL("image/png");
         if(pngUrl.length <= maxBytes){
-          cb(pngUrl, w, h);
+          cb(pngUrl, w, h, previewUrl);
           return;
         }
         var quality = 0.9;
@@ -5191,13 +5192,30 @@
           dataUrl = canvas.toDataURL("image/jpeg", quality);
           attempts++;
         }
-        cb(dataUrl, w, h);
+        cb(dataUrl, w, h, previewUrl);
       };
       img.onerror = function(){ cb(null); };
       img.src = e.target.result;
     };
     reader.onerror = function(){ cb(null); };
     reader.readAsDataURL(file);
+  }
+  // نسخة مصغّرة (١٤٠٠px كحد أقصى) من صورة القالب تُستخدم فقط لعرض محرر المواضع وقائمة القوالب —
+  // الصورة الأصلية بجودتها الكاملة (حتى ٤٠٠٠px/٨ ميقا) تبقى محفوظة وتُستخدم فقط عند التوليد
+  // النهائي. بدون هذا الفصل: كل تعديل بسيط بمحرر القالب (نقل حقل، تغيير رقم) كان يعيد بناء DOM
+  // المحرر بالكامل — بما فيه صورة الخلفية — فيفرض على المتصفح فكّ ترميز الصورة الضخمة ورسمها من
+  // جديد في كل مرة، وهذا بالضبط سبب الوميض والبطء اللي لاحظه المستخدم بعد رفع صورة قالب كبيرة
+  function makeEditorPreviewDataUrl(img){
+    var maxDim = 1400;
+    var w = img.width, h = img.height;
+    if(w > maxDim || h > maxDim){
+      if(w > h){ h = Math.round(h * maxDim / w); w = maxDim; }
+      else { w = Math.round(w * maxDim / h); h = maxDim; }
+    }
+    var canvas = document.createElement("canvas");
+    canvas.width = w; canvas.height = h;
+    canvas.getContext("2d").drawImage(img, 0, 0, w, h);
+    return canvas.toDataURL("image/jpeg", 0.82);
   }
 
   // ===== كشيدة عربية: تمديد النصوص المتغيرة لتملأ عرضاً مستهدفاً بأناقة =====
@@ -7124,7 +7142,7 @@
     } else {
       templates.forEach(function(t){
         html += '<div class="tmpl-list-card">' +
-          '<img src="' + t.image + '" alt=""/>' +
+          '<img src="' + (t.previewImage || t.image) + '" alt=""/>' +
           '<div class="info"><b>' + escapeHTML(t.name) + (t.gender ? ' <span class="hint" style="font-weight:400;">(' + (t.gender === "ذكر" ? "♂ ذكور" : "♀ إناث") + ')</span>' : '') + '</b><div class="hint">' + t.fields.length + ' متغير محدد</div></div>' +
           '<button type="button" class="btn-secondary" data-action="edit-design-tmpl" data-id="' + t.id + '">تعديل</button>' +
           '<button type="button" class="btn-secondary" data-action="open-tmpl-copy" data-id="' + t.id + '" title="ينسخ الصورة والمتغيرات لقالب جديد — بنفس التصنيف أو تصنيف آخر">📋 نسخ</button>' +
@@ -7172,12 +7190,13 @@
   }
   // يستبدل صورة القالب فقط (مع أبعادها الجديدة) دون المساس بمصفوفة المتغيرات ومواضعها المحفوظة
   function tmplReplaceTemplateImage(tmpl, file, cb){
-    compressTemplateImageFile(file, function(dataUrl, w, h){
+    compressTemplateImageFile(file, function(dataUrl, w, h, previewUrl){
       if(!dataUrl){ showToast("تعذّرت قراءة الصورة"); cb(false); return; }
       uploadDataUrlToR2(dataUrl, "templates", function(finalUrl){
         tmpl.image = finalUrl;
         tmpl.width = w;
         tmpl.height = h;
+        tmpl.previewImage = previewUrl || null;
         saveDesignTemplate(tmpl);
         showToast("تم تحديث صورة القالب");
         cb(true);
@@ -7495,7 +7514,7 @@
     }
     html += '</div></div>';
     html += '<div class="tmpl-canvas-col">';
-    html += '<div class="tmpl-canvas-stage" style="text-align:center;"><div class="tmpl-canvas-wrap" id="tmplCanvasWrap"><img src="' + tmpl.image + '" alt="" draggable="false"/><div class="tmpl-guide-center-v" data-guide="v"></div><div class="tmpl-guide-center-h" data-guide="h"></div></div>';
+    html += '<div class="tmpl-canvas-stage" style="text-align:center;"><div class="tmpl-canvas-wrap" id="tmplCanvasWrap"><img src="' + (tmpl.previewImage || tmpl.image) + '" alt="" draggable="false"/><div class="tmpl-guide-center-v" data-guide="v"></div><div class="tmpl-guide-center-h" data-guide="h"></div></div>';
     var pendingMeta = tmplEditorState.pendingKey ? tmplFieldMeta(tmpl.category, tmplEditorState.pendingKey) : null;
     if(pendingMeta){
       html += '<p class="hint" style="margin-top:10px; font-weight:700; color:var(--teal-dark);">' + (pendingMeta.type === "image" ? "✋ اسحب على القالب لتحديد مربع الصورة" : "✋ انقر على موضع النص في القالب") + '</p>';
@@ -8121,10 +8140,10 @@
     } else if(e.target.id === "newTmplUploadInput"){
       var file = e.target.files && e.target.files[0];
       if(!file) return;
-      compressTemplateImageFile(file, function(dataUrl, w, h){
+      compressTemplateImageFile(file, function(dataUrl, w, h, previewUrl){
         if(!dataUrl){ showToast("تعذّرت قراءة الصورة"); return; }
         uploadDataUrlToR2(dataUrl, "templates", function(finalUrl){
-          var tmpl = { id: genTemplateId(), category: eventsUI.designTmplCategory, name: "قالب جديد", image: finalUrl, width: w, height: h, fields: [] };
+          var tmpl = { id: genTemplateId(), category: eventsUI.designTmplCategory, name: "قالب جديد", image: finalUrl, previewImage: previewUrl || null, width: w, height: h, fields: [] };
           saveDesignTemplate(tmpl);
           openTemplateEditor(tmpl.id);
         });
