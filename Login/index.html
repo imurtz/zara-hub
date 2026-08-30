@@ -5409,14 +5409,27 @@
   function loadImageAsync(src){
     return new Promise(function(resolve){
       if(!src){ resolve(null); return; }
-      var img = new Image();
-      // مهم لصور مستضافة على نطاق آخر (مثل R2): بدون crossOrigin يصير الكانفس "ملوّثاً" (tainted)
-      // بمجرد رسم صورة من نطاق مختلف عليه، ويفشل toDataURL()/toBlob() باستثناء أمني — حتى لو
-      // كان السيرفر يرسل رؤوس CORS صحيحة، لازم الطرفين (المتصفح والسيرفر) يتعاونا معاً
-      img.crossOrigin = "anonymous";
-      img.onload = function(){ resolve(img); };
-      img.onerror = function(){ resolve(null); };
-      img.src = src;
+      function attempt(url, isRetry){
+        var img = new Image();
+        // مهم لصور مستضافة على نطاق آخر (مثل R2): بدون crossOrigin يصير الكانفس "ملوّثاً" (tainted)
+        // بمجرد رسم صورة من نطاق مختلف عليه، ويفشل toDataURL()/toBlob() باستثناء أمني — حتى لو
+        // كان السيرفر يرسل رؤوس CORS صحيحة، لازم الطرفين (المتصفح والسيرفر) يتعاونا معاً
+        img.crossOrigin = "anonymous";
+        img.onload = function(){ resolve(img); };
+        img.onerror = function(){
+          // إعادة محاولة واحدة برابط مكسور الكاش: صورة رُفعت لتوّها (مثل تغيير صورة قالب) قد
+          // يفشل أول تحميل لها لحظياً (قبل اكتمال انتشارها على حواف الشبكة)، والمتصفح قد يحفظ
+          // تلك الفشلة بذاكرته المؤقتة لنفس الرابط بالضبط ويرفض إعادة المحاولة تلقائياً — كسر
+          // الكاش بمعامل زمني إضافي يجبره على طلب جديد فعلي بدل الاعتماد على تلك الذاكرة الفاشلة
+          if(!isRetry && /^https?:\/\//.test(src)){
+            attempt(url + (url.indexOf("?") > -1 ? "&" : "?") + "_r=" + Date.now(), true);
+          } else {
+            resolve(null);
+          }
+        };
+        img.src = url;
+      }
+      attempt(src, false);
     });
   }
   async function renderTemplateToCanvas(canvas, template, record){

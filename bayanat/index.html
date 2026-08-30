@@ -1638,13 +1638,24 @@
   function loadImageAsyncPublic(src){
     return new Promise(function(resolve){
       if(!src){ resolve(null); return; }
-      var img = new Image();
-      // مهم لصور مستضافة على نطاق آخر (مثل R2): بدون crossOrigin يصير الكانفس "ملوّثاً" (tainted)
-      // بمجرد رسم صورة من نطاق مختلف عليه، ويفشل toDataURL()/toBlob() باستثناء أمني
-      img.crossOrigin = "anonymous";
-      img.onload = function(){ resolve(img); };
-      img.onerror = function(){ resolve(null); };
-      img.src = src;
+      function attempt(url, isRetry){
+        var img = new Image();
+        // مهم لصور مستضافة على نطاق آخر (مثل R2): بدون crossOrigin يصير الكانفس "ملوّثاً" (tainted)
+        // بمجرد رسم صورة من نطاق مختلف عليه، ويفشل toDataURL()/toBlob() باستثناء أمني
+        img.crossOrigin = "anonymous";
+        img.onload = function(){ resolve(img); };
+        img.onerror = function(){
+          // إعادة محاولة واحدة برابط مكسور الكاش — نفس منطق النسخة الإدارية بالضبط، انظر
+          // loadImageAsync في Login/index.html
+          if(!isRetry && /^https?:\/\//.test(src)){
+            attempt(url + (url.indexOf("?") > -1 ? "&" : "?") + "_r=" + Date.now(), true);
+          } else {
+            resolve(null);
+          }
+        };
+        img.src = url;
+      }
+      attempt(src, false);
     });
   }
   function customFontFamilyNamePublic(fontId){ return "df_" + String(fontId).replace(/[^a-zA-Z0-9]/g, ""); }
