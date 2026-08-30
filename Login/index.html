@@ -5160,13 +5160,15 @@
       cb(dataUrl);
     });
   }
-  // ضغط صورة قالب التصميم — جودة أعلى من صور المناسبات العادية لأن القالب يحتوي نصوصاً دقيقة، لكن يبقى ضمن حد المستند الواحد بـ Firestore (1 ميقابايت)
+  // ضغط صورة قالب التصميم — كانت محدودة سابقاً بحد مستند Firestore الواحد (1 ميقابايت)؛ الآن
+  // صور القوالب تُرفع لـR2 (رابط قصير فقط يُخزَّن بفايرستور)، فرفعنا السقف بشكل كبير للسماح
+  // بجودة/دقة أعلى بكثير — يبقى الحد الأقصى ضمن سقف خدمة الرفع نفسها (15 ميقابايت)
   function compressTemplateImageFile(file, cb){
     var reader = new FileReader();
     reader.onload = function(e){
       var img = new Image();
       img.onload = function(){
-        var maxDim = 2000;
+        var maxDim = 4000;
         var w = img.width, h = img.height;
         if(w > maxDim || h > maxDim){
           if(w > h){ h = Math.round(h * maxDim / w); w = maxDim; }
@@ -5175,7 +5177,7 @@
         var canvas = document.createElement("canvas");
         canvas.width = w; canvas.height = h;
         canvas.getContext("2d").drawImage(img, 0, 0, w, h);
-        var maxBytes = 960 * 1024;
+        var maxBytes = 8 * 1024 * 1024;
         var pngUrl = canvas.toDataURL("image/png");
         if(pngUrl.length <= maxBytes){
           cb(pngUrl, w, h);
