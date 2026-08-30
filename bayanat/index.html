@@ -535,7 +535,8 @@
         { key: "gender", label: "الجنس", type: "select", options: ["ذكر", "أنثى"], required: true, hint: "حدد جنس المولود" },
         { key: "fullName", label: "اسم المولود", type: "text", required: true, hint: "الاسم الأول للمولود فقط" },
         { key: "fatherName", label: "اسم الأب", type: "text", required: true, hint: "الاسم الكامل لوالد المولود" },
-        { key: "motherName", label: "اسم الأم أو كريمة الحاج", type: "text", required: true, hint: "مثال: فلانة الفلانية، أو كريمة الحاج فلان الفلاني" },
+        { key: "motherPhrase", label: "صيغة ذكر الأم بالتصميم", type: "selectOther", optionsKey: "motherPhrases", options: [], hint: "اختر الصيغة ثم اكتب الاسم المناسب لها بالحقل التالي" },
+        { key: "motherName", label: "اسم الأم (أو اسم من تُنسَب له الصيغة أعلاه)", type: "text", required: true, hint: "مثال: لو اخترت \"وحرمه\" اكتب اسمها هي، ولو اخترت \"وكريمة الحاج\" اكتب اسم والدها" },
         { key: "birthDateGregorian", label: "تاريخ الميلاد (ميلادي)", type: "date", required: true, hint: "تاريخ الولادة الفعلي — بقية التواريخ تُحسب تلقائياً منه" },
         { key: "birthDateHijri", label: "تاريخ الميلاد (هجري)", type: "text", derived: true },
         { key: "birthMonthGregorian", label: "الشهر (ميلادي)", type: "select", options: GREG_MONTHS, derived: true },
@@ -556,7 +557,8 @@
         { key: "contractMonthHijri", label: "شهر العقد (هجري)", type: "select", options: HIJRI_MONTHS, derived: true },
         { key: "husbandName", label: "اسم الزوج", type: "text", required: true, hint: "الاسم الكامل للزوج" },
         { key: "husbandDistrict", label: "منطقة / حي الزوج", type: "selectOther", options: QATIF_DISTRICTS_LIST, required: true, hint: "اختر من القائمة أو \"غير ذلك\"" },
-        { key: "wifeGuardian", label: "كريمة / ولي الزوجة", type: "text", required: true, hint: "مثال: كريمة فلان الفلاني، أو اسم ولي أمرها" },
+        { key: "wifeGuardianPhrase", label: "صيغة الإشارة للزوجة بالتصميم", type: "selectOther", optionsKey: "wifeGuardianPhrases", options: [], hint: "اختر الصيغة ثم اكتب الاسم المناسب لها بالحقل التالي" },
+        { key: "wifeGuardian", label: "اسم ولي الزوجة (أو اسمها هي حسب الصيغة أعلاه)", type: "text", required: true, hint: "مثال: لو اخترت \"كريمة\" اكتب اسم والدها، ولو اخترت \"حرمة\" اكتب اسمها هي" },
         { key: "wifeDistrict", label: "منطقة / حي الزوجة", type: "selectOther", options: QATIF_DISTRICTS_LIST, required: true, hint: "اختر من القائمة أو \"غير ذلك\"" },
         { key: "notes", label: "ملاحظات", type: "text", hint: "أي ملاحظات إضافية تودون إضافتها — اختياري" }
       ]
@@ -1408,7 +1410,11 @@
     v = String(v).trim();
     if(field.hideValues && field.hideValues.indexOf(v) > -1) return "";
     if(!v) return "";
-    if(field.prefix) v = field.prefix + v;
+    // بادئة ديناميكية لكل سجل (مثل "وحرمه"/"وكريمة الحاج") تُقرأ من حقل آخر بنفس السجل — نفس منطق
+    // النسخة الإدارية بالضبط، انظر templateFieldValue في Login/index.html
+    var dynPrefix = field.dynamicPrefixKey ? String(record[field.dynamicPrefixKey] || "").trim() : "";
+    if(dynPrefix) v = dynPrefix + " " + v;
+    else if(field.prefix) v = field.prefix + v;
     if(field.suffix) v = v + field.suffix;
     return v;
   }
@@ -1983,7 +1989,9 @@
   var EVENTS_OPTIONS_DEFAULTS = {
     congratsTitles: ["المهندس", "المهندسة", "الدكتور", "الدكتورة", "الأستاذ", "الأستاذة", "الشيخ"],
     congratsOccasionTypes: ["ترقية وظيفية", "جائزة أو تكريم", "افتتاح مشروع", "إنجاز أو نجاح"],
-    graduateJobTitles: ["مهندس", "مهندسة", "محاسب", "محاسبة", "معلم", "معلمة", "طبيب", "طبيبة", "صيدلي", "صيدلانية", "ممرض", "ممرضة", "محامي", "محامية", "مبرمج", "مبرمجة", "مدير", "مديرة", "أخصائي", "أخصائية"]
+    graduateJobTitles: ["مهندس", "مهندسة", "محاسب", "محاسبة", "معلم", "معلمة", "طبيب", "طبيبة", "صيدلي", "صيدلانية", "ممرض", "ممرضة", "محامي", "محامية", "مبرمج", "مبرمجة", "مدير", "مديرة", "أخصائي", "أخصائية"],
+    motherPhrases: ["وحرمه", "وكريمة الحاج"],
+    wifeGuardianPhrases: ["كريمة", "كريمة الحاج", "حرمة"]
   };
   function applyEventsOptions(data){
     var merged = {};

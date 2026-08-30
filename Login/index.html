@@ -4900,7 +4900,8 @@
         { key: "gender", label: "الجنس", type: "select", options: ["ذكر", "أنثى"], hint: "حدد جنس المولود" },
         { key: "fullName", label: "اسم المولود", type: "text", hint: "الاسم الأول للمولود فقط" },
         { key: "fatherName", label: "اسم الأب", type: "text", hint: "الاسم الكامل لوالد المولود" },
-        { key: "motherName", label: "اسم الأم أو كريمة الحاج", type: "text", hint: "مثال: فلانة الفلانية، أو كريمة الحاج فلان الفلاني" },
+        { key: "motherPhrase", label: "صيغة ذكر الأم بالتصميم", type: "growSelect", optKey: "motherPhrases", hint: "تُضاف تلقائياً قبل الاسم بالتصميم — اختر الصيغة ثم اكتب الاسم المناسب لها بالحقل التالي" },
+        { key: "motherName", label: "اسم الأم (أو اسم من تُنسَب له الصيغة أعلاه)", type: "text", hint: "مثال: لو اخترت \"وحرمه\" اكتب اسمها هي، ولو اخترت \"وكريمة الحاج\" اكتب اسم والدها" },
         { key: "birthDateGregorian", label: "تاريخ الميلاد (ميلادي)", type: "date", hint: "تاريخ الولادة الفعلي — بقية التواريخ تُحسب تلقائياً منه" },
         { key: "birthDateHijri", label: "تاريخ الميلاد (هجري)", type: "text", derived: true, hint: "يُحسب تلقائياً من التاريخ الميلادي" },
         { key: "birthMonthGregorian", label: "الشهر (ميلادي)", type: "select", options: GREG_MONTHS, derived: true, hint: "يُحسب تلقائياً" },
@@ -4923,7 +4924,8 @@
         { key: "contractMonthHijri", label: "شهر العقد (هجري)", type: "select", options: HIJRI_MONTHS, derived: true, hint: "يُحسب تلقائياً" },
         { key: "husbandName", label: "اسم الزوج", type: "text", hint: "الاسم الكامل للزوج" },
         { key: "husbandDistrict", label: "منطقة / حي الزوج", type: "selectOther", options: QATIF_DISTRICTS_LIST, hint: "اختر من القائمة أو \"غير ذلك\"" },
-        { key: "wifeGuardian", label: "كريمة / ولي الزوجة", type: "text", hint: "مثال: كريمة فلان الفلاني، أو اسم ولي أمرها" },
+        { key: "wifeGuardianPhrase", label: "صيغة الإشارة للزوجة بالتصميم", type: "growSelect", optKey: "wifeGuardianPhrases", hint: "تُضاف تلقائياً قبل الاسم بالتصميم — اختر الصيغة ثم اكتب الاسم المناسب لها بالحقل التالي" },
+        { key: "wifeGuardian", label: "اسم ولي الزوجة (أو اسمها هي حسب الصيغة أعلاه)", type: "text", hint: "مثال: لو اخترت \"كريمة\" اكتب اسم والدها، ولو اخترت \"حرمة\" اكتب اسمها هي" },
         { key: "wifeDistrict", label: "منطقة / حي الزوجة", type: "selectOther", options: QATIF_DISTRICTS_LIST, hint: "اختر من القائمة أو \"غير ذلك\"" },
         { key: "notes", label: "ملاحظات", type: "text", hint: "أي ملاحظات إضافية — اختياري" }
       ],
@@ -5228,7 +5230,11 @@
     v = String(v).trim();
     if(field.hideValues && field.hideValues.indexOf(v) > -1) return "";
     if(!v) return "";
-    if(field.prefix) v = field.prefix + v;
+    // بادئة ديناميكية لكل سجل (مثل "وحرمه"/"وكريمة الحاج") تُقرأ من حقل آخر بنفس السجل بدل نص
+    // ثابت بالقالب — تسمح بتبديل الصيغة فوراً حسب اختيار كل سجل، بدل قالب منفصل لكل صيغة
+    var dynPrefix = field.dynamicPrefixKey ? String(record[field.dynamicPrefixKey] || "").trim() : "";
+    if(dynPrefix) v = dynPrefix + " " + v;
+    else if(field.prefix) v = field.prefix + v;
     if(field.suffix) v = v + field.suffix;
     return v;
   }
@@ -5537,6 +5543,8 @@
       specializations: [],
       ageCategories: ["طفل", "شاب", "بالغ", "كبير السن"],
       funeralFrom: [],
+      motherPhrases: ["وحرمه", "وكريمة الحاج"],
+      wifeGuardianPhrases: ["كريمة", "كريمة الحاج", "حرمة"],
       congratsOccasionTypes: ["ترقية وظيفية", "جائزة أو تكريم", "افتتاح مشروع", "إنجاز أو نجاح"],
       congratsTitles: ["المهندس", "المهندسة", "الدكتور", "الدكتورة", "الأستاذ", "الأستاذة", "الشيخ"],
       graduateJobTitles: ["مهندس", "مهندسة", "محاسب", "محاسبة", "معلم", "معلمة", "طبيب", "طبيبة", "صيدلي", "صيدلانية", "ممرض", "ممرضة", "محامي", "محامية", "مبرمج", "مبرمجة", "مدير", "مديرة", "أخصائي", "أخصائية"]
@@ -6999,6 +7007,13 @@
   function tmplOtherTextFields(tmpl, excludeKey){
     return tmpl.fields.filter(function(f){ return f.key !== excludeKey && f.type !== "image"; });
   }
+  // حقول بيانات السجل (من تعريف التصنيف نفسه، وليس حقول القالب المرسومة) من نوع اختيار محدود
+  // (growSelect/select) — تصلح كمصدر لبادئة ديناميكية تتغيّر قيمتها فوراً حسب اختيار كل سجل
+  function tmplSelectDataFields(catKey){
+    var cat = EVENTS_CATEGORIES.find(function(c){ return c.key === catKey; });
+    if(!cat) return [];
+    return cat.fields.filter(function(f){ return f.type === "growSelect" || f.type === "select"; });
+  }
   function tmplManagerHTML(){
     var cat = eventsUI.designTmplCategory;
     var templates = loadDesignTemplates(cat);
@@ -7251,9 +7266,15 @@
         '<label><input type="checkbox" data-tmpl-prop="kashida"' + (f.kashida ? " checked" : "") + '/> تمديد كشيدة</label>' +
         '<label>تمديد الكشيدة يطبَّق فقط عند القيمة (اتركه فارغاً ليُطبَّق دائماً)<input type="text" data-tmpl-prop="kashidaValue" placeholder="مثال: الماجستير" value="' + escapeHTML(f.kashidaValue || "") + '" style="width:150px;"/></label>' +
         '<label style="flex-basis:100%;">إخفاء عند القيمة (افصل بفاصلة)<input type="text" data-tmpl-prop="hideValues" placeholder="مثال: بدون" value="' + escapeHTML((f.hideValues || []).join("، ")) + '" style="width:200px;"/></label>' +
-        '<label>نص قبل القيمة<input type="text" data-tmpl-prop="prefix" placeholder="مثال: كريمة " value="' + escapeHTML(f.prefix || "") + '" style="width:150px;"/></label>' +
+        '<label>نص قبل القيمة (ثابت لكل السجلات)<input type="text" data-tmpl-prop="prefix" placeholder="مثال: كريمة " value="' + escapeHTML(f.prefix || "") + '"' + (f.dynamicPrefixKey ? " disabled" : "") + ' style="width:150px;"/></label>' +
         '<label>نص بعد القيمة<input type="text" data-tmpl-prop="suffix" placeholder="مثال: حفظه الله" value="' + escapeHTML(f.suffix || "") + '" style="width:150px;"/></label>' +
         '<p class="hint" style="flex-basis:100%; margin:0 0 -4px;">النص هنا يظهر في التصميم فقط — القيمة المحفوظة بالسجل نفسها لا تتغيّر</p>' +
+        (tmplSelectDataFields(tmpl.category).length ?
+          '<label style="flex-basis:100%;">بادئة ديناميكية تتغيّر حسب حقل آخر بالسجل (تتجاوز "نص قبل القيمة" الثابت أعلاه إن اختيرت)<select data-tmpl-prop="dynamicPrefixKey"><option value="">بدون — استخدم النص الثابت</option>' +
+            tmplSelectDataFields(tmpl.category).map(function(sf){ return '<option value="' + sf.key + '"' + (f.dynamicPrefixKey === sf.key ? " selected" : "") + '>' + escapeHTML(sf.label) + '</option>'; }).join("") +
+          '</select></label>' +
+          '<p class="hint" style="flex-basis:100%; margin:0;">مثال: اختر حقل "صيغة ذكر الأم" — كل سجل يظهر بالصيغة اللي اختارها مُدخِل البيانات نفسه (وحرمه / وكريمة الحاج...) بدل صيغة واحدة ثابتة لكل السجلات</p>'
+        : "") +
         (tmplOtherTextFields(tmpl, f.key).length ?
           '<label style="flex-basis:100%;">طابق عرض هذا السطر مع<select data-tmpl-prop="matchWidthKey"><option value="">بدون</option>' +
             tmplOtherTextFields(tmpl, f.key).map(function(of){ return '<option value="' + of.key + '"' + (f.matchWidthKey === of.key ? " selected" : "") + '>' + escapeHTML((tmplFieldMeta(tmpl.category, of.key) || {}).label || of.key) + '</option>'; }).join("") +
