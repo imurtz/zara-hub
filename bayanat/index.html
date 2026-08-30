@@ -202,7 +202,7 @@
 
   .identity-modal-overlay{display:none; position:fixed; inset:0; background:rgba(30,40,38,.55); z-index:60; align-items:center; justify-content:center; padding:20px;}
   .identity-modal-overlay.open{display:flex;}
-  .identity-modal{position:relative; background:var(--white); border-radius:18px; box-shadow:var(--shadow); padding:26px 22px; max-width:420px; width:100%; text-align:center; max-height:90vh; overflow:auto;}
+  .identity-modal{position:relative; background:var(--white); border-radius:18px; box-shadow:var(--shadow); padding:26px 22px; max-width:640px; width:100%; text-align:center; max-height:90vh; overflow:auto;}
   .identity-modal-close{position:absolute; top:12px; left:12px; width:30px; height:30px; border-radius:50%; border:1px solid var(--line); background:var(--white); color:var(--ink-soft); font-size:18px; line-height:1; cursor:pointer; display:flex; align-items:center; justify-content:center; padding:0;}
   .identity-modal-close:hover{background:var(--teal-tint); color:var(--teal-dark);}
   .identity-modal h3{font-size:16.5px; color:var(--teal-dark); margin-bottom:6px;}
@@ -218,6 +218,33 @@
   .identity-modal-font{font-size:11.5px; color:var(--ink-soft); font-weight:600;}
   .identity-concept-card{background:linear-gradient(180deg, var(--teal-tint), var(--white)); border:1px solid var(--line); border-radius:16px; padding:16px 18px 14px; margin-bottom:18px; display:flex; flex-direction:column; align-items:center; gap:8px;}
   .identity-concept-card span{font-size:11px; font-weight:700; color:var(--teal-dark);}
+
+  /* ===== مستكشف الشعار التفاعلي: يفكك الشعار لأجزاء، ويسلّط الضوء على الجزء المختار ===== */
+  .identity-explorer{text-align:start; border-top:1px solid var(--line); padding-top:18px; margin-top:2px; margin-bottom:18px;}
+  .identity-explorer-intro{font-size:12.5px; color:var(--ink-soft); line-height:1.85; margin-bottom:16px;}
+  .identity-explorer-head{font-size:13px; color:var(--teal-dark); font-weight:700; margin-bottom:12px; display:flex; align-items:center; gap:6px;}
+  .identity-explorer-body{display:flex; flex-direction:column; gap:16px;}
+  .identity-explorer-svg-wrap{background:linear-gradient(180deg, var(--teal-tint), var(--white)); border:1px solid var(--line); border-radius:16px; padding:18px; display:flex; align-items:center; justify-content:center;}
+  .identity-explorer-svg{width:150px; height:auto; overflow:visible;}
+  .id-part{transition:opacity .35s ease, filter .35s ease; cursor:pointer;}
+  .id-part.id-dimmed{opacity:.15;}
+  .id-part.id-spotlit{filter:drop-shadow(0 0 7px rgba(0,128,255,.55));}
+  .identity-parts-grid{display:grid; grid-template-columns:1fr 1fr; gap:8px;}
+  .identity-part-btn{display:flex; align-items:center; gap:8px; padding:10px 12px; border-radius:12px; border:1.5px solid var(--line); background:var(--white); cursor:pointer; text-align:start; transition:all .15s; font-family:inherit;}
+  .identity-part-btn:hover{border-color:var(--blue); background:var(--blue-tint);}
+  .identity-part-btn.active{border-color:var(--teal); background:var(--teal-tint);}
+  .identity-part-num{flex-shrink:0; width:22px; height:22px; border-radius:50%; background:var(--line); color:var(--ink-soft); font-size:11px; font-weight:700; display:flex; align-items:center; justify-content:center; transition:all .15s;}
+  .identity-part-btn.active .identity-part-num{background:var(--teal); color:#fff;}
+  .identity-part-label{font-size:11.5px; font-weight:700; color:var(--ink); line-height:1.4;}
+  .identity-part-detail{background:var(--white); border:1.5px solid var(--teal); border-radius:14px; padding:14px 16px; min-height:78px;}
+  .identity-part-detail-title{font-size:13px; font-weight:700; color:var(--teal-dark); margin-bottom:6px;}
+  .identity-part-detail-text{font-size:12.5px; color:var(--ink-soft); line-height:1.85;}
+  @media (min-width:520px){
+    .identity-explorer-body{flex-direction:row; align-items:flex-start;}
+    .identity-explorer-svg-wrap{flex:0 0 200px;}
+    .identity-explorer-svg{width:170px;}
+    .identity-explorer-side{flex:1; display:flex; flex-direction:column; gap:10px;}
+  }
   .identity-story{text-align:start; border-top:1px solid var(--line); padding-top:16px; margin-top:2px; margin-bottom:16px;}
   .identity-story-intro{font-size:12.5px; color:var(--ink-soft); line-height:1.85; margin-bottom:14px;}
   .identity-story h4{font-size:13px; color:var(--teal-dark); margin-bottom:8px; margin-top:16px;}
@@ -343,28 +370,41 @@
       <div class="identity-color-swatch" style="background:#b8906e;"><span>التان</span><code>#B8906E</code></div>
       <div class="identity-color-swatch" style="background:#0080ff;"><span>الأزرق المميز</span><code>#0080FF</code></div>
     </div>
-    <div class="identity-concept-card">
-      <svg viewBox="0 0 140 170" width="128" height="155" fill="none">
-        <path d="M30 158 V62 A40 40 0 0 1 110 62 V120" stroke="#3d5b56" stroke-width="13" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
-        <path d="M110 120 Q107 158 76 158" stroke="#3d5b56" stroke-width="13" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
-        <circle cx="123" cy="94" r="7" fill="#3d5b56"/>
-        <rect x="47" y="120" width="13" height="38" rx="4" fill="#b9916e"/>
-        <rect x="65" y="98" width="13" height="60" rx="4" fill="#b9916e"/>
-        <rect x="83" y="74" width="13" height="84" rx="4" fill="#b9916e"/>
-        <path d="M43 149 L94 67" stroke="#0080ff" stroke-width="6" stroke-linecap="round"/>
-        <path d="M75 67 L96 63 L100 84" stroke="#0080ff" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
-      </svg>
-      <span>قراءة تصميمية لمكوّنات الشعار</span>
+    <div class="identity-explorer">
+      <p class="identity-explorer-intro">يرتكز تصميم شعار "بوابة زارة" بنمطه المسطح (Flat Vector) على المزج الدقيق بين الإرث الجغرافي للعوامية والوظيفة التقنية للمنصة. انقر أي جزء لتكتشف سبب وجوده:</p>
+      <div class="identity-explorer-body">
+        <div class="identity-explorer-svg-wrap">
+          <svg viewBox="0 0 140 170" class="identity-explorer-svg" fill="none" id="identityExplorerSvg">
+            <g class="id-part" data-part="gate">
+              <path d="M30 158 V62 A40 40 0 0 1 110 62 V120" stroke="#3d5b56" stroke-width="13" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+            </g>
+            <g class="id-part" data-part="bars">
+              <rect x="47" y="120" width="13" height="38" rx="4" fill="#b9916e"/>
+              <rect x="65" y="98" width="13" height="60" rx="4" fill="#b9916e"/>
+              <rect x="83" y="74" width="13" height="84" rx="4" fill="#b9916e"/>
+            </g>
+            <g class="id-part" data-part="arrow">
+              <path d="M43 149 L94 67" stroke="#0080ff" stroke-width="6" stroke-linecap="round"/>
+              <path d="M75 67 L96 63 L100 84" stroke="#0080ff" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+            </g>
+            <g class="id-part" data-part="zayn">
+              <path d="M110 120 Q107 158 76 158" stroke="#3d5b56" stroke-width="13" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+              <circle cx="123" cy="94" r="7" fill="#3d5b56"/>
+            </g>
+          </svg>
+        </div>
+        <div class="identity-explorer-side">
+          <div class="identity-parts-grid" id="identityPartsGrid">
+            <button type="button" class="identity-part-btn" data-part="gate"><span class="identity-part-num">١</span><span class="identity-part-label">القوس المعماري (البوابة)</span></button>
+            <button type="button" class="identity-part-btn" data-part="bars"><span class="identity-part-num">٢</span><span class="identity-part-label">الأعمدة البيانية</span></button>
+            <button type="button" class="identity-part-btn" data-part="arrow"><span class="identity-part-num">٣</span><span class="identity-part-label">السهم الصاعد</span></button>
+            <button type="button" class="identity-part-btn" data-part="zayn"><span class="identity-part-num">٤</span><span class="identity-part-label">حرف الزاي المدمج</span></button>
+          </div>
+          <div class="identity-part-detail" id="identityPartDetail"></div>
+        </div>
+      </div>
     </div>
     <div class="identity-story">
-      <p class="identity-story-intro">يرتكز تصميم شعار "بوابة زارة" بنمطه المسطح (Flat Vector) على المزج الدقيق بين الإرث الجغرافي للعوامية والوظيفة التقنية للمنصة:</p>
-      <h4>التكوين البصري والرموز</h4>
-      <ul>
-        <li><b>القوس المعماري التراثي (البوابة):</b> يمثل الإطار الخارجي قنطرة تراثية مستوحاة من عمارة "زارة" القديمة، ليشير بوضوح إلى "البوابة" كمدخل رقمي مركزي موثوق لجميع خدمات الجمعية.</li>
-        <li><b>الأعمدة والمؤشرات البيانية (Data Analytics):</b> الخطوط الرأسية داخل القوس تحاكي الرسوم البيانية وقواعد البيانات، مجسدةً وظيفة المنصة الأساسية في رصد وتسجيل وتقييم البيانات الإحصائية.</li>
-        <li><b>السهم الصاعد (Growth &amp; Progress):</b> يتقاطع السهم التفاعلي مع الأعمدة ليعبر عن تحويل البيانات الخام إلى تقارير تنموية وقرارات تسهم في تطور العمل الخيري ورفع كفاءته.</li>
-        <li><b>الدمج التيبوغرافي الذكي (حرف الزاي):</b> ينحني الجزء الأيمن من الهيكل مع النقطة الدائرية ليكوّن حرف "ز"، مما يربط الشكل البصري باسم "زارة" دون إقحام نصي إضافي.</li>
-      </ul>
       <h4>سيكولوجية ودلالات الألوان</h4>
       <ul>
         <li><b>الأخضر المزرق المطفي (#517771):</b> يمنح الشعار وزناً بصرياً يوحي بالاستقرار، الموثوقية، والأمان الرقمي لحفظ بيانات المستفيدين والجمعية.</li>
@@ -2030,11 +2070,48 @@
     }
   });
 
+  // مستكشف الشعار التفاعلي: كل جزء بالشعار له شرح مستقل — النقر يسلّط الضوء على الجزء
+  // المقابل بالرسم ويعتّم الباقي، بدل عرض كل الشرح كنص ثابت بمعزل عن الشكل
+  var IDENTITY_PARTS = [
+    { key: "gate", title: "القوس المعماري (البوابة)", text: 'يمثل الإطار الخارجي قنطرة تراثية مستوحاة من عمارة "زارة" القديمة، ليشير بوضوح إلى "البوابة" كمدخل رقمي مركزي موثوق لجميع خدمات الجمعية.' },
+    { key: "bars", title: "الأعمدة البيانية", text: "الخطوط الرأسية داخل القوس تحاكي الرسوم البيانية وقواعد البيانات، مجسدةً وظيفة المنصة الأساسية في رصد وتسجيل وتقييم البيانات الإحصائية." },
+    { key: "arrow", title: "السهم الصاعد", text: "يتقاطع السهم التفاعلي مع الأعمدة ليعبر عن تحويل البيانات الخام إلى تقارير تنموية وقرارات تسهم في تطور العمل الخيري ورفع كفاءته." },
+    { key: "zayn", title: "حرف الزاي المدمج", text: 'ينحني الجزء الأيمن من الهيكل مع النقطة الدائرية ليكوّن حرف "ز"، مما يربط الشكل البصري باسم "زارة" دون إقحام نصي إضافي.' }
+  ];
+  function selectIdentityPart(key){
+    var svg = document.getElementById("identityExplorerSvg");
+    if(svg){
+      Array.prototype.forEach.call(svg.querySelectorAll(".id-part"), function(g){
+        var match = g.getAttribute("data-part") === key;
+        g.classList.toggle("id-dimmed", !match);
+        g.classList.toggle("id-spotlit", match);
+      });
+    }
+    var grid = document.getElementById("identityPartsGrid");
+    if(grid){
+      Array.prototype.forEach.call(grid.querySelectorAll(".identity-part-btn"), function(btn){
+        btn.classList.toggle("active", btn.dataset.part === key);
+      });
+    }
+    var part = IDENTITY_PARTS.find(function(p){ return p.key === key; });
+    var detail = document.getElementById("identityPartDetail");
+    if(detail && part){
+      detail.innerHTML = '<div class="identity-part-detail-title">' + part.title + '</div><div class="identity-part-detail-text">' + part.text + '</div>';
+    }
+  }
+  var identityPartsGridEl = document.getElementById("identityPartsGrid");
+  if(identityPartsGridEl){
+    identityPartsGridEl.addEventListener("click", function(e){
+      var partBtn = e.target.closest(".identity-part-btn");
+      if(partBtn) selectIdentityPart(partBtn.dataset.part);
+    });
+  }
   function closeIdentityModal(){
     document.getElementById("identityModalOverlay").classList.remove("open");
   }
   document.getElementById("mediaGuideBtn").addEventListener("click", function(){
     document.getElementById("identityModalOverlay").classList.add("open");
+    selectIdentityPart("gate");
   });
   document.getElementById("identityModalClose").addEventListener("click", closeIdentityModal);
   document.getElementById("identityModalOverlay").addEventListener("click", function(e){
