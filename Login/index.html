@@ -5047,7 +5047,10 @@
     reader.onload = function(e){
       var img = new Image();
       img.onload = function(){
-        var maxDim = 1600;
+        // كانت ١٦٠٠px يوم كانت الصورة تُخزَّن كاملة داخل مستند فايرستور (حد ١ ميقا) — الآن تُرفع
+        // لـR2 وتُخزَّن كرابط قصير فقط، فرفعناها لتفادي بهتان الصور عند تكبير/تقريب الصورة داخل
+        // قوالب كبيرة (مثل قالب عقود القران ٣٢٠٠×٤٠٠٠) — انظر compressTemplateImageFile لنفس السبب
+        var maxDim = 2400;
         var w = img.width, h = img.height;
         if(w > maxDim || h > maxDim){
           if(w > h){ h = Math.round(h * maxDim / w); w = maxDim; }
@@ -5078,7 +5081,7 @@
     reader.onload = function(e){
       var img = new Image();
       img.onload = function(){
-        var maxDim = 1200;
+        var maxDim = 1800; // نفس منطق الرفع أعلاه — كانت مقيّدة بحد فايرستور، صارت تُرفع لـR2
         var attempts = 0;
         var dataUrl;
         do {
@@ -8236,7 +8239,7 @@
       }
       detectImageTransparency(imgFile, function(alreadyTransparent){
         if(alreadyTransparent){
-          compressCutoutImageFile(imgFile, 400 * 1024, function(dataUrl){
+          compressCutoutImageFile(imgFile, 1200 * 1024, function(dataUrl){
             if(!dataUrl){ showToast("تعذّرت قراءة الصورة"); return; }
             uploadDataUrlToR2(dataUrl, "events", function(finalUrl){
               eventModalState.draft[fieldKey] = finalUrl;
@@ -8247,7 +8250,7 @@
           });
           return;
         }
-        compressEventImageFile(imgFile, 400 * 1024, function(dataUrl){
+        compressEventImageFile(imgFile, 1500 * 1024, function(dataUrl){
           if(!dataUrl){ showToast("تعذّرت قراءة الصورة"); return; }
           uploadDataUrlToR2(dataUrl, "events", function(finalUrl){
             eventModalState.draft[fieldKey] = finalUrl;
@@ -8317,10 +8320,9 @@
         var origThumbUrl = null;
         fetch(srcImg).then(function(r){ return r.blob(); }).then(function(blob){
           return new Promise(function(resolve){
-            // نسخة "قبل التفريغ" تُخزَّن بحجم أصغر من النسخة النهائية (200 كيلوبايت بدل 400) لتفادي
-            // تجاوز حد فايرستور لحجم المستند عند تخزين نسختين لنفس الصورة — لكنها تبقى بجودة
-            // كافية للاستخدام الفعلي (مو مجرد معاينة صغيرة)، لأن الأدمن يقدر يختارها كصورة نهائية
-            compressEventImageFile(blob, 200 * 1024, function(smallDataUrl){
+            // نسخة "قبل التفريغ" — تُرفع لـR2 بنفس جودة النسخة النهائية تقريباً (لم تعد مقيّدة
+            // بحد فايرستور بعد الآن)، لأن الأدمن يقدر يختارها كصورة نهائية بدل المفرّغة
+            compressEventImageFile(blob, 1000 * 1024, function(smallDataUrl){
               uploadDataUrlToR2(smallDataUrl || srcImg, "events", function(finalOrigUrl){
                 origThumbUrl = finalOrigUrl;
                 resolve(blob);
@@ -8335,7 +8337,7 @@
             if(el) el.textContent = msg;
           });
         }).then(function(cutBlob){
-          compressCutoutImageFile(cutBlob, 400 * 1024, function(dataUrl){
+          compressCutoutImageFile(cutBlob, 1200 * 1024, function(dataUrl){
             if(!dataUrl){
               if(bgKey === "photo") eventModalState.photoProcessing = false;
               else if(eventModalState.imageProcessing) eventModalState.imageProcessing[bgKey] = false;
@@ -8828,7 +8830,7 @@
         var bgOrigThumbUrl = null;
         fetch(bgSrcImg).then(function(r){ return r.blob(); }).then(function(blob){
           return new Promise(function(resolve){
-            compressEventImageFile(blob, 200 * 1024, function(smallDataUrl){
+            compressEventImageFile(blob, 1000 * 1024, function(smallDataUrl){
               uploadDataUrlToR2(smallDataUrl || bgSrcImg, "events", function(finalOrigUrl){
                 bgOrigThumbUrl = finalOrigUrl;
                 resolve(blob);
@@ -8840,7 +8842,7 @@
             if(bgStatusEl) bgStatusEl.textContent = msg;
           });
         }).then(function(cutBlob){
-          compressCutoutImageFile(cutBlob, 400 * 1024, function(dataUrl){
+          compressCutoutImageFile(cutBlob, 1200 * 1024, function(dataUrl){
             if(!dataUrl){ showToast("تعذّرت معالجة الصورة"); renderDesignGenerateModal(); return; }
             uploadDataUrlToR2(dataUrl, "events", function(finalUrl){
               // نبني نسخة جديدة من السجل بدل تعديله في مكانه — تعديل الكائن المرجعي مباشرة يخلي فحص "هل تغيّر شيء؟"

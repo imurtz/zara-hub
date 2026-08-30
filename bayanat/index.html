@@ -707,7 +707,9 @@
     reader.onload = function(e){
       var img = new Image();
       img.onload = function(){
-        var maxDim = 1600;
+        // كانت ١٦٠٠px يوم كانت الصورة تُخزَّن كاملة داخل مستند فايرستور — الآن تُرفع لـR2 وتُخزَّن
+        // كرابط قصير فقط، فرفعناها لتفادي بهتان الصور عند التقريب/التكبير داخل قوالب كبيرة
+        var maxDim = 2400;
         var w = img.width, h = img.height;
         if(w > maxDim || h > maxDim){
           if(w > h){ h = Math.round(h * maxDim / w); w = maxDim; }
@@ -767,7 +769,7 @@
     reader.onload = function(e){
       var img = new Image();
       img.onload = function(){
-        var maxDim = 1200;
+        var maxDim = 1800; // نفس منطق الرفع أعلاه — كانت مقيّدة بحد فايرستور، صارت تُرفع لـR2
         var attempts = 0;
         var dataUrl;
         do {
@@ -1031,9 +1033,9 @@
     var origThumbUrl = null;
     fetch(state.photo).then(function(r){ return r.blob(); }).then(function(blob){
       return new Promise(function(resolve){
-        // نحتفظ بنسخة "قبل التفريغ" (بحجم أصغر من النهائية لتفادي حد فايرستور) — تصل مع
-        // السجل المُرسَل عشان الأدمن يقدر يراجعها ويختار بينها وبين النسخة المفرّغة لاحقاً
-        compressImageFile(blob, 200 * 1024, function(smallDataUrl){
+        // نحتفظ بنسخة "قبل التفريغ" — تُرفع لـR2 بنفس جودة النسخة النهائية تقريباً (لم تعد
+        // مقيّدة بحد فايرستور) — تصل مع السجل عشان الأدمن يقدر يراجعها ويختارها بدل المفرّغة
+        compressImageFile(blob, 1000 * 1024, function(smallDataUrl){
           uploadDataUrlToR2(smallDataUrl || state.photo, "events", function(finalOrigUrl){
             origThumbUrl = finalOrigUrl;
             resolve(blob);
@@ -1047,7 +1049,7 @@
         if(el) el.textContent = msg;
       });
     }).then(function(cutBlob){
-      compressCutoutImageFile(cutBlob, 400 * 1024, function(dataUrl){
+      compressCutoutImageFile(cutBlob, 1200 * 1024, function(dataUrl){
         if(!dataUrl){
           state.photoProcessing = false;
           refreshPhotoField();
@@ -1078,7 +1080,7 @@
     var fieldOrigThumbUrl = null;
     fetch(src).then(function(r){ return r.blob(); }).then(function(blob){
       return new Promise(function(resolve){
-        compressImageFile(blob, 200 * 1024, function(smallDataUrl){
+        compressImageFile(blob, 1000 * 1024, function(smallDataUrl){
           uploadDataUrlToR2(smallDataUrl || src, "events", function(finalOrigUrl){
             fieldOrigThumbUrl = finalOrigUrl;
             resolve(blob);
@@ -1092,7 +1094,7 @@
         if(el) el.textContent = msg;
       });
     }).then(function(cutBlob){
-      compressCutoutImageFile(cutBlob, 400 * 1024, function(dataUrl){
+      compressCutoutImageFile(cutBlob, 1200 * 1024, function(dataUrl){
         if(!dataUrl){
           delete state.fieldImagesProcessing[key];
           refreshFieldImage(key);
@@ -1320,7 +1322,7 @@
         errEl.style.display = "none";
         detectImageTransparency(file, function(alreadyTransparent){
           if(alreadyTransparent){
-            compressCutoutImageFile(file, 400 * 1024, function(dataUrl){
+            compressCutoutImageFile(file, 1200 * 1024, function(dataUrl){
               if(!dataUrl){
                 errEl.textContent = "تعذّرت قراءة الصورة — جرّب صورة أخرى";
                 errEl.style.display = "block";
@@ -1336,7 +1338,7 @@
             });
             return;
           }
-          compressImageFile(file, 400 * 1024, function(dataUrl){
+          compressImageFile(file, 1500 * 1024, function(dataUrl){
             if(!dataUrl){
               errEl.textContent = "تعذّرت قراءة الصورة — جرّب صورة أخرى";
               errEl.style.display = "block";
@@ -1373,7 +1375,7 @@
         errEl.style.display = "none";
         detectImageTransparency(file, function(alreadyTransparent){
           if(alreadyTransparent){
-            compressCutoutImageFile(file, 400 * 1024, function(dataUrl){
+            compressCutoutImageFile(file, 1200 * 1024, function(dataUrl){
               if(!dataUrl) return;
               uploadDataUrlToR2(dataUrl, "events", function(finalUrl){
                 state.fieldImages[key] = finalUrl;
@@ -1385,7 +1387,7 @@
             });
             return;
           }
-          compressImageFile(file, 400 * 1024, function(dataUrl){
+          compressImageFile(file, 1500 * 1024, function(dataUrl){
             if(!dataUrl) return;
             state.fieldImages[key] = dataUrl;
             delete state.fieldImagesOrig[key];
@@ -1878,7 +1880,7 @@
       showPanStatus("حجم الملف كبير جداً — اختر صورة أصغر", true);
       return;
     }
-    compressImageFile(file, 400 * 1024, function(dataUrl){
+    compressImageFile(file, 1500 * 1024, function(dataUrl){
       if(!dataUrl){
         showPanStatus("تعذّرت قراءة الصورة — جرّب صورة أخرى", true);
         return;
@@ -1892,7 +1894,7 @@
         fetch(uploadedUrl).then(function(r){ return r.blob(); }).then(function(blob){
           return removeImageBackground(blob, function(){});
         }).then(function(cutBlob){
-          compressCutoutImageFile(cutBlob, 400 * 1024, function(finalDataUrl){
+          compressCutoutImageFile(cutBlob, 1200 * 1024, function(finalDataUrl){
             if(!finalDataUrl){
               hideBgToast();
               savePanPhotoToFirestore(rec);
