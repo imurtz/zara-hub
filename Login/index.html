@@ -5430,25 +5430,33 @@
   function loadImageAsync(src){
     return new Promise(function(resolve){
       if(!src){ resolve(null); return; }
+      if(src.indexOf("data:") === 0){
+        // صورة data: مضمّنة محلياً — لا تحتاج شبكة إطلاقاً، تحميل مباشر بسيط
+        var dimg = new Image();
+        dimg.onload = function(){ resolve(dimg); };
+        dimg.onerror = function(){ resolve(null); };
+        dimg.src = src;
+        return;
+      }
+      // نجلب صور الشبكة (R2) عبر fetch() ثم نحوّلها لرابط blob: محلي بدل تحميلها مباشرة بوسم
+      // <img crossorigin> — تبيّن إن بعض إضافات حظر الإعلانات/فلاتر الشبكة تحظر تحديداً طلبات
+      // الصور (resourceType: image) لنطاقات فرعية بنمط شائع مثل "media."، بغض النظر عن المحتوى
+      // الفعلي أو صحة رؤوس CORS، بينما طلبات fetch عادة لا تُصنَّف بنفس القاعدة فتمر بسلام.
+      // فائدة إضافية: blob: نفس أصل الصفحة دائماً فلا حاجة لـcrossOrigin أو رؤوس CORS بعدها إطلاقاً
       function attempt(url, isRetry){
-        var img = new Image();
-        // مهم لصور مستضافة على نطاق آخر (مثل R2): بدون crossOrigin يصير الكانفس "ملوّثاً" (tainted)
-        // بمجرد رسم صورة من نطاق مختلف عليه، ويفشل toDataURL()/toBlob() باستثناء أمني — حتى لو
-        // كان السيرفر يرسل رؤوس CORS صحيحة، لازم الطرفين (المتصفح والسيرفر) يتعاونا معاً
-        img.crossOrigin = "anonymous";
-        img.onload = function(){ resolve(img); };
-        img.onerror = function(){
-          // إعادة محاولة واحدة برابط مكسور الكاش: صورة رُفعت لتوّها (مثل تغيير صورة قالب) قد
-          // يفشل أول تحميل لها لحظياً (قبل اكتمال انتشارها على حواف الشبكة)، والمتصفح قد يحفظ
-          // تلك الفشلة بذاكرته المؤقتة لنفس الرابط بالضبط ويرفض إعادة المحاولة تلقائياً — كسر
-          // الكاش بمعامل زمني إضافي يجبره على طلب جديد فعلي بدل الاعتماد على تلك الذاكرة الفاشلة
-          if(!isRetry && /^https?:\/\//.test(src)){
-            attempt(url + (url.indexOf("?") > -1 ? "&" : "?") + "_r=" + Date.now(), true);
-          } else {
-            resolve(null);
-          }
-        };
-        img.src = url;
+        fetch(url, { mode: "cors", cache: isRetry ? "reload" : "default" }).then(function(res){
+          if(!res.ok) throw new Error("http_" + res.status);
+          return res.blob();
+        }).then(function(blob){
+          var blobUrl = URL.createObjectURL(blob);
+          var img = new Image();
+          img.onload = function(){ URL.revokeObjectURL(blobUrl); resolve(img); };
+          img.onerror = function(){ URL.revokeObjectURL(blobUrl); resolve(null); };
+          img.src = blobUrl;
+        }).catch(function(){
+          if(!isRetry) attempt(url, true);
+          else resolve(null);
+        });
       }
       attempt(src, false);
     });
