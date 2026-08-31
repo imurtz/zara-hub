@@ -567,7 +567,7 @@
         { key: "fullName", label: "اسم المولود", type: "text", required: true, hint: "الاسم الأول للمولود فقط" },
         { key: "fatherName", label: "اسم الأب", type: "text", required: true, hint: "الاسم الكامل لوالد المولود" },
         { key: "motherPhrase", label: "صيغة ذكر الأم بالتصميم", type: "selectOther", optionsKey: "motherPhrases", options: [], hint: "اختر الصيغة ثم اكتب الاسم المناسب لها بالحقل التالي" },
-        { key: "motherName", label: "اسم الأم (أو اسم من تُنسَب له الصيغة أعلاه)", type: "text", required: true, hint: "مثال: لو اخترت \"وحرمه\" اكتب اسمها هي، ولو اخترت \"وكريمة الحاج\" اكتب اسم والدها" },
+        { key: "motherName", label: "اسم الأم (أو اسم من تُنسَب له الصيغة أعلاه)", type: "text", required: true, hint: "مثال: لو اخترت \"وحرمه\" اكتب اسمها هي، ولو اخترت \"وحرمه كريمة الحاج\" اكتب اسم والدها" },
         { key: "birthDateGregorian", label: "تاريخ الميلاد (ميلادي)", type: "date", required: true, hint: "تاريخ الولادة الفعلي — بقية التواريخ تُحسب تلقائياً منه" },
         { key: "birthDateHijri", label: "تاريخ الميلاد (هجري)", type: "text", derived: true },
         { key: "birthMonthGregorian", label: "الشهر (ميلادي)", type: "select", options: GREG_MONTHS, derived: true },
@@ -1545,7 +1545,7 @@
     v = String(v).trim();
     if(field.hideValues && field.hideValues.indexOf(v) > -1) return "";
     if(!v) return "";
-    // بادئة ديناميكية لكل سجل (مثل "وحرمه"/"وكريمة الحاج") تُقرأ من حقل آخر بنفس السجل — نفس منطق
+    // بادئة ديناميكية لكل سجل (مثل "وحرمه"/"وحرمه كريمة الحاج") تُقرأ من حقل آخر بنفس السجل — نفس منطق
     // النسخة الإدارية بالضبط، انظر templateFieldValue في Login/index.html
     var dynPrefix = field.dynamicPrefixKey ? String(record[field.dynamicPrefixKey] || "").trim() : "";
     if(dynPrefix) v = dynPrefix + " " + v;
@@ -2205,7 +2205,7 @@
     congratsTitles: ["المهندس", "المهندسة", "الدكتور", "الدكتورة", "الأستاذ", "الأستاذة", "الشيخ"],
     congratsOccasionTypes: ["ترقية وظيفية", "جائزة أو تكريم", "افتتاح مشروع", "إنجاز أو نجاح"],
     graduateJobTitles: ["مهندس", "مهندسة", "محاسب", "محاسبة", "معلم", "معلمة", "طبيب", "طبيبة", "صيدلي", "صيدلانية", "ممرض", "ممرضة", "محامي", "محامية", "مبرمج", "مبرمجة", "مدير", "مديرة", "أخصائي", "أخصائية"],
-    motherPhrases: ["وحرمه", "وكريمة الحاج"],
+    motherPhrases: ["وحرمه", "وحرمه كريمة الحاج"],
     wifeGuardianPhrases: ["كريمة", "كريمة الحاج", "حرمة"]
   };
   function applyEventsOptions(data){

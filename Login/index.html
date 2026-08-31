@@ -4901,7 +4901,7 @@
         { key: "fullName", label: "اسم المولود", type: "text", hint: "الاسم الأول للمولود فقط" },
         { key: "fatherName", label: "اسم الأب", type: "text", hint: "الاسم الكامل لوالد المولود" },
         { key: "motherPhrase", label: "صيغة ذكر الأم بالتصميم", type: "growSelect", optKey: "motherPhrases", hint: "تُضاف تلقائياً قبل الاسم بالتصميم — اختر الصيغة ثم اكتب الاسم المناسب لها بالحقل التالي" },
-        { key: "motherName", label: "اسم الأم (أو اسم من تُنسَب له الصيغة أعلاه)", type: "text", hint: "مثال: لو اخترت \"وحرمه\" اكتب اسمها هي، ولو اخترت \"وكريمة الحاج\" اكتب اسم والدها" },
+        { key: "motherName", label: "اسم الأم (أو اسم من تُنسَب له الصيغة أعلاه)", type: "text", hint: "مثال: لو اخترت \"وحرمه\" اكتب اسمها هي، ولو اخترت \"وحرمه كريمة الحاج\" اكتب اسم والدها" },
         { key: "birthDateGregorian", label: "تاريخ الميلاد (ميلادي)", type: "date", hint: "تاريخ الولادة الفعلي — بقية التواريخ تُحسب تلقائياً منه" },
         { key: "birthDateHijri", label: "تاريخ الميلاد (هجري)", type: "text", derived: true, hint: "يُحسب تلقائياً من التاريخ الميلادي" },
         { key: "birthMonthGregorian", label: "الشهر (ميلادي)", type: "select", options: GREG_MONTHS, derived: true, hint: "يُحسب تلقائياً" },
@@ -5326,7 +5326,7 @@
     v = String(v).trim();
     if(field.hideValues && field.hideValues.indexOf(v) > -1) return "";
     if(!v) return "";
-    // بادئة ديناميكية لكل سجل (مثل "وحرمه"/"وكريمة الحاج") تُقرأ من حقل آخر بنفس السجل بدل نص
+    // بادئة ديناميكية لكل سجل (مثل "وحرمه"/"وحرمه كريمة الحاج") تُقرأ من حقل آخر بنفس السجل بدل نص
     // ثابت بالقالب — تسمح بتبديل الصيغة فوراً حسب اختيار كل سجل، بدل قالب منفصل لكل صيغة
     var dynPrefix = field.dynamicPrefixKey ? String(record[field.dynamicPrefixKey] || "").trim() : "";
     if(dynPrefix) v = dynPrefix + " " + v;
@@ -5679,7 +5679,7 @@
       specializations: [],
       ageCategories: ["طفل", "شاب", "بالغ", "كبير السن"],
       funeralFrom: [],
-      motherPhrases: ["وحرمه", "وكريمة الحاج"],
+      motherPhrases: ["وحرمه", "وحرمه كريمة الحاج"],
       wifeGuardianPhrases: ["كريمة", "كريمة الحاج", "حرمة"],
       congratsOccasionTypes: ["ترقية وظيفية", "جائزة أو تكريم", "افتتاح مشروع", "إنجاز أو نجاح"],
       congratsTitles: ["المهندس", "المهندسة", "الدكتور", "الدكتورة", "الأستاذ", "الأستاذة", "الشيخ"],
@@ -7424,7 +7424,7 @@
           '<label style="flex-basis:100%;">بادئة ديناميكية تتغيّر حسب حقل آخر بالسجل (تتجاوز "نص قبل القيمة" الثابت أعلاه إن اختيرت)<select data-tmpl-prop="dynamicPrefixKey"><option value="">بدون — استخدم النص الثابت</option>' +
             tmplSelectDataFields(tmpl.category).map(function(sf){ return '<option value="' + sf.key + '"' + (f.dynamicPrefixKey === sf.key ? " selected" : "") + '>' + escapeHTML(sf.label) + '</option>'; }).join("") +
           '</select></label>' +
-          '<p class="hint" style="flex-basis:100%; margin:0;">مثال: اختر حقل "صيغة ذكر الأم" — كل سجل يظهر بالصيغة اللي اختارها مُدخِل البيانات نفسه (وحرمه / وكريمة الحاج...) بدل صيغة واحدة ثابتة لكل السجلات</p>'
+          '<p class="hint" style="flex-basis:100%; margin:0;">مثال: اختر حقل "صيغة ذكر الأم" — كل سجل يظهر بالصيغة اللي اختارها مُدخِل البيانات نفسه (وحرمه / وحرمه كريمة الحاج...) بدل صيغة واحدة ثابتة لكل السجلات</p>'
         : "") +
         (!f.multiline && tmplOtherTextFields(tmpl, f.key).length ?
           '<label style="flex-basis:100%;">طابق عرض هذا السطر مع<select data-tmpl-prop="matchWidthKey"><option value="">بدون</option>' +
