@@ -5463,7 +5463,20 @@
   }
   async function renderTemplateToCanvas(canvas, template, record){
     var warnings = [];
-    var bg = await loadImageAsync(template.image);
+    // نجهّز كل الصور (الخلفية + كل حقول الصور بالقالب) بالتوازي أولاً بدل انتظار كل واحدة على
+    // حدة بالتتابع — قالب فيه عدة حقول صور (صورة الخريج + شعار الجامعة مثلاً) كان يجمع زمن كل
+    // صورة فوق بعضها بالتتابع (ثوانٍ إضافية محسوسة)، بينما رسمها فعلياً على الكانفس يبقى بترتيبه
+    // الأصلي (يهم لتراكب الطبقات) — فقط الجلب نفسه (الجزء البطيء المرتبط بالشبكة) صار متوازياً
+    var imgFieldsList = template.fields.filter(function(f){ return f.type === "image"; });
+    var imageByKey = {};
+    var loadResults = await Promise.all(
+      [loadImageAsync(template.image)].concat(imgFieldsList.map(function(f){
+        var v = record[f.key] || "";
+        return v ? loadImageAsync(v) : Promise.resolve(null);
+      }))
+    );
+    var bg = loadResults[0];
+    imgFieldsList.forEach(function(f, idx){ imageByKey[f.key] = loadResults[idx + 1]; });
     if(!bg) return { ok: false, warnings: warnings };
     canvas.width = template.width;
     canvas.height = template.height;
@@ -5507,7 +5520,7 @@
         } else if(imgGeom.x + imgGeom.boxWidth < 0 || imgGeom.x > template.width || imgGeom.y + imgGeom.boxHeight < 0 || imgGeom.y > template.height){
           warnings.push('موضع حقل "' + flabel + '" خارج حدود القالب');
         } else {
-          var img = await loadImageAsync(srcVal);
+          var img = imageByKey[f.key];
           if(img){
             var imgStyle = tmplResolveImageStyle(f, record);
             if(imgStyle.fit === "contain") drawImageContain(ctx, img, imgGeom.x, imgGeom.y, imgGeom.boxWidth, imgGeom.boxHeight, imgStyle.radius, imgStyle.zoom, imgStyle.offsetX, imgStyle.offsetY);

@@ -1687,7 +1687,18 @@
     }).catch(function(){ return null; });
   }
   async function renderTemplateToCanvasPublic(canvas, template, record){
-    var bg = await loadImageAsyncPublic(template.image);
+    // نجهّز كل الصور (الخلفية + كل حقول الصور) بالتوازي أولاً — نفس منطق النسخة الإدارية بالضبط،
+    // انظر renderTemplateToCanvas في Login/index.html للشرح الكامل
+    var imgFieldsList = template.fields.filter(function(f){ return f.type === "image"; });
+    var imageByKey = {};
+    var loadResults = await Promise.all(
+      [loadImageAsyncPublic(template.image)].concat(imgFieldsList.map(function(f){
+        var v = record[f.key] || "";
+        return v ? loadImageAsyncPublic(v) : Promise.resolve(null);
+      }))
+    );
+    var bg = loadResults[0];
+    imgFieldsList.forEach(function(f, idx){ imageByKey[f.key] = loadResults[idx + 1]; });
     if(!bg) return false;
     canvas.width = template.width;
     canvas.height = template.height;
@@ -1723,7 +1734,7 @@
         var srcVal = record[f.key] || "";
         var imgGeom = tmplGeomTargetPublic(f);
         if(srcVal && imgGeom.boxWidth > 0 && imgGeom.boxHeight > 0){
-          var img = await loadImageAsyncPublic(srcVal);
+          var img = imageByKey[f.key];
           if(img){
             var imgStyle = tmplResolveImageStylePublic(f, record);
             if(imgStyle.fit === "contain") drawImageContainPublic(ctx, img, imgGeom.x, imgGeom.y, imgGeom.boxWidth, imgGeom.boxHeight, imgStyle.radius, imgStyle.zoom, imgStyle.offsetX, imgStyle.offsetY);
