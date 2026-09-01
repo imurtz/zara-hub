@@ -4875,7 +4875,6 @@
         { key: "graduationMonthGregorian", label: "شهر التخرج (ميلادي)", type: "select", options: GREG_MONTHS, auto: true, locked: true, hint: "يُحدَّد تلقائياً بشهر التسجيل" },
         { key: "graduationMonthHijri", label: "شهر التخرج (هجري)", type: "select", options: HIJRI_MONTHS, auto: true, locked: true, hint: "يُحدَّد تلقائياً بشهر التسجيل" },
         { key: "fullName", label: "الاسم الكامل", type: "text", hint: "الاسم الثلاثي أو الرباعي كاملاً كما في الهوية" },
-        { key: "jobTitle", label: "اللقب الوظيفي", type: "growSelect", optKey: "graduateJobTitles", hint: "اختر من القائمة، أو اترك فارغاً إذا لا ينطبق", excludeFromExport: true },
         { key: "gender", label: "الجنس", type: "select", options: ["ذكر", "أنثى"], hint: "حدد جنس الخريج" },
         { key: "country", label: "الدولة", type: "growSelect", optKey: "countries", hint: "الدولة التي تخرّج منها الطالب" },
         { key: "university", label: "الجامعة", type: "selectOther", options: SAUDI_UNIVERSITIES, hint: "اختر من القائمة، أو \"غير ذلك\" لكتابة اسم الجامعة/الكلية/المعهد" },
@@ -5241,32 +5240,32 @@
     if(!points.length) return text;
     var tatweelWidth = ctx.measureText("ـ").width || 6;
     var needed = targetWidth - natural;
-    var perPoint = Math.max(1, Math.round((needed / tatweelWidth) / points.length));
+    // إجمالي عدد أحرف الكشيدة المطلوبة لكل السطر (مو لكل نقطة على حدة)، ثم يُوزَّع بالتساوي على
+    // نقاط الاتصال المتاحة — قبل هذا التصحيح كان أي سطر فيه نقاط اتصال كثيرة (كلمات طويلة) يُمدَّد
+    // بمقدار نقطة واحدة على الأقل بكل نقطة، حتى لو كان السطر يحتاج تمديداً بسيطاً جداً فقط، فيتجاوز
+    // العرض المستهدف بمئات البكسلات بدل عشرات — الآن نحسب الكمية الكلية المطلوبة أولاً ثم نفرّقها
+    var totalTatweels = Math.max(1, Math.round(needed / tatweelWidth));
+    var perPointBase = Math.floor(totalTatweels / points.length);
+    var remainder = totalTatweels - perPointBase * points.length;
+    var extraIndices = {};
+    if(remainder > 0){
+      var step = points.length / remainder;
+      for(var r = 0; r < remainder; r++){
+        var pidx = Math.min(points.length - 1, Math.round(r * step));
+        extraIndices[pidx] = true;
+      }
+    }
     var chars = text.split("");
     var offset = 0;
-    points.forEach(function(idx){
+    points.forEach(function(idx, pi){
+      var count = perPointBase + (extraIndices[pi] ? 1 : 0);
+      if(count <= 0) return;
       var insertAt = idx + 1 + offset;
-      var ins = new Array(perPoint + 1).join("ـ");
+      var ins = new Array(count + 1).join("ـ");
       chars.splice(insertAt, 0, ins);
       offset += 1;
     });
-    var result = chars.join("");
-    // إن تجاوزنا العرض المستهدف بهامش كبير، قلّل عدد التكرارات تدريجياً
-    var safety = 0;
-    while(ctx.measureText(result).width > targetWidth * 1.06 && perPoint > 1 && safety < 20){
-      perPoint--;
-      chars = text.split("");
-      offset = 0;
-      points.forEach(function(idx){
-        var insertAt = idx + 1 + offset;
-        var ins = new Array(perPoint + 1).join("ـ");
-        chars.splice(insertAt, 0, ins);
-        offset += 1;
-      });
-      result = chars.join("");
-      safety++;
-    }
-    return result;
+    return chars.join("");
   }
   // ===== فقرة متعددة الأسطر داخل صندوق ثابت (مثل فقرة "بمناسبة حصوله على جائزة..." أسفل الاسم
   // بقوالب التهنئة): تلتف تلقائياً على عرض الصندوق، وإن فُعِّلت الكشيدة تُمدَّد كل سطر ليملأ عرض
@@ -6107,8 +6106,13 @@
     var f = cat.fields.find(function(x){ return x.key === key; });
     return f ? f.label : key;
   }
+  // أزواج (حقل الصيغة → حقل الاسم) تُعرض مدمجة بجدول السجلات — بدون هذا كان الجدول يعرض الاسم
+  // المجرد فقط دون الصيغة المختارة (وحرمه / وحرمه كريمة الحاج...)، رغم أنها محفوظة فعلياً بالسجل
+  var CELL_PHRASE_PAIRS = { motherName: "motherPhrase", wifeGuardian: "wifeGuardianPhrase" };
   function cellValue(cat, rec, key){
     if(key === "entryDate") return rec.createdAt ? toISODate(new Date(rec.createdAt)) : "";
+    var phraseKey = CELL_PHRASE_PAIRS[key];
+    if(phraseKey && rec[phraseKey]) return (rec[phraseKey] + " " + (rec[key] || "")).trim();
     return rec[key] || "";
   }
 
@@ -7378,7 +7382,7 @@
           '</div>' +
         '</div>' +
         '<div class="tmpl-field-controls" style="margin-top:8px;">' +
-          '<label>🔍 تقريب/تبعيد<input type="number" min="1" step="0.05" data-tmpl-prop="zoom" value="' + imgStyle.zoom + '"/></label>' +
+          '<label>🔍 تقريب/تبعيد<input type="number" min="0.4" step="0.05" data-tmpl-prop="zoom" value="' + imgStyle.zoom + '"/></label>' +
           '<label>↔ إزاحة أفقية<input type="number" min="-1" max="1" step="0.05" data-tmpl-prop="offsetX" value="' + imgStyle.offsetX + '"/></label>' +
           '<label>↕ إزاحة عمودية<input type="number" min="-1" max="1" step="0.05" data-tmpl-prop="offsetY" value="' + imgStyle.offsetY + '"/></label>' +
         '</div>' +
@@ -9109,7 +9113,9 @@
     var style = tmplResolveImageStyle(f);
     var delta = e.deltaY < 0 ? 0.08 : -0.08;
     var g = tmplGeomTarget(f);
-    g.zoom = Math.max(1, Math.round((style.zoom + delta) * 100) / 100);
+    // الحد الأدنى كان 1 (يمنع التبعيد لأبعد من ملء الصندوق تماماً) — رُفع لـ0.4 للسماح بإظهار
+    // مساحة أكبر من الصورة الأصلية لصور مقرَّبة جداً على الوجه (تبقى داخل الصندوق نفسه بلا تمدّد فارغ لأن drawImageCover يقتصّ عند الحدود)
+    g.zoom = Math.max(0.4, Math.round((style.zoom + delta) * 100) / 100);
     runDesignGenerate();
     clearTimeout(tmplGenZoomSaveTimer);
     tmplGenZoomSaveTimer = setTimeout(function(){ saveDesignTemplate(tmpl); }, 500);

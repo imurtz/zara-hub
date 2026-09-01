@@ -1465,31 +1465,31 @@
     if(!points.length) return text;
     var tatweelWidth = ctx.measureText("ـ").width || 6;
     var needed = targetWidth - natural;
-    var perPoint = Math.max(1, Math.round((needed / tatweelWidth) / points.length));
+    // نفس تصحيح النسخة الإدارية بالضبط: نحسب إجمالي التاتويل المطلوب للسطر كله أولاً ثم نوزّعه
+    // بالتساوي على نقاط الاتصال، بدل فرض تاتويل واحد على الأقل بكل نقطة (كان يسبب تمديداً
+    // مبالغاً فيه بالأسطر ذات نقاط الاتصال الكثيرة حتى لو احتاجت زيادة بسيطة فقط)
+    var totalTatweels = Math.max(1, Math.round(needed / tatweelWidth));
+    var perPointBase = Math.floor(totalTatweels / points.length);
+    var remainder = totalTatweels - perPointBase * points.length;
+    var extraIndices = {};
+    if(remainder > 0){
+      var step = points.length / remainder;
+      for(var r = 0; r < remainder; r++){
+        var pidx = Math.min(points.length - 1, Math.round(r * step));
+        extraIndices[pidx] = true;
+      }
+    }
     var chars = text.split("");
     var offset = 0;
-    points.forEach(function(idx){
+    points.forEach(function(idx, pi){
+      var count = perPointBase + (extraIndices[pi] ? 1 : 0);
+      if(count <= 0) return;
       var insertAt = idx + 1 + offset;
-      var ins = new Array(perPoint + 1).join("ـ");
+      var ins = new Array(count + 1).join("ـ");
       chars.splice(insertAt, 0, ins);
       offset += 1;
     });
-    var result = chars.join("");
-    var safety = 0;
-    while(ctx.measureText(result).width > targetWidth * 1.06 && perPoint > 1 && safety < 20){
-      perPoint--;
-      chars = text.split("");
-      offset = 0;
-      points.forEach(function(idx){
-        var insertAt = idx + 1 + offset;
-        var ins = new Array(perPoint + 1).join("ـ");
-        chars.splice(insertAt, 0, ins);
-        offset += 1;
-      });
-      result = chars.join("");
-      safety++;
-    }
-    return result;
+    return chars.join("");
   }
   // ===== فقرة متعددة الأسطر داخل صندوق ثابت — نفس منطق النسخة الإدارية بالضبط، انظر
   // drawParagraphField في Login/index.html =====
@@ -1781,6 +1781,24 @@
     return true;
   }
   // علامة مائية متكررة بطبقتين متقاطعتين بزوايا وأحجام مختلفة — تصعّب الاستخلاص النظيف حتى بلقطة شاشة
+  // دقة معاينة الجمهور مخفَّضة عمداً — واضحة بما يكفي للاطمئنان على الشكل العام قبل الإرسال،
+  // لكن غير كافية لالتقاطها واستخدامها كصورة نهائية (التصميم الفعلي بجودته الكاملة يبقى محصوراً
+  // بتوليد الأدمن من لوحة التحكم فقط، بعد المراجعة والاعتماد)
+  var PUBLIC_PREVIEW_MAX_DIM = 900;
+  function downscalePreviewCanvasInPlace(canvas){
+    var w = canvas.width, h = canvas.height;
+    var scale = Math.min(1, PUBLIC_PREVIEW_MAX_DIM / Math.max(w, h));
+    if(scale >= 1) return;
+    var nw = Math.max(1, Math.round(w * scale)), nh = Math.max(1, Math.round(h * scale));
+    var tmp = document.createElement("canvas");
+    tmp.width = w; tmp.height = h;
+    tmp.getContext("2d").drawImage(canvas, 0, 0);
+    canvas.width = nw; canvas.height = nh;
+    var ctx = canvas.getContext("2d");
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = "high";
+    ctx.drawImage(tmp, 0, 0, nw, nh);
+  }
   function drawPreviewWatermark(ctx, w, h){
     ctx.save();
     var text = "معاينة فقط — خيرية العوامية";
@@ -1850,6 +1868,7 @@
       return renderTemplateToCanvasPublic(canvas, tmpl, rec).then(function(ok){
         if(!ok){ hidePreviewNotice(); return; }
         drawPreviewWatermark(canvas.getContext("2d"), canvas.width, canvas.height);
+        downscalePreviewCanvasInPlace(canvas);
         section.style.display = "block";
         var panControls = document.getElementById("photoPanControls");
         var hasPhotoField = tmpl.fields.some(function(f){ return f.type === "image" && f.key === "photo"; });
@@ -1870,7 +1889,10 @@
   function rerenderPanPreview(){
     if(!_panState) return;
     renderTemplateToCanvasPublic(_panState.canvas, _panState.tmpl, _panState.rec).then(function(ok){
-      if(ok) drawPreviewWatermark(_panState.canvas.getContext("2d"), _panState.canvas.width, _panState.canvas.height);
+      if(ok){
+        drawPreviewWatermark(_panState.canvas.getContext("2d"), _panState.canvas.width, _panState.canvas.height);
+        downscalePreviewCanvasInPlace(_panState.canvas);
+      }
     });
   }
   function showPanStatus(text, isError){
@@ -1953,7 +1975,9 @@
   function adjustPhotoZoom(delta){
     if(!_panState) return;
     var rec = _panState.rec;
-    rec.photoZoomAdj = Math.max(1, Math.min(2.5, Math.round(((rec.photoZoomAdj || 1) + delta) * 100) / 100));
+    // الحد الأدنى كان 1 (يمنع التبعيد لإظهار مساحة أوسع من الصورة الأصلية) — رُفع لـ0.4 لأجل
+    // الصور المقرَّبة جداً على الوجه، حتى يقدر صاحب الصورة يبعّد ويُظهر جزءاً أكبر منها
+    rec.photoZoomAdj = Math.max(0.4, Math.min(2.5, Math.round(((rec.photoZoomAdj || 1) + delta) * 100) / 100));
     rerenderPanPreview();
   }
   function savePhotoPosition(){
