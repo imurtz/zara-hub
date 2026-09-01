@@ -1216,11 +1216,18 @@
     state.aiConsentPolicy = false;
     state.aiConsentWording = false;
     refreshAiBlock();
+    // مهلة زمنية للطلب: لاحظنا إن خدمة جيمناي أحياناً لا ترجع خطأ سريع عند الازدحام (تجاوز الحصة
+    // مثلاً) بل تعلّق بلا استجابة لمدة طويلة — بدون هذي المهلة يبقى المستخدم ينتظر بلا نهاية
+    // بشاشة "جاري الإعداد" بلا أي بديل، فيُضطر يغلق الصفحة بدل ما يشوف خيار التجاوز
+    var aiController = (typeof AbortController !== "undefined") ? new AbortController() : null;
+    var aiTimeoutId = aiController ? setTimeout(function(){ aiController.abort(); }, 20000) : null;
     fetch(GEMINI_PROXY_URL, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ fullName: fullName, gender: gender, title: title, occasionType: occasionType, details: details, image: state.aiImage || "" })
+      body: JSON.stringify({ fullName: fullName, gender: gender, title: title, occasionType: occasionType, details: details, image: state.aiImage || "" }),
+      signal: aiController ? aiController.signal : undefined
     }).then(function(res){
+      if(aiTimeoutId) clearTimeout(aiTimeoutId);
       return res.json().then(function(data){ return { ok: res.ok, status: res.status, data: data }; });
     }).then(function(result){
       state.aiLoading = false;
@@ -1233,9 +1240,12 @@
         state.aiError = "تعذّر إعداد نص التهنئة (" + errCode + ")";
       }
       refreshAiBlock();
-    }).catch(function(){
+    }).catch(function(err){
+      if(aiTimeoutId) clearTimeout(aiTimeoutId);
       state.aiLoading = false;
-      state.aiError = "تعذّر الاتصال — تأكد من اتصالك بالإنترنت";
+      state.aiError = (err && err.name === "AbortError")
+        ? "الخدمة تأخّرت بالاستجابة أكثر من اللازم — قد تكون مشغولة حالياً"
+        : "تعذّر الاتصال — تأكد من اتصالك بالإنترنت";
       refreshAiBlock();
     });
   }
