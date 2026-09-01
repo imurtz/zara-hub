@@ -654,13 +654,14 @@
     return (key && _uniLogosCachePublic[key]) ? _uniLogosCachePublic[key] : null;
   }
   function loadPublicFormConfig(){
-    var cfg = { footerMessage: "", footerCredit: FOOTER_CREDIT_DEFAULT, photoPanPrompt: PHOTO_PAN_PROMPT_DEFAULT, banner: { enabled: BANNER_DEFAULTS.enabled, intervalSeconds: BANNER_DEFAULTS.intervalSeconds, slides: BANNER_DEFAULTS.slides.map(copyBannerSlide) } };
+    var cfg = { footerMessage: "", footerCredit: FOOTER_CREDIT_DEFAULT, photoPanPrompt: PHOTO_PAN_PROMPT_DEFAULT, defaultFemalePhotos: {}, banner: { enabled: BANNER_DEFAULTS.enabled, intervalSeconds: BANNER_DEFAULTS.intervalSeconds, slides: BANNER_DEFAULTS.slides.map(copyBannerSlide) } };
     CATEGORIES.forEach(function(c){ cfg[c.key] = { hidden: [], hints: {}, labels: {}, custom: [] }; });
     var p = _publicFormConfigCache;
     if(p){
       if(typeof p.footerMessage === "string") cfg.footerMessage = p.footerMessage;
       if(typeof p.footerCredit === "string") cfg.footerCredit = p.footerCredit;
       if(typeof p.photoPanPrompt === "string") cfg.photoPanPrompt = p.photoPanPrompt;
+      if(p.defaultFemalePhotos && typeof p.defaultFemalePhotos === "object") cfg.defaultFemalePhotos = p.defaultFemalePhotos;
       if(p.banner){
         if(typeof p.banner.enabled === "boolean") cfg.banner.enabled = p.banner.enabled;
         if(typeof p.banner.intervalSeconds === "number" && p.banner.intervalSeconds >= 2) cfg.banner.intervalSeconds = p.banner.intervalSeconds;
@@ -965,18 +966,23 @@
     var el = document.querySelector('[data-key="gender"]');
     return el ? el.value : "";
   }
-  // للخريجات تحديداً: إن رفعت الإدارة صورة افتراضية، نعرض خيارَين بدل رفع مباشر —
-  // صورة افتراضية جاهزة، أو رفع صورة شخصية كالمعتاد — بدل ما يُترك حقل الصورة فارغاً بالكامل
-  function isFemaleGraduateChoiceActive(){
+  // لأي تصنيف فيه صورة إلزامية للذكور فقط (اختيارية للإناث — graduates، congrats...): إن رفعت
+  // الإدارة صورة افتراضية خاصة بهذا التصنيف، نعرض خيارَين بدل رفع مباشر — صورة افتراضية جاهزة،
+  // أو رفع صورة شخصية كالمعتاد — بدل ما يُترك حقل الصورة فارغاً بالكامل
+  function isFemalePhotoChoiceActive(){
     var cat = CATEGORIES.find(function(c){ return c.key === state.activeCategory; });
-    if(!cat || cat.key !== "graduates") return false;
+    if(!cat || cat.photoRequired !== "maleOnly") return false;
     if(currentGenderValue() !== "أنثى") return false;
-    return !!(loadPublicFormConfig().defaultFemaleGraduatePhoto);
+    return !!((loadPublicFormConfig().defaultFemalePhotos || {})[cat.key]);
+  }
+  function currentDefaultFemalePhoto(){
+    var cat = CATEGORIES.find(function(c){ return c.key === state.activeCategory; });
+    return cat ? ((loadPublicFormConfig().defaultFemalePhotos || {})[cat.key] || "") : "";
   }
   function photoFieldHTML(){
     var inner;
-    var femaleChoiceActive = isFemaleGraduateChoiceActive();
-    var defaultPhoto = femaleChoiceActive ? loadPublicFormConfig().defaultFemaleGraduatePhoto : "";
+    var femaleChoiceActive = isFemalePhotoChoiceActive();
+    var defaultPhoto = femaleChoiceActive ? currentDefaultFemalePhoto() : "";
     if(femaleChoiceActive && !state.femalePhotoChoice){
       inner = '<div class="female-photo-choice">' +
         '<button type="button" class="female-photo-choice-btn" data-action="choose-female-photo" data-choice="default">' +
@@ -1324,7 +1330,7 @@
         });
       }
     }
-    if(activeCat && activeCat.key === "graduates"){
+    if(activeCat && activeCat.photoRequired === "maleOnly"){
       var gradGenderSelect = document.querySelector('[data-key="gender"]');
       if(gradGenderSelect && !gradGenderSelect.dataset.femPhotoBound){
         gradGenderSelect.dataset.femPhotoBound = "1";
@@ -1339,7 +1345,7 @@
     Array.prototype.forEach.call(document.querySelectorAll('[data-action="choose-female-photo"]'), function(btn){
       btn.addEventListener("click", function(){
         state.femalePhotoChoice = btn.dataset.choice;
-        if(btn.dataset.choice === "default") state.photo = loadPublicFormConfig().defaultFemaleGraduatePhoto || "";
+        if(btn.dataset.choice === "default") state.photo = currentDefaultFemalePhoto();
         else state.photo = "";
         state.photoOrig = "";
         refreshPhotoField();

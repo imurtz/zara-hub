@@ -4873,7 +4873,7 @@
 
   var EVENTS_CATEGORIES = [
     {
-      key: "graduates", label: "الخريجون", icon: EVICON.grad, color: "#4d6ea9",
+      key: "graduates", label: "الخريجون", icon: EVICON.grad, color: "#4d6ea9", photoRequired: "maleOnly",
       fields: [
         { key: "gregorianYear", label: "السنة الميلادية", type: "growSelect", optKey: "gregorianYears", auto: true, hint: "تُملأ تلقائياً بسنة التسجيل — عدّلها فقط إذا كان التخرج في سنة سابقة" },
         { key: "hijriYear", label: "السنة الهجرية", type: "growSelect", optKey: "hijriYears", auto: true, hint: "تُملأ تلقائياً بسنة التسجيل — عدّلها فقط إذا كان التخرج في سنة سابقة" },
@@ -4959,7 +4959,7 @@
       dedupKeys: ["deceasedName", "deceasedFamily", "deathDateGregorian"]
     },
     {
-      key: "congrats", label: "تهنئات", icon: EVICON.gift, color: "#4d6ea9",
+      key: "congrats", label: "تهنئات", icon: EVICON.gift, color: "#4d6ea9", photoRequired: "maleOnly",
       fields: [
         { key: "gregorianYear", label: "السنة الميلادية", type: "growSelect", optKey: "gregorianYears", derived: true, hint: "تُحسب تلقائياً من تاريخ المناسبة" },
         { key: "hijriYear", label: "السنة الهجرية", type: "growSelect", optKey: "hijriYears", derived: true, hint: "تُحسب تلقائياً من تاريخ المناسبة" },
@@ -6048,14 +6048,16 @@
   var FOOTER_CREDIT_DEFAULT = "صُنع بحب من قبل جمعية العوامية الخيرية";
   var PHOTO_PAN_PROMPT_DEFAULT = "مو راضين عن موضع صورتكم داخل التصميم؟ عدّلوها بأنفسكم:";
   function loadPublicFormConfig(){
-    var cfg = { footerMessage: "", footerCredit: FOOTER_CREDIT_DEFAULT, photoPanPrompt: PHOTO_PAN_PROMPT_DEFAULT, defaultFemaleGraduatePhoto: "", banner: { enabled: BANNER_DEFAULTS.enabled, intervalSeconds: BANNER_DEFAULTS.intervalSeconds, slides: BANNER_DEFAULTS.slides.map(copyBannerSlide) } };
+    var cfg = { footerMessage: "", footerCredit: FOOTER_CREDIT_DEFAULT, photoPanPrompt: PHOTO_PAN_PROMPT_DEFAULT, defaultFemalePhotos: {}, banner: { enabled: BANNER_DEFAULTS.enabled, intervalSeconds: BANNER_DEFAULTS.intervalSeconds, slides: BANNER_DEFAULTS.slides.map(copyBannerSlide) } };
     EVENTS_CATEGORIES.forEach(function(c){ cfg[c.key] = { hidden: [], hints: {}, labels: {}, custom: [] }; });
     var p = _publicFormConfigCache;
     if(p){
       if(typeof p.footerMessage === "string") cfg.footerMessage = p.footerMessage;
       if(typeof p.footerCredit === "string") cfg.footerCredit = p.footerCredit;
       if(typeof p.photoPanPrompt === "string") cfg.photoPanPrompt = p.photoPanPrompt;
-      if(typeof p.defaultFemaleGraduatePhoto === "string") cfg.defaultFemaleGraduatePhoto = p.defaultFemaleGraduatePhoto;
+      // صور افتراضية للإناث — واحدة مستقلة لكل تصنيف فيه صورة إلزامية للذكور فقط (graduates،
+      // congrats...)، بدل حقل واحد كان مخصصاً للخريجات فقط
+      if(p.defaultFemalePhotos && typeof p.defaultFemalePhotos === "object") cfg.defaultFemalePhotos = p.defaultFemalePhotos;
       if(p.banner){
         if(typeof p.banner.enabled === "boolean") cfg.banner.enabled = p.banner.enabled;
         if(typeof p.banner.intervalSeconds === "number" && p.banner.intervalSeconds >= 2) cfg.banner.intervalSeconds = p.banner.intervalSeconds;
@@ -6286,7 +6288,7 @@
     }
     var initialFemaleChoice = "";
     if(draft.photo){
-      var defaultPhotoForInit = loadPublicFormConfig().defaultFemaleGraduatePhoto || "";
+      var defaultPhotoForInit = (loadPublicFormConfig().defaultFemalePhotos || {})[catKey] || "";
       initialFemaleChoice = (defaultPhotoForInit && draft.photo === defaultPhotoForInit) ? "default" : "own";
     }
     eventModalState = { catKey: catKey, recordId: recordId || null, draft: draft, imageProcessing: {}, femalePhotoChoice: initialFemaleChoice };
@@ -6318,8 +6320,8 @@
     });
     var photoLbl = cat.photoLabel || "صورة المناسبة";
     html += '<div class="event-field full-field"><label>' + photoLbl + ' (اختياري)</label>';
-    var isFemaleGraduateAdmin = cat.key === "graduates" && draft.gender === "أنثى";
-    var defaultPhotoAdmin = isFemaleGraduateAdmin ? (loadPublicFormConfig().defaultFemaleGraduatePhoto || "") : "";
+    var isFemaleGraduateAdmin = cat.photoRequired === "maleOnly" && draft.gender === "أنثى";
+    var defaultPhotoAdmin = isFemaleGraduateAdmin ? ((loadPublicFormConfig().defaultFemalePhotos || {})[cat.key] || "") : "";
     if(isFemaleGraduateAdmin && defaultPhotoAdmin && !eventModalState.femalePhotoChoice){
       html += '<div class="female-photo-choice">' +
         '<button type="button" class="female-photo-choice-btn" data-action="choose-female-photo-admin" data-choice="default">' +
@@ -8083,13 +8085,18 @@
       '<label style="display:block; font-size:12.5px; font-weight:700; color:var(--teal-dark); margin-bottom:6px;">عبارة دعوة تعديل موضع الصورة (تظهر أعلى معاينة التصميم بعد التسجيل)</label>' +
       '<input type="text" id="publicCfgPhotoPanPrompt" value="' + escapeHTML(cfg.photoPanPrompt || "") + '" placeholder="' + escapeHTML(PHOTO_PAN_PROMPT_DEFAULT) + '" style="width:100%; padding:10px 12px; border:1.5px solid var(--line); border-radius:10px; font-size:13px; font-family:inherit;"/>' +
     '</div>';
-    html += '<div style="margin-top:14px;">' +
-      '<label style="display:block; font-size:12.5px; font-weight:700; color:var(--teal-dark); margin-bottom:6px;">صورة افتراضية للخريجات (تُعرض كخيار بدل رفع صورة شخصية عند اختيار "أنثى" في نموذج الخريجين العام)</label>' +
-      (cfg.defaultFemaleGraduatePhoto
-        ? '<div class="photo-thumb"><img src="' + cfg.defaultFemaleGraduatePhoto + '" alt=""/><button type="button" class="rm" data-action="remove-default-female-photo">×</button></div>'
-        : '<input type="file" accept="image/png,image/jpeg" class="event-photo-input" data-action="default-female-photo-input"/>') +
-      '<p class="hint" style="margin-top:4px;">إن لم تُرفع صورة هنا، لن يظهر خيار "صورة افتراضية" للخريجات — يبقى الرفع الشخصي اختيارياً كما هو حالياً</p>' +
-    '</div>';
+    // صورة افتراضية للإناث — قسم مستقل لكل تصنيف فيه صورة إلزامية للذكور فقط (اختيارية للإناث)،
+    // بدل قسم واحد كان مخصصاً للخريجات فقط
+    EVENTS_CATEGORIES.filter(function(c){ return c.photoRequired === "maleOnly"; }).forEach(function(c){
+      var existingPhoto = (cfg.defaultFemalePhotos || {})[c.key] || "";
+      html += '<div style="margin-top:14px;">' +
+        '<label style="display:block; font-size:12.5px; font-weight:700; color:var(--teal-dark); margin-bottom:6px;">صورة افتراضية للإناث — ' + escapeHTML(c.label) + ' (تُعرض كخيار بدل رفع صورة شخصية عند اختيار "أنثى" بنموذج ' + escapeHTML(c.label) + ' العام)</label>' +
+        (existingPhoto
+          ? '<div class="photo-thumb"><img src="' + existingPhoto + '" alt=""/><button type="button" class="rm" data-action="remove-default-female-photo" data-cat="' + c.key + '">×</button></div>'
+          : '<input type="file" accept="image/png,image/jpeg" class="event-photo-input" data-action="default-female-photo-input" data-cat="' + c.key + '"/>') +
+        '<p class="hint" style="margin-top:4px;">إن لم تُرفع صورة هنا، لن يظهر خيار "صورة افتراضية" بهذا التصنيف — يبقى الرفع الشخصي اختيارياً كما هو حالياً</p>' +
+      '</div>';
+    });
     html += '</div>';
     return html;
   }
@@ -8371,7 +8378,7 @@
       case "choose-female-photo-admin": {
         eventModalState.femalePhotoChoice = btn.dataset.choice;
         if(btn.dataset.choice === "default"){
-          eventModalState.draft.photo = loadPublicFormConfig().defaultFemaleGraduatePhoto || "";
+          eventModalState.draft.photo = (loadPublicFormConfig().defaultFemalePhotos || {})[eventModalState.catKey] || "";
           eventModalState.draft.photoOrig = "";
         } else {
           eventModalState.draft.photo = "";
@@ -9314,10 +9321,12 @@
     } else if(e.target.matches('[data-action="default-female-photo-input"]')){
       var femPhotoFile = e.target.files && e.target.files[0];
       if(!femPhotoFile) return;
+      var femPhotoCat = e.target.dataset.cat;
       compressEventImageFile(femPhotoFile, 400 * 1024, function(dataUrl){
         if(!dataUrl) return;
         var pCfgFem = loadPublicFormConfig();
-        pCfgFem.defaultFemaleGraduatePhoto = dataUrl;
+        pCfgFem.defaultFemalePhotos = pCfgFem.defaultFemalePhotos || {};
+        pCfgFem.defaultFemalePhotos[femPhotoCat] = dataUrl;
         savePublicFormConfig(pCfgFem);
         renderEventsSettingsPanel();
       });
@@ -9340,7 +9349,8 @@
       case "admin-clear-events-cat": adminClearEventsCategory(btn.dataset.cat); break;
       case "remove-default-female-photo": {
         var pCfgRmFem = loadPublicFormConfig();
-        pCfgRmFem.defaultFemaleGraduatePhoto = "";
+        pCfgRmFem.defaultFemalePhotos = pCfgRmFem.defaultFemalePhotos || {};
+        delete pCfgRmFem.defaultFemalePhotos[btn.dataset.cat];
         savePublicFormConfig(pCfgRmFem);
         renderEventsSettingsPanel();
         break;
