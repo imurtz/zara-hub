@@ -2044,6 +2044,17 @@
       db.collection("eventsMeta").doc("options").set({ specializations: firebase.firestore.FieldValue.arrayUnion(draft.specialization) }, { merge: true })
         .catch(function(err){ console.error("specialization merge failed", err); });
     }
+    // إثراء تلقائي لمكتبة شعارات الجامعات المشتركة: أول خريج يكتب اسم جامعة ما زالت بلا شعار
+    // بمكتبة الأدمن ويرفع شعار جامعته مع تسجيله، يُحفظ هذا الشعار بالمكتبة المشتركة تلقائياً —
+    // فيُعبَّأ تلقائياً لاحقاً لأي خريج آخر من نفس الجامعة (دون انتظار رفع الأدمن يدوياً). لا
+    // يستبدل شعاراً موجوداً مسبقاً (سواء رفعه الأدمن أو خريج سابق) حتى لا تُستبدل نسخة رسمية
+    // بأخرى أقل جودة؛ الأدمن يقدر يراجع/يستبدل أي شعار لاحقاً من "شعارات الجامعات" بلوحة التحكم
+    if(cat.key === "graduates" && rec.universityLogo && draft.university && !findUniversityLogoPublic(draft.university)){
+      var uniLogoPatch = {};
+      uniLogoPatch[draft.university] = rec.universityLogo;
+      db.collection("eventsMeta").doc("universityLogos").set(uniLogoPatch, { merge: true })
+        .catch(function(err){ console.error("auto university logo save failed", err); });
+    }
     if(cat.aiWordingAssist){
       rec.suggestedWording = state.aiSuggestion || "";
       rec.wordingApprovedByUser = !!(state.aiConsentPolicy && state.aiConsentWording);
