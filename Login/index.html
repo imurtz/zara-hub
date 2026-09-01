@@ -4971,7 +4971,7 @@
         { key: "fullName", label: "اسم المحتفى به", type: "text", hint: "الاسم الكامل للشخص المُهنَّأ" },
         { key: "occasionType", label: "نوع المناسبة", type: "growSelect", optKey: "congratsOccasionTypes", hint: "سبب التهنئة، مثل: ترقية، جائزة، افتتاح مشروع" },
         { key: "details", label: "تفاصيل إضافية", type: "text", hint: "تفاصيل المناسبة — تُستخدم بصياغة منشور التهنئة" },
-        { key: "suggestedWording", label: "الصياغة المعتمدة من جيمناي", type: "readonlyText", hint: "النص اللي وافق عليه المُرسل من الصفحة العامة — يُستخدم مباشرة عند تجهيز المنشور" },
+        { key: "suggestedWording", label: "صياغة منشور التهنئة (تُستخدم بالتصميم)", type: "textarea", hint: "إن أرسلها المُسجِّل عبر مساعد جيمناي تصل جاهزة هنا؛ وإن كتب تفاصيله يدوياً بدون مساعد الصياغة (حقل \"تفاصيل إضافية\" أعلاه) تبقى فارغة — يراجعها القسم الإعلامي ويكتب/يعدّل الصياغة النهائية هنا قبل توليد التصميم" },
         { key: "notes", label: "ملاحظات", type: "text", hint: "أي ملاحظات إضافية — اختياري" }
       ],
       photoLabel: "صورة صاحب التهنئة",
@@ -6204,6 +6204,9 @@
       if(!value) return '<p class="event-field-hint" style="margin:0;">لا يوجد — لم يُستخدم مساعد الصياغة لهذا السجل</p>';
       return '<div style="padding:10px 12px; background:var(--teal-tint); border:1px solid var(--line); border-radius:10px; font-size:13px; line-height:1.8; color:var(--ink);">' + escapeHTML(value) + '</div>';
     }
+    if(f.type === "textarea"){
+      return '<textarea data-field-input data-key="' + f.key + '" rows="4" style="font-family:inherit; font-size:13px; line-height:1.8; resize:vertical;">' + escapeHTML(value || "") + '</textarea>';
+    }
     return '<input type="text" data-field-input data-key="' + f.key + '" value="' + escapeHTML(value || "") + '"/>';
   }
 
@@ -7178,7 +7181,7 @@
     congrats: [
       { key: "fullName", label: "اسم المحتفى به" }, { key: "title", label: "اللقب/المسمى الوظيفي" },
       { key: "occasionType", label: "نوع المناسبة" }, { key: "details", label: "تفاصيل إضافية" },
-      { key: "suggestedWording", label: "الصياغة المعتمدة من جيمناي" },
+      { key: "suggestedWording", label: "صياغة منشور التهنئة" },
       { key: "occasionMonthGregorian", label: "الشهر (ميلادي)" }, { key: "occasionMonthHijri", label: "الشهر (هجري)" },
       { key: "gregorianYear", label: "السنة الميلادية" }, { key: "hijriYear", label: "السنة الهجرية" },
       { key: "photo", label: "صورة صاحب التهنئة", type: "image" }

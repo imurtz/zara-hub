@@ -161,6 +161,8 @@
   .ai-regen-link{margin-top:8px; border:none; background:none; color:var(--ink-soft); font-size:11.5px; text-decoration:underline; cursor:pointer; padding:0;}
   .submit-btn:disabled{opacity:.5; cursor:not-allowed;}
   .ai-consent-row input{margin-top:2px; flex-shrink:0;}
+  .ai-skip-row{display:flex; align-items:flex-start; gap:8px; margin-top:14px; padding-top:12px; border-top:1px dashed var(--line); font-size:12px; color:var(--ink-soft); line-height:1.6; cursor:pointer;}
+  .ai-skip-row input{margin-top:2px; flex-shrink:0;}
   .field .other-input{margin-top:6px;}
   .photo-input{padding:10px 12px; border:1.5px dashed var(--line); border-radius:10px; font-size:12.5px; background:#fbfcfc; color:var(--ink-soft); cursor:pointer;}
   .photo-preview{position:relative; display:inline-block; border-radius:10px; overflow:hidden; border:1px solid var(--line); line-height:0;}
@@ -625,7 +627,7 @@
     history.replaceState(null, "", url.toString());
   }
 
-  var state = { activeCategory: getCategoryFromUrl(), photo: "", photoOrig: "", photoProcessing: false, photoProcessingMsg: "", femalePhotoChoice: "", fieldImages: {}, fieldImagesOrig: {}, fieldImagesProcessing: {}, aiSuggestion: "", aiLoading: false, aiError: "", aiConsentPolicy: false, aiConsentWording: false, aiImage: "" };
+  var state = { activeCategory: getCategoryFromUrl(), photo: "", photoOrig: "", photoProcessing: false, photoProcessingMsg: "", femalePhotoChoice: "", fieldImages: {}, fieldImagesOrig: {}, fieldImagesProcessing: {}, aiSuggestion: "", aiLoading: false, aiError: "", aiConsentPolicy: false, aiConsentWording: false, aiImage: "", skipAiWording: false };
 
   var GRADIENT_PRESETS = {
     brand: "linear-gradient(120deg, var(--teal) 0%, var(--teal-dark) 55%, var(--blue-dark) 100%)",
@@ -936,7 +938,7 @@
     state.femalePhotoChoice = "";
     state.fieldImages = {};
     state.fieldImagesOrig = {};
-    state.aiSuggestion = ""; state.aiLoading = false; state.aiError = ""; state.aiConsentPolicy = false; state.aiConsentWording = false; state.aiImage = "";
+    state.aiSuggestion = ""; state.aiLoading = false; state.aiError = ""; state.aiConsentPolicy = false; state.aiConsentWording = false; state.aiImage = ""; state.skipAiWording = false;
     grid.innerHTML = effectiveFields.map(function(f){
       if(f.derived) return "";
       if(cat.aiWordingAssist && f.key === "details") return aiBlockHTML();
@@ -1147,7 +1149,7 @@
     }
     html += '</div>';
     html += '</div>';
-    if(!state.aiSuggestion && !state.aiLoading){
+    if(!state.aiSuggestion && !state.aiLoading && !state.skipAiWording){
       var hasContent = !!(currentDetailsValue() || state.aiImage);
       html += '<button type="button" class="ai-suggest-btn" id="aiSuggestBtn"' + (hasContent ? "" : " disabled") + '>✨ اكتب التهنئة الآن</button>';
     }
@@ -1163,6 +1165,12 @@
       html += '<label class="ai-consent-row"><input type="checkbox" id="aiConsentWording"' + (state.aiConsentWording ? " checked" : "") + '/> أوافق على الصياغة الظاهرة أعلاه</label>';
       html += '<button type="button" class="ai-regen-link" id="aiRegenBtn">تعديل الصياغة</button>';
     }
+    // خيار تخطّي الصياغة الآلية بالكامل — يبقى متاحاً دائماً (حتى بعد وجود اقتراح) لمن لا يرغب
+    // ينتظر أو يستخدم الذكاء الاصطناعي إطلاقاً؛ تفاصيله المكتوبة تصل كما هي، ويتولى القسم
+    // الإعلامي صياغتها وتجهيزها للنشر يدوياً قبل توليد التصميم
+    if(!state.aiLoading){
+      html += '<label class="ai-skip-row"><input type="checkbox" id="aiSkipWording"' + (state.skipAiWording ? " checked" : "") + '/> لا أرغب باستخدام الصياغة الآلية — أكتفي بكتابة التفاصيل أعلاه، وسيراجعها القسم الإعلامي ويجهّزها للنشر</label>';
+    }
     html += '</div>';
     return html;
   }
@@ -1177,8 +1185,10 @@
     var cat = CATEGORIES.find(function(c){ return c.key === state.activeCategory; });
     var submitBtn = document.getElementById("submitBtn");
     if(!submitBtn) return;
-    if(cat.aiWordingAssist){
+    if(cat.aiWordingAssist && !state.skipAiWording){
       submitBtn.disabled = !(state.aiSuggestion && state.aiConsentPolicy && state.aiConsentWording);
+    } else if(cat.aiWordingAssist && state.skipAiWording){
+      submitBtn.disabled = !currentDetailsValue();
     } else {
       submitBtn.disabled = false;
     }
@@ -1233,6 +1243,15 @@
     if(aiPolicyChk) aiPolicyChk.addEventListener("change", function(){ state.aiConsentPolicy = aiPolicyChk.checked; updateSubmitButtonState(); });
     var aiWordingChk = document.getElementById("aiConsentWording");
     if(aiWordingChk) aiWordingChk.addEventListener("change", function(){ state.aiConsentWording = aiWordingChk.checked; updateSubmitButtonState(); });
+    var aiSkipChk = document.getElementById("aiSkipWording");
+    if(aiSkipChk) aiSkipChk.addEventListener("change", function(){
+      state.skipAiWording = aiSkipChk.checked;
+      // نمسح أي اقتراح/موافقة سابقة عند التفعيل حتى لا يبقى معروضاً بالشاشة بلا فائدة أثناء تخطّي الصياغة الآلية
+      if(state.skipAiWording){
+        state.aiSuggestion = ""; state.aiConsentPolicy = false; state.aiConsentWording = false; state.aiError = "";
+      }
+      refreshAiBlock();
+    });
     var aiImageInput = document.getElementById("aiImageInput");
     if(aiImageInput){
       aiImageInput.addEventListener("change", function(e){
@@ -1266,6 +1285,7 @@
       if(detailsInput && !detailsInput.dataset.aiBound){
         detailsInput.dataset.aiBound = "1";
         detailsInput.addEventListener("input", function(){
+          if(state.skipAiWording){ updateSubmitButtonState(); return; }
           if(state.aiSuggestion || state.aiError){
             state.aiSuggestion = ""; state.aiConsentPolicy = false; state.aiConsentWording = false; state.aiError = "";
             refreshAiBlock();
@@ -2025,7 +2045,8 @@
       errEl.style.display = "block";
       return;
     }
-    if(cat.aiWordingAssist && !(state.aiSuggestion && state.aiConsentPolicy && state.aiConsentWording)) return;
+    if(cat.aiWordingAssist && !state.skipAiWording && !(state.aiSuggestion && state.aiConsentPolicy && state.aiConsentWording)) return;
+    if(cat.aiWordingAssist && state.skipAiWording && !currentDetailsValue()) return;
     var rec = { id: genId(), category: cat.key, source: "public", status: "pending", createdAt: Date.now(), updatedAt: Date.now() };
     effectiveFields.forEach(function(f){ rec[f.key] = draft[f.key] || ""; });
     if(cat.dateSource){
