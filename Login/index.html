@@ -696,8 +696,13 @@
   .publish-type-chip{padding:6px 14px; border-radius:999px; border:1.5px solid var(--line); background:var(--white); color:var(--ink-soft); font-size:12px; font-weight:500; cursor:pointer;}
   .publish-type-chip.active{background:var(--teal-tint); border-color:var(--teal); color:var(--teal-dark);}
   .publish-row-head{display:flex; align-items:center; gap:12px; flex-wrap:wrap; cursor:pointer;}
+  .publish-row-check{width:16px; height:16px; flex-shrink:0; cursor:pointer; accent-color:var(--teal);}
+  .publish-row-selected{background:var(--teal-tint); border-radius:12px;}
   .publish-row-chevron{width:14px; height:14px; color:var(--ink-soft); transition:transform .15s; flex-shrink:0;}
   .publish-row-chevron.open{transform:rotate(180deg);}
+  .publish-bulk-bar{display:flex; align-items:center; gap:14px; flex-wrap:wrap; padding:10px 14px; margin-bottom:12px; background:var(--white); border:1.5px solid var(--line); border-radius:12px;}
+  .publish-bulk-count{font-size:12px; font-weight:700; color:var(--teal-dark);}
+  .publish-bulk-actions{display:flex; align-items:center; gap:8px; flex-wrap:wrap;}
   .publish-row-title{flex:1; min-width:180px;}
   .publish-row-time{font-size:11.5px; color:var(--ink-soft); white-space:nowrap;}
   .publish-row-actions{display:flex; gap:6px; flex-wrap:wrap;}
@@ -6093,6 +6098,7 @@
     publishStatusFilter: "all",
     publishSearch: "",
     expandedPublishIds: {},
+    publishSelectedIds: {},
     templatesCategory: "graduates",
     designTmplCategory: "graduates",
     reportsCategory: "graduates",
@@ -6763,6 +6769,13 @@
     statuses[id] = status;
     saveEventsPublish(statuses);
   }
+  // تحديث حالة النشر لعدة سجلات دفعة واحدة (تحديد الكل) — كتابة واحدة لكل السجلات المحددة
+  // بدل استدعاء منفصل لكل سجل، أسرع وأقل حِمل على فايرستور من تكرار setEventPublishStatus
+  function setEventsPublishStatusBulk(ids, status){
+    var statuses = loadEventsPublish();
+    ids.forEach(function(id){ statuses[id] = status; });
+    saveEventsPublish(statuses);
+  }
   // "قبل ٤ أشهر" ونحوها — فرق زمني تقريبي منذ إدخال السجل
   function timeAgoAr(ts){
     if(!ts) return "—";
@@ -6801,12 +6814,13 @@
     var active = eventsUI.publishStatusFilter === statusVal;
     return '<div class="stat-card' + (extraClass ? " " + extraClass : "") + (active ? " active" : "") + '" data-action="publish-status-filter" data-status="' + statusVal + '"><div class="num">' + num + '</div><div class="lbl">' + label + '</div></div>';
   }
-  function eventsPublishListHTML(){
+  // نفس منطق الفلترة يُستخدم بعرض القائمة وبتحديد الكل معاً — دالة واحدة مشتركة حتى لا يختلف
+  // "تحديد الكل" عن السجلات المعروضة فعلياً أمام المستخدم
+  function filteredPublishRecords(){
     var all = loadEventsData();
     var statuses = loadEventsPublish();
-    var templates = loadEventsTemplates();
     var q = (eventsUI.publishSearch || "").trim().toLowerCase();
-    var filtered = all.filter(function(r){
+    return all.filter(function(r){
       if(eventsUI.publishTypeFilter !== "all" && r.category !== eventsUI.publishTypeFilter) return false;
       if(eventsUI.publishStatusFilter && eventsUI.publishStatusFilter !== "all"){
         var st = statuses[r.id] || "pending";
@@ -6816,6 +6830,11 @@
       var cat = EVENTS_CATEGORIES.find(function(c){ return c.key === r.category; });
       return cat && cat.fields.some(function(f){ return String(r[f.key] || "").toLowerCase().indexOf(q) > -1; });
     }).sort(function(a, b){ return (b.createdAt || 0) - (a.createdAt || 0); });
+  }
+  function eventsPublishListHTML(){
+    var templates = loadEventsTemplates();
+    var statuses = loadEventsPublish();
+    var filtered = filteredPublishRecords();
 
     if(!filtered.length) return '<p class="report-empty" style="padding:30px 0;">🎉 لا توجد سجلات مطابقة</p>';
 
@@ -6826,8 +6845,10 @@
       var text = tpl ? renderTemplateText(tpl.text, r) : "";
       var title = cat.fields.slice(0, 3).map(function(f){ return r[f.key]; }).filter(Boolean).join(" — ") || "(بدون بيانات)";
       var expanded = !!eventsUI.expandedPublishIds[r.id];
-      var html = '<div class="report-section-card publish-row">' +
+      var checked = !!eventsUI.publishSelectedIds[r.id];
+      var html = '<div class="report-section-card publish-row' + (checked ? " publish-row-selected" : "") + '">' +
         '<div class="publish-row-head" data-action="toggle-publish-row" data-id="' + r.id + '">' +
+          '<input type="checkbox" class="publish-row-check" data-action="toggle-publish-select" data-id="' + r.id + '"' + (checked ? " checked" : "") + ' onclick="event.stopPropagation();"/>' +
           '<span class="publish-row-chevron' + (expanded ? " open" : "") + '"><span class="icon">' + TICON.chevron + '</span></span>' +
           '<div class="publish-row-title"><span class="sec-badge">' + cat.label + '</span> <b style="font-size:13.5px;">' + escapeHTML(title) + '</b></div>' +
           '<span class="publish-row-time">' + timeAgoAr(r.createdAt) + '</span>' +
@@ -6863,9 +6884,34 @@
   }
   function refreshEventsPublishList(){
     var c = document.getElementById("eventsPublishListContainer");
-    if(c) setHTML(c, eventsPublishListHTML());
+    if(c) setHTML(c, eventsPublishBulkBarHTML() + eventsPublishListHTML());
+    var s = document.getElementById("eventsPublishStatsContainer");
+    if(s) setHTML(s, eventsPublishStatsHTML());
   }
-  function eventsPublishHTML(){
+  // شريط "تحديد الكل" + إجراءات جماعية (نقل عدة سجلات معاً لحالة نشر واحدة) — يُحسب فقط على
+  // السجلات المعروضة حالياً (بعد الفلاتر النشطة)، حتى لا يحدّد سجلات مخفية عن المستخدم بالخطأ
+  function eventsPublishBulkBarHTML(){
+    var filtered = filteredPublishRecords();
+    var visibleSelectedCount = filtered.filter(function(r){ return eventsUI.publishSelectedIds[r.id]; }).length;
+    var allChecked = filtered.length > 0 && visibleSelectedCount === filtered.length;
+    var html = '<div class="publish-bulk-bar">' +
+      '<label style="display:flex; align-items:center; gap:6px; font-size:12.5px; cursor:pointer; font-weight:700;">' +
+        '<input type="checkbox" id="publishSelectAllCheckbox"' + (allChecked ? " checked" : "") + (filtered.length ? "" : " disabled") + '/> تحديد الكل (' + filtered.length + ')' +
+      '</label>';
+    if(visibleSelectedCount > 0){
+      html += '<span class="publish-bulk-count">' + visibleSelectedCount + ' محدَّد</span>' +
+        '<div class="publish-bulk-actions">' +
+          '<span class="hint" style="margin:0;">نقل المحدَّد إلى:</span>' +
+          '<button type="button" class="publish-status-pill published" data-action="bulk-set-publish-status" data-status="published">تم النشر</button>' +
+          '<button type="button" class="publish-status-pill wontPublish" data-action="bulk-set-publish-status" data-status="wontPublish">لن يُنشر</button>' +
+          '<button type="button" class="publish-status-pill pending" data-action="bulk-set-publish-status" data-status="pending">معلق</button>' +
+          '<button type="button" class="btn-secondary" data-action="clear-publish-selection" style="padding:5px 10px; font-size:11.5px;">إلغاء التحديد</button>' +
+        '</div>';
+    }
+    html += '</div>';
+    return html;
+  }
+  function eventsPublishStatsHTML(){
     var all = loadEventsData();
     var statuses = loadEventsPublish();
     var counts = { total: all.length, published: 0, wontPublish: 0, pending: 0 };
@@ -6873,12 +6919,15 @@
       var s = statuses[r.id] || "pending";
       counts[s] = (counts[s] || 0) + 1;
     });
-    var html = '<div class="stat-card-grid">' +
+    return '<div class="stat-card-grid">' +
       statCardFilterHTML(counts.total, "الإجمالي", "all", "") +
       statCardFilterHTML(counts.pending || 0, "معلق", "pending", "stat-pending") +
       statCardFilterHTML(counts.published || 0, "تم النشر", "published", "stat-published") +
       statCardFilterHTML(counts.wontPublish || 0, "لن يُنشر", "wontPublish", "stat-wontpublish") +
     '</div>';
+  }
+  function eventsPublishHTML(){
+    var html = '<div id="eventsPublishStatsContainer">' + eventsPublishStatsHTML() + '</div>';
     html += '<div class="events-toolbar">' +
       '<button type="button" class="btn-secondary" data-action="open-event-templates"><span class="icon">' + AICON.note + '</span> قوالب التهنئة والتعازي</button>' +
       '<div class="events-search-wrap"><input type="text" class="events-search" id="publishSearchInput" placeholder="بحث في كل الحقول..." value="' + escapeHTML(eventsUI.publishSearch || "") + '"/></div>' +
@@ -6887,7 +6936,7 @@
       '<button type="button" class="publish-type-chip' + (eventsUI.publishTypeFilter === "all" ? " active" : "") + '" data-action="publish-type-filter" data-type="all">الكل</button>' +
       EVENTS_CATEGORIES.map(function(c){ return '<button type="button" class="publish-type-chip' + (eventsUI.publishTypeFilter === c.key ? " active" : "") + '" data-action="publish-type-filter" data-type="' + c.key + '">' + c.label + '</button>'; }).join("") +
     '</div>';
-    html += '<div id="eventsPublishListContainer">' + eventsPublishListHTML() + '</div>';
+    html += '<div id="eventsPublishListContainer">' + eventsPublishBulkBarHTML() + eventsPublishListHTML() + '</div>';
     return html;
   }
 
@@ -8122,7 +8171,18 @@
       case "open-uni-logos": openUniLogosModal(); break;
       case "publish-type-filter": eventsUI.publishTypeFilter = btn.dataset.type; renderEventsHub(); break;
       case "publish-status-filter": eventsUI.publishStatusFilter = btn.dataset.status; renderEventsHub(); break;
-      case "set-publish-status": setEventPublishStatus(btn.dataset.id, btn.dataset.status); renderEventsHub(); break;
+      case "set-publish-status": setEventPublishStatus(btn.dataset.id, btn.dataset.status); refreshEventsPublishList(); break;
+      case "bulk-set-publish-status": {
+        var bulkIds = filteredPublishRecords().filter(function(r){ return eventsUI.publishSelectedIds[r.id]; }).map(function(r){ return r.id; });
+        if(bulkIds.length){
+          setEventsPublishStatusBulk(bulkIds, btn.dataset.status);
+          eventsUI.publishSelectedIds = {};
+          showToast("✔ تم نقل " + bulkIds.length + " سجلاً");
+        }
+        refreshEventsPublishList();
+        break;
+      }
+      case "clear-publish-selection": eventsUI.publishSelectedIds = {}; refreshEventsPublishList(); break;
       case "copy-publish-text": copyToClipboard(btn.dataset.text); break;
       case "share-publish-whatsapp": shareRecordToWhatsApp(btn.dataset.id, btn.dataset.text, btn); break;
       case "toggle-publish-row": {
@@ -8151,7 +8211,19 @@
     }
   });
   eventsRootEl.addEventListener("change", function(e){
-    if(e.target.matches('[data-action="toggle-col"]')){
+    if(e.target.id === "publishSelectAllCheckbox"){
+      var checkedNow = e.target.checked;
+      filteredPublishRecords().forEach(function(r){
+        if(checkedNow) eventsUI.publishSelectedIds[r.id] = true;
+        else delete eventsUI.publishSelectedIds[r.id];
+      });
+      refreshEventsPublishList();
+    } else if(e.target.matches('[data-action="toggle-publish-select"]')){
+      var selId = e.target.dataset.id;
+      if(eventsUI.publishSelectedIds[selId]) delete eventsUI.publishSelectedIds[selId];
+      else eventsUI.publishSelectedIds[selId] = true;
+      refreshEventsPublishList();
+    } else if(e.target.matches('[data-action="toggle-col"]')){
       var cat = EVENTS_CATEGORIES.find(function(c){ return c.key === eventsUI.activeCategory; });
       eventsUI.visibleCols[cat.key] = eventsUI.visibleCols[cat.key] || {};
       eventsUI.visibleCols[cat.key][e.target.dataset.col] = e.target.checked;
