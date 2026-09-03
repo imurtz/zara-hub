@@ -5539,6 +5539,13 @@
         }
         continue;
       }
+      // تنبيه واضح لو استُخدم الحقل الاحتياطي فعلياً (القيمة الأساسية فارغة) — حتى لا يُنشر
+      // الأدمن تصميماً بنص خام غير مصقول (مثل ملاحظة سريعة) بالخطأ ظاناً إنه الصياغة النهائية
+      if(f.fallbackKey && !String(record[f.key] || "").trim() && String(record[f.fallbackKey] || "").trim()){
+        var fbLabel = (tmplFieldMeta(template.category, f.key) || {}).label || f.key;
+        var fbSrcLabel = (tmplFieldMeta(template.category, f.fallbackKey) || {}).label || f.fallbackKey;
+        warnings.push('حقل "' + fbLabel + '" فارغ — يُستخدم نص احتياطي من "' + fbSrcLabel + '" مؤقتاً، يُفضّل كتابة الصياغة النهائية قبل النشر');
+      }
       var text = templateFieldValue(f, record, null);
       if(!text) continue;
       var weight = f.bold ? "700" : "400";
