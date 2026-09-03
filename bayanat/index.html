@@ -1622,6 +1622,9 @@
     if(field.key === "photo") v = record.photo;
     if(v == null) v = "";
     v = String(v).trim();
+    // حقل احتياطي عند فراغ القيمة الأساسية — نفس منطق النسخة الإدارية بالضبط، انظر
+    // templateFieldValue في Login/index.html
+    if(!v && field.fallbackKey) v = String(record[field.fallbackKey] || "").trim();
     if(field.hideValues && field.hideValues.indexOf(v) > -1) return "";
     if(!v) return "";
     // بادئة ديناميكية لكل سجل (مثل "وحرمه"/"وحرمه كريمة الحاج") تُقرأ من حقل آخر بنفس السجل — نفس منطق

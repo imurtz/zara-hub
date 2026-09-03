@@ -5328,6 +5328,10 @@
     if(field.key === "photo") v = record.photo;
     if(v == null) v = "";
     v = String(v).trim();
+    // حقل احتياطي: لو القيمة الأساسية فارغة (مثال: "صياغة منشور التهنئة" لم يُكتب فيها شيء
+    // بعد لأن المُسجِّل تخطّى مساعد الصياغة الآلية)، نقرأ من حقل آخر بنفس السجل بدل ترك المنشور
+    // بلا نص إطلاقاً — أفضل من فراغ تام حتى لو كان النص الاحتياطي أقل صقلاً
+    if(!v && field.fallbackKey) v = String(record[field.fallbackKey] || "").trim();
     if(field.hideValues && field.hideValues.indexOf(v) > -1) return "";
     if(!v) return "";
     // بادئة ديناميكية لكل سجل (مثل "وحرمه"/"وحرمه كريمة الحاج") تُقرأ من حقل آخر بنفس السجل بدل نص
@@ -7483,6 +7487,12 @@
             tmplSelectDataFields(tmpl.category).map(function(sf){ return '<option value="' + sf.key + '"' + (f.dynamicPrefixKey === sf.key ? " selected" : "") + '>' + escapeHTML(sf.label) + '</option>'; }).join("") +
           '</select></label>' +
           '<p class="hint" style="flex-basis:100%; margin:0;">مثال: اختر حقل "صيغة ذكر الأم" — كل سجل يظهر بالصيغة اللي اختارها مُدخِل البيانات نفسه (وحرمه / وحرمه كريمة الحاج...) بدل صيغة واحدة ثابتة لكل السجلات</p>'
+        : "") +
+        (tmplSelectDataFields(tmpl.category).length ?
+          '<label style="flex-basis:100%;">حقل احتياطي عند فراغ القيمة (يُستخدم فقط إن كان هذا الحقل فارغاً بالسجل)<select data-tmpl-prop="fallbackKey"><option value="">بدون</option>' +
+            tmplSelectDataFields(tmpl.category).filter(function(sf){ return sf.key !== f.key; }).map(function(sf){ return '<option value="' + sf.key + '"' + (f.fallbackKey === sf.key ? " selected" : "") + '>' + escapeHTML(sf.label) + '</option>'; }).join("") +
+          '</select></label>' +
+          '<p class="hint" style="flex-basis:100%; margin:0;">مثال: لو حقل "صياغة منشور التهنئة" وصل فارغاً (تخطّى المُسجِّل مساعد الصياغة الآلية)، اختر هنا "تفاصيل إضافية" — يظهر نصه بدل ترك المنشور بلا نص إطلاقاً</p>'
         : "") +
         (!f.multiline && tmplOtherTextFields(tmpl, f.key).length ?
           '<label style="flex-basis:100%;">طابق عرض هذا السطر مع<select data-tmpl-prop="matchWidthKey"><option value="">بدون</option>' +
