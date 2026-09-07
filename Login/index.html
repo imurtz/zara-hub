@@ -7816,7 +7816,10 @@
       syncTmplLivePreview();
       return;
     }
-    tmplLivePreviewWin = window.open("", "tmplLivePreview_" + Date.now(), "width=760,height=880");
+    // بدون سلسلة "features" (width/height...) عمدًا — تمريرها يجعل المتصفح
+    // يفتحها كنافذة منبثقة مصغّرة بلا شريط عنوان أو تبويبات، بينما المطلوب
+    // صفحة مستقلة كاملة (تبويب/نافذة عادية بكل عناصر تحكّم المتصفح)
+    tmplLivePreviewWin = window.open("", "tmplLivePreview");
     if(!tmplLivePreviewWin){
       showToast("تعذّر فتح نافذة المعاينة — اسمح بالنوافذ المنبثقة لهذا الموقع من إعدادات المتصفح");
       return;
