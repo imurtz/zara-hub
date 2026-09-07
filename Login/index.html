@@ -7793,34 +7793,47 @@
     link.download = name.replace(/[^\w؀-ۿ ]/g, "").trim() + ".png";
     link.href = canvas.toDataURL("image/png");
     link.click();
-    closeTmplPreviewModal();
   }
-  // نافذة معاينة التصميم بحجمه الكامل قبل التنزيل — تُبنى وتُلحق مباشرةً بالصفحة
-  // (خارج نطاق مستمع النقر الخاص بلوحة تصميم القالب)، لذا أزرارها تُربط بمعالجات
-  // مباشرة بدل الاعتماد على data-action لضمان عملها بشكل صحيح
-  function closeTmplPreviewModal(){
-    var el = document.getElementById("tmplPreviewOverlay");
-    if(el) el.remove();
+  // نافذة معاينة مستقلة (نافذة متصفح حقيقية منفصلة، لا نافذة منبثقة داخل
+  // الصفحة) تتحدّث تلقائيًا مع كل إعادة رسم فعلية للوحة الرئيسية (بعد كل
+  // تحريك/تحجيم/تعديل قيمة يُحفَظ) — تمامًا بنفس لحظة تحدّث اللوحة نفسها،
+  // لأن اللوحة الفعلية أثناء السحب نفسه تعرض فقط مربعات إطارية توضيحية ولا
+  // تُعاد رسمها بالكامل إلا بعد الإفلات، فهذا أصدق مستوى "حي" ممكن مطابقةً
+  // لسلوك المحرر نفسه.
+  var tmplLivePreviewWin = null;
+  function syncTmplLivePreview(){
+    if(!tmplLivePreviewWin || tmplLivePreviewWin.closed) return;
+    var mainCanvas = document.getElementById("tmplGenCanvas");
+    if(!mainCanvas) return;
+    try {
+      var img = tmplLivePreviewWin.document.getElementById("livePreviewImg");
+      if(img) img.src = mainCanvas.toDataURL("image/png");
+    } catch(e){}
   }
-  function openTmplPreviewModal(dataUrl){
-    closeTmplPreviewModal();
-    var overlay = document.createElement("div");
-    overlay.className = "modal-overlay active";
-    overlay.id = "tmplPreviewOverlay";
-    overlay.innerHTML =
-      '<div class="modal" style="max-width:640px; text-align:center;">' +
-        '<h3 style="margin-top:0;">معاينة التصميم</h3>' +
-        '<p class="hint" style="margin-bottom:14px;">هذا هو الشكل النهائي كما سيُحفَظ — راجعه جيدًا قبل التنزيل</p>' +
-        '<img src="' + dataUrl + '" style="max-width:100%; border-radius:10px; box-shadow:0 4px 18px rgba(0,0,0,.15);"/>' +
-        '<div class="modal-actions" style="margin-top:18px; justify-content:center;">' +
-          '<button type="button" class="btn-secondary" id="tmplPreviewCloseBtn">إغلاق</button>' +
-          '<button type="button" class="btn-primary" id="tmplPreviewDownloadBtn">⬇ تنزيل الصورة</button>' +
-        '</div>' +
-      '</div>';
-    document.body.appendChild(overlay);
-    overlay.addEventListener("click", function(e){ if(e.target === overlay) closeTmplPreviewModal(); });
-    document.getElementById("tmplPreviewCloseBtn").addEventListener("click", closeTmplPreviewModal);
-    document.getElementById("tmplPreviewDownloadBtn").addEventListener("click", downloadTmplDesign);
+  function openTmplPreviewModal(){
+    if(tmplLivePreviewWin && !tmplLivePreviewWin.closed){
+      tmplLivePreviewWin.focus();
+      syncTmplLivePreview();
+      return;
+    }
+    tmplLivePreviewWin = window.open("", "tmplLivePreview_" + Date.now(), "width=760,height=880");
+    if(!tmplLivePreviewWin){
+      showToast("تعذّر فتح نافذة المعاينة — اسمح بالنوافذ المنبثقة لهذا الموقع من إعدادات المتصفح");
+      return;
+    }
+    tmplLivePreviewWin.document.open();
+    tmplLivePreviewWin.document.write(
+      '<!DOCTYPE html><html dir="rtl" lang="ar"><head><meta charset="utf-8"><title>معاينة حيّة</title>' +
+      '<style>body{margin:0; background:#22302c; display:flex; flex-direction:column; align-items:center; padding:22px; font-family:Tahoma,Arial,sans-serif; box-sizing:border-box;} ' +
+      'h2{color:#fff; font-size:15px; margin:0 0 14px;} #livePreviewImg{max-width:100%; border-radius:10px; box-shadow:0 6px 24px rgba(0,0,0,.4); background:#fff;} ' +
+      'p{color:#c7d1ce; font-size:12px; margin-top:14px; text-align:center; line-height:1.7;}</style></head><body>' +
+      '<h2>👁️ معاينة حيّة للتصميم</h2>' +
+      '<img id="livePreviewImg" alt="معاينة" />' +
+      '<p>تتحدّث هذه الصورة تلقائيًا مع كل تعديل تحفظه في نافذة التصميم — أبقِ النافذتين مفتوحتين معًا</p>' +
+      '</body></html>'
+    );
+    tmplLivePreviewWin.document.close();
+    syncTmplLivePreview();
   }
   function runDesignGenerate(){
     var tmpl = findDesignTemplate(tmplGenerateState.templateId);
@@ -7845,6 +7858,7 @@
         }
         var genWrap = document.getElementById("tmplGenCanvasWrap");
         if(genWrap) tmplRenderMarkersOverlay(genWrap, tmpl);
+        syncTmplLivePreview();
       } else {
         statusEl.textContent = "تعذّر تحميل صورة القالب";
       }
@@ -8953,9 +8967,8 @@
         break;
       }
       case "preview-tmpl-design": {
-        var pvCanvas = document.getElementById("tmplGenCanvas");
-        if(!pvCanvas || !tmplGenerateState) return;
-        openTmplPreviewModal(pvCanvas.toDataURL("image/png"));
+        if(!tmplGenerateState) return;
+        openTmplPreviewModal();
         break;
       }
       case "download-tmpl-design": {
