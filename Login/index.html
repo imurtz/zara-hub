@@ -7776,7 +7776,7 @@
       html += '<p class="hint" style="text-align:center; font-weight:700; color:var(--teal-dark);">✋ ' + (pendingMeta.type === "image" ? "اسحب على الصورة لتحديد مربع الصورة الجديد" : "انقر على موضع النص الجديد بالصورة") + '</p>';
     }
     html += '<div class="tmpl-toolbar-legend" style="justify-content:center;"><span>↔ سحب = تحريك</span><span>⤡ المقبض = تحجيم</span><span>🖱️ عجلة الفأرة = تقريب/تبعيد الصورة</span></div>';
-    html += '<div style="text-align:center; margin-top:14px;"><button type="button" class="btn-primary" id="tmplGenDownloadBtn" data-action="download-tmpl-design" disabled>⬇ تنزيل الصورة</button></div>';
+    html += '<div style="text-align:center; margin-top:14px; display:flex; gap:8px; justify-content:center;"><button type="button" class="btn-secondary" id="tmplGenPreviewBtn" data-action="preview-tmpl-design" disabled>👁️ معاينة</button><button type="button" class="btn-primary" id="tmplGenDownloadBtn" data-action="download-tmpl-design" disabled>⬇ تنزيل الصورة</button></div>';
     html += '<div style="text-align:center; margin-top:10px;"><label class="btn-secondary" style="display:inline-flex; align-items:center; gap:6px; cursor:pointer; font-size:12px; padding:6px 12px;">🖼️ تغيير صورة القالب<input type="file" accept="image/png,image/jpeg" id="tmplReplaceImageInput" style="display:none;"/></label>' +
       '<p class="hint" style="margin-top:4px;">يستبدل صورة القالب فقط مع الإبقاء على كل المتغيرات ومواضعها كما هي — PNG أو JPG فقط</p></div>';
     html += '</div></div>';
@@ -7784,19 +7784,60 @@
     setHTML(body, html);
     runDesignGenerate();
   }
+  function downloadTmplDesign(){
+    var canvas = document.getElementById("tmplGenCanvas");
+    if(!canvas || !tmplGenerateState) return;
+    var rec = loadEventsData().find(function(r){ return r.id === tmplGenerateState.recordId; });
+    var name = (rec && (rec.fullName || rec.husbandName || rec.deceasedName)) || "تصميم";
+    var link = document.createElement("a");
+    link.download = name.replace(/[^\w؀-ۿ ]/g, "").trim() + ".png";
+    link.href = canvas.toDataURL("image/png");
+    link.click();
+    closeTmplPreviewModal();
+  }
+  // نافذة معاينة التصميم بحجمه الكامل قبل التنزيل — تُبنى وتُلحق مباشرةً بالصفحة
+  // (خارج نطاق مستمع النقر الخاص بلوحة تصميم القالب)، لذا أزرارها تُربط بمعالجات
+  // مباشرة بدل الاعتماد على data-action لضمان عملها بشكل صحيح
+  function closeTmplPreviewModal(){
+    var el = document.getElementById("tmplPreviewOverlay");
+    if(el) el.remove();
+  }
+  function openTmplPreviewModal(dataUrl){
+    closeTmplPreviewModal();
+    var overlay = document.createElement("div");
+    overlay.className = "modal-overlay active";
+    overlay.id = "tmplPreviewOverlay";
+    overlay.innerHTML =
+      '<div class="modal" style="max-width:640px; text-align:center;">' +
+        '<h3 style="margin-top:0;">معاينة التصميم</h3>' +
+        '<p class="hint" style="margin-bottom:14px;">هذا هو الشكل النهائي كما سيُحفَظ — راجعه جيدًا قبل التنزيل</p>' +
+        '<img src="' + dataUrl + '" style="max-width:100%; border-radius:10px; box-shadow:0 4px 18px rgba(0,0,0,.15);"/>' +
+        '<div class="modal-actions" style="margin-top:18px; justify-content:center;">' +
+          '<button type="button" class="btn-secondary" id="tmplPreviewCloseBtn">إغلاق</button>' +
+          '<button type="button" class="btn-primary" id="tmplPreviewDownloadBtn">⬇ تنزيل الصورة</button>' +
+        '</div>' +
+      '</div>';
+    document.body.appendChild(overlay);
+    overlay.addEventListener("click", function(e){ if(e.target === overlay) closeTmplPreviewModal(); });
+    document.getElementById("tmplPreviewCloseBtn").addEventListener("click", closeTmplPreviewModal);
+    document.getElementById("tmplPreviewDownloadBtn").addEventListener("click", downloadTmplDesign);
+  }
   function runDesignGenerate(){
     var tmpl = findDesignTemplate(tmplGenerateState.templateId);
     var rec = loadEventsData().find(function(r){ return r.id === tmplGenerateState.recordId; });
     var canvas = document.getElementById("tmplGenCanvas");
     var statusEl = document.getElementById("tmplGenStatus");
     var dlBtn = document.getElementById("tmplGenDownloadBtn");
+    var pvBtn = document.getElementById("tmplGenPreviewBtn");
     if(!tmpl || !rec || !canvas) return;
     dlBtn.disabled = true;
+    if(pvBtn) pvBtn.disabled = true;
     statusEl.textContent = "جارٍ التجهيز...";
     renderTemplateToCanvas(canvas, tmpl, rec).then(function(result){
       if(!tmplGenerateState) return;
       if(result.ok){
         dlBtn.disabled = false;
+        if(pvBtn) pvBtn.disabled = false;
         if(result.warnings.length){
           statusEl.innerHTML = '<span style="color:var(--danger); font-weight:700;">⚠️ ' + result.warnings.map(escapeHTML).join(' — ') + '</span>';
         } else {
@@ -8911,15 +8952,14 @@
         renderDesignGenerateModal();
         break;
       }
+      case "preview-tmpl-design": {
+        var pvCanvas = document.getElementById("tmplGenCanvas");
+        if(!pvCanvas || !tmplGenerateState) return;
+        openTmplPreviewModal(pvCanvas.toDataURL("image/png"));
+        break;
+      }
       case "download-tmpl-design": {
-        var canvas = document.getElementById("tmplGenCanvas");
-        if(!canvas || !tmplGenerateState) return;
-        var rec = loadEventsData().find(function(r){ return r.id === tmplGenerateState.recordId; });
-        var name = (rec && (rec.fullName || rec.husbandName || rec.deceasedName)) || "تصميم";
-        var link = document.createElement("a");
-        link.download = name.replace(/[^\w؀-ۿ ]/g, "").trim() + ".png";
-        link.href = canvas.toDataURL("image/png");
-        link.click();
+        downloadTmplDesign();
         break;
       }
       case "remove-tmpl-field": {
