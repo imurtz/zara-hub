@@ -1755,6 +1755,67 @@
       attempt(src, false);
     });
   }
+  // ===== التشكيل والخطوط: بعض الخطوط الزخرفية (مثل Falak) ما فيها أي حرف تشكيل. لما يجي اسم مكتوب بالحركات
+  // بخط كهذا، المتصفح يستبدل خط الحركة وحدها بخط احتياطي فينكسر تشكيل الكلمة ويتقطع اتصال حروفها.
+  // نقرأ جدول cmap من ملف الخط نفسه لنعرف هل يدعم الحركات فعلاً؛ لو لا، تُرسم الكلمة بدون حركات (متصلة سليمة)
+  // بدل ما تتقطع — والسجل نفسه يظل محتفظاً بالحركات كما كُتبت =====
+  var AR_MARKS_RE = /[ً-ٰٟ]/;
+  var AR_MARKS_RE_G = /[ً-ٰٟ]/g;
+  function ttfHasArabicMarks(dataUrl){
+    try{
+      var bin = atob(dataUrl.slice(dataUrl.indexOf(",") + 1));
+      var u8 = function(o){ return bin.charCodeAt(o) & 255; };
+      var u16 = function(o){ return (u8(o) << 8) | u8(o + 1); };
+      var u32 = function(o){ return ((u8(o) << 24) | (u8(o + 1) << 16) | (u8(o + 2) << 8) | u8(o + 3)) >>> 0; };
+      var tag = bin.substr(0, 4);
+      var base = 0;
+      if(tag === "ttcf") base = u32(12);
+      else if(u32(0) !== 0x00010000 && tag !== "true" && tag !== "OTTO") return true;
+      var numTables = u16(base + 4), cmapOff = -1;
+      for(var i = 0; i < numTables; i++){
+        var rec = base + 12 + i * 16;
+        if(bin.substr(rec, 4) === "cmap"){ cmapOff = u32(rec + 8); break; }
+      }
+      if(cmapOff < 0) return true;
+      var subs = [], nSub = u16(cmapOff + 2);
+      for(var s = 0; s < nSub; s++){
+        var pid = u16(cmapOff + 4 + s * 8), eid = u16(cmapOff + 6 + s * 8), off = cmapOff + u32(cmapOff + 8 + s * 8);
+        var fmt = u16(off);
+        if((fmt === 4 || fmt === 12) && (pid === 0 || (pid === 3 && (eid === 1 || eid === 10)))) subs.push({ off: off, fmt: fmt });
+      }
+      if(!subs.length) return true;
+      var has = function(sub, cp){
+        var o = sub.off;
+        if(sub.fmt === 12){
+          var n = u32(o + 12);
+          for(var g = 0; g < n; g++){
+            var go = o + 16 + g * 12;
+            if(cp >= u32(go) && cp <= u32(go + 4)) return true;
+          }
+          return false;
+        }
+        var segX2 = u16(o + 6), endO = o + 14, startO = endO + segX2 + 2, deltaO = startO + segX2, rangeO = deltaO + segX2;
+        for(var k = 0; k < segX2 / 2; k++){
+          if(cp > u16(endO + k * 2)) continue;
+          if(cp < u16(startO + k * 2)) return false;
+          var ro = u16(rangeO + k * 2);
+          if(ro === 0) return ((cp + u16(deltaO + k * 2)) & 0xFFFF) !== 0;
+          return u16(rangeO + k * 2 + ro + 2 * (cp - u16(startO + k * 2))) !== 0;
+        }
+        return false;
+      };
+      return [0x64E, 0x64F, 0x650, 0x651, 0x652].every(function(cp){
+        return subs.some(function(sub){ return has(sub, cp); });
+      });
+    } catch(e){ return true; }
+  }
+  var _fontMarksCache = {};
+  // نص الحقل جاهزاً للرسم: لو الحقل بخط مخصص ما يدعم الحركات، تُحذف الحركات من النص المرسوم فقط
+  function markSafeTextPublic(fld, t){
+    if(!t || !fld.font || fld.font.indexOf("custom:") !== 0 || !AR_MARKS_RE.test(t)) return t;
+    var id = fld.font.slice(7);
+    return _fontMarksCache[id] === false ? t.replace(AR_MARKS_RE_G, "") : t;
+  }
   function customFontFamilyNamePublic(fontId){ return "df_" + String(fontId).replace(/[^a-zA-Z0-9]/g, ""); }
   function loadCustomFontOncePublic(fontId){
     var fam = customFontFamilyNamePublic(fontId);
@@ -1764,6 +1825,7 @@
     return db.collection("designFonts").doc(fontId).get().then(function(doc){
       var fontDoc = doc.exists ? doc.data() : null;
       if(!fontDoc || !fontDoc.dataUrl || !window.FontFace) return null;
+      _fontMarksCache[fontId] = ttfHasArabicMarks(fontDoc.dataUrl);
       var face = new FontFace(fam, "url(" + fontDoc.dataUrl + ")");
       return face.load().then(function(loaded){ document.fonts.add(loaded); return fam; }).catch(function(){ return null; });
     }).catch(function(){ return null; });
@@ -1801,7 +1863,7 @@
     var naturalWidths = {};
     template.fields.forEach(function(nf){
       if(nf.type === "image") return;
-      var nText = templateFieldValuePublic(nf, record);
+      var nText = markSafeTextPublic(nf, templateFieldValuePublic(nf, record));
       if(!nText) return;
       var nWeight = nf.bold ? "700" : "400";
       var nFam = "Cairo";
@@ -1825,7 +1887,7 @@
         }
         continue;
       }
-      var text = templateFieldValuePublic(f, record);
+      var text = markSafeTextPublic(f, templateFieldValuePublic(f, record));
       if(!text) continue;
       var weight = f.bold ? "700" : "400";
       var fam = "Cairo";
