@@ -268,7 +268,9 @@ def main():
     print("أخبار بالقائمة:", len(listing))
     state = fs_get("eventsMeta/deathsSync")     # القراءة آمنة حتى بوضع --dry-run؛ الكتابة والرفع فقط هي التي تُمنع
     seen = set((state or {}).get("seen") or [])
-    have_urls = existing_source_urls()
+    # فحص السجلات الموجودة يقرأ كل سجلات الوفيات (مئات القراءات) — لا نحتاجه بالتشغيل الدوري العادي لأن وثيقة الحالة
+    # تكفي؛ فقط عند غيابها (أول تشغيل/فقدانها) أو عند سحب الأرشيف كاملاً، توفيراً لحصة قراءات Firestore اليومية
+    have_urls = existing_source_urls() if (state is None or args.backfill) else set()
     first_run = state is None
     print("أول تشغيل:" if first_run else "وثيقة الحالة موجودة —", "مُشاهَد سابقاً:", len(seen), "| سجلات موجودة برابط:", len(have_urls))
 
