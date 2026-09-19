@@ -1817,29 +1817,36 @@
     return _fontMarksCache[id] === false ? t.replace(AR_MARKS_RE_G, "") : t;
   }
   // رسم الحركات يدوياً فوق نص مرسوم بخط لا يحتوي حروف التشكيل (مثل Falak) — نفس ما يفعله Adobe:
-  // الحرف بخط الحقل نفسه (فيبقى الاسم متصلاً سليماً) والحركة من خط احتياطي تُوضع فوق/تحت حرفها.
+  // الحرف بخط الحقل نفسه (فيبقى الاسم متصلاً سليماً) والحركة تُوضع فوق/تحت حرفها. أشكال الحركات مضمّنة هنا
+  // كمسارات (من خط Cairo مفتوح الرخصة) وتُرسم بـPath2D — فلا تعتمد على أي خط محمَّل ولا على قياس المتصفح
+  // لنص الحركة، فتظهر بنفس الشكل والموضع في كل المتصفحات.
   // الحركات بلا عرض أصلاً فلا يتغير عرض السطر ولا مواضع الحروف. تُستدعى بعد رسم النص مباشرة.
-  var AR_MARKS_BELOW = /[ٍِٕٖ]/;
+  var AR_MARK_SHAPES = {"\u064b":{"d":"M-102 0V39H102V0ZM-102 91V130H102V91Z","w":204,"h":130},"\u064c":{"d":"M-68 9 -103 11 -119 93 -84 90ZM-99 0V39H-28V0ZM-22 0Q-35 63 -21 102Q-6 141 45 141Q79 141 97 123Q114 106 118 74Q121 42 112 0L75 8Q86 61 78 82Q70 103 45 103Q19 103 12 82Q4 61 16 9ZM-92 0V39H112V0Z","w":238,"h":141},"\u064d":{"d":"M-102 91V130H102V91ZM-102 0V39H102V0Z","w":204,"h":130},"\u064e":{"d":"M-102 0V39H102V0Z","w":204,"h":39},"\u064f":{"d":"M-35 0Q-49 63 -34 102Q-20 141 31 141Q65 141 83 123Q101 106 104 74Q108 42 99 0L61 8Q72 61 64 82Q56 103 31 103Q6 103 -2 82Q-9 61 2 9ZM-105 0V39H99V0Z","w":211,"h":141},"\u0650":{"d":"M-102 0V39H102V0Z","w":204,"h":39},"\u0651":{"d":"M50 0Q16 0 -2 25Q-19 51 -19 95V127H19V95Q19 64 27 51Q35 39 50 39Q72 39 80 64Q87 90 77 147L115 154Q128 83 112 41Q97 0 50 0ZM-50 0Q-97 0 -112 41Q-128 83 -115 154L-77 147Q-87 90 -79 64Q-71 39 -50 39Q-35 39 -27 51Q-19 64 -19 95V127H19V95Q19 51 2 25Q-16 0 -50 0Z","w":242,"h":154},"\u0652":{"d":"M1 0Q-24 0 -45 12Q-66 24 -78 45Q-91 65 -91 89Q-91 115 -78 135Q-66 155 -45 168Q-24 180 0 180Q25 180 46 168Q67 155 79 135Q91 115 91 89Q91 65 79 45Q67 24 46 12Q25 0 1 0ZM0 39Q22 39 37 54Q52 69 52 89Q52 111 37 127Q22 142 1 142Q-22 142 -37 127Q-52 111 -52 89Q-52 69 -37 54Q-22 39 0 39Z","w":181,"h":180},"\u0670":{"d":"M-19 0V129H19V0Z","w":39,"h":129},"\u0653":{"d":"M-93 0 -130 30 -84 95H-25Q-15 83 3 78Q21 72 38 72Q56 72 72 77Q88 83 99 94L130 69Q120 52 105 38Q90 23 70 15Q50 7 24 7Q2 7 -20 14Q-41 21 -57 35Z","w":260,"h":95},"\u0654":{"d":"M-50 2Q-67 23 -76 43Q-85 62 -85 84Q-85 114 -69 138Q-54 163 -29 176Q-3 190 27 190Q44 190 61 185Q78 181 90 172L62 123Q54 128 46 129Q38 131 30 131Q7 131 -7 118Q-20 105 -20 84Q-20 71 -15 60Q-9 48 1 34ZM-105 0V58H105V0Z","w":209,"h":190},"\u0655":{"d":"M-50 2Q-67 23 -76 43Q-85 62 -85 84Q-85 114 -69 138Q-54 163 -29 176Q-3 190 27 190Q44 190 61 185Q78 181 90 172L62 123Q54 128 46 129Q38 131 30 131Q7 131 -7 118Q-20 105 -20 84Q-20 71 -15 60Q-9 48 1 34ZM-105 0V58H105V0Z","w":209,"h":190}};
+  var AR_MARKS_BELOW = /[\u064D\u0650\u0655]/;
+  var _markPaths = {};
+  function markPath(mk){
+    if(!_markPaths[mk] && AR_MARK_SHAPES[mk] && window.Path2D) _markPaths[mk] = new Path2D(AR_MARK_SHAPES[mk].d);
+    return _markPaths[mk] || null;
+  }
   function drawMissingMarksOverlay(ctx, shownText, origText, fontSize, weight, x, y, align){
     var bases = [];
     String(origText).split("").forEach(function(ch){
       if(AR_MARKS_RE.test(ch)){ if(bases.length) bases[bases.length - 1].marks.push(ch); }
       else bases.push({ ch: ch, marks: [] });
     });
-    if(!bases.some(function(b){ return b.marks.length; })) return;
+    if(!bases.some(function(b){ return b.marks.length; })) return 0;
     // مطابقة أحرف النص المعروض (وقد فيه كشيدة مُدرَجة) مع الأحرف الأصلية — عند أي اختلاف غير متوقع
     // نتراجع بدون رسم حركات بدل المخاطرة بحركات في مواضع خاطئة
     var map = [], k = 0;
     for(var i = 0; i < shownText.length; i++){
       if(k < bases.length && shownText[i] === bases[k].ch){ map.push(k); k++; }
       else if(shownText[i] === "ـ") map.push(-1);
-      else return;
+      else return 0;
     }
-    if(k !== bases.length) return;
+    if(k !== bases.length) return 0;
     var isAlef = function(c){ return "اأإآ".indexOf(c || "~") > -1; };
     ctx.save();
     ctx.textAlign = align || "center";
-    var baseFont = ctx.font;
     var W = ctx.measureText(shownText).width;
     var L = align === "left" ? x : (align === "right" ? x - W : x - W / 2);
     var R = L + W;
@@ -1850,38 +1857,37 @@
       if(n < shownText.length && shownText[n] !== " ") s += "\u200D";
       return ctx.measureText(s).width;
     };
-    var markFont = weight + " " + Math.round(fontSize * 1.25) + 'px "Cairo", sans-serif';
+    var scale = fontSize * 1.25 / 1000;
     var gap = fontSize * 0.03;
+    var drawn = 0;
     for(var j = 0; j < shownText.length; j++){
       var bi = map[j];
       if(bi < 0 || !bases[bi].marks.length || shownText[j] === " ") continue;
       var start = j, end = j + 1;
       if(shownText[j] === "ل" && isAlef(shownText[j + 1])) end = j + 2;
       else if(isAlef(shownText[j]) && shownText[j - 1] === "ل") start = j - 1;
-      ctx.font = baseFont; ctx.textAlign = "center";
       var cx = R - (prefixW(start) + prefixW(end)) / 2;
       var lm = ctx.measureText(shownText[j]);
       var upTop = y - lm.actualBoundingBoxAscent, downBottom = y + lm.actualBoundingBoxDescent;
-      ctx.font = markFont;
-      var marks = bases[bi].marks.slice().sort(function(a, b){ return (b === "ّ" ? 1 : 0) - (a === "ّ" ? 1 : 0); });
+      var marks = bases[bi].marks.slice().sort(function(a, b){ return (b === "\u0651" ? 1 : 0) - (a === "\u0651" ? 1 : 0); });
       marks.forEach(function(mk){
-        var mm = ctx.measureText(mk), yb;
-        if(AR_MARKS_BELOW.test(mk)){
-          yb = downBottom + gap + mm.actualBoundingBoxAscent;
-          downBottom = yb + mm.actualBoundingBoxDescent;
-        } else {
-          yb = upTop - gap - mm.actualBoundingBoxDescent;
-          upTop = yb - mm.actualBoundingBoxAscent;
-        }
-        ctx.fillText(mk, cx - (mm.actualBoundingBoxRight - mm.actualBoundingBoxLeft) / 2, yb);
+        var path = markPath(mk), sh = AR_MARK_SHAPES[mk];
+        if(!path || !sh) return;
+        var hh = sh.h * scale, baseY;
+        if(AR_MARKS_BELOW.test(mk)){ baseY = downBottom + gap + hh; downBottom = baseY; }
+        else { baseY = upTop - gap; upTop = baseY - hh; }
+        ctx.save();
+        ctx.translate(cx, baseY);
+        ctx.scale(scale, -scale);
+        ctx.fill(path);
+        ctx.restore();
+        drawn++;
       });
     }
     ctx.restore();
+    return drawn;
   }
-  // خط الحركات (Cairo) لازم يكون محمّلاً قبل قياسها ورسمها
-  async function ensureMarksFont(weight){
-    try{ if(document.fonts && document.fonts.load) await document.fonts.load(weight + ' 40px "Cairo"', "\u064E"); } catch(e){}
-  }
+
   function customFontFamilyNamePublic(fontId){ return "df_" + String(fontId).replace(/[^a-zA-Z0-9]/g, ""); }
   function loadCustomFontOncePublic(fontId){
     var fam = customFontFamilyNamePublic(fontId);
@@ -1991,10 +1997,7 @@
       }
       ctx.textAlign = f.align || "center";
       ctx.fillText(renderText, f.x, f.y);
-      if(marksOverlay){
-        await ensureMarksFont(weight);
-        drawMissingMarksOverlay(ctx, renderText, rawText, drawFs, weight, f.x, f.y, f.align || "center");
-      }
+      if(marksOverlay) drawMissingMarksOverlay(ctx, renderText, rawText, drawFs, weight, f.x, f.y, f.align || "center");
     }
     return true;
   }
