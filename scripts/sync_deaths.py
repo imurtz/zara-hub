@@ -295,6 +295,10 @@ def main():
         try:
             page = fetch_entry(it)
             parsed = P.parse_entry(page, it["title"], it["url"])
+            if not re.search(r"رحمة|ذمة|فقيد", it["title"]) or re.search(r"أماكن\s+عزاء", it["title"]):
+                print("  - تجاهل خبر ليس إعلان وفاة: " + it["title"][:70])
+                seen.add(url_key(it["url"]))
+                continue
             if not parsed.get("deceasedName"):
                 raise RuntimeError("لم يُستخرج اسم المتوفى")
             photo = ""

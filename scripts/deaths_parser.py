@@ -69,9 +69,13 @@ def article_lines(page_html):
     return html_to_lines(seg[:60000])
 
 
+_TITLE_PREFIX = re.compile(r"^\s*(?:في\s+ذمة\s+الله|(?:انتقل[ت]?\s+)?(?:إلى|الى)\s+رحمة(?:\s+ال[\u0621-\u064A]{1,5})?(?:\s+تعالى)?)\s*[:：\-–]?\s*")
+
+
 def split_title(title):
-    """'إلى رحمة الله تعالى الحاج عبدالعزيز محمد مهدي الفرج' -> (المسمى، الاسم، العائلة، ما بين قوسين)."""
-    t = re.sub(r"^\s*(?:انتقل[ت]?\s+)?(?:إلى|الى)\s+رحمة\s+الله\s+تعالى\s*", "", title.strip())
+    """'إلى رحمة الله تعالى الحاج عبدالعزيز محمد مهدي الفرج' -> (المسمى، الاسم، العائلة، ما بين قوسين).
+    يدعم صياغات عناوين الموقع المتنوعة: "في ذمة الله: ..."، "إلى رحمة تعالى ..."، "إلى رحمة الله ..." بلا "تعالى"."""
+    t = title.strip()
     nick = ""
     m = re.search(r"[\(（]([^)）]*)[\)）]", t)
     if m:
@@ -79,16 +83,36 @@ def split_title(title):
         t = (t[:m.start()] + " " + t[m.end():])
     t = re.sub(r"\s+", " ", t).strip(" -–—")
     parts = t.split(" ") if t else []
+    # المسمى: أول مسمى ضمن الكلمات الأولى؛ ما قبله عبارة الاستهلال ("إلى رحمة الله تعالى" ونحوها) فتُحذف
     hon = ""
-    if len(parts) > 2 and parts[0] in HONORIFICS:
-        hon = parts.pop(0)
-    name = " ".join(parts)
+    idx = next((i for i, w in enumerate(parts[:8]) if w in HONORIFICS), -1)
+    if idx >= 0 and len(parts) - idx > 2:
+        hon = parts[idx]
+        parts = parts[idx + 1:]
+    else:
+        parts = _TITLE_PREFIX.sub("", " ".join(parts)).split(" ") if parts else []
+    name = " ".join(p for p in parts if p)
+    parts = name.split(" ") if name else []
     family = ""
     if len(parts) >= 2:
         family = parts[-1]
         if len(parts) >= 3 and parts[-2] in ("آل", "ال", "أبو", "ابو", "بن", "ابن"):
             family = parts[-2] + " " + parts[-1]
     return hon, name, family, nick
+
+
+def canon_place(p):
+    """توحيد صياغات أسماء الأماكن حتى لا تتضخم قوائم الاختيار بمرادفات نفس المكان."""
+    p = re.sub(r"\s*[،,\-–]?\s*وقف\s+الحاج\s+منصور\s+الخنيزي", " - وقف الحاج منصور الخنيزي", p)
+    p = p.replace("حسينة", "حسينية")
+    p = re.sub(r"\s*\(\s*ع\s*\)", " (ع)", p)
+    p = re.sub(r"\s*(?:وقت|أوقات)$", "", p)          # بقايا "أوقات القراءة" مقطوعة بآخر النص
+    return re.sub(r"\s+", " ", p).strip(" -–،.")
+
+
+def canon_funeral_place(p):
+    p = canon_place(p)
+    return "مغتسل مقبرة العوامية" if p in ("مغتسل العوامية", "مغتسل مقبرة العوامية") else p
 
 
 # عناوين الأقسام (بادئة اختيارية: - ■ ◼ ▣ ▪ ◀ ⬟)
@@ -339,7 +363,7 @@ def parse_entry(page_html, list_title="", url=""):
         rest = re.sub(r"^[\s\-–—:،.]*(?:من\s+)?", "", _clean_value(rest))
         place = _clean_value(rest)
         if place and not re.fullmatch(r"[\d\s:.\-]*", place):
-            rec["funeralFrom"] = place
+            rec["funeralFrom"] = canon_funeral_place(place)
 
     # ----- أماكن العزاء -----
     if condol_hdr:
@@ -377,6 +401,8 @@ def parse_entry(page_html, list_title="", url=""):
     start_bits = []
     rec["condolenceMenPlace"], rec["condolenceMenTimes"] = parse_condol(men, start_bits)
     rec["condolenceWomenPlace"], rec["condolenceWomenTimes"] = parse_condol(women, start_bits)
+    rec["condolenceMenPlace"] = canon_place(rec["condolenceMenPlace"])
+    rec["condolenceWomenPlace"] = canon_place(rec["condolenceWomenPlace"])
     if start_bits and not rec.get("condolenceStart"):
         rec["condolenceStart"] = start_bits[0]
     rec["condolenceMenLink"] = mlink[0] if mlink else ""
