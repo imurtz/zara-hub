@@ -5003,6 +5003,8 @@
         { key: "funeralTimeText", label: "وقت التشييع (12 ساعة)" }, { key: "relativesBlock", label: "كتلة ذوو الفقيد" },
         { key: "condolenceBlock", label: "كتلة أماكن العزاء" }
       ],
+      // عنوان بطاقة مهمة النشر: اسم المتوفى بمسماه وتاريخ الوفاة (بدل أول ثلاثة حقول = السنتان + المسمى)
+      publishTitle: function(r){ return [((r.honorific || "") + " " + (r.deceasedName || "")).trim(), r.deathDateHijri || r.gregorianYear].filter(Boolean).join(" — "); },
       photoLabel: "صورة المتوفى",
       dateSource: { field: "deathDateGregorian", hijriDate: "deathDateHijri", monthGreg: "deathMonthGregorian", monthHijri: "deathMonthHijri", dayName: "deathDay" },
       columns: ["deceasedName", "deceasedFamily", "gender", "ageCategory", "gregorianYear", "deathMonthGregorian"],
@@ -7235,7 +7237,7 @@
       var status = statuses[r.id] || "pending";
       var tpl = pickBestTextTemplateForRecord(templates[r.category] || [], r);
       var text = tpl ? renderTemplateText(tpl.text, r) : "";
-      var title = cat.fields.slice(0, 3).map(function(f){ return r[f.key]; }).filter(Boolean).join(" — ") || "(بدون بيانات)";
+      var title = (cat.publishTitle ? cat.publishTitle(r) : cat.fields.slice(0, 3).map(function(f){ return r[f.key]; }).filter(Boolean).join(" — ")) || "(بدون بيانات)";
       var expanded = !!eventsUI.expandedPublishIds[r.id];
       var checked = !!eventsUI.publishSelectedIds[r.id];
       var html = '<div class="report-section-card publish-row' + (checked ? " publish-row-selected" : "") + '">' +
