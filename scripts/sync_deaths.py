@@ -174,7 +174,23 @@ def upload_photo(photo_url):
         return ""
 
 
-def build_record(parsed, list_title, url, photo_r2):
+def hijri_to_gregorian_approx(hy, hm, hd):
+    """تقويم هجري جدولي -> ميلادي (تقريبي ±يوم واحد عن أم القرى) — يُستعمل فقط لتقدير الشهر/السنة الميلادية عند غياب التاريخ الميلادي."""
+    jd = (11 * hy + 3) // 30 + 354 * hy + 30 * hm - (hm - 1) // 2 + hd + 1948440 - 385
+    l = jd + 68569
+    n = 4 * l // 146097
+    l = l - (146097 * n + 3) // 4
+    i = 4000 * (l + 1) // 1461001
+    l = l - 1461 * i // 4 + 31
+    j = 80 * l // 2447
+    d = l - 2447 * j // 80
+    l = j // 11
+    m = j + 2 - 12 * l
+    y = 100 * (n - 49) + i + l
+    return y, m, d
+
+
+def build_record(parsed, list_title, url, photo_r2, prev_ts=0):
     rec = {k: v for k, v in parsed.items() if v not in ("", None) and k not in ("photoUrl", "nickname")}
     nick = parsed.get("nickname")
     notes = []
@@ -182,6 +198,16 @@ def build_record(parsed, list_title, url, photo_r2):
         notes.append("اللقب/الكنية: " + nick)
     if not rec.get("deathDateGregorian") and not rec.get("deathDateHijri"):
         notes.append("لم يُستخرج تاريخ الوفاة تلقائياً — راجع الخبر بموقع الجمعية")
+    est_ts = 0
+    if not parsed.get("deathDateGregorian") and parsed.get("deathDateHijri"):
+        m = re.match(r"(\d+)\s+(.+?)\s+(\d{4})", parsed["deathDateHijri"])
+        if m and m.group(2) in P.HIJRI_MONTHS:
+            gy, gm, gd = hijri_to_gregorian_approx(int(m.group(3)), P.HIJRI_MONTHS.index(m.group(2)) + 1, int(m.group(1)))
+            if 1990 <= gy <= 2100:
+                rec["deathMonthGregorian"] = P.GREG_MONTHS[gm - 1]
+                rec["gregorianYear"] = str(gy)
+                est_ts = int(time.mktime((gy, gm, gd, 12, 0, 0, 0, 0, -1)) * 1000)
+                notes.append("الشهر والسنة الميلادية مقدَّران من التاريخ الهجري (التاريخ الميلادي بالخبر غير صحيح)")
     if notes:
         rec["notes"] = " — ".join(notes)
     rec["category"] = "deaths"
@@ -190,13 +216,17 @@ def build_record(parsed, list_title, url, photo_r2):
     if photo_r2:
         rec["photo"] = photo_r2
     now = int(time.time() * 1000)
-    ts = now
+    # ترتيب العرض بالجدول ("الأحدث إدخالاً أولاً") يعتمد createdAt، فنجعله تاريخ الوفاة نفسه ليظهر الأحدث وفاةً أولاً.
+    # لو ما عُرف التاريخ: بعد أقدم منه مباشرة (prev_ts) حتى يبقى بمكانه الزمني التقريبي حسب ترتيبه بقائمة الموقع
+    ts = 0
     if rec.get("deathDateGregorian"):
         try:
             y, m, d = (int(x) for x in rec["deathDateGregorian"].split("-"))
             ts = int(time.mktime((y, m, d, 12, 0, 0, 0, 0, -1)) * 1000)
         except Exception:  # noqa: BLE001
-            ts = now
+            ts = 0
+    if not ts:
+        ts = est_ts or ((prev_ts + 60000) if prev_ts else now)
     rid = "evt-" + format(now, "x") + "".join(random.choice("abcdefghijklmnopqrstuvwxyz0123456789") for _ in range(6))
     rec["id"] = rid
     rec["createdAt"] = ts
@@ -242,7 +272,10 @@ def main():
     first_run = state is None
     print("أول تشغيل:" if first_run else "وثيقة الحالة موجودة —", "مُشاهَد سابقاً:", len(seen), "| سجلات موجودة برابط:", len(have_urls))
 
-    fresh = [it for it in listing if url_key(it["url"]) not in seen and it["url"] not in have_urls]
+    if args.backfill:
+        fresh = [it for it in listing if it["url"] not in have_urls]      # الأرشيف كاملاً: كل خبر ليس له سجل بعد
+    else:
+        fresh = [it for it in listing if url_key(it["url"]) not in seen and it["url"] not in have_urls]
     to_import, to_mark = [], []
     if first_run and not args.backfill:
         to_import = fresh[:args.initial_count]
@@ -254,7 +287,7 @@ def main():
         to_import = to_import[:args.max_per_run]
     print("جديد للسحب:", len(to_import), "| يُعلَّم مُشاهَداً بلا سحب:", len(to_mark))
 
-    imported, failed = 0, 0
+    imported, failed, prev_ts = 0, 0, 0
     opt_new = {"deathHonorifics": set(), "funeralFrom": set(), "condolencePlaces": set(), "ageCategories": set()}
     for it in reversed(to_import):          # الأقدم أولاً ليتطابق ترتيب الإدخال مع الترتيب الزمني
         try:
@@ -265,7 +298,8 @@ def main():
             photo = ""
             if parsed.get("photoUrl") and not args.dry_run:
                 photo = upload_photo(parsed["photoUrl"])
-            rec = build_record(parsed, it["title"], it["url"], photo)
+            rec = build_record(parsed, it["title"], it["url"], photo, prev_ts)
+            prev_ts = rec["createdAt"]
             label = "%s %s | %s | %s" % (rec.get("honorific", ""), rec["deceasedName"], rec.get("deathDateGregorian", "؟"), rec.get("funeralFrom", ""))
             if args.dry_run:
                 print("  [dry] " + label)
@@ -273,7 +307,8 @@ def main():
             else:
                 fs_patch("events/" + rec["id"], {k: v for k, v in rec.items()})
                 seen.add(url_key(it["url"]))
-                fs_patch("eventsMeta/deathsSync", {"seen": sorted(seen), "lastRun": int(time.time() * 1000)}, mask=["seen", "lastRun"])
+                if imported % 25 == 24:
+                    fs_patch("eventsMeta/deathsSync", {"seen": sorted(seen), "lastRun": int(time.time() * 1000)}, mask=["seen", "lastRun"])
                 print("  ✓ " + label)
             for key, fld in (("deathHonorifics", "honorific"), ("funeralFrom", "funeralFrom"), ("ageCategories", "ageCategory"),
                              ("condolencePlaces", "condolenceMenPlace"), ("condolencePlaces", "condolenceWomenPlace")):

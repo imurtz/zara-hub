@@ -4996,6 +4996,13 @@
         { key: "sourceUrl", label: "رابط الخبر بموقع الجمعية", type: "text", hint: "يُملأ تلقائياً عند سحب الخبر من الموقع" },
         { key: "notes", label: "ملاحظات", type: "text", hint: "أي ملاحظات إضافية — اختياري" }
       ],
+      // متغيرات جاهزة لقوالب النشر تُبنى من عدة حقول (انظر eventTemplateComputedVars) — تظهر بلوحة "قوالب التهنئة والتعازي"
+      templateExtraVars: [
+        { key: "deceasedFullName", label: "المسمى + الاسم" }, { key: "deathDateLine", label: "سطر تاريخ الوفاة" },
+        { key: "deathDateGregorianText", label: "التاريخ الميلادي مكتوباً" }, { key: "funeralLine", label: "سطر التشييع" },
+        { key: "funeralTimeText", label: "وقت التشييع (12 ساعة)" }, { key: "relativesBlock", label: "كتلة ذوو الفقيد" },
+        { key: "condolenceBlock", label: "كتلة أماكن العزاء" }
+      ],
       photoLabel: "صورة المتوفى",
       dateSource: { field: "deathDateGregorian", hijriDate: "deathDateHijri", monthGreg: "deathMonthGregorian", monthHijri: "deathMonthHijri", dayName: "deathDay" },
       columns: ["deceasedName", "deceasedFamily", "gender", "ageCategory", "gregorianYear", "deathMonthGregorian"],
@@ -5972,7 +5979,11 @@
       graduates: [{ id: "tpl-grad-1", text: "🎓 تهانينا لـ {fullName} بمناسبة التخرج من {university} تخصص {specialization} ({degree})." }],
       births: [{ id: "tpl-birth-1", text: "😊 مبارك المولود {fullName} لعائلة {family}، بارك الله لكم في الموهوب وشكرتم الواهب." }],
       marriages: [{ id: "tpl-marriage-1", text: "💍 مبارك الزواج بين {husbandName} و{wifeName}، بالرفاء والبنين." }],
-      deaths: [{ id: "tpl-death-1", text: "🤲 تعازينا الحارة لعائلة {deceasedFamily} بوفاة {deceasedName}، رحمه الله وأسكنه فسيح جناته وألهم أهله الصبر والسلوان." }],
+      deaths: [
+        { id: "tpl-death-f", condFieldKey: "gender", condValue: "أنثى", text: "*🤲 إنا لله وإنا إليه راجعون*\n\nانتقل إلى رحمة الله تعالى\n*{deceasedFullName}*\n\n{deathDateLine}\n{funeralLine}\n\n{relativesBlock}\n\n{condolenceBlock}\n\n*يتقدم رئيس وأعضاء مجلس إدارة جمعية العوامية الخيرية بخالص التعازي والمواساة*\n*رحم الله من يقرأ لروحها سورة الفاتحة*\n——————\n*القسم الإعلامي - خيرية العوامية*" },
+        { id: "tpl-death-m", condFieldKey: "gender", condValue: "ذكر", text: "*🤲 إنا لله وإنا إليه راجعون*\n\nانتقل إلى رحمة الله تعالى\n*{deceasedFullName}*\n\n{deathDateLine}\n{funeralLine}\n\n{relativesBlock}\n\n{condolenceBlock}\n\n*يتقدم رئيس وأعضاء مجلس إدارة جمعية العوامية الخيرية بخالص التعازي والمواساة*\n*رحم الله من يقرأ لروحه سورة الفاتحة*\n——————\n*القسم الإعلامي - خيرية العوامية*" },
+        { id: "tpl-death-1", text: "*🤲 إنا لله وإنا إليه راجعون*\n\nانتقل إلى رحمة الله تعالى\n*{deceasedFullName}*\n\n{deathDateLine}\n{funeralLine}\n\n{relativesBlock}\n\n{condolenceBlock}\n\n*يتقدم رئيس وأعضاء مجلس إدارة جمعية العوامية الخيرية بخالص التعازي والمواساة*\n*رحم الله من يقرأ لروح الفقيد/ة سورة الفاتحة*\n——————\n*القسم الإعلامي - خيرية العوامية*" }
+      ],
       congrats: [{ id: "tpl-congrats-1", text: "🎉 تهانينا لـ {fullName} بمناسبة {occasionType}، بارك الله لكم ودمتم بخير." }]
     };
     var p = _eventsTemplatesCache;
@@ -6274,6 +6285,25 @@
   }
 
   var _eventsRespCache = {};
+  // حالة المزامنة التلقائية لأخبار الوفيات من موقع الجمعية (scripts/sync_deaths.py — تعمل كل نصف ساعة بـGitHub Actions)
+  var _deathsSyncCache = null;
+  db.collection("eventsMeta").doc("deathsSync").onSnapshot(function(doc){
+    var d = doc.exists ? doc.data() : null;
+    _deathsSyncCache = d ? { lastRun: d.lastRun || 0, lastImported: d.lastImported || 0, lastFailed: d.lastFailed || 0, lastError: d.lastError || "" } : null;
+    eventsFirestoreRefresh();
+  }, function(err){ console.error("deathsSync snapshot error", err); });
+  function deathsSyncBadgeHTML(){
+    var st = _deathsSyncCache;
+    if(!st || !st.lastRun) return ' <span style="color:var(--ink-soft);">· 🔄 مزامنة تلقائية مع أخبار الوفيات بموقع الجمعية (لم تعمل بعد)</span>';
+    var mins = Math.max(0, Math.round((Date.now() - st.lastRun) / 60000));
+    var ago = mins < 2 ? "قبل لحظات" : (mins < 90 ? "قبل " + mins + " دقيقة" : (mins < 2880 ? "قبل " + Math.round(mins / 60) + " ساعة" : "قبل " + Math.round(mins / 1440) + " يوم"));
+    // لو انقطعت المزامنة أكثر من ٣ ساعات (المفروض كل نصف ساعة) أو فيها فشل، نلفت الانتباه بدل الصمت
+    var stale = mins > 180;
+    var color = (stale || st.lastFailed) ? "var(--danger)" : "var(--teal-dark)";
+    var extra = st.lastFailed ? " — ⚠️ تعذّر سحب " + st.lastFailed + " خبراً بآخر تشغيل" : (stale ? " — ⚠️ المزامنة متوقفة، راجع تبويب Actions بـGitHub" : "");
+    return ' <span style="color:' + color + ';">· 🔄 مزامنة تلقائية مع أخبار الوفيات بموقع الجمعية — آخر فحص ' + ago + extra + '</span>';
+  }
+
   db.collection("eventsMeta").doc("resp").onSnapshot(function(doc){
     _eventsRespCache = doc.exists ? doc.data() : {};
     eventsFirestoreRefresh();
@@ -6861,7 +6891,7 @@
     });
     html += '</div>';
 
-    html += '<div style="font-size:12px; color:var(--ink-soft); margin-bottom:12px;">سجلات <b style="color:var(--teal-dark);">' + cat.label + '</b> — بيانات مشتركة يشترك في تعبئتها كل من لديه صلاحية الوصول لهذا القسم' + eventsRespBadgeHTML(cat.key) + '</div>';
+    html += '<div style="font-size:12px; color:var(--ink-soft); margin-bottom:12px;">سجلات <b style="color:var(--teal-dark);">' + cat.label + '</b> — بيانات مشتركة يشترك في تعبئتها كل من لديه صلاحية الوصول لهذا القسم' + eventsRespBadgeHTML(cat.key) + (cat.key === "deaths" ? deathsSyncBadgeHTML() : "") + '</div>';
 
     // نظام ترتيب موحّد وواضح: قائمة منسدلة واحدة تعكس دائمًا الترتيب الفعلي
     // المطبَّق على الجدول (بدل زر تبديل ثنائي قد يتعارض بصمت مع الترتيب بالنقر
@@ -7059,8 +7089,62 @@
     if(general) return general;
     return list[0];
   }
+  // متغيرات تُبنى وقت العرض من بيانات السجل (لا تُخزَّن): تجمّع عدة حقول بسطر/كتلة جاهزة بصياغة منشور الجمعية،
+  // وتكون فارغة تماماً (بدون عنوانها) لو ما فيه بيانات — فلا تظهر أسطر يتيمة مثل "أماكن العزاء:" بلا محتوى
+  function eventTime12(t){
+    var m = /^(\d{1,2}):(\d{2})$/.exec(String(t || "").trim());
+    if(!m) return "";
+    var h = parseInt(m[1], 10);
+    return ("0" + ((h % 12) || 12)).slice(-2) + ":" + m[2] + (h >= 12 ? "م" : "ص");
+  }
+  function eventTemplateComputedVars(rec){
+    var out = {};
+    if(!rec || rec.category !== "deaths") return out;
+    var fem = rec.gender === "أنثى", fq = fem ? "الفقيدة" : "الفقيد";
+    out.deceasedFullName = ((rec.honorific || "") + " " + (rec.deceasedName || "")).trim();
+    var gregText = "";
+    var gp = String(rec.deathDateGregorian || "").split("-");
+    if(gp.length === 3 && parseInt(gp[2], 10)) gregText = parseInt(gp[2], 10) + " " + (GREG_MONTHS[parseInt(gp[1], 10) - 1] || "") + " " + gp[0] + "م";
+    out.deathDateGregorianText = gregText;
+    out.funeralTimeText = eventTime12(rec.funeralTime);
+    var dl = [];
+    if(rec.deathDay) dl.push("يوم " + rec.deathDay);
+    if(rec.deathDateHijri) dl.push(String(rec.deathDateHijri).replace(/\s+هـ$/, "هـ"));
+    if(gregText) dl.push("الموافق " + gregText);
+    out.deathDateLine = dl.length ? "📅 *تاريخ الوفاة:* " + dl.join(" ") : "";
+    var fl = [];
+    if(rec.funeralDay) fl.push(rec.funeralDay);
+    if(out.funeralTimeText) fl.push(out.funeralTimeText);
+    if(rec.funeralFrom) fl.push(/^من\s/.test(rec.funeralFrom) ? rec.funeralFrom : "من " + rec.funeralFrom);
+    out.funeralLine = fl.length ? "⬟ *وقت ومكان التشييع:* " + fl.join(" | ") : "";
+    var rl = [];
+    [["spouseName", fem ? "زوج" : "زوجة"], ["sons", "أبناء"], ["daughters", "بنات"], ["brothers", "إخوان"], ["sisters", "أخوات"]].forEach(function(p){
+      if(rec[p[0]]) rl.push("■ *" + p[1] + " " + fq + ":* " + rec[p[0]]);
+    });
+    if(rec.otherRelatives) String(rec.otherRelatives).split("\n").forEach(function(l){ if(l.trim()) rl.push("■ " + l.trim()); });
+    out.relativesBlock = rl.length ? "◼ *ذوو " + fq + ":*\n" + rl.join("\n") : "";
+    var cl = [];
+    function condolLine(label, place, times, link){
+      if(!place && !times && !link) return;
+      var t = "◀ *" + label + ":* " + (place || "");
+      if(times) t += "\n⏱ أوقات القراءة: " + times;
+      if(link) t += "\n🔗 " + link;
+      cl.push(t.trim());
+    }
+    condolLine("للرجال", rec.condolenceMenPlace, rec.condolenceMenTimes, rec.condolenceMenLink);
+    condolLine("للنساء", rec.condolenceWomenPlace, rec.condolenceWomenTimes, rec.condolenceWomenLink);
+    out.condolenceBlock = cl.length ? "▣ *أماكن العزاء" + (rec.condolenceStart ? " (بدءًا من " + rec.condolenceStart + ")" : "") + "*\n" + cl.join("\n") : "";
+    return out;
+  }
   function renderTemplateText(text, rec){
-    return String(text || "").replace(/\{(\w+)\}/g, function(m, key){ return (rec[key] != null && rec[key] !== "") ? rec[key] : ""; });
+    var vars = rec || {};
+    var extra = eventTemplateComputedVars(vars);
+    var txt = String(text || "").replace(/\{(\w+)\}/g, function(m, key){
+      if(extra[key] !== undefined) return extra[key];
+      return (vars[key] != null && vars[key] !== "") ? vars[key] : "";
+    });
+    // متغيرات فارغة تترك أسطراً فارغة متتالية — نقلّصها لسطر فارغ واحد
+    return extra.deceasedFullName !== undefined ? txt.replace(/\n{3,}/g, "\n\n").trim() : txt;
   }
   function copyToClipboard(text){
     if(navigator.clipboard && navigator.clipboard.writeText){
@@ -7272,7 +7356,7 @@
     html += '<div class="cat-tabs">' + EVENTS_CATEGORIES.map(function(c){
       return '<button type="button" class="cat-tab' + (c.key === catKey ? " active" : "") + '" data-action="set-templates-category" data-cat="' + c.key + '"><span class="icon">' + c.icon + '</span>' + c.label + '</button>';
     }).join("") + '</div>';
-    html += '<div class="template-placeholders">المتغيرات المتاحة: ' + cat.fields.map(function(f){ return '<code>{' + f.key + '}</code>'; }).join(" ") + '</div>';
+    html += '<div class="template-placeholders">المتغيرات المتاحة: ' + cat.fields.concat(cat.templateExtraVars || []).map(function(f){ return '<code>{' + f.key + '}</code>'; }).join(" ") + '</div>';
     if(!list.length) html += '<p class="report-empty">لا توجد قوالب بعد لهذا التصنيف</p>';
     var condHint = list.length > 1 ? '<p class="hint" style="margin:0 0 10px;">عند وجود أكثر من قالب لنفس التصنيف: اختر حقل الشرط، ثم إما "أي قيمة معبأة" (يُستخدم القالب إذا كان الحقل معبأ وليس "بدون" — مثل مرتبة الشرف) أو قيمة محددة (يُستخدم فقط إذا ساوت قيمة الحقل هذه بالضبط — مثل الجنس ذكر/أنثى). القالب غير المشروط يُستخدم كافتراضي إذا ما طابق أي قالب مشروط.</p>' : '';
     html += condHint;

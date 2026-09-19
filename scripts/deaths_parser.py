@@ -345,12 +345,13 @@ def parse_entry(page_html, list_title="", url=""):
     if condol_hdr:
         mc = re.search(r"\(([^)]*)\)", condol_hdr)
         if mc:
-            rec["condolenceStart"] = _clean_value(re.sub(r"^\s*(?:بدءا|بدءً|بدءًا|بدءاً|بدأ|تبدأ)\s*(?:من)?\s*", "", mc.group(1)))
+            hd = re.sub("[\u064B-\u065F\u0670]", "", mc.group(1))       # "بدءًا/بدءاً" بتنوينها
+            rec["condolenceStart"] = _clean_value(re.sub(r"^\s*(?:بدءا|بدأ|تبدأ)\s*(?:من)?\s*", "", hd))
 
     def parse_condol(lines, start_out):
         places, times = [], []
         for x in lines:
-            x = _clean_value(x.replace("⚠️", " "))
+            x = _clean_value(re.sub("[\u064B-\u065F\u0670]", "", x.replace("⚠️", " ")))
             if not x or x in ("-", ":"):
                 continue
             m0 = re.match(r"^(?:ت[بب]دأ|بدءا[ًً]?|بدءاً)\s+(.+?)\s+في\s+(.+)$", x)
