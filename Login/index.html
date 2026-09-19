@@ -6294,6 +6294,59 @@
     _deathsSyncCache = d ? { lastRun: d.lastRun || 0, lastImported: d.lastImported || 0, lastFailed: d.lastFailed || 0, lastError: d.lastError || "" } : null;
     eventsFirestoreRefresh();
   }, function(err){ console.error("deathsSync snapshot error", err); });
+  // زر "مزامنة الآن" (للأدمن): يشغّل مهمة المزامنة على GitHub فوراً بدل انتظار الجدولة الدورية.
+  // يحتاج مفتاح GitHub خاصاً (Fine-grained، لمستودع zara-hub فقط، صلاحية Actions: Read and write) يُدخله الأدمن مرة واحدة
+  // ويُحفظ بمتصفحه هو فقط (localStorage) — لا يُوضع بالكود ولا يصل لأي طرف آخر، لأن الصفحة عامة فأي مفتاح بالكود يتسرّب
+  var GH_SYNC_TOKEN_KEY = "zaraGhSyncToken";
+  var deathsSyncRunning = false;
+  function ghSyncToken(){ try{ return localStorage.getItem(GH_SYNC_TOKEN_KEY) || ""; }catch(e){ return ""; } }
+  function runDeathsSyncNow(btn){
+    if(deathsSyncRunning) return;
+    var token = ghSyncToken();
+    if(!token){
+      token = (window.prompt("للمزامنة الفورية الصق مفتاح GitHub الخاص بك (يُحفظ بهذا المتصفح فقط).\n\nيُنشأ من: github.com/settings/personal-access-tokens/new\n— Repository access: zara-hub فقط\n— Permissions ← Actions: Read and write") || "").trim();
+      if(!token) return;
+      try{ localStorage.setItem(GH_SYNC_TOKEN_KEY, token); }catch(e){}
+    }
+    deathsSyncRunning = true;
+    var startedAt = Date.now();
+    var label = btn ? btn.textContent : "";
+    if(btn){ btn.disabled = true; btn.textContent = "جارٍ التشغيل..."; }
+    var finish = function(msg){
+      deathsSyncRunning = false;
+      if(btn){ btn.disabled = false; btn.textContent = label; }
+      if(msg) showToast(msg);
+    };
+    fetch("https://api.github.com/repos/imurtz/zara-hub/actions/workflows/sync-deaths.yml/dispatches", {
+      method: "POST",
+      headers: { "Authorization": "Bearer " + token, "Accept": "application/vnd.github+json", "Content-Type": "application/json", "X-GitHub-Api-Version": "2022-11-28" },
+      body: JSON.stringify({ ref: "main" })
+    }).then(function(res){
+      if(res.status === 204){
+        showToast("🔄 بدأت المزامنة — النتيجة خلال دقيقة تقريباً");
+        // نراقب وثيقة الحالة: أول تحديث لوقت آخر فحص بعد الضغط = انتهت المزامنة
+        var tries = 0;
+        var timer = setInterval(function(){
+          tries++;
+          var st = _deathsSyncCache;
+          if(st && st.lastRun > startedAt){
+            clearInterval(timer);
+            finish(st.lastFailed ? "⚠️ اكتملت لكن تعذّر سحب " + st.lastFailed + " خبراً" : (st.lastImported ? "✔ سُحب " + st.lastImported + " خبراً جديداً" : "✔ لا توجد أخبار جديدة بموقع الجمعية"));
+          } else if(tries > 36){
+            clearInterval(timer);
+            finish("لم تكتمل بعد — تحقق من سطر آخر فحص بعد قليل");
+          }
+        }, 5000);
+        return;
+      }
+      if(res.status === 401 || res.status === 403 || res.status === 404){
+        try{ localStorage.removeItem(GH_SYNC_TOKEN_KEY); }catch(e){}
+        finish("المفتاح غير صالح أو ينقصه صلاحية Actions: Read and write — اضغط الزر وأدخل مفتاحاً جديداً");
+        return;
+      }
+      finish("تعذّر تشغيل المزامنة (" + res.status + ")");
+    }).catch(function(){ finish("تعذّر الاتصال بـGitHub — تحقق من الإنترنت"); });
+  }
   function deathsSyncBadgeHTML(){
     var st = _deathsSyncCache;
     if(!st || !st.lastRun) return ' <span style="color:var(--ink-soft);">· 🔄 مزامنة تلقائية مع أخبار الوفيات بموقع الجمعية (لم تعمل بعد)</span>';
@@ -6893,7 +6946,7 @@
     });
     html += '</div>';
 
-    html += '<div style="font-size:12px; color:var(--ink-soft); margin-bottom:12px;">سجلات <b style="color:var(--teal-dark);">' + cat.label + '</b> — بيانات مشتركة يشترك في تعبئتها كل من لديه صلاحية الوصول لهذا القسم' + eventsRespBadgeHTML(cat.key) + (cat.key === "deaths" ? deathsSyncBadgeHTML() : "") + '</div>';
+    html += '<div style="font-size:12px; color:var(--ink-soft); margin-bottom:12px;">سجلات <b style="color:var(--teal-dark);">' + cat.label + '</b> — بيانات مشتركة يشترك في تعبئتها كل من لديه صلاحية الوصول لهذا القسم' + eventsRespBadgeHTML(cat.key) + (cat.key === "deaths" ? deathsSyncBadgeHTML() + (currentUser && currentUser.role === "admin" ? ' <button type="button" class="btn-secondary" data-action="deaths-sync-now" style="padding:3px 12px; font-size:12px; margin-inline-start:6px;">🔄 مزامنة الآن</button>' : "") : "") + '</div>';
 
     // نظام ترتيب موحّد وواضح: قائمة منسدلة واحدة تعكس دائمًا الترتيب الفعلي
     // المطبَّق على الجدول (بدل زر تبديل ثنائي قد يتعارض بصمت مع الترتيب بالنقر
@@ -8652,6 +8705,7 @@
         refreshEventsPublishList();
         break;
       }
+      case "deaths-sync-now": runDeathsSyncNow(btn); break;
       case "clear-publish-selection": eventsUI.publishSelectedIds = {}; refreshEventsPublishList(); break;
       case "copy-publish-text": copyToClipboard(btn.dataset.text); break;
       case "share-publish-whatsapp": shareRecordToWhatsApp(btn.dataset.id, btn.dataset.text, btn); break;
