@@ -4807,6 +4807,8 @@
   // ===========================================================================
   var GREG_MONTHS = ["يناير","فبراير","مارس","أبريل","مايو","يونيو","يوليو","أغسطس","سبتمبر","أكتوبر","نوفمبر","ديسمبر"];
   var HIJRI_MONTHS = ["محرم","صفر","ربيع الأول","ربيع الآخر","جمادى الأولى","جمادى الآخرة","رجب","شعبان","رمضان","شوال","ذو القعدة","ذو الحجة"];
+  var AR_WEEKDAYS = ["السبت","الأحد","الاثنين","الثلاثاء","الأربعاء","الخميس","الجمعة"];
+  var AR_WEEKDAY_BY_JS_INDEX = ["الأحد","الاثنين","الثلاثاء","الأربعاء","الخميس","الجمعة","السبت"];
 
   // تحويل ميلادي → هجري (خوارزمية جدولية معروفة — تقريب حسابي، قد يختلف بيوم عن تقويم أم القرى الرسمي أحياناً)
   function gregorianToHijri(gYear, gMonth, gDay){
@@ -4875,7 +4877,8 @@
       hijriYear: String(h.year),
       gregorianMonth: GREG_MONTHS[gm - 1] || "",
       hijriMonth: HIJRI_MONTHS[h.month - 1] || "",
-      hijriDateText: h.day + " " + (HIJRI_MONTHS[h.month - 1] || "") + " " + h.year + "هـ"
+      hijriDateText: h.day + " " + (HIJRI_MONTHS[h.month - 1] || "") + " " + h.year + "هـ",
+      dayName: AR_WEEKDAY_BY_JS_INDEX[new Date(gy, gm - 1, gd).getDay()] || ""
     };
   }
 
@@ -4958,21 +4961,43 @@
     },
     {
       key: "deaths", label: "الوفيات", icon: EVICON.memorial, color: "#4d6ea9",
+      // متغيرات حالة الوفاة مبنيّة على ما تنشره الجمعية فعلياً بقسم "أخبار الوفيات" بموقعها (awamiach.sa):
+      // المسمى والاسم والعائلة، الصورة، تاريخ الوفاة (يوم + هجري + ميلادي)، التشييع (يوم/وقت/مكان)،
+      // ذوو الفقيد (الزوج/ة، الأبناء، البنات، الإخوان، الأخوات)، وأماكن العزاء للرجال والنساء وأوقات القراءة وروابط التعزية
       fields: [
-        { key: "gregorianYear", label: "السنة الميلادية", type: "growSelect", optKey: "gregorianYears", hint: "تُملأ تلقائياً بسنة التسجيل — عدّلها فقط إذا كانت الوفاة في سنة سابقة" },
-        { key: "hijriYear", label: "السنة الهجرية", type: "growSelect", optKey: "hijriYears", hint: "تُملأ تلقائياً بسنة التسجيل — عدّلها فقط إذا كانت الوفاة في سنة سابقة" },
-        { key: "ageCategory", label: "الفئة العمرية", type: "growSelect", optKey: "ageCategories", hint: "الفئة العمرية التقريبية للمتوفى عند الوفاة" },
+        { key: "gregorianYear", label: "السنة الميلادية", type: "growSelect", optKey: "gregorianYears", derived: true, hint: "تُحسب تلقائياً من تاريخ الوفاة" },
+        { key: "hijriYear", label: "السنة الهجرية", type: "growSelect", optKey: "hijriYears", derived: true, hint: "تُحسب تلقائياً من تاريخ الوفاة" },
+        { key: "honorific", label: "المسمى قبل الاسم", type: "growSelect", optKey: "deathHonorifics", hint: "مثل: الحاج، الحاجة، الشاب، الشابة، الطفل، الطفلة — يظهر قبل الاسم بالتصميم" },
+        { key: "deceasedName", label: "اسم المتوفى", type: "text", hint: "الاسم الكامل بدون المسمى (الحاج/الحاجة...)" },
+        { key: "deceasedFamily", label: "عائلة المتوفى", type: "text", hint: "اسم عائلة المتوفى أو قبيلته، مثل: الفرج، آل ربح" },
         { key: "gender", label: "الجنس", type: "select", options: ["ذكر", "أنثى"], hint: "حدد جنس المتوفى" },
-        { key: "deceasedFamily", label: "عائلة المتوفى", type: "text", hint: "اسم عائلة المتوفى أو قبيلته" },
-        { key: "deceasedName", label: "اسم المتوفى", type: "text", hint: "الاسم الكامل للمتوفى" },
-        { key: "deathDateHijri", label: "تاريخ الوفاة (هجري)", type: "text", hint: "مثال: 5 شوال 1447هـ" },
-        { key: "deathDateGregorian", label: "تاريخ الوفاة (ميلادي)", type: "date", hint: "تاريخ الوفاة الفعلي بالتقويم الميلادي" },
-        { key: "deathMonthGregorian", label: "شهر الوفاة (ميلادي)", type: "select", options: GREG_MONTHS, hint: "شهر الوفاة بالتقويم الميلادي" },
-        { key: "deathMonthHijri", label: "شهر الوفاة (هجري)", type: "select", options: HIJRI_MONTHS, hint: "شهر الوفاة بالتقويم الهجري" },
-        { key: "funeralFrom", label: "التشييع من", type: "growSelect", optKey: "funeralFrom", hint: "المكان الذي ينطلق منه التشييع، مثل اسم المسجد" },
-        { key: "funeralTime", label: "وقت التشييع", type: "time", hint: "الوقت المحدد لصلاة الجنازة والتشييع" },
+        { key: "ageCategory", label: "الفئة العمرية", type: "growSelect", optKey: "ageCategories", hint: "الفئة العمرية التقريبية للمتوفى عند الوفاة" },
+        { key: "deathDateGregorian", label: "تاريخ الوفاة (ميلادي)", type: "date", hint: "تاريخ الوفاة الفعلي — اليوم والتاريخ الهجري والشهر والسنة تُحسب تلقائياً منه" },
+        { key: "deathDay", label: "يوم الوفاة", type: "select", options: AR_WEEKDAYS, derived: true, hint: "يُحسب تلقائياً" },
+        { key: "deathDateHijri", label: "تاريخ الوفاة (هجري)", type: "text", derived: true, hint: "يُحسب تلقائياً من التاريخ الميلادي" },
+        { key: "deathMonthGregorian", label: "شهر الوفاة (ميلادي)", type: "select", options: GREG_MONTHS, derived: true, hint: "يُحسب تلقائياً" },
+        { key: "deathMonthHijri", label: "شهر الوفاة (هجري)", type: "select", options: HIJRI_MONTHS, derived: true, hint: "يُحسب تلقائياً" },
+        { key: "funeralDay", label: "يوم التشييع", type: "select", options: AR_WEEKDAYS, hint: "اليوم الذي يُشيَّع فيه المتوفى" },
+        { key: "funeralTime", label: "وقت التشييع", type: "time", hint: "الوقت المحدد للتشييع" },
+        { key: "funeralFrom", label: "مكان انطلاق التشييع", type: "growSelect", optKey: "funeralFrom", hint: "مثل: مغتسل مقبرة العوامية" },
+        { key: "spouseName", label: "الزوج / الزوجة", type: "textarea", hint: "زوجة الفقيد أو زوج الفقيدة — عدة أسماء تُفصل بفاصلة" },
+        { key: "sons", label: "الأبناء", type: "textarea", hint: "أسماء الأبناء (والكنية بين قوسين إن وُجدت) مفصولة بفاصلة" },
+        { key: "daughters", label: "البنات", type: "textarea", hint: "أسماء البنات (وأزواجهن إن رغبتم) مفصولة بفاصلة" },
+        { key: "brothers", label: "الإخوان", type: "textarea", hint: "أسماء إخوان المتوفى مفصولة بفاصلة" },
+        { key: "sisters", label: "الأخوات", type: "textarea", hint: "أسماء أخوات المتوفى مفصولة بفاصلة" },
+        { key: "otherRelatives", label: "أقارب آخرون", type: "textarea", hint: "أي ذوي فقيد آخرين، بسطر لكل صلة قرابة — مثل: والدة زوجة الفقيد: فلانة" },
+        { key: "condolenceStart", label: "بدء العزاء", type: "text", hint: "مثل: ليلة الثلاثاء، أو يوم السبت، أو هذه الليلة" },
+        { key: "condolenceMenPlace", label: "مكان العزاء — الرجال", type: "growSelect", optKey: "condolencePlaces", hint: "اسم الحسينية أو المكان" },
+        { key: "condolenceMenTimes", label: "أوقات القراءة — الرجال", type: "text", hint: "مثل: 04:00م - 08:00م" },
+        { key: "condolenceWomenPlace", label: "مكان العزاء — النساء", type: "growSelect", optKey: "condolencePlaces", hint: "اسم الحسينية أو المكان" },
+        { key: "condolenceWomenTimes", label: "أوقات القراءة — النساء", type: "text", hint: "اتركه فارغاً إذا لا ينطبق" },
+        { key: "condolenceMenLink", label: "رابط التعزية — الرجال", type: "text", hint: "رابط مجموعة واتساب أو بث التعزية — اختياري" },
+        { key: "condolenceWomenLink", label: "رابط التعزية — النساء", type: "text", hint: "رابط مجموعة واتساب أو بث التعزية — اختياري" },
+        { key: "sourceUrl", label: "رابط الخبر بموقع الجمعية", type: "text", hint: "يُملأ تلقائياً عند سحب الخبر من الموقع" },
         { key: "notes", label: "ملاحظات", type: "text", hint: "أي ملاحظات إضافية — اختياري" }
       ],
+      photoLabel: "صورة المتوفى",
+      dateSource: { field: "deathDateGregorian", hijriDate: "deathDateHijri", monthGreg: "deathMonthGregorian", monthHijri: "deathMonthHijri", dayName: "deathDay" },
       columns: ["deceasedName", "deceasedFamily", "gender", "ageCategory", "gregorianYear", "deathMonthGregorian"],
       dedupKeys: ["deceasedName", "deceasedFamily", "deathDateGregorian"]
     },
@@ -5912,7 +5937,9 @@
       honors: ["بدون مرتبة", "جيد", "جيد جداً", "ممتاز", "امتياز مع مرتبة الشرف"],
       specializations: [],
       ageCategories: ["طفل", "شاب", "بالغ", "كبير السن"],
-      funeralFrom: [],
+      funeralFrom: ["مغتسل مقبرة العوامية"],
+      condolencePlaces: [],
+      deathHonorifics: ["الحاج", "الحاجة", "الشاب", "الشابة", "الطفل", "الطفلة", "السيد", "السيدة", "الشيخ", "الدكتور", "الدكتورة"],
       motherPhrases: ["وحرمه", "وحرمه كريمة الحاج"],
       wifeGuardianPhrases: ["كريمة", "كريمة الحاج", "حرمة"],
       congratsOccasionTypes: ["ترقية وظيفية", "جائزة أو تكريم", "افتتاح مشروع", "إنجاز أو نجاح"],
@@ -6592,6 +6619,7 @@
         if(cat.dateSource.monthGreg) draft[cat.dateSource.monthGreg] = derived.gregorianMonth;
         if(cat.dateSource.monthHijri) draft[cat.dateSource.monthHijri] = derived.hijriMonth;
         if(cat.dateSource.hijriDate) draft[cat.dateSource.hijriDate] = derived.hijriDateText;
+        if(cat.dateSource.dayName) draft[cat.dateSource.dayName] = derived.dayName;
       }
     }
     var specDupNote = "";
@@ -7464,11 +7492,18 @@
       { key: "photo", label: "صورة صاحب التهنئة", type: "image" }
     ],
     deaths: [
-      { key: "deceasedName", label: "اسم المتوفى" }, { key: "deceasedFamily", label: "عائلة المتوفى" },
-      { key: "ageCategory", label: "الفئة العمرية" }, { key: "deathDateHijri", label: "تاريخ الوفاة (هجري)" },
+      { key: "honorific", label: "المسمى قبل الاسم" }, { key: "deceasedName", label: "اسم المتوفى" },
+      { key: "deceasedFamily", label: "عائلة المتوفى" }, { key: "ageCategory", label: "الفئة العمرية" },
+      { key: "deathDay", label: "يوم الوفاة" }, { key: "deathDateHijri", label: "تاريخ الوفاة (هجري)" },
       { key: "deathMonthGregorian", label: "شهر الوفاة (ميلادي)" }, { key: "deathMonthHijri", label: "شهر الوفاة (هجري)" },
-      { key: "funeralFrom", label: "التشييع من" }, { key: "funeralTime", label: "وقت التشييع" },
-      { key: "gregorianYear", label: "السنة الميلادية" }, { key: "hijriYear", label: "السنة الهجرية" }
+      { key: "funeralDay", label: "يوم التشييع" }, { key: "funeralTime", label: "وقت التشييع" }, { key: "funeralFrom", label: "التشييع من" },
+      { key: "spouseName", label: "الزوج / الزوجة" }, { key: "sons", label: "الأبناء" }, { key: "daughters", label: "البنات" },
+      { key: "brothers", label: "الإخوان" }, { key: "sisters", label: "الأخوات" }, { key: "otherRelatives", label: "أقارب آخرون" },
+      { key: "condolenceStart", label: "بدء العزاء" },
+      { key: "condolenceMenPlace", label: "مكان العزاء — الرجال" }, { key: "condolenceMenTimes", label: "أوقات القراءة — الرجال" },
+      { key: "condolenceWomenPlace", label: "مكان العزاء — النساء" }, { key: "condolenceWomenTimes", label: "أوقات القراءة — النساء" },
+      { key: "gregorianYear", label: "السنة الميلادية" }, { key: "hijriYear", label: "السنة الهجرية" },
+      { key: "photo", label: "صورة المتوفى", type: "image" }
     ]
   };
   function tmplFieldMeta(catKey, fieldKey){

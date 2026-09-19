@@ -1,0 +1,40 @@
+# مزامنة أخبار الوفيات من موقع جمعية العوامية (awamiach.sa) إلى قسم "الوفيات" بلوحة التحكم — كل نصف ساعة تقريباً.
+# التفاصيل والحدود: scripts/sync_deaths.py. التشغيل اليدوي: تبويب Actions ← "مزامنة أخبار الوفيات" ← Run workflow.
+name: مزامنة أخبار الوفيات
+
+on:
+  schedule:
+    - cron: "*/30 * * * *"
+  workflow_dispatch:
+    inputs:
+      backfill:
+        description: "سحب أرشيف الموقع كاملاً (كل الأخبار غير الموجودة بدل الأحدث فقط)"
+        type: boolean
+        default: false
+      dry_run:
+        description: "تجربة فقط: يحلّل ويعرض بدون أي كتابة"
+        type: boolean
+        default: false
+
+concurrency:
+  group: sync-deaths
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: سحب الأخبار الجديدة
+        env:
+          BACKFILL: ${{ inputs.backfill }}
+          DRY_RUN: ${{ inputs.dry_run }}
+        run: |
+          ARGS=""
+          if [ "$BACKFILL" = "true" ]; then ARGS="$ARGS --backfill --max-per-run 500"; fi
+          if [ "$DRY_RUN" = "true" ]; then ARGS="$ARGS --dry-run"; fi
+          python3 scripts/sync_deaths.py $ARGS
