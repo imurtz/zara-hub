@@ -2503,5 +2503,37 @@
   }).catch(function(err){ console.error("universityLogos fetch error", err); });
 })();
 </script>
+<script>
+// تنبيه تحديث الصفحة: صفحات الموظفين تبقى مفتوحة أياماً وGitHub Pages يخزّن الملف ~10 دقائق، فقد يشتغل المستخدم
+// على نسخة قديمة بدون ما يدري (يشوف إصلاحاً "ما اشتغل" وهو بالحقيقة ما وصله). نقارن تاريخ تعديل الصفحة المحمّلة
+// (document.lastModified) بتاريخ نسختها الحالية على السيرفر، ولو صارت أحدث يظهر شريط "تحديث الآن"
+(function(){
+  var shown = false;
+  function showBanner(){
+    if(shown) return; shown = true;
+    var bar = document.createElement("div");
+    bar.setAttribute("role", "status");
+    bar.style.cssText = "position:fixed; left:12px; right:12px; bottom:12px; z-index:2147483000; max-width:460px; margin:0 auto; background:#3d5b56; color:#fff; border-radius:14px; padding:12px 16px; display:flex; align-items:center; gap:12px; justify-content:space-between; font:600 13.5px/1.6 Cairo, sans-serif; box-shadow:0 10px 30px rgba(0,0,0,.25); direction:rtl;";
+    var msg = document.createElement("span"); msg.textContent = "يتوفر تحديث جديد للمنصة";
+    var btn = document.createElement("button"); btn.type = "button"; btn.textContent = "تحديث الآن";
+    btn.style.cssText = "background:#fff; color:#3d5b56; border:0; border-radius:10px; padding:8px 16px; font:700 13px Cairo, sans-serif; cursor:pointer; flex-shrink:0;";
+    btn.addEventListener("click", function(){ location.reload(); });
+    bar.appendChild(msg); bar.appendChild(btn); document.body.appendChild(bar);
+  }
+  function check(){
+    if(shown || !window.fetch) return;
+    var loaded = new Date(document.lastModified).getTime();
+    if(!loaded || isNaN(loaded)) return;
+    fetch(location.pathname, { method: "HEAD", cache: "no-store" }).then(function(r){
+      var lm = r.headers.get("last-modified");
+      var server = lm ? new Date(lm).getTime() : 0;
+      if(server && server - loaded > 1500) showBanner();
+    }).catch(function(){});
+  }
+  setTimeout(check, 4000);
+  setInterval(check, 180000);
+  document.addEventListener("visibilitychange", function(){ if(!document.hidden) check(); });
+})();
+</script>
 </body>
 </html>
