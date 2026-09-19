@@ -6299,8 +6299,8 @@
     if(!st || !st.lastRun) return ' <span style="color:var(--ink-soft);">· 🔄 مزامنة تلقائية مع أخبار الوفيات بموقع الجمعية (لم تعمل بعد)</span>';
     var mins = Math.max(0, Math.round((Date.now() - st.lastRun) / 60000));
     var ago = mins < 2 ? "قبل لحظات" : (mins < 90 ? "قبل " + mins + " دقيقة" : (mins < 2880 ? "قبل " + Math.round(mins / 60) + " ساعة" : "قبل " + Math.round(mins / 1440) + " يوم"));
-    // لو انقطعت المزامنة أكثر من ٣ ساعات (المفروض كل نصف ساعة) أو فيها فشل، نلفت الانتباه بدل الصمت
-    var stale = mins > 180;
+    // لو انقطعت المزامنة أكثر من ٦ ساعات (GitHub قد يؤخّر التشغيل الدوري لساعات) أو فيها فشل، نلفت الانتباه بدل الصمت
+    var stale = mins > 360;
     var color = (stale || st.lastFailed) ? "var(--danger)" : "var(--teal-dark)";
     var extra = st.lastFailed ? " — ⚠️ تعذّر سحب " + st.lastFailed + " خبراً بآخر تشغيل" : (stale ? " — ⚠️ المزامنة متوقفة، راجع تبويب Actions بـGitHub" : "");
     return ' <span style="color:' + color + ';">· 🔄 مزامنة تلقائية مع أخبار الوفيات بموقع الجمعية — آخر فحص ' + ago + extra + '</span>';

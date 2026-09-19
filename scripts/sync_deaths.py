@@ -125,7 +125,11 @@ def url_key(u):
 
 
 def fetch_listing():
-    st, body, _ = http(LIST_URL)
+    for attempt in range(3):          # الموقع يرجع أحياناً صفحة بلا قائمة لحظياً فنعيد المحاولة قبل الفشل
+        st, body, _ = http(LIST_URL)
+        if st == 200 and b"generic1_block" in body:
+            break
+        time.sleep(20 * (attempt + 1))
     if st != 200:
         raise RuntimeError("تعذّر فتح قائمة أخبار الوفيات (%s)" % st)
     html = body.decode("utf8", "ignore")
