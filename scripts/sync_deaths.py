@@ -128,18 +128,21 @@ def existing_url_ids():
 
 def fs_batch_get(rids):
     """يجلب عدة سجلات دفعة واحدة -> {id: {field: value}} للموجودة فقط (المحذوفة لا تظهر)."""
-    found = {}
     rids = list(rids)
-    for i in range(0, len(rids), 100):
-        chunk = rids[i:i + 100]
+
+    def one(chunk):
         body = json.dumps({"documents": ["projects/%s/databases/(default)/documents/events/%s" % (FIREBASE_PROJECT, r) for r in chunk]}).encode()
         st, resp, _ = http("%s:batchGet?key=%s" % (FS, FIREBASE_KEY), data=body, headers={"Content-Type": "application/json"}, method="POST")
         if st != 200:
             raise RuntimeError("جلب السجلات دفعة واحدة فشل (%s): %s" % (st, resp[:200]))
-        for row in json.loads(resp):
-            f = row.get("found")
-            if f:
-                found[f["name"].rsplit("/", 1)[-1]] = {k: fs_decode(v) for k, v in f.get("fields", {}).items()}
+        return json.loads(resp)
+    found = {}
+    with ThreadPoolExecutor(max_workers=5) as ex:            # دفعات الـ100 بالتوازي
+        for rows in ex.map(one, [rids[i:i + 100] for i in range(0, len(rids), 100)]):
+            for row in rows:
+                f = row.get("found")
+                if f:
+                    found[f["name"].rsplit("/", 1)[-1]] = {k: fs_decode(v) for k, v in f.get("fields", {}).items()}
     return found
 
 
@@ -348,9 +351,11 @@ def main():
     args = ap.parse_args()
     t0 = time.time()
 
+    def tick(label):
+        print("   ⏱ %s: %.1fث" % (label, time.time() - t0))
     listing = fetch_listing()
-    print("أخبار بالقائمة:", len(listing))
-    state, ids, skip = load_state(listing)
+    print("أخبار بالقائمة:", len(listing)); tick("قراءة قائمة الموقع")
+    state, ids, skip = load_state(listing); tick("وثيقة الحالة")
     by_key = {url_key(it["url"]): it for it in listing}
     full = args.full or args.backfill
     check_items = listing if full else listing[:args.window]
@@ -359,7 +364,7 @@ def main():
     # ----- ما الموجود فعلاً بقاعدة البيانات؟ (سجل حُذف من اللوحة يُعاد سحبه — الحذف ليس "تجاهلاً" دائماً) -----
     check_ids = [ids[url_key(it["url"])] for it in check_items if url_key(it["url"]) in ids]
     existing = fs_batch_get(check_ids)
-    print("فحص %d سجلاً: موجود %d، مفقود/محذوف %d" % (len(check_ids), len(existing), len(check_ids) - len(existing)))
+    print("فحص %d سجلاً: موجود %d، مفقود/محذوف %d" % (len(check_ids), len(existing), len(check_ids) - len(existing))); tick("فحص السجلات")
 
     to_import = []
     for it in listing:
@@ -408,6 +413,7 @@ def main():
             except Exception as e:  # noqa: BLE001
                 errors[id(it)] = str(e)
 
+    tick("قراءة صفحات الأخبار")
     imported, updated, failed, prev_ts = 0, 0, 0, 0
     opt_new = {"deathHonorifics": set(), "funeralFrom": set(), "condolencePlaces": set(), "ageCategories": set()}
 
@@ -480,6 +486,7 @@ def main():
             failed += 1
             print("  ✗ تحديث %s — %s" % (it["title"][:60], e))
 
+    tick("الكتابة")
     if not args.dry_run:
         merge_options(opt_new)
         fs_patch(STATE_PATH,
