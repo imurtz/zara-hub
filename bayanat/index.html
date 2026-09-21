@@ -2484,6 +2484,7 @@
       c.fields.forEach(function(f){
         if(f.optionsKey && merged[f.optionsKey]) f.options = merged[f.optionsKey];
         if(f.key === "specialization") f.options = mergedSpecializations;
+        if(f.key === "university") f.options = SAUDI_UNIVERSITIES.concat((data && Array.isArray(data.universities) ? data.universities : []).filter(function(u){ return SAUDI_UNIVERSITIES.indexOf(u) === -1; }));
       });
     });
   }

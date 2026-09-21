@@ -6060,7 +6060,25 @@
   // أسماء الجامعات المرشّحة لإدارة شعاراتها: القائمة الثابتة (SAUDI_UNIVERSITIES) فقط —
   // لا تُضاف أي جامعة "غير ذلك" مخصصة من سجلات فعلية، حتى تبقى القائمة موحّدة ومطابقة تماماً لما أُعِدَّ بالنظام
   function allUniversityNamesForLogos(){
-    return SAUDI_UNIVERSITIES.slice();
+    return allUniversityNames();
+  }
+  // القائمة الثابتة + الجامعات/الجهات التي أضافتها الإدارة (تُحفظ بـ eventsMeta/options → universities)
+  function allUniversityNames(){
+    var extra = loadEventsOptions().universities || [];
+    return SAUDI_UNIVERSITIES.concat(extra.filter(function(n){ return SAUDI_UNIVERSITIES.indexOf(n) === -1; }));
+  }
+  function addCustomUniversities(newNames){
+    var opts = loadEventsOptions();
+    var cur = (opts.universities || []).slice();
+    var keys = allUniversityNames().map(uniNameMatchKey);
+    var added = 0;
+    newNames.forEach(function(n){
+      var name = String(n || "").normalize("NFC").replace(/\s+/g, " ").trim();
+      if(!name || keys.indexOf(uniNameMatchKey(name)) > -1) return;
+      cur.push(name); keys.push(uniNameMatchKey(name)); added++;
+    });
+    if(added){ opts.universities = cur; saveEventsOptions(opts); }
+    return added;
   }
   function openUniLogosModal(){
     eventsUI.uniLogosSearch = "";
@@ -6090,14 +6108,18 @@
       var baseKey = uniNameMatchKey(base);
       var hit = allNames.find(function(n){ return n === base || uniNameMatchKey(n) === baseKey; });
       if(hit) matched.push({ name: hit, file: f });
-      else unmatched.push(f.name);
+      else unmatched.push({ name: base.normalize("NFC").replace(/\s+/g, " ").trim(), file: f });
     });
-    uniLogosBulkState = { matched: matched, unmatched: unmatched };
+    uniLogosBulkState = { matched: matched, unmatched: unmatched, addNew: unmatched.length > 0 };
     renderUniLogosPanel();
   }
   function confirmUniLogosBulkUpload(){
     if(!uniLogosBulkState || !uniLogosBulkState.matched.length) return;
-    var items = uniLogosBulkState.matched;
+    var items = uniLogosBulkState.matched.slice();
+    var newNames = [];
+    if(uniLogosBulkState.addNew){
+      uniLogosBulkState.unmatched.forEach(function(u){ items.push({ name: u.name, file: u.file }); newNames.push(u.name); });
+    }
     var total = items.length, done = 0, failed = 0;
     // نجمّع كل الشعارات المُعالَجة بنسخة واحدة بالذاكرة ونحفظها بكتابة واحدة أخيرة — بدل قراءة/كتابة
     // متكررة لنفس مستند Firestore لكل شعار، والذي قد يفقد شعارات رُفعت للتو بنفس الدفعة بسبب
@@ -6107,9 +6129,10 @@
     function next(i){
       if(i >= items.length){
         saveUniversityLogos(logos);
+        var addedNew = newNames.length ? addCustomUniversities(newNames.filter(function(n){ return !!logos[n]; })) : 0;
         uniLogosBulkState = null;
         renderUniLogosPanel();
-        showToast("تم رفع " + done + " شعار" + (failed ? (" — تعذّر " + failed) : ""));
+        showToast("تم رفع " + done + " شعار" + (addedNew ? (" — أُضيفت " + addedNew + " جهة جديدة للقائمة") : "") + (failed ? (" — تعذّر " + failed) : ""));
         return;
       }
       processUniLogoFile(items[i].file, function(dataUrl){
@@ -6131,11 +6154,13 @@
         return '<div class="uni-logo-card"><div class="uni-logo-thumb uni-logo-placeholder">✔</div><div class="uni-logo-name">' + escapeHTML(m.name) + '</div></div>';
       }).join("") + '</div>';
       if(st.unmatched.length){
-        html += '<p style="font-weight:600; color:var(--danger); margin-bottom:8px;">✕ ' + st.unmatched.length + ' ملف لم يُتعرَّف عليه (اسم الملف لا يطابق أي جامعة بالقائمة بالضبط):</p>';
-        html += '<ul style="margin:0 0 16px; padding-inline-start:20px; font-size:12.5px; color:var(--ink-soft);">' + st.unmatched.map(function(n){ return '<li>' + escapeHTML(n) + '</li>'; }).join("") + '</ul>';
+        html += '<p style="font-weight:600; color:var(--ink); margin-bottom:8px;">✚ ' + st.unmatched.length + ' ملف باسم غير موجود بالقائمة:</p>';
+        html += '<label style="display:flex; align-items:center; gap:8px; font-size:13px; margin-bottom:8px; cursor:pointer;"><input type="checkbox" data-action="uni-bulk-add-new"' + (st.addNew ? " checked" : "") + '/> إضافتها كجامعات / جهات جديدة (باسم الملف) ورفع شعاراتها</label>';
+        html += '<ul style="margin:0 0 16px; padding-inline-start:20px; font-size:12.5px; color:var(--ink-soft);">' + st.unmatched.map(function(u){ return '<li>' + escapeHTML(u.name) + '</li>'; }).join("") + '</ul>';
       }
+      var bulkCount = st.matched.length + (st.addNew ? st.unmatched.length : 0);
       html += '<div style="display:flex; gap:8px;">' +
-        '<button type="button" class="btn-primary" data-action="confirm-uni-logos-bulk"' + (st.matched.length ? "" : " disabled") + '>رفع ' + st.matched.length + ' شعار</button>' +
+        '<button type="button" class="btn-primary" data-action="confirm-uni-logos-bulk"' + (bulkCount ? "" : " disabled") + '>رفع ' + bulkCount + ' شعار</button>' +
         '<button type="button" class="btn-secondary" data-action="cancel-uni-logos-bulk">إلغاء</button>' +
       '</div>';
       setHTML(body, html);
@@ -6149,6 +6174,9 @@
     html += '<label class="btn-secondary" style="cursor:pointer; display:inline-flex; align-items:center; gap:6px; margin-bottom:14px;">📁 رفع مجلد شعارات دفعة واحدة' +
       '<input type="file" webkitdirectory multiple id="uniLogosFolderInput" style="display:none;"/></label>' +
       '<p class="hint" style="margin:-8px 0 14px;">اختر مجلداً فيه صور بأسماء ملفات مطابقة تماماً لأسماء الجامعات (مثال: <code>جامعة الملك سعود.png</code>) — تُطابَق تلقائياً وتُعرض للمراجعة قبل الحفظ.</p>';
+    html += '<div style="display:flex; gap:8px; margin-bottom:12px;">' +
+      '<input type="text" id="uniLogosAddInput" placeholder="إضافة جامعة أو جهة جديدة (اكتب الاسم)..." style="flex:1; margin:0;"/>' +
+      '<button type="button" class="btn-secondary" data-action="uni-logos-add-name" style="flex-shrink:0;">+ إضافة</button></div>';
     html += '<input type="text" class="events-search" id="uniLogosSearchInput" placeholder="بحث عن جامعة..." value="' + escapeHTML(eventsUI.uniLogosSearch || "") + '" style="margin-bottom:14px;"/>';
     if(!names.length) html += '<p class="report-empty">لا توجد نتائج مطابقة</p>';
     html += '<div class="uni-logos-grid">';
@@ -6571,7 +6599,7 @@
       '</select></div>';
     }
     if(f.type === "selectOther"){
-      var soOpts = (f.key === "specialization") ? loadEventsOptions().specializations : f.options;
+      var soOpts = (f.key === "specialization") ? loadEventsOptions().specializations : (f.key === "university" ? allUniversityNames() : f.options);
       var isCustom = !!value && soOpts.indexOf(value) === -1;
       var selVal = isCustom ? "__other__" : (value || "");
       return '<div class="select-wrap"><select data-action="select-other-toggle" data-key="' + f.key + '"><option value="">اختر...</option>' +
@@ -6621,7 +6649,7 @@
       var out = { key: f.key, label: f.label, type: (f.type === "growSelect" ? "select" : f.type) };
       if(f.type === "select") out.options = f.options || [];
       else if(f.type === "growSelect") out.options = loadEventsOptions()[f.optKey] || [];
-      else if(f.type === "selectOther") out.options = (f.key === "specialization") ? loadEventsOptions().specializations : (f.options || []);
+      else if(f.type === "selectOther") out.options = (f.key === "specialization") ? loadEventsOptions().specializations : (f.key === "university" ? allUniversityNames() : (f.options || []));
       return out;
     });
   }
@@ -9296,6 +9324,10 @@
     if(e.target.id === "uniLogosFolderInput"){
       handleUniLogosFolderSelect(e.target.files);
     }
+    if(e.target.matches && e.target.matches('[data-action="uni-bulk-add-new"]') && uniLogosBulkState){
+      uniLogosBulkState.addNew = e.target.checked;
+      renderUniLogosPanel();
+    }
   });
   uniLogosOverlayEl.addEventListener("input", function(e){
     if(e.target.id === "uniLogosSearchInput"){
@@ -9312,6 +9344,14 @@
     switch(btn.dataset.action){
       case "close-uni-logos": closeUniLogosModal(); break;
       case "remove-uni-logo": removeUniversityLogo(btn.dataset.uni); break;
+      case "uni-logos-add-name":
+        var addInp = document.getElementById("uniLogosAddInput");
+        var addVal = addInp ? addInp.value : "";
+        if(!String(addVal).trim()){ showToast("اكتب اسم الجامعة أو الجهة أولاً"); break; }
+        if(addCustomUniversities([addVal])){ showToast('أُضيفت "' + String(addVal).trim() + '" — ارفع شعارها من بطاقتها'); eventsUI.uniLogosSearch = String(addVal).trim(); }
+        else showToast("الاسم موجود مسبقاً بالقائمة");
+        renderUniLogosPanel();
+        break;
       case "confirm-uni-logos-bulk": confirmUniLogosBulkUpload(); break;
       case "cancel-uni-logos-bulk": uniLogosBulkState = null; renderUniLogosPanel(); break;
     }
