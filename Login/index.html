@@ -5582,6 +5582,7 @@
     // بعد لأن المُسجِّل تخطّى مساعد الصياغة الآلية)، نقرأ من حقل آخر بنفس السجل بدل ترك المنشور
     // بلا نص إطلاقاً — أفضل من فراغ تام حتى لو كان النص الاحتياطي أقل صقلاً
     if(!v && field.fallbackKey) v = String(record[field.fallbackKey] || "").trim();
+    if(field.key === "funeralTime") v = eventTime12(v) || v;
     if(field.hideValues && field.hideValues.indexOf(v) > -1) return "";
     if(!v) return "";
     // بادئة ديناميكية لكل سجل (مثل "وحرمه"/"وحرمه كريمة الحاج") تُقرأ من حقل آخر بنفس السجل بدل نص
@@ -6510,7 +6511,7 @@
     if(key === "entryDate") return rec.createdAt ? toISODate(new Date(rec.createdAt)) : "";
     var phraseKey = CELL_PHRASE_PAIRS[key];
     if(phraseKey && rec[phraseKey]) return (rec[phraseKey] + " " + (rec[key] || "")).trim();
-    return rec[key] || "";
+    return eventFieldDisplay(cat.fields.find(function(f){ return f.key === key; }), rec[key]) || "";
   }
 
   // ----- لوحة القيادة -----
@@ -7199,6 +7200,10 @@
     var h = parseInt(m[1], 10);
     return ("0" + ((h % 12) || 12)).slice(-2) + ":" + m[2] + (h >= 12 ? "م" : "ص");
   }
+  // الأوقات تُخزَّن HH:MM بنظام 24 ساعة (لأن حقل الوقت يحتاجها) لكنها تُعرض وتُنشر دائماً 12 ساعة مع م/ص: 22:30 ← 10:30م
+  function eventFieldDisplay(f, v){
+    return (f && f.type === "time" && v) ? (eventTime12(v) || v) : v;
+  }
   function eventTemplateComputedVars(rec){
     var out = {};
     if(!rec || rec.category !== "deaths") return out;
@@ -7246,6 +7251,7 @@
     var extra = eventTemplateComputedVars(vars);
     var txt = String(text || "").replace(/\{(\w+)\}/g, function(m, key){
       if(extra[key] !== undefined) return extra[key];
+      if(key === "funeralTime") return eventTime12(vars[key]) || (vars[key] || "");
       return (vars[key] != null && vars[key] !== "") ? vars[key] : "";
     });
     // متغيرات فارغة تترك أسطراً فارغة متتالية — نقلّصها لسطر فارغ واحد
@@ -7299,7 +7305,7 @@
   // نص السجل كاملاً بصيغة "التسمية: القيمة" سطراً سطراً — جاهز للصق بأي مكان (رسالة، مستند...)
   function recordFullTextForCopy(cat, rec){
     return eventFieldsForCopy(cat).map(function(f){
-      var v = rec[f.key];
+      var v = eventFieldDisplay(f, rec[f.key]);
       return f.label + ": " + (v != null && v !== "" ? v : "—");
     }).join("\n");
   }
@@ -7378,7 +7384,7 @@
       if(expanded){
         html += '<div class="publish-detail-grid">' +
           eventFieldsForCopy(cat).map(function(f){
-            var v = r[f.key];
+            var v = eventFieldDisplay(f, r[f.key]);
             var display = (v != null && v !== "") ? v : "—";
             return '<div class="publish-detail-item">' +
               '<span class="publish-detail-label">' + escapeHTML(f.label) + '</span>' +
