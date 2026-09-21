@@ -36,6 +36,8 @@ jobs:
           DRY_RUN: ${{ inputs.dry_run }}
         run: |
           ARGS=""
-          if [ "$BACKFILL" = "true" ]; then ARGS="$ARGS --backfill --max-per-run 500"; fi
+          # التشغيل اليدوي (زر "مزامنة الآن" باللوحة) يفحص الأرشيف كاملاً؛ الدوري يفحص أحدث الأخبار فقط لتوفير القراءات
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then ARGS="--full"; fi
+          if [ "$BACKFILL" = "true" ]; then ARGS="--backfill --max-per-run 500"; fi
           if [ "$DRY_RUN" = "true" ]; then ARGS="$ARGS --dry-run"; fi
           python3 scripts/sync_deaths.py $ARGS

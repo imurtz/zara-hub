@@ -6291,7 +6291,7 @@
   var _deathsSyncCache = null;
   db.collection("eventsMeta").doc("deathsSync").onSnapshot(function(doc){
     var d = doc.exists ? doc.data() : null;
-    _deathsSyncCache = d ? { lastRun: d.lastRun || 0, lastImported: d.lastImported || 0, lastFailed: d.lastFailed || 0, lastError: d.lastError || "" } : null;
+    _deathsSyncCache = d ? { lastRun: d.lastRun || 0, lastImported: d.lastImported || 0, lastUpdated: d.lastUpdated || 0, lastFailed: d.lastFailed || 0, lastError: d.lastError || "" } : null;
     eventsFirestoreRefresh();
   }, function(err){ console.error("deathsSync snapshot error", err); });
   // زر "مزامنة الآن" (للأدمن): يشغّل مهمة المزامنة على GitHub فوراً بدل انتظار الجدولة الدورية.
@@ -6331,12 +6331,15 @@
           var st = _deathsSyncCache;
           if(st && st.lastRun > startedAt){
             clearInterval(timer);
-            finish(st.lastFailed ? "⚠️ اكتملت لكن تعذّر سحب " + st.lastFailed + " خبراً" : (st.lastImported ? "✔ سُحب " + st.lastImported + " خبراً جديداً" : "✔ لا توجد أخبار جديدة بموقع الجمعية"));
-          } else if(tries > 36){
+            var parts = [];
+            if(st.lastImported) parts.push("سُحب " + st.lastImported + " خبراً جديداً");
+            if(st.lastUpdated) parts.push("حُدّث " + st.lastUpdated + " سجلاً باستكمال من الموقع");
+            finish(st.lastFailed ? "⚠️ اكتملت لكن تعذّر " + st.lastFailed + " عنصراً" + (parts.length ? " — " + parts.join("، ") : "") : (parts.length ? "✔ " + parts.join("، ") : "✔ كل شي محدَّث — لا جديد بموقع الجمعية"));
+          } else if(tries > 60){
             clearInterval(timer);
             finish("لم تكتمل بعد — تحقق من سطر آخر فحص بعد قليل");
           }
-        }, 5000);
+        }, 3000);
         return;
       }
       if(res.status === 401 || res.status === 403 || res.status === 404){

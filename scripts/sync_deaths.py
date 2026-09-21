@@ -4,15 +4,15 @@
 
 كل تشغيل:
   1) يقرأ قائمة "أخبار الوفيات" بالموقع (الأحدث أولاً)
-  2) يعرف الأخبار الجديدة = التي لم تُسحب سابقاً (بوثيقة الحالة eventsMeta/deathsSync) ولا يوجد لها سجل بنفس رابط الخبر
-  3) لكل خبر جديد: يقرأ صفحته، يحلّل متغيراته (deaths_parser.py)، يرفع صورة المتوفى (إن وُجدت) إلى R2،
-     ثم يُنشئ سجلاً بمجموعة events بتصنيف deaths
-  4) يحدّث وثيقة الحالة (ما سُحب + وقت آخر فحص) حتى لا يُسحب الخبر مرتين — حتى لو حذفه أحد لاحقاً من اللوحة
+  2) يجلب من قاعدة البيانات السجلات المقابلة لأحدث الأخبار (أو كل الأرشيف بوضع --full) ويعرف:
+       • الخبر الجديد (بلا سجل)                → يُسحب
+       • السجل المحذوف من اللوحة                → يُسحب من جديد (الحذف ليس تجاهلاً دائماً)
+  3) يعيد قراءة صفحة أحدث 8 أخبار + كل خبر حديث ناقص البيانات، ويحدّث السجل بما استُكمل/تغيّر بالموقع:
+       • سجل لم يعدّله موظف (updatedAt == syncStamp): يُحدَّث بالكامل
+       • سجل عدّله موظف: يُملأ فقط ما كان فارغاً، ولا يُستبدل ما كتبه
+  4) الصفحات تُقرأ بالتوازي، وتُحفظ وثيقة الحالة (خريطة رابط→سجل + نتيجة آخر تشغيل)
 
-أول تشغيل بلا وثيقة حالة: يسحب أحدث N خبراً فقط (افتراضياً 20) ويعلّم كل ما سواها "مُشاهَد" بدون سحب، حتى لا
-تُغرَق اللوحة بأرشيف الموقع كله فجأة. لسحب الأرشيف كاملاً استعمل --backfill (أو خيار backfill بالـWorkflow).
-
-الاستعمال:  python3 scripts/sync_deaths.py [--dry-run] [--backfill] [--initial-count 20] [--max-per-run 60]
+الاستعمال:  python3 scripts/sync_deaths.py [--dry-run] [--full] [--backfill] [--window 60] [--refresh-latest 8]
 مكتبة قياسية فقط.
 """
 import argparse
@@ -26,6 +26,7 @@ import time
 import urllib.error
 import urllib.parse
 import urllib.request
+from concurrent.futures import ThreadPoolExecutor
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import deaths_parser as P  # noqa: E402
@@ -37,6 +38,7 @@ LIST_URL = P.BASE + "pages/" + urllib.parse.quote("أخبار-الوفيات") +
 MEDIA_UPLOAD_URL = os.environ.get("MEDIA_UPLOAD_URL", "https://zara-media-upload.murtada-ud.workers.dev/")   # نفس Worker الرفع بالمنصة
 UA = "Mozilla/5.0 (compatible; AwamiaSync/1.0; +https://gzara.org)"
 SOURCE_TAG = "website-sync"
+STATE_PATH = "eventsMeta/deathsSync"
 
 
 def http(url, data=None, headers=None, method=None, timeout=45, retries=3):
@@ -67,6 +69,8 @@ def fs_value(v):
         return {"integerValue": str(v)}
     if isinstance(v, list):
         return {"arrayValue": {"values": [fs_value(x) for x in v]}}
+    if isinstance(v, dict):
+        return {"mapValue": {"fields": {k: fs_value(x) for k, x in v.items()}}}
     return {"stringValue": str(v)}
 
 
@@ -79,6 +83,8 @@ def fs_decode(f):
         return f["booleanValue"]
     if "arrayValue" in f:
         return [fs_decode(x) for x in f["arrayValue"].get("values", [])]
+    if "mapValue" in f:
+        return {k: fs_decode(x) for k, x in f["mapValue"].get("fields", {}).items()}
     return None
 
 
@@ -102,21 +108,39 @@ def fs_patch(path, fields, mask=None):
         raise RuntimeError("كتابة %s فشلت (%s): %s" % (path, st, resp[:300]))
 
 
-def existing_source_urls():
+def existing_url_ids():
+    """{sourceUrl: recordId} لكل سجلات الوفيات المسحوبة (تُستعمل مرة واحدة لبناء/ترحيل خريطة الحالة)."""
     q = {"structuredQuery": {"from": [{"collectionId": "events"}],
                              "where": {"fieldFilter": {"field": {"fieldPath": "category"}, "op": "EQUAL", "value": {"stringValue": "deaths"}}},
                              "select": {"fields": [{"fieldPath": "sourceUrl"}]}}}
     st, body, _ = http("%s:runQuery?key=%s" % (FS, FIREBASE_KEY), data=json.dumps(q).encode(), headers={"Content-Type": "application/json"}, method="POST")
     if st != 200:
         raise RuntimeError("استعلام السجلات الحالية فشل (%s)" % st)
-    out = set()
+    out = {}
     for row in json.loads(body):
         doc = row.get("document")
         if doc:
             u = doc.get("fields", {}).get("sourceUrl", {}).get("stringValue")
             if u:
-                out.add(u)
+                out[u] = doc["name"].rsplit("/", 1)[-1]
     return out
+
+
+def fs_batch_get(rids):
+    """يجلب عدة سجلات دفعة واحدة -> {id: {field: value}} للموجودة فقط (المحذوفة لا تظهر)."""
+    found = {}
+    rids = list(rids)
+    for i in range(0, len(rids), 100):
+        chunk = rids[i:i + 100]
+        body = json.dumps({"documents": ["projects/%s/databases/(default)/documents/events/%s" % (FIREBASE_PROJECT, r) for r in chunk]}).encode()
+        st, resp, _ = http("%s:batchGet?key=%s" % (FS, FIREBASE_KEY), data=body, headers={"Content-Type": "application/json"}, method="POST")
+        if st != 200:
+            raise RuntimeError("جلب السجلات دفعة واحدة فشل (%s): %s" % (st, resp[:200]))
+        for row in json.loads(resp):
+            f = row.get("found")
+            if f:
+                found[f["name"].rsplit("/", 1)[-1]] = {k: fs_decode(v) for k, v in f.get("fields", {}).items()}
+    return found
 
 
 # ---------------- الموقع ----------------
@@ -235,7 +259,42 @@ def build_record(parsed, list_title, url, photo_r2, prev_ts=0):
     rec["id"] = rid
     rec["createdAt"] = ts
     rec["updatedAt"] = now
+    rec["syncHash"] = content_hash(parsed)
+    rec["syncStamp"] = now      # لو بقي updatedAt == syncStamp فالسجل ما عُدِّل يدوياً — يجوز تحديثه بالكامل من الموقع
     return rec
+
+
+def content_hash(parsed):
+    core = {k: v for k, v in parsed.items() if k != "sourceUrl"}
+    return hashlib.sha1(json.dumps(core, ensure_ascii=False, sort_keys=True).encode("utf8")).hexdigest()[:12]
+
+
+def is_complete(f):
+    """خبر مكتمل = اسم + تاريخ وفاة + تشييع (مكان/وقت) + مكان عزاء. الأخبار الحديثة الناقصة تُعاد قراءتها بكل مزامنة."""
+    return bool(f.get("deceasedName") and (f.get("deathDateHijri") or f.get("deathDateGregorian"))
+                and (f.get("funeralFrom") or f.get("funeralTime"))
+                and (f.get("condolenceMenPlace") or f.get("condolenceWomenPlace")))
+
+
+MERGE_SKIP = {"photoUrl", "nickname", "sourceUrl"}
+
+
+def merge_changes(doc, parsed):
+    """ما يُكتب على سجل قائم من نسخة الموقع الأحدث:
+    - سجل لم يُعدَّل يدوياً (updatedAt == syncStamp): تُحدَّث كل حقوله التي تغيّرت بالموقع.
+    - سجل عدّله موظف (أو سجل قديم بلا ختم): نملأ فقط الحقول الفارغة ولا نستبدل أي قيمة كُتبت — حتى لا نمسح تعديلات المستخدم.
+    القيم الفارغة بالموقع لا تمسح قيمة موجودة أبداً."""
+    untouched = bool(doc.get("syncStamp")) and doc.get("updatedAt") == doc.get("syncStamp")
+    ch = {}
+    for k, v in parsed.items():
+        if k in MERGE_SKIP or v in ("", None):
+            continue
+        old = doc.get(k, "")
+        if old == v:
+            continue
+        if untouched or old in ("", None):
+            ch[k] = v
+    return ch, untouched
 
 
 def merge_options(new_values):
@@ -260,85 +319,173 @@ def merge_options(new_values):
         print("  + خيارات جديدة بالقوائم:", {k: len(v) for k, v in upd.items()})
 
 
+def load_state(listing):
+    """وثيقة الحالة: ids = {بصمة الرابط: معرّف السجل}، skip = أخبار ليست إعلان وفاة. تُرحَّل تلقائياً من الصيغة القديمة (seen)."""
+    state = fs_get(STATE_PATH)
+    if state is not None and isinstance(state.get("ids"), dict):
+        return state, dict(state["ids"]), set(state.get("skip") or [])
+    url_ids = existing_url_ids()
+    ids = {url_key(u): rid for u, rid in url_ids.items()}
+    skip = set(state.get("seen") or []) - set(ids) if state else set()
+    print("ترحيل وثيقة الحالة: %d سجلاً مربوطاً برابطه، %d خبراً متجاهلاً" % (len(ids), len(skip)))
+    return state, ids, skip
+
+
+def fetch_and_parse(it):
+    return P.parse_entry(fetch_entry(it), it["title"], it["url"])
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--dry-run", action="store_true", help="يحلّل ويعرض فقط بدون أي كتابة")
     ap.add_argument("--backfill", action="store_true", help="يسحب كل أخبار الأرشيف غير الموجودة")
-    ap.add_argument("--initial-count", type=int, default=20, help="عدد أحدث الأخبار المسحوبة بأول تشغيل")
-    ap.add_argument("--max-per-run", type=int, default=60, help="أقصى عدد أخبار يُسحب بالتشغيل الواحد")
+    ap.add_argument("--full", action="store_true", help="فحص كامل: يتحقق من وجود كل سجلات الأرشيف (لا أحدث %d فقط) ويعيد سحب المحذوف" % 60)
+    ap.add_argument("--window", type=int, default=60, help="عدد أحدث الأخبار المفحوصة بالتشغيل الدوري لاكتشاف المحذوف/الناقص")
+    ap.add_argument("--refresh-latest", type=int, default=8, help="أحدث كم خبراً تُعاد قراءة صفحتها كل مرة لالتقاط تعديلات الموقع")
+    ap.add_argument("--refresh-days", type=int, default=45, help="الأخبار الناقصة الأحدث من هذه المدة (يوماً) تُعاد قراءتها بكل مزامنة")
+    ap.add_argument("--initial-count", type=int, default=20, help="عدد أحدث الأخبار المسحوبة بأول تشغيل بلا أي سجلات")
+    ap.add_argument("--max-per-run", type=int, default=60, help="أقصى عدد أخبار جديدة يُسحب بالتشغيل الواحد")
     args = ap.parse_args()
+    t0 = time.time()
 
     listing = fetch_listing()
     print("أخبار بالقائمة:", len(listing))
-    state = fs_get("eventsMeta/deathsSync")     # القراءة آمنة حتى بوضع --dry-run؛ الكتابة والرفع فقط هي التي تُمنع
-    seen = set((state or {}).get("seen") or [])
-    # فحص السجلات الموجودة يقرأ كل سجلات الوفيات (مئات القراءات) — لا نحتاجه بالتشغيل الدوري العادي لأن وثيقة الحالة
-    # تكفي؛ فقط عند غيابها (أول تشغيل/فقدانها) أو عند سحب الأرشيف كاملاً، توفيراً لحصة قراءات Firestore اليومية
-    have_urls = existing_source_urls() if (state is None or args.backfill) else set()
-    first_run = state is None
-    print("أول تشغيل:" if first_run else "وثيقة الحالة موجودة —", "مُشاهَد سابقاً:", len(seen), "| سجلات موجودة برابط:", len(have_urls))
+    state, ids, skip = load_state(listing)
+    by_key = {url_key(it["url"]): it for it in listing}
+    full = args.full or args.backfill
+    check_items = listing if full else listing[:args.window]
+    check_keys = {url_key(it["url"]) for it in check_items}
 
-    if args.backfill:
-        fresh = [it for it in listing if it["url"] not in have_urls]      # الأرشيف كاملاً: كل خبر ليس له سجل بعد
-    else:
-        fresh = [it for it in listing if url_key(it["url"]) not in seen and it["url"] not in have_urls]
-    to_import, to_mark = [], []
+    # ----- ما الموجود فعلاً بقاعدة البيانات؟ (سجل حُذف من اللوحة يُعاد سحبه — الحذف ليس "تجاهلاً" دائماً) -----
+    check_ids = [ids[url_key(it["url"])] for it in check_items if url_key(it["url"]) in ids]
+    existing = fs_batch_get(check_ids)
+    print("فحص %d سجلاً: موجود %d، مفقود/محذوف %d" % (len(check_ids), len(existing), len(check_ids) - len(existing)))
+
+    to_import = []
+    for it in listing:
+        k = url_key(it["url"])
+        if k in skip:
+            continue
+        if k not in ids:
+            to_import.append(it)                                   # خبر جديد
+        elif k in check_keys and ids[k] not in existing:
+            to_import.append(it)                                   # سجل حُذف من اللوحة: يُعاد سحبه
+    first_run = not ids
     if first_run and not args.backfill:
-        to_import = fresh[:args.initial_count]
-        to_mark = fresh[args.initial_count:]
-    else:
-        to_import = fresh
+        marked = to_import[args.initial_count:]
+        to_import = to_import[:args.initial_count]
+        for it in marked:
+            skip.add(url_key(it["url"]))
     if len(to_import) > args.max_per_run:
-        print("تنبيه: %d خبراً جديداً، سيُسحب أحدث %d الآن والباقي بالتشغيل القادم" % (len(to_import), args.max_per_run))
+        print("تنبيه: %d خبراً للسحب، سيُسحب أحدث %d الآن والباقي بالتشغيل القادم" % (len(to_import), args.max_per_run))
         to_import = to_import[:args.max_per_run]
-    print("جديد للسحب:", len(to_import), "| يُعلَّم مُشاهَداً بلا سحب:", len(to_mark))
 
-    imported, failed, prev_ts = 0, 0, 0
+    # ----- ما يُعاد قراءته لالتقاط ما استُكمل/تغيّر بالموقع -----
+    cutoff = (time.time() - args.refresh_days * 86400) * 1000
+    to_refresh, seen_keys = [], set()
+    for it in listing[:args.refresh_latest]:
+        k = url_key(it["url"])
+        if k in ids and ids[k] in existing and k not in seen_keys:
+            to_refresh.append(it); seen_keys.add(k)
+    for it in check_items:
+        k = url_key(it["url"])
+        d = existing.get(ids.get(k, ""))
+        if d and k not in seen_keys and not is_complete(d) and (d.get("createdAt") or 0) > cutoff:
+            to_refresh.append(it); seen_keys.add(k)
+    print("جديد/محذوف للسحب: %d | تُعاد قراءته لالتقاط الاستكمال: %d" % (len(to_import), len(to_refresh)))
+
+    # ----- قراءة الصفحات بالتوازي (أسرع بكثير من التتابع) -----
+    jobs = {id(it): it for it in to_import + to_refresh}
+    parsed_by, errors = {}, {}
+    with ThreadPoolExecutor(max_workers=6) as ex:
+        futs = {ex.submit(fetch_and_parse, it): it for it in jobs.values()}
+        for fut, it in futs.items():
+            try:
+                parsed_by[id(it)] = fut.result()
+            except Exception as e:  # noqa: BLE001
+                errors[id(it)] = str(e)
+
+    imported, updated, failed, prev_ts = 0, 0, 0, 0
     opt_new = {"deathHonorifics": set(), "funeralFrom": set(), "condolencePlaces": set(), "ageCategories": set()}
+
+    def collect_opts(r):
+        for key, fld in (("deathHonorifics", "honorific"), ("funeralFrom", "funeralFrom"), ("ageCategories", "ageCategory"),
+                         ("condolencePlaces", "condolenceMenPlace"), ("condolencePlaces", "condolenceWomenPlace")):
+            if r.get(fld):
+                opt_new[key].add(r[fld])
+
     for it in reversed(to_import):          # الأقدم أولاً ليتطابق ترتيب الإدخال مع الترتيب الزمني
         try:
-            page = fetch_entry(it)
-            parsed = P.parse_entry(page, it["title"], it["url"])
+            if id(it) in errors:
+                raise RuntimeError(errors[id(it)])
             if not re.search(r"رحمة|ذمة|فقيد", it["title"]) or re.search(r"أماكن\s+عزاء", it["title"]):
                 print("  - تجاهل خبر ليس إعلان وفاة: " + it["title"][:70])
-                seen.add(url_key(it["url"]))
+                skip.add(url_key(it["url"]))
                 continue
+            parsed = parsed_by[id(it)]
             if not parsed.get("deceasedName"):
                 raise RuntimeError("لم يُستخرج اسم المتوفى")
-            photo = ""
-            if parsed.get("photoUrl") and not args.dry_run:
-                photo = upload_photo(parsed["photoUrl"])
+            photo = upload_photo(parsed["photoUrl"]) if (parsed.get("photoUrl") and not args.dry_run) else ""
             rec = build_record(parsed, it["title"], it["url"], photo, prev_ts)
             prev_ts = rec["createdAt"]
             label = "%s %s | %s | %s" % (rec.get("honorific", ""), rec["deceasedName"], rec.get("deathDateGregorian", "؟"), rec.get("funeralFrom", ""))
             if args.dry_run:
-                print("  [dry] " + label)
-                print("       " + json.dumps({k: v for k, v in rec.items() if k not in ("id", "createdAt", "updatedAt", "category", "source")}, ensure_ascii=False)[:600])
+                print("  [dry] جديد: " + label)
             else:
-                fs_patch("events/" + rec["id"], {k: v for k, v in rec.items()})
-                seen.add(url_key(it["url"]))
-                if imported % 25 == 24:
-                    fs_patch("eventsMeta/deathsSync", {"seen": sorted(seen), "lastRun": int(time.time() * 1000)}, mask=["seen", "lastRun"])
-                print("  ✓ " + label)
-            for key, fld in (("deathHonorifics", "honorific"), ("funeralFrom", "funeralFrom"), ("ageCategories", "ageCategory"),
-                             ("condolencePlaces", "condolenceMenPlace"), ("condolencePlaces", "condolenceWomenPlace")):
-                if rec.get(fld):
-                    opt_new[key].add(rec[fld])
+                fs_patch("events/" + rec["id"], dict(rec))
+                ids[url_key(it["url"])] = rec["id"]
+                print("  ✓ جديد: " + label)
+            collect_opts(rec)
             imported += 1
-            time.sleep(0.4)
         except Exception as e:  # noqa: BLE001
             failed += 1
             print("  ✗ %s — %s" % (it["title"][:60], e))
+
+    for it in to_refresh:
+        k = url_key(it["url"])
+        try:
+            if id(it) in errors:
+                raise RuntimeError(errors[id(it)])
+            parsed = parsed_by[id(it)]
+            doc = existing[ids[k]]
+            h = content_hash(parsed)
+            if doc.get("syncHash") == h and is_complete(doc):
+                continue
+            ch, untouched = merge_changes(doc, parsed)
+            if parsed.get("photoUrl") and not doc.get("photo") and not args.dry_run:
+                p = upload_photo(parsed["photoUrl"])
+                if p:
+                    ch["photo"] = p
+            label = "%s | %s" % (doc.get("deceasedName", "")[:30], ",".join(sorted(ch)) or "بلا تغيير جوهري")
+            if ch:
+                now = int(time.time() * 1000)
+                upd = dict(ch)
+                upd["syncHash"] = h
+                if untouched:
+                    upd["updatedAt"] = now
+                    upd["syncStamp"] = now      # يبقى "غير معدَّل يدوياً"
+                if args.dry_run:
+                    print("  [dry] تحديث: " + label)
+                else:
+                    fs_patch("events/" + ids[k], upd, mask=list(upd.keys()))
+                    print("  ↻ تحديث من الموقع: " + label + ("" if untouched else " (ملء الفارغ فقط — السجل معدَّل يدوياً)"))
+                collect_opts({**doc, **ch})
+                updated += 1
+            elif doc.get("syncHash") != h and not args.dry_run:
+                fs_patch("events/" + ids[k], {"syncHash": h}, mask=["syncHash"])
+        except Exception as e:  # noqa: BLE001
+            failed += 1
+            print("  ✗ تحديث %s — %s" % (it["title"][:60], e))
+
     if not args.dry_run:
-        for it in to_mark:
-            seen.add(url_key(it["url"]))
         merge_options(opt_new)
-        fs_patch("eventsMeta/deathsSync",
-                 {"seen": sorted(seen), "lastRun": int(time.time() * 1000), "lastImported": imported, "lastFailed": failed,
-                  "lastError": "" if not failed else "فشل سحب %d خبراً — راجع سجل التشغيل" % failed},
-                 mask=["seen", "lastRun", "lastImported", "lastFailed", "lastError"])
-    print("انتهى: سُحب %d، فشل %d، مُعلَّم %d" % (imported, failed, len(to_mark)))
-    if failed and not imported:
+        fs_patch(STATE_PATH,
+                 {"ids": ids, "skip": sorted(skip), "seen": [], "lastRun": int(time.time() * 1000), "lastImported": imported,
+                  "lastUpdated": updated, "lastFailed": failed,
+                  "lastError": "" if not failed else "فشل %d عنصراً — راجع سجل التشغيل" % failed},
+                 mask=["ids", "skip", "seen", "lastRun", "lastImported", "lastUpdated", "lastFailed", "lastError"])
+    print("انتهى بـ %.1f ثانية: جديد %d، محدَّث %d، فشل %d" % (time.time() - t0, imported, updated, failed))
+    if failed and not (imported or updated):
         sys.exit(1)
 
 
