@@ -5021,7 +5021,8 @@
         { key: "deceasedFullName", label: "المسمى + الاسم" }, { key: "deathDateLine", label: "سطر تاريخ الوفاة" },
         { key: "deathDateGregorianText", label: "التاريخ الميلادي مكتوباً" }, { key: "funeralLine", label: "سطر التشييع" },
         { key: "funeralTimeText", label: "وقت التشييع (12 ساعة)" }, { key: "relativesBlock", label: "كتلة ذوو الفقيد" },
-        { key: "condolenceBlock", label: "كتلة أماكن العزاء" }, { key: "forSoul", label: "لروحه/لروحها" }
+        { key: "condolenceBlock", label: "كتلة أماكن العزاء" }, { key: "forSoul", label: "لروحه/لروحها" },
+        { key: "funeralWhen", label: "موعد ومكان التشييع" }, { key: "condolenceBody", label: "أماكن العزاء بدون عنوان" }
       ],
       // عنوان بطاقة مهمة النشر: اسم المتوفى بمسماه وتاريخ الوفاة (بدل أول ثلاثة حقول = السنتان + المسمى)
       publishTitle: function(r){ return [((r.honorific || "") + " " + (r.deceasedName || "")).trim(), r.deathDateHijri || r.gregorianYear].filter(Boolean).join(" — "); },
@@ -5999,8 +6000,8 @@
   // رسائل النشر الثلاث لحالة الوفاة — كل واحدة قالب مستقل؛ الصورة المرفقة (imageUrl) لرسالة الإعلان فقط
   var DEATH_TEMPLATE_DEFAULTS = [
         { id: "tpl-death-announce", kind: "announce", text: "*🤲 إنا لله وإنا إليه راجعون*\n\nانتقل إلى رحمة الله تعالى\n*{deceasedFullName}*\n\n{deathDateLine}\n\n{relativesBlock}\n\n*يتقدم رئيس وأعضاء مجلس إدارة جمعية العوامية الخيرية بخالص التعازي والمواساة*\n*رحم الله من يقرأ {forSoul} سورة الفاتحة*\n——————\n*القسم الإعلامي - خيرية العوامية*" },
-        { id: "tpl-death-funeral", kind: "funeral", text: "*⬟ تشييع {deceasedFullName}*\n\n{funeralLine}\n\n*رحم الله من يقرأ {forSoul} سورة الفاتحة*\n——————\n*القسم الإعلامي - خيرية العوامية*" },
-        { id: "tpl-death-condolence", kind: "condolence", text: "*▣ عزاء {deceasedFullName}*\n\n{condolenceBlock}\n\n*يتقدم رئيس وأعضاء مجلس إدارة جمعية العوامية الخيرية بخالص التعازي والمواساة*\n——————\n*القسم الإعلامي - خيرية العوامية*" }
+        { id: "tpl-death-funeral", kind: "funeral", text: "*⬟ تشييع {deceasedFullName}*\n\n{funeralWhen}\n\n*رحم الله من يقرأ {forSoul} سورة الفاتحة*\n——————\n*القسم الإعلامي - خيرية العوامية*" },
+        { id: "tpl-death-condolence", kind: "condolence", text: "*▣ عزاء {deceasedFullName}*\n\n{condolenceBody}\n\n*يتقدم رئيس وأعضاء مجلس إدارة جمعية العوامية الخيرية بخالص التعازي والمواساة*\n——————\n*القسم الإعلامي - خيرية العوامية*" }
   ];
   var DEATH_MSG_KINDS = [
     { kind: "announce", title: "رسالة إعلان الوفاة", hasImage: true },
@@ -6019,8 +6020,8 @@
       marriages: [{ id: "tpl-marriage-1", text: "💍 مبارك الزواج بين {husbandName} و{wifeName}، بالرفاء والبنين." }],
       deaths: [
         { id: "tpl-death-announce", kind: "announce", text: "*🤲 إنا لله وإنا إليه راجعون*\n\nانتقل إلى رحمة الله تعالى\n*{deceasedFullName}*\n\n{deathDateLine}\n\n{relativesBlock}\n\n*يتقدم رئيس وأعضاء مجلس إدارة جمعية العوامية الخيرية بخالص التعازي والمواساة*\n*رحم الله من يقرأ {forSoul} سورة الفاتحة*\n——————\n*القسم الإعلامي - خيرية العوامية*" },
-        { id: "tpl-death-funeral", kind: "funeral", text: "*⬟ تشييع {deceasedFullName}*\n\n{funeralLine}\n\n*رحم الله من يقرأ {forSoul} سورة الفاتحة*\n——————\n*القسم الإعلامي - خيرية العوامية*" },
-        { id: "tpl-death-condolence", kind: "condolence", text: "*▣ عزاء {deceasedFullName}*\n\n{condolenceBlock}\n\n*يتقدم رئيس وأعضاء مجلس إدارة جمعية العوامية الخيرية بخالص التعازي والمواساة*\n——————\n*القسم الإعلامي - خيرية العوامية*" }
+        { id: "tpl-death-funeral", kind: "funeral", text: "*⬟ تشييع {deceasedFullName}*\n\n{funeralWhen}\n\n*رحم الله من يقرأ {forSoul} سورة الفاتحة*\n——————\n*القسم الإعلامي - خيرية العوامية*" },
+        { id: "tpl-death-condolence", kind: "condolence", text: "*▣ عزاء {deceasedFullName}*\n\n{condolenceBody}\n\n*يتقدم رئيس وأعضاء مجلس إدارة جمعية العوامية الخيرية بخالص التعازي والمواساة*\n——————\n*القسم الإعلامي - خيرية العوامية*" }
       ],
       congrats: [{ id: "tpl-congrats-1", text: "🎉 تهانينا لـ {fullName} بمناسبة {occasionType}، بارك الله لكم ودمتم بخير." }]
     };
@@ -7218,6 +7219,7 @@
     if(out.funeralTimeText) fl.push(out.funeralTimeText);
     if(rec.funeralFrom) fl.push(/^من\s/.test(rec.funeralFrom) ? rec.funeralFrom : "من " + rec.funeralFrom);
     out.funeralLine = fl.length ? "⬟ *وقت ومكان التشييع:* " + fl.join(" | ") : "";
+    out.funeralWhen = fl.join(" | ");
     var rl = [];
     [["spouseName", fem ? "زوج" : "زوجة"], ["sons", "أبناء"], ["daughters", "بنات"], ["brothers", "إخوان"], ["sisters", "أخوات"]].forEach(function(p){
       if(rec[p[0]]) rl.push("■ *" + p[1] + " " + fq + ":* " + rec[p[0]]);
@@ -7234,6 +7236,7 @@
     }
     condolLine("للرجال", rec.condolenceMenPlace, rec.condolenceMenTimes, rec.condolenceMenLink);
     condolLine("للنساء", rec.condolenceWomenPlace, rec.condolenceWomenTimes, rec.condolenceWomenLink);
+    out.condolenceBody = cl.length ? (rec.condolenceStart ? "بدءًا من " + rec.condolenceStart + "\n" : "") + cl.join("\n") : "";
     out.condolenceBlock = cl.length ? "▣ *أماكن العزاء" + (rec.condolenceStart ? " (بدءًا من " + rec.condolenceStart + ")" : "") + "*\n" + cl.join("\n") : "";
     return out;
   }
