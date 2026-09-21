@@ -748,6 +748,10 @@
   .tpl-actions .btn-primary{padding:8px 22px;}
   .tpl-reset{background:none; border:none; color:var(--ink-soft); font-size:12px; cursor:pointer; text-decoration:underline; font-family:inherit; padding:6px;}
   .tpl-reset.danger{color:var(--danger);}
+  .publish-link-row{display:flex; flex-wrap:wrap; align-items:center; gap:8px; margin-top:10px;}
+  .publish-link-row input{flex:1; min-width:180px; margin:0; padding:7px 10px; font-size:12.5px; text-align:left;}
+  .publish-link-row .btn-secondary{padding:6px 12px; font-size:12px;}
+  .publish-link-warn{font-size:11.5px; color:var(--tan);}
   .publish-msg{border:1px solid var(--line); border-radius:12px; padding:10px 12px; margin-top:10px; background:#fbfcfc;}
   .publish-msg-head{display:flex; align-items:center; justify-content:space-between; gap:8px; flex-wrap:wrap; margin-bottom:6px; font-size:13px; color:var(--teal-dark);}
   .publish-msg-actions{display:flex; gap:6px;}
@@ -5014,6 +5018,7 @@
         { key: "condolenceMenLink", label: "رابط التعزية — الرجال", type: "text", hint: "رابط مجموعة واتساب أو بث التعزية — اختياري" },
         { key: "condolenceWomenLink", label: "رابط التعزية — النساء", type: "text", hint: "رابط مجموعة واتساب أو بث التعزية — اختياري" },
         { key: "sourceUrl", label: "رابط الخبر بموقع الجمعية", type: "text", hint: "يُملأ تلقائياً عند سحب الخبر من الموقع" },
+        { key: "shortLink", label: "الرابط المختصر", type: "text", hint: "رابط الخبر بعد اختصاره من لوحة موقع الجمعية — يُوضع برسائل النشر مكان الرابط الطويل" },
         { key: "notes", label: "ملاحظات", type: "text", hint: "أي ملاحظات إضافية — اختياري" }
       ],
       // متغيرات جاهزة لقوالب النشر تُبنى من عدة حقول (انظر eventTemplateComputedVars) — تظهر بلوحة "قوالب التهنئة والتعازي"
@@ -5022,7 +5027,7 @@
         { key: "deathDateGregorianText", label: "التاريخ الميلادي مكتوباً" }, { key: "funeralLine", label: "سطر التشييع" },
         { key: "funeralTimeText", label: "وقت التشييع (12 ساعة)" }, { key: "relativesBlock", label: "كتلة ذوو الفقيد" },
         { key: "condolenceBlock", label: "كتلة أماكن العزاء" }, { key: "forSoul", label: "لروحه/لروحها" },
-        { key: "funeralWhen", label: "موعد ومكان التشييع" }, { key: "condolenceBody", label: "أماكن العزاء بدون عنوان" }
+        { key: "newsLink", label: "رابط الخبر (المختصر إن وُجد)" }, { key: "funeralWhen", label: "موعد ومكان التشييع" }, { key: "condolenceBody", label: "أماكن العزاء بدون عنوان" }
       ],
       // عنوان بطاقة مهمة النشر: اسم المتوفى بمسماه وتاريخ الوفاة (بدل أول ثلاثة حقول = السنتان + المسمى)
       publishTitle: function(r){ return [((r.honorific || "") + " " + (r.deceasedName || "")).trim(), r.deathDateHijri || r.gregorianYear].filter(Boolean).join(" — "); },
@@ -7209,6 +7214,7 @@
     if(!rec || rec.category !== "deaths") return out;
     var fem = rec.gender === "أنثى", fq = fem ? "الفقيدة" : "الفقيد";
     out.deceasedFullName = ((rec.honorific || "") + " " + (rec.deceasedName || "")).trim();
+    out.newsLink = String(rec.shortLink || rec.sourceUrl || "").trim();     // المختصر لو وُجد، وإلا رابط الخبر الطويل كي لا تخلو الرسالة من الرابط
     out.forSoul = rec.gender === "أنثى" ? "لروحها" : (rec.gender === "ذكر" ? "لروحه" : "لروح الفقيد/ة");
     var gregText = "";
     var gp = String(rec.deathDateGregorian || "").split("-");
@@ -7339,7 +7345,13 @@
   }
   // رسائل النشر الثلاث للوفاة: كل رسالة بنصها وزري نسخ/واتساب؛ الصورة المرفقة برسالة الإعلان فقط، والرسالة بلا بيانات تُخفى
   function deathMessagesHTML(r, templates){
-    return DEATH_MSG_KINDS.map(function(km){
+    var linkRow = '<div class="publish-link-row">' +
+      '<input type="text" dir="ltr" data-short-link-input data-id="' + r.id + '" value="' + escapeHTML(r.shortLink || "") + '" placeholder="الرابط المختصر"/>' +
+      '<button type="button" class="btn-secondary" data-action="paste-short-link" data-id="' + r.id + '">📋 لصق</button>' +
+      '<button type="button" class="btn-secondary" data-action="copy-news-link" data-id="' + r.id + '">نسخ رابط الخبر</button>' +
+      (r.shortLink ? '' : '<span class="publish-link-warn">لم يُختصر — يُرسل الرابط الطويل</span>') +
+    '</div>';
+    return linkRow + DEATH_MSG_KINDS.map(function(km){
       var t = (templates.deaths || []).find(function(x){ return x.kind === km.kind; });
       if(!t || !deathMsgHasData(km.kind, r)) return "";
       var text = renderTemplateText(t.text, r);
@@ -7354,6 +7366,21 @@
         '<p class="publish-msg-text" data-action="copy-publish-text" data-text="' + escapeHTML(text) + '" title="اضغط للنسخ">' + escapeHTML(text) + '</p>' +
       '</div>';
     }).join("");
+  }
+  // الرابط المختصر: يُحفظ بالسجل مباشرة (بدون تغيير updatedAt حتى لا يُعدّ تعديلاً يدوياً يمنع تحديث السجل من الموقع)
+  function saveShortLink(recId, val){
+    val = String(val || "").trim();
+    if(val && !/^https?:\/\//i.test(val)){ showToast("الرابط غير صالح — يجب أن يبدأ بـ https://"); refreshEventsPublishList(); return; }
+    var rec = _eventsRecordsCache.find(function(x){ return x.id === recId; });
+    if(rec){ if(val) rec.shortLink = val; else delete rec.shortLink; }
+    var patch = val ? { shortLink: val } : { shortLink: firebase.firestore.FieldValue.delete() };
+    db.collection("events").doc(recId).update(patch).catch(function(err){ console.error("shortLink save failed", err); showToast("تعذّر حفظ الرابط"); });
+    refreshEventsPublishList();
+    showToast(val ? "✔ تم حفظ الرابط المختصر" : "تمت إزالة الرابط المختصر");
+  }
+  function pasteShortLink(recId){
+    if(!navigator.clipboard || !navigator.clipboard.readText){ showToast("المتصفح لا يسمح باللصق التلقائي — الصق الرابط بالحقل يدوياً"); return; }
+    navigator.clipboard.readText().then(function(t){ saveShortLink(recId, t); }).catch(function(){ showToast("اسمح للمتصفح بقراءة الحافظة، أو الصق الرابط بالحقل يدوياً"); });
   }
   function eventsPublishListHTML(){
     var templates = loadEventsTemplates();
@@ -8866,6 +8893,8 @@
       case "deaths-sync-now": runDeathsSyncNow(btn); break;
       case "clear-publish-selection": eventsUI.publishSelectedIds = {}; refreshEventsPublishList(); break;
       case "copy-publish-text": copyToClipboard(btn.dataset.text); break;
+      case "paste-short-link": pasteShortLink(btn.dataset.id); break;
+      case "copy-news-link": { var nlRec = findEventRecord(btn.dataset.id); if(nlRec && nlRec.sourceUrl) copyToClipboard(nlRec.sourceUrl); else showToast("لا يوجد رابط للخبر بهذا السجل"); break; }
       case "share-publish-whatsapp": shareRecordToWhatsApp(btn.dataset.id, btn.dataset.text, btn, (btn.dataset.kind && (btn.dataset.kind !== "announce" || btn.dataset.image)) ? { textOnly: !btn.dataset.image, imageUrl: btn.dataset.image || "" } : null); break;
       case "toggle-publish-row": {
         var togId = btn.dataset.id;
@@ -8900,6 +8929,8 @@
         else delete eventsUI.publishSelectedIds[r.id];
       });
       refreshEventsPublishList();
+    } else if(e.target.matches('[data-short-link-input]')){
+      saveShortLink(e.target.dataset.id, e.target.value);
     } else if(e.target.matches('[data-action="toggle-publish-select"]')){
       var selId = e.target.dataset.id;
       if(eventsUI.publishSelectedIds[selId]) delete eventsUI.publishSelectedIds[selId];
