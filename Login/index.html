@@ -6035,7 +6035,8 @@
     });
     return defaults;
   }
-  function saveEventsTemplates(t){ db.collection("eventsMeta").doc("templates").set(t); }
+  // نحدّث الكاش محلياً فوراً قبل الكتابة — بدونه كانت أي إعادة رسم مباشرة بعد الحفظ (مثل لوحة القوالب) تقرأ النسخة القديمة
+  function saveEventsTemplates(t){ _eventsTemplatesCache = t; db.collection("eventsMeta").doc("templates").set(t); }
 
   // ----- مكتبة شعارات الجامعات: تُرفع مرة واحدة لكل جامعة، وتُعبّأ تلقائياً في حقل "شعار الجامعة"
   // لأي سجل خريج من نفس الجامعة (ما لم يُرفع شعار خاص بذلك السجل يدوياً) — بدل رفع الشعار يدوياً كل مرة -----
