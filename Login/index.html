@@ -733,6 +733,26 @@
   .publish-detail-footer .btn-secondary .icon{width:14px; height:14px;}
   .template-card{background:var(--white); border:1px solid var(--line); border-radius:12px; padding:14px 16px; margin-bottom:10px;}
   .template-card textarea{width:100%; padding:9px 11px; border:1.5px solid var(--line); border-radius:9px; font-size:12.5px; font-family:inherit; resize:vertical; margin-bottom:8px;}
+  .tpl-vars{margin-bottom:12px; font-size:12px; color:var(--ink-soft);}
+  .tpl-vars summary{cursor:pointer; font-weight:600; padding:4px 0;}
+  .tpl-vars div{display:flex; flex-wrap:wrap; gap:6px; padding:8px 0;}
+  .tpl-vars code{background:var(--teal-tint); color:var(--teal-dark); border-radius:6px; padding:2px 8px; cursor:pointer; font-size:11.5px;}
+  .tpl-vars code:hover{background:var(--teal); color:#fff;}
+  .tpl-card-title{font-weight:700; font-size:14px; color:var(--teal-dark); margin-bottom:8px;}
+  .tpl-cond{display:flex; flex-wrap:wrap; align-items:center; gap:8px; margin:0 0 8px; font-size:12px; color:var(--ink-soft);}
+  .tpl-cond select{margin:0; padding:6px 10px; font-size:12px; width:auto; max-width:100%;}
+  .tpl-image-row{display:flex; flex-wrap:wrap; align-items:center; gap:10px; margin:0 0 10px;}
+  .tpl-image-row img{width:56px; height:56px; object-fit:cover; border-radius:10px; border:1px solid var(--line);}
+  .tpl-image-btn{cursor:pointer; font-size:12.5px;}
+  .tpl-actions{display:flex; align-items:center; gap:10px;}
+  .tpl-actions .btn-primary{padding:8px 22px;}
+  .tpl-reset{background:none; border:none; color:var(--ink-soft); font-size:12px; cursor:pointer; text-decoration:underline; font-family:inherit; padding:6px;}
+  .tpl-reset.danger{color:var(--danger);}
+  .publish-msg{border:1px solid var(--line); border-radius:12px; padding:10px 12px; margin-top:10px; background:#fbfcfc;}
+  .publish-msg-head{display:flex; align-items:center; justify-content:space-between; gap:8px; flex-wrap:wrap; margin-bottom:6px; font-size:13px; color:var(--teal-dark);}
+  .publish-msg-actions{display:flex; gap:6px;}
+  .publish-msg-actions .btn-secondary{padding:5px 12px; font-size:12px; display:inline-flex; align-items:center; gap:5px;}
+  .publish-msg-text{margin:0; font-size:12.5px; line-height:1.8; white-space:pre-wrap; cursor:copy;}
   .template-placeholders{font-size:11px; color:var(--ink-soft); margin-bottom:10px; line-height:1.8;}
   .template-placeholders code{background:var(--teal-tint); color:var(--teal-dark); border-radius:5px; padding:1px 6px; margin-inline-end:4px;}
   .uni-logos-grid{display:grid; grid-template-columns:repeat(auto-fill, minmax(160px, 1fr)); gap:12px;}
@@ -5001,7 +5021,7 @@
         { key: "deceasedFullName", label: "المسمى + الاسم" }, { key: "deathDateLine", label: "سطر تاريخ الوفاة" },
         { key: "deathDateGregorianText", label: "التاريخ الميلادي مكتوباً" }, { key: "funeralLine", label: "سطر التشييع" },
         { key: "funeralTimeText", label: "وقت التشييع (12 ساعة)" }, { key: "relativesBlock", label: "كتلة ذوو الفقيد" },
-        { key: "condolenceBlock", label: "كتلة أماكن العزاء" }
+        { key: "condolenceBlock", label: "كتلة أماكن العزاء" }, { key: "forSoul", label: "لروحه/لروحها" }
       ],
       // عنوان بطاقة مهمة النشر: اسم المتوفى بمسماه وتاريخ الوفاة (بدل أول ثلاثة حقول = السنتان + المسمى)
       publishTitle: function(r){ return [((r.honorific || "") + " " + (r.deceasedName || "")).trim(), r.deathDateHijri || r.gregorianYear].filter(Boolean).join(" — "); },
@@ -5976,20 +5996,42 @@
     _eventsTemplatesCache = doc.exists ? doc.data() : null;
     eventsFirestoreRefresh();
   }, function(err){ console.error("templates snapshot error", err); });
+  // رسائل النشر الثلاث لحالة الوفاة — كل واحدة قالب مستقل؛ الصورة المرفقة (imageUrl) لرسالة الإعلان فقط
+  var DEATH_TEMPLATE_DEFAULTS = [
+        { id: "tpl-death-announce", kind: "announce", text: "*🤲 إنا لله وإنا إليه راجعون*\n\nانتقل إلى رحمة الله تعالى\n*{deceasedFullName}*\n\n{deathDateLine}\n\n{relativesBlock}\n\n*يتقدم رئيس وأعضاء مجلس إدارة جمعية العوامية الخيرية بخالص التعازي والمواساة*\n*رحم الله من يقرأ {forSoul} سورة الفاتحة*\n——————\n*القسم الإعلامي - خيرية العوامية*" },
+        { id: "tpl-death-funeral", kind: "funeral", text: "*⬟ تشييع {deceasedFullName}*\n\n{funeralLine}\n\n*رحم الله من يقرأ {forSoul} سورة الفاتحة*\n——————\n*القسم الإعلامي - خيرية العوامية*" },
+        { id: "tpl-death-condolence", kind: "condolence", text: "*▣ عزاء {deceasedFullName}*\n\n{condolenceBlock}\n\n*يتقدم رئيس وأعضاء مجلس إدارة جمعية العوامية الخيرية بخالص التعازي والمواساة*\n——————\n*القسم الإعلامي - خيرية العوامية*" }
+  ];
+  var DEATH_MSG_KINDS = [
+    { kind: "announce", title: "رسالة إعلان الوفاة", hasImage: true },
+    { kind: "funeral", title: "رسالة التشييع", hasImage: false },
+    { kind: "condolence", title: "رسالة أماكن العزاء", hasImage: false }
+  ];
+  function deathMsgHasData(kind, r){
+    if(kind === "funeral") return !!(r.funeralFrom || r.funeralTime || r.funeralDay);
+    if(kind === "condolence") return !!(r.condolenceMenPlace || r.condolenceWomenPlace);
+    return true;
+  }
   function loadEventsTemplates(){
     var defaults = {
       graduates: [{ id: "tpl-grad-1", text: "🎓 تهانينا لـ {fullName} بمناسبة التخرج من {university} تخصص {specialization} ({degree})." }],
       births: [{ id: "tpl-birth-1", text: "😊 مبارك المولود {fullName} لعائلة {family}، بارك الله لكم في الموهوب وشكرتم الواهب." }],
       marriages: [{ id: "tpl-marriage-1", text: "💍 مبارك الزواج بين {husbandName} و{wifeName}، بالرفاء والبنين." }],
       deaths: [
-        { id: "tpl-death-f", condFieldKey: "gender", condValue: "أنثى", text: "*🤲 إنا لله وإنا إليه راجعون*\n\nانتقل إلى رحمة الله تعالى\n*{deceasedFullName}*\n\n{deathDateLine}\n{funeralLine}\n\n{relativesBlock}\n\n{condolenceBlock}\n\n*يتقدم رئيس وأعضاء مجلس إدارة جمعية العوامية الخيرية بخالص التعازي والمواساة*\n*رحم الله من يقرأ لروحها سورة الفاتحة*\n——————\n*القسم الإعلامي - خيرية العوامية*" },
-        { id: "tpl-death-m", condFieldKey: "gender", condValue: "ذكر", text: "*🤲 إنا لله وإنا إليه راجعون*\n\nانتقل إلى رحمة الله تعالى\n*{deceasedFullName}*\n\n{deathDateLine}\n{funeralLine}\n\n{relativesBlock}\n\n{condolenceBlock}\n\n*يتقدم رئيس وأعضاء مجلس إدارة جمعية العوامية الخيرية بخالص التعازي والمواساة*\n*رحم الله من يقرأ لروحه سورة الفاتحة*\n——————\n*القسم الإعلامي - خيرية العوامية*" },
-        { id: "tpl-death-1", text: "*🤲 إنا لله وإنا إليه راجعون*\n\nانتقل إلى رحمة الله تعالى\n*{deceasedFullName}*\n\n{deathDateLine}\n{funeralLine}\n\n{relativesBlock}\n\n{condolenceBlock}\n\n*يتقدم رئيس وأعضاء مجلس إدارة جمعية العوامية الخيرية بخالص التعازي والمواساة*\n*رحم الله من يقرأ لروح الفقيد/ة سورة الفاتحة*\n——————\n*القسم الإعلامي - خيرية العوامية*" }
+        { id: "tpl-death-announce", kind: "announce", text: "*🤲 إنا لله وإنا إليه راجعون*\n\nانتقل إلى رحمة الله تعالى\n*{deceasedFullName}*\n\n{deathDateLine}\n\n{relativesBlock}\n\n*يتقدم رئيس وأعضاء مجلس إدارة جمعية العوامية الخيرية بخالص التعازي والمواساة*\n*رحم الله من يقرأ {forSoul} سورة الفاتحة*\n——————\n*القسم الإعلامي - خيرية العوامية*" },
+        { id: "tpl-death-funeral", kind: "funeral", text: "*⬟ تشييع {deceasedFullName}*\n\n{funeralLine}\n\n*رحم الله من يقرأ {forSoul} سورة الفاتحة*\n——————\n*القسم الإعلامي - خيرية العوامية*" },
+        { id: "tpl-death-condolence", kind: "condolence", text: "*▣ عزاء {deceasedFullName}*\n\n{condolenceBlock}\n\n*يتقدم رئيس وأعضاء مجلس إدارة جمعية العوامية الخيرية بخالص التعازي والمواساة*\n——————\n*القسم الإعلامي - خيرية العوامية*" }
       ],
       congrats: [{ id: "tpl-congrats-1", text: "🎉 تهانينا لـ {fullName} بمناسبة {occasionType}، بارك الله لكم ودمتم بخير." }]
     };
     var p = _eventsTemplatesCache;
-    if(p){ for(var k in defaults){ if(p[k] !== undefined) defaults[k] = p[k]; } }
+    if(p){ for(var k in defaults){ if(p[k] !== undefined && k !== "deaths") defaults[k] = p[k]; } }
+    // الوفيات: ثلاث رسائل ثابتة (إعلان/تشييع/عزاء) — ما فيه شروط ولا إضافة/حذف، وأي نسخة قديمة بلا kind تُستبدل بالافتراضي
+    var defDeaths = defaults.deaths;
+    defaults.deaths = DEATH_MSG_KINDS.map(function(km){
+      var stored = p && Array.isArray(p.deaths) ? p.deaths.find(function(t){ return t && t.kind === km.kind; }) : null;
+      return stored || defDeaths.find(function(t){ return t.kind === km.kind; });
+    });
     return defaults;
   }
   function saveEventsTemplates(t){ db.collection("eventsMeta").doc("templates").set(t); }
@@ -7160,6 +7202,7 @@
     if(!rec || rec.category !== "deaths") return out;
     var fem = rec.gender === "أنثى", fq = fem ? "الفقيدة" : "الفقيد";
     out.deceasedFullName = ((rec.honorific || "") + " " + (rec.deceasedName || "")).trim();
+    out.forSoul = rec.gender === "أنثى" ? "لروحها" : (rec.gender === "ذكر" ? "لروحه" : "لروح الفقيد/ة");
     var gregText = "";
     var gp = String(rec.deathDateGregorian || "").split("-");
     if(gp.length === 3 && parseInt(gp[2], 10)) gregText = parseInt(gp[2], 10) + " " + (GREG_MONTHS[parseInt(gp[1], 10) - 1] || "") + " " + gp[0] + "م";
@@ -7281,6 +7324,24 @@
       return cat && cat.fields.some(function(f){ return String(r[f.key] || "").toLowerCase().indexOf(q) > -1; });
     }).sort(function(a, b){ return (b.createdAt || 0) - (a.createdAt || 0); });
   }
+  // رسائل النشر الثلاث للوفاة: كل رسالة بنصها وزري نسخ/واتساب؛ الصورة المرفقة برسالة الإعلان فقط، والرسالة بلا بيانات تُخفى
+  function deathMessagesHTML(r, templates){
+    return DEATH_MSG_KINDS.map(function(km){
+      var t = (templates.deaths || []).find(function(x){ return x.kind === km.kind; });
+      if(!t || !deathMsgHasData(km.kind, r)) return "";
+      var text = renderTemplateText(t.text, r);
+      if(!text) return "";
+      var img = km.hasImage && t.imageUrl ? t.imageUrl : "";
+      return '<div class="publish-msg">' +
+        '<div class="publish-msg-head"><b>' + km.title + (img ? ' <span class="publish-msg-img" title="مرفق معها صورة">🖼️</span>' : '') + '</b>' +
+          '<span class="publish-msg-actions">' +
+            '<button type="button" class="btn-secondary" data-action="copy-publish-text" data-text="' + escapeHTML(text) + '">نسخ</button>' +
+            '<button type="button" class="btn-secondary wa-share-btn" data-action="share-publish-whatsapp" data-id="' + r.id + '" data-text="' + escapeHTML(text) + '" data-kind="' + km.kind + '"' + (img ? ' data-image="' + escapeHTML(img) + '"' : '') + '><span class="icon">' + ICON_WA + '</span> واتساب</button>' +
+          '</span></div>' +
+        '<p class="publish-msg-text" data-action="copy-publish-text" data-text="' + escapeHTML(text) + '" title="اضغط للنسخ">' + escapeHTML(text) + '</p>' +
+      '</div>';
+    }).join("");
+  }
   function eventsPublishListHTML(){
     var templates = loadEventsTemplates();
     var statuses = loadEventsPublish();
@@ -7291,7 +7352,7 @@
     return filtered.map(function(r){
       var cat = EVENTS_CATEGORIES.find(function(c){ return c.key === r.category; });
       var status = statuses[r.id] || "pending";
-      var tpl = pickBestTextTemplateForRecord(templates[r.category] || [], r);
+      var tpl = r.category === "deaths" ? null : pickBestTextTemplateForRecord(templates[r.category] || [], r);
       var text = tpl ? renderTemplateText(tpl.text, r) : "";
       var title = (cat.publishTitle ? cat.publishTitle(r) : cat.fields.slice(0, 3).map(function(f){ return r[f.key]; }).filter(Boolean).join(" — ")) || "(بدون بيانات)";
       var expanded = !!eventsUI.expandedPublishIds[r.id];
@@ -7308,8 +7369,8 @@
             '<button type="button" class="publish-status-pill pending' + (status === "pending" ? " active" : "") + '" data-action="set-publish-status" data-id="' + r.id + '" data-status="pending">معلق</button>' +
           '</div>' +
         '</div>' +
-        (text ? '<p class="copy-field" data-action="copy-publish-text" data-text="' + escapeHTML(text) + '" style="margin-top:10px; font-size:12.5px; line-height:1.8; white-space:pre-wrap;" title="اضغط للنسخ">' + escapeHTML(text) + '</p>' : '<p class="report-empty">لا يوجد قالب تهنئة/تعزية لهذا التصنيف بعد</p>') +
-        (text ? '<button type="button" class="btn-secondary wa-share-btn" data-action="share-publish-whatsapp" data-id="' + r.id + '" data-text="' + escapeHTML(text) + '" style="margin-top:10px; display:inline-flex; align-items:center; gap:6px; font-size:12px; padding:7px 14px;"><span class="icon">' + ICON_WA + '</span> شارك مع الصورة عبر واتساب</button>' : "");
+        (r.category === "deaths" ? deathMessagesHTML(r, templates) : ((text ? '<p class="copy-field" data-action="copy-publish-text" data-text="' + escapeHTML(text) + '" style="margin-top:10px; font-size:12.5px; line-height:1.8; white-space:pre-wrap;" title="اضغط للنسخ">' + escapeHTML(text) + '</p>' : '<p class="report-empty">لا يوجد قالب تهنئة/تعزية لهذا التصنيف بعد</p>') +
+        (text ? '<button type="button" class="btn-secondary wa-share-btn" data-action="share-publish-whatsapp" data-id="' + r.id + '" data-text="' + escapeHTML(text) + '" style="margin-top:10px; display:inline-flex; align-items:center; gap:6px; font-size:12px; padding:7px 14px;"><span class="icon">' + ICON_WA + '</span> شارك مع الصورة عبر واتساب</button>' : "")));
       if(expanded){
         html += '<div class="publish-detail-grid">' +
           eventFieldsForCopy(cat).map(function(f){
@@ -7403,47 +7464,96 @@
     document.getElementById("eventTemplatesOverlay").classList.add("active");
   }
   function closeEventTemplatesModal(){ document.getElementById("eventTemplatesOverlay").classList.remove("active"); }
+  // لوحة قوالب النشر: بدون شروحات — تبويبات التصنيفات، المتغيرات (مطوية، والنقر عليها يدرجها بمؤشر الكتابة)، ثم البطاقات.
+  // الوفيات: ثلاث بطاقات ثابتة (إعلان/تشييع/عزاء)، وصورة مرفقة اختيارية لرسالة الإعلان فقط
+  function tplRows(text){ return Math.max(5, Math.min(14, String(text || "").split("\n").length + 1)); }
   function renderEventTemplatesPanel(){
     var body = document.getElementById("eventTemplatesBody");
     var templates = loadEventsTemplates();
     var catKey = eventsUI.templatesCategory;
     var cat = EVENTS_CATEGORIES.find(function(c){ return c.key === catKey; });
     var list = templates[catKey] || [];
-    var html = '<div class="panel-head"><h3>قوالب التهنئة والتعازي</h3><button type="button" class="panel-close" data-action="close-event-templates">✕</button></div>';
-    html += '<p style="font-size:12px; color:var(--ink-soft); margin-bottom:14px;">قوالب نصية جاهزة تُستبدل متغيراتها تلقائياً ببيانات السجل عند النشر.</p>';
+    var html = '<div class="panel-head"><h3>قوالب النشر</h3><button type="button" class="panel-close" data-action="close-event-templates">✕</button></div>';
     html += '<div class="cat-tabs">' + EVENTS_CATEGORIES.map(function(c){
       return '<button type="button" class="cat-tab' + (c.key === catKey ? " active" : "") + '" data-action="set-templates-category" data-cat="' + c.key + '"><span class="icon">' + c.icon + '</span>' + c.label + '</button>';
     }).join("") + '</div>';
-    html += '<div class="template-placeholders">المتغيرات المتاحة: ' + cat.fields.concat(cat.templateExtraVars || []).map(function(f){ return '<code>{' + f.key + '}</code>'; }).join(" ") + '</div>';
-    if(!list.length) html += '<p class="report-empty">لا توجد قوالب بعد لهذا التصنيف</p>';
-    var condHint = list.length > 1 ? '<p class="hint" style="margin:0 0 10px;">عند وجود أكثر من قالب لنفس التصنيف: اختر حقل الشرط، ثم إما "أي قيمة معبأة" (يُستخدم القالب إذا كان الحقل معبأ وليس "بدون" — مثل مرتبة الشرف) أو قيمة محددة (يُستخدم فقط إذا ساوت قيمة الحقل هذه بالضبط — مثل الجنس ذكر/أنثى). القالب غير المشروط يُستخدم كافتراضي إذا ما طابق أي قالب مشروط.</p>' : '';
-    html += condHint;
+    var vars = cat.fields.filter(function(f){ return f.type !== "image"; }).concat(cat.templateExtraVars || []);
+    html += '<details class="tpl-vars"><summary>المتغيرات (' + vars.length + ') — اضغط متغيراً لإدراجه</summary><div>' +
+      vars.map(function(f){ return '<code data-insert-var="' + f.key + '" title="' + escapeHTML(f.label) + '">{' + f.key + '}</code>'; }).join("") +
+    '</div></details>';
+    if(catKey === "deaths"){
+      DEATH_MSG_KINDS.forEach(function(km){
+        var t = list.find(function(x){ return x.kind === km.kind; });
+        if(!t) return;
+        html += '<div class="template-card">' +
+          '<div class="tpl-card-title">' + km.title + '</div>' +
+          '<textarea rows="' + tplRows(t.text) + '" data-template-input data-id="' + t.id + '">' + escapeHTML(t.text) + '</textarea>' +
+          (km.hasImage ? '<div class="tpl-image-row">' +
+            (t.imageUrl ? '<img src="' + escapeHTML(t.imageUrl) + '" alt=""/><button type="button" class="btn-secondary" data-action="remove-template-image" data-id="' + t.id + '">إزالة الصورة</button>' : '') +
+            '<label class="btn-secondary tpl-image-btn">🖼️ ' + (t.imageUrl ? 'تغيير الصورة' : 'صورة مرفقة بالرسالة') + '<input type="file" accept="image/png,image/jpeg" data-template-image data-id="' + t.id + '" style="display:none;"/></label>' +
+          '</div>' : '') +
+          '<div class="tpl-actions"><button type="button" class="btn-primary" data-action="save-template" data-id="' + t.id + '">حفظ</button>' +
+          '<button type="button" class="tpl-reset" data-action="reset-death-template" data-kind="' + km.kind + '">استعادة الافتراضي</button></div>' +
+        '</div>';
+      });
+      setHTML(body, html);
+      return;
+    }
+    if(!list.length) html += '<p class="report-empty">لا توجد قوالب</p>';
     list.forEach(function(t){
       var condOptions = t.condFieldKey ? templateCondFieldOptions(cat, t.condFieldKey) : [];
       html += '<div class="template-card">' +
-        '<textarea rows="3" data-template-input data-id="' + t.id + '">' + escapeHTML(t.text) + '</textarea>' +
-        '<label style="display:block; font-size:11.5px; color:var(--ink-soft); margin:8px 0 2px;">يُستخدم فقط إذا كان الحقل التالي مطابقاً بالسجل (اتركه فارغاً ليكون القالب الافتراضي)' +
-          '<select data-template-cond data-id="' + t.id + '" style="margin-top:4px;">' +
-            '<option value=""' + (!t.condFieldKey ? " selected" : "") + '>بدون شرط (افتراضي)</option>' +
+        '<textarea rows="' + tplRows(t.text) + '" data-template-input data-id="' + t.id + '">' + escapeHTML(t.text) + '</textarea>' +
+        (list.length > 1 || t.condFieldKey ? '<div class="tpl-cond"><span>الشرط:</span>' +
+          '<select data-template-cond data-id="' + t.id + '"><option value="">افتراضي</option>' +
             cat.fields.map(function(f){ return '<option value="' + f.key + '"' + (t.condFieldKey === f.key ? " selected" : "") + '>' + escapeHTML(f.label) + '</option>'; }).join("") +
           '</select>' +
-        '</label>' +
-        (t.condFieldKey && condOptions.length ? (
-          '<label style="display:block; font-size:11.5px; color:var(--ink-soft); margin:6px 0 2px;">القيمة المطلوبة' +
-            '<select data-template-condvalue data-id="' + t.id + '" style="margin-top:4px;">' +
-              '<option value=""' + (!t.condValue ? " selected" : "") + '>أي قيمة معبأة (غير "بدون")</option>' +
-              condOptions.map(function(o){ return '<option value="' + escapeHTML(o) + '"' + (t.condValue === o ? " selected" : "") + '>يساوي: ' + escapeHTML(o) + '</option>'; }).join("") +
-            '</select>' +
-          '</label>'
-        ) : "") +
-        '<div style="display:flex; gap:8px; margin-top:6px;">' +
-          '<button type="button" class="btn-primary" style="padding:8px 16px;" data-action="save-template" data-id="' + t.id + '">حفظ</button>' +
-          '<button type="button" class="danger-btn" data-action="delete-template" data-id="' + t.id + '">حذف</button>' +
-        '</div>' +
+          (t.condFieldKey && condOptions.length ? '<select data-template-condvalue data-id="' + t.id + '"><option value=""' + (!t.condValue ? " selected" : "") + '>أي قيمة</option>' +
+            condOptions.map(function(o){ return '<option value="' + escapeHTML(o) + '"' + (t.condValue === o ? " selected" : "") + '>' + escapeHTML(o) + '</option>'; }).join("") + '</select>' : '') +
+        '</div>' : '') +
+        '<div class="tpl-actions"><button type="button" class="btn-primary" data-action="save-template" data-id="' + t.id + '">حفظ</button>' +
+          '<button type="button" class="tpl-reset danger" data-action="delete-template" data-id="' + t.id + '">حذف</button></div>' +
       '</div>';
     });
-    html += '<button type="button" class="btn-secondary" style="width:100%; justify-content:center;" data-action="add-template"><span class="icon">' + TICON.plus + '</span> إضافة قالب جديد</button>';
+    html += '<button type="button" class="btn-secondary" style="width:100%; justify-content:center;" data-action="add-template"><span class="icon">' + TICON.plus + '</span> قالب جديد</button>';
     setHTML(body, html);
+  }
+  // صورة مرفقة برسالة إعلان الوفاة: تُضغط وتُرفع لـR2 ويُحفظ رابطها بالقالب
+  function setDeathTemplateImage(tplId, file){
+    if(!file) return;
+    showToast("جارٍ رفع الصورة...");
+    compressEventImageFile(file, 1200 * 1024, function(dataUrl){
+      if(!dataUrl){ showToast("تعذّر قراءة الصورة"); return; }
+      uploadDataUrlToR2(dataUrl, "events", function(url){
+        var templates = loadEventsTemplates();
+        var tpl = (templates.deaths || []).find(function(t){ return t.id === tplId; });
+        if(!tpl) return;
+        tpl.imageUrl = url;
+        saveEventsTemplates(templates);
+        renderEventTemplatesPanel();
+        showToast("تم حفظ الصورة");
+      });
+    });
+  }
+  function removeDeathTemplateImage(tplId){
+    var templates = loadEventsTemplates();
+    var tpl = (templates.deaths || []).find(function(t){ return t.id === tplId; });
+    if(!tpl) return;
+    delete tpl.imageUrl;
+    saveEventsTemplates(templates);
+    renderEventTemplatesPanel();
+  }
+  function resetDeathTemplate(kind){
+    var templates = loadEventsTemplates();
+    var i = (templates.deaths || []).findIndex(function(t){ return t.kind === kind; });
+    if(i < 0) return;
+    var keepImage = templates.deaths[i].imageUrl;
+    var def = DEATH_TEMPLATE_DEFAULTS.find(function(t){ return t.kind === kind; });
+    templates.deaths[i] = { id: def.id, kind: kind, text: def.text };
+    if(keepImage) templates.deaths[i].imageUrl = keepImage;
+    saveEventsTemplates(templates);
+    renderEventTemplatesPanel();
+    showToast("تمت الاستعادة");
   }
   function addTemplate(){
     var templates = loadEventsTemplates();
@@ -8092,7 +8202,39 @@
   // مشاركة السجل عبر واتساب: النص + صورة التصميم معاً في خطوة واحدة — يعمل هكذا فقط على الجوال عبر Web Share API
   // (نفس الآلية اللي يستخدمها زر "مشاركة" بأي تطبيق جوال). واتساب على الحاسوب لا يوفر أي طريقة برمجية لإرفاق صورة
   // تلقائياً برسالة عبر رابط — قيد حقيقي بمنصة واتساب نفسها، فعلى الحاسوب ننسخ النص ونُنزّل الصورة كأفضل بديل متاح
-  function shareRecordToWhatsApp(recordId, text, btn){
+  // مشاركة رسالة نشر بصورة جاهزة محددة (imageUrl) أو بنص فقط (opts.textOnly) — بدون توليد تصميم
+  function shareTextWithFixedImage(text, imageUrl, btn, fileBase){
+    var orig = btn ? btn.innerHTML : "";
+    if(btn){ btn.disabled = true; btn.textContent = "جارٍ التجهيز..."; }
+    var done = function(){ if(btn){ btn.disabled = false; btn.innerHTML = orig; } };
+    var textOnly = function(){
+      copyToClipboard(text);
+      window.open("https://wa.me/?text=" + encodeURIComponent(text), "_blank");
+    };
+    if(!imageUrl){ done(); textOnly(); return; }
+    fetch(imageUrl, { mode: "cors" }).then(function(res){ if(!res.ok) throw new Error("img"); return res.blob(); }).then(function(blob){
+      done();
+      var ext = /png/.test(blob.type) ? "png" : "jpg";
+      var file = new File([blob], (fileBase || "وفاة") + "." + ext, { type: blob.type || "image/jpeg" });
+      if(navigator.canShare && navigator.canShare({ files: [file] })){
+        navigator.share({ text: text, files: [file] }).catch(function(err){ if(err && err.name !== "AbortError") showToast("تعذّرت المشاركة"); });
+        return;
+      }
+      copyToClipboard(text);
+      var link = document.createElement("a");
+      link.download = file.name; link.href = URL.createObjectURL(blob); link.click();
+      setTimeout(function(){ URL.revokeObjectURL(link.href); }, 4000);
+      window.open("https://wa.me/?text=" + encodeURIComponent(text), "_blank");
+      showToast("تم نسخ النص وتنزيل الصورة — أرفقها يدوياً بالمحادثة");
+    }).catch(function(){ done(); showToast("تعذّر تحميل الصورة — أُرسل النص فقط"); textOnly(); });
+  }
+  function shareRecordToWhatsApp(recordId, text, btn, opts){
+    opts = opts || {};
+    if(opts.textOnly || opts.imageUrl){
+      var fixedRec = loadEventsData().find(function(r){ return r.id === recordId; });
+      shareTextWithFixedImage(text, opts.textOnly ? "" : opts.imageUrl, btn, fixedRec ? ((fixedRec.deceasedName || "وفاة").replace(/[^\w؀-ۿ ]/g, "").trim()) : "وفاة");
+      return;
+    }
     var rec = loadEventsData().find(function(r){ return r.id === recordId; });
     if(!rec) return;
     var cat = EVENTS_CATEGORIES.find(function(c){ return c.key === rec.category; });
@@ -8711,7 +8853,7 @@
       case "deaths-sync-now": runDeathsSyncNow(btn); break;
       case "clear-publish-selection": eventsUI.publishSelectedIds = {}; refreshEventsPublishList(); break;
       case "copy-publish-text": copyToClipboard(btn.dataset.text); break;
-      case "share-publish-whatsapp": shareRecordToWhatsApp(btn.dataset.id, btn.dataset.text, btn); break;
+      case "share-publish-whatsapp": shareRecordToWhatsApp(btn.dataset.id, btn.dataset.text, btn, (btn.dataset.kind && (btn.dataset.kind !== "announce" || btn.dataset.image)) ? { textOnly: !btn.dataset.image, imageUrl: btn.dataset.image || "" } : null); break;
       case "toggle-publish-row": {
         var togId = btn.dataset.id;
         if(eventsUI.expandedPublishIds[togId]) delete eventsUI.expandedPublishIds[togId];
@@ -9032,6 +9174,10 @@
 
   var eventTemplatesOverlayEl = document.getElementById("eventTemplatesOverlay");
   eventTemplatesOverlayEl.addEventListener("change", function(e){
+    if(e.target.matches("[data-template-image]")){
+      setDeathTemplateImage(e.target.dataset.id, e.target.files && e.target.files[0]);
+      return;
+    }
     if(e.target.matches("[data-template-cond]")){
       var condTplId = e.target.dataset.id;
       var condTemplates = loadEventsTemplates();
@@ -9055,6 +9201,20 @@
       showToast("تم حفظ الشرط");
     }
   });
+  // آخر حقل نص فُتح بلوحة القوالب — ليُدرج فيه المتغير المضغوط عند مؤشر الكتابة
+  var lastTplTextarea = null;
+  eventTemplatesOverlayEl.addEventListener("focusin", function(e){ if(e.target.matches("[data-template-input]")) lastTplTextarea = e.target; });
+  eventTemplatesOverlayEl.addEventListener("click", function(e){
+    var chip = e.target.closest("[data-insert-var]");
+    if(chip){
+      var ta = lastTplTextarea && document.body.contains(lastTplTextarea) ? lastTplTextarea : eventTemplatesOverlayEl.querySelector("[data-template-input]");
+      if(!ta) return;
+      var tag = "{" + chip.dataset.insertVar + "}", st = ta.selectionStart == null ? ta.value.length : ta.selectionStart, en = ta.selectionEnd == null ? st : ta.selectionEnd;
+      ta.value = ta.value.slice(0, st) + tag + ta.value.slice(en);
+      ta.focus(); ta.selectionStart = ta.selectionEnd = st + tag.length;
+      return;
+    }
+  });
   eventTemplatesOverlayEl.addEventListener("click", function(e){
     if(e.target === eventTemplatesOverlayEl){ closeEventTemplatesModal(); return; }
     var btn = e.target.closest("[data-action]");
@@ -9065,6 +9225,8 @@
       case "add-template": addTemplate(); break;
       case "save-template": saveTemplate(btn.dataset.id); break;
       case "delete-template": deleteTemplate(btn.dataset.id); break;
+      case "remove-template-image": removeDeathTemplateImage(btn.dataset.id); break;
+      case "reset-death-template": resetDeathTemplate(btn.dataset.kind); break;
     }
   });
 
