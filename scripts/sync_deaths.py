@@ -460,8 +460,8 @@ def main():
             parsed = parsed_by[id(it)]
             doc = existing[ids[k]]
             h = content_hash(parsed)
-            if doc.get("syncHash") == h and is_complete(doc):
-                continue
+            # لا نتوقف عند تطابق البصمة: قد يكون الحقل ناقصاً بالسجل رغم أن الخبر لم يتغيّر (مثلاً حُذفت قيمته أو كانت فارغة
+            # وقت السحب الأول) — الدمج نفسه رخيص ولا يكتب شيئاً إلا لو وُجد فرق فعلي
             ch, untouched = merge_changes(doc, parsed)
             if parsed.get("photoUrl") and not doc.get("photo") and not args.dry_run:
                 p = upload_photo(parsed["photoUrl"])
