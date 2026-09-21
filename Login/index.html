@@ -5044,7 +5044,7 @@
         { key: "occasionDateGregorian", label: "تاريخ المناسبة (ميلادي)", type: "date", hint: "تاريخ المناسبة الفعلي — بقية التواريخ تُحسب تلقائياً منه" },
         { key: "occasionMonthGregorian", label: "الشهر (ميلادي)", type: "select", options: GREG_MONTHS, derived: true, hint: "يُحسب تلقائياً" },
         { key: "occasionMonthHijri", label: "الشهر (هجري)", type: "select", options: HIJRI_MONTHS, derived: true, hint: "يُحسب تلقائياً" },
-        { key: "gender", label: "الجنس", type: "select", options: ["ذكر", "أنثى"], hint: "حدد جنس المحتفى به" },
+        { key: "gender", label: "نوع المحتفى به", type: "select", options: ["ذكر", "أنثى", "جهة / مؤسسة"], hint: "فرد (ذكر أو أنثى) أو جهة / مؤسسة مثل جمعية أو نادٍ" },
         { key: "title", label: "اللقب / المسمى الوظيفي", type: "growSelect", optKey: "congratsTitles", hint: "مثال: المهندس، الدكتور، الأستاذ — اتركه فارغاً إذا لا ينطبق" },
         { key: "fullName", label: "اسم المحتفى به", type: "text", hint: "الاسم الكامل للشخص المُهنَّأ" },
         { key: "occasionType", label: "نوع المناسبة", type: "growSelect", optKey: "congratsOccasionTypes", hint: "سبب التهنئة، مثل: ترقية، جائزة، افتتاح مشروع" },
@@ -7829,7 +7829,7 @@
       templates.forEach(function(t){
         html += '<div class="tmpl-list-card">' +
           '<img src="' + (t.previewImage || t.image) + '" alt=""/>' +
-          '<div class="info"><b>' + escapeHTML(t.name) + (t.gender ? ' <span class="hint" style="font-weight:400;">(' + (t.gender === "ذكر" ? "♂ ذكور" : "♀ إناث") + ')</span>' : '') + '</b><div class="hint">' + t.fields.length + ' متغير محدد</div></div>' +
+          '<div class="info"><b>' + escapeHTML(t.name) + (t.gender ? ' <span class="hint" style="font-weight:400;">(' + (t.gender === "ذكر" ? "♂ ذكور" : (t.gender === "أنثى" ? "♀ إناث" : "🏛 جهات ومؤسسات")) + ')</span>' : '') + '</b><div class="hint">' + t.fields.length + ' متغير محدد</div></div>' +
           '<button type="button" class="btn-secondary" data-action="edit-design-tmpl" data-id="' + t.id + '">تعديل</button>' +
           '<button type="button" class="btn-secondary" data-action="open-tmpl-copy" data-id="' + t.id + '" title="ينسخ الصورة والمتغيرات لقالب جديد — بنفس التصنيف أو تصنيف آخر">📋 نسخ</button>' +
           '<button type="button" class="task-icon-btn" data-action="delete-design-tmpl" data-id="' + t.id + '" title="حذف"><span class="icon">' + ICON_DELETE + '</span></button>' +
@@ -8166,6 +8166,7 @@
         '<option value=""' + (!tmpl.gender ? " selected" : "") + '>الجميع</option>' +
         '<option value="ذكر"' + (tmpl.gender === "ذكر" ? " selected" : "") + '>ذكور فقط</option>' +
         '<option value="أنثى"' + (tmpl.gender === "أنثى" ? " selected" : "") + '>إناث فقط</option>' +
+        '<option value="جهة / مؤسسة"' + (tmpl.gender === "جهة / مؤسسة" ? " selected" : "") + '>جهات ومؤسسات فقط</option>' +
       '</select></div>';
     html += '</div>';
     return html;

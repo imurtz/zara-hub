@@ -649,7 +649,7 @@
         { key: "occasionDateGregorian", label: "تاريخ المناسبة (ميلادي)", type: "date", required: true, hint: "تاريخ المناسبة الفعلي — بقية التواريخ تُحسب تلقائياً منه" },
         { key: "occasionMonthGregorian", label: "الشهر (ميلادي)", type: "select", options: GREG_MONTHS, derived: true },
         { key: "occasionMonthHijri", label: "الشهر (هجري)", type: "select", options: HIJRI_MONTHS, derived: true },
-        { key: "gender", label: "الجنس", type: "select", options: ["ذكر", "أنثى"], required: true, hint: "حدد جنس المحتفى به" },
+        { key: "gender", label: "نوع المحتفى به", type: "select", options: ["ذكر", "أنثى", "جهة / مؤسسة"], required: true, hint: "فرد (ذكر أو أنثى) أو جهة / مؤسسة مثل جمعية أو نادٍ" },
         { key: "title", label: "اللقب / المسمى الوظيفي", type: "selectOther", optionsKey: "congratsTitles", options: [], hint: "اختر من القائمة، أو \"غير ذلك\" — اتركه فارغاً إذا لا ينطبق" },
         { key: "fullName", label: "اسم المحتفى به", type: "text", required: true, hint: "الاسم الكامل للشخص المُهنَّأ" },
         { key: "occasionType", label: "نوع المناسبة", type: "selectOther", optionsKey: "congratsOccasionTypes", options: [], required: true, hint: "اختر من القائمة أو \"غير ذلك\"" },
