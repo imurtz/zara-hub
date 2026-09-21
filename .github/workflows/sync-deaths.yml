@@ -22,7 +22,7 @@ concurrency:
   cancel-in-progress: false
 
 permissions:
-  contents: read
+  contents: write      # لنشر صفحات التحويل المختصرة s/<code>.html بالمستودع
 
 jobs:
   sync:
@@ -39,3 +39,15 @@ jobs:
           if [ "$BACKFILL" = "true" ]; then ARGS="--backfill --max-per-run 500"; fi
           if [ "$DRY_RUN" = "true" ]; then ARGS="$ARGS --dry-run"; fi
           python3 scripts/sync_deaths.py $ARGS
+      - name: نشر صفحات الروابط المختصرة
+        run: |
+          if [ -n "$(git status --porcelain s 2>/dev/null)" ]; then
+            git config user.name "awamia-sync"
+            git config user.email "sync@gzara.org"
+            git add s
+            git commit -m "روابط مختصرة لأخبار الوفيات (تلقائي)"
+            for i in 1 2 3; do git pull --rebase -q origin main && git push -q origin HEAD:main && break || sleep 5; done
+          fi
+      - name: ربط الروابط المختصرة بالسجلات بعد نشرها
+        run: |
+          if [ -f short_pending.json ]; then python3 scripts/sync_deaths.py --publish-short short_pending.json; fi

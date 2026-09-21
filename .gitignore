@@ -1,4 +1,6 @@
 # Local Netlify folder
-.netlify
-.DS_Store
 *.mov
+.DS_Store
+.netlify
+__pycache__/
+short_pending.json

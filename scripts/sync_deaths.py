@@ -221,6 +221,86 @@ def hijri_to_gregorian_approx(hy, hm, hd):
     return y, m, d
 
 
+# ================= روابط مختصرة بنطاق بوابة زارة: gzara.org/s/<code> =================
+# لكل خبر صفحة تحويل ثابتة s/<code>.html بمستودع الموقع (GitHub Pages)، تحمل عنوان الخبر وصورته لمعاينة واتساب ثم تحوّل لصفحة الخبر.
+# الكود مشتق من رابط الخبر نفسه (نفس الخبر = نفس الكود دائماً)، فلا يتكرر ولا يحتاج قاعدة بيانات.
+# لا يُكتب الرابط بسجل الخبر إلا بعد أن تصبح الصفحة منشورة فعلاً (انظر publish_short) حتى لا يُرسَل رابط غير جاهز.
+SHORT_HOST = "https://gzara.org/s/"
+REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+SHORT_ALPHABET = "abcdefghjkmnpqrstuvwxyz23456789"          # بلا حروف متشابهة (i l o 0 1)
+
+
+def short_code(url):
+    n = int.from_bytes(hashlib.sha1(("gz-short:" + urllib.parse.unquote(url).strip()).encode("utf8")).digest()[:8], "big")
+    out = ""
+    for _ in range(7):
+        out += SHORT_ALPHABET[n % len(SHORT_ALPHABET)]
+        n //= len(SHORT_ALPHABET)
+    return out
+
+
+def extract_og(page_html):
+    def meta(prop):
+        m = re.search(r'<meta[^>]*property="%s"[^>]*content="([^"]*)"' % re.escape(prop), page_html, re.I)
+        return P.htmllib.unescape(m.group(1)).strip() if m else ""
+    return {"title": meta("og:title"), "image": meta("og:image").replace("//rafed", "/rafed") if meta("og:image") else ""}
+
+
+def write_redirect(code, url, og):
+    """يكتب s/<code>.html (يتجاوز لو موجودة بنفس الهدف). يرجّع True لو كُتب ملف جديد."""
+    esc = lambda x: P.htmllib.escape(x or "", quote=True)
+    target = urllib.parse.quote(urllib.parse.unquote(url), safe=":/%?=&#-_.~")
+    title = og.get("title") or "جمعية العوامية الخيرية"
+    html = ('<!DOCTYPE html>\n<html lang="ar" dir="rtl"><head><meta charset="utf-8">\n'
+            '<meta name="viewport" content="width=device-width, initial-scale=1">\n'
+            '<title>%s</title>\n<meta name="robots" content="noindex">\n'
+            '<meta property="og:type" content="article"><meta property="og:title" content="%s">\n'
+            '<meta property="og:description" content="جمعية العوامية الخيرية للخدمات الاجتماعية">\n'
+            '%s<meta property="og:url" content="%s"><link rel="canonical" href="%s">\n'
+            '<meta http-equiv="refresh" content="0;url=%s">\n'
+            '<script>location.replace(%s);</script>\n</head>\n'
+            '<body style="font-family:sans-serif;text-align:center;padding:40px"><p>جارٍ فتح الخبر…</p><p><a href="%s">اضغط هنا إن لم تُحوَّل تلقائياً</a></p></body></html>\n'
+            % (esc(title), esc(title),
+               ('<meta property="og:image" content="%s"><meta name="twitter:card" content="summary_large_image"><meta name="twitter:image" content="%s">\n' % (esc(og["image"]), esc(og["image"]))) if og.get("image") else "",
+               esc(SHORT_HOST + code), esc(SHORT_HOST + code), esc(target), json.dumps(target), esc(target)))
+    path = os.path.join(REPO_ROOT, "s", code + ".html")
+    if os.path.exists(path) and open(path, encoding="utf8").read() == html:
+        return False
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    open(path, "w", encoding="utf8").write(html)
+    return True
+
+
+def publish_short(pending_file, wait_seconds=300):
+    """بعد نشر صفحات التحويل: ينتظر أن تصبح كل صفحة متاحة فعلاً، ثم يكتب الرابط المختصر بسجلها (لو ما فيه رابط يدوي)."""
+    items = json.load(open(pending_file, encoding="utf8"))
+    deadline = time.time() + wait_seconds
+    todo = list(items)
+    done = 0
+    while todo and time.time() < deadline:
+        left = []
+        for it in todo:
+            try:
+                st, _, _ = http("%s%s?nocache=%d" % (SHORT_HOST, it["code"], int(time.time())), retries=1, timeout=20)
+            except Exception:  # noqa: BLE001
+                st = 0
+            if st == 200:
+                cur = fs_batch_get([it["rid"]]).get(it["rid"])
+                if cur is not None and not cur.get("shortLink"):
+                    fs_patch("events/" + it["rid"], {"shortLink": SHORT_HOST + it["code"]}, mask=["shortLink"])
+                    print("  🔗 %s%s ← %s" % (SHORT_HOST, it["code"], it.get("label", "")))
+                done += 1
+            else:
+                left.append(it)
+        todo = left
+        if todo:
+            time.sleep(10)
+    if todo:
+        print("  ! لم تُنشر بعد: %s — ستُربط بالتشغيل القادم" % ", ".join(i["code"] for i in todo))
+        json.dump(todo, open(pending_file, "w", encoding="utf8"), ensure_ascii=False)
+    print("رُبط %d رابطاً مختصراً" % done)
+
+
 def build_record(parsed, list_title, url, photo_r2, prev_ts=0):
     rec = {k: v for k, v in parsed.items() if v not in ("", None) and k not in ("photoUrl", "nickname")}
     nick = parsed.get("nickname")
@@ -337,7 +417,9 @@ def load_state(listing):
 
 
 def fetch_and_parse(it):
-    return P.parse_entry(fetch_entry(it), it["title"], it["url"])
+    page = fetch_entry(it)
+    it["og"] = extract_og(page)
+    return P.parse_entry(page, it["title"], it["url"])
 
 
 def main():
@@ -349,9 +431,15 @@ def main():
     ap.add_argument("--refresh-latest", type=int, default=5, help="أحدث كم خبراً تُعاد قراءة صفحتها كل مرة لالتقاط ما استُكمل/تغيّر بالموقع")
     ap.add_argument("--refresh-days", type=int, default=45, help="الأخبار الناقصة الأحدث من هذه المدة (يوماً) تُعاد قراءتها بكل مزامنة")
     ap.add_argument("--initial-count", type=int, default=20, help="عدد أحدث الأخبار المسحوبة بأول تشغيل بلا أي سجلات")
+    ap.add_argument("--publish-short", metavar="FILE", help="ينتظر نشر صفحات التحويل ثم يكتب الروابط المختصرة بالسجلات (يُشغَّل بعد دفع ملفات s/)")
+    ap.add_argument("--no-short", action="store_true", help="لا تُنشئ روابط مختصرة")
     ap.add_argument("--max-per-run", type=int, default=60, help="أقصى عدد أخبار جديدة يُسحب بالتشغيل الواحد")
     args = ap.parse_args()
+    if args.publish_short:
+        publish_short(args.publish_short)
+        return
     t0 = time.time()
+    pending_short = []
 
     def tick(label):
         print("   ⏱ %s: %.1fث" % (label, time.time() - t0))
@@ -446,6 +534,9 @@ def main():
                 fs_patch("events/" + rec["id"], dict(rec))
                 ids[url_key(it["url"])] = rec["id"]
                 print("  ✓ جديد: " + label)
+                if not args.no_short:
+                    c = short_code(it["url"]); write_redirect(c, it["url"], it.get("og") or {})
+                    pending_short.append({"rid": rec["id"], "code": c, "label": label})
             collect_opts(rec)
             imported += 1
         except Exception as e:  # noqa: BLE001
@@ -462,6 +553,9 @@ def main():
             h = content_hash(parsed)
             # لا نتوقف عند تطابق البصمة: قد يكون الحقل ناقصاً بالسجل رغم أن الخبر لم يتغيّر (مثلاً حُذفت قيمته أو كانت فارغة
             # وقت السحب الأول) — الدمج نفسه رخيص ولا يكتب شيئاً إلا لو وُجد فرق فعلي
+            if not args.dry_run and not args.no_short and not doc.get("shortLink"):
+                c = short_code(it["url"]); write_redirect(c, it["url"], it.get("og") or {})
+                pending_short.append({"rid": ids[k], "code": c, "label": doc.get("deceasedName", "")[:30]})
             ch, untouched = merge_changes(doc, parsed)
             if parsed.get("photoUrl") and not doc.get("photo") and not args.dry_run:
                 p = upload_photo(parsed["photoUrl"])
@@ -489,6 +583,9 @@ def main():
             print("  ✗ تحديث %s — %s" % (it["title"][:60], e))
 
     tick("الكتابة")
+    if pending_short:
+        json.dump(pending_short, open(os.path.join(REPO_ROOT, "short_pending.json"), "w", encoding="utf8"), ensure_ascii=False)
+        print("صفحات تحويل مختصرة بانتظار النشر:", len(pending_short))
     if not args.dry_run:
         merge_options(opt_new)
         st = {"lastRun": int(time.time() * 1000), "lastImported": imported, "lastUpdated": updated, "lastFailed": failed,
