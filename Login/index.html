@@ -6070,6 +6070,9 @@
   }
   function closeUniLogosModal(){ document.getElementById("uniLogosOverlay").classList.remove("active"); }
   // اسم الملف بدون الامتداد، بعد إزالة الفراغات الزائدة — يُطابَق مباشرة مع أسماء الجامعات المعروفة
+  function uniNameMatchKey(str){
+    return String(str || "").normalize("NFC").replace(/[\u064B-\u065F\u0670\u0640]/g, "").replace(/[إأآٱ]/g, "ا").replace(/ى/g, "ي").replace(/ة/g, "ه").replace(/\s+/g, " ").trim().toLowerCase();
+  }
   function baseFileNameForMatch(fileName){
     return String(fileName || "").replace(/\.[^.]+$/, "").trim();
   }
@@ -6083,7 +6086,9 @@
     var matched = [], unmatched = [];
     files.forEach(function(f){
       var base = baseFileNameForMatch(f.name);
-      var hit = allNames.find(function(n){ return n === base; });
+      // مطابقة متسامحة مع اختلاف ترميز الحروف (نظام الملفات بماك يفكّك الهمزات أحياناً) والتشكيل والهمزات والتاء المربوطة
+      var baseKey = uniNameMatchKey(base);
+      var hit = allNames.find(function(n){ return n === base || uniNameMatchKey(n) === baseKey; });
       if(hit) matched.push({ name: hit, file: f });
       else unmatched.push(f.name);
     });
