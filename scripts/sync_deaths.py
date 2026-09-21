@@ -326,9 +326,9 @@ def load_state(listing):
         return state, dict(state["ids"]), set(state.get("skip") or [])
     url_ids = existing_url_ids()
     ids = {url_key(u): rid for u, rid in url_ids.items()}
-    skip = set(state.get("seen") or []) - set(ids) if state else set()
-    print("ترحيل وثيقة الحالة: %d سجلاً مربوطاً برابطه، %d خبراً متجاهلاً" % (len(ids), len(skip)))
-    return state, ids, skip
+    # الصيغة القديمة كانت تعدّ "المُشاهَد" متجاهَلاً حتى لو حُذف سجله — الآن سجل محذوف = يُعاد سحبه، فلا نرحّل المشاهَد كتجاهل
+    print("ترحيل وثيقة الحالة: %d سجلاً مربوطاً برابطه" % len(ids))
+    return state, ids, set()
 
 
 def fetch_and_parse(it):
@@ -365,6 +365,9 @@ def main():
     for it in listing:
         k = url_key(it["url"])
         if k in skip:
+            continue
+        if not re.search(r"رحمة|ذمة|فقيد", it["title"]) or re.search(r"أماكن\s+عزاء", it["title"]):
+            skip.add(k)                                            # ليس إعلان وفاة (مثل جداول العزاء الشهرية)
             continue
         if k not in ids:
             to_import.append(it)                                   # خبر جديد
