@@ -7255,7 +7255,10 @@
       return (vars[key] != null && vars[key] !== "") ? vars[key] : "";
     });
     // متغيرات فارغة تترك أسطراً فارغة متتالية — نقلّصها لسطر فارغ واحد
-    return extra.deceasedFullName !== undefined ? txt.replace(/\n{3,}/g, "\n\n").trim() : txt;
+    if(extra.deceasedFullName === undefined) return txt;
+    // {deceasedFullName} يحوي المسمى أصلاً، فلو كتب المستخدم {honorific} قبله يتكرر ("الحاج الحاج ...") — ندمج المكرر تلقائياً
+    txt = txt.replace(/(^|[\s*])(الحاجة|الحاج|الشابة|الشاب|الطفلة|الطفل|السيدة|السيد|الشيخة|الشيخ|الدكتورة|الدكتور|المهندسة|المهندس|الأستاذة|الأستاذ|المرحومة|المرحوم)\s+\2(?=[\s*])/g, "$1$2");
+    return txt.replace(/\n{3,}/g, "\n\n").trim();
   }
   function copyToClipboard(text){
     if(navigator.clipboard && navigator.clipboard.writeText){
