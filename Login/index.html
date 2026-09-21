@@ -5027,7 +5027,7 @@
         { key: "deathDateGregorianText", label: "التاريخ الميلادي مكتوباً" }, { key: "funeralLine", label: "سطر التشييع" },
         { key: "funeralTimeText", label: "وقت التشييع (12 ساعة)" }, { key: "relativesBlock", label: "كتلة ذوو الفقيد" },
         { key: "condolenceBlock", label: "كتلة أماكن العزاء" }, { key: "forSoul", label: "لروحه/لروحها" },
-        { key: "newsLink", label: "رابط الخبر (المختصر إن وُجد)" }, { key: "funeralWhen", label: "موعد ومكان التشييع" }, { key: "condolenceBody", label: "أماكن العزاء بدون عنوان" }
+        { key: "newsLink", label: "رابط الخبر (المختصر إن وُجد)" }, { key: "funeralWhen", label: "موعد ومكان التشييع (أو: يعلن عنه لاحقاً)" }, { key: "condolenceBody", label: "أماكن العزاء بدون عنوان" }
       ],
       // عنوان بطاقة مهمة النشر: اسم المتوفى بمسماه وتاريخ الوفاة (بدل أول ثلاثة حقول = السنتان + المسمى)
       publishTitle: function(r){ return [((r.honorific || "") + " " + (r.deceasedName || "")).trim(), r.deathDateHijri || r.gregorianYear].filter(Boolean).join(" — "); },
@@ -7231,7 +7231,8 @@
     if(out.funeralTimeText) fl.push(out.funeralTimeText);
     if(rec.funeralFrom) fl.push(/^من\s/.test(rec.funeralFrom) ? rec.funeralFrom : "من " + rec.funeralFrom);
     out.funeralLine = fl.length ? "⬟ *وقت ومكان التشييع:* " + fl.join(" | ") : "";
-    out.funeralWhen = fl.join(" | ");
+    // لو ما كُتب شيء بخانة التشييع بالموقع (لا يوم ولا وقت ولا مكان) يظهر "يعلن عنه لاحقاً" بدل سطر فارغ
+    out.funeralWhen = fl.length ? fl.join(" | ") : "يعلن عنه لاحقاً";
     var rl = [];
     [["spouseName", fem ? "زوج" : "زوجة"], ["sons", "أبناء"], ["daughters", "بنات"], ["brothers", "إخوان"], ["sisters", "أخوات"]].forEach(function(p){
       if(rec[p[0]]) rl.push("■ *" + p[1] + " " + fq + ":* " + rec[p[0]]);
