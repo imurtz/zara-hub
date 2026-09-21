@@ -6443,7 +6443,7 @@
   var FOOTER_CREDIT_DEFAULT = "صُنع بحب من قبل جمعية العوامية الخيرية";
   var PHOTO_PAN_PROMPT_DEFAULT = "مو راضين عن موضع صورتكم داخل التصميم؟ عدّلوها بأنفسكم:";
   function loadPublicFormConfig(){
-    var cfg = { footerMessage: "", footerCredit: FOOTER_CREDIT_DEFAULT, photoPanPrompt: PHOTO_PAN_PROMPT_DEFAULT, defaultFemalePhotos: {}, banner: { enabled: BANNER_DEFAULTS.enabled, intervalSeconds: BANNER_DEFAULTS.intervalSeconds, slides: BANNER_DEFAULTS.slides.map(copyBannerSlide) } };
+    var cfg = { footerMessage: "", footerCredit: FOOTER_CREDIT_DEFAULT, photoPanPrompt: PHOTO_PAN_PROMPT_DEFAULT, defaultFemalePhotos: {}, showDesignPreview: true, banner: { enabled: BANNER_DEFAULTS.enabled, intervalSeconds: BANNER_DEFAULTS.intervalSeconds, slides: BANNER_DEFAULTS.slides.map(copyBannerSlide) } };
     EVENTS_CATEGORIES.forEach(function(c){ cfg[c.key] = { hidden: [], hints: {}, labels: {}, custom: [] }; });
     var p = _publicFormConfigCache;
     if(p){
@@ -6453,6 +6453,7 @@
       // صور افتراضية للإناث — واحدة مستقلة لكل تصنيف فيه صورة إلزامية للذكور فقط (graduates،
       // congrats...)، بدل حقل واحد كان مخصصاً للخريجات فقط
       if(p.defaultFemalePhotos && typeof p.defaultFemalePhotos === "object") cfg.defaultFemalePhotos = p.defaultFemalePhotos;
+      if(typeof p.showDesignPreview === "boolean") cfg.showDesignPreview = p.showDesignPreview;
       if(p.banner){
         if(typeof p.banner.enabled === "boolean") cfg.banner.enabled = p.banner.enabled;
         if(typeof p.banner.intervalSeconds === "number" && p.banner.intervalSeconds >= 2) cfg.banner.intervalSeconds = p.banner.intervalSeconds;
@@ -8701,6 +8702,12 @@
       '<p class="hint">تحكم بالحقول الظاهرة للمجتمع في صفحة gzara.org/bayanat، ملاحظاتها، وإضافة حقول مخصصة لكل تصنيف</p>';
 
     html += '<div style="margin-bottom:18px; padding-bottom:16px; border-bottom:1px solid var(--line);">' +
+      '<label style="display:flex; align-items:center; gap:8px; font-size:13px; font-weight:700; color:var(--teal-dark);">' +
+        '<input type="checkbox" data-action="public-cfg-preview-toggle"' + (cfg.showDesignPreview !== false ? " checked" : "") + '/> عرض معاينة تصميم المناسبة للزائر بعد الإرسال' +
+      '</label>' +
+      '<p class="hint" style="margin:6px 0 0;">أزل العلامة لتصير الصفحة لاستقبال البيانات فقط — تُجهَّز التصاميم من لوحة التحكم</p>' +
+    '</div>';
+    html += '<div style="margin-bottom:18px; padding-bottom:16px; border-bottom:1px solid var(--line);">' +
       '<label style="display:flex; align-items:center; gap:8px; font-size:12.5px; font-weight:700; color:var(--teal-dark); margin-bottom:12px;">' +
         '<input type="checkbox" data-action="public-cfg-banner-toggle"' + (cfg.banner.enabled ? " checked" : "") + '/> إظهار البنر الإعلاني أعلى صفحة التسجيل العام' +
       '</label>' +
@@ -10019,6 +10026,11 @@
       var pCfg3c = loadPublicFormConfig();
       pCfg3c.photoPanPrompt = e.target.value;
       savePublicFormConfig(pCfg3c);
+    } else if(e.target.matches('[data-action="public-cfg-preview-toggle"]')){
+      var pCfgPv = loadPublicFormConfig();
+      pCfgPv.showDesignPreview = e.target.checked;
+      savePublicFormConfig(pCfgPv);
+      showToast(e.target.checked ? "المعاينة تظهر للزائر بعد الإرسال" : "أُغلقت المعاينة — الصفحة لاستقبال البيانات فقط");
     } else if(e.target.matches('[data-action="public-cfg-banner-toggle"]')){
       var pCfg5 = loadPublicFormConfig();
       pCfg5.banner.enabled = e.target.checked;

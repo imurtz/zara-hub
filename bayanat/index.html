@@ -109,6 +109,16 @@
   .field input:focus, .field select:focus, .field textarea:focus{outline:none; border-color:var(--blue); background-color:var(--white);}
   .field-hint{font-size:11px; color:var(--ink-soft); line-height:1.5;}
   .ai-block{margin-top:-4px; display:flex; flex-direction:column; gap:10px;}
+  .ai-helper{margin-top:8px; border:1.5px solid var(--line); border-radius:14px; padding:12px 14px; background:var(--white); display:flex; flex-direction:column; gap:10px;}
+  .ai-helper-head{display:flex; flex-wrap:wrap; align-items:baseline; gap:6px 10px; font-size:12px; color:var(--ink-soft);}
+  .ai-helper-head b{font-size:13px; color:var(--teal-dark);}
+  .ai-helper-actions{display:flex; flex-wrap:wrap; align-items:center; gap:10px;}
+  .ai-check{display:flex; align-items:flex-start; gap:10px; padding:12px 14px; border:1.5px solid var(--line); border-radius:12px; background:var(--white); cursor:pointer;}
+  .ai-check.on{border-color:var(--teal); background:var(--teal-tint);}
+  .ai-check input{margin-top:3px; flex-shrink:0; width:18px; height:18px;}
+  .ai-check b{display:block; font-size:13px; color:var(--teal-dark); margin-bottom:4px;}
+  .ai-check-text{display:block; font-size:13px; color:var(--ink); line-height:1.9;}
+  .ai-check small{display:block; margin-top:6px; font-size:11px; color:var(--ink-soft);}
   .ai-choice-heading{display:block; margin-bottom:2px; font-size:13.5px;}
   .ai-choice-hint{margin:0 0 12px; font-size:12px; color:var(--ink-soft);}
   .ai-choice-grid{display:flex; align-items:stretch; gap:14px; flex-wrap:wrap;}
@@ -660,7 +670,7 @@
     history.replaceState(null, "", url.toString());
   }
 
-  var state = { activeCategory: getCategoryFromUrl(), photo: "", photoOrig: "", photoProcessing: false, photoProcessingMsg: "", femalePhotoChoice: "", fieldImages: {}, fieldImagesOrig: {}, fieldImagesProcessing: {}, aiSuggestion: "", aiLoading: false, aiError: "", aiConsentPolicy: false, aiConsentWording: false, aiImage: "", skipAiWording: false };
+  var state = { activeCategory: getCategoryFromUrl(), photo: "", photoOrig: "", photoProcessing: false, photoProcessingMsg: "", femalePhotoChoice: "", fieldImages: {}, fieldImagesOrig: {}, fieldImagesProcessing: {}, aiSuggestion: "", aiLoading: false, aiError: "", aiAccepted: false, aiImage: "" };
 
   var GRADIENT_PRESETS = {
     brand: "linear-gradient(120deg, var(--teal) 0%, var(--teal-dark) 55%, var(--blue-dark) 100%)",
@@ -686,7 +696,7 @@
     return (key && _uniLogosCachePublic[key]) ? _uniLogosCachePublic[key] : null;
   }
   function loadPublicFormConfig(){
-    var cfg = { footerMessage: "", footerCredit: FOOTER_CREDIT_DEFAULT, photoPanPrompt: PHOTO_PAN_PROMPT_DEFAULT, defaultFemalePhotos: {}, banner: { enabled: BANNER_DEFAULTS.enabled, intervalSeconds: BANNER_DEFAULTS.intervalSeconds, slides: BANNER_DEFAULTS.slides.map(copyBannerSlide) } };
+    var cfg = { footerMessage: "", footerCredit: FOOTER_CREDIT_DEFAULT, photoPanPrompt: PHOTO_PAN_PROMPT_DEFAULT, defaultFemalePhotos: {}, showDesignPreview: true, banner: { enabled: BANNER_DEFAULTS.enabled, intervalSeconds: BANNER_DEFAULTS.intervalSeconds, slides: BANNER_DEFAULTS.slides.map(copyBannerSlide) } };
     CATEGORIES.forEach(function(c){ cfg[c.key] = { hidden: [], hints: {}, labels: {}, custom: [] }; });
     var p = _publicFormConfigCache;
     if(p){
@@ -694,6 +704,7 @@
       if(typeof p.footerCredit === "string") cfg.footerCredit = p.footerCredit;
       if(typeof p.photoPanPrompt === "string") cfg.photoPanPrompt = p.photoPanPrompt;
       if(p.defaultFemalePhotos && typeof p.defaultFemalePhotos === "object") cfg.defaultFemalePhotos = p.defaultFemalePhotos;
+      if(typeof p.showDesignPreview === "boolean") cfg.showDesignPreview = p.showDesignPreview;
       if(p.banner){
         if(typeof p.banner.enabled === "boolean") cfg.banner.enabled = p.banner.enabled;
         if(typeof p.banner.intervalSeconds === "number" && p.banner.intervalSeconds >= 2) cfg.banner.intervalSeconds = p.banner.intervalSeconds;
@@ -972,7 +983,7 @@
     state.femalePhotoChoice = "";
     state.fieldImages = {};
     state.fieldImagesOrig = {};
-    state.aiSuggestion = ""; state.aiLoading = false; state.aiError = ""; state.aiConsentPolicy = false; state.aiConsentWording = false; state.aiImage = ""; state.skipAiWording = false;
+    state.aiSuggestion = ""; state.aiLoading = false; state.aiError = ""; state.aiAccepted = false; state.aiImage = "";
     grid.innerHTML = effectiveFields.map(function(f){
       if(f.derived) return "";
       if(cat.aiWordingAssist && f.key === "details") return aiBlockHTML();
@@ -1167,76 +1178,50 @@
     var el = document.querySelector('[data-key="details"]');
     return el ? el.value.trim() : "";
   }
+  // تفاصيل التهنئة: الأساس كتابة المناسبة كما هي بنص حر. وتحتها خيار "صياغة جاهزة" ظاهر ومفتوح دائماً (مو بديل عند الفشل):
+  // يضغط المستخدم "اكتب لي الصياغة" فتظهر صياغة جيمناي كعنصر قائمة تحقق — إن أعجبته يعتمدها، وإن ما اشتغلت الخدمة
+  // أو ما أعجبته يكمل بتفاصيله مباشرة بدون أي تعطيل
   function aiBlockHTML(){
-    var html = '<div class="field full ai-block">';
-    html += '<label class="ai-choice-heading">تفاصيل التهنئة</label>';
-    html += '<p class="ai-choice-hint">اختر إحدى الطريقتين، ونتولى صياغة نص التهنئة النهائي لك</p>';
-    html += '<div class="ai-choice-grid">';
-    html += '<div class="ai-choice-card">';
-    html += '<b>✍️ كتابة التفاصيل بنفسك</b>';
-    html += '<p>صف المناسبة بجملة أو جملتين، ونتولى صياغتها بالشكل النهائي</p>';
-    html += '<textarea data-key="details" rows="4" placeholder="مثال: حصوله على جائزة التميز من..."></textarea>';
-    html += '</div>';
-    html += '<div class="ai-choice-divider"><span>أو</span></div>';
-    html += '<div class="ai-choice-card">';
-    html += '<b>📎 إرفاق شهادة أو صورة</b>';
-    html += '<p>صورة شهادة، جائزة، أو تكريم يخص المناسبة — نصوغ التهنئة اعتماداً على تفاصيلها (PNG أو JPG فقط)</p>';
+    return '<div class="field full ai-block">' +
+      '<label>تفاصيل التهنئة <span class="req">*</span></label>' +
+      '<textarea data-key="details" rows="4" placeholder="اكتب تفاصيل المناسبة كما هي، مثال: حصوله على جائزة التميز من..."></textarea>' +
+      '<div id="aiHelper" class="ai-helper">' + aiHelperHTML() + '</div>' +
+    '</div>';
+  }
+  function aiHelperHTML(){
+    var hasContent = !!(currentDetailsValue() || state.aiImage);
+    var html = '<div class="ai-helper-head"><b>✨ صياغة جاهزة</b><span>اختياري — إن أعجبتك اعتمدها، وإن لم تعمل أكمل بتفاصيلك</span></div>';
+    html += '<div class="ai-helper-actions">';
+    if(!state.aiLoading){
+      html += '<button type="button" class="ai-suggest-btn" id="aiSuggestBtn"' + (hasContent ? "" : " disabled") + '>' + (state.aiSuggestion ? "إعادة الصياغة" : "اكتب لي الصياغة") + '</button>';
+    }
     if(state.aiImage){
       html += '<div class="ai-image-preview"><img src="' + state.aiImage + '" alt=""/><button type="button" class="rm" id="aiImageRemoveBtn">×</button></div>';
     } else {
-      html += '<label class="ai-image-upload-label">📷 اختر صورة<input type="file" accept="image/png,image/jpeg" id="aiImageInput" style="display:none;"/></label>';
+      html += '<label class="ai-image-upload-label">📎 إرفاق شهادة أو صورة<input type="file" accept="image/png,image/jpeg" id="aiImageInput" style="display:none;"/></label>';
     }
     html += '</div>';
-    html += '</div>';
-    // حالة "تجاوز الصياغة الآلية" — لا تظهر إلا بعد فشل فعلي بالتوليد (تعذّر الاتصال، ازدحام
-    // الخدمة...)؛ ليست خياراً موازياً معروضاً دائماً من البداية حتى لا يلتبس مع المسار الأساسي
-    if(state.skipAiWording){
-      html += '<div class="ai-skip-confirm">✅ تم تجاوز الصياغة الآلية — التفاصيل المكتوبة أعلاه ستصل كما هي، وسيراجعها القسم الإعلامي ويجهّزها للنشر.</div>';
-      html += '<button type="button" class="ai-regen-link" id="aiUndoSkipBtn">أو جرّب الصياغة الآلية بدل ذلك</button>';
-    } else {
-      if(!state.aiSuggestion && !state.aiLoading){
-        var hasContent = !!(currentDetailsValue() || state.aiImage);
-        html += '<button type="button" class="ai-suggest-btn" id="aiSuggestBtn"' + (hasContent ? "" : " disabled") + '>✨ اكتب التهنئة الآن</button>';
-      }
-      if(state.aiLoading){
-        html += '<p class="ai-status">جاري إعداد نص التهنئة...</p>';
-      }
-      if(state.aiError){
-        html += '<p class="ai-error">' + escapeHTML(state.aiError) + '</p>';
-        // بديل يظهر فقط بعد فشل فعلي — يمنع المستخدم من التعطّل بالانتظار لو الخدمة متعذّرة
-        html += '<div class="ai-error-actions">' +
-          '<button type="button" class="ai-retry-btn" id="aiRetryBtn">إعادة المحاولة</button>' +
-          '<button type="button" class="ai-skip-after-error-btn" id="aiSkipAfterErrorBtn">تجاوز الصياغة الآلية — أرسل التفاصيل كما هي ليراجعها القسم الإعلامي</button>' +
-        '</div>';
-      }
-      if(state.aiSuggestion){
-        html += '<div class="ai-suggestion-box"><p>' + escapeHTML(state.aiSuggestion) + '</p></div>';
-        html += '<label class="ai-consent-row"><input type="checkbox" id="aiConsentPolicy"' + (state.aiConsentPolicy ? " checked" : "") + '/> أوافق على تعديل صياغة المناسبة بما يتناسب مع سياسة النشر للجمعية</label>';
-        html += '<label class="ai-consent-row"><input type="checkbox" id="aiConsentWording"' + (state.aiConsentWording ? " checked" : "") + '/> أوافق على الصياغة الظاهرة أعلاه</label>';
-        html += '<button type="button" class="ai-regen-link" id="aiRegenBtn">تعديل الصياغة</button>';
-      }
+    if(state.aiLoading) html += '<p class="ai-status">جاري إعداد الصياغة...</p>';
+    if(state.aiError) html += '<p class="ai-error">' + escapeHTML(state.aiError) + ' — تقدر تكمل بتفاصيلك.</p>';
+    if(state.aiSuggestion){
+      html += '<label class="ai-check' + (state.aiAccepted ? " on" : "") + '">' +
+        '<input type="checkbox" id="aiAccept"' + (state.aiAccepted ? " checked" : "") + '/>' +
+        '<span><b>اعتماد هذه الصياغة</b><span class="ai-check-text">' + escapeHTML(state.aiSuggestion) + '</span>' +
+        '<small>باعتمادها توافق على تعديلها بما يتناسب مع سياسة النشر للجمعية</small></span>' +
+      '</label>';
     }
-    html += '</div>';
     return html;
   }
   function refreshAiBlock(){
-    var block = document.querySelector(".ai-block");
-    if(!block) return;
-    block.outerHTML = aiBlockHTML();
+    var helper = document.getElementById("aiHelper");
+    if(!helper) return;
+    helper.innerHTML = aiHelperHTML();          // الحقل نفسه ثابت — فما يضيع ما كتبه المستخدم ولا يفقد المؤشر
     bindFormEvents();
     updateSubmitButtonState();
   }
   function updateSubmitButtonState(){
-    var cat = CATEGORIES.find(function(c){ return c.key === state.activeCategory; });
     var submitBtn = document.getElementById("submitBtn");
-    if(!submitBtn) return;
-    if(cat.aiWordingAssist && !state.skipAiWording){
-      submitBtn.disabled = !(state.aiSuggestion && state.aiConsentPolicy && state.aiConsentWording);
-    } else if(cat.aiWordingAssist && state.skipAiWording){
-      submitBtn.disabled = !currentDetailsValue();
-    } else {
-      submitBtn.disabled = false;
-    }
+    if(submitBtn) submitBtn.disabled = false;   // الصياغة الجاهزة اختيارية — لا شرط عليها للإرسال
   }
   function fetchAiSuggestion(){
     var cat = CATEGORIES.find(function(c){ return c.key === state.activeCategory; });
@@ -1251,8 +1236,7 @@
     state.aiLoading = true;
     state.aiError = "";
     state.aiSuggestion = "";
-    state.aiConsentPolicy = false;
-    state.aiConsentWording = false;
+    state.aiAccepted = false;
     refreshAiBlock();
     // مهلة زمنية للطلب: لاحظنا إن خدمة جيمناي أحياناً لا ترجع خطأ سريع عند الازدحام (تجاوز الحصة
     // مثلاً) بل تعلّق بلا استجابة لمدة طويلة — بدون هذي المهلة يبقى المستخدم ينتظر بلا نهاية
@@ -1271,6 +1255,7 @@
       state.aiLoading = false;
       if(result.ok && result.data && result.data.suggestion){
         state.aiSuggestion = result.data.suggestion;
+        state.aiAccepted = true;               // اشتغلت: معتمدة مبدئياً ويقدر يلغيها بضغطة
       } else if(result.data && result.data.error === "quota_exceeded"){
         state.aiError = "الخدمة مشغولة حالياً بسبب الضغط — حاول مرة أخرى بعد قليل";
       } else {
@@ -1294,22 +1279,10 @@
     if(aiRetryBtn) aiRetryBtn.addEventListener("click", fetchAiSuggestion);
     var aiRegenBtn = document.getElementById("aiRegenBtn");
     if(aiRegenBtn) aiRegenBtn.addEventListener("click", fetchAiSuggestion);
-    var aiPolicyChk = document.getElementById("aiConsentPolicy");
-    if(aiPolicyChk) aiPolicyChk.addEventListener("change", function(){ state.aiConsentPolicy = aiPolicyChk.checked; updateSubmitButtonState(); });
-    var aiWordingChk = document.getElementById("aiConsentWording");
-    if(aiWordingChk) aiWordingChk.addEventListener("change", function(){ state.aiConsentWording = aiWordingChk.checked; updateSubmitButtonState(); });
-    // "تجاوز الصياغة الآلية" لا يظهر إلا بعد فشل فعلي بالتوليد — بديل واضح لمن تعذّرت عليه
-    // الخدمة، مو خيار موازٍ من البداية
-    var aiSkipAfterErrorBtn = document.getElementById("aiSkipAfterErrorBtn");
-    if(aiSkipAfterErrorBtn) aiSkipAfterErrorBtn.addEventListener("click", function(){
-      state.skipAiWording = true;
-      state.aiError = "";
-      refreshAiBlock();
-    });
-    var aiUndoSkipBtn = document.getElementById("aiUndoSkipBtn");
-    if(aiUndoSkipBtn) aiUndoSkipBtn.addEventListener("click", function(){
-      state.skipAiWording = false;
-      refreshAiBlock();
+    var aiAcceptChk = document.getElementById("aiAccept");
+    if(aiAcceptChk) aiAcceptChk.addEventListener("change", function(){
+      state.aiAccepted = aiAcceptChk.checked;
+      var box = aiAcceptChk.closest(".ai-check"); if(box) box.classList.toggle("on", aiAcceptChk.checked);
     });
     var aiImageInput = document.getElementById("aiImageInput");
     if(aiImageInput){
@@ -1324,9 +1297,7 @@
         compressImageFile(file, 600 * 1024, function(dataUrl){
           if(!dataUrl) return;
           state.aiImage = dataUrl;
-          if(state.aiSuggestion || state.aiError){
-            state.aiSuggestion = ""; state.aiConsentPolicy = false; state.aiConsentWording = false; state.aiError = "";
-          }
+          state.aiSuggestion = ""; state.aiAccepted = false; state.aiError = "";
           refreshAiBlock();
         });
       });
@@ -1344,9 +1315,8 @@
       if(detailsInput && !detailsInput.dataset.aiBound){
         detailsInput.dataset.aiBound = "1";
         detailsInput.addEventListener("input", function(){
-          if(state.skipAiWording){ updateSubmitButtonState(); return; }
           if(state.aiSuggestion || state.aiError){
-            state.aiSuggestion = ""; state.aiConsentPolicy = false; state.aiConsentWording = false; state.aiError = "";
+            state.aiSuggestion = ""; state.aiAccepted = false; state.aiError = "";
             refreshAiBlock();
             return;
           }
@@ -2282,8 +2252,11 @@
       errEl.style.display = "block";
       return;
     }
-    if(cat.aiWordingAssist && !state.skipAiWording && !(state.aiSuggestion && state.aiConsentPolicy && state.aiConsentWording)) return;
-    if(cat.aiWordingAssist && state.skipAiWording && !currentDetailsValue()) return;
+    if(cat.aiWordingAssist && !currentDetailsValue() && !(state.aiSuggestion && state.aiAccepted)){
+      errEl.textContent = "اكتب تفاصيل المناسبة";
+      errEl.style.display = "block";
+      return;
+    }
     var rec = { id: genId(), category: cat.key, source: "public", status: "pending", createdAt: Date.now(), updatedAt: Date.now() };
     effectiveFields.forEach(function(f){ rec[f.key] = draft[f.key] || ""; });
     if(cat.dateSource){
@@ -2314,8 +2287,9 @@
         .catch(function(err){ console.error("auto university logo save failed", err); });
     }
     if(cat.aiWordingAssist){
-      rec.suggestedWording = state.aiSuggestion || "";
-      rec.wordingApprovedByUser = !!(state.aiConsentPolicy && state.aiConsentWording);
+      var wordingOk = !!(state.aiSuggestion && state.aiAccepted);
+      rec.suggestedWording = wordingOk ? state.aiSuggestion : "";
+      rec.wordingApprovedByUser = wordingOk;
     }
     var submitBtn = document.getElementById("submitBtn");
     submitBtn.disabled = true;
@@ -2323,7 +2297,8 @@
     db.collection("events").doc(rec.id).set(rec).then(function(){
       document.getElementById("formCard").style.display = "none";
       document.getElementById("thanksCard").style.display = "block";
-      showDesignPreview(rec);
+      // الأدمن يقدر يقفل المعاينة من لوحة التحكم فتبقى الصفحة لاستقبال البيانات فقط (والتصميم يُجهَّز من الداخل)
+      if(loadPublicFormConfig().showDesignPreview !== false) showDesignPreview(rec);
     }).catch(function(err){
       console.error("submit error", err);
       errEl.textContent = "تعذّر إرسال البيانات — تأكد من اتصالك بالإنترنت وحاول مرة أخرى";
