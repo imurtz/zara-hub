@@ -4,10 +4,10 @@
 
 كل تشغيل:
   1) يقرأ قائمة "أخبار الوفيات" بالموقع (الأحدث أولاً)
-  2) يجلب من قاعدة البيانات السجلات المقابلة لأحدث الأخبار (أو كل الأرشيف بوضع --full) ويعرف:
+  2) يجلب من قاعدة البيانات السجلات المقابلة لأحدث 5 أخبار (أو كل الأرشيف بوضع --full) ويعرف:
        • الخبر الجديد (بلا سجل)                → يُسحب
        • السجل المحذوف من اللوحة                → يُسحب من جديد (الحذف ليس تجاهلاً دائماً)
-  3) يعيد قراءة صفحة أحدث 8 أخبار + كل خبر حديث ناقص البيانات، ويحدّث السجل بما استُكمل/تغيّر بالموقع:
+  3) يعيد قراءة صفحة أحدث 5 أخبار + كل خبر حديث ناقص البيانات، ويحدّث السجل بما استُكمل/تغيّر بالموقع:
        • سجل لم يعدّله موظف (updatedAt == syncStamp): يُحدَّث بالكامل
        • سجل عدّله موظف: يُملأ فقط ما كان فارغاً، ولا يُستبدل ما كتبه
   4) الصفحات تُقرأ بالتوازي، وتُحفظ وثيقة الحالة (خريطة رابط→سجل + نتيجة آخر تشغيل)
@@ -295,7 +295,9 @@ def merge_changes(doc, parsed):
         old = doc.get(k, "")
         if old == v:
             continue
-        if untouched or old in ("", None):
+        # قيمة بلا أي حرف/رقم (مثل ":" أو "-" من خبر ناقص وقت سحبه) تُعامل كفارغة فتُستبدل بالقيمة الحقيقية
+        blank = old in ("", None) or not re.search(r"[0-9A-Za-z\u0621-\u064A]", str(old))
+        if untouched or blank:
             ch[k] = v
     return ch, untouched
 
@@ -342,9 +344,9 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--dry-run", action="store_true", help="يحلّل ويعرض فقط بدون أي كتابة")
     ap.add_argument("--backfill", action="store_true", help="يسحب كل أخبار الأرشيف غير الموجودة")
-    ap.add_argument("--full", action="store_true", help="فحص كامل: يتحقق من وجود كل سجلات الأرشيف (لا أحدث %d فقط) ويعيد سحب المحذوف" % 60)
-    ap.add_argument("--window", type=int, default=60, help="عدد أحدث الأخبار المفحوصة بالتشغيل الدوري لاكتشاف المحذوف/الناقص")
-    ap.add_argument("--refresh-latest", type=int, default=8, help="أحدث كم خبراً تُعاد قراءة صفحتها كل مرة لالتقاط تعديلات الموقع")
+    ap.add_argument("--full", action="store_true", help="فحص كامل: يتحقق من وجود كل سجلات الأرشيف (لا أحدث النافذة فقط) ويعيد سحب المحذوف")
+    ap.add_argument("--window", type=int, default=5, help="عدد أحدث الأخبار المفحوصة بالتشغيل الدوري لاكتشاف المحذوف/الناقص")
+    ap.add_argument("--refresh-latest", type=int, default=5, help="أحدث كم خبراً تُعاد قراءة صفحتها كل مرة لالتقاط ما استُكمل/تغيّر بالموقع")
     ap.add_argument("--refresh-days", type=int, default=45, help="الأخبار الناقصة الأحدث من هذه المدة (يوماً) تُعاد قراءتها بكل مزامنة")
     ap.add_argument("--initial-count", type=int, default=20, help="عدد أحدث الأخبار المسحوبة بأول تشغيل بلا أي سجلات")
     ap.add_argument("--max-per-run", type=int, default=60, help="أقصى عدد أخبار جديدة يُسحب بالتشغيل الواحد")
@@ -356,7 +358,7 @@ def main():
     listing = fetch_listing()
     print("أخبار بالقائمة:", len(listing)); tick("قراءة قائمة الموقع")
     state, ids, skip = load_state(listing); tick("وثيقة الحالة")
-    by_key = {url_key(it["url"]): it for it in listing}
+    ids0, skip0 = dict(ids), set(skip)
     full = args.full or args.backfill
     check_items = listing if full else listing[:args.window]
     check_keys = {url_key(it["url"]) for it in check_items}
@@ -489,11 +491,11 @@ def main():
     tick("الكتابة")
     if not args.dry_run:
         merge_options(opt_new)
-        fs_patch(STATE_PATH,
-                 {"ids": ids, "skip": sorted(skip), "seen": [], "lastRun": int(time.time() * 1000), "lastImported": imported,
-                  "lastUpdated": updated, "lastFailed": failed,
-                  "lastError": "" if not failed else "فشل %d عنصراً — راجع سجل التشغيل" % failed},
-                 mask=["ids", "skip", "seen", "lastRun", "lastImported", "lastUpdated", "lastFailed", "lastError"])
+        st = {"lastRun": int(time.time() * 1000), "lastImported": imported, "lastUpdated": updated, "lastFailed": failed,
+              "lastError": "" if not failed else "فشل %d عنصراً — راجع سجل التشغيل" % failed}
+        if ids != ids0 or skip != skip0 or not (state and isinstance(state.get("ids"), dict)):
+            st.update({"ids": ids, "skip": sorted(skip), "seen": []})     # الخريطة الكبيرة تُكتب فقط عند تغيّرها
+        fs_patch(STATE_PATH, st, mask=list(st.keys()))
     print("انتهى بـ %.1f ثانية: جديد %d، محدَّث %d، فشل %d" % (time.time() - t0, imported, updated, failed))
     if failed and not (imported or updated):
         sys.exit(1)

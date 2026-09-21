@@ -302,7 +302,7 @@ def parse_entry(page_html, list_title="", url=""):
         for a in v:
             a = re.sub(r"^[\-–—■◼▣▪]+\s*", "", a).strip()
             a = re.sub(r"[\s،,.]+$", "", a)          # نقطة/فاصلة ختامية بآخر السطر
-            if a:
+            if a and re.search(r"[\u0621-\u064A]", a):   # بلا حروف (مثل ":" وحدها) = فارغ
                 vals.append(a)
         out = "، ".join(vals)
         return re.sub(r"(?:\s*[،,]\s*){2,}", "، ", out)   # فاصلتان متتاليتان بعد الدمج -> فاصلة واحدة
@@ -390,8 +390,8 @@ def parse_entry(page_html, list_title="", url=""):
                 p = _clean_value(x[:m1.start()])
                 if p:
                     places.append(p)
-                t = _clean_value(m1.group(1))
-                if t:
+                t = _clean_value(m1.group(1).lstrip(" :：-–"))
+                if t and re.search(r"\d", t.translate(_AR_DIGITS)):      # وقت حقيقي فقط (بلا رقم = فارغ، مثل "أوقات القراءة:" ثم لا شيء)
                     times.append(t.translate(_AR_DIGITS))
             elif re.search(r"\d\s*[:.]\s*\d{2}|الساعة", x.translate(_AR_DIGITS)) and not re.search(r"حسيني|مسجد|مأتم|قاعة|بيت", x):
                 times.append(_clean_value(x.translate(_AR_DIGITS)))
