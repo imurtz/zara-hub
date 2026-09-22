@@ -39,15 +39,25 @@ MEDIA_UPLOAD_URL = os.environ.get("MEDIA_UPLOAD_URL", "https://zara-media-upload
 UA = "Mozilla/5.0 (compatible; AwamiaSync/1.0; +https://gzara.org)"
 SOURCE_TAG = "website-sync"
 STATE_PATH = "eventsMeta/deathsSync"
+# بروكسي اختياري لجلب صفحات/صور awamiach.sa عبر شبكة Cloudflare بدل الاتصال المباشر — استضافة
+# الموقع بدأت تحجب اتصالات GitHub Actions تحديداً (تُعلَّق بلا استجابة)، فنمرّرها من هنا بدلاً من
+# ذلك عند ضبط FETCH_PROXY_URL. راجع awamiach-fetch-proxy/README.md
+FETCH_PROXY_URL = os.environ.get("FETCH_PROXY_URL", "").strip()
+FETCH_PROXY_KEY = os.environ.get("FETCH_PROXY_KEY", "").strip()
 
 
 def http(url, data=None, headers=None, method=None, timeout=20, retries=3):
     h = {"User-Agent": UA}
     h.update(headers or {})
+    real_url = url
+    if FETCH_PROXY_URL and url.startswith(P.BASE):
+        real_url = FETCH_PROXY_URL.rstrip("/") + "/?url=" + urllib.parse.quote(url, safe="")
+        if FETCH_PROXY_KEY:
+            h["X-Proxy-Key"] = FETCH_PROXY_KEY
     last = None
     for attempt in range(retries):
         try:
-            req = urllib.request.Request(url, data=data, headers=h, method=method)
+            req = urllib.request.Request(real_url, data=data, headers=h, method=method)
             with urllib.request.urlopen(req, timeout=timeout) as r:
                 return r.status, r.read(), dict(r.headers)
         except urllib.error.HTTPError as e:

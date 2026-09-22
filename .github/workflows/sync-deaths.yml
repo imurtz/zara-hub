@@ -34,6 +34,8 @@ jobs:
         env:
           BACKFILL: ${{ inputs.backfill }}
           DRY_RUN: ${{ inputs.dry_run }}
+          FETCH_PROXY_URL: ${{ secrets.FETCH_PROXY_URL }}
+          FETCH_PROXY_KEY: ${{ secrets.FETCH_PROXY_KEY }}
         run: |
           ARGS=""
           if [ "$BACKFILL" = "true" ]; then ARGS="--backfill --max-per-run 500"; fi
