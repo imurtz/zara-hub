@@ -30,6 +30,11 @@ jobs:
     timeout-minutes: 90
     steps:
       - uses: actions/checkout@v4
+      - name: تشخيص مؤقت للاتصال
+        run: |
+          echo "== IP الخارجي لهذا الـrunner =="; curl -s -m 10 https://api.ipify.org || true; echo
+          echo "== DNS =="; getent hosts www.awamiach.sa || true
+          echo "== curl -v (10s) =="; curl -v -m 10 https://www.awamiach.sa/ 2>&1 | tail -40 || true
       - name: سحب الأخبار الجديدة
         env:
           BACKFILL: ${{ inputs.backfill }}
