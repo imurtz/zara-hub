@@ -6435,16 +6435,16 @@
       finish("تعذّر تشغيل المزامنة (" + res.status + ")");
     }).catch(function(){ finish("تعذّر الاتصال بـGitHub — تحقق من الإنترنت"); });
   }
+  // المزامنة يدوية فقط (زر "مزامنة الآن") منذ إلغاء الجدولة الدورية — فلا معنى لتحذير "توقفت" لمجرد
+  // مرور وقت طويل منذ آخر نقرة؛ التحذير الوحيد المستحق هو فشل فعلي بآخر محاولة
   function deathsSyncBadgeHTML(){
     var st = _deathsSyncCache;
-    if(!st || !st.lastRun) return ' <span style="color:var(--ink-soft);">· 🔄 مزامنة تلقائية مع أخبار الوفيات بموقع الجمعية (لم تعمل بعد)</span>';
+    if(!st || !st.lastRun) return ' <span style="color:var(--ink-soft);">· 🔄 مزامنة يدوية مع أخبار الوفيات بموقع الجمعية (لم تُشغَّل بعد)</span>';
     var mins = Math.max(0, Math.round((Date.now() - st.lastRun) / 60000));
     var ago = mins < 2 ? "قبل لحظات" : (mins < 90 ? "قبل " + mins + " دقيقة" : (mins < 2880 ? "قبل " + Math.round(mins / 60) + " ساعة" : "قبل " + Math.round(mins / 1440) + " يوم"));
-    // لو انقطعت المزامنة أكثر من ٦ ساعات (GitHub قد يؤخّر التشغيل الدوري لساعات) أو فيها فشل، نلفت الانتباه بدل الصمت
-    var stale = mins > 360;
-    var color = (stale || st.lastFailed) ? "var(--danger)" : "var(--teal-dark)";
-    var extra = st.lastFailed ? " — ⚠️ تعذّر سحب " + st.lastFailed + " خبراً بآخر تشغيل" : (stale ? " — ⚠️ المزامنة متوقفة، راجع تبويب Actions بـGitHub" : "");
-    return ' <span style="color:' + color + ';">· 🔄 مزامنة تلقائية مع أخبار الوفيات بموقع الجمعية — آخر فحص ' + ago + extra + '</span>';
+    var color = st.lastFailed ? "var(--danger)" : "var(--teal-dark)";
+    var extra = st.lastFailed ? " — ⚠️ فشل آخر تشغيل" + (st.lastError ? " (" + st.lastError + ")" : "") : "";
+    return ' <span style="color:' + color + ';">· 🔄 مزامنة يدوية مع أخبار الوفيات بموقع الجمعية — آخر تشغيل ' + ago + extra + '</span>';
   }
 
   db.collection("eventsMeta").doc("resp").onSnapshot(function(doc){
