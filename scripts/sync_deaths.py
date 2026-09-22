@@ -41,7 +41,7 @@ SOURCE_TAG = "website-sync"
 STATE_PATH = "eventsMeta/deathsSync"
 
 
-def http(url, data=None, headers=None, method=None, timeout=45, retries=3):
+def http(url, data=None, headers=None, method=None, timeout=20, retries=3):
     h = {"User-Agent": UA}
     h.update(headers or {})
     last = None
@@ -599,4 +599,20 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except SystemExit:
+        raise
+    except Exception as e:  # noqa: BLE001
+        # فشل غير متوقع (غالباً تعذّر الوصول لموقع الجمعية من شبكة GitHub Actions) — نكتب وثيقة
+        # الحالة رغم الفشل. بدون هذا، الزر "مزامنة الآن" باللوحة يبقى معلّقاً منتظراً تحديث
+        # lastRun حتى مهلة 3 دقائق كاملة، رغم أن التشغيل فشل من أول ثانية ولن يتحدّث شيء أصلاً
+        print("فشل غير متوقع:", e)
+        try:
+            fs_patch(STATE_PATH, {
+                "lastRun": int(time.time() * 1000), "lastImported": 0, "lastUpdated": 0, "lastFailed": 1,
+                "lastError": "تعذّر تشغيل المزامنة: %s" % e,
+            }, mask=["lastRun", "lastImported", "lastUpdated", "lastFailed", "lastError"])
+        except Exception as e2:  # noqa: BLE001
+            print("تعذّرت كتابة وثيقة الحالة أيضاً:", e2)
+        sys.exit(1)

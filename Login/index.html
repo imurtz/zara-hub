@@ -6417,7 +6417,9 @@
             var parts = [];
             if(st.lastImported) parts.push("سُحب " + st.lastImported + " خبراً جديداً");
             if(st.lastUpdated) parts.push("حُدّث " + st.lastUpdated + " سجلاً باستكمال من الموقع");
-            finish(st.lastFailed ? "⚠️ اكتملت لكن تعذّر " + st.lastFailed + " عنصراً" + (parts.length ? " — " + parts.join("، ") : "") : (parts.length ? "✔ " + parts.join("، ") : "✔ كل شي محدَّث — لا جديد بموقع الجمعية"));
+            var totalFailure = st.lastFailed && !st.lastImported && !st.lastUpdated;
+            finish(totalFailure ? "❌ فشلت المزامنة" + (st.lastError ? " — " + st.lastError : "") + " — جرّب مرة أخرى بعد قليل" :
+              (st.lastFailed ? "⚠️ اكتملت لكن تعذّر " + st.lastFailed + " عنصراً" + (parts.length ? " — " + parts.join("، ") : "") : (parts.length ? "✔ " + parts.join("، ") : "✔ كل شي محدَّث — لا جديد بموقع الجمعية")));
           } else if(tries > 60){
             clearInterval(timer);
             finish("لم تكتمل بعد — تحقق من سطر آخر فحص بعد قليل");
