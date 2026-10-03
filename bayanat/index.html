@@ -397,6 +397,57 @@
   .identity-modal, .wa-panel{border-radius:28px;}
 
 
+
+  /* ===== الهوية البصرية: عرض جديد — ورقة واسعة ناعمة (ورقة سفلية على الجوال) ===== */
+  .identity-modal-overlay{background:rgba(20,28,27,.42); -webkit-backdrop-filter:blur(8px); backdrop-filter:blur(8px); padding:24px;}
+  .identity-modal-overlay.open .identity-modal{animation:idIn .45s var(--ease);}
+  @keyframes idIn{from{opacity:0; transform:translateY(26px) scale(.985);} to{opacity:1; transform:none;}}
+  .identity-modal{max-width:780px; border-radius:32px; padding:34px 32px 30px; text-align:start; box-shadow:0 2px 4px rgba(20,28,27,.04), 0 40px 90px rgba(20,28,27,.28); scrollbar-width:thin;}
+  .identity-modal-close{position:sticky; top:0; float:left; z-index:3; width:38px; height:38px; border:1px solid var(--line); background:#fff; box-shadow:var(--shadow-sm); color:var(--ink-2); font-size:20px; margin:-6px -6px 0 0;}
+  .identity-modal-close:hover{background:var(--ink); color:#fff;}
+  .identity-modal .kicker{margin-bottom:16px;}
+  .identity-modal h3{font-size:clamp(28px, 4.6vw, 40px); font-weight:300; letter-spacing:-.6px; line-height:1.3; color:var(--ink); margin-bottom:8px;}
+  .identity-modal h3 strong{font-weight:700; background:linear-gradient(100deg, var(--teal) 5%, var(--tan) 100%); -webkit-background-clip:text; background-clip:text; color:transparent;}
+  .identity-modal-sub{font-size:15px; color:var(--ink-2); margin-bottom:26px;}
+  .identity-logos{gap:12px; margin-bottom:12px;}
+  .identity-logo-card{background:var(--field); border-radius:24px; padding:26px 18px 18px; gap:16px;}
+  .identity-logo-card img{height:92px;}
+  .identity-logo-card span{font-size:12.5px; font-weight:500; color:var(--ink-soft);}
+  .identity-colors{gap:12px; margin-bottom:28px;}
+  .identity-color-swatch{position:relative; border:none; cursor:pointer; font-family:inherit; border-radius:24px; min-height:128px; padding:18px 20px; align-items:flex-start; justify-content:flex-end; gap:2px; text-align:start; transition:transform .45s var(--ease), box-shadow .45s var(--ease);}
+  .identity-color-swatch:hover{transform:translateY(-4px); box-shadow:0 18px 36px rgba(20,28,27,.20);}
+  .identity-color-swatch span{font-size:15px; font-weight:600;}
+  .identity-color-swatch code{font-family:ui-monospace, SFMono-Regular, Menlo, monospace; font-size:13px; opacity:.9; letter-spacing:.5px;}
+  .identity-color-swatch small{position:absolute; top:16px; inset-inline-end:16px; font-size:11px; font-weight:500; background:rgba(255,255,255,.2); border-radius:999px; padding:4px 10px;}
+  .identity-explorer, .identity-story{border-top:1px solid var(--line); padding-top:26px; margin-bottom:26px;}
+  .identity-explorer-intro, .identity-story-intro{font-size:14.5px; line-height:2; color:var(--ink-2);}
+  .identity-explorer-svg-wrap{background:var(--field); border:none; border-radius:24px; padding:26px;}
+  .identity-parts-grid{gap:8px;}
+  .identity-part-btn{border:1px solid var(--line); border-radius:16px; padding:12px 14px; transition:background .3s ease, border-color .3s ease, box-shadow .3s ease;}
+  .identity-part-btn:hover{border-color:rgba(20,28,27,.18); background:#fff;}
+  .identity-part-btn.active{border-color:var(--ink); background:var(--ink);}
+  .identity-part-btn.active .identity-part-label{color:#fff;}
+  .identity-part-btn.active .identity-part-num{background:#fff; color:var(--ink);}
+  .identity-part-num{background:rgba(20,28,27,.07);}
+  .identity-part-label{font-size:13px; font-weight:500;}
+  .identity-part-detail{border:none; background:var(--teal-tint); border-radius:20px; padding:16px 18px;}
+  .identity-part-detail-title{font-size:15px; font-weight:600;}
+  .identity-part-detail-text{font-size:14px; line-height:1.95; color:var(--ink-2);}
+  .identity-story h4{font-size:16px; font-weight:600; color:var(--ink); margin-bottom:10px;}
+  .identity-story li, .identity-story-plain{font-size:14.5px; line-height:2; color:var(--ink-2);}
+  .identity-story li b{font-weight:600;}
+  .identity-modal-font{display:grid; grid-template-columns:auto 1fr; gap:6px 14px; align-items:baseline; background:var(--field); border-radius:20px; padding:16px 18px; font-weight:400;}
+  .identity-modal-font span{font-size:12.5px; color:var(--ink-soft);}
+  .identity-modal-font b{font-size:16px; font-weight:600; color:var(--ink);}
+  @media (max-width:640px){
+    .identity-modal-overlay{padding:0; align-items:flex-end;}
+    .identity-modal{max-width:100%; max-height:92vh; max-height:92dvh; border-radius:28px 28px 0 0; padding:24px 18px calc(24px + env(safe-area-inset-bottom, 0px));}
+    .identity-modal-overlay.open .identity-modal{animation:idSheet .4s var(--ease);}
+    .identity-logo-card img{height:70px;}
+    .identity-color-swatch{min-height:108px;}
+    .identity-parts-grid{grid-template-columns:1fr;}
+  }
+  @keyframes idSheet{from{transform:translateY(60px); opacity:0;} to{transform:none; opacity:1;}}
   @media (max-width:640px){
     .nav-wrap{padding:0 12px; top:10px; margin-top:10px;}
     .nav{flex-wrap:wrap; border-radius:26px; padding:9px 12px; justify-content:center; row-gap:2px;}
@@ -576,7 +627,8 @@
 <div class="identity-modal-overlay" id="identityModalOverlay">
   <div class="identity-modal">
     <button type="button" class="identity-modal-close" id="identityModalClose" aria-label="إغلاق">×</button>
-    <h3>الهوية البصرية لـ بوابة زارة</h3>
+    <p class="kicker"><i></i>الهوية البصرية</p>
+    <h3>هوية <strong>بوابة زارة</strong></h3>
     <p class="identity-modal-sub">شعار المنصة وألوانها الأساسية — للاطلاع والاستخدام المرجعي</p>
     <div class="identity-logos">
       <div class="identity-logo-card">
@@ -589,8 +641,8 @@
       </div>
     </div>
     <div class="identity-colors">
-      <div class="identity-color-swatch" style="background:#4b7071;"><span>التيل</span><code>#4B7071</code></div>
-      <div class="identity-color-swatch" style="background:#b88d66;"><span>التان</span><code>#B88D66</code></div>
+      <button type="button" class="identity-color-swatch" data-hex="#4B7071" style="background:#4b7071;"><span>التيل</span><code>#4B7071</code><small>اضغط للنسخ</small></button>
+      <button type="button" class="identity-color-swatch" data-hex="#B88D66" style="background:#b88d66;"><span>التان</span><code>#B88D66</code><small>اضغط للنسخ</small></button>
     </div>
     <div class="identity-explorer">
       <p class="identity-explorer-intro">يرتكز تصميم شعار "بوابة زارة" بنمطه المسطح (Flat Vector) على المزج الدقيق بين الإرث الجغرافي للعوامية والوظيفة التقنية للمنصة. انقر أي جزء لتكتشف سبب وجوده:</p>
@@ -624,7 +676,7 @@
       <h4>النمط التصميمي والوظيفي (Flat Design)</h4>
       <p class="identity-story-plain">إزالة التدرجات والظلال تضمن أداءً بصرياً عالياً واستجابة كاملة (Responsive UI) للشاشات الصغيرة، الأيقونات، وأنظمة إدارة التقارير ولوحات التحكم (Dashboards).</p>
     </div>
-    <p class="identity-modal-font">الخط الرسمي: Cairo</p>
+    <p class="identity-modal-font"><span>خط الهوية والتصاميم</span><b style="font-family:'Cairo', sans-serif;">Cairo</b><span>خط واجهة المنصة</span><b>IBM Plex Sans Arabic</b></p>
   </div>
 </div>
 
@@ -2660,6 +2712,13 @@
     selectIdentityPart("gate");
   });
   document.getElementById("identityModalClose").addEventListener("click", closeIdentityModal);
+  Array.prototype.forEach.call(document.querySelectorAll(".identity-color-swatch[data-hex]"), function(sw){
+    sw.addEventListener("click", function(){
+      var hex = sw.getAttribute("data-hex"), hint = sw.querySelector("small");
+      var done = function(){ if(hint){ hint.textContent = "✓ تم النسخ"; setTimeout(function(){ hint.textContent = "اضغط للنسخ"; }, 1600); } };
+      if(navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(hex).then(done, function(){});
+    });
+  });
   document.getElementById("identityModalOverlay").addEventListener("click", function(e){
     if(e.target.id === "identityModalOverlay") closeIdentityModal();
   });
