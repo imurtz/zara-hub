@@ -9363,17 +9363,41 @@
       if(e.target.value === "__other__"){
         if(otherInput){ otherInput.style.display = "block"; otherInput.value = ""; otherInput.focus(); }
         eventModalState.draft[soKey] = "";
+        // "غير ذلك": شعار الجامعة السابقة المأخوذ من المكتبة لا يبقى مع اسم جامعة أخرى
+        if(soKey === "university" && eventModalState.catKey === "graduates" && eventModalState.draft.universityLogo){
+          var libAllO = loadUniversityLogos(), curO = eventModalState.draft.universityLogo;
+          if(Object.keys(libAllO).some(function(k){ return libAllO[k] === curO; })){
+            eventModalState.draft.universityLogo = ""; eventModalState.draft.universityLogoOrig = "";
+            renderEventModal();
+            var selO = eventModalOverlayEl.querySelector('[data-action="select-other-toggle"][data-key="university"]');
+            var inpO = eventModalOverlayEl.querySelector('[data-other-input="university"]');
+            if(selO) selO.value = "__other__";
+            if(inpO){ inpO.style.display = "block"; inpO.focus(); }
+            return;
+          }
+        }
       } else {
         if(otherInput){ otherInput.style.display = "none"; otherInput.value = ""; }
         eventModalState.draft[soKey] = e.target.value;
         // تعبئة تلقائية لشعار الجامعة من المكتبة عند اختيار جامعة لها شعار محفوظ — فقط إذا ما فيه شعار مرفوع مسبقاً لهذا السجل تحديداً
-        if(soKey === "university" && eventModalState.catKey === "graduates" && !eventModalState.draft.universityLogo){
-          var libLogo = findUniversityLogo(e.target.value);
-          if(libLogo){
+        // شعار الجامعة يتبع الاسم المختار لحظياً: كل تغيير للجامعة يبدّل الشعار لشعارها من المكتبة،
+        // وإن لم يكن لها شعار يُزال شعار الجامعة السابقة (الشعار المرفوع يدوياً لهذا السجل لا يُمَس)
+        if(soKey === "university" && eventModalState.catKey === "graduates"){
+          var curLogo = eventModalState.draft.universityLogo || "";
+          var libLogo = findUniversityLogo(e.target.value) || "";
+          var libAll = loadUniversityLogos();
+          var curFromLib = !!curLogo && Object.keys(libAll).some(function(k){ return libAll[k] === curLogo; });
+          if(libLogo && libLogo !== curLogo){
             eventModalState.draft.universityLogo = libLogo;
             eventModalState.draft.universityLogoOrig = "";
             renderEventModal();
-            showToast("✔ تم تعبئة شعار الجامعة تلقائياً من المكتبة");
+            showToast("✔ شعار " + e.target.value);
+            return;
+          }
+          if(!libLogo && curFromLib){
+            eventModalState.draft.universityLogo = "";
+            eventModalState.draft.universityLogoOrig = "";
+            renderEventModal();
             return;
           }
         }

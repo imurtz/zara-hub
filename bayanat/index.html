@@ -380,6 +380,9 @@
   .submit-btn{margin-top:28px; padding:17px 20px; border-radius:999px; background:linear-gradient(140deg, #58807F, var(--teal-dark)); font-size:16px; font-weight:600; box-shadow:0 10px 26px rgba(50,76,75,.30); display:flex; align-items:center; justify-content:center; gap:10px; transition:transform .4s var(--ease), box-shadow .4s var(--ease), gap .4s var(--ease);}
   .submit-btn::after{content:""; width:17px; height:17px; background:currentColor; -webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M19 12H5M11 6l-6 6 6 6'/%3E%3C/svg%3E") center/contain no-repeat; mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M19 12H5M11 6l-6 6 6 6'/%3E%3C/svg%3E") center/contain no-repeat;}
   .submit-btn:hover{background:linear-gradient(140deg, #58807F, var(--teal-dark)); transform:translateY(-2px); box-shadow:0 16px 34px rgba(50,76,75,.38); gap:15px;}
+  /* ظهور ناعم لشعار الجامعة عند تبدّله مع تغيير اسم الجامعة */
+  #imgFieldMount-universityLogo img{animation:uniLogoIn .45s var(--ease);}
+  @keyframes uniLogoIn{from{opacity:0; transform:scale(.9);} to{opacity:1; transform:none;}}
   .card:not(:has(.cat-select button.active)) .submit-btn{display:none;}
   .card:not(:has(.cat-select button.active)) .cat-select{margin-bottom:0;}
   .err-msg{background:#FBEDEC; border-radius:14px; padding:11px 15px; margin-top:16px;}
@@ -1299,6 +1302,27 @@
       hideBgToast();
     });
   }
+  // شعار الجامعة يتبع اسم الجامعة المختار لحظياً: كل تغيير للاسم يبدّل الشعار إلى شعار الجامعة الجديدة
+  // من المكتبة، وإن لم يكن لها شعار يُزال الشعار السابق (حتى لا يبقى شعار جامعة أخرى ويُحفظ خطأً
+  // باسم الجامعة الجديدة). الشعار الذي رفعه المسجِّل بنفسه لا يُمَس إلا إذا كان للجامعة الجديدة شعار بالمكتبة
+  function syncUniversityLogoToName(name){
+    var cur = state.fieldImages.universityLogo || "";
+    var lib = findUniversityLogoPublic(name) || "";
+    if(lib){
+      if(lib === cur) return;
+      state.fieldImages.universityLogo = lib;
+      delete state.fieldImagesOrig.universityLogo;
+      refreshFieldImage("universityLogo");
+      return;
+    }
+    if(!cur) return;
+    var curIsFromLibrary = Object.keys(_uniLogosCachePublic).some(function(k){ return _uniLogosCachePublic[k] === cur; });
+    if(curIsFromLibrary){
+      delete state.fieldImages.universityLogo;
+      delete state.fieldImagesOrig.universityLogo;
+      refreshFieldImage("universityLogo");
+    }
+  }
   function autoRemoveFieldBg(key){
     var src = state.fieldImages[key];
     if(!src) return;
@@ -1632,14 +1656,16 @@
         refreshFieldImage(key);
       });
     });
+    var uniOtherInput = document.querySelector('[data-other-input="university"]');
+    if(uniOtherInput && !uniOtherInput.dataset.logoBound){
+      uniOtherInput.dataset.logoBound = "1";
+      uniOtherInput.addEventListener("input", function(){ syncUniversityLogoToName(uniOtherInput.value); });
+    }
     Array.prototype.forEach.call(document.querySelectorAll('[data-action="select-other-toggle"]'), function(sel){
       sel.addEventListener("change", function(){
         var key = sel.dataset.key;
         var otherInput = document.querySelector('[data-other-input="' + key + '"]');
-        if(key === "university" && sel.value !== "__other__" && !state.fieldImages.universityLogo){
-          var libLogo = findUniversityLogoPublic(sel.value);
-          if(libLogo){ state.fieldImages.universityLogo = libLogo; refreshFieldImage("universityLogo"); }
-        }
+        if(key === "university") syncUniversityLogoToName(sel.value === "__other__" ? "" : sel.value);
         if(!otherInput) return;
         if(sel.value === "__other__"){
           otherInput.style.display = "block";
