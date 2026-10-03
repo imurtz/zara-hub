@@ -17,77 +17,109 @@
 <meta name="twitter:card" content="summary_large_image" />
 <link rel="icon" href="/assets/favicon.png" />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
-<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
 <style>
+  /* نفس لغة تصميم الرئيسية: خلفية فاتحة بهالات هادئة، شريط علوي زجاجي عائم، عنوان بوزن خفيف، بطاقات ناعمة */
   :root{
-    --teal:#517771; --teal-dark:#3d5b56; --teal-tint:#eef3f2;
-    --tan:#b8906e; --tan-tint:#f8f1ea;
-    --white:#ffffff; --ink:#2b3532; --ink-soft:#6b7876; --line:#e4e9e8;
-    --shadow:0 10px 30px rgba(45,70,66,.10);
+    --bg:#F5F6F5; --ink:#141C1B; --ink-2:#47534F; --ink-3:#7F8B88;
+    --teal:#4B7071; --teal-deep:#324C4B; --teal-soft:#E6EEED;
+    --tan:#B88D66; --tan-deep:#8F6A45; --tan-soft:#F6EEE5;
+    --hair:rgba(20,28,27,.08);
+    --shadow-sm:0 1px 2px rgba(20,28,27,.04), 0 6px 16px rgba(20,28,27,.05);
+    --shadow-md:0 2px 4px rgba(20,28,27,.03), 0 18px 44px rgba(20,28,27,.08);
+    --ease:cubic-bezier(.22,.9,.24,1);
   }
   *{box-sizing:border-box; margin:0; padding:0;}
-  h1,h2,h3,h4{font-weight:600;}
-  body{
-    font-family:'Cairo', sans-serif; background:
-      radial-gradient(circle at 15% 15%, var(--teal-tint) 0%, transparent 45%),
-      radial-gradient(circle at 85% 85%, var(--tan-tint) 0%, transparent 45%),
-      var(--white);
-    color:var(--ink); min-height:100vh; padding:28px 16px;
+  html{-webkit-text-size-adjust:100%;}
+  body{font-family:'IBM Plex Sans Arabic', system-ui, sans-serif; color:var(--ink); background:var(--bg); min-height:100vh; overflow-x:hidden; position:relative; -webkit-font-smoothing:antialiased; padding-bottom:34px;}
+  a{color:inherit; text-decoration:none;}
+  body::before{
+    content:""; position:absolute; inset:0 0 auto 0; height:900px; z-index:0; pointer-events:none;
+    background:
+      radial-gradient(640px circle at 92% -4%, rgba(75,112,113,.22), transparent 62%),
+      radial-gradient(560px circle at 6% 24%, rgba(184,141,102,.20), transparent 62%);
   }
-  .wrap{max-width:640px; margin:0 auto;}
-  .back-link{display:inline-flex; align-items:center; gap:6px; font-size:12.5px; font-weight:700; color:var(--teal-dark); text-decoration:none; margin-bottom:18px;}
-  .back-link:hover{text-decoration:underline;}
-  .back-link svg{width:14px; height:14px;}
-  .policy-page-card{background:var(--white); border-radius:20px; box-shadow:var(--shadow); padding:30px 24px;}
-  .policy-modal-header{text-align:center; border-bottom:1px solid var(--line); padding-bottom:18px; margin-bottom:20px;}
-  .policy-modal-icon{width:56px; height:56px; margin:0 auto 12px; border-radius:15px; background:linear-gradient(160deg, var(--teal), var(--teal-dark)); display:flex; align-items:center; justify-content:center; box-shadow:0 4px 14px rgba(45,70,66,.22);}
-  .policy-modal-icon svg{width:28px; height:28px; color:#fff;}
-  .policy-modal-header h1{font-size:19px; color:var(--teal-dark); margin-bottom:6px; line-height:1.5;}
-  .policy-modal-sub{font-size:12.5px; color:var(--ink-soft); font-weight:600;}
-  .policy-article{background:var(--white); border:1px solid var(--line); border-inline-end:3px solid var(--teal); border-radius:14px; padding:18px 20px; margin-bottom:16px;}
-  .policy-article-head{display:flex; align-items:center; gap:10px; margin-bottom:10px;}
-  .policy-article-badge{flex-shrink:0; width:32px; height:32px; border-radius:10px; background:var(--teal-tint); color:var(--teal-dark); font-size:14px; font-weight:800; display:flex; align-items:center; justify-content:center;}
-  .policy-article-head h2{font-size:14.5px; color:var(--ink); font-weight:800;}
-  .policy-article > p{font-size:13px; color:var(--ink-soft); line-height:1.95;}
-  .policy-values-grid{display:grid; grid-template-columns:repeat(2, 1fr); gap:10px;}
-  .policy-value-item{background:var(--teal-tint); border-radius:10px; padding:12px 14px; font-size:12.5px; line-height:1.75; color:var(--ink);}
-  .policy-value-item b{display:block; color:var(--teal-dark); font-size:13px; margin-bottom:3px;}
-  .policy-occasions-list{display:flex; flex-direction:column; gap:9px;}
-  .policy-occasion-item{display:flex; align-items:flex-start; gap:10px; background:var(--tan-tint); border-radius:10px; padding:11px 14px;}
-  .policy-occasion-dot{flex-shrink:0; width:8px; height:8px; border-radius:50%; background:var(--tan); margin-top:7px;}
-  .policy-occasion-item span{font-size:13px; line-height:1.85; color:var(--ink);}
-  .policy-occasion-item b{color:#9c6b3f; font-weight:800;}
-  .policy-modal-footer{text-align:center; border-top:1px solid var(--line); padding-top:18px; margin-top:8px;}
-  .policy-footer-title{display:block; font-size:13px; font-weight:800; color:var(--teal-dark); margin-bottom:4px;}
-  .policy-footer-tagline{display:block; font-size:12px; color:var(--ink-soft); font-style:italic;}
-  @media (max-width:480px){
-    .policy-values-grid{grid-template-columns:1fr;}
-    .policy-page-card{padding:22px 16px;}
-    .policy-article{padding:15px 15px;}
+  .nav-wrap{position:sticky; top:14px; z-index:30; max-width:1160px; margin:14px auto 0; padding:0 22px;}
+  .nav{display:flex; align-items:center; gap:6px; padding:9px 9px 9px 18px; border-radius:999px; background:rgba(255,255,255,.72); -webkit-backdrop-filter:saturate(170%) blur(20px); backdrop-filter:saturate(170%) blur(20px); border:1px solid rgba(255,255,255,.9); box-shadow:var(--shadow-sm);}
+  .brand{display:inline-flex; align-items:center; gap:10px; margin-inline-end:auto;}
+  .brand img{width:34px; height:34px; object-fit:contain;}
+  .brand b{font-size:16.5px; font-weight:700;}
+  .nav-link{font-size:13.5px; font-weight:500; color:var(--ink-2); padding:9px 14px; border-radius:999px; transition:background .25s ease, color .25s ease;}
+  .nav-link:hover{background:rgba(20,28,27,.05); color:var(--ink);}
+  .btn-dark{display:inline-flex; align-items:center; font-size:14px; font-weight:600; border-radius:999px; padding:11px 20px; background:var(--ink); color:#fff; transition:background .25s ease;}
+  .btn-dark:hover{background:#000;}
+
+  .wrap{position:relative; z-index:1; max-width:840px; margin:0 auto; padding:0 20px;}
+  .policy-modal-header{text-align:center; margin:56px 0 34px;}
+  .kicker{display:inline-flex; align-items:center; gap:9px; font-size:13px; font-weight:500; color:var(--teal-deep); background:rgba(255,255,255,.8); border:1px solid var(--hair); border-radius:999px; padding:7px 14px 7px 16px; margin-bottom:22px; box-shadow:var(--shadow-sm);}
+  .kicker i{width:7px; height:7px; border-radius:50%; background:var(--tan); box-shadow:0 0 0 4px rgba(184,141,102,.2);}
+  .policy-modal-header h1{font-size:clamp(30px, 5.2vw, 48px); font-weight:300; line-height:1.35; letter-spacing:-.6px; margin-bottom:12px;}
+  .policy-modal-header h1 strong{font-weight:700; background:linear-gradient(100deg, var(--teal) 5%, var(--tan) 100%); -webkit-background-clip:text; background-clip:text; color:transparent;}
+  .policy-modal-sub{font-size:16px; color:var(--ink-2);}
+
+  .policy-article{background:rgba(255,255,255,.86); border:1px solid rgba(255,255,255,.95); border-radius:28px; box-shadow:var(--shadow-md); padding:26px 28px; margin-bottom:16px; animation:in .8s var(--ease) both;}
+  .policy-article:nth-of-type(2){animation-delay:.05s;} .policy-article:nth-of-type(3){animation-delay:.1s;} .policy-article:nth-of-type(4){animation-delay:.15s;}
+  @keyframes in{from{opacity:0; transform:translateY(18px);} to{opacity:1; transform:none;}}
+  .policy-article-head{display:flex; align-items:center; gap:12px; margin-bottom:14px;}
+  .policy-article-badge{flex-shrink:0; min-width:38px; font-size:13px; font-weight:600; color:var(--tan-deep); background:var(--tan-soft); border-radius:999px; padding:5px 12px; text-align:center; font-variant-numeric:tabular-nums;}
+  .policy-article-head h2{font-size:19px; font-weight:600; letter-spacing:-.2px;}
+  .policy-article > p{font-size:15px; color:var(--ink-2); line-height:2.05;}
+  .policy-values-grid{display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:10px;}
+  .policy-value-item{background:var(--teal-soft); border-radius:20px; padding:16px 18px; font-size:14px; line-height:1.9; color:var(--ink-2);}
+  .policy-value-item b{display:block; color:var(--teal-deep); font-size:15px; font-weight:600; margin-bottom:4px;}
+  .policy-occasions-list{display:flex; flex-direction:column;}
+  .policy-occasion-item{display:flex; align-items:flex-start; gap:12px; padding:14px 2px; border-top:1px solid var(--hair);}
+  .policy-occasion-item:first-child{border-top:none; padding-top:4px;}
+  .policy-occasion-dot{flex-shrink:0; width:8px; height:8px; border-radius:50%; background:var(--tan); box-shadow:0 0 0 4px rgba(184,141,102,.18); margin-top:11px;}
+  .policy-occasion-item span{font-size:15px; line-height:2; color:var(--ink-2);}
+  .policy-occasion-item b{color:var(--ink); font-weight:600;}
+
+  .policy-modal-footer{margin-top:26px; text-align:center; padding:28px 24px; border-radius:28px; background:var(--ink); color:#fff; position:relative; overflow:hidden;}
+  .policy-modal-footer::before{content:""; position:absolute; width:380px; height:380px; border-radius:50%; inset-inline-start:-130px; top:-250px; background:radial-gradient(circle, rgba(75,112,113,.75), transparent 68%);}
+  .policy-modal-footer > *{position:relative;}
+  .policy-footer-title{display:block; font-size:17px; font-weight:600; margin-bottom:6px;}
+  .policy-footer-tagline{display:block; font-size:14px; color:rgba(255,255,255,.7);}
+  .foot{display:flex; align-items:center; justify-content:center; gap:10px; flex-wrap:wrap; padding:30px 0 0; font-size:13px; color:var(--ink-3);}
+  .foot img{height:24px; width:auto;}
+
+  @media (max-width:640px){
+    .nav-wrap{padding:0 12px; top:10px; margin-top:10px;}
+    .nav{padding:7px 7px 7px 14px;}
+    .nav-link{display:none;}
+    .btn-dark{padding:10px 16px; font-size:13px;}
+    .wrap{padding:0 14px;}
+    .policy-modal-header{margin:38px 0 26px;}
+    .policy-modal-sub{font-size:15px;}
+    .policy-article{padding:20px 18px; border-radius:24px;}
+    .policy-article-head h2{font-size:17.5px;}
+    .policy-values-grid{grid-template-columns:minmax(0, 1fr);}
   }
+  @media (prefers-reduced-motion:reduce){ .policy-article{animation:none;} }
 </style>
 </head>
 <body>
+<div class="nav-wrap">
+  <nav class="nav">
+    <a class="brand" href="/" aria-label="بوابة زارة — الرئيسية"><img src="/assets/bawabat-zara-icon.png" alt="" /><b>بوابة زارة</b></a>
+    <a class="nav-link" href="/">الرئيسية</a>
+    <a class="nav-link" href="https://www.awamiach.sa/projects/" target="_blank" rel="noopener">التبرعات</a>
+    <a class="btn-dark" href="/bayanat/">سجّل مناسبتك</a>
+  </nav>
+</div>
 <div class="wrap">
-  <a class="back-link" href="/bayanat/">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"/></svg>
-    رجوع لتسجيل بيانات المناسبات
-  </a>
-
-  <div class="policy-page-card">
     <div class="policy-modal-header">
-      <div class="policy-modal-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3h7l5 5v13a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z"/><path d="M14 3v5h5"/><path d="M9 13h6M9 16.5h6M9 9.5h2.5"/></svg></div>
-      <h1>السياسة الموحدة للنشر الإعلامي والإلكتروني</h1>
+      <p class="kicker"><i></i>سياسة النشر</p>
+      <h1>السياسة الموحدة <strong>للنشر الإعلامي والإلكتروني</strong></h1>
       <p class="policy-modal-sub">لجمعية العوامية الخيرية للخدمات الاجتماعية</p>
     </div>
 
     <div class="policy-article">
-      <div class="policy-article-head"><span class="policy-article-badge">1</span><h2>التمهيد والأهداف</h2></div>
+      <div class="policy-article-head"><span class="policy-article-badge">01</span><h2>التمهيد والأهداف</h2></div>
       <p>تهدف هذه السياسة إلى تنظيم أعمال النشر في جميع منصات الجمعية وفق أعلى معايير المهنية، لضمان دقة المحتوى، والمحافظة على الهوية المؤسسية، والالتزام بالأنظمة المرعية في المملكة العربية السعودية.</p>
     </div>
 
     <div class="policy-article">
-      <div class="policy-article-head"><span class="policy-article-badge">2</span><h2>مبادئ وضوابط النشر</h2></div>
+      <div class="policy-article-head"><span class="policy-article-badge">02</span><h2>مبادئ وضوابط النشر</h2></div>
       <div class="policy-values-grid">
         <div class="policy-value-item"><b>المصداقية</b>التحقق من المعلومات والأرقام قبل بثها</div>
         <div class="policy-value-item"><b>الهوية البصرية</b>الالتزام التام بالشعار والألوان والخطوط المعتمدة</div>
@@ -97,7 +129,7 @@
     </div>
 
     <div class="policy-article">
-      <div class="policy-article-head"><span class="policy-article-badge">3</span><h2>النشرات الاجتماعية وآلية قبولها</h2></div>
+      <div class="policy-article-head"><span class="policy-article-badge">03</span><h2>النشرات الاجتماعية وآلية قبولها</h2></div>
       <p style="margin-bottom:10px;">تشارك الجمعية المجتمع مناسباتهم وفق الآتي:</p>
       <div class="policy-occasions-list">
         <div class="policy-occasion-item"><span class="policy-occasion-dot"></span><span><b>الوفيات:</b> تُنشر فور تأكيد الخبر من العائلة أو الجهات الرسمية.</span></div>
@@ -109,17 +141,17 @@
     </div>
 
     <div class="policy-article">
-      <div class="policy-article-head"><span class="policy-article-badge">4</span><h2>التفاعل والتعليقات</h2></div>
+      <div class="policy-article-head"><span class="policy-article-badge">04</span><h2>التفاعل والتعليقات</h2></div>
       <p>ترحب الجمعية بالحوار البنّاء، ولها الحق في حذف أي تعليق يتضمن إساءة، تشهير، أو معلومات مضللة، كما يحق لها حظر المستخدمين المخالفين.</p>
     </div>
 
     <div class="policy-article">
-      <div class="policy-article-head"><span class="policy-article-badge">5</span><h2>صلاحيات النشر والمسؤولية</h2></div>
+      <div class="policy-article-head"><span class="policy-article-badge">05</span><h2>صلاحيات النشر والمسؤولية</h2></div>
       <p>يقتصر النشر على الأشخاص المخولين من "الإدارة المختصة" بعد مراجعة المحتوى وتعميده. يتحمل معد المحتوى مسؤولية صحة المعلومات المقدمة منه. تخضع هذه السياسة لأنظمة النشر الإلكتروني والجرائم المعلوماتية في المملكة.</p>
     </div>
 
     <div class="policy-article">
-      <div class="policy-article-head"><span class="policy-article-badge">6</span><h2>المراجعة والنفاذ</h2></div>
+      <div class="policy-article-head"><span class="policy-article-badge">06</span><h2>المراجعة والنفاذ</h2></div>
       <p>تُعد هذه السياسة ملزمة فور اعتمادها من مجلس الإدارة، وتُراجع دورياً لضمان مواكبتها للمصلحة العامة للجمعية ومجتمع العوامية.</p>
     </div>
 
@@ -127,7 +159,10 @@
       <span class="policy-footer-title">القسم الإعلامي - جمعية العوامية الخيرية</span>
       <span class="policy-footer-tagline">نعمل باحترافية.. لنخدمكم بمسؤولية</span>
     </div>
-  </div>
+
+  <footer class="foot">
+    <img src="/assets/logo.png" alt="شعار جمعية العوامية الخيرية" /><span>صُنع بحب من قبل جمعية العوامية الخيرية</span>
+  </footer>
 </div>
 </body>
 </html>
