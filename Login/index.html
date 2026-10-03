@@ -1071,7 +1071,7 @@
      لو تعذّر تشغيل الفيديو (منع التشغيل التلقائي، بطء الشبكة) بدل ما تعلّق الزائر أمام شاشة فاضية -->
 <style>
   #zaraIntro{position:fixed; inset:0; z-index:2147483647; background:#FEFEFC; display:flex; align-items:center; justify-content:center; cursor:pointer; transition:opacity .6s ease, visibility .6s ease;}
-  #zaraIntro video{width:100%; height:100%; object-fit:cover; display:block; pointer-events:none;}
+  #zaraIntro video{width:clamp(180px, 46vmin, 250px); height:clamp(180px, 46vmin, 250px); object-fit:contain; display:block; pointer-events:none;}
   #zaraIntro.zi-out{opacity:0; visibility:hidden;}
   #zaraIntro .zi-skip{position:absolute; bottom:22px; left:22px; font-family:inherit; font-size:12.5px; font-weight:500; line-height:1; color:#4d6e6a; background:rgba(77,110,106,.08); border:1px solid rgba(77,110,106,.18); border-radius:999px; padding:8px 14px; cursor:pointer;}
   #zaraIntro .zi-sound{position:absolute; bottom:22px; right:22px; display:none; align-items:center; gap:6px; font-family:inherit; font-size:12.5px; font-weight:500; line-height:1; color:#fff; background:#4d6e6a; border:none; border-radius:999px; padding:9px 15px; cursor:pointer; box-shadow:0 4px 14px rgba(77,110,106,.25);}
@@ -10388,10 +10388,29 @@
 </script>
 <script>
 // تنبيه تحديث الصفحة: صفحات الموظفين تبقى مفتوحة أياماً وGitHub Pages يخزّن الملف ~10 دقائق، فقد يشتغل المستخدم
-// على نسخة قديمة بدون ما يدري (يشوف إصلاحاً "ما اشتغل" وهو بالحقيقة ما وصله). نقارن تاريخ تعديل الصفحة المحمّلة
-// (document.lastModified) بتاريخ نسختها الحالية على السيرفر، ولو صارت أحدث يظهر شريط "تحديث الآن"
+// على نسخة قديمة بدون ما يدري. نقارن تاريخ تعديل الصفحة المحمّلة (document.lastModified) بتاريخ نسختها الحالية
+// على السيرفر:
+//   • عند الدخول مباشرة: لو وصلت نسخة قديمة (كاش المتصفح أو شبكة التوزيع) نحمّل الأحدث بصمت — بلا أي شريط
+//   • أثناء العمل (الصفحة مفتوحة من مدة): يظهر شريط "تحديث الآن"
+// السابق كان يعيد التحميل العادي (location.reload) فقد يرجع نفس النسخة القديمة من كاش شبكة التوزيع (عدة خوادم
+// كل منها يخزّن 10 دقائق) فيعود الشريط مباشرة وكأن الزر لا يعمل. الآن الطلب يحمل معاملاً فريداً يتجاوز الكاش
+// فيصل دائماً للنسخة الأحدث، ثم يُزال المعامل من الرابط
 (function(){
-  var shown = false;
+  var shown = false, BUST = "_zr", AUTO_KEY = "zaraAutoFresh:" + location.pathname;
+  try{
+    var cur = new URL(location.href);
+    if(cur.searchParams.has(BUST)){
+      cur.searchParams.delete(BUST);
+      history.replaceState(history.state, "", cur.pathname + cur.search + cur.hash);
+    }
+  }catch(e){}
+  function freshReload(){
+    try{
+      var u = new URL(location.href);
+      u.searchParams.set(BUST, String(Date.now()));
+      location.replace(u.toString());
+    }catch(e){ location.reload(); }
+  }
   function showBanner(){
     if(shown) return; shown = true;
     var bar = document.createElement("div");
@@ -10400,22 +10419,33 @@
     var msg = document.createElement("span"); msg.textContent = "يتوفر تحديث جديد للمنصة";
     var btn = document.createElement("button"); btn.type = "button"; btn.textContent = "تحديث الآن";
     btn.style.cssText = "background:#fff; color:#3d5b56; border:0; border-radius:10px; padding:8px 16px; font:700 13px Cairo, sans-serif; cursor:pointer; flex-shrink:0;";
-    btn.addEventListener("click", function(){ location.reload(); });
+    btn.addEventListener("click", function(){ btn.disabled = true; btn.textContent = "جارٍ التحديث..."; freshReload(); });
     bar.appendChild(msg); bar.appendChild(btn); document.body.appendChild(bar);
   }
-  function check(){
+  function check(atEntry){
     if(shown || !window.fetch) return;
     var loaded = new Date(document.lastModified).getTime();
     if(!loaded || isNaN(loaded)) return;
-    fetch(location.pathname, { method: "HEAD", cache: "no-store" }).then(function(r){
+    fetch(location.pathname + "?" + BUST + "=" + Date.now(), { method: "HEAD", cache: "no-store" }).then(function(r){
       var lm = r.headers.get("last-modified");
       var server = lm ? new Date(lm).getTime() : 0;
-      if(server && server - loaded > 1500) showBanner();
+      if(!(server && server - loaded > 1500)) return;
+      if(atEntry){
+        // تحميل صامت مرة واحدة فقط بالدقيقة (حماية من أي حلقة تكرار لو تعثّر شيء)
+        var last = 0;
+        try{ last = +sessionStorage.getItem(AUTO_KEY) || 0; }catch(e){}
+        if(Date.now() - last > 60000){
+          try{ sessionStorage.setItem(AUTO_KEY, String(Date.now())); }catch(e){}
+          freshReload();
+          return;
+        }
+      }
+      showBanner();
     }).catch(function(){});
   }
-  setTimeout(check, 4000);
-  setInterval(check, 180000);
-  document.addEventListener("visibilitychange", function(){ if(!document.hidden) check(); });
+  check(true);
+  setInterval(function(){ check(false); }, 180000);
+  document.addEventListener("visibilitychange", function(){ if(!document.hidden) check(false); });
 })();
 </script>
 </body>
