@@ -67,6 +67,16 @@
   }
 
   /* ===== الواجهة ===== */
+  /* فيديو الواجهة: يعمل صامتاً تلقائياً، وزر ناعم لتشغيل الصوت */
+  .film{position:relative; margin-top:26px; border-radius:32px; overflow:hidden; aspect-ratio:16 / 9; background:#fff; box-shadow:0 2px 4px rgba(20,28,27,.04), 0 30px 70px rgba(20,28,27,.18); animation:in .9s var(--ease) both;}
+  .film video{display:block; width:100%; height:100%; object-fit:cover;}
+  .film-sound{position:absolute; bottom:16px; inset-inline-start:16px; display:inline-flex; align-items:center; gap:8px; padding:9px 15px 9px 13px; border:1px solid rgba(255,255,255,.28); border-radius:999px; background:rgba(20,28,27,.38); -webkit-backdrop-filter:blur(14px) saturate(160%); backdrop-filter:blur(14px) saturate(160%); color:#fff; font-family:inherit; font-size:13px; font-weight:500; cursor:pointer; transition:background .3s ease, transform .4s var(--ease);}
+  .film-sound:hover{background:rgba(20,28,27,.55); transform:translateY(-2px);}
+  .film-sound svg{width:18px; height:18px; flex:none;}
+  .film-sound .film-wave{display:none;}
+  .film-sound.on .film-wave{display:inline; animation:filmPulse 1.6s ease-in-out infinite;}
+  .film-sound.on .film-mute{display:none;}
+  @keyframes filmPulse{0%,100%{opacity:1;} 50%{opacity:.45;}}
   .hero{display:grid; grid-template-columns:minmax(0, 1.02fr) minmax(0, .98fr); gap:56px; align-items:center; padding:74px 0 84px;}
   .kicker{display:inline-flex; align-items:center; gap:9px; font-size:13px; font-weight:500; color:var(--teal-deep); background:rgba(255,255,255,.8); border:1px solid var(--hair); border-radius:999px; padding:7px 14px 7px 16px; margin-bottom:24px; box-shadow:var(--shadow-sm);}
   .kicker i{width:7px; height:7px; border-radius:50%; background:var(--tan); box-shadow:0 0 0 4px rgba(184,141,102,.2);}
@@ -160,6 +170,9 @@
     .nav{padding:7px 7px 7px 14px;}
     .btn--dark{padding:10px 16px; font-size:13px;}
     .hero{padding:38px 0 62px; gap:32px;}
+    .film{margin-top:18px; border-radius:24px;}
+    .film-sound{bottom:10px; inset-inline-start:10px; padding:8px; }
+    .film-sound span{display:none;}
     .btn--primary, .btn--ghost{width:100%;}
     .bento{gap:12px;}
     .bento > :nth-child(even){transform:translateY(20px);}
@@ -251,6 +264,13 @@
 </div>
 
 <div class="shell">
+  <div class="film" id="homeFilm">
+    <video id="homeFilmVideo" src="/assets/home/awamia.mp4" poster="/assets/home/awamia-poster.jpg" autoplay muted loop playsinline preload="metadata" aria-label="فيديو تعريفي — جمعية العوامية الخيرية"></video>
+    <button type="button" class="film-sound" id="homeFilmSound" aria-pressed="false" aria-label="تشغيل الصوت">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9.500v5h3.500l4.500 4v-13l-4.500 4H4z"/><path class="film-wave" d="M15.500 9.200a4 4 0 0 1 0 5.600M18 6.800a7.500 7.500 0 0 1 0 10.400"/><path class="film-mute" d="M16 9.500l5 5M21 9.500l-5 5"/></svg>
+      <span>تشغيل الصوت</span>
+    </button>
+  </div>
   <section class="hero">
     <div>
       <p class="kicker"><i></i>المنصة الرقمية لجمعية العوامية الخيرية</p>
@@ -329,6 +349,33 @@
     </div>
   </footer>
 </div>
+
+<script>
+// فيديو الواجهة: صامت تلقائياً؛ الزر يشغّل/يكتم الصوت. يتوقف خارج الشاشة ويُكتم عند مغادرة التبويب
+(function(){
+  var v = document.getElementById("homeFilmVideo"), b = document.getElementById("homeFilmSound");
+  if(!v || !b) return;
+  function paint(){
+    var on = !v.muted;
+    b.classList.toggle("on", on);
+    b.setAttribute("aria-pressed", on ? "true" : "false");
+    b.setAttribute("aria-label", on ? "كتم الصوت" : "تشغيل الصوت");
+    b.querySelector("span").textContent = on ? "كتم الصوت" : "تشغيل الصوت";
+  }
+  b.addEventListener("click", function(){
+    v.muted = !v.muted;
+    if(!v.muted){ v.volume = 1; var p = v.play(); if(p && p.catch) p.catch(function(){}); }
+    paint();
+  });
+  if("IntersectionObserver" in window){
+    new IntersectionObserver(function(es){
+      if(es[0].isIntersecting){ var p = v.play(); if(p && p.catch) p.catch(function(){}); }
+      else { v.pause(); }
+    }, { threshold: .15 }).observe(v);
+  }
+  document.addEventListener("visibilitychange", function(){ if(document.hidden && !v.muted){ v.muted = true; paint(); } });
+})();
+</script>
 
 <script>
 // أعداد المناسبات المسجّلة — تُقرأ حيّة من قاعدة البيانات (عدّ فقط، بلا أي بيانات شخصية). لو تعذّر
