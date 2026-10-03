@@ -17,7 +17,7 @@
 <meta name="twitter:card" content="summary_large_image" />
 <link rel="icon" href="/assets/favicon.png" />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
-<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&family=Cairo:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
 <style>
@@ -300,6 +300,117 @@
   .identity-story li b{color:var(--ink); font-weight:700;}
   .identity-story-plain{font-size:12px; color:var(--ink-soft); line-height:1.85;}
 </style>
+<style id="redesign">
+  /* ===== طبقة التصميم الجديدة — نفس لغة الرئيسية: عصري ناعم =====
+     شريط زجاجي عائم · عنوان بوزن خفيف · اختيار المناسبة كمفتاح مقسَّم (Segmented) · حقول ممتلئة بلا حدود
+     · زوايا كبيرة وظلال منتشرة. لا تغيير بأي وظيفة. */
+  :root{
+    --bg:#F5F6F5; --ink:#141C1B; --ink-soft:#6B7775; --ink-2:#47534F;
+    --teal:#4B7071; --teal-dark:#324C4B; --teal-tint:#E6EEED;
+    --tan:#B88D66; --tan-tint:#F6EEE5; --tan-deep:#8F6A45;
+    --blue:#4B7071; --blue-dark:#324C4B; --blue-tint:#E6EEED;
+    --line:rgba(20,28,27,.09); --field:#F1F3F2;
+    --shadow:0 2px 4px rgba(20,28,27,.03), 0 18px 44px rgba(20,28,27,.08);
+    --shadow-sm:0 1px 2px rgba(20,28,27,.04), 0 6px 16px rgba(20,28,27,.05);
+    --ease:cubic-bezier(.22,.9,.24,1);
+  }
+  body{font-family:'IBM Plex Sans Arabic', system-ui, sans-serif; background:var(--bg); padding:0 0 30px; position:relative; overflow-x:hidden; -webkit-font-smoothing:antialiased;}
+  body::before{
+    content:""; position:absolute; inset:0 0 auto 0; height:900px; z-index:0; pointer-events:none;
+    background:
+      radial-gradient(640px circle at 92% -4%, rgba(75,112,113,.22), transparent 62%),
+      radial-gradient(560px circle at 6% 24%, rgba(184,141,102,.20), transparent 62%);
+  }
+  h1,h2,h3{font-weight:600;}
+
+  /* ----- الشريط العلوي ----- */
+  .nav-wrap{position:sticky; top:14px; z-index:30; max-width:1160px; margin:14px auto 0; padding:0 22px;}
+  .nav{display:flex; align-items:center; gap:6px; padding:9px 12px 9px 18px; border-radius:999px; background:rgba(255,255,255,.72); -webkit-backdrop-filter:saturate(170%) blur(20px); backdrop-filter:saturate(170%) blur(20px); border:1px solid rgba(255,255,255,.9); box-shadow:var(--shadow-sm);}
+  .brand{display:inline-flex; align-items:center; gap:10px; margin-inline-end:auto; text-decoration:none; color:var(--ink);}
+  .brand img{width:34px; height:34px; object-fit:contain;}
+  .brand b{font-size:16.5px; font-weight:700;}
+  .quick-links-row{margin:0; gap:2px; flex-wrap:nowrap;}
+  .quick-link-pill{border:none; background:transparent; box-shadow:none; font-weight:500; font-size:13.5px; padding:9px 13px; color:var(--ink-2);}
+  .quick-link-pill:hover{background:rgba(20,28,27,.05); border:none; transform:none; color:var(--ink);}
+  .quick-link-pill.donate{color:var(--tan-deep);}
+  .quick-link-pill.donate:hover{background:var(--tan-tint);}
+
+  /* ----- العنوان ----- */
+  .wrap{position:relative; z-index:1; max-width:780px; padding:0 20px;}
+  .head{text-align:center; margin:54px 0 30px;}
+  .kicker{display:inline-flex; align-items:center; gap:9px; font-size:13px !important; font-weight:500; color:var(--teal-dark) !important; background:rgba(255,255,255,.8); border:1px solid var(--line); border-radius:999px; padding:7px 14px 7px 16px; margin-bottom:20px; box-shadow:var(--shadow-sm);}
+  .kicker i{width:7px; height:7px; border-radius:50%; background:var(--tan); box-shadow:0 0 0 4px rgba(184,141,102,.2);}
+  .head h1{font-size:clamp(36px, 6vw, 54px); font-weight:300; line-height:1.25; letter-spacing:-.8px; color:var(--ink); margin-bottom:12px;}
+  .head h1 strong{font-weight:700; background:linear-gradient(100deg, var(--teal) 5%, var(--tan) 100%); -webkit-background-clip:text; background-clip:text; color:transparent;}
+  .head p{font-size:16px; line-height:1.95; color:var(--ink-2); max-width:46ch; margin:0 auto;}
+
+  .ad-banner-carousel{border-radius:30px; margin-bottom:18px; box-shadow:0 2px 4px rgba(50,76,75,.1), 0 22px 50px rgba(50,76,75,.22);}
+
+  /* ----- البطاقة ----- */
+  .card{border-radius:32px; border:1px solid rgba(255,255,255,.95); background:rgba(255,255,255,.86); -webkit-backdrop-filter:blur(14px); backdrop-filter:blur(14px); box-shadow:var(--shadow); padding:26px;}
+
+  /* اختيار المناسبة: مفتاح مقسَّم */
+  .cat-select{display:grid; grid-template-columns:repeat(4, minmax(0, 1fr)); gap:4px; padding:6px; margin-bottom:26px; background:rgba(20,28,27,.05); border-radius:24px;}
+  .cat-select button{min-width:0; padding:14px 6px 12px; border:none; border-radius:18px; background:transparent; gap:8px; font-size:13.5px; font-weight:500; color:var(--ink-2); transition:background .35s var(--ease), box-shadow .35s var(--ease), color .25s ease, transform .35s var(--ease);}
+  .cat-select button:hover{border:none; background:rgba(255,255,255,.6); color:var(--ink);}
+  .cat-select button.active, .cat-select button.active:hover{background:#fff; color:var(--ink); font-weight:600; box-shadow:0 1px 2px rgba(20,28,27,.06), 0 8px 20px rgba(20,28,27,.10);}
+  .cat-select .icon{width:24px; height:24px; color:var(--ink-soft) !important; transition:color .25s ease;}
+  .cat-select button.active .icon{color:var(--teal) !important;}
+
+  /* ----- الحقول: ممتلئة ناعمة ----- */
+  .form-grid{gap:20px 16px;}
+  .field{gap:8px;}
+  .field label{font-size:13.5px; font-weight:500; color:var(--ink-2);}
+  .field input, .field select, .field textarea{padding:14px 16px; border:1px solid transparent; border-radius:16px; font-size:15px; background:var(--field); color:var(--ink); transition:background-color .25s ease, border-color .25s ease, box-shadow .25s ease;}
+  .select-wrap select{padding:14px 16px 14px 40px;}
+  .select-wrap::after{left:15px;}
+  .field input:hover, .field select:hover, .field textarea:hover{background:#ECEFEE;}
+  .field input:focus, .field select:focus, .field textarea:focus{border-color:var(--teal); background-color:#fff; box-shadow:0 0 0 4px rgba(75,112,113,.14);}
+  .field input::placeholder, .field textarea::placeholder{color:#9AA5A2;}
+  .field-hint{font-size:12px; line-height:1.7; color:var(--ink-soft);}
+  .photo-input, .field input[type="file"]{width:100%; cursor:pointer;}
+  .photo-input{border:1.5px dashed rgba(20,28,27,.16); border-radius:18px; padding:16px; background:transparent;}
+  .photo-input:hover{border-color:var(--teal); background:var(--teal-tint);}
+  .field input[type="file"]::file-selector-button{font-family:inherit; font-size:13px; font-weight:600; color:#fff; background:var(--ink); border:none; border-radius:999px; padding:9px 18px; margin-inline-end:12px; cursor:pointer;}
+  .ai-helper, .ai-check, .ai-choice-card{border-radius:20px; border-width:1px;}
+  .ai-suggest-btn{border-radius:999px; padding:11px 22px; background:var(--ink);}
+  .ai-suggest-btn:hover{background:#000;}
+  .female-photo-choice-btn{border-radius:20px; border-width:1px;}
+
+  .submit-btn{margin-top:28px; padding:17px 20px; border-radius:999px; background:linear-gradient(140deg, #58807F, var(--teal-dark)); font-size:16px; font-weight:600; box-shadow:0 10px 26px rgba(50,76,75,.30); display:flex; align-items:center; justify-content:center; gap:10px; transition:transform .4s var(--ease), box-shadow .4s var(--ease), gap .4s var(--ease);}
+  .submit-btn::after{content:""; width:17px; height:17px; background:currentColor; -webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M19 12H5M11 6l-6 6 6 6'/%3E%3C/svg%3E") center/contain no-repeat; mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M19 12H5M11 6l-6 6 6 6'/%3E%3C/svg%3E") center/contain no-repeat;}
+  .submit-btn:hover{background:linear-gradient(140deg, #58807F, var(--teal-dark)); transform:translateY(-2px); box-shadow:0 16px 34px rgba(50,76,75,.38); gap:15px;}
+  .card:not(:has(.cat-select button.active)) .submit-btn{display:none;}
+  .card:not(:has(.cat-select button.active)) .cat-select{margin-bottom:0;}
+  .err-msg{background:#FBEDEC; border-radius:14px; padding:11px 15px; margin-top:16px;}
+
+  .thanks .icon-big{width:64px; height:64px;}
+  .thanks h2{font-size:22px;}
+  .thanks button{border-radius:999px; padding:11px 24px; border-width:1px;}
+
+  .foot-msg{background:rgba(255,255,255,.7); border:1px solid rgba(255,255,255,.95); color:var(--ink-2); border-radius:20px; font-weight:400; margin-top:22px; box-shadow:var(--shadow-sm);}
+  .foot{margin-top:24px; font-size:13px;}
+  .wa-fab{box-shadow:0 10px 24px rgba(37,211,102,.35);}
+  .identity-modal, .wa-panel{border-radius:28px;}
+
+
+  @media (max-width:640px){
+    .nav-wrap{padding:0 12px; top:10px; margin-top:10px;}
+    .nav{flex-wrap:wrap; border-radius:26px; padding:9px 12px; justify-content:center; row-gap:2px;}
+    .brand{margin-inline-end:0; width:100%; justify-content:center; padding-bottom:4px;}
+    .quick-link-pill{font-size:12.5px; padding:8px 10px;}
+    .wrap{padding:0 14px;}
+    .head{margin:36px 0 24px;}
+    .head p{font-size:15px;}
+    .card{padding:18px; border-radius:28px;}
+    .cat-select{border-radius:22px;}
+    .cat-select button{font-size:12.5px; padding:12px 2px 10px; border-radius:16px;}
+  }
+  @media (prefers-reduced-motion:reduce){
+    .cat-select button, .submit-btn{transition:none;}
+  }
+
+</style>
 </head>
 <body>
 <!-- ============ شاشة افتتاحية: موشن شعار بوابة زارة ============
@@ -365,8 +476,10 @@
   kick();
 })();
 </script>
-<div class="wrap">
-  <div class="quick-links-row">
+<div class="nav-wrap">
+  <nav class="nav">
+    <a class="brand" href="/" aria-label="بوابة زارة — الرئيسية"><img src="/assets/bawabat-zara-icon.png" alt="" /><b>بوابة زارة</b></a>
+    <div class="quick-links-row">
     <button type="button" class="quick-link-pill" id="mediaGuideBtn">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="8.5" cy="10" r="1.7"/><path d="M3 16l5-4 4 3 4-3.5 5 4.5"/></svg>
       الهوية البصرية
@@ -380,19 +493,15 @@
       سياسة النشر
     </a>
   </div>
-  <div class="ad-banner-carousel" id="adBannerCarousel" style="display:none;"></div>
-
+  </nav>
+</div>
+<div class="wrap">
   <div class="head">
-    <div class="brand-hero">
-      <img class="brand-hero-icon" src="/assets/bawabat-zara-icon.png" alt="أيقونة بوابة زارة" />
-      <div class="brand-hero-text">
-        <span class="brand-hero-ar">بوابة زارة</span>
-        <span class="brand-hero-en">Bawabat Zara</span>
-      </div>
-    </div>
-    <h1>تسجيل بيانات المناسبات الاجتماعية</h1>
-    <p>شاركونا مناسبتكم الاجتماعية (تخرج، مولود، عقد قران، تهنئة) ليتم توثيقها ضمن سجلات الجمعية</p>
+    <p class="kicker"><i></i>تسجيل المناسبات الاجتماعية</p>
+    <h1>سجّل <strong>مناسبتك</strong></h1>
+    <p>اختر نوع المناسبة ثم عبّئ بياناتها — تُوثَّق ضمن سجلات جمعية العوامية الخيرية بعد المراجعة.</p>
   </div>
+  <div class="ad-banner-carousel" id="adBannerCarousel" style="display:none;"></div>
 
   <div class="card" id="formCard">
     <div class="cat-select" id="catSelect"></div>
