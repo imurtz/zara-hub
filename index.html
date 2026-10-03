@@ -96,6 +96,11 @@
   .tile-meta b{font-size:15px; font-weight:600; color:var(--ink-2); font-variant-numeric:tabular-nums;}
   .tile-go{position:absolute; top:20px; inset-inline-end:20px; width:36px; height:36px; border-radius:50%; display:flex; align-items:center; justify-content:center; background:rgba(20,28,27,.05); color:var(--ink-2); transition:transform .5s var(--ease), background .3s ease, color .3s ease;}
   .tile-go svg{width:15px; height:15px;}
+  .tile--wide{grid-column:1 / -1; min-height:0; margin-top:30px; flex-direction:row; align-items:center; gap:18px; background:rgba(20,28,27,.045); border-color:rgba(20,28,27,.05); box-shadow:none; -webkit-backdrop-filter:none; backdrop-filter:none;}
+  .bento > .tile--wide, .bento > .tile--wide:hover{transform:none; box-shadow:none;}
+  .tile--wide .tile-ico{margin-bottom:0; flex:none; background:#fff; color:var(--ink-2);}
+  .tile--wide h3{margin-top:0;}
+  .tile-note{font-size:13px; line-height:1.8; color:var(--ink-3); margin-top:6px;}
   .tile--tan .tile-ico{background:var(--tan-soft); color:var(--tan-deep);}
   .tile--deep{color:#fff; border-color:transparent; background:linear-gradient(150deg, #5B8483 0%, var(--teal) 40%, var(--teal-deep) 100%); box-shadow:0 2px 4px rgba(50,76,75,.1), 0 22px 50px rgba(50,76,75,.30);}
   .tile--deep::after{content:""; position:absolute; width:220px; height:220px; border-radius:50%; inset-inline-end:-80px; bottom:-110px; background:radial-gradient(circle, rgba(184,141,102,.45), transparent 68%); pointer-events:none;}
@@ -158,6 +163,7 @@
     .btn--primary, .btn--ghost{width:100%;}
     .bento{gap:12px;}
     .bento > :nth-child(even){transform:translateY(20px);}
+    .tile--wide{margin-top:20px;}
     .tile{min-height:168px; padding:18px; border-radius:26px;}
     .tile h3{font-size:16.5px; margin-top:20px;}
     .tile-go{top:16px; inset-inline-end:16px; width:32px; height:32px;}
@@ -284,6 +290,14 @@
         <h3>تهنئة</h3>
         <p class="tile-meta"><b data-count="congrats"></b><span></span></p>
       </a>
+      <div class="tile tile--wide">
+        <span class="tile-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20.500s-7-4.300-7-9.700A4.300 4.300 0 0 1 12 8a4.300 4.300 0 0 1 7 2.800c0 5.400-7 9.700-7 9.700z"/></svg></span>
+        <div class="tile-wide-body">
+          <h3>الوفيات</h3>
+          <p class="tile-meta"><b data-count="deaths" data-label="وفاة موثّقة"></b><span></span></p>
+          <p class="tile-note">تُنشر فور تأكيد الخبر من العائلة أو الجهات الرسمية.</p>
+        </div>
+      </div>
     </div>
   </section>
 
@@ -325,7 +339,7 @@
   function countUp(el, n){
     var reduce = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
     var label = el.nextElementSibling;
-    if(label) label.textContent = "مناسبة مسجّلة";
+    if(label) label.textContent = el.getAttribute("data-label") || "مناسبة مسجّلة";
     if(reduce){ el.textContent = n.toLocaleString("en-US"); return; }
     var t0 = null, dur = 1100;
     function step(ts){
@@ -336,8 +350,16 @@
     }
     requestAnimationFrame(step);
   }
+  // آخر عدد معروف يُحفظ في المتصفح: يُعرض لو تعذّر الجلب (مثلاً عند استنفاد حصة القراءة اليومية)،
+  // ولا يُعاد الجلب إلا بعد ساعة تخفيفاً للقراءات
+  var CK = "zaraHomeCounts", cache = {};
+  try{ cache = JSON.parse(localStorage.getItem(CK) || "{}") || {}; }catch(e){ cache = {}; }
+  var fresh = cache.t && (Date.now() - cache.t) < 3600000;
   if(!window.fetch) return;
   Array.prototype.forEach.call(document.querySelectorAll("[data-count]"), function(el){
+    var cat = el.getAttribute("data-count"), known = cache.n && cache.n[cat];
+    if(known > 0) countUp(el, known);
+    if(fresh && known > 0) return;
     fetch(URL_, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({
       structuredAggregationQuery: {
         structuredQuery: { from: [{ collectionId: "events" }], where: { fieldFilter: { field: { fieldPath: "category" }, op: "EQUAL", value: { stringValue: el.getAttribute("data-count") } } } },
@@ -346,7 +368,11 @@
     })}).then(function(r){ return r.ok ? r.json() : null; }).then(function(d){
       var v = d && d[0] && d[0].result && d[0].result.aggregateFields && d[0].result.aggregateFields.n;
       var n = v ? parseInt(v.integerValue, 10) : 0;
-      if(n > 0) countUp(el, n);
+      if(n > 0){
+        if(n !== known) countUp(el, n);
+        cache.n = cache.n || {}; cache.n[cat] = n; cache.t = Date.now();
+        try{ localStorage.setItem(CK, JSON.stringify(cache)); }catch(e){}
+      }
     }).catch(function(){});
   });
 })();
