@@ -1065,6 +1065,62 @@
 </style>
 </head>
 <body>
+<!-- ============ شاشة افتتاحية: موشن شعار بوابة زارة ============
+     تظهر مرة واحدة بكل جلسة تبويب (sessionStorage)، تغطي الصفحة أثناء تحميلها خلفها، ثم تتلاشى
+     وتكشف الصفحة. النقر في أي مكان يتخطاها. لا تظهر لمن فعّل "تقليل الحركة" بجهازه، وتنسحب تلقائياً
+     لو تعذّر تشغيل الفيديو (منع التشغيل التلقائي، بطء الشبكة) بدل ما تعلّق الزائر أمام شاشة فاضية -->
+<style>
+  #zaraIntro{position:fixed; inset:0; z-index:2147483000; background:#FEFEFC; display:flex; align-items:center; justify-content:center; cursor:pointer; transition:opacity .6s ease, visibility .6s ease;}
+  #zaraIntro video{width:100%; height:100%; object-fit:cover; display:block; pointer-events:none;}
+  #zaraIntro.zi-out{opacity:0; visibility:hidden;}
+  #zaraIntro .zi-skip{position:absolute; bottom:22px; left:22px; font-family:inherit; font-size:12.5px; font-weight:500; line-height:1; color:#4d6e6a; background:rgba(77,110,106,.08); border:1px solid rgba(77,110,106,.18); border-radius:999px; padding:8px 14px; cursor:pointer;}
+  html.zi-lock, html.zi-lock body{overflow:hidden !important;}
+</style>
+<div id="zaraIntro" aria-hidden="true">
+  <video muted playsinline preload="auto" disablepictureinpicture>
+    <source src="/assets/intro/zara-intro.mp4" type="video/mp4" />
+  </video>
+  <button type="button" class="zi-skip">تخطي</button>
+</div>
+<script>
+(function(){
+  var el = document.getElementById("zaraIntro");
+  if(!el) return;
+  var key = "zaraIntroSeen:" + location.pathname;
+  var skip = false;
+  try{ skip = sessionStorage.getItem(key) === "1"; }catch(e){}
+  try{ if(window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches) skip = true; }catch(e){}
+  if(window.top !== window) skip = true;
+  if(skip){ el.parentNode.removeChild(el); return; }
+  document.documentElement.classList.add("zi-lock");
+  var v = el.querySelector("video"), done = false, started = false, kicked = false;
+  function finish(){
+    if(done) return; done = true;
+    try{ sessionStorage.setItem(key, "1"); }catch(e){}
+    el.classList.add("zi-out");
+    document.documentElement.classList.remove("zi-lock");
+    setTimeout(function(){ if(el.parentNode) el.parentNode.removeChild(el); }, 700);
+  }
+  v.addEventListener("playing", function(){ started = true; });
+  v.addEventListener("ended", finish);
+  // بعض المتصفحات توقف الفيديو عند آخره بلا حدث "ended"
+  v.addEventListener("pause", function(){ if(v.duration && v.currentTime >= v.duration - 0.15) finish(); });
+  v.addEventListener("error", finish, true);
+  el.addEventListener("click", finish);
+  // التشغيل يبدأ فقط والتبويب ظاهر — المتصفح يمنع التشغيل التلقائي بتبويب مخفي (مثلاً صفحة فُتحت
+  // بالخلفية)، فننتظر لين يصير ظاهراً بدل ما تُتخطّى الافتتاحية بصمت
+  function kick(){
+    if(kicked || done || document.hidden) return;
+    kicked = true;
+    var p = v.play();
+    if(p && p.catch) p.catch(finish);
+    setTimeout(function(){ if(!started) finish(); }, 2500);   // لم يبدأ التشغيل (شبكة بطيئة / منع تلقائي)
+    setTimeout(finish, 8000);                                  // سقف أعلى احتياطي مهما حصل
+  }
+  document.addEventListener("visibilitychange", kick);
+  kick();
+})();
+</script>
 
 <!-- ============ LOGIN SCREEN ============ -->
 <div id="loginScreen">
