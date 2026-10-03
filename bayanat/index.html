@@ -321,7 +321,7 @@
 (function(){
   var el = document.getElementById("zaraIntro");
   if(!el) return;
-  var key = "zaraIntroSeen:" + location.pathname;
+  var key = "zaraIntroSeen";   // مفتاح واحد لكل الموقع: من شاهدها بصفحة لا تتكرر له عند الانتقال لصفحة أخرى بنفس التبويب
   var skip = false;
   try{ skip = sessionStorage.getItem(key) === "1"; }catch(e){}
   try{ if(window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches) skip = true; }catch(e){}
