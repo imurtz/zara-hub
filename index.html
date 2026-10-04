@@ -69,7 +69,13 @@
   /* ===== الواجهة ===== */
   /* فيديو الواجهة: يعمل صامتاً تلقائياً، وزر ناعم لتشغيل الصوت */
   .film{position:relative; margin-top:26px; border-radius:32px; overflow:hidden; aspect-ratio:16 / 9; background:#fff; box-shadow:0 2px 4px rgba(20,28,27,.04), 0 30px 70px rgba(20,28,27,.18); animation:in .9s var(--ease) both;}
-  @media (min-width:900px){ .film{max-width:680px; margin-inline:auto; border-radius:28px;} }
+  /* الكمبيوتر: البطاقة بعرض الصفحة كاملاً لكن بارتفاع أقل — الفيديو يظهر كاملاً في الوسط، وخلفه نسخة مموّهة منه تملأ الجانبين */
+  @media (min-width:900px){
+    .film{aspect-ratio:auto; height:clamp(300px, 30vw, 380px);}
+    .film #homeFilmVideo{position:relative; z-index:1; object-fit:contain;}
+    .film .film-bg{position:absolute; inset:-48px; width:calc(100% + 96px); height:calc(100% + 96px); object-fit:cover; filter:blur(38px) saturate(1.15); pointer-events:none;}
+    .film-sound{z-index:2;}
+  }
   .film video{display:block; width:100%; height:100%; object-fit:cover;}
   .film-sound{position:absolute; bottom:16px; inset-inline-start:16px; display:inline-flex; align-items:center; gap:8px; padding:9px 15px 9px 13px; border:1px solid rgba(255,255,255,.28); border-radius:999px; background:rgba(20,28,27,.38); -webkit-backdrop-filter:blur(14px) saturate(160%); backdrop-filter:blur(14px) saturate(160%); color:#fff; font-family:inherit; font-size:13px; font-weight:500; cursor:pointer; transition:background .3s ease, transform .4s var(--ease);}
   .film-sound:hover{background:rgba(20,28,27,.55); transform:translateY(-2px);}
@@ -368,6 +374,21 @@
     if(!v.muted){ v.volume = 1; var p = v.play(); if(p && p.catch) p.catch(function(){}); }
     paint();
   });
+  // الكمبيوتر فقط: نسخة مموّهة صامتة خلف الفيديو تملأ جانبي البطاقة
+  var bg = null;
+  if(window.matchMedia && matchMedia("(min-width:900px)").matches){
+    bg = document.createElement("video");
+    bg.className = "film-bg";
+    bg.muted = true; bg.loop = true; bg.playsInline = true;
+    bg.setAttribute("aria-hidden", "true");
+    bg.tabIndex = -1;
+    bg.src = v.currentSrc || v.src;
+    v.parentNode.insertBefore(bg, v);
+    v.addEventListener("play", function(){ try{ bg.currentTime = v.currentTime; }catch(e){} var bp = bg.play(); if(bp && bp.catch) bp.catch(function(){}); });
+    v.addEventListener("pause", function(){ bg.pause(); });
+    v.addEventListener("seeked", function(){ try{ bg.currentTime = v.currentTime; }catch(e){} });
+    if(!v.paused){ var bp0 = bg.play(); if(bp0 && bp0.catch) bp0.catch(function(){}); }
+  }
   if("IntersectionObserver" in window){
     new IntersectionObserver(function(es){
       if(es[0].isIntersecting){ var p = v.play(); if(p && p.catch) p.catch(function(){}); }
