@@ -1514,6 +1514,87 @@
     .tmpl-marker:not(.is-active):not(.img-marker){opacity:.7;}
   }
 
+  /* ===================== تقارير المناسبات ===================== */
+  .rp-filters{padding:10px 12px; background:#fff; border:1px solid rgba(255,255,255,.95); border-radius:22px; box-shadow:var(--shadow-sm);}
+  .rp-print{margin-inline-start:auto; display:inline-flex; align-items:center; gap:7px; flex:none; width:auto;}
+  .rp-print .icon{width:16px; height:16px;}
+  .rp-kpis{display:grid; grid-template-columns:repeat(auto-fit, minmax(180px, 1fr)); gap:12px; margin-bottom:14px;}
+  .rp-kpi{padding:18px 20px; border-radius:24px; background:#fff; border:1px solid rgba(255,255,255,.95); box-shadow:var(--shadow); min-width:0;}
+  .rp-kpi-num{font-size:30px; font-weight:600; letter-spacing:-.5px; color:var(--ink); line-height:1.25; font-variant-numeric:tabular-nums; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .rp-kpi-lbl{font-size:13px; font-weight:500; color:var(--ink-2); margin-top:4px;}
+  .rp-kpi-sub{font-size:12px; color:var(--ink-soft); margin-top:6px;}
+  .rp-kpi--deep{background:linear-gradient(150deg, #5B8483 0%, var(--teal) 40%, var(--teal-dark) 100%); border-color:transparent; box-shadow:0 2px 4px rgba(50,76,75,.1), 0 18px 40px rgba(50,76,75,.26);}
+  .rp-kpi--deep .rp-kpi-num{color:#fff; font-size:38px;}
+  .rp-kpi--deep .rp-kpi-lbl{color:rgba(255,255,255,.9);}
+  .rp-kpi--deep .rp-kpi-sub{color:rgba(255,255,255,.78);}
+  .rp-kpi--tan{background:var(--tan-tint);}
+  .rp-kpi--tan .rp-kpi-num{color:#7A5630; font-size:24px;}
+  .rp-delta{display:inline-block; font-weight:600; border-radius:999px; padding:1px 9px; font-size:11.500px; background:rgba(255,255,255,.2); color:#fff;}
+  .rp-insights{margin-bottom:14px; padding:20px 24px; border-radius:24px; background:var(--ink); color:#fff;}
+  .rp-insights h3{display:flex; align-items:center; gap:9px; font-size:14px; font-weight:600; color:#fff; margin:0 0 10px;}
+  .rp-insights h3::before{content:""; width:8px; height:8px; border-radius:50%; background:var(--tan); box-shadow:0 0 0 4px rgba(184,141,102,.28);}
+  .rp-insights ul{list-style:none; margin:0; padding:0; display:grid; grid-template-columns:repeat(auto-fit, minmax(280px, 1fr)); gap:6px 26px;}
+  .rp-insights li{position:relative; padding-inline-start:16px; font-size:13.500px; line-height:1.9; color:rgba(255,255,255,.88);}
+  .rp-insights li::before{content:""; position:absolute; inset-inline-start:0; top:.85em; width:6px; height:1.500px; background:var(--tan);}
+  .rp-grid{display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:14px; align-items:start;}
+  .rp-grid > .rp-card:only-child{grid-column:1 / -1;}
+  .report-section-card.rp-card{margin-bottom:14px; border-radius:24px; padding:20px 22px; min-width:0;}
+  .rp-card h3{font-size:14.500px; font-weight:600; color:var(--ink); margin-bottom:14px;}
+  .rp-rank{display:flex; flex-direction:column; gap:9px;}
+  .rp-rank-row{display:grid; grid-template-columns:18px minmax(0, 1.1fr) minmax(40px, 1fr) auto 38px; align-items:center; gap:10px; font-size:13px;}
+  .rp-rank-n{font-size:11px; color:var(--ink-soft); text-align:center; font-variant-numeric:tabular-nums;}
+  .rp-rank-lbl{color:var(--ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .rp-rank-bar{display:flex; justify-content:flex-start; height:8px; border-radius:999px; background:var(--field); overflow:hidden;}
+  .rp-rank-bar i{display:block; flex:none; height:100%; border-radius:999px; margin-left:auto; margin-right:0;}
+  .rp-rank-row b, .rp-split-row b{font-weight:600; color:var(--ink); font-variant-numeric:tabular-nums; text-align:end; min-width:22px;}
+  .rp-rank-row em{font-style:normal; font-size:12px; color:var(--ink-soft); text-align:end; font-variant-numeric:tabular-nums;}
+  .rp-more{font-size:12px; color:var(--ink-soft); margin:12px 0 0;}
+  .rp-donut{display:flex; align-items:center; gap:24px; flex-wrap:wrap;}
+  .rp-donut-fig{position:relative; width:140px; height:140px; flex:none;}
+  .rp-donut-center{position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; pointer-events:none;}
+  .rp-donut-center b{font-size:26px; font-weight:600; color:var(--ink); line-height:1.1; font-variant-numeric:tabular-nums;}
+  .rp-donut-center span{font-size:11.500px; color:var(--ink-soft);}
+  .rp-legend{flex:1; min-width:150px; display:flex; flex-direction:column; gap:10px;}
+  .rp-leg{display:grid; grid-template-columns:12px minmax(0, 1fr) auto 38px; align-items:center; gap:9px; font-size:13px;}
+  .rp-leg i, .rp-split-legend i{width:10px; height:10px; border-radius:50%; display:inline-block;}
+  .rp-leg b{font-weight:600; font-variant-numeric:tabular-nums;}
+  .rp-leg em{font-style:normal; font-size:12px; color:var(--ink-soft); text-align:end;}
+  .rp-cols{display:flex; align-items:stretch; gap:6px; height:190px;}
+  .rp-col{flex:1; min-width:0; display:flex; flex-direction:column; align-items:center; gap:6px;}
+  .rp-col b{font-size:11.500px; font-weight:600; color:var(--ink-2); min-height:16px; font-variant-numeric:tabular-nums;}
+  .rp-col-track{flex:1; width:100%; max-width:44px; display:flex; align-items:flex-end; background:var(--field); border-radius:12px; overflow:hidden;}
+  .rp-col-track i{display:block; width:100%; border-radius:12px; background:var(--teal); transition:height .6s var(--ease);}
+  .rp-col.is-peak .rp-col-track i{background:var(--tan);}
+  .rp-col.is-peak b{color:#7A5630;}
+  .rp-col em{font-style:normal; font-size:10.500px; color:var(--ink-soft); max-width:100%; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .rp-split{display:flex; flex-direction:column; gap:10px;}
+  .rp-split-row{display:grid; grid-template-columns:minmax(0, 150px) minmax(0, 1fr) auto; align-items:center; gap:12px; font-size:13px;}
+  .rp-split-bar{display:flex; height:22px; border-radius:999px; overflow:hidden; gap:2px;}
+  .rp-split-bar i{display:flex; align-items:center; justify-content:center; font-style:normal; font-size:11px; font-weight:600; color:#fff; min-width:4px;}
+  .rp-split-legend{display:flex; gap:16px; font-size:12.500px; color:var(--ink-2); margin-bottom:12px;}
+  .rp-split-legend span{display:inline-flex; align-items:center; gap:6px;}
+  #eventsReportsPrintArea, #eventsReportsPrintArea *{-webkit-print-color-adjust:exact; print-color-adjust:exact;}
+  @media (max-width:760px){
+    .rp-kpis{grid-template-columns:repeat(2, minmax(0, 1fr)); gap:10px;}
+    .rp-kpi{padding:14px 16px; border-radius:20px;}
+    .rp-kpi--deep{grid-column:1 / -1;}
+    .rp-kpi-num{font-size:24px;}
+    .rp-kpi--tan .rp-kpi-num{font-size:20px;}
+    .rp-grid{grid-template-columns:minmax(0, 1fr); gap:0;}
+    .rp-insights{padding:16px 18px; border-radius:20px;}
+    .report-section-card.rp-card{padding:16px; border-radius:20px;}
+    .rp-cols{gap:3px; height:160px;}
+    .rp-col em{font-size:9.500px; writing-mode:vertical-rl; transform:rotate(180deg); max-height:46px;}
+    .rp-rank-row{grid-template-columns:16px minmax(0, 1.4fr) minmax(30px, 1fr) auto 34px; gap:7px;}
+    .rp-split-row{grid-template-columns:minmax(0, 96px) minmax(0, 1fr) auto; gap:8px;}
+    .rp-print{margin-inline-start:0; width:100%; justify-content:center;}
+  }
+  @media print{
+    .rp-grid{grid-template-columns:repeat(2, minmax(0, 1fr));}
+    .rp-kpi, .rp-insights, .rp-card{box-shadow:none !important; break-inside:avoid;}
+    .rp-kpi{border:1px solid #ddd;}
+  }
+
 </style>
 </head>
 <body>
@@ -9689,6 +9770,97 @@
     }
     return html;
   }
+  // ===== تقارير المناسبات: مؤشرات ذكية لكل فئة بألوان وأشكال الهوية الجديدة =====
+  var RP_COLORS = ["#4B7071", "#B88D66", "#324C4B", "#8FB0AE", "#D9BE9F", "#6E8F8A", "#8F6A45", "#A9BDB4"];
+  function rpColor(i){ return RP_COLORS[i % RP_COLORS.length]; }
+  function rpPct(n, total){ return total ? Math.round(n / total * 100) : 0; }
+  // يعدّ القيم ويرتبها تنازلياً (أو بترتيب محدد) — fn يرجع القيمة النصية لكل سجل، والفارغ يُتجاهل
+  function rpCount(records, fn, order){
+    var counts = {};
+    records.forEach(function(r){ var v = fn(r); v = v == null ? "" : String(v).trim(); if(v) counts[v] = (counts[v] || 0) + 1; });
+    var keys = order ? order.filter(function(k){ return counts[k]; }) : Object.keys(counts).sort(function(a, b){ return counts[b] - counts[a]; });
+    return keys.map(function(k){ return { label: k, value: counts[k] }; });
+  }
+  function rpField(key){ return function(r){ return r[key]; }; }
+  // اسم العائلة من الاسم الكامل: آخر كلمة، مع ضم «آل/أبو/بو/بن» السابقة لها
+  function rpFamily(name){
+    var p = String(name || "").replace(/[()،,]/g, " ").trim().split(/\s+/);
+    if(p.length < 2) return "";
+    var last = p[p.length - 1], prev = p[p.length - 2];
+    if(/^(آل|ال|أبو|ابو|بو|بن)$/.test(prev)) return prev + " " + last;
+    return last;
+  }
+  function rpFirstName(name){
+    var p = String(name || "").trim().split(/\s+/);
+    if(!p[0]) return "";
+    if(/^(عبد|أبو|ابو|أم|ام)$/.test(p[0]) && p[1]) return p[0] + " " + p[1];
+    return p[0];
+  }
+  function rpCard(title, inner, extraClass){
+    if(!inner) return "";
+    return '<div class="report-section-card rp-card' + (extraClass ? " " + extraClass : "") + '"><h3>' + escapeHTML(title) + '</h3>' + inner + '</div>';
+  }
+  // قائمة مرتّبة بأشرطة أفقية — للتوزيعات الطويلة (جامعات، تخصصات، عوائل، أحياء)
+  function rpRank(items, cap, total){
+    if(!items.length) return "";
+    cap = cap || 10;
+    var shown = items.slice(0, cap), rest = items.slice(cap);
+    var sum = total || items.reduce(function(s, d){ return s + d.value; }, 0);
+    var max = shown[0] ? Math.max.apply(null, shown.map(function(d){ return d.value; })) : 1;
+    var html = '<div class="rp-rank">' + shown.map(function(d, i){
+      return '<div class="rp-rank-row"><span class="rp-rank-n">' + (i + 1) + '</span><span class="rp-rank-lbl" title="' + escapeHTML(d.label) + '">' + escapeHTML(d.label) + '</span>' +
+        '<span class="rp-rank-bar"><i style="width:' + Math.max(3, Math.round(d.value / max * 100)) + '%; background:' + (i === 0 ? RP_COLORS[1] : RP_COLORS[0]) + ';"></i></span>' +
+        '<b>' + d.value + '</b><em>' + rpPct(d.value, sum) + '%</em></div>';
+    }).join("") + '</div>';
+    if(rest.length) html += '<p class="rp-more">و ' + rest.length + ' أخرى بمجموع ' + rest.reduce(function(s, d){ return s + d.value; }, 0) + '</p>';
+    return html;
+  }
+  // حلقة بمجموع في الوسط — للتوزيعات القليلة الفئات (الجنس، داخل/خارج)
+  function rpDonut(items, centerLabel){
+    var total = items.reduce(function(s, d){ return s + d.value; }, 0);
+    if(!total) return "";
+    var R = 52, C = 2 * Math.PI * R, acc = 0;
+    var segs = items.map(function(d, i){
+      var len = d.value / total * C, gap = items.length > 1 ? 3 : 0;
+      var seg = '<circle cx="70" cy="70" r="' + R + '" fill="none" stroke="' + rpColor(i) + '" stroke-width="16" stroke-linecap="butt" stroke-dasharray="' + Math.max(0, len - gap) + ' ' + (C - Math.max(0, len - gap)) + '" stroke-dashoffset="' + (-acc) + '"><title>' + escapeHTML(d.label) + ': ' + d.value + '</title></circle>';
+      acc += len;
+      return seg;
+    }).join("");
+    var legend = items.map(function(d, i){
+      return '<div class="rp-leg"><i style="background:' + rpColor(i) + ';"></i><span>' + escapeHTML(d.label) + '</span><b>' + d.value + '</b><em>' + rpPct(d.value, total) + '%</em></div>';
+    }).join("");
+    return '<div class="rp-donut"><div class="rp-donut-fig"><svg viewBox="0 0 140 140" width="140" height="140"><g transform="rotate(-90 70 70)">' + segs + '</g></svg>' +
+      '<div class="rp-donut-center"><b>' + total + '</b><span>' + escapeHTML(centerLabel || "الإجمالي") + '</span></div></div><div class="rp-legend">' + legend + '</div></div>';
+  }
+  // أعمدة زمنية (شهور/سنوات/أيام) — العمود الأعلى يُبرز بلون التان
+  function rpColumns(items){
+    if(!items.some(function(d){ return d.value > 0; })) return "";
+    var max = Math.max.apply(null, items.map(function(d){ return d.value; })) || 1;
+    return '<div class="rp-cols">' + items.map(function(d){
+      var peak = d.value === max && d.value > 0;
+      return '<div class="rp-col' + (peak ? " is-peak" : "") + '" title="' + escapeHTML(d.label) + ': ' + d.value + '"><b>' + (d.value || "") + '</b>' +
+        '<span class="rp-col-track"><i style="height:' + (d.value ? Math.max(4, Math.round(d.value / max * 100)) : 0) + '%;"></i></span><em>' + escapeHTML(d.label) + '</em></div>';
+    }).join("") + '</div>';
+  }
+  // تقاطع فئتين: لكل صف شريط مقسوم (مثل الدرجة العلمية × الجنس)
+  function rpSplit(records, rowFn, splitFn, splitOrder, cap){
+    var rows = rpCount(records, rowFn).slice(0, cap || 6);
+    if(!rows.length) return "";
+    var html = '<div class="rp-split-legend">' + splitOrder.map(function(s, i){ return '<span><i style="background:' + rpColor(i) + ';"></i>' + escapeHTML(s) + '</span>'; }).join("") + '</div><div class="rp-split">';
+    rows.forEach(function(row){
+      var sub = records.filter(function(r){ return String(rowFn(r) || "").trim() === row.label; });
+      var parts = splitOrder.map(function(s){ return sub.filter(function(r){ return splitFn(r) === s; }).length; });
+      var known = parts.reduce(function(a, b){ return a + b; }, 0) || 1;
+      html += '<div class="rp-split-row"><span class="rp-rank-lbl" title="' + escapeHTML(row.label) + '">' + escapeHTML(row.label) + '</span><span class="rp-split-bar">' +
+        parts.map(function(n, i){ return n ? '<i style="flex:' + n + '; background:' + rpColor(i) + ';" title="' + escapeHTML(splitOrder[i]) + ': ' + n + '">' + (n / known > 0.12 ? rpPct(n, known) + '%' : '') + '</i>' : ''; }).join("") +
+        '</span><b>' + row.value + '</b></div>';
+    });
+    return html + '</div>';
+  }
+  function rpKpi(num, label, sub, tone){
+    return '<div class="rp-kpi' + (tone ? " rp-kpi--" + tone : "") + '"><div class="rp-kpi-num">' + num + '</div><div class="rp-kpi-lbl">' + escapeHTML(label) + '</div>' + (sub ? '<div class="rp-kpi-sub">' + sub + '</div>' : '') + '</div>';
+  }
+  function rpTop(items){ return items[0] || null; }
   function eventsReportsHTML(){
     var cat = EVENTS_CATEGORIES.find(function(c){ return c.key === eventsUI.reportsCategory; }) || EVENTS_CATEGORIES[0];
     var all = loadEventsData().filter(function(r){ return r.category === cat.key; });
@@ -9704,20 +9876,19 @@
       if(eventsUI.reportsPeriodType === "quarter" && eventsUI.reportsPeriodValue) periodLabel += " — الربع " + eventsUI.reportsPeriodValue.replace("Q", "");
     }
 
-    var html = '<div class="dept-selector">' +
+    var html = '<div class="dept-selector rp-filters">' +
       '<label>التصنيف</label><select id="reportsCategorySelect">' + EVENTS_CATEGORIES.map(function(c){ return '<option value="' + c.key + '"' + (c.key === cat.key ? " selected" : "") + '>' + c.label + '</option>'; }).join("") + '</select>' +
       '<label>السنة</label><select id="reportsYearSelect"><option value="">كل السنوات</option>' + years.map(function(y){ return '<option value="' + escapeHTML(y) + '"' + (eventsUI.reportsYear === y ? " selected" : "") + '>' + escapeHTML(y) + '</option>'; }).join("") + '</select>' +
       reportsPeriodSelectorHTML() +
-      '<button type="button" class="btn-secondary" data-action="print-events-report" style="margin-inline-start:auto;">🖨️ طباعة / حفظ PDF</button>' +
+      '<button type="button" class="btn-secondary rp-print" data-action="print-events-report"><span class="icon">' + TICON.download + '</span> طباعة / حفظ PDF</button>' +
     '</div>';
 
     html += '<div id="eventsReportsPrintArea">';
     html += '<h2 class="print-only-title">تقرير ' + escapeHTML(cat.label) + escapeHTML(periodLabel) + '</h2>';
-    html += '<div class="stat-card" style="cursor:default; max-width:280px; margin-bottom:20px;"><div class="num">' + filtered.length + '</div><div class="lbl">إجمالي سجلات ' + cat.label + escapeHTML(periodLabel) + '</div></div>';
 
     if(!filtered.length){
-      html += '<p class="report-empty">لا توجد بيانات كافية لعرض المؤشرات بعد</p>';
-      html += '</div>';
+      html += '<div class="rp-kpis">' + rpKpi(0, "إجمالي سجلات " + cat.label + periodLabel) + '</div>';
+      html += '<p class="report-empty">لا توجد بيانات كافية لعرض المؤشرات بعد</p></div>';
       return html;
     }
 
@@ -9725,33 +9896,112 @@
     if(eventsUI.reportsPeriodType === "quarter" && eventsUI.reportsPeriodValue) monthsInScope = QUARTER_MONTHS[eventsUI.reportsPeriodValue];
     else if(eventsUI.reportsPeriodType === "half" && eventsUI.reportsPeriodValue) monthsInScope = HALF_MONTHS[eventsUI.reportsPeriodValue];
 
-    if(cat.key === "graduates"){
-      var insideCount = filtered.filter(function(r){ return (r.country || "").indexOf("السعود") > -1; }).length;
-      var originItems = [{ label: "داخل السعودية", value: insideCount, color: chartColorAt(0) }, { label: "خارج السعودية", value: filtered.length - insideCount, color: chartColorAt(1) }];
-      html += '<div class="report-section-card">' + reportCardHeadHTML("مؤشر مكان التخرج") +
-        '<div style="display:flex; align-items:center; gap:26px; flex-wrap:wrap;">' + svgDonutChartHTML(originItems) + chartLegendHTML(originItems, filtered.length) + '</div></div>';
-      html += breakdownCardHTML("التوزيع حسب الجنس", filtered, "gender", ["ذكر", "أنثى"]);
-      html += breakdownCardHTML("التوزيع حسب الدرجة العلمية", filtered, "degree", null);
-      html += breakdownCardHTML("أكثر الجامعات", filtered, "university", null, 12);
-      html += breakdownCardHTML("التوزيع حسب نوع التخصص", filtered, "specializationType", null, 12);
-      html += breakdownCardHTML("أكثر التخصصات الدقيقة", filtered, "specialization", null, 12);
-      html += breakdownCardHTML("التوزيع حسب مرتبة الشرف", filtered, "honor", HONORS_LIST);
-      html += trendChartCardHTML("عدد الخريجين حسب الشهر", filtered, monthField, monthsInScope);
-    } else if(cat.key === "births"){
-      html += breakdownCardHTML("التوزيع حسب الجنس", filtered, "gender", ["ذكر", "أنثى"]);
-      html += trendChartCardHTML("التوزيع حسب الشهر (ميلادي)", filtered, monthField, monthsInScope);
-    } else if(cat.key === "marriages"){
-      html += breakdownCardHTML("التوزيع حسب بلد الزوج", filtered, "husbandCountry", null, 12);
-      html += trendChartCardHTML("التوزيع حسب الشهر (ميلادي)", filtered, monthField, monthsInScope);
-    } else if(cat.key === "deaths"){
-      html += breakdownCardHTML("التوزيع حسب الجنس", filtered, "gender", ["ذكر", "أنثى"]);
-      html += breakdownCardHTML("التوزيع حسب الفئة العمرية", filtered, "ageCategory", null);
-      html += trendChartCardHTML("التوزيع حسب الشهر (ميلادي)", filtered, monthField, monthsInScope);
-    } else if(cat.key === "congrats"){
-      html += breakdownCardHTML("التوزيع حسب نوع المناسبة", filtered, "occasionType", null);
-      html += trendChartCardHTML("التوزيع حسب الشهر (ميلادي)", filtered, monthField, monthsInScope);
+    var total = filtered.length;
+    var insights = [];
+    // ----- مؤشرات مشتركة -----
+    var monthCounts = rpCount(filtered, rpField(monthField), monthsInScope);
+    var monthItems = monthsInScope.map(function(m){ var hit = monthCounts.find(function(x){ return x.label === m; }); return { label: m, value: hit ? hit.value : 0 }; });
+    var peak = monthCounts.slice().sort(function(a, b){ return b.value - a.value; })[0];
+    var activeMonths = monthCounts.length || 1;
+    var deltaHTML = "";
+    if(eventsUI.reportsYear && /^\d+$/.test(String(eventsUI.reportsYear))){
+      var prevYear = String(Number(eventsUI.reportsYear) - 1);
+      var prev = filterRecordsByPeriod(all.filter(function(r){ return String(r.gregorianYear) === prevYear; }), monthField, eventsUI.reportsPeriodType, eventsUI.reportsPeriodValue).length;
+      if(prev){
+        var diff = Math.round((total - prev) / prev * 100);
+        deltaHTML = '<span class="rp-delta ' + (diff >= 0 ? "up" : "down") + '">' + (diff >= 0 ? "▲ " : "▼ ") + Math.abs(diff) + '%</span> عن ' + prevYear + ' (' + prev + ')';
+        insights.push((diff >= 0 ? "ارتفاع" : "انخفاض") + " بنسبة " + Math.abs(diff) + "% مقارنة بنفس الفترة من " + prevYear + " (" + prev + " ← " + total + ").");
+      }
     }
-    html += '</div>';
+    var pendingCount = filtered.filter(function(r){ return r.status === "pending"; }).length;
+    var kpis = rpKpi(total, "إجمالي " + cat.label + periodLabel, deltaHTML, "deep");
+    kpis += rpKpi(Math.round(total / activeMonths * 10) / 10, "المتوسط الشهري", "على " + activeMonths + " شهر فيه سجلات");
+    if(peak) kpis += rpKpi(escapeHTML(peak.label), "شهر الذروة", peak.value + " سجل (" + rpPct(peak.value, total) + "%)", "tan");
+    if(peak && monthCounts.length > 2) insights.push("شهر الذروة هو " + peak.label + " بـ " + peak.value + " سجل، أي " + rpPct(peak.value, total) + "% من الفترة.");
+
+    var body = "";
+    var genderOrder = ["ذكر", "أنثى"];
+    var yearItems = !eventsUI.reportsYear && years.length > 1 ? years.map(function(y){ return { label: String(y), value: all.filter(function(r){ return r.gregorianYear === y; }).length }; }) : null;
+    var yearCard = yearItems ? rpCard("التطور عبر السنوات", rpColumns(yearItems)) : "";
+    var monthCard = rpCard("التوزيع الشهري (ميلادي)", rpColumns(monthItems));
+
+    if(cat.key === "graduates"){
+      var inside = filtered.filter(function(r){ return (r.country || "").indexOf("السعود") > -1; }).length;
+      var honored = filtered.filter(function(r){ return r.honor && r.honor !== "بدون"; }).length;
+      var females = filtered.filter(function(r){ return r.gender === "أنثى"; }).length;
+      var unis = rpCount(filtered, rpField("university")), specs = rpCount(filtered, rpField("specialization"));
+      var postgrad = filtered.filter(function(r){ return /ماجستير|دكتورا|دبلوم عال|زمالة/.test(r.degree || ""); });
+      kpis += rpKpi(rpPct(honored, total) + "%", "تخرّجوا بمرتبة شرف", honored + " خريج");
+      kpis += rpKpi(unis.length, "جامعة مختلفة", specs.length + " تخصص دقيق");
+      if(rpTop(unis)) insights.push("أكثر جامعة: " + unis[0].label + " (" + unis[0].value + " خريج، " + rpPct(unis[0].value, total) + "%).");
+      if(rpTop(specs)) insights.push("أكثر تخصص: " + specs[0].label + " (" + specs[0].value + ").");
+      if(females) insights.push("الإناث " + rpPct(females, total) + "% من الخريجين" + (postgrad.length ? "، و" + rpPct(postgrad.filter(function(r){ return r.gender === "أنثى"; }).length, postgrad.length) + "% من خريجي الدراسات العليا (" + postgrad.length + ")." : "."));
+      if(total - inside) insights.push(rpPct(total - inside, total) + "% تخرّجوا من خارج المملكة (" + (total - inside) + ").");
+      body += '<div class="rp-grid">' +
+        rpCard("الجنس", rpDonut(rpCount(filtered, rpField("gender"), genderOrder), "خريج")) +
+        rpCard("مكان التخرج", rpDonut([{ label: "داخل السعودية", value: inside }, { label: "خارج السعودية", value: total - inside }], "خريج")) +
+      '</div>';
+      body += rpCard("الدرجة العلمية × الجنس", rpSplit(filtered, rpField("degree"), rpField("gender"), genderOrder, 7));
+      body += '<div class="rp-grid">' + rpCard("أكثر الجامعات", rpRank(unis, 10, total)) + rpCard("أكثر التخصصات الدقيقة", rpRank(specs, 10, total)) + '</div>';
+      body += '<div class="rp-grid">' + rpCard("نوع التخصص", rpRank(rpCount(filtered, rpField("specializationType")), 8, total)) +
+        rpCard("مرتبة الشرف", rpRank(rpCount(filtered, rpField("honor"), HONORS_LIST), 6, total)) + '</div>';
+      body += '<div class="rp-grid">' + rpCard("دول الدراسة خارج المملكة", rpRank(rpCount(filtered.filter(function(r){ return r.country && r.country.indexOf("السعود") === -1; }), rpField("country")), 8)) +
+        rpCard("أكثر العوائل تخرّجاً", rpRank(rpCount(filtered, function(r){ return rpFamily(r.fullName); }), 10, total)) + '</div>';
+      body += yearCard + rpCard("عدد الخريجين حسب الشهر", rpColumns(monthItems));
+    } else if(cat.key === "births"){
+      var boys = filtered.filter(function(r){ return r.gender === "ذكر"; }).length, girls = filtered.filter(function(r){ return r.gender === "أنثى"; }).length;
+      var boyNames = rpCount(filtered.filter(function(r){ return r.gender === "ذكر"; }), function(r){ return rpFirstName(r.fullName); });
+      var girlNames = rpCount(filtered.filter(function(r){ return r.gender === "أنثى"; }), function(r){ return rpFirstName(r.fullName); });
+      kpis += rpKpi(boys + " : " + girls, "ذكور : إناث", girls ? "لكل 100 أنثى " + Math.round(boys / girls * 100) + " ذكر" : "");
+      if(rpTop(boyNames)) insights.push("أكثر اسم للذكور: " + boyNames[0].label + " (" + boyNames[0].value + ").");
+      if(rpTop(girlNames)) insights.push("أكثر اسم للإناث: " + girlNames[0].label + " (" + girlNames[0].value + ").");
+      body += '<div class="rp-grid">' + rpCard("الجنس", rpDonut(rpCount(filtered, rpField("gender"), genderOrder), "مولود")) +
+        rpCard("أكثر العوائل مواليدَ", rpRank(rpCount(filtered, function(r){ return rpFamily(r.fatherName || r.fullName); }), 8, total)) + '</div>';
+      body += '<div class="rp-grid">' + rpCard("أكثر أسماء الذكور", rpRank(boyNames, 8)) + rpCard("أكثر أسماء الإناث", rpRank(girlNames, 8)) + '</div>';
+      body += yearCard + monthCard + rpCard("التوزيع حسب الشهر الهجري", rpColumns(HIJRI_MONTHS.map(function(m){ return { label: m, value: filtered.filter(function(r){ return r.birthMonthHijri === m; }).length }; })));
+    } else if(cat.key === "marriages"){
+      var both = filtered.filter(function(r){ return r.husbandDistrict && r.wifeDistrict; });
+      var same = both.filter(function(r){ return String(r.husbandDistrict).trim() === String(r.wifeDistrict).trim(); }).length;
+      var pairs = rpCount(both, function(r){ return String(r.husbandDistrict).trim() + " ← " + String(r.wifeDistrict).trim(); });
+      var hij = HIJRI_MONTHS.map(function(m){ return { label: m, value: filtered.filter(function(r){ return r.contractMonthHijri === m; }).length }; });
+      var hijPeak = hij.slice().sort(function(a, b){ return b.value - a.value; })[0];
+      if(both.length) kpis += rpKpi(rpPct(same, both.length) + "%", "زواج من نفس الحي", same + " من " + both.length + " عقداً مكتمل البيانات");
+      if(both.length) insights.push(rpPct(same, both.length) + "% من العقود بين زوجين من نفس الحي، و" + (100 - rpPct(same, both.length)) + "% بين حيّين مختلفين.");
+      if(hijPeak && hijPeak.value) insights.push("أكثر شهر هجري للعقود: " + hijPeak.label + " (" + hijPeak.value + ").");
+      body += '<div class="rp-grid">' + rpCard("حي الزوج", rpRank(rpCount(filtered, rpField("husbandDistrict")), 10)) + rpCard("حي الزوجة", rpRank(rpCount(filtered, rpField("wifeDistrict")), 10)) + '</div>';
+      body += '<div class="rp-grid">' + rpCard("أكثر الارتباطات بين الأحياء (الزوج ← الزوجة)", rpRank(pairs, 8, both.length)) +
+        rpCard("أكثر العوائل عقوداً (الزوج)", rpRank(rpCount(filtered, function(r){ return rpFamily(r.husbandName); }), 8, total)) + '</div>';
+      body += yearCard + monthCard + rpCard("التوزيع حسب الشهر الهجري", rpColumns(hij));
+    } else if(cat.key === "deaths"){
+      var ages = rpCount(filtered, rpField("ageCategory"));
+      var fams = rpCount(filtered, function(r){ return r.deceasedFamily || rpFamily(r.deceasedName); });
+      var withCond = filtered.filter(function(r){ return r.condolenceMenPlace || r.condolenceWomenPlace; }).length;
+      if(rpTop(ages)) kpis += rpKpi(escapeHTML(ages[0].label), "أكثر فئة عمرية", ages[0].value + " (" + rpPct(ages[0].value, total) + "%)");
+      kpis += rpKpi(rpPct(withCond, total) + "%", "سُجّل لها مكان عزاء", withCond + " من " + total);
+      if(rpTop(fams)) insights.push("أكثر العوائل: " + fams[0].label + " (" + fams[0].value + ").");
+      var days = AR_WEEKDAYS.map(function(d){ return { label: d, value: filtered.filter(function(r){ return r.deathDay === d; }).length }; });
+      body += '<div class="rp-grid">' + rpCard("الجنس", rpDonut(rpCount(filtered, rpField("gender"), genderOrder), "وفاة")) + rpCard("الفئة العمرية", rpRank(ages, 8, total)) + '</div>';
+      body += rpCard("الفئة العمرية × الجنس", rpSplit(filtered, rpField("ageCategory"), rpField("gender"), genderOrder, 7));
+      body += '<div class="rp-grid">' + rpCard("أكثر العوائل", rpRank(fams, 10, total)) + rpCard("مكان انطلاق التشييع", rpRank(rpCount(filtered, rpField("funeralFrom")), 8)) + '</div>';
+      body += yearCard + monthCard + rpCard("التوزيع حسب يوم الأسبوع", rpColumns(days)) +
+        rpCard("التوزيع حسب الشهر الهجري", rpColumns(HIJRI_MONTHS.map(function(m){ return { label: m, value: filtered.filter(function(r){ return r.deathMonthHijri === m; }).length }; })));
+    } else if(cat.key === "congrats"){
+      var types = rpCount(filtered, rpField("occasionType"));
+      var orgs = filtered.filter(function(r){ return r.gender === "جهة / مؤسسة"; }).length;
+      if(rpTop(types)) kpis += rpKpi(escapeHTML(types[0].label), "أكثر نوع مناسبة", types[0].value + " (" + rpPct(types[0].value, total) + "%)");
+      if(orgs) insights.push(rpPct(orgs, total) + "% من التهنئات موجهة لجهات ومؤسسات (" + orgs + ").");
+      body += '<div class="rp-grid">' + rpCard("نوع المحتفى به", rpDonut(rpCount(filtered, rpField("gender"), ["ذكر", "أنثى", "جهة / مؤسسة"]), "تهنئة")) + rpCard("نوع المناسبة", rpRank(types, 10, total)) + '</div>';
+      body += '<div class="rp-grid">' + rpCard("أكثر الألقاب والمسميات", rpRank(rpCount(filtered, rpField("title")), 8)) +
+        rpCard("أكثر العوائل", rpRank(rpCount(filtered.filter(function(r){ return r.gender !== "جهة / مؤسسة"; }), function(r){ return rpFamily(r.fullName); }), 8)) + '</div>';
+      body += yearCard + monthCard;
+    }
+    if(pendingCount) insights.push(pendingCount + " سجل ما زال قيد المراجعة ضمن هذه الأرقام.");
+
+    html += '<div class="rp-kpis">' + kpis + '</div>';
+    if(insights.length){
+      html += '<div class="rp-insights"><h3>قراءة سريعة</h3><ul>' + insights.map(function(t){ return '<li>' + escapeHTML(t) + '</li>'; }).join("") + '</ul></div>';
+    }
+    html += body + '</div>';
     return html;
   }
 
