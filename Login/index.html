@@ -17,7 +17,7 @@
 <meta name="twitter:card" content="summary_large_image" />
 <link rel="icon" href="/assets/favicon.png" />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
-<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&family=Cairo:wght@300;400;500;600;700&family=Tajawal:wght@400;500;700&family=Almarai:wght@400;700&family=Amiri:wght@400;700&family=Reem+Kufi:wght@400;700&display=swap" rel="stylesheet" />
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&family=Cairo:wght@300;400;500;600;700;800;900&family=Tajawal:wght@400;500;700&family=Almarai:wght@400;700&family=Amiri:wght@400;700&family=Reem+Kufi:wght@400;700&display=swap" rel="stylesheet" />
 <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
@@ -1331,6 +1331,9 @@
   .tmpl-marker{background:var(--ink); border-radius:999px; padding:3px 9px; font-weight:600; opacity:.9; touch-action:none; box-shadow:0 0 0 2px #fff, 0 4px 10px rgba(20,28,27,.25);}
   .tmpl-marker::after{background:var(--ink);}
   .tmpl-marker.is-active{background:var(--teal); opacity:1; z-index:6;}
+  #tmplGenCanvasWrap .tmpl-marker:not(.img-marker):not(.is-active){opacity:.5; transform:translate(-50%,-100%) scale(.82); transform-origin:50% 100%;}
+  #tmplGenCanvasWrap .tmpl-marker:not(.img-marker):hover{opacity:1;}
+  #tmplGenCanvasWrap .tmpl-marker::after{display:none;}
   .tmpl-marker.is-active::after{background:var(--teal);}
   .tmpl-marker.img-marker{border:1.500px dashed var(--tan); border-radius:8px; background:transparent; box-shadow:none;}
   .tmpl-marker.img-marker.is-active{border-style:solid; border-width:2px; background:rgba(184,141,102,.08);}
@@ -1440,6 +1443,19 @@
   .tp-file{align-self:flex-start;}
   .tp-font-row{display:flex; align-items:center; justify-content:space-between; gap:8px; font-size:13px; padding:4px 0;}
 
+  .tf-grid-font{grid-template-columns:minmax(0, 1.5fr) minmax(0, 1fr);}
+  .tf-fx{display:flex; flex-direction:column; gap:8px; padding:10px 12px; background:var(--field); border-radius:16px;}
+  .tf-fx-head{display:flex; align-items:center; justify-content:space-between; gap:8px;}
+  .tf-fx-title{font-size:12.500px; font-weight:500; color:var(--ink-2);}
+  .tf-fx .tf-chip span, .tf-fx .tf-slider input[type="number"], .tf-fx .tf-f input{background-color:#fff;}
+  .tf-fx .tf-chip input:checked + span{background:var(--ink);}
+  .tf-fx .tf-color{width:28px; height:28px;}
+  .tf-adv > .tf-slider{padding-inline:2px;}
+  .tp-ctl-btns{padding:5px 6px 5px 6px;}
+  .tp-ctl-btns button{border:none; background:var(--field); font:inherit; font-size:12.500px; font-weight:500; color:var(--ink-2); padding:6px 12px; border-radius:999px; cursor:pointer; white-space:nowrap;}
+  .tp-ctl-btns button:hover{background:var(--ink); color:#fff;}
+  .tp-warns{display:flex; flex-wrap:wrap; justify-content:center; gap:6px;}
+  .tp-warn{display:inline-block; padding:5px 11px; font-size:12px; line-height:1.6; background:#FBEDEC; border-radius:12px;}
   .tp-actionbar{position:sticky; bottom:0; z-index:8; display:flex; align-items:center; justify-content:flex-end; gap:10px; margin-inline:-36px; padding:12px 36px calc(12px + env(safe-area-inset-bottom, 0px)); background:rgba(245,246,245,.82); -webkit-backdrop-filter:blur(16px) saturate(160%); backdrop-filter:blur(16px) saturate(160%); border-top:1px solid var(--line);}
   .tp-actionbar .btn-primary, .tp-actionbar .btn-secondary{display:inline-flex; align-items:center; justify-content:center; gap:8px; margin:0; width:auto; flex:none;}
   .tp-actionbar button:disabled{opacity:.5;}
@@ -6210,6 +6226,67 @@
       attempt(src, false);
     });
   }
+  // ----- تأثيرات النص بالتصميم (وزن، ظل، حد، تدرج، خلفية، شفافية، دوران، أرقام) — مشتركة بين كل الحقول النصية -----
+  function tmplWeight(f){ return f.weight ? String(f.weight) : (f.bold ? "700" : "400"); }
+  function tmplDigits(t, mode){
+    if(!t || !mode) return t;
+    if(mode === "arabic") return String(t).replace(/[0-9]/g, function(d){ return "٠١٢٣٤٥٦٧٨٩".charAt(Number(d)); });
+    if(mode === "latin") return String(t).replace(/[٠-٩]/g, function(d){ return String("٠١٢٣٤٥٦٧٨٩".indexOf(d)); });
+    return t;
+  }
+  function tmplHexAlpha(hex, a){
+    var h = String(hex || "#000000").replace("#", "");
+    if(h.length === 3) h = h.charAt(0) + h.charAt(0) + h.charAt(1) + h.charAt(1) + h.charAt(2) + h.charAt(2);
+    var n = parseInt(h, 16);
+    if(isNaN(n)) n = 0;
+    return "rgba(" + ((n >> 16) & 255) + "," + ((n >> 8) & 255) + "," + (n & 255) + "," + a + ")";
+  }
+  // يُستدعى بعد ctx.save(): شفافية + دوران حول نقطة الحقل + ظل
+  function tmplTextFxBegin(ctx, f){
+    if(typeof f.opacity === "number" && f.opacity >= 0 && f.opacity < 1) ctx.globalAlpha = f.opacity;
+    if(f.rotate){
+      ctx.translate(f.x, f.y);
+      ctx.rotate(f.rotate * Math.PI / 180);
+      ctx.translate(-f.x, -f.y);
+    }
+    if(f.shadow){
+      ctx.shadowColor = tmplHexAlpha(f.shadowColor || "#000000", 0.45);
+      ctx.shadowBlur = typeof f.shadowBlur === "number" ? f.shadowBlur : 12;
+      ctx.shadowOffsetX = 0;
+      ctx.shadowOffsetY = typeof f.shadowY === "number" ? f.shadowY : 4;
+    }
+  }
+  function tmplShadowOff(ctx){ ctx.shadowColor = "transparent"; ctx.shadowBlur = 0; ctx.shadowOffsetX = 0; ctx.shadowOffsetY = 0; }
+  // يرسم سطراً واحداً بكل تأثيراته (الخط والمحاذاة مضبوطان مسبقاً على ctx) ويرجع حدوده الأفقية
+  function tmplDrawStyledLine(ctx, f, str, x, y, w, fs){
+    var align = f.align || "center";
+    var left = align === "center" ? x - w / 2 : (align === "right" ? x - w : x);
+    if(f.bgOn){
+      var px = typeof f.bgPadX === "number" ? f.bgPadX : Math.round(fs * 0.5);
+      var py = typeof f.bgPadY === "number" ? f.bgPadY : Math.round(fs * 0.18);
+      var bh = fs * 1.3 + py * 2;
+      ctx.save();
+      ctx.fillStyle = f.bgColor || "#324C4B";
+      roundRectPath(ctx, left - px, y - bh / 2, w + px * 2, bh, typeof f.bgRadius === "number" ? f.bgRadius : 999);
+      ctx.fill();
+      ctx.restore();
+    }
+    if(f.gradient && f.color2){
+      var gr = ctx.createLinearGradient(left + w, 0, left, 0);
+      gr.addColorStop(0, f.color || "#000000");
+      gr.addColorStop(1, f.color2);
+      ctx.fillStyle = gr;
+    }
+    if(f.strokeWidth > 0){
+      ctx.lineJoin = "round";
+      ctx.lineWidth = f.strokeWidth;
+      ctx.strokeStyle = f.strokeColor || "#ffffff";
+      ctx.strokeText(str, x, y);
+      tmplShadowOff(ctx);
+    }
+    ctx.fillText(str, x, y);
+    return { left: left, right: left + w };
+  }
   async function renderTemplateToCanvas(canvas, template, record){
     var warnings = [];
     // نجهّز كل الصور (الخلفية + كل حقول الصور بالقالب) بالتوازي أولاً بدل انتظار كل واحدة على
@@ -6227,6 +6304,13 @@
     var bg = loadResults[0];
     imgFieldsList.forEach(function(f, idx){ imageByKey[f.key] = loadResults[idx + 1]; });
     if(!bg) return { ok: false, warnings: warnings };
+    if(document.fonts && document.fonts.load){
+      try {
+        await Promise.all(template.fields.filter(function(wf){ return wf.type !== "image" && (!wf.font || wf.font.indexOf("custom:") !== 0); }).map(function(wf){
+          return document.fonts.load(tmplWeight(wf) + ' 24px "' + (wf.font || "Cairo") + '"', "ابجد 123");
+        }));
+      } catch(fontErr){}
+    }
     canvas.width = template.width;
     canvas.height = template.height;
     var ctx = canvas.getContext("2d");
@@ -6245,12 +6329,13 @@
     if(uniqueFontIds.length && document.fonts && document.fonts.ready) await document.fonts.ready;
     // تمريرة أولى لقياس العرض الطبيعي (بدون كشيدة) لكل حقل نصي — تُستخدم لخاصية "طابق العرض مع سطر آخر"
     var marksInfo = [];
+    var textBoxes = [];
     var naturalWidths = {};
     template.fields.forEach(function(nf){
       if(nf.type === "image") return;
       var nText = markSafeText(nf, templateFieldValue(nf, record, null));
       if(!nText) return;
-      var nWeight = nf.bold ? "700" : "400";
+      var nWeight = tmplWeight(nf);
       var nFam = "Cairo";
       if(nf.font && nf.font.indexOf("custom:") === 0) nFam = fontFamMap[nf.font.slice(7)] || "Cairo";
       else if(nf.font) nFam = nf.font;
@@ -6273,6 +6358,7 @@
           var img = imageByKey[f.key];
           if(img){
             var imgStyle = tmplResolveImageStyle(f, record);
+            if(img.width < imgGeom.boxWidth * 0.55 && img.height < imgGeom.boxHeight * 0.55) warnings.push('صورة "' + flabel + '" منخفضة الدقة وقد تظهر مغبّشة');
             if(imgStyle.fit === "contain") drawImageContain(ctx, img, imgGeom.x, imgGeom.y, imgGeom.boxWidth, imgGeom.boxHeight, imgStyle.radius, imgStyle.zoom, imgStyle.offsetX, imgStyle.offsetY);
             else drawImageCover(ctx, img, imgGeom.x, imgGeom.y, imgGeom.boxWidth, imgGeom.boxHeight, imgStyle.radius, imgStyle.zoom, imgStyle.offsetX, imgStyle.offsetY);
           } else {
@@ -6288,7 +6374,7 @@
         var fbSrcLabel = (tmplFieldMeta(template.category, f.fallbackKey) || {}).label || f.fallbackKey;
         warnings.push('حقل "' + fbLabel + '" فارغ — يُستخدم نص احتياطي من "' + fbSrcLabel + '" مؤقتاً، يُفضّل كتابة الصياغة النهائية قبل النشر');
       }
-      var rawText = templateFieldValue(f, record, null);
+      var rawText = tmplDigits(templateFieldValue(f, record, null), f.digits);
       var text = markSafeText(f, rawText);
       // الخط لا يدعم الحركات: الحرف يُرسم بخط الحقل والحركات تُوضع فوقه يدوياً بعد الرسم (الحقول متعددة الأسطر فقط تُحذف حركاتها)
       var marksOverlay = !!text && text !== rawText && !f.multiline;
@@ -6297,14 +6383,17 @@
         warnings.push('حقل "' + mkLabel + '" فقرة مكتوبة بحركات لكن خط القالب لا يدعم التشكيل — رُسمت بدون حركات حتى تبقى الحروف متصلة');
       }
       if(!text) continue;
-      var weight = f.bold ? "700" : "400";
+      var weight = tmplWeight(f);
       var fam = "Cairo";
       if(f.font && f.font.indexOf("custom:") === 0) fam = fontFamMap[f.font.slice(7)] || "Cairo";
       else if(f.font) fam = f.font;
       if(f.multiline){
         ctx.fillStyle = f.color || "#000000";
         var paraKashidaApplies = f.kashida && (!f.kashidaValue || String(record[f.key] || "").trim() === String(f.kashidaValue).trim());
+        ctx.save();
+        tmplTextFxBegin(ctx, f);
         drawParagraphField(ctx, f, text, fam, weight, paraKashidaApplies);
+        ctx.restore();
         continue;
       }
       ctx.font = weight + ' ' + f.fontSize + 'px "' + fam + '", sans-serif';
@@ -6322,19 +6411,39 @@
       var drawFs = f.fontSize;
       if(f.maxWidth && w > f.maxWidth){
         var fs = f.fontSize;
-        while(w > f.maxWidth && fs > 10){
+        var minFs = f.minFontSize > 0 ? f.minFontSize : 10;
+        while(w > f.maxWidth && fs > minFs){
           fs -= 1;
           ctx.font = weight + ' ' + fs + 'px "' + fam + '", sans-serif';
           w = ctx.measureText(renderText).width;
         }
         drawFs = fs;
+        var fitLabel = (tmplFieldMeta(template.category, f.key) || {}).label || f.key;
+        if(w > f.maxWidth + 1) warnings.push('نص "' + fitLabel + '" أطول من العرض المحدد حتى بعد التصغير');
+        else if(drawFs < f.fontSize * 0.7) warnings.push('نص "' + fitLabel + '" صُغّر كثيراً ليتسع (من ' + f.fontSize + ' إلى ' + drawFs + ')');
       }
       var drawX = f.x;
       ctx.textAlign = f.align || "center";
-      ctx.fillText(renderText, drawX, f.y);
+      ctx.save();
+      tmplTextFxBegin(ctx, f);
+      var lineBox = tmplDrawStyledLine(ctx, f, renderText, drawX, f.y, w, drawFs);
+      if(!f.rotate && (lineBox.left < -2 || lineBox.right > template.width + 2)){
+        warnings.push('نص "' + ((tmplFieldMeta(template.category, f.key) || {}).label || f.key) + '" يخرج عن حدود التصميم');
+      }
+      if(!f.rotate) textBoxes.push({ key: f.key, l: lineBox.left, r: lineBox.right, t: f.y - drawFs * 0.5, b: f.y + drawFs * 0.5 });
       if(marksOverlay){
         var drawnMarks = drawMissingMarksOverlay(ctx, renderText, rawText, drawFs, weight, drawX, f.y, f.align || "center");
         if(drawnMarks) marksInfo.push('✓ رُسمت حركات "' + ((tmplFieldMeta(template.category, f.key) || {}).label || f.key) + '" (' + drawnMarks + ')');
+      }
+      ctx.restore();
+    }
+    for(var ta = 0; ta < textBoxes.length; ta++){
+      for(var tb = ta + 1; tb < textBoxes.length; tb++){
+        var A = textBoxes[ta], B = textBoxes[tb];
+        var ox = Math.min(A.r, B.r) - Math.max(A.l, B.l), oy = Math.min(A.b, B.b) - Math.max(A.t, B.t);
+        if(ox > 8 && oy > Math.min(A.b - A.t, B.b - B.t) * 0.35){
+          warnings.push('تداخل بين "' + ((tmplFieldMeta(template.category, A.key) || {}).label || A.key) + '" و"' + ((tmplFieldMeta(template.category, B.key) || {}).label || B.key) + '"');
+        }
       }
     }
     return { ok: true, warnings: warnings, info: marksInfo };
@@ -8462,6 +8571,8 @@
         el.className = "tmpl-marker" + (extraClass || "") + (tmplActiveFieldKey === f.key ? " is-active" : "");
         el.style.left = (f.x / tmpl.width * 100) + "%";
         el.style.top = (f.y / tmpl.height * 100) + "%";
+        // التسمية ترتفع فوق النص نفسه (بدل تغطيته): نصف ارتفاع الخط بمقياس العرض الحالي للوحة
+        if(!f.multiline && wrap.clientWidth) el.style.marginTop = -Math.round((f.fontSize || 28) * 0.62 * wrap.clientWidth / tmpl.width + 6) + "px";
         el.textContent = lbl;
       }
       wrap.appendChild(el);
@@ -8619,15 +8730,18 @@
         (f.fit === "contain" && f.containOverride ? '<p class="tf-hint">تعدّل الآن الموضع الخاص بوضع الاحتواء — لا يؤثر على موضع التغطية.</p>' : '') +
       '</div></details>';
     } else {
-      html += '<label class="tf-f tf-f-wide"><span>الخط</span><select data-tmpl-prop="font">' +
+      var curW = Number(tmplWeight(f));
+      html += '<div class="tf-grid tf-grid-font"><label class="tf-f"><span>الخط</span><select data-tmpl-prop="font">' +
           TMPL_FONT_CHOICES.map(function(fn){ return '<option value="' + fn + '"' + (f.font === fn ? " selected" : "") + '>' + fn + '</option>'; }).join("") +
           loadDesignFonts().map(function(df){ return '<option value="custom:' + df.id + '"' + (f.font === "custom:" + df.id ? " selected" : "") + '>' + escapeHTML(df.name) + ' (مخصص)</option>'; }).join("") +
         '</select></label>' +
+        '<label class="tf-f"><span>الوزن</span><select data-tmpl-prop="weight">' +
+          [[300, "خفيف"], [400, "عادي"], [500, "متوسط"], [600, "شبه عريض"], [700, "عريض"], [800, "عريض جداً"], [900, "أسود"]].map(function(wo){ return '<option value="' + wo[0] + '"' + (curW === wo[0] ? " selected" : "") + '>' + wo[1] + '</option>'; }).join("") +
+        '</select></label></div>' +
         tmplSliderHTML("الحجم", "fontSize", f.fontSize, 8, 300, 1) +
         '<div class="tf-row">' +
           '<label class="tf-color" title="لون النص"><input type="color" data-tmpl-prop="color" value="' + (f.color || "#000000") + '"/></label>' +
           tmplSegHTML(f.key, "align", f.align || "center", [["right", "يمين"], ["center", "وسط"], ["left", "يسار"]]) +
-          tmplChipHTML('data-tmpl-prop="bold"', !!f.bold, "عريض") +
         '</div>' +
         '<p class="tf-label">الموضع</p>' +
         '<div class="tf-grid tf-grid-3">' +
@@ -8645,6 +8759,32 @@
         '</div>' +
         '<p class="tf-hint">في الفقرة: «Y» هو أعلى الصندوق، والنص يلتف داخل «عرض الصندوق». «أقصى ارتفاع» يصغّر الخط تلقائياً ليتسع. ومع الكشيدة يُمدَّد كل سطر ليملأ العرض.</p>';
       }
+      html += '<details class="tmpl-field-group"><summary>التأثيرات</summary><div class="tf-adv">' +
+        '<div class="tf-fx"><div class="tf-fx-head">' + tmplChipHTML('data-tmpl-prop="shadow"', !!f.shadow, "ظل") +
+          '<label class="tf-color" title="لون الظل"><input type="color" data-tmpl-prop="shadowColor" value="' + (f.shadowColor || "#000000") + '"/></label></div>' +
+          tmplSliderHTML("النعومة", "shadowBlur", typeof f.shadowBlur === "number" ? f.shadowBlur : 12, 0, 60, 1) +
+          tmplSliderHTML("الإزاحة", "shadowY", typeof f.shadowY === "number" ? f.shadowY : 4, -30, 30, 1) +
+        '</div>' +
+        '<div class="tf-fx"><div class="tf-fx-head"><span class="tf-fx-title">حدّ حول النص</span>' +
+          '<label class="tf-color" title="لون الحد"><input type="color" data-tmpl-prop="strokeColor" value="' + (f.strokeColor || "#ffffff") + '"/></label></div>' +
+          tmplSliderHTML("السماكة", "strokeWidth", f.strokeWidth || 0, 0, 30, 1) +
+        '</div>' +
+        (f.multiline ? '' :
+          '<div class="tf-fx"><div class="tf-fx-head">' + tmplChipHTML('data-tmpl-prop="gradient"', !!f.gradient, "تدرج لوني") +
+            '<label class="tf-color" title="اللون الثاني للتدرج"><input type="color" data-tmpl-prop="color2" value="' + (f.color2 || "#B88D66") + '"/></label></div>' +
+          '</div>' +
+          '<div class="tf-fx"><div class="tf-fx-head">' + tmplChipHTML('data-tmpl-prop="bgOn"', !!f.bgOn, "خلفية خلف النص") +
+            '<label class="tf-color" title="لون الخلفية"><input type="color" data-tmpl-prop="bgColor" value="' + (f.bgColor || "#324C4B") + '"/></label></div>' +
+            '<div class="tf-grid tf-grid-3">' +
+              tmplNumHTML("حشو أفقي", "bgPadX", typeof f.bgPadX === "number" ? f.bgPadX : Math.round(f.fontSize * 0.5), 'min="0" step="1"') +
+              tmplNumHTML("حشو عمودي", "bgPadY", typeof f.bgPadY === "number" ? f.bgPadY : Math.round(f.fontSize * 0.18), 'min="0" step="1"') +
+              tmplNumHTML("الزوايا", "bgRadius", typeof f.bgRadius === "number" ? f.bgRadius : 999, 'min="0" step="1"') +
+            '</div>' +
+          '</div>') +
+        tmplSliderHTML("الشفافية", "opacity", typeof f.opacity === "number" ? f.opacity : 1, 0.05, 1, 0.05) +
+        tmplSliderHTML("الدوران", "rotate", f.rotate || 0, -180, 180, 1) +
+        (f.multiline ? '<p class="tf-hint">التدرج والحد والخلفية تعمل على السطر الواحد فقط؛ الظل والشفافية والدوران تعمل على الفقرة أيضاً.</p>' : '') +
+      '</div></details>';
       var selFields = tmplSelectDataFields(tmpl.category);
       var otherText = f.multiline ? [] : tmplOtherTextFields(tmpl, f.key);
       html += '<details class="tmpl-field-group"><summary>خيارات متقدمة</summary><div class="tf-adv">' +
@@ -8662,6 +8802,10 @@
             selFields.filter(function(sf){ return sf.key !== f.key; }).map(function(sf){ return '<option value="' + sf.key + '"' + (f.fallbackKey === sf.key ? " selected" : "") + '>' + escapeHTML(sf.label) + '</option>'; }).join("") +
           '</select></label>'
         : "") +
+        '<div class="tf-grid tf-grid-2">' +
+          (f.multiline ? '' : tmplNumHTML("أصغر حجم عند التصغير التلقائي", "minFontSize", f.minFontSize || "", 'min="8" step="1" placeholder="10"')) +
+          '<label class="tf-f"><span>الأرقام</span><select data-tmpl-prop="digits"><option value=""' + (!f.digits ? " selected" : "") + '>كما هي</option><option value="arabic"' + (f.digits === "arabic" ? " selected" : "") + '>عربية ٠١٢٣</option><option value="latin"' + (f.digits === "latin" ? " selected" : "") + '>إنجليزية 0123</option></select></label>' +
+        '</div>' +
         '<label class="tf-f tf-f-wide"><span>إخفاء عند القيمة (افصل بفاصلة)</span><input type="text" data-tmpl-prop="hideValues" placeholder="مثال: بدون" value="' + escapeHTML((f.hideValues || []).join("، ")) + '"/></label>' +
         '<label class="tf-f tf-f-wide"><span>الكشيدة فقط عند القيمة (فارغ = دائماً)</span><input type="text" data-tmpl-prop="kashidaValue" placeholder="مثال: الماجستير" value="' + escapeHTML(f.kashidaValue || "") + '"/></label>' +
         (otherText.length ?
@@ -8700,8 +8844,10 @@
       val = Number(target.value) || 0;
     }
     else if(prop === "hideValues") val = target.value.split(/[،,]/).map(function(s){ return s.trim(); }).filter(Boolean);
+    else if(prop === "weight") val = Number(target.value) || 400;
     else val = target.value;
     var patch = {};
+    if(prop === "weight") patch.bold = val >= 600;
     if(prop === "radiusAll"){ patch.radiusTL = val; patch.radiusTR = val; patch.radiusBL = val; patch.radiusBR = val; }
     else patch[prop] = val;
     tmplUpdateField(tmpl, row.dataset.fieldKey, patch, true);
@@ -8874,6 +9020,7 @@
         return '<option value="' + r.id + '"' + (r.id === currentRecordId ? " selected" : "") + '>' + escapeHTML(lbl) + '</option>';
       }).join("") +
       '</select></label>' +
+      (records.length > 1 ? '<div class="tp-ctl tp-ctl-btns"><span>اختبار</span><button type="button" data-action="tmpl-pick-extreme" data-which="long" data-tmpl="' + tmpl.id + '">أطول اسم</button><button type="button" data-action="tmpl-pick-extreme" data-which="short" data-tmpl="' + tmpl.id + '">أقصر اسم</button></div>' : '') +
       '<label class="tp-ctl"><span>القالب مخصص لـ</span>' +
       '<select id="tmplGenderSelect">' +
         '<option value=""' + (!tmpl.gender ? " selected" : "") + '>الجميع</option>' +
@@ -8898,6 +9045,18 @@
     if(!pendingMeta) return "";
     return '<p class="tp-pending">' + (pendingMeta.type === "image" ? "اسحب على القالب لتحديد مربع الصورة" : "انقر على موضع النص في القالب") + ' — «' + escapeHTML(pendingMeta.label || "") + '»</p>';
   }
+  // اختبار القالب بأطول/أقصر اسم مسجَّل بنفس التصنيف — يكشف مشاكل الاتساع بنقرة
+  document.addEventListener("click", function(e){
+    var xb = e.target.closest && e.target.closest('[data-action="tmpl-pick-extreme"]');
+    if(!xb) return;
+    var xt = findDesignTemplate(xb.dataset.tmpl);
+    if(!xt) return;
+    var nm = function(r){ return String(r.fullName || r.husbandName || r.deceasedName || "").trim(); };
+    var recs = loadEventsData().filter(function(r){ return r.category === xt.category && nm(r); });
+    if(!recs.length) return;
+    recs.sort(function(a, b){ return nm(a).length - nm(b).length; });
+    tmplSwitchWorkspace(xt.id, (xb.dataset.which === "long" ? recs[recs.length - 1] : recs[0]).id);
+  });
   var TMPL_LEGEND_HTML = '<div class="tmpl-toolbar-legend"><span>اسحب العنصر لتحريكه</span><span>المقبض للتحجيم</span><span>الأسهم للتحريك الدقيق</span></div>';
   function renderTemplateEditor(){
     var tmpl = tmplEditorCurrentTemplate();
@@ -9210,7 +9369,7 @@
         if(dlBtn) dlBtn.disabled = false;
         if(pvBtn) pvBtn.disabled = false;
         if(result.warnings.length){
-          statusEl.innerHTML = '<span class="tp-warn">' + result.warnings.map(escapeHTML).join(' — ') + '</span>';
+          statusEl.innerHTML = '<span class="tp-warns">' + result.warnings.map(function(wm){ return '<span class="tp-warn">' + escapeHTML(wm) + '</span>'; }).join("") + '</span>';
         } else {
           statusEl.textContent = "جاهز للتنزيل";
         }

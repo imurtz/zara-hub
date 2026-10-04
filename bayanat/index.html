@@ -2158,6 +2158,67 @@
       return face.load().then(function(loaded){ document.fonts.add(loaded); return fam; }).catch(function(){ return null; });
     }).catch(function(){ return null; });
   }
+  // ----- تأثيرات النص بالتصميم (وزن، ظل، حد، تدرج، خلفية، شفافية، دوران، أرقام) — مشتركة بين كل الحقول النصية -----
+  function tmplWeight(f){ return f.weight ? String(f.weight) : (f.bold ? "700" : "400"); }
+  function tmplDigits(t, mode){
+    if(!t || !mode) return t;
+    if(mode === "arabic") return String(t).replace(/[0-9]/g, function(d){ return "٠١٢٣٤٥٦٧٨٩".charAt(Number(d)); });
+    if(mode === "latin") return String(t).replace(/[٠-٩]/g, function(d){ return String("٠١٢٣٤٥٦٧٨٩".indexOf(d)); });
+    return t;
+  }
+  function tmplHexAlpha(hex, a){
+    var h = String(hex || "#000000").replace("#", "");
+    if(h.length === 3) h = h.charAt(0) + h.charAt(0) + h.charAt(1) + h.charAt(1) + h.charAt(2) + h.charAt(2);
+    var n = parseInt(h, 16);
+    if(isNaN(n)) n = 0;
+    return "rgba(" + ((n >> 16) & 255) + "," + ((n >> 8) & 255) + "," + (n & 255) + "," + a + ")";
+  }
+  // يُستدعى بعد ctx.save(): شفافية + دوران حول نقطة الحقل + ظل
+  function tmplTextFxBegin(ctx, f){
+    if(typeof f.opacity === "number" && f.opacity >= 0 && f.opacity < 1) ctx.globalAlpha = f.opacity;
+    if(f.rotate){
+      ctx.translate(f.x, f.y);
+      ctx.rotate(f.rotate * Math.PI / 180);
+      ctx.translate(-f.x, -f.y);
+    }
+    if(f.shadow){
+      ctx.shadowColor = tmplHexAlpha(f.shadowColor || "#000000", 0.45);
+      ctx.shadowBlur = typeof f.shadowBlur === "number" ? f.shadowBlur : 12;
+      ctx.shadowOffsetX = 0;
+      ctx.shadowOffsetY = typeof f.shadowY === "number" ? f.shadowY : 4;
+    }
+  }
+  function tmplShadowOff(ctx){ ctx.shadowColor = "transparent"; ctx.shadowBlur = 0; ctx.shadowOffsetX = 0; ctx.shadowOffsetY = 0; }
+  // يرسم سطراً واحداً بكل تأثيراته (الخط والمحاذاة مضبوطان مسبقاً على ctx) ويرجع حدوده الأفقية
+  function tmplDrawStyledLine(ctx, f, str, x, y, w, fs){
+    var align = f.align || "center";
+    var left = align === "center" ? x - w / 2 : (align === "right" ? x - w : x);
+    if(f.bgOn){
+      var px = typeof f.bgPadX === "number" ? f.bgPadX : Math.round(fs * 0.5);
+      var py = typeof f.bgPadY === "number" ? f.bgPadY : Math.round(fs * 0.18);
+      var bh = fs * 1.3 + py * 2;
+      ctx.save();
+      ctx.fillStyle = f.bgColor || "#324C4B";
+      roundRectPath(ctx, left - px, y - bh / 2, w + px * 2, bh, typeof f.bgRadius === "number" ? f.bgRadius : 999);
+      ctx.fill();
+      ctx.restore();
+    }
+    if(f.gradient && f.color2){
+      var gr = ctx.createLinearGradient(left + w, 0, left, 0);
+      gr.addColorStop(0, f.color || "#000000");
+      gr.addColorStop(1, f.color2);
+      ctx.fillStyle = gr;
+    }
+    if(f.strokeWidth > 0){
+      ctx.lineJoin = "round";
+      ctx.lineWidth = f.strokeWidth;
+      ctx.strokeStyle = f.strokeColor || "#ffffff";
+      ctx.strokeText(str, x, y);
+      tmplShadowOff(ctx);
+    }
+    ctx.fillText(str, x, y);
+    return { left: left, right: left + w };
+  }
   async function renderTemplateToCanvasPublic(canvas, template, record){
     // نجهّز كل الصور (الخلفية + كل حقول الصور) بالتوازي أولاً — نفس منطق النسخة الإدارية بالضبط،
     // انظر renderTemplateToCanvas في Login/index.html للشرح الكامل
@@ -2193,7 +2254,7 @@
       if(nf.type === "image") return;
       var nText = markSafeTextPublic(nf, templateFieldValuePublic(nf, record));
       if(!nText) return;
-      var nWeight = nf.bold ? "700" : "400";
+      var nWeight = tmplWeight(nf);
       var nFam = "Cairo";
       if(nf.font && nf.font.indexOf("custom:") === 0) nFam = fontFamMap[nf.font.slice(7)] || "Cairo";
       else if(nf.font) nFam = nf.font;
@@ -2215,18 +2276,21 @@
         }
         continue;
       }
-      var rawText = templateFieldValuePublic(f, record);
+      var rawText = tmplDigits(templateFieldValuePublic(f, record), f.digits);
       var text = markSafeTextPublic(f, rawText);
       var marksOverlay = !!text && text !== rawText && !f.multiline;
       if(!text) continue;
-      var weight = f.bold ? "700" : "400";
+      var weight = tmplWeight(f);
       var fam = "Cairo";
       if(f.font && f.font.indexOf("custom:") === 0) fam = fontFamMap[f.font.slice(7)] || "Cairo";
       else if(f.font) fam = f.font;
       if(f.multiline){
         ctx.fillStyle = f.color || "#000000";
         var paraKashidaApplies = f.kashida && (!f.kashidaValue || String(record[f.key] || "").trim() === String(f.kashidaValue).trim());
+        ctx.save();
+        tmplTextFxBegin(ctx, f);
         drawParagraphFieldPublic(ctx, f, text, fam, weight, paraKashidaApplies);
+        ctx.restore();
         continue;
       }
       ctx.font = weight + ' ' + f.fontSize + 'px "' + fam + '", sans-serif';
@@ -2244,7 +2308,8 @@
       var drawFs = f.fontSize;
       if(f.maxWidth && w > f.maxWidth){
         var fs = f.fontSize;
-        while(w > f.maxWidth && fs > 10){
+        var minFs = f.minFontSize > 0 ? f.minFontSize : 10;
+        while(w > f.maxWidth && fs > minFs){
           fs -= 1;
           ctx.font = weight + ' ' + fs + 'px "' + fam + '", sans-serif';
           w = ctx.measureText(renderText).width;
@@ -2252,8 +2317,11 @@
         drawFs = fs;
       }
       ctx.textAlign = f.align || "center";
-      ctx.fillText(renderText, f.x, f.y);
+      ctx.save();
+      tmplTextFxBegin(ctx, f);
+      tmplDrawStyledLine(ctx, f, renderText, f.x, f.y, w, drawFs);
       if(marksOverlay) drawMissingMarksOverlay(ctx, renderText, rawText, drawFs, weight, f.x, f.y, f.align || "center");
+      ctx.restore();
     }
     return true;
   }
