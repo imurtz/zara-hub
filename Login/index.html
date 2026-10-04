@@ -1456,6 +1456,28 @@
   .tp-ctl-btns button:hover{background:var(--ink); color:#fff;}
   .tp-warns{display:flex; flex-wrap:wrap; justify-content:center; gap:6px;}
   .tp-warn{display:inline-block; padding:5px 11px; font-size:12px; line-height:1.6; background:#FBEDEC; border-radius:12px;}
+  .tp-add{flex-wrap:wrap;}
+  .tp-hist{padding:5px;}
+  .tp-hist button{display:flex; padding:7px 9px;}
+  .tp-hist button svg{width:16px; height:16px;}
+  .tp-hist button:last-child svg{transform:scaleX(-1);}
+  .tp-hist button:disabled{opacity:.35; cursor:default; background:var(--field); color:var(--ink-2);}
+  .tp-grow{flex:1;}
+  .tb-tools{display:flex; flex-wrap:wrap; gap:8px; margin-bottom:10px;}
+  .tb-tools input{flex:1; min-width:150px; margin:0; padding:10px 14px; font:inherit; font-size:14px; background:var(--field); border:1px solid transparent; border-radius:999px;}
+  .tb-list{max-height:44vh; overflow-y:auto; border:1px solid var(--line); border-radius:18px; padding:6px;}
+  .tb-row{display:flex; align-items:center; gap:10px; padding:9px 10px; border-radius:12px; font-size:14px; cursor:pointer;}
+  .tb-row:hover{background:var(--field);}
+  .tb-row input{width:18px; height:18px; flex:none; margin:0; accent-color:var(--teal);}
+  .tb-row span{flex:1; min-width:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .tb-row i{font-style:normal; font-size:11.500px; color:#8F6A45; background:var(--tan-tint); border-radius:999px; padding:2px 9px;}
+  .tb-bar{height:8px; border-radius:999px; background:var(--field); overflow:hidden; margin:10px 0 12px;}
+  .tb-bar i{display:block; height:100%; width:0; background:linear-gradient(90deg, var(--teal), var(--tan)); border-radius:999px; transition:width .3s ease;}
+  .tb-done{font-size:15px; font-weight:600; color:var(--teal-dark); margin:4px 0 12px;}
+  .tb-report{max-height:26vh; overflow-y:auto; font-size:12.500px; line-height:1.9; color:var(--ink-2); background:var(--field); border-radius:14px; padding:8px 12px; margin:8px 0 12px;}
+  .tb-report p{margin:0;}
+  #tmplBulkRun{display:inline-flex; align-items:center; gap:8px;}
+  #tmplBulkRun svg{width:16px; height:16px;}
   .tp-actionbar{position:sticky; bottom:0; z-index:8; display:flex; align-items:center; justify-content:flex-end; gap:10px; margin-inline:-36px; padding:12px 36px calc(12px + env(safe-area-inset-bottom, 0px)); background:rgba(245,246,245,.82); -webkit-backdrop-filter:blur(16px) saturate(160%); backdrop-filter:blur(16px) saturate(160%); border-top:1px solid var(--line);}
   .tp-actionbar .btn-primary, .tp-actionbar .btn-secondary{display:inline-flex; align-items:center; justify-content:center; gap:8px; margin:0; width:auto; flex:none;}
   .tp-actionbar button:disabled{opacity:.5;}
@@ -1487,6 +1509,8 @@
     .tf-chip span{padding:9px 14px;}
     .tp-actionbar{margin-inline:-12px; padding:10px 12px calc(10px + env(safe-area-inset-bottom, 0px));}
     .tp-actionbar .btn-primary{flex:1;}
+    .tp-bulk-btn{padding-inline:12px !important;}
+    .tp-grow{display:none;}
     .tmpl-marker:not(.is-active):not(.img-marker){opacity:.7;}
   }
 
@@ -6070,6 +6094,7 @@
 
   // ===== محرك رسم القالب: يركّب بيانات سجل حقيقي فوق قالب جاهز داخل Canvas =====
   function templateFieldValue(field, record, cat){
+    if(field.staticText != null) return String(field.staticText);
     var v = record[field.key];
     if(field.key === "photo") v = record.photo;
     if(v == null) v = "";
@@ -6876,6 +6901,7 @@
   var _tmplSaveTimers = {}, _tmplHubStale = false;
   function saveDesignTemplate(tmpl){
     if(_tmplSaveTimers[tmpl.id]){ clearTimeout(_tmplSaveTimers[tmpl.id]); delete _tmplSaveTimers[tmpl.id]; }
+    tmplHistPush(tmpl);
     db.collection("designTemplates").doc(tmpl.id).set(tmpl);
   }
   function deleteDesignTemplate(id){ db.collection("designTemplates").doc(id).delete(); }
@@ -8437,6 +8463,7 @@
     ]
   };
   function tmplFieldMeta(catKey, fieldKey){
+    if(typeof fieldKey === "string" && fieldKey.indexOf("static-") === 0) return { key: fieldKey, label: "نص ثابت", type: "text" };
     var list = TMPL_PLACEABLE_FIELDS[catKey] || [];
     return list.find(function(f){ return f.key === fieldKey; });
   }
@@ -8622,6 +8649,8 @@
       align: "center", maxWidth: Math.round(tmpl.width * 0.6),
       kashida: false, hideValues: [], multiline: false, lineHeight: null, boxHeight: null
     });
+    if(key.indexOf("static-") === 0) tmpl.fields[tmpl.fields.length - 1].staticText = "نص ثابت";
+    tmplExpandedFieldKeys = {}; tmplExpandedFieldKeys[key] = true; tmplActiveFieldKey = key;
     saveDesignTemplate(tmpl);
   }
   function finalizeTmplImageField(tmpl, key, x1, y1, x2, y2){
@@ -8647,6 +8676,8 @@
     eye: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.700" stroke-linecap="round" stroke-linejoin="round"><path d="M2.500 12S6 5.500 12 5.500 21.500 12 21.500 12 18 18.500 12 18.500 2.500 12 2.500 12z"/><circle cx="12" cy="12" r="2.800"/></svg>',
     download: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.900" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11M7.500 11l4.500 4.500 4.500-4.500M5 19.500h14"/></svg>',
     swap: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.700" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V4M8 8l4-4 4 4M5 14v4a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-4"/></svg>',
+    undo: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.900" stroke-linecap="round" stroke-linejoin="round"><path d="M8 5L4 9l4 4"/><path d="M4 9h10a6 6 0 0 1 0 12h-3"/></svg>',
+    stack: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.700" stroke-linecap="round" stroke-linejoin="round"><rect x="3.500" y="7.500" width="13" height="13" rx="2.500"/><path d="M7.500 4h10.500a2.500 2.500 0 0 1 2.500 2.500V17"/></svg>',
     arrow: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.200" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M6 11l6-6 6 6"/></svg>'
   };
   function tmplNum(n, digits){
@@ -8679,7 +8710,7 @@
       '<div class="tmpl-field-row-head" data-action="toggle-tmpl-field-row">' +
         '<span class="tmpl-drag-handle" draggable="true" title="اسحب لتغيير الترتيب (يتحكم أيضاً بأيها يظهر فوق الآخر عند التداخل)">' + TPI.grip + '</span>' +
         '<span class="tf-type' + (isImage ? " is-img" : "") + '">' + (isImage ? TPI.image : TPI.text) + '</span>' +
-        '<b>' + escapeHTML(meta.label) + '</b>' +
+        '<b>' + escapeHTML(f.staticText != null ? ("نص: " + f.staticText) : meta.label) + '</b>' +
         '<button type="button" class="task-icon-btn" data-action="remove-tmpl-field" data-key="' + f.key + '" title="حذف الموضع"><span class="icon">' + ICON_DELETE + '</span></button>' +
         '<span class="tf-chev">' + TICON.chevron + '</span>' +
       '</div>';
@@ -8731,6 +8762,7 @@
       '</div></details>';
     } else {
       var curW = Number(tmplWeight(f));
+      if(f.staticText != null) html += '<label class="tf-f tf-f-wide"><span>النص</span><input type="text" data-tmpl-prop="staticText" value="' + escapeHTML(f.staticText) + '" placeholder="اكتب النص الثابت"/></label>';
       html += '<div class="tf-grid tf-grid-font"><label class="tf-f"><span>الخط</span><select data-tmpl-prop="font">' +
           TMPL_FONT_CHOICES.map(function(fn){ return '<option value="' + fn + '"' + (f.font === fn ? " selected" : "") + '>' + fn + '</option>'; }).join("") +
           loadDesignFonts().map(function(df){ return '<option value="custom:' + df.id + '"' + (f.font === "custom:" + df.id ? " selected" : "") + '>' + escapeHTML(df.name) + ' (مخصص)</option>'; }).join("") +
@@ -8912,6 +8944,7 @@
     var st = body.scrollTop;
     var oldCanvas = keepCanvasId ? document.getElementById(keepCanvasId) : null;
     body.innerHTML = html;
+    tmplHistButtons();
     if(oldCanvas && oldCanvas.width > 0){
       var nc = document.getElementById(keepCanvasId);
       if(nc && nc !== oldCanvas) nc.parentNode.replaceChild(oldCanvas, nc);
@@ -8990,6 +9023,7 @@
     var tmpl = findDesignTemplate(templateId);
     if(!tmpl) return;
     tmplEditorState = { templateId: templateId, pendingKey: "", dragStart: null };
+    tmplHistReset(tmpl);
     renderTemplateEditor();
     document.getElementById("tmplEditorOverlay").classList.add("active");
   }
@@ -9030,10 +9064,11 @@
       '</select></label>';
   }
   function tmplAddFieldHTML(selectId, action, available, pendingKey){
-    if(!available.length) return '<p class="tf-hint" style="margin:0 0 12px;">كل المتغيرات المتاحة لهذا التصنيف موضوعة على القالب.</p>';
+    var staticBtn = '<button type="button" class="btn-secondary tf-btn-sm" data-action="arm-tmpl-static" title="نص لا يتغير بين السجلات — مثل عبارة تهنئة">' + TPI.text + ' نص ثابت</button>';
+    if(!available.length) return '<div class="tp-add">' + staticBtn + '</div>';
     return '<div class="tp-add"><select id="' + selectId + '">' +
       available.map(function(f){ return '<option value="' + f.key + '"' + (pendingKey === f.key ? " selected" : "") + '>' + escapeHTML(f.label) + '</option>'; }).join("") +
-      '</select><button type="button" class="btn-secondary tf-btn-sm" data-action="' + action + '">' + TPI.plus + ' إضافة</button></div>';
+      '</select><button type="button" class="btn-secondary tf-btn-sm" data-action="' + action + '">' + TPI.plus + ' إضافة</button>' + staticBtn + '</div>';
   }
   function tmplReplaceImageHTML(){
     return '<details class="tp-more"><summary>صورة القالب</summary><div class="tf-adv">' +
@@ -9057,6 +9092,13 @@
     recs.sort(function(a, b){ return nm(a).length - nm(b).length; });
     tmplSwitchWorkspace(xt.id, (xb.dataset.which === "long" ? recs[recs.length - 1] : recs[0]).id);
   });
+  document.addEventListener("click", function(e){
+    var sb = e.target.closest && e.target.closest('[data-action="arm-tmpl-static"]');
+    if(!sb) return;
+    var newKey = "static-" + Date.now().toString(36);
+    if(tmplGenerateState){ tmplGenerateState.pendingKey = newKey; renderDesignGenerateModal(); }
+    else if(tmplEditorState){ tmplEditorState.pendingKey = newKey; renderTemplateEditor(); }
+  });
   var TMPL_LEGEND_HTML = '<div class="tmpl-toolbar-legend"><span>اسحب العنصر لتحريكه</span><span>المقبض للتحجيم</span><span>الأسهم للتحريك الدقيق</span></div>';
   function renderTemplateEditor(){
     var tmpl = tmplEditorCurrentTemplate();
@@ -9065,7 +9107,7 @@
     var placedKeys = tmpl.fields.map(function(f){ return f.key; });
     var available = (TMPL_PLACEABLE_FIELDS[tmpl.category] || []).filter(function(f){ return placedKeys.indexOf(f.key) === -1; });
     var html = '<div class="panel-head tp-head"><div class="tp-title"><span class="tp-title-ico">' + TPI.design + '</span><div><h3>تعديل القالب</h3><input type="text" id="tmplNameInput" class="tp-name" value="' + escapeHTML(tmpl.name) + '" aria-label="اسم القالب"/></div></div><button type="button" class="panel-close" data-action="close-tmpl-editor" title="رجوع لقائمة القوالب">✕</button></div>';
-    html += '<div class="tp-toolbar">' + tmplPreviewSwitcherHTML(tmpl, null) + '</div>';
+    html += '<div class="tp-toolbar">' + tmplPreviewSwitcherHTML(tmpl, null) + tmplHistButtonsHTML() + '</div>';
     html += '<div class="tmpl-workspace-stack">';
     html += '<div class="tmpl-fields-col">';
     html += '<div class="tmpl-fields-panel">';
@@ -9231,6 +9273,7 @@
     }
     tmplGenerateState = { recordId: recordId, catKey: cat.key, templateId: tid, pendingKey: "" };
     document.getElementById("tmplGenerateBody").innerHTML = "";
+    tmplHistReset(findDesignTemplate(tid));
     renderDesignGenerateModal();
     document.getElementById("tmplGenerateOverlay").classList.add("active");
   }
@@ -9255,7 +9298,7 @@
         '</select></label>';
     }
     if(tmpl) html += tmplPreviewSwitcherHTML(tmpl, tmplGenerateState.recordId);
-    html += '</div>';
+    html += tmplHistButtonsHTML() + '</div>';
     html += '<div class="tmpl-workspace-stack">';
     html += '<div class="tmpl-fields-col" id="tmplGenFieldsList">';
     if(tmpl){
@@ -9263,7 +9306,7 @@
       var available = (TMPL_PLACEABLE_FIELDS[tmpl.category] || []).filter(function(f){ return placedKeys.indexOf(f.key) === -1; });
       html += '<div class="tmpl-fields-panel">';
       html += '<div class="tmpl-fields-panel-head">العناصر <i>' + tmpl.fields.length + '</i></div>';
-      if(available.length) html += tmplAddFieldHTML("tmplGenAddFieldSelect", "arm-tmpl-gen-field", available, tmplGenerateState.pendingKey);
+      html += tmplAddFieldHTML("tmplGenAddFieldSelect", "arm-tmpl-gen-field", available, tmplGenerateState.pendingKey);
       if(!tmpl.fields.length){
         html += '<p class="tp-empty">لا توجد عناصر على هذا القالب بعد — أضِف أول متغير من الأعلى.</p>';
       } else {
@@ -9281,9 +9324,242 @@
     html += TMPL_LEGEND_HTML;
     html += '</div></div>';
     html += '</div>';
-    html += '<div class="tp-actionbar"><button type="button" class="btn-secondary" id="tmplGenPreviewBtn" data-action="preview-tmpl-design" disabled>' + TPI.eye + ' معاينة</button><button type="button" class="btn-primary" id="tmplGenDownloadBtn" data-action="download-tmpl-design" disabled>' + TPI.download + ' تنزيل الصورة</button></div>';
+    html += '<div class="tp-actionbar"><button type="button" class="btn-secondary tp-bulk-btn" data-action="open-tmpl-bulk" data-cat="' + tmplGenerateState.catKey + '">' + TPI.stack + ' توليد جماعي</button><span class="tp-grow"></span><button type="button" class="btn-secondary" id="tmplGenPreviewBtn" data-action="preview-tmpl-design" disabled>' + TPI.eye + ' معاينة</button><button type="button" class="btn-primary" id="tmplGenDownloadBtn" data-action="download-tmpl-design" disabled>' + TPI.download + ' تنزيل الصورة</button></div>';
     tmplSetBodyKeepScroll(body, html, "tmplGenCanvas");
     runDesignGenerate();
+  }
+  // ===== توليد جماعي: عدة سجلات → ملف ZIP واحد (كاتب ZIP داخلي بلا ضغط — صور PNG مضغوطة أصلاً) =====
+  var _crcTable = null;
+  function tmplCrc32(u8){
+    if(!_crcTable){
+      _crcTable = [];
+      for(var n = 0; n < 256; n++){ var c = n; for(var k = 0; k < 8; k++) c = (c & 1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1); _crcTable[n] = c >>> 0; }
+    }
+    var crc = 0xFFFFFFFF;
+    for(var i = 0; i < u8.length; i++) crc = _crcTable[(crc ^ u8[i]) & 0xFF] ^ (crc >>> 8);
+    return (crc ^ 0xFFFFFFFF) >>> 0;
+  }
+  function tmplZipStore(files){
+    var enc = new TextEncoder(), parts = [], central = [], offset = 0;
+    var d = new Date();
+    var dosTime = (d.getHours() << 11) | (d.getMinutes() << 5) | (d.getSeconds() >> 1);
+    var dosDate = ((d.getFullYear() - 1980) << 9) | ((d.getMonth() + 1) << 5) | d.getDate();
+    files.forEach(function(file){
+      var name = enc.encode(file.name), crc = tmplCrc32(file.data), size = file.data.length;
+      var lh = new DataView(new ArrayBuffer(30));
+      lh.setUint32(0, 0x04034b50, true); lh.setUint16(4, 20, true); lh.setUint16(6, 0x0800, true); lh.setUint16(8, 0, true);
+      lh.setUint16(10, dosTime, true); lh.setUint16(12, dosDate, true); lh.setUint32(14, crc, true);
+      lh.setUint32(18, size, true); lh.setUint32(22, size, true); lh.setUint16(26, name.length, true); lh.setUint16(28, 0, true);
+      parts.push(lh.buffer, name, file.data);
+      var ch = new DataView(new ArrayBuffer(46));
+      ch.setUint32(0, 0x02014b50, true); ch.setUint16(4, 20, true); ch.setUint16(6, 20, true); ch.setUint16(8, 0x0800, true); ch.setUint16(10, 0, true);
+      ch.setUint16(12, dosTime, true); ch.setUint16(14, dosDate, true); ch.setUint32(16, crc, true);
+      ch.setUint32(20, size, true); ch.setUint32(24, size, true); ch.setUint16(28, name.length, true);
+      ch.setUint32(42, offset, true);
+      central.push(ch.buffer, name);
+      offset += 30 + name.length + size;
+    });
+    var cdSize = 0;
+    central.forEach(function(c){ cdSize += c.byteLength; });
+    var end = new DataView(new ArrayBuffer(22));
+    end.setUint32(0, 0x06054b50, true); end.setUint16(8, files.length, true); end.setUint16(10, files.length, true);
+    end.setUint32(12, cdSize, true); end.setUint32(16, offset, true);
+    return new Blob(parts.concat(central, [end.buffer]), { type: "application/zip" });
+  }
+  var TMPL_BULK_MAX = 80;
+  var tmplBulkState = null;
+  function tmplRecName(r){ return String(r.fullName || r.husbandName || r.deceasedName || "").trim(); }
+  function tmplBulkOverlayEl(){
+    var el = document.getElementById("tmplBulkOverlay");
+    if(el) return el;
+    el = document.createElement("div");
+    el.className = "panel-overlay";
+    el.id = "tmplBulkOverlay";
+    el.style.zIndex = "160";
+    el.innerHTML = '<div class="panel panel-wide" id="tmplBulkBody"></div>';
+    document.body.appendChild(el);
+    el.addEventListener("click", function(e){
+      if(!tmplBulkState) return;
+      if(e.target === el && !tmplBulkState.running){ closeTmplBulk(); return; }
+      var b = e.target.closest("[data-bulk]");
+      if(!b) return;
+      var act = b.dataset.bulk;
+      if(act === "close"){ if(!tmplBulkState.running) closeTmplBulk(); }
+      else if(act === "all"){ tmplBulkVisible().slice(0, TMPL_BULK_MAX).forEach(function(r){ tmplBulkState.sel[r.id] = true; }); renderTmplBulk(); }
+      else if(act === "none"){ tmplBulkState.sel = {}; renderTmplBulk(); }
+      else if(act === "run"){ runTmplBulk(); }
+    });
+    el.addEventListener("change", function(e){
+      if(!tmplBulkState) return;
+      if(e.target.dataset.bulkId){
+        if(e.target.checked) tmplBulkState.sel[e.target.dataset.bulkId] = true; else delete tmplBulkState.sel[e.target.dataset.bulkId];
+        tmplBulkUpdateCount();
+      }
+    });
+    el.addEventListener("input", function(e){
+      if(!tmplBulkState || e.target.id !== "tmplBulkSearch") return;
+      tmplBulkState.q = e.target.value;
+      var list = document.getElementById("tmplBulkList");
+      if(list) list.innerHTML = tmplBulkListHTML();
+    });
+    return el;
+  }
+  function openTmplBulk(catKey){
+    tmplBulkState = { catKey: catKey, sel: {}, q: "", running: false, report: null };
+    renderTmplBulk();
+    tmplBulkOverlayEl().classList.add("active");
+  }
+  function closeTmplBulk(){
+    var el = document.getElementById("tmplBulkOverlay");
+    if(el) el.classList.remove("active");
+    tmplBulkState = null;
+  }
+  function tmplBulkVisible(){
+    var q = (tmplBulkState.q || "").trim();
+    return loadEventsData().filter(function(r){ return r.category === tmplBulkState.catKey && tmplRecName(r) && (!q || tmplRecName(r).indexOf(q) > -1); })
+      .sort(function(a, b){ return (b.updatedAt || b.createdAt || 0) - (a.updatedAt || a.createdAt || 0); });
+  }
+  function tmplBulkListHTML(){
+    var recs = tmplBulkVisible();
+    if(!recs.length) return '<p class="tp-empty">لا توجد سجلات مطابقة.</p>';
+    return recs.slice(0, 300).map(function(r){
+      return '<label class="tb-row"><input type="checkbox" data-bulk-id="' + r.id + '"' + (tmplBulkState.sel[r.id] ? " checked" : "") + '/><span>' + escapeHTML(tmplRecName(r)) + '</span>' +
+        (r.status === "pending" ? '<i>قيد المراجعة</i>' : '') + '</label>';
+    }).join("");
+  }
+  function tmplBulkUpdateCount(){
+    var n = Object.keys(tmplBulkState.sel).length;
+    var btn = document.getElementById("tmplBulkRun");
+    if(btn){ btn.disabled = !n || n > TMPL_BULK_MAX; btn.lastChild.textContent = " توليد " + n + " تصميم"; }
+    var note = document.getElementById("tmplBulkNote");
+    if(note) note.textContent = n > TMPL_BULK_MAX ? "الحد الأقصى " + TMPL_BULK_MAX + " تصميماً في الدفعة الواحدة — قلّل التحديد." : "";
+  }
+  function renderTmplBulk(){
+    var body = document.getElementById("tmplBulkBody") || tmplBulkOverlayEl().firstChild;
+    var st = tmplBulkState;
+    var html = '<div class="panel-head"><h3>توليد جماعي</h3><button type="button" class="panel-close" data-bulk="close">✕</button></div>';
+    if(st.report){
+      html += '<p class="tb-done">تم توليد ' + st.report.ok + ' تصميم في ملف واحد.</p>';
+      if(st.report.failed.length) html += '<p class="tf-label">تعذّر توليدها (' + st.report.failed.length + ')</p><div class="tb-report">' + st.report.failed.map(function(x){ return '<p>' + escapeHTML(x) + '</p>'; }).join("") + '</div>';
+      if(st.report.warned.length) html += '<p class="tf-label">وُلّدت مع تنبيهات — راجعها (' + st.report.warned.length + ')</p><div class="tb-report">' + st.report.warned.map(function(x){ return '<p><b>' + escapeHTML(x.name) + '</b> — ' + escapeHTML(x.w.join("، ")) + '</p>'; }).join("") + '</div>';
+      html += '<div class="modal-actions"><button type="button" class="btn-primary" data-bulk="close">تم</button></div>';
+    } else if(st.running){
+      html += '<p class="hint" id="tmplBulkProgressText">جارٍ التجهيز...</p><div class="tb-bar"><i id="tmplBulkProgressBar"></i></div><p class="tf-hint">أبقِ هذه النافذة مفتوحة حتى ينتهي التوليد.</p>';
+    } else {
+      html += '<p class="hint" style="margin-bottom:12px;">اختر السجلات، ويُولَّد لكل سجل تصميمه بالقالب الأنسب له (حسب نوع المحتفى به)، ثم تُنزَّل كلها في ملف ZIP واحد.</p>' +
+        '<div class="tb-tools"><input type="search" id="tmplBulkSearch" placeholder="بحث بالاسم" value="' + escapeHTML(st.q) + '"/>' +
+        '<button type="button" class="btn-secondary tf-btn-sm" data-bulk="all">تحديد الظاهر</button><button type="button" class="btn-secondary tf-btn-sm" data-bulk="none">إلغاء التحديد</button></div>' +
+        '<div class="tb-list" id="tmplBulkList">' + tmplBulkListHTML() + '</div>' +
+        '<p class="tf-hint" id="tmplBulkNote"></p>' +
+        '<div class="modal-actions"><button type="button" class="btn-primary" id="tmplBulkRun" data-bulk="run" disabled>' + TPI.download + '<span> توليد 0 تصميم</span></button></div>';
+    }
+    body.innerHTML = html;
+    if(!st.report && !st.running) tmplBulkUpdateCount();
+  }
+  async function runTmplBulk(){
+    var st = tmplBulkState;
+    if(!st || st.running) return;
+    var ids = Object.keys(st.sel);
+    if(!ids.length || ids.length > TMPL_BULK_MAX) return;
+    var cat = EVENTS_CATEGORIES.find(function(c){ return c.key === st.catKey; });
+    var templates = loadDesignTemplates(st.catKey);
+    st.running = true;
+    renderTmplBulk();
+    var canvas = document.createElement("canvas");
+    canvas.style.cssText = "position:fixed; left:-9999px; top:0;";
+    document.body.appendChild(canvas);
+    var files = [], used = {}, report = { ok: 0, failed: [], warned: [] };
+    for(var i = 0; i < ids.length; i++){
+      if(tmplBulkState !== st) break;
+      var rec = findEventRecord(ids[i]);
+      var name = rec ? tmplRecName(rec) : ids[i];
+      var pt = document.getElementById("tmplBulkProgressText"), pb = document.getElementById("tmplBulkProgressBar");
+      if(pt) pt.textContent = "(" + (i + 1) + " / " + ids.length + ") " + name;
+      if(pb) pb.style.width = Math.round(i / ids.length * 100) + "%";
+      try {
+        var tmpl = rec ? pickBestTemplateForRecord(templates, rec) : null;
+        if(!tmpl){ report.failed.push(name + " — لا يوجد قالب"); continue; }
+        var result = await renderTemplateToCanvas(canvas, tmpl, rec);
+        if(!result.ok){ report.failed.push(name + " — تعذّر تحميل صورة القالب"); continue; }
+        var blob = await new Promise(function(res){ canvas.toBlob(res, "image/png"); });
+        if(!blob){ report.failed.push(name + " — تعذّر تصدير الصورة"); continue; }
+        var base = name.replace(/[^\w؀-ۿ ]/g, "").trim() || "تصميم", fname = base, k = 2;
+        while(used[fname]) fname = base + " " + (k++);
+        used[fname] = true;
+        files.push({ name: fname + ".png", data: new Uint8Array(await blob.arrayBuffer()) });
+        report.ok++;
+        if(result.warnings.length) report.warned.push({ name: name, w: result.warnings });
+      } catch(err){
+        console.error("bulk design failed", err);
+        report.failed.push(name + " — خطأ غير متوقع");
+      }
+    }
+    document.body.removeChild(canvas);
+    if(tmplBulkState !== st) return;
+    if(files.length){
+      var zip = tmplZipStore(files);
+      var a = document.createElement("a");
+      a.download = "تصاميم " + ((cat && cat.label) || st.catKey) + " (" + files.length + ").zip";
+      a.href = URL.createObjectURL(zip);
+      a.click();
+      setTimeout(function(){ URL.revokeObjectURL(a.href); }, 8000);
+    }
+    st.running = false;
+    st.report = report;
+    renderTmplBulk();
+  }
+  document.addEventListener("click", function(e){
+    var bb = e.target.closest && e.target.closest('[data-action="open-tmpl-bulk"]');
+    if(bb && bb.dataset.cat) openTmplBulk(bb.dataset.cat);
+  });
+
+  // ===== تراجع / إعادة داخل المحرر: كل حفظ يُسجَّل كحالة، و Ctrl+Z يرجع للحالة السابقة =====
+  var _tmplHist = { id: null, stack: [], idx: -1, muted: false };
+  function tmplHistReset(tmpl){
+    _tmplHist = { id: tmpl ? tmpl.id : null, stack: tmpl ? [JSON.stringify(tmpl.fields)] : [], idx: tmpl ? 0 : -1, muted: false };
+  }
+  function tmplHistPush(tmpl){
+    if(_tmplHist.muted || _tmplHist.id !== tmpl.id) return;
+    var snap = JSON.stringify(tmpl.fields);
+    if(_tmplHist.stack[_tmplHist.idx] === snap) return;
+    _tmplHist.stack = _tmplHist.stack.slice(0, _tmplHist.idx + 1);
+    _tmplHist.stack.push(snap);
+    if(_tmplHist.stack.length > 60) _tmplHist.stack.shift();
+    _tmplHist.idx = _tmplHist.stack.length - 1;
+    tmplHistButtons();
+  }
+  function tmplHistButtons(){
+    var u = document.querySelectorAll('[data-action="tmpl-undo"]'), r = document.querySelectorAll('[data-action="tmpl-redo"]');
+    for(var i = 0; i < u.length; i++) u[i].disabled = _tmplHist.idx <= 0;
+    for(var j = 0; j < r.length; j++) r[j].disabled = _tmplHist.idx >= _tmplHist.stack.length - 1;
+  }
+  function tmplHistMove(dir){
+    var genOpen = !!tmplGenerateState, tmpl = genOpen ? findDesignTemplate(tmplGenerateState.templateId) : tmplEditorCurrentTemplate();
+    if(!tmpl || _tmplHist.id !== tmpl.id) return;
+    tmplFlushSaves();
+    var ni = _tmplHist.idx + dir;
+    if(ni < 0 || ni >= _tmplHist.stack.length) return;
+    _tmplHist.idx = ni;
+    tmpl.fields = JSON.parse(_tmplHist.stack[ni]);
+    _tmplHist.muted = true;
+    saveDesignTemplate(tmpl);
+    _tmplHist.muted = false;
+    if(genOpen) renderDesignGenerateModal(); else renderTemplateEditor();
+  }
+  document.addEventListener("click", function(e){
+    var hb = e.target.closest && e.target.closest('[data-action="tmpl-undo"], [data-action="tmpl-redo"]');
+    if(hb) tmplHistMove(hb.dataset.action === "tmpl-undo" ? -1 : 1);
+  });
+  document.addEventListener("keydown", function(e){
+    if(!(e.ctrlKey || e.metaKey) || (e.key !== "z" && e.key !== "Z" && e.key !== "y")) return;
+    if(!tmplGenerateState && !tmplEditorState) return;
+    var tag = document.activeElement && document.activeElement.tagName;
+    if(tag === "INPUT" || tag === "TEXTAREA") return;
+    e.preventDefault();
+    tmplHistMove((e.key === "y" || e.shiftKey) ? 1 : -1);
+  });
+  function tmplHistButtonsHTML(){
+    return '<div class="tp-ctl tp-ctl-btns tp-hist"><button type="button" data-action="tmpl-undo" title="تراجع (Ctrl+Z)" disabled>' + TPI.undo + '</button><button type="button" data-action="tmpl-redo" title="إعادة (Ctrl+Shift+Z)" disabled>' + TPI.undo + '</button></div>';
   }
   function downloadTmplDesign(){
     var canvas = document.getElementById("tmplGenCanvas");
@@ -10661,6 +10937,7 @@
     if(e.target.id === "tmplGenSelect" && tmplGenerateState){
       tmplGenerateState.templateId = e.target.value;
       tmplGenerateState.pendingKey = "";
+      tmplHistReset(findDesignTemplate(e.target.value));
       renderDesignGenerateModal();
       return;
     }

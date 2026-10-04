@@ -1838,6 +1838,7 @@
     });
   }
   function templateFieldValuePublic(field, record){
+    if(field.staticText != null) return String(field.staticText);
     var v = record[field.key];
     if(field.key === "photo") v = record.photo;
     if(v == null) v = "";
