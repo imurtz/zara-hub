@@ -1288,6 +1288,192 @@
     .modal-overlay.active .modal, .panel-overlay.active .panel{animation:none;}
   }
 
+  /* ===================== محرر التصميم (توليد تصميم / تعديل القالب) =====================
+     مساحة عمل: اللوحة ثابتة أمام العين، ولوحة تحكم جانبية (مفتّش) بعناصر قابلة للطي.
+     منزلقات حيّة، أزرار مقسَّمة، أرقام مرتبة بشبكة — وعلى الجوال: اللوحة تثبت أعلى الشاشة
+     والتحكم يُمرَّر تحتها، مع شريط إجراءات سفلي ثابت. */
+  .panel-overlay.panel-overlay-fullscreen{background:var(--bg);}
+  .panel-overlay.panel-overlay-fullscreen .panel.panel-fullscreen{padding:18px 22px 0; background:transparent; animation:none;}
+  @media (min-width:900px){ .panel-overlay.panel-overlay-fullscreen .panel.panel-fullscreen{padding:22px 36px 0;} }
+  .tp-head{align-items:center; margin-bottom:14px;}
+  .tp-title{display:flex; align-items:center; gap:12px; min-width:0;}
+  .tp-title-ico{width:42px; height:42px; flex:none; border-radius:14px; display:flex; align-items:center; justify-content:center; background:linear-gradient(140deg, #58807F, var(--teal-dark)); color:#fff; box-shadow:0 8px 18px rgba(50,76,75,.24);}
+  .tp-title-ico svg{width:21px; height:21px;}
+  .tp-title h3{font-size:17px; margin:0; line-height:1.4;}
+  .tp-title p{font-size:13px; color:var(--ink-soft); margin:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:52vw;}
+  .tp-name{display:block; width:min(280px, 52vw); margin-top:2px; padding:5px 10px; font:inherit; font-size:13.500px; color:var(--ink); background:var(--field); border:1px solid transparent; border-radius:10px;}
+  .tp-name:focus{outline:none; background:#fff; border-color:var(--teal);}
+  .row-menu-item .icon svg{width:16px; height:16px;}
+
+  .tp-toolbar{display:flex; flex-wrap:wrap; gap:10px; margin-bottom:16px;}
+  .tp-ctl{display:flex; align-items:center; gap:8px; min-width:0; padding:5px 6px 5px 14px; background:#fff; border:1px solid var(--line); border-radius:999px; box-shadow:var(--shadow-sm);}
+  .tp-ctl > span{font-size:12px; color:var(--ink-soft); white-space:nowrap; padding-inline-start:10px;}
+  .tp-ctl select{border:none; background-color:transparent; font:inherit; font-size:13.500px; font-weight:500; color:var(--ink); padding:6px 4px; margin:0; min-width:0; max-width:260px; width:auto; box-shadow:none; min-height:0;}
+  .tp-ctl select:focus{outline:none; box-shadow:none;}
+  .tp-ctl-grow{flex:0 1 auto;}
+
+  .tmpl-workspace-stack{gap:22px; align-items:flex-start; padding-bottom:22px;}
+  .tmpl-workspace-stack > .tmpl-canvas-col{flex:1 1 0; min-width:0; order:1; position:sticky; top:0;}
+  .tmpl-workspace-stack > .tmpl-fields-col{flex:0 0 400px; min-width:0; order:2;}
+  .tmpl-canvas-stage{border:1px solid rgba(255,255,255,.95); border-radius:28px; padding:18px; text-align:center; background:#fff; box-shadow:var(--shadow);}
+  .tmpl-canvas-stage .tmpl-canvas-wrap{max-width:100%; margin:0 auto; vertical-align:top;}
+  .tmpl-canvas-wrap{border:none; border-radius:14px; cursor:default; box-shadow:0 0 0 1px var(--line); touch-action:pan-y;}
+  .tmpl-canvas-wrap.is-arming{cursor:crosshair; box-shadow:0 0 0 2px var(--tan); touch-action:none;}
+  .tmpl-canvas-wrap canvas, .tmpl-canvas-wrap img{display:block; width:auto; height:auto; max-width:100%; max-height:calc(100vh - 310px);}
+  .tmpl-canvas-wrap canvas{background:repeating-conic-gradient(#f0f0f0 0% 25%, #fff 0% 50%) 50% / 16px 16px;}
+  .tp-status{font-size:12.500px; font-weight:500; color:var(--ink-soft); margin:12px 0 0; min-height:19px;}
+  .tp-warn{color:var(--danger, #B4483C); font-weight:600;}
+  .tp-pending{display:inline-block; margin:12px 0 0; padding:7px 14px; font-size:12.500px; font-weight:600; color:#7A5630; background:var(--tan-tint); border-radius:999px;}
+  .tmpl-toolbar-legend{justify-content:center; gap:6px; margin-top:10px; padding-top:0; border-top:none;}
+  .tmpl-toolbar-legend span{font-size:11px; background:var(--field); border-radius:999px; padding:4px 10px;}
+
+  /* العلامات على اللوحة */
+  .tmpl-marker{background:var(--ink); border-radius:999px; padding:3px 9px; font-weight:600; opacity:.9; touch-action:none; box-shadow:0 0 0 2px #fff, 0 4px 10px rgba(20,28,27,.25);}
+  .tmpl-marker::after{background:var(--ink);}
+  .tmpl-marker.is-active{background:var(--teal); opacity:1; z-index:6;}
+  .tmpl-marker.is-active::after{background:var(--teal);}
+  .tmpl-marker.img-marker{border:1.500px dashed var(--tan); border-radius:8px; background:transparent; box-shadow:none;}
+  .tmpl-marker.img-marker.is-active{border-style:solid; border-width:2px; background:rgba(184,141,102,.08);}
+  .tmpl-marker.img-marker span:first-child{border-radius:999px; padding:3px 9px; font-weight:600;}
+  .tmpl-resize-handle{width:16px; height:16px; bottom:-8px; right:-8px; border-width:2.500px; box-shadow:0 2px 6px rgba(20,28,27,.25); touch-action:none;}
+  @media (pointer:coarse){
+    .tmpl-marker{font-size:12px; padding:6px 12px;}
+    .tmpl-resize-handle{width:26px; height:26px; bottom:-13px; right:-13px;}
+  }
+
+  /* لوحة العناصر */
+  .tmpl-fields-panel{border:1px solid rgba(255,255,255,.95); border-radius:24px; padding:16px; box-shadow:var(--shadow);}
+  .tmpl-fields-panel-head{font-size:14px; font-weight:600; color:var(--ink); margin-bottom:12px; gap:8px;}
+  .tmpl-fields-panel-head i, .tp-more summary i{font-style:normal; font-size:11.500px; font-weight:600; color:var(--teal-dark); background:var(--teal-tint); border-radius:999px; padding:1px 8px;}
+  .tp-add{display:flex; gap:8px; margin-bottom:14px;}
+  .tp-add select, .tf-grow{flex:1; min-width:0; margin:0; padding:9px 12px; font:inherit; font-size:13px; background-color:var(--field); border:1px solid transparent; border-radius:12px;}
+  .tp-empty{text-align:center; font-size:13px; color:var(--ink-soft); padding:16px 0 8px;}
+  .tf-btn-sm{display:inline-flex; align-items:center; gap:6px; padding:8px 14px !important; font-size:12.500px !important; white-space:nowrap; min-height:0 !important; cursor:pointer;}
+  .tf-btn-sm svg, .tp-actionbar svg, .tmpl-field-bg-row .btn-secondary svg{width:15px; height:15px; flex:none;}
+
+  .tmpl-field-row{border:1px solid var(--line); border-inline-start:1px solid var(--line); border-radius:18px; padding:0; margin-bottom:8px; box-shadow:none; overflow:hidden; scroll-margin:12px; transition:border-color .25s ease, box-shadow .25s ease;}
+  .tmpl-field-row.is-active{border-color:var(--teal); box-shadow:0 0 0 3px rgba(75,112,113,.12);}
+  .tmpl-field-row.drag-over{border-top:2px solid var(--teal);}
+  .tmpl-field-row-head{gap:10px; margin:0; padding:10px 12px; justify-content:flex-start; user-select:none;}
+  .tmpl-field-row-head b{flex:1; min-width:0; font-size:13.500px; font-weight:600; color:var(--ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .tmpl-field-row-head b::before{content:none;}
+  .tmpl-field-row.collapsed .tmpl-field-row-head{margin:0;}
+  .tmpl-drag-handle{display:flex; margin:0; color:#B4BDBA; cursor:grab;}
+  .tmpl-drag-handle svg{width:16px; height:16px;}
+  .tf-type{width:30px; height:30px; flex:none; border-radius:10px; display:flex; align-items:center; justify-content:center; background:var(--teal-tint); color:var(--teal-dark);}
+  .tf-type.is-img{background:var(--tan-tint); color:#8F6A45;}
+  .tf-type svg{width:16px; height:16px;}
+  .tf-chev{display:flex; color:var(--ink-soft); transition:transform .3s var(--ease);}
+  .tf-chev svg{width:16px; height:16px;}
+  .tmpl-field-row:not(.collapsed) .tf-chev{transform:rotate(180deg);}
+  .tmpl-field-row-head .task-icon-btn{opacity:.55;}
+  .tmpl-field-row-head .task-icon-btn:hover{opacity:1;}
+  .tmpl-field-body{padding:4px 14px 14px; display:flex; flex-direction:column; gap:10px; border-top:1px solid var(--line);}
+  .tmpl-field-body > *{margin:0;}
+  .tmpl-field-body > :first-child{margin-top:10px;}
+
+  .tf-label{font-size:11.500px; font-weight:600; color:var(--ink-soft); margin:4px 0 -4px !important;}
+  .tf-hint{font-size:11.500px; line-height:1.8; color:var(--ink-soft); margin:0;}
+  .tf-grid{display:grid; gap:8px;}
+  .tf-grid-2{grid-template-columns:repeat(2, minmax(0, 1fr));}
+  .tf-grid-3{grid-template-columns:repeat(3, minmax(0, 1fr));}
+  .tf-grid-4{grid-template-columns:repeat(4, minmax(0, 1fr));}
+  .tf-f{display:flex; flex-direction:column; gap:4px; min-width:0; font-size:11px; color:var(--ink-soft);}
+  .tf-f > span{white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .tf-f input, .tf-f select, .tf-slider input[type="number"]{width:100%; min-width:0; margin:0; padding:8px 10px; font:inherit; font-size:13px; color:var(--ink); background-color:var(--field); border:1px solid transparent; border-radius:11px; min-height:0; box-shadow:none; font-variant-numeric:tabular-nums;}
+  .tf-f input:focus, .tf-f select:focus, .tf-slider input[type="number"]:focus, .tp-add select:focus, .tf-grow:focus{outline:none; background-color:#fff; border-color:var(--teal); box-shadow:0 0 0 3px rgba(75,112,113,.12);}
+  .tf-f input[type="number"], .tf-slider input[type="number"]{direction:ltr; text-align:center; -moz-appearance:textfield;}
+  .tf-f input[type="number"]::-webkit-inner-spin-button, .tf-slider input[type="number"]::-webkit-inner-spin-button{-webkit-appearance:none; margin:0;}
+  .tf-f input:disabled{opacity:.5;}
+  .tf-slider{display:grid; grid-template-columns:54px minmax(0, 1fr) 62px; align-items:center; gap:10px;}
+  .tf-slider > span{font-size:12px; color:var(--ink-2);}
+  .tf-slider input[type="range"]{-webkit-appearance:none; appearance:none; width:100%; height:26px; margin:0; padding:0; background:transparent; border:none; cursor:pointer; direction:ltr; min-height:0;}
+  .tf-slider input[type="range"]::-webkit-slider-runnable-track{height:5px; border-radius:999px; background:rgba(20,28,27,.12);}
+  .tf-slider input[type="range"]::-moz-range-track{height:5px; border-radius:999px; background:rgba(20,28,27,.12);}
+  .tf-slider input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none; width:20px; height:20px; margin-top:-7.500px; border-radius:50%; background:#fff; border:2px solid var(--teal); box-shadow:0 2px 6px rgba(20,28,27,.2);}
+  .tf-slider input[type="range"]::-moz-range-thumb{width:16px; height:16px; border-radius:50%; background:#fff; border:2px solid var(--teal); box-shadow:0 2px 6px rgba(20,28,27,.2);}
+  .tf-row{display:flex; align-items:center; gap:8px; flex-wrap:wrap;}
+  .tf-row-label{font-size:12px; color:var(--ink-2); width:54px; flex:none;}
+  .tf-seg{display:inline-flex; padding:3px; background:var(--field); border-radius:12px;}
+  .tf-seg label{position:relative; cursor:pointer;}
+  .tf-seg input{position:absolute; opacity:0; pointer-events:none;}
+  .tf-seg span{display:block; padding:6px 13px; font-size:12.500px; font-weight:500; color:var(--ink-2); border-radius:9px; transition:background .25s ease, color .25s ease, box-shadow .25s ease;}
+  .tf-seg input:checked + span{background:#fff; color:var(--ink); font-weight:600; box-shadow:0 1px 2px rgba(20,28,27,.08), 0 4px 10px rgba(20,28,27,.08);}
+  .tf-seg input:focus-visible + span{box-shadow:0 0 0 2px var(--teal);}
+  .tf-chips{display:flex; flex-wrap:wrap; gap:6px;}
+  .tf-chip{position:relative; cursor:pointer;}
+  .tf-chip input{position:absolute; opacity:0; pointer-events:none;}
+  .tf-chip span{display:block; padding:7px 13px; font-size:12.500px; font-weight:500; color:var(--ink-2); background:var(--field); border:1px solid transparent; border-radius:999px; transition:background .25s ease, color .25s ease;}
+  .tf-chip input:checked + span{background:var(--ink); color:#fff;}
+  .tf-chip input:focus-visible + span{border-color:var(--teal);}
+  .tf-color{width:34px; height:34px; flex:none; border-radius:50%; overflow:hidden; border:2px solid #fff; box-shadow:0 0 0 1px var(--line), 0 2px 6px rgba(20,28,27,.12); cursor:pointer;}
+  .tf-color input{width:150%; height:150%; margin:-25%; padding:0; border:none; background:none; cursor:pointer; min-height:0;}
+
+  .tf-pan{display:flex; align-items:center; gap:14px; padding:12px; background:var(--field); border-radius:16px;}
+  .tf-pan-side{flex:1; min-width:0; display:flex; flex-direction:column; gap:10px;}
+  .tf-pan .tf-slider input[type="number"], .tf-pan .tf-seg{background-color:#fff;}
+  .tf-pan .tf-seg{background:#fff;}
+  .tf-pan .tf-seg input:checked + span{background:var(--ink); color:#fff; box-shadow:none;}
+  .tmpl-nudge-pad{grid-template-columns:repeat(3, 32px); grid-template-rows:repeat(3, 32px); gap:3px; flex:none; direction:ltr;}
+  .tmpl-nudge-pad button{border:none; background:#fff; border-radius:10px; color:var(--ink-2); box-shadow:0 1px 2px rgba(20,28,27,.08);}
+  .tmpl-nudge-pad button:hover{background:var(--ink); color:#fff;}
+  .tmpl-nudge-pad button:active{transform:scale(.92);}
+  .tmpl-nudge-pad svg{width:14px; height:14px;}
+  .tmpl-nudge-left{grid-column:1; grid-row:2;} .tmpl-nudge-left svg{transform:rotate(-90deg);}
+  .tmpl-nudge-right{grid-column:3; grid-row:2;} .tmpl-nudge-right svg{transform:rotate(90deg);}
+  .tmpl-nudge-down svg{transform:rotate(180deg);}
+  .tmpl-nudge-center i{width:7px; height:7px; border-radius:50%; background:currentColor;}
+  .tmpl-field-bg-row{border:none; border-radius:16px; padding:8px 10px; background:var(--tan-tint);}
+  .tmpl-field-bg-row .btn-secondary{display:inline-flex; align-items:center; gap:6px; padding:7px 13px; font-size:12.500px; min-height:0;}
+  .tmpl-field-bg-thumb{border-radius:10px; width:38px; height:38px;}
+
+  .tmpl-field-group, .tp-more{margin:0; padding:0; border:none; border-top:1px solid var(--line);}
+  .tmpl-field-body > .tmpl-field-group{margin-inline:-14px; padding-inline:14px;}
+  .tmpl-field-body > .tmpl-field-group:last-child{margin-bottom:-14px; padding-bottom:4px;}
+  .tmpl-field-group summary, .tp-more summary{display:flex; align-items:center; gap:8px; padding:11px 0; font-size:12.500px; font-weight:600; color:var(--ink-2); cursor:pointer; list-style:none;}
+  .tp-more summary::-webkit-details-marker{display:none;}
+  .tmpl-field-group summary::before, .tp-more summary::before{content:""; width:6px; height:6px; margin-inline:3px 5px; border-inline-start:1.500px solid currentColor; border-bottom:1.500px solid currentColor; transform:rotate(45deg); transition:transform .25s ease;}
+  .tmpl-field-group[open] summary::before, .tp-more[open] summary::before{transform:rotate(-45deg);}
+  .tf-adv{display:flex; flex-direction:column; gap:10px; padding-bottom:12px;}
+  .tf-adv > *{margin:0;}
+  .tp-more{margin-top:12px; padding:2px 16px; background:#fff; border:1px solid rgba(255,255,255,.95); border-radius:20px; box-shadow:var(--shadow-sm);}
+  .tp-file{align-self:flex-start;}
+  .tp-font-row{display:flex; align-items:center; justify-content:space-between; gap:8px; font-size:13px; padding:4px 0;}
+
+  .tp-actionbar{position:sticky; bottom:0; z-index:8; display:flex; align-items:center; justify-content:flex-end; gap:10px; margin-inline:-36px; padding:12px 36px calc(12px + env(safe-area-inset-bottom, 0px)); background:rgba(245,246,245,.82); -webkit-backdrop-filter:blur(16px) saturate(160%); backdrop-filter:blur(16px) saturate(160%); border-top:1px solid var(--line);}
+  .tp-actionbar .btn-primary, .tp-actionbar .btn-secondary{display:inline-flex; align-items:center; justify-content:center; gap:8px; margin:0; width:auto; flex:none;}
+  .tp-actionbar button:disabled{opacity:.5;}
+
+  @media (max-width:899px){
+    .panel-overlay.panel-overlay-fullscreen .panel.panel-fullscreen{padding:12px 12px 0;}
+    .tp-head{margin-bottom:10px;}
+    .tp-title-ico{width:36px; height:36px; border-radius:12px;}
+    .tp-toolbar{flex-wrap:nowrap; overflow-x:auto; margin-inline:-12px; padding:2px 12px 4px; margin-bottom:10px; scrollbar-width:none;}
+    .tp-toolbar::-webkit-scrollbar{display:none;}
+    .tp-ctl{flex:none;}
+    .tp-ctl select{max-width:190px; font-size:16px;}
+    .tmpl-workspace-stack{flex-direction:column; gap:12px; padding-bottom:14px;}
+    .tmpl-workspace-stack > .tmpl-canvas-col{width:100%; flex:none; z-index:7; margin-inline:-12px; width:calc(100% + 24px); padding:0 12px 8px; background:linear-gradient(to bottom, var(--bg) 92%, rgba(245,246,245,0));}
+    .tmpl-workspace-stack > .tmpl-fields-col{flex:none; width:100%;}
+    .tmpl-canvas-stage{border-radius:20px; padding:10px;}
+    .tmpl-canvas-wrap canvas, .tmpl-canvas-wrap img{max-height:40vh;}
+    .tmpl-toolbar-legend{display:none;}
+    .tp-status{margin-top:6px; font-size:12px;}
+    .tmpl-field-row{scroll-margin-top:calc(40vh + 90px);}
+    .tmpl-fields-panel{border-radius:20px; padding:12px;}
+    .tf-f input, .tf-f select, .tf-slider input[type="number"], .tp-add select, .tf-grow{font-size:16px; padding:9px 8px;}
+    .tf-grid-4{grid-template-columns:repeat(2, minmax(0, 1fr));}
+    .tf-slider{grid-template-columns:48px minmax(0, 1fr) 66px;}
+    .tf-slider input[type="range"]{height:34px;}
+    .tf-slider input[type="range"]::-webkit-slider-thumb{width:26px; height:26px; margin-top:-10.500px;}
+    .tmpl-nudge-pad{grid-template-columns:repeat(3, 38px); grid-template-rows:repeat(3, 38px);}
+    .tf-seg span{padding:8px 14px;}
+    .tf-chip span{padding:9px 14px;}
+    .tp-actionbar{margin-inline:-12px; padding:10px 12px calc(10px + env(safe-area-inset-bottom, 0px));}
+    .tp-actionbar .btn-primary{flex:1;}
+    .tmpl-marker:not(.is-active):not(.img-marker){opacity:.7;}
+  }
+
 </style>
 </head>
 <body>
@@ -5980,7 +6166,17 @@
       offsetY: Math.max(-1, Math.min(1, baseOffsetY + adj.dy))
     };
   }
+  var _imgMemo = {}, _imgMemoKeys = [];
   function loadImageAsync(src){
+    if(!src) return Promise.resolve(null);
+    if(_imgMemo[src]) return _imgMemo[src];
+    var p = loadImageAsyncRaw(src).then(function(img){ if(!img) delete _imgMemo[src]; return img; });
+    _imgMemo[src] = p;
+    _imgMemoKeys.push(src);
+    if(_imgMemoKeys.length > 30) delete _imgMemo[_imgMemoKeys.shift()];
+    return p;
+  }
+  function loadImageAsyncRaw(src){
     return new Promise(function(resolve){
       if(!src){ resolve(null); return; }
       if(src.indexOf("data:") === 0){
@@ -6556,7 +6752,10 @@
   // ----- قوالب التصميم (توليد صورة مخصصة لكل سجل من قالب جاهز) -----
   var _designTemplatesCache = [];
   db.collection("designTemplates").onSnapshot(function(snap){
-    _designTemplatesCache = snap.docs.map(function(d){ return d.data(); });
+    var editingId = (tmplGenerateState && tmplGenerateState.templateId) || (tmplEditorState && tmplEditorState.templateId) || null;
+    var liveTmpl = editingId ? findDesignTemplate(editingId) : null;
+    _designTemplatesCache = snap.docs.map(function(d){ var v = d.data(); return (liveTmpl && v.id === liveTmpl.id) ? liveTmpl : v; });
+    if(editingId){ _tmplHubStale = true; return; }
     eventsFirestoreRefresh();
   }, function(err){ console.error("designTemplates snapshot error", err); });
   function loadDesignTemplates(catKey){
@@ -6565,7 +6764,11 @@
   function findDesignTemplate(id){
     return _designTemplatesCache.find(function(t){ return t.id === id; });
   }
-  function saveDesignTemplate(tmpl){ db.collection("designTemplates").doc(tmpl.id).set(tmpl); }
+  var _tmplSaveTimers = {}, _tmplHubStale = false;
+  function saveDesignTemplate(tmpl){
+    if(_tmplSaveTimers[tmpl.id]){ clearTimeout(_tmplSaveTimers[tmpl.id]); delete _tmplSaveTimers[tmpl.id]; }
+    db.collection("designTemplates").doc(tmpl.id).set(tmpl);
+  }
   function deleteDesignTemplate(id){ db.collection("designTemplates").doc(id).delete(); }
   function genTemplateId(){ return "tmpl-" + Date.now().toString(36) + Math.random().toString(36).slice(2, 8); }
   // ينسخ الصورة وكل المتغيرات ومواضعها إلى قالب جديد مستقل — إما لنفس التصنيف (نسخة معدّلة، مثل قالب الإناث)
@@ -7293,7 +7496,7 @@
             '<button type="button" class="row-menu-item danger" data-action="reject-event" data-id="' + r.id + '"><span class="icon" style="font-weight:700;">✕</span> رفض</button>';
         }
         if(loadDesignTemplates(cat.key).length){
-          html += '<button type="button" class="row-menu-item" data-action="generate-design" data-id="' + r.id + '"><span class="icon">🎨</span> توليد تصميم</button>';
+          html += '<button type="button" class="row-menu-item" data-action="generate-design" data-id="' + r.id + '"><span class="icon">' + TPI.design + '</span> توليد تصميم</button>';
         }
         html += '<button type="button" class="row-menu-item" data-action="edit-event" data-id="' + r.id + '"><span class="icon">' + ICON_EDIT + '</span> تعديل</button>' +
           '<button type="button" class="row-menu-item danger" data-action="delete-event" data-id="' + r.id + '"><span class="icon">' + ICON_DELETE + '</span> حذف</button>' +
@@ -8146,7 +8349,7 @@
       EVENTS_CATEGORIES.map(function(c){
         return '<button type="button" class="cat-tab' + (c.key === cat ? " active" : "") + '" data-action="set-design-tmpl-cat" data-cat="' + c.key + '"><span class="icon" style="color:' + eventCategoryColor(c.key) + ';">' + c.icon + '</span>' + c.label + '</button>';
       }).join("") + '</div>';
-    html += '<p class="hint" style="margin-bottom:14px;">ارفع قالب التصميم هنا فقط. بعدها كل شي — إضافة المتغيرات وضبط مواضعها وتوليد الصورة — يصير من زر 🎨 داخل جدول البيانات، وأنت شايف بيانات السجل الحقيقية أثناء الضبط. "تعديل" هنا يفتح نفس الأدوات بس على القالب الفارغ بدون بيانات سجل، لو حبيت تجهّزه قبل أي تسجيل.</p>';
+    html += '<p class="hint" style="margin-bottom:14px;">ارفع قالب التصميم هنا فقط. بعدها كل شي — إضافة المتغيرات وضبط مواضعها وتوليد الصورة — يصير من زر داخل جدول البيانات، وأنت شايف بيانات السجل الحقيقية أثناء الضبط. "تعديل" هنا يفتح نفس الأدوات بس على القالب الفارغ بدون بيانات سجل، لو حبيت تجهّزه قبل أي تسجيل.</p>';
     if(!templates.length){
       html += '<p style="text-align:center; color:var(--ink-soft); padding:20px 0;">لا توجد قوالب لهذا التصنيف بعد</p>';
     } else {
@@ -8174,14 +8377,14 @@
     return tmplEditorState ? findDesignTemplate(tmplEditorState.templateId) : null;
   }
   var TMPL_GEOM_PROPS = ["x", "y", "boxWidth", "boxHeight", "zoom", "offsetX", "offsetY"];
-  function tmplUpdateField(tmpl, key, patch){
+  function tmplUpdateField(tmpl, key, patch, noSave){
     var f = tmpl.fields.find(function(x){ return x.key === key; });
     if(!f) return;
     var geomTarget = f.type === "image" ? tmplGeomTarget(f) : f;
     Object.keys(patch).forEach(function(k){
       (TMPL_GEOM_PROPS.indexOf(k) > -1 ? geomTarget : f)[k] = patch[k];
     });
-    saveDesignTemplate(tmpl);
+    if(!noSave) saveDesignTemplate(tmpl);
   }
   function tmplToggleContainOverride(tmpl, key, enable){
     var f = tmpl.fields.find(function(x){ return x.key === key; });
@@ -8249,14 +8452,14 @@
       el.dataset.fieldKey = f.key;
       if(f.type === "image"){
         var g = tmplGeomTarget(f);
-        el.className = "tmpl-marker img-marker" + (extraClass || "") + (g !== f ? " contain-marker" : "");
+        el.className = "tmpl-marker img-marker" + (extraClass || "") + (g !== f ? " contain-marker" : "") + (tmplActiveFieldKey === f.key ? " is-active" : "");
         el.style.left = (g.x / tmpl.width * 100) + "%";
         el.style.top = (g.y / tmpl.height * 100) + "%";
         el.style.width = (g.boxWidth / tmpl.width * 100) + "%";
         el.style.height = (g.boxHeight / tmpl.height * 100) + "%";
         el.innerHTML = '<span>' + lbl + (g !== f ? " (احتواء)" : "") + '</span><span class="tmpl-resize-handle" data-resize-key="' + f.key + '"></span>';
       } else {
-        el.className = "tmpl-marker" + (extraClass || "");
+        el.className = "tmpl-marker" + (extraClass || "") + (tmplActiveFieldKey === f.key ? " is-active" : "");
         el.style.left = (f.x / tmpl.width * 100) + "%";
         el.style.top = (f.y / tmpl.height * 100) + "%";
         el.textContent = lbl;
@@ -8323,120 +8526,304 @@
     });
     saveDesignTemplate(tmpl);
   }
+  // ===== لوحة التحكم بالتصميم (المفتّش): أيقونات خطية، منزلقات حيّة، أزرار مقسَّمة بدل القوائم =====
+  var TPI = {
+    design: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20L15 9"/><path d="M13.500 7.500l3 3"/><path d="M18 3v3M16.500 4.500h3M20 12v2M19 13h2M8 3.500v2M7 4.500h2"/></svg>',
+    text: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M5 7V5h14v2M12 5v14M9.500 19h5"/></svg>',
+    image: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3.500" y="4.500" width="17" height="15" rx="3"/><circle cx="9" cy="10" r="1.600"/><path d="M4 17l4.500-4 3.500 3 3-2.500 5 4"/></svg>',
+    grip: '<svg viewBox="0 0 24 24" fill="currentColor"><circle cx="9" cy="6" r="1.500"/><circle cx="15" cy="6" r="1.500"/><circle cx="9" cy="12" r="1.500"/><circle cx="15" cy="12" r="1.500"/><circle cx="9" cy="18" r="1.500"/><circle cx="15" cy="18" r="1.500"/></svg>',
+    plus: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>',
+    eye: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.700" stroke-linecap="round" stroke-linejoin="round"><path d="M2.500 12S6 5.500 12 5.500 21.500 12 21.500 12 18 18.500 12 18.500 2.500 12 2.500 12z"/><circle cx="12" cy="12" r="2.800"/></svg>',
+    download: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.900" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11M7.500 11l4.500 4.500 4.500-4.500M5 19.500h14"/></svg>',
+    swap: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.700" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V4M8 8l4-4 4 4M5 14v4a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-4"/></svg>',
+    arrow: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.200" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M6 11l6-6 6 6"/></svg>'
+  };
+  function tmplNum(n, digits){
+    n = Number(n);
+    if(!isFinite(n)) return "";
+    var m = Math.pow(10, digits == null ? 1 : digits);
+    return String(Math.round(n * m) / m);
+  }
+  function tmplSegHTML(key, prop, cur, opts){
+    return '<div class="tf-seg">' + opts.map(function(o){
+      return '<label><input type="radio" name="tf-' + prop + '-' + key + '" data-tmpl-prop="' + prop + '" value="' + o[0] + '"' + (cur === o[0] ? " checked" : "") + '/><span>' + o[1] + '</span></label>';
+    }).join("") + '</div>';
+  }
+  function tmplChipHTML(attr, on, label){
+    return '<label class="tf-chip"><input type="checkbox" ' + attr + (on ? " checked" : "") + '/><span>' + label + '</span></label>';
+  }
+  function tmplNumHTML(label, prop, val, attrs){
+    return '<label class="tf-f"><span>' + label + '</span><input type="number" inputmode="decimal" data-tmpl-prop="' + prop + '" value="' + val + '" ' + (attrs || "") + '/></label>';
+  }
+  function tmplSliderHTML(label, prop, val, min, max, step){
+    return '<div class="tf-slider"><span>' + label + '</span>' +
+      '<input type="range" data-tmpl-prop="' + prop + '" min="' + min + '" max="' + max + '" step="' + step + '" value="' + val + '"/>' +
+      '<input type="number" inputmode="decimal" data-tmpl-prop="' + prop + '" min="' + min + '" step="' + step + '" value="' + val + '"/></div>';
+  }
   function tmplFieldRowHTML(tmpl, f, previewRecordId){
     var meta = tmplFieldMeta(tmpl.category, f.key) || { label: f.key };
     var isImage = f.type === "image";
     var g = isImage ? tmplGeomTarget(f) : f;
-    var typeIcon = isImage ? "🖼️" : "🔤";
-    var html = '<div class="tmpl-field-row' + (tmplExpandedFieldKeys[f.key] ? "" : " collapsed") + '" data-field-key="' + f.key + '">' +
-      '<div class="tmpl-field-row-head" data-action="toggle-tmpl-field-row"><b><span class="tmpl-drag-handle" draggable="true" title="اسحب لتغيير الترتيب (يتحكم أيضاً بأيها يظهر فوق الآخر عند التداخل)">⠿</span><span class="tmpl-field-type-icon">' + typeIcon + '</span>' + escapeHTML(meta.label) + '</b><button type="button" class="task-icon-btn" data-action="remove-tmpl-field" data-key="' + f.key + '" title="حذف الموضع"><span class="icon">' + ICON_DELETE + '</span></button></div>';
-    html += '<div class="tmpl-field-body">';
-    if(isImage && previewRecordId){
-      var previewRec = loadEventsData().find(function(r){ return r.id === previewRecordId; });
-      var previewSrc = previewRec ? previewRec[f.key] : "";
-      html += '<div class="tmpl-field-bg-row">' +
-        (previewSrc ? '<img src="' + previewSrc + '" alt="" class="tmpl-field-bg-thumb"/>' : '<span class="tmpl-field-bg-thumb tmpl-field-bg-thumb-empty">؟</span>') +
-        '<button type="button" class="btn-secondary" data-action="remove-field-bg" data-key="' + f.key + '"' + (previewSrc ? "" : " disabled") + '>🪄 إزالة الخلفية من هذه الصورة</button>' +
+    var html = '<div class="tmpl-field-row' + (tmplExpandedFieldKeys[f.key] ? "" : " collapsed") + (tmplActiveFieldKey === f.key ? " is-active" : "") + '" data-field-key="' + f.key + '">' +
+      '<div class="tmpl-field-row-head" data-action="toggle-tmpl-field-row">' +
+        '<span class="tmpl-drag-handle" draggable="true" title="اسحب لتغيير الترتيب (يتحكم أيضاً بأيها يظهر فوق الآخر عند التداخل)">' + TPI.grip + '</span>' +
+        '<span class="tf-type' + (isImage ? " is-img" : "") + '">' + (isImage ? TPI.image : TPI.text) + '</span>' +
+        '<b>' + escapeHTML(meta.label) + '</b>' +
+        '<button type="button" class="task-icon-btn" data-action="remove-tmpl-field" data-key="' + f.key + '" title="حذف الموضع"><span class="icon">' + ICON_DELETE + '</span></button>' +
+        '<span class="tf-chev">' + TICON.chevron + '</span>' +
       '</div>';
-    }
-    html += '<div class="tmpl-field-controls">' +
-      '<label>X<input type="number" step="0.001" data-tmpl-prop="x" value="' + g.x + '"/></label>' +
-      '<label>Y<input type="number" step="0.001" data-tmpl-prop="y" value="' + g.y + '"/></label>';
-    if(isImage){
-      html += '<label>العرض<input type="number" min="10" step="0.001" data-tmpl-prop="boxWidth" value="' + g.boxWidth + '"/></label>' +
-        '<label>الارتفاع<input type="number" min="10" step="0.001" data-tmpl-prop="boxHeight" value="' + g.boxHeight + '"/></label>';
-    } else {
-      html += '<label>حجم الخط<input type="number" min="8" max="400" data-tmpl-prop="fontSize" value="' + f.fontSize + '"/></label>' +
-        '<label>اللون<input type="color" data-tmpl-prop="color" value="' + (f.color || "#000000") + '"/></label>';
-    }
-    html += '</div>';
+    html += '<div class="tmpl-field-body">';
     if(isImage){
       var imgStyle = tmplResolveImageStyle(f);
-      html += '<div class="tmpl-field-pan-block">' +
-        '<div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">' +
-          '<span class="hint" style="margin:0; font-weight:700;">تحريك الصورة داخل صندوقها (تقريب/تبعيد وأعلى/أسفل/يمين/يسار):</span>' +
+      if(previewRecordId){
+        var previewRec = loadEventsData().find(function(r){ return r.id === previewRecordId; });
+        var previewSrc = previewRec ? previewRec[f.key] : "";
+        html += '<div class="tmpl-field-bg-row">' +
+          (previewSrc ? '<img src="' + previewSrc + '" alt="" class="tmpl-field-bg-thumb"/>' : '<span class="tmpl-field-bg-thumb tmpl-field-bg-thumb-empty">؟</span>') +
+          '<button type="button" class="btn-secondary" data-action="remove-field-bg" data-key="' + f.key + '"' + (previewSrc ? "" : " disabled") + '>' + TPI.design + ' إزالة خلفية هذه الصورة</button>' +
+        '</div>';
+      }
+      html += '<p class="tf-label">الصورة داخل الإطار</p>' +
+        '<div class="tf-pan">' +
           '<div class="tmpl-nudge-pad">' +
-            '<button type="button" class="tmpl-nudge-up" data-action="nudge-tmpl-pan" data-key="' + f.key + '" data-dx="0" data-dy="-1" title="أعلى">▲</button>' +
-            '<button type="button" class="tmpl-nudge-left" data-action="nudge-tmpl-pan" data-key="' + f.key + '" data-dx="-1" data-dy="0" title="يسار">◀</button>' +
-            '<button type="button" class="tmpl-nudge-center" data-action="nudge-tmpl-pan" data-key="' + f.key + '" data-dx="0" data-dy="0" title="توسيط">●</button>' +
-            '<button type="button" class="tmpl-nudge-right" data-action="nudge-tmpl-pan" data-key="' + f.key + '" data-dx="1" data-dy="0" title="يمين">▶</button>' +
-            '<button type="button" class="tmpl-nudge-down" data-action="nudge-tmpl-pan" data-key="' + f.key + '" data-dx="0" data-dy="1" title="أسفل">▼</button>' +
+            '<button type="button" class="tmpl-nudge-up" data-action="nudge-tmpl-pan" data-key="' + f.key + '" data-dx="0" data-dy="-1" title="أعلى">' + TPI.arrow + '</button>' +
+            '<button type="button" class="tmpl-nudge-left" data-action="nudge-tmpl-pan" data-key="' + f.key + '" data-dx="-1" data-dy="0" title="يسار">' + TPI.arrow + '</button>' +
+            '<button type="button" class="tmpl-nudge-center" data-action="nudge-tmpl-pan" data-key="' + f.key + '" data-dx="0" data-dy="0" title="توسيط"><i></i></button>' +
+            '<button type="button" class="tmpl-nudge-right" data-action="nudge-tmpl-pan" data-key="' + f.key + '" data-dx="1" data-dy="0" title="يمين">' + TPI.arrow + '</button>' +
+            '<button type="button" class="tmpl-nudge-down" data-action="nudge-tmpl-pan" data-key="' + f.key + '" data-dx="0" data-dy="1" title="أسفل">' + TPI.arrow + '</button>' +
+          '</div>' +
+          '<div class="tf-pan-side">' +
+            tmplSliderHTML("التقريب", "zoom", tmplNum(imgStyle.zoom, 2), 0.4, 4, 0.01) +
+            '<div class="tf-row"><span class="tf-row-label">الملء</span>' + tmplSegHTML(f.key, "fit", imgStyle.fit, [["cover", "تغطية"], ["contain", "احتواء"]]) + '</div>' +
           '</div>' +
         '</div>' +
-        '<div class="tmpl-field-controls" style="margin-top:8px;">' +
-          '<label>🔍 تقريب/تبعيد<input type="number" min="0.4" step="0.05" data-tmpl-prop="zoom" value="' + imgStyle.zoom + '"/></label>' +
-          '<label>↔ إزاحة أفقية<input type="number" min="-1" max="1" step="0.05" data-tmpl-prop="offsetX" value="' + imgStyle.offsetX + '"/></label>' +
-          '<label>↕ إزاحة عمودية<input type="number" min="-1" max="1" step="0.05" data-tmpl-prop="offsetY" value="' + imgStyle.offsetY + '"/></label>' +
+        '<p class="tf-label">الموضع والمقاس</p>' +
+        '<div class="tf-grid tf-grid-4">' +
+          tmplNumHTML("X", "x", tmplNum(g.x), 'step="1"') + tmplNumHTML("Y", "y", tmplNum(g.y), 'step="1"') +
+          tmplNumHTML("العرض", "boxWidth", tmplNum(g.boxWidth), 'min="10" step="1"') + tmplNumHTML("الارتفاع", "boxHeight", tmplNum(g.boxHeight), 'min="10" step="1"') +
+        '</div>';
+      var rAll = Math.max(imgStyle.radius.tl, imgStyle.radius.tr, imgStyle.radius.bl, imgStyle.radius.br);
+      var rMax = Math.max(40, Math.round(Math.min(g.boxWidth || 0, g.boxHeight || 0) / 2));
+      html += tmplSliderHTML("الزوايا", "radiusAll", tmplNum(rAll), 0, rMax, 1);
+      html += '<details class="tmpl-field-group"><summary>خيارات متقدمة</summary><div class="tf-adv">' +
+        '<p class="tf-label">كل زاوية على حدة</p>' +
+        '<div class="tf-grid tf-grid-4">' +
+          tmplNumHTML("أعلى يسار", "radiusTL", tmplNum(imgStyle.radius.tl), 'min="0" step="1"') + tmplNumHTML("أعلى يمين", "radiusTR", tmplNum(imgStyle.radius.tr), 'min="0" step="1"') +
+          tmplNumHTML("أسفل يسار", "radiusBL", tmplNum(imgStyle.radius.bl), 'min="0" step="1"') + tmplNumHTML("أسفل يمين", "radiusBR", tmplNum(imgStyle.radius.br), 'min="0" step="1"') +
         '</div>' +
-      '</div>';
-      html += '<details class="tmpl-field-group"><summary>الملء والزوايا</summary><div class="tmpl-field-controls">' +
-        '<label>طريقة الملء<select data-tmpl-prop="fit">' +
-          '<option value="cover"' + (imgStyle.fit === "cover" ? " selected" : "") + '>تغطية (قص لملء المربع — الخلفية كما هي)</option>' +
-          '<option value="contain"' + (imgStyle.fit === "contain" ? " selected" : "") + '>احتواء كامل (بدون قص — لصور مفرّغة الخلفية)</option>' +
-        '</select></label>' +
-        '<label style="flex-basis:100%; display:flex; align-items:center; gap:6px;"><input type="checkbox" data-toggle-contain-override="' + f.key + '"' + (f.containOverride ? " checked" : "") + ' style="width:auto; margin:0;"/> موضع ومقاس مستقلّان عند "احتواء كامل" (بدل استخدام نفس موضع التغطية)</label>' +
-        (f.fit === "contain" && f.containOverride ? '<p class="hint" style="flex-basis:100%; margin:0;">تعدّل الآن الموضع الخاص بوضع الاحتواء — لن يؤثر على موضع التغطية</p>' : '') +
-        '<label style="flex-basis:100%; font-weight:700; margin-top:4px;">انحناء الزوايا (px) — كل زاوية مستقلة</label>' +
-        '<label>⌜ أعلى-يسار<input type="number" min="0" step="0.001" data-tmpl-prop="radiusTL" value="' + imgStyle.radius.tl + '"/></label>' +
-        '<label>⌝ أعلى-يمين<input type="number" min="0" step="0.001" data-tmpl-prop="radiusTR" value="' + imgStyle.radius.tr + '"/></label>' +
-        '<label>⌞ أسفل-يسار<input type="number" min="0" step="0.001" data-tmpl-prop="radiusBL" value="' + imgStyle.radius.bl + '"/></label>' +
-        '<label>⌟ أسفل-يمين<input type="number" min="0" step="0.001" data-tmpl-prop="radiusBR" value="' + imgStyle.radius.br + '"/></label>' +
+        '<p class="tf-label">إزاحة الصورة بالأرقام (من -1 إلى 1)</p>' +
+        '<div class="tf-grid tf-grid-2">' +
+          tmplNumHTML("أفقية", "offsetX", tmplNum(imgStyle.offsetX, 2), 'min="-1" max="1" step="0.05"') + tmplNumHTML("عمودية", "offsetY", tmplNum(imgStyle.offsetY, 2), 'min="-1" max="1" step="0.05"') +
+        '</div>' +
+        '<div class="tf-chips">' + tmplChipHTML('data-toggle-contain-override="' + f.key + '"', !!f.containOverride, "موضع ومقاس مستقلّان لوضع «احتواء»") + '</div>' +
+        (f.fit === "contain" && f.containOverride ? '<p class="tf-hint">تعدّل الآن الموضع الخاص بوضع الاحتواء — لا يؤثر على موضع التغطية.</p>' : '') +
       '</div></details>';
     } else {
-      html += '<details class="tmpl-field-group" open><summary>الخط والمحاذاة</summary><div class="tmpl-field-controls">' +
-        '<label>الخط<select data-tmpl-prop="font">' +
+      html += '<label class="tf-f tf-f-wide"><span>الخط</span><select data-tmpl-prop="font">' +
           TMPL_FONT_CHOICES.map(function(fn){ return '<option value="' + fn + '"' + (f.font === fn ? " selected" : "") + '>' + fn + '</option>'; }).join("") +
-          loadDesignFonts().map(function(df){ return '<option value="custom:' + df.id + '"' + (f.font === "custom:" + df.id ? " selected" : "") + '>🔤 ' + escapeHTML(df.name) + '</option>'; }).join("") +
+          loadDesignFonts().map(function(df){ return '<option value="custom:' + df.id + '"' + (f.font === "custom:" + df.id ? " selected" : "") + '>' + escapeHTML(df.name) + ' (مخصص)</option>'; }).join("") +
         '</select></label>' +
-        '<label>المحاذاة<select data-tmpl-prop="align"><option value="right"' + (f.align === "right" ? " selected" : "") + '>يمين</option><option value="center"' + (f.align === "center" ? " selected" : "") + '>وسط</option><option value="left"' + (f.align === "left" ? " selected" : "") + '>يسار</option></select></label>' +
-        '<label>أقصى عرض' + (f.multiline ? " (عرض صندوق الفقرة)" : "") + '<input type="number" min="20" data-tmpl-prop="maxWidth" value="' + (f.maxWidth || "") + '"/></label>' +
-        '<label><input type="checkbox" data-tmpl-prop="bold"' + (f.bold ? " checked" : "") + '/> عريض</label>' +
-        '<label><input type="checkbox" data-tmpl-prop="multiline"' + (f.multiline ? " checked" : "") + '/> فقرة متعددة الأسطر (تلتف تلقائياً داخل الصندوق)</label>' +
-        (f.multiline ?
-          '<label>ارتفاع السطر (اتركه فارغاً للتلقائي)<input type="number" min="10" data-tmpl-prop="lineHeight" value="' + (f.lineHeight || "") + '"/></label>' +
-          '<label>أقصى ارتفاع للصندوق (اختياري — يصغّر الخط تلقائياً ليتسع، اتركه فارغاً لتعطيله)<input type="number" min="20" data-tmpl-prop="boxHeight" value="' + (f.boxHeight || "") + '"/></label>' +
-          '<p class="hint" style="flex-basis:100%; margin:0;">مع "Y" أعلى تصبح موضع أعلى الصندوق (لا وسطه)، والنص يلتف تلقائياً على عدة أسطر بعرض "أقصى عرض"</p>'
-        : "") +
-        '<label><input type="checkbox" data-tmpl-prop="kashida"' + (f.kashida ? " checked" : "") + '/> تمديد كشيدة</label>' +
-        (f.multiline ?
-          '<p class="hint" style="flex-basis:100%; margin:0;">مع الفقرة متعددة الأسطر: يُمدَّد كل سطر تلقائياً ليملأ عرض الصندوق (مثل التبرير الكامل بمحرري النصوص) — يُستثنى سطر أخير قصير جداً حتى لا تظهر فجوات كشيدة كبيرة على كلمتين فقط</p>'
-        : "") +
-        '<label>تمديد الكشيدة يطبَّق فقط عند القيمة (اتركه فارغاً ليُطبَّق دائماً)<input type="text" data-tmpl-prop="kashidaValue" placeholder="مثال: الماجستير" value="' + escapeHTML(f.kashidaValue || "") + '" style="width:150px;"/></label>' +
-        '<label style="flex-basis:100%;">إخفاء عند القيمة (افصل بفاصلة)<input type="text" data-tmpl-prop="hideValues" placeholder="مثال: بدون" value="' + escapeHTML((f.hideValues || []).join("، ")) + '" style="width:200px;"/></label>' +
-        '<label>نص قبل القيمة (ثابت لكل السجلات)<input type="text" data-tmpl-prop="prefix" placeholder="مثال: كريمة " value="' + escapeHTML(f.prefix || "") + '"' + (f.dynamicPrefixKey ? " disabled" : "") + ' style="width:150px;"/></label>' +
-        '<label>نص بعد القيمة<input type="text" data-tmpl-prop="suffix" placeholder="مثال: حفظه الله" value="' + escapeHTML(f.suffix || "") + '" style="width:150px;"/></label>' +
-        '<p class="hint" style="flex-basis:100%; margin:0 0 -4px;">النص هنا يظهر في التصميم فقط — القيمة المحفوظة بالسجل نفسها لا تتغيّر</p>' +
-        (tmplSelectDataFields(tmpl.category).length ?
-          '<label style="flex-basis:100%;">بادئة ديناميكية تتغيّر حسب حقل آخر بالسجل (تتجاوز "نص قبل القيمة" الثابت أعلاه إن اختيرت)<select data-tmpl-prop="dynamicPrefixKey"><option value="">بدون — استخدم النص الثابت</option>' +
-            tmplSelectDataFields(tmpl.category).map(function(sf){ return '<option value="' + sf.key + '"' + (f.dynamicPrefixKey === sf.key ? " selected" : "") + '>' + escapeHTML(sf.label) + '</option>'; }).join("") +
+        tmplSliderHTML("الحجم", "fontSize", f.fontSize, 8, 300, 1) +
+        '<div class="tf-row">' +
+          '<label class="tf-color" title="لون النص"><input type="color" data-tmpl-prop="color" value="' + (f.color || "#000000") + '"/></label>' +
+          tmplSegHTML(f.key, "align", f.align || "center", [["right", "يمين"], ["center", "وسط"], ["left", "يسار"]]) +
+          tmplChipHTML('data-tmpl-prop="bold"', !!f.bold, "عريض") +
+        '</div>' +
+        '<p class="tf-label">الموضع</p>' +
+        '<div class="tf-grid tf-grid-3">' +
+          tmplNumHTML("X", "x", tmplNum(g.x), 'step="1"') + tmplNumHTML("Y", "y", tmplNum(g.y), 'step="1"') +
+          tmplNumHTML(f.multiline ? "عرض الصندوق" : "أقصى عرض", "maxWidth", f.maxWidth || "", 'min="20" step="1"') +
+        '</div>' +
+        '<div class="tf-chips">' +
+          tmplChipHTML('data-tmpl-prop="multiline"', !!f.multiline, "فقرة متعددة الأسطر") +
+          tmplChipHTML('data-tmpl-prop="kashida"', !!f.kashida, "تمديد كشيدة") +
+        '</div>';
+      if(f.multiline){
+        html += '<div class="tf-grid tf-grid-2">' +
+          tmplNumHTML("ارتفاع السطر", "lineHeight", f.lineHeight || "", 'min="10" step="1" placeholder="تلقائي"') +
+          tmplNumHTML("أقصى ارتفاع", "boxHeight", f.boxHeight || "", 'min="20" step="1" placeholder="بلا حد"') +
+        '</div>' +
+        '<p class="tf-hint">في الفقرة: «Y» هو أعلى الصندوق، والنص يلتف داخل «عرض الصندوق». «أقصى ارتفاع» يصغّر الخط تلقائياً ليتسع. ومع الكشيدة يُمدَّد كل سطر ليملأ العرض.</p>';
+      }
+      var selFields = tmplSelectDataFields(tmpl.category);
+      var otherText = f.multiline ? [] : tmplOtherTextFields(tmpl, f.key);
+      html += '<details class="tmpl-field-group"><summary>خيارات متقدمة</summary><div class="tf-adv">' +
+        '<div class="tf-grid tf-grid-2">' +
+          '<label class="tf-f"><span>نص قبل القيمة</span><input type="text" data-tmpl-prop="prefix" placeholder="مثال: كريمة " value="' + escapeHTML(f.prefix || "") + '"' + (f.dynamicPrefixKey ? " disabled" : "") + '/></label>' +
+          '<label class="tf-f"><span>نص بعد القيمة</span><input type="text" data-tmpl-prop="suffix" placeholder="مثال: حفظه الله" value="' + escapeHTML(f.suffix || "") + '"/></label>' +
+        '</div>' +
+        '<p class="tf-hint">يظهر في التصميم فقط — القيمة المحفوظة بالسجل لا تتغيّر.</p>' +
+        (selFields.length ?
+          '<label class="tf-f tf-f-wide"><span>بادئة تتغيّر حسب حقل آخر</span><select data-tmpl-prop="dynamicPrefixKey"><option value="">بدون — استخدم النص الثابت</option>' +
+            selFields.map(function(sf){ return '<option value="' + sf.key + '"' + (f.dynamicPrefixKey === sf.key ? " selected" : "") + '>' + escapeHTML(sf.label) + '</option>'; }).join("") +
           '</select></label>' +
-          '<p class="hint" style="flex-basis:100%; margin:0;">مثال: اختر حقل "صيغة ذكر الأم" — كل سجل يظهر بالصيغة اللي اختارها مُدخِل البيانات نفسه (وحرمه / وحرمه كريمة الحاج...) بدل صيغة واحدة ثابتة لكل السجلات</p>'
+          '<p class="tf-hint">مثال: «صيغة ذكر الأم» — كل سجل يظهر بالصيغة التي اختارها مُدخِل البيانات.</p>' +
+          '<label class="tf-f tf-f-wide"><span>حقل بديل إن كانت القيمة فارغة</span><select data-tmpl-prop="fallbackKey"><option value="">بدون</option>' +
+            selFields.filter(function(sf){ return sf.key !== f.key; }).map(function(sf){ return '<option value="' + sf.key + '"' + (f.fallbackKey === sf.key ? " selected" : "") + '>' + escapeHTML(sf.label) + '</option>'; }).join("") +
+          '</select></label>'
         : "") +
-        (tmplSelectDataFields(tmpl.category).length ?
-          '<label style="flex-basis:100%;">حقل احتياطي عند فراغ القيمة (يُستخدم فقط إن كان هذا الحقل فارغاً بالسجل)<select data-tmpl-prop="fallbackKey"><option value="">بدون</option>' +
-            tmplSelectDataFields(tmpl.category).filter(function(sf){ return sf.key !== f.key; }).map(function(sf){ return '<option value="' + sf.key + '"' + (f.fallbackKey === sf.key ? " selected" : "") + '>' + escapeHTML(sf.label) + '</option>'; }).join("") +
+        '<label class="tf-f tf-f-wide"><span>إخفاء عند القيمة (افصل بفاصلة)</span><input type="text" data-tmpl-prop="hideValues" placeholder="مثال: بدون" value="' + escapeHTML((f.hideValues || []).join("، ")) + '"/></label>' +
+        '<label class="tf-f tf-f-wide"><span>الكشيدة فقط عند القيمة (فارغ = دائماً)</span><input type="text" data-tmpl-prop="kashidaValue" placeholder="مثال: الماجستير" value="' + escapeHTML(f.kashidaValue || "") + '"/></label>' +
+        (otherText.length ?
+          '<label class="tf-f tf-f-wide"><span>طابق عرض هذا السطر مع</span><select data-tmpl-prop="matchWidthKey"><option value="">بدون</option>' +
+            otherText.map(function(of){ return '<option value="' + of.key + '"' + (f.matchWidthKey === of.key ? " selected" : "") + '>' + escapeHTML((tmplFieldMeta(tmpl.category, of.key) || {}).label || of.key) + '</option>'; }).join("") +
           '</select></label>' +
-          '<p class="hint" style="flex-basis:100%; margin:0;">مثال: لو حقل "صياغة منشور التهنئة" وصل فارغاً (تخطّى المُسجِّل مساعد الصياغة الآلية)، اختر هنا "تفاصيل إضافية" — يظهر نصه بدل ترك المنشور بلا نص إطلاقاً</p>'
-        : "") +
-        (!f.multiline && tmplOtherTextFields(tmpl, f.key).length ?
-          '<label style="flex-basis:100%;">طابق عرض هذا السطر مع<select data-tmpl-prop="matchWidthKey"><option value="">بدون</option>' +
-            tmplOtherTextFields(tmpl, f.key).map(function(of){ return '<option value="' + of.key + '"' + (f.matchWidthKey === of.key ? " selected" : "") + '>' + escapeHTML((tmplFieldMeta(tmpl.category, of.key) || {}).label || of.key) + '</option>'; }).join("") +
-          '</select></label>' +
-          '<p class="hint" style="flex-basis:100%; margin:0;">مع تفعيل "تمديد كشيدة": يمتد هذا السطر تلقائياً (أو يبقى كما هو إن كان أطول) ليتساوى بصرياً مع عرض السطر المختار — فعّلها على السطرين معاً لتطابق تام بينهما</p>'
+          '<p class="tf-hint">يعمل مع «تمديد كشيدة» — فعّلها على السطرين معاً لتطابق تام.</p>'
         : "") +
       '</div></details>';
     }
     var otherTmpls = _designTemplatesCache.filter(function(t){ return t.id !== tmpl.id && t.category === tmpl.category; });
     if(otherTmpls.length){
-      html += '<details class="tmpl-field-group"><summary>نسخ الإعدادات لقالب آخر</summary><div class="tmpl-field-controls">' +
-        '<label>القالب الهدف<select id="tmplCopyTarget-' + f.key + '">' +
+      html += '<details class="tmpl-field-group"><summary>نسخ الإعدادات لقالب آخر</summary><div class="tf-adv"><div class="tf-row">' +
+        '<select id="tmplCopyTarget-' + f.key + '" class="tf-grow">' +
           otherTmpls.map(function(t){ return '<option value="' + t.id + '">' + escapeHTML(t.name) + '</option>'; }).join("") +
-        '</select></label>' +
-        '<button type="button" class="btn-secondary" data-action="copy-tmpl-field-style" data-key="' + f.key + '" style="padding:4px 10px; font-size:11px;">نسخ الإعدادات</button>' +
-      '</div></details>';
+        '</select>' +
+        '<button type="button" class="btn-secondary tf-btn-sm" data-action="copy-tmpl-field-style" data-key="' + f.key + '">نسخ</button>' +
+      '</div></div></details>';
     }
     html += '</div></div>';
     return html;
+  }
+
+  // ----- تشغيل اللوحة: تطبيق حيّ أثناء الكتابة/السحب، حفظ مؤجَّل، وتحديث خفيف بلا إعادة بناء النافذة -----
+  var TMPL_RERENDER_PROPS = ["multiline", "fit", "dynamicPrefixKey"];
+  // يطبّق قيمة عنصر تحكم على الحقل بالذاكرة (بلا حفظ) ويُزامن توأمه (المنزلق ↔ الرقم). live = أثناء الكتابة
+  function tmplApplyControl(tmpl, target, live){
+    var row = target.closest("[data-field-key]");
+    var prop = target.dataset ? target.dataset.tmplProp : "";
+    if(!row || !prop) return null;
+    if(target.type === "radio" && !target.checked) return null;
+    var val;
+    if(target.type === "checkbox") val = target.checked;
+    else if(target.type === "number" || target.type === "range"){
+      if(live && target.value === "") return null;
+      val = Number(target.value) || 0;
+    }
+    else if(prop === "hideValues") val = target.value.split(/[،,]/).map(function(s){ return s.trim(); }).filter(Boolean);
+    else val = target.value;
+    var patch = {};
+    if(prop === "radiusAll"){ patch.radiusTL = val; patch.radiusTR = val; patch.radiusBL = val; patch.radiusBR = val; }
+    else patch[prop] = val;
+    tmplUpdateField(tmpl, row.dataset.fieldKey, patch, true);
+    var syncProps = prop === "radiusAll" ? ["radiusAll", "radiusTL", "radiusTR", "radiusBL", "radiusBR"] : [prop];
+    syncProps.forEach(function(p){
+      var twins = row.querySelectorAll('[data-tmpl-prop="' + p + '"]');
+      for(var i = 0; i < twins.length; i++){
+        if(twins[i] !== target && twins[i].type !== "radio" && twins[i].type !== "checkbox") twins[i].value = target.value;
+      }
+    });
+    return { key: row.dataset.fieldKey, prop: prop, rerender: TMPL_RERENDER_PROPS.indexOf(prop) > -1 };
+  }
+  function tmplSaveSoon(tmpl){
+    clearTimeout(_tmplSaveTimers[tmpl.id]);
+    _tmplSaveTimers[tmpl.id] = setTimeout(function(){ delete _tmplSaveTimers[tmpl.id]; saveDesignTemplate(tmpl); }, 450);
+  }
+  function tmplFlushSaves(){
+    Object.keys(_tmplSaveTimers).forEach(function(id){
+      clearTimeout(_tmplSaveTimers[id]);
+      delete _tmplSaveTimers[id];
+      var t = findDesignTemplate(id);
+      if(t) saveDesignTemplate(t);
+    });
+  }
+  window.addEventListener("pagehide", tmplFlushSaves);
+  // يحدّث أرقام الموضع/المقاس/التقريب بصف الحقل بعد سحب أو تحريك — بدل إعادة بناء النافذة كاملة
+  function tmplSyncRowInputs(overlayEl, tmpl, key){
+    var f = tmpl.fields.find(function(x){ return x.key === key; });
+    var row = overlayEl.querySelector('.tmpl-field-row[data-field-key="' + key + '"]');
+    if(!f || !row) return;
+    var g = f.type === "image" ? tmplGeomTarget(f) : f;
+    var vals = { x: [g.x, 1], y: [g.y, 1], boxWidth: [g.boxWidth, 1], boxHeight: [g.boxHeight, 1] };
+    if(f.type === "image"){
+      var st = tmplResolveImageStyle(f);
+      vals.zoom = [st.zoom, 2]; vals.offsetX = [st.offsetX, 2]; vals.offsetY = [st.offsetY, 2];
+    }
+    Object.keys(vals).forEach(function(p){
+      if(vals[p][0] == null) return;
+      var els = row.querySelectorAll('[data-tmpl-prop="' + p + '"]');
+      for(var i = 0; i < els.length; i++){ if(document.activeElement !== els[i]) els[i].value = tmplNum(vals[p][0], vals[p][1]); }
+    });
+  }
+  // يحدّد العنصر النشط: يميّز صفه وعلامته على اللوحة، ومع expand يفتح صفه ويطوي الباقي
+  function tmplFocusField(overlayEl, key, expand){
+    tmplActiveFieldKey = key;
+    var rows = overlayEl.querySelectorAll(".tmpl-field-row"), target = null;
+    for(var i = 0; i < rows.length; i++){
+      var on = rows[i].dataset.fieldKey === key;
+      rows[i].classList.toggle("is-active", on);
+      if(on) target = rows[i];
+      if(expand){
+        tmplExpandedFieldKeys[rows[i].dataset.fieldKey] = on;
+        rows[i].classList.toggle("collapsed", !on);
+      }
+    }
+    var marks = overlayEl.querySelectorAll(".tmpl-marker");
+    for(var m = 0; m < marks.length; m++) marks[m].classList.toggle("is-active", marks[m].dataset.fieldKey === key);
+    if(expand && target && target.scrollIntoView) target.scrollIntoView({ block: "nearest", behavior: "smooth" });
+  }
+  // إعادة بناء محتوى النافذة مع الحفاظ على موضع التمرير وعلى لوحة الرسم نفسها (بلا وميض ولا قفز لأعلى)
+  function tmplSetBodyKeepScroll(body, html, keepCanvasId){
+    var st = body.scrollTop;
+    var oldCanvas = keepCanvasId ? document.getElementById(keepCanvasId) : null;
+    body.innerHTML = html;
+    if(oldCanvas && oldCanvas.width > 0){
+      var nc = document.getElementById(keepCanvasId);
+      if(nc && nc !== oldCanvas) nc.parentNode.replaceChild(oldCanvas, nc);
+    }
+    body.scrollTop = st;
+  }
+  var _tmplLiveRaf = 0;
+  function tmplGenLive(){
+    if(_tmplLiveRaf) return;
+    _tmplLiveRaf = requestAnimationFrame(function(){ _tmplLiveRaf = 0; if(tmplGenerateState) runDesignGenerate(); });
+  }
+  // تطبيق حيّ أثناء الكتابة/سحب المنزلق (حدث input) — الحفظ مؤجَّل لنصف ثانية بعد آخر تغيير
+  function tmplBindLiveInput(overlayEl, getTmpl, redraw){
+    overlayEl.addEventListener("input", function(e){
+      var t = e.target;
+      if(!t.dataset || !t.dataset.tmplProp) return;
+      if(t.type === "checkbox" || t.type === "radio" || t.tagName === "SELECT") return;
+      var tmpl = getTmpl();
+      if(!tmpl) return;
+      if(!tmplApplyControl(tmpl, t, true)) return;
+      tmplSaveSoon(tmpl);
+      redraw(tmpl);
+    });
+  }
+  // دعم اللمس (جوال/آيباد): يحوّل لمس العلامات والمقابض على اللوحة لأحداث الفأرة التي يفهمها المحرر
+  function tmplBindTouch(overlayEl, getState, getTmpl){
+    var active = false, last = null;
+    function fire(type, pt){
+      var wrap = overlayEl.querySelector(".tmpl-canvas-wrap");
+      (wrap || overlayEl).dispatchEvent(new MouseEvent(type, { bubbles: true, cancelable: true, clientX: pt.clientX, clientY: pt.clientY }));
+    }
+    overlayEl.addEventListener("touchstart", function(e){
+      if(e.touches.length !== 1) return;
+      var st = getState(), tmpl = getTmpl();
+      if(!st || !tmpl || !e.target.closest) return;
+      var wrap = e.target.closest(".tmpl-canvas-wrap");
+      if(!wrap) return;
+      var hit = e.target.closest(".tmpl-resize-handle, .tmpl-marker");
+      var pendMeta = st.pendingKey ? tmplFieldMeta(tmpl.category, st.pendingKey) : null;
+      if(!hit && !(pendMeta && pendMeta.type === "image")) return;
+      active = true;
+      last = e.touches[0];
+      e.preventDefault();
+      e.target.dispatchEvent(new MouseEvent("mousedown", { bubbles: true, cancelable: true, clientX: last.clientX, clientY: last.clientY }));
+    }, { passive: false });
+    overlayEl.addEventListener("touchmove", function(e){
+      if(!active) return;
+      last = e.touches[0];
+      e.preventDefault();
+      fire("mousemove", last);
+    }, { passive: false });
+    function end(){
+      if(!active) return;
+      active = false;
+      if(last) fire("mouseup", last);
+    }
+    overlayEl.addEventListener("touchend", end);
+    overlayEl.addEventListener("touchcancel", end);
   }
   function copyTmplFieldStyleToTarget(tmpl, key){
     var sel = document.getElementById("tmplCopyTarget-" + key);
@@ -8461,12 +8848,15 @@
     document.getElementById("tmplEditorOverlay").classList.add("active");
   }
   function closeTemplateEditor(){
+    tmplFlushSaves();
     document.getElementById("tmplEditorOverlay").classList.remove("active");
     tmplEditorState = null;
+    if(_tmplHubStale){ _tmplHubStale = false; eventsFirestoreRefresh(); }
     refreshTmplManager();
   }
   // يبدّل بين "تعديل القالب فارغاً" و"معاينة بسجل حقيقي" ضمن نفس الشاشة، دون المرور بقائمة القوالب
   function tmplSwitchWorkspace(templateId, recordId){
+    tmplFlushSaves();
     document.getElementById("tmplEditorOverlay").classList.remove("active");
     document.getElementById("tmplGenerateOverlay").classList.remove("active");
     tmplEditorState = null;
@@ -8476,72 +8866,75 @@
   }
   function tmplPreviewSwitcherHTML(tmpl, currentRecordId){
     var records = loadEventsData().filter(function(r){ return r.category === tmpl.category; });
-    var html = '<div style="display:flex; gap:16px; flex-wrap:wrap; margin-bottom:16px;">';
-    html += '<div><label style="font-size:11.5px; color:var(--ink-soft); display:block; margin-bottom:4px;">🔍 المعاينة الحالية</label>' +
-      '<select id="tmplPreviewRecordSelect" style="max-width:360px; margin-bottom:0;">' +
-      '<option value=""' + (!currentRecordId ? " selected" : "") + '>— بدون بيانات (تعديل القالب فقط) —</option>' +
+    return '<label class="tp-ctl tp-ctl-grow"><span>السجل المعروض</span>' +
+      '<select id="tmplPreviewRecordSelect">' +
+      '<option value=""' + (!currentRecordId ? " selected" : "") + '>بدون بيانات — تعديل القالب فقط</option>' +
       records.map(function(r){
         var lbl = r.fullName || r.husbandName || r.deceasedName || "(بدون اسم)";
         return '<option value="' + r.id + '"' + (r.id === currentRecordId ? " selected" : "") + '>' + escapeHTML(lbl) + '</option>';
       }).join("") +
-      '</select></div>';
-    html += '<div><label style="font-size:11.5px; color:var(--ink-soft); display:block; margin-bottom:4px;">👤 هذا القالب مخصص لـ</label>' +
-      '<select id="tmplGenderSelect" style="max-width:200px; margin-bottom:0;">' +
+      '</select></label>' +
+      '<label class="tp-ctl"><span>القالب مخصص لـ</span>' +
+      '<select id="tmplGenderSelect">' +
         '<option value=""' + (!tmpl.gender ? " selected" : "") + '>الجميع</option>' +
         '<option value="ذكر"' + (tmpl.gender === "ذكر" ? " selected" : "") + '>ذكور فقط</option>' +
         '<option value="أنثى"' + (tmpl.gender === "أنثى" ? " selected" : "") + '>إناث فقط</option>' +
         '<option value="جهة / مؤسسة"' + (tmpl.gender === "جهة / مؤسسة" ? " selected" : "") + '>جهات ومؤسسات فقط</option>' +
-      '</select></div>';
-    html += '</div>';
-    return html;
+      '</select></label>';
   }
+  function tmplAddFieldHTML(selectId, action, available, pendingKey){
+    if(!available.length) return '<p class="tf-hint" style="margin:0 0 12px;">كل المتغيرات المتاحة لهذا التصنيف موضوعة على القالب.</p>';
+    return '<div class="tp-add"><select id="' + selectId + '">' +
+      available.map(function(f){ return '<option value="' + f.key + '"' + (pendingKey === f.key ? " selected" : "") + '>' + escapeHTML(f.label) + '</option>'; }).join("") +
+      '</select><button type="button" class="btn-secondary tf-btn-sm" data-action="' + action + '">' + TPI.plus + ' إضافة</button></div>';
+  }
+  function tmplReplaceImageHTML(){
+    return '<details class="tp-more"><summary>صورة القالب</summary><div class="tf-adv">' +
+      '<label class="btn-secondary tf-btn-sm tp-file">' + TPI.swap + ' تغيير صورة القالب<input type="file" accept="image/png,image/jpeg" id="tmplReplaceImageInput" style="display:none;"/></label>' +
+      '<p class="tf-hint">تُستبدل الصورة فقط وتبقى كل المتغيرات ومواضعها كما هي — PNG أو JPG.</p>' +
+    '</div></details>';
+  }
+  function tmplPendingHintHTML(pendingMeta){
+    if(!pendingMeta) return "";
+    return '<p class="tp-pending">' + (pendingMeta.type === "image" ? "اسحب على القالب لتحديد مربع الصورة" : "انقر على موضع النص في القالب") + ' — «' + escapeHTML(pendingMeta.label || "") + '»</p>';
+  }
+  var TMPL_LEGEND_HTML = '<div class="tmpl-toolbar-legend"><span>اسحب العنصر لتحريكه</span><span>المقبض للتحجيم</span><span>الأسهم للتحريك الدقيق</span></div>';
   function renderTemplateEditor(){
     var tmpl = tmplEditorCurrentTemplate();
     if(!tmpl || !tmplEditorState) return;
     var body = document.getElementById("tmplEditorBody");
     var placedKeys = tmpl.fields.map(function(f){ return f.key; });
     var available = (TMPL_PLACEABLE_FIELDS[tmpl.category] || []).filter(function(f){ return placedKeys.indexOf(f.key) === -1; });
-    var html = '<div class="panel-head"><h3>تعديل القالب — <input type="text" id="tmplNameInput" value="' + escapeHTML(tmpl.name) + '" style="display:inline-block; width:200px; padding:4px 8px; font-size:14px; border:1px solid var(--line); border-radius:6px;"/></h3><button type="button" class="panel-close" data-action="close-tmpl-editor" title="رجوع لقائمة القوالب">✕</button></div>';
-    html += tmplPreviewSwitcherHTML(tmpl, null);
+    var html = '<div class="panel-head tp-head"><div class="tp-title"><span class="tp-title-ico">' + TPI.design + '</span><div><h3>تعديل القالب</h3><input type="text" id="tmplNameInput" class="tp-name" value="' + escapeHTML(tmpl.name) + '" aria-label="اسم القالب"/></div></div><button type="button" class="panel-close" data-action="close-tmpl-editor" title="رجوع لقائمة القوالب">✕</button></div>';
+    html += '<div class="tp-toolbar">' + tmplPreviewSwitcherHTML(tmpl, null) + '</div>';
     html += '<div class="tmpl-workspace-stack">';
     html += '<div class="tmpl-fields-col">';
-    var fonts = loadDesignFonts();
-    html += '<details class="tmpl-field-group" style="border-top:none; margin-top:0;"><summary>🔤 الخطوط المخصصة' + (fonts.length ? ' (' + fonts.length + ')' : '') + '</summary><div style="padding-top:8px;">';
-    if(fonts.length){
-      fonts.forEach(function(fnt){
-        html += '<div style="display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:6px; font-size:12px;"><span>🔤 ' + escapeHTML(fnt.name) + '</span><button type="button" class="task-icon-btn" data-action="delete-tmpl-font" data-id="' + fnt.id + '" title="حذف الخط"><span class="icon">' + ICON_DELETE + '</span></button></div>';
-      });
-    }
-    html += '<label class="btn-secondary" style="display:inline-flex; align-items:center; gap:6px; cursor:pointer; font-size:12px; padding:6px 10px;">رفع خط أو أكثر (ttf/otf/woff)<input type="file" accept=".ttf,.otf,.woff,.woff2" id="tmplFontUploadInput" multiple style="display:none;"/></label>' +
-      '<p class="hint" style="margin:6px 0 0;">بعد الرفع سيظهر الخط ضمن قائمة "الخط" لأي متغير نصي — يفضّل ملف بصيغة woff2 لحجم أصغر</p>' +
-      '</div></details>';
-    html += '<div class="tmpl-fields-panel" style="margin-top:14px;">';
-    html += '<div class="tmpl-fields-panel-head">📋 المتغيرات (' + tmpl.fields.length + ')</div>';
-    if(available.length){
-      html += '<div style="display:flex; gap:8px; margin-bottom:14px;"><select id="tmplAddFieldSelect" style="flex:1; margin-bottom:0;">' +
-        available.map(function(f){ return '<option value="' + f.key + '"' + (tmplEditorState.pendingKey === f.key ? " selected" : "") + '>' + escapeHTML(f.label) + '</option>'; }).join("") +
-        '</select><button type="button" class="btn-secondary" data-action="arm-tmpl-field">➕ تحديد الموضع</button></div>';
-    } else {
-      html += '<p class="hint" style="margin-bottom:14px;">تم تحديد مواضع كل المتغيرات المتاحة لهذا التصنيف</p>';
-    }
+    html += '<div class="tmpl-fields-panel">';
+    html += '<div class="tmpl-fields-panel-head">العناصر <i>' + tmpl.fields.length + '</i></div>';
+    html += tmplAddFieldHTML("tmplAddFieldSelect", "arm-tmpl-field", available, tmplEditorState.pendingKey);
     if(!tmpl.fields.length){
-      html += '<p style="text-align:center; color:var(--ink-soft); padding:10px 0;">لم تُحدَّد أي متغيرات بعد</p>';
+      html += '<p class="tp-empty">لم يُحدَّد أي عنصر بعد — اختر متغيراً ثم «إضافة».</p>';
     } else {
       tmpl.fields.forEach(function(f){ html += tmplFieldRowHTML(tmpl, f); });
     }
-    html += '</div></div>';
+    html += '</div>';
+    var fonts = loadDesignFonts();
+    html += '<details class="tp-more"><summary>الخطوط المخصصة' + (fonts.length ? ' <i>' + fonts.length + '</i>' : '') + '</summary><div class="tf-adv">';
+    fonts.forEach(function(fnt){
+      html += '<div class="tp-font-row"><span>' + escapeHTML(fnt.name) + '</span><button type="button" class="task-icon-btn" data-action="delete-tmpl-font" data-id="' + fnt.id + '" title="حذف الخط"><span class="icon">' + ICON_DELETE + '</span></button></div>';
+    });
+    html += '<label class="btn-secondary tf-btn-sm tp-file">' + TPI.swap + ' رفع خط أو أكثر<input type="file" accept=".ttf,.otf,.woff,.woff2" id="tmplFontUploadInput" multiple style="display:none;"/></label>' +
+      '<p class="tf-hint">ttf / otf / woff — يظهر بعد الرفع ضمن قائمة «الخط» لأي عنصر نصي. يفضَّل woff2 لحجم أصغر.</p>' +
+      '</div></details>';
+    html += tmplReplaceImageHTML();
+    html += '</div>';
     html += '<div class="tmpl-canvas-col">';
-    html += '<div class="tmpl-canvas-stage" style="text-align:center;"><div class="tmpl-canvas-wrap" id="tmplCanvasWrap"><img src="' + (tmpl.previewImage || tmpl.image) + '" alt="" draggable="false"/><div class="tmpl-guide-center-v" data-guide="v"></div><div class="tmpl-guide-center-h" data-guide="h"></div></div>';
-    var pendingMeta = tmplEditorState.pendingKey ? tmplFieldMeta(tmpl.category, tmplEditorState.pendingKey) : null;
-    if(pendingMeta){
-      html += '<p class="hint" style="margin-top:10px; font-weight:700; color:var(--teal-dark);">' + (pendingMeta.type === "image" ? "✋ اسحب على القالب لتحديد مربع الصورة" : "✋ انقر على موضع النص في القالب") + '</p>';
-    }
-    html += '<div class="tmpl-toolbar-legend" style="justify-content:center;"><span>↔ سحب = تحريك</span><span>⤡ المقبض = تحجيم (Shift لحفظ النسبة)</span></div>';
-    html += '<div style="text-align:center; margin-top:12px;"><label class="btn-secondary" style="display:inline-flex; align-items:center; gap:6px; cursor:pointer; font-size:12px; padding:6px 12px;">🖼️ تغيير صورة القالب<input type="file" accept="image/png,image/jpeg" id="tmplReplaceImageInput" style="display:none;"/></label>' +
-      '<p class="hint" style="margin-top:4px;">يستبدل صورة القالب فقط مع الإبقاء على كل المتغيرات ومواضعها كما هي — PNG أو JPG فقط</p></div>';
+    html += '<div class="tmpl-canvas-stage"><div class="tmpl-canvas-wrap' + (tmplEditorState.pendingKey ? " is-arming" : "") + '" id="tmplCanvasWrap"><img src="' + (tmpl.previewImage || tmpl.image) + '" alt="" draggable="false"/><div class="tmpl-guide-center-v" data-guide="v"></div><div class="tmpl-guide-center-h" data-guide="h"></div></div>';
+    html += tmplPendingHintHTML(tmplEditorState.pendingKey ? tmplFieldMeta(tmpl.category, tmplEditorState.pendingKey) : null);
+    html += TMPL_LEGEND_HTML;
     html += '</div></div>';
     html += '</div>';
-    setHTML(body, html);
+    tmplSetBodyKeepScroll(body, html, null);
     var editorWrap = document.getElementById("tmplCanvasWrap");
     if(editorWrap) tmplRenderMarkersOverlay(editorWrap, tmpl);
   }
@@ -8678,60 +9071,59 @@
       if(mismatchWarn) showToast(mismatchWarn);
     }
     tmplGenerateState = { recordId: recordId, catKey: cat.key, templateId: tid, pendingKey: "" };
+    document.getElementById("tmplGenerateBody").innerHTML = "";
     renderDesignGenerateModal();
     document.getElementById("tmplGenerateOverlay").classList.add("active");
   }
   function closeDesignGenerateModal(){
+    tmplFlushSaves();
     document.getElementById("tmplGenerateOverlay").classList.remove("active");
     tmplGenerateState = null;
+    if(_tmplHubStale){ _tmplHubStale = false; eventsFirestoreRefresh(); }
   }
   function renderDesignGenerateModal(){
     if(!tmplGenerateState) return;
     var body = document.getElementById("tmplGenerateBody");
     var templates = loadDesignTemplates(tmplGenerateState.catKey);
     var tmpl = findDesignTemplate(tmplGenerateState.templateId);
-    var html = '<div class="panel-head"><h3>توليد تصميم</h3><button type="button" class="panel-close" data-action="close-tmpl-generate" title="رجوع لقائمة القوالب">✕</button></div>';
-    if(tmpl) html += tmplPreviewSwitcherHTML(tmpl, tmplGenerateState.recordId);
+    var genRec = loadEventsData().find(function(r){ return r.id === tmplGenerateState.recordId; });
+    var genRecName = genRec ? (genRec.fullName || genRec.husbandName || genRec.deceasedName || "") : "";
+    var html = '<div class="panel-head tp-head"><div class="tp-title"><span class="tp-title-ico">' + TPI.design + '</span><div><h3>توليد تصميم</h3>' + (genRecName ? '<p>' + escapeHTML(genRecName) + '</p>' : '') + '</div></div><button type="button" class="panel-close" data-action="close-tmpl-generate" title="رجوع لقائمة القوالب">✕</button></div>';
+    html += '<div class="tp-toolbar">';
     if(templates.length > 1){
-      html += '<select id="tmplGenSelect" style="margin-bottom:14px;">' +
+      html += '<label class="tp-ctl tp-ctl-grow"><span>القالب</span><select id="tmplGenSelect">' +
         templates.map(function(t){ return '<option value="' + t.id + '"' + (t.id === tmplGenerateState.templateId ? " selected" : "") + '>' + escapeHTML(t.name) + '</option>'; }).join("") +
-        '</select>';
+        '</select></label>';
     }
+    if(tmpl) html += tmplPreviewSwitcherHTML(tmpl, tmplGenerateState.recordId);
+    html += '</div>';
     html += '<div class="tmpl-workspace-stack">';
     html += '<div class="tmpl-fields-col" id="tmplGenFieldsList">';
     if(tmpl){
       var placedKeys = tmpl.fields.map(function(f){ return f.key; });
       var available = (TMPL_PLACEABLE_FIELDS[tmpl.category] || []).filter(function(f){ return placedKeys.indexOf(f.key) === -1; });
       html += '<div class="tmpl-fields-panel">';
-      html += '<div class="tmpl-fields-panel-head">📋 المتغيرات (' + tmpl.fields.length + ')</div>';
-      if(available.length){
-        html += '<div style="display:flex; gap:8px; margin-bottom:14px;"><select id="tmplGenAddFieldSelect" style="flex:1; margin-bottom:0;">' +
-          available.map(function(f){ return '<option value="' + f.key + '"' + (tmplGenerateState.pendingKey === f.key ? " selected" : "") + '>' + escapeHTML(f.label) + '</option>'; }).join("") +
-          '</select><button type="button" class="btn-secondary" data-action="arm-tmpl-gen-field">➕ إضافة متغير جديد</button></div>';
-      }
+      html += '<div class="tmpl-fields-panel-head">العناصر <i>' + tmpl.fields.length + '</i></div>';
+      if(available.length) html += tmplAddFieldHTML("tmplGenAddFieldSelect", "arm-tmpl-gen-field", available, tmplGenerateState.pendingKey);
       if(!tmpl.fields.length){
-        html += '<p class="hint">لا توجد متغيرات محددة على هذا القالب بعد — أضِف أول متغير من الأعلى</p>';
+        html += '<p class="tp-empty">لا توجد عناصر على هذا القالب بعد — أضِف أول متغير من الأعلى.</p>';
       } else {
         tmpl.fields.forEach(function(f){ html += tmplFieldRowHTML(tmpl, f, tmplGenerateState.recordId); });
       }
       html += '</div>';
+      html += tmplReplaceImageHTML();
     }
     html += '</div>';
     html += '<div class="tmpl-canvas-col">';
-    html += '<div class="tmpl-canvas-stage" style="text-align:center;">';
-    html += '<div class="tmpl-canvas-wrap" id="tmplGenCanvasWrap" style="display:inline-block; margin:0 auto; cursor:default;"><canvas id="tmplGenCanvas" style="max-width:100%; display:block; background:repeating-conic-gradient(#f0f0f0 0% 25%, #fff 0% 50%) 50% / 16px 16px;"></canvas><div class="tmpl-guide-center-v" data-guide="v"></div><div class="tmpl-guide-center-h" data-guide="h"></div></div>';
-    html += '<p class="hint" id="tmplGenStatus" style="text-align:center; margin-top:10px; font-weight:600;">جارٍ التجهيز...</p>';
-    var pendingMeta = (tmpl && tmplGenerateState.pendingKey) ? tmplFieldMeta(tmpl.category, tmplGenerateState.pendingKey) : null;
-    if(pendingMeta){
-      html += '<p class="hint" style="text-align:center; font-weight:700; color:var(--teal-dark);">✋ ' + (pendingMeta.type === "image" ? "اسحب على الصورة لتحديد مربع الصورة الجديد" : "انقر على موضع النص الجديد بالصورة") + '</p>';
-    }
-    html += '<div class="tmpl-toolbar-legend" style="justify-content:center;"><span>↔ سحب = تحريك</span><span>⤡ المقبض = تحجيم</span><span>🖱️ عجلة الفأرة = تقريب/تبعيد الصورة</span></div>';
-    html += '<div style="text-align:center; margin-top:14px; display:flex; gap:8px; justify-content:center;"><button type="button" class="btn-secondary" id="tmplGenPreviewBtn" data-action="preview-tmpl-design" disabled>👁️ معاينة</button><button type="button" class="btn-primary" id="tmplGenDownloadBtn" data-action="download-tmpl-design" disabled>⬇ تنزيل الصورة</button></div>';
-    html += '<div style="text-align:center; margin-top:10px;"><label class="btn-secondary" style="display:inline-flex; align-items:center; gap:6px; cursor:pointer; font-size:12px; padding:6px 12px;">🖼️ تغيير صورة القالب<input type="file" accept="image/png,image/jpeg" id="tmplReplaceImageInput" style="display:none;"/></label>' +
-      '<p class="hint" style="margin-top:4px;">يستبدل صورة القالب فقط مع الإبقاء على كل المتغيرات ومواضعها كما هي — PNG أو JPG فقط</p></div>';
+    html += '<div class="tmpl-canvas-stage">';
+    html += '<div class="tmpl-canvas-wrap' + (tmplGenerateState.pendingKey ? " is-arming" : "") + '" id="tmplGenCanvasWrap"><canvas id="tmplGenCanvas"></canvas><div class="tmpl-guide-center-v" data-guide="v"></div><div class="tmpl-guide-center-h" data-guide="h"></div></div>';
+    html += tmplPendingHintHTML((tmpl && tmplGenerateState.pendingKey) ? tmplFieldMeta(tmpl.category, tmplGenerateState.pendingKey) : null);
+    html += '<p class="tp-status" id="tmplGenStatus"></p>';
+    html += TMPL_LEGEND_HTML;
     html += '</div></div>';
     html += '</div>';
-    setHTML(body, html);
+    html += '<div class="tp-actionbar"><button type="button" class="btn-secondary" id="tmplGenPreviewBtn" data-action="preview-tmpl-design" disabled>' + TPI.eye + ' معاينة</button><button type="button" class="btn-primary" id="tmplGenDownloadBtn" data-action="download-tmpl-design" disabled>' + TPI.download + ' تنزيل الصورة</button></div>';
+    tmplSetBodyKeepScroll(body, html, "tmplGenCanvas");
     runDesignGenerate();
   }
   function downloadTmplDesign(){
@@ -8788,35 +9180,49 @@
     tmplLivePreviewWin.document.close();
     syncTmplLivePreview();
   }
+  // طلبات الرسم تُدمَج: لو طُلب رسم جديد أثناء رسم جارٍ يُعاد مرة واحدة بعد انتهائه — يمنع تراكب رسمتين على
+  // نفس اللوحة (نص مكرر) ويخلي السحب والمنزلقات تتحدّث حيّاً بلا تعليق
+  var _tmplGenBusy = false, _tmplGenAgain = false;
   function runDesignGenerate(){
+    if(_tmplGenBusy){ _tmplGenAgain = true; return; }
+    if(!tmplGenerateState) return;
     var tmpl = findDesignTemplate(tmplGenerateState.templateId);
     var rec = loadEventsData().find(function(r){ return r.id === tmplGenerateState.recordId; });
     var canvas = document.getElementById("tmplGenCanvas");
-    var statusEl = document.getElementById("tmplGenStatus");
-    var dlBtn = document.getElementById("tmplGenDownloadBtn");
-    var pvBtn = document.getElementById("tmplGenPreviewBtn");
     if(!tmpl || !rec || !canvas) return;
-    dlBtn.disabled = true;
-    if(pvBtn) pvBtn.disabled = true;
-    statusEl.textContent = "جارٍ التجهيز...";
+    _tmplGenBusy = true;
+    var slowTimer = setTimeout(function(){
+      var s = document.getElementById("tmplGenStatus");
+      if(s) s.textContent = "جارٍ التجهيز...";
+    }, 400);
+    var done = function(){
+      clearTimeout(slowTimer);
+      _tmplGenBusy = false;
+      if(_tmplGenAgain){ _tmplGenAgain = false; runDesignGenerate(); }
+    };
     renderTemplateToCanvas(canvas, tmpl, rec).then(function(result){
       if(!tmplGenerateState) return;
+      var statusEl = document.getElementById("tmplGenStatus");
+      var dlBtn = document.getElementById("tmplGenDownloadBtn");
+      var pvBtn = document.getElementById("tmplGenPreviewBtn");
+      if(!statusEl) return;
       if(result.ok){
-        dlBtn.disabled = false;
+        if(dlBtn) dlBtn.disabled = false;
         if(pvBtn) pvBtn.disabled = false;
         if(result.warnings.length){
-          statusEl.innerHTML = '<span style="color:var(--danger); font-weight:700;">⚠️ ' + result.warnings.map(escapeHTML).join(' — ') + '</span>';
+          statusEl.innerHTML = '<span class="tp-warn">' + result.warnings.map(escapeHTML).join(' — ') + '</span>';
         } else {
-          statusEl.textContent = "جاهز — يمكنك تنزيل الصورة";
+          statusEl.textContent = "جاهز للتنزيل";
         }
         if(result.info && result.info.length) statusEl.appendChild(document.createTextNode("  " + result.info.join(" — ")));
         var genWrap = document.getElementById("tmplGenCanvasWrap");
-        if(genWrap) tmplRenderMarkersOverlay(genWrap, tmpl);
+        // أثناء السحب لا نعيد إنشاء العلامات (العنصر المسحوب نفسه يجب أن يبقى بالصفحة حتى يكتمل السحب باللمس)
+        if(genWrap && !tmplGenerateState.movingKey && !tmplGenerateState.resizingKey) tmplRenderMarkersOverlay(genWrap, tmpl);
         syncTmplLivePreview();
       } else {
         statusEl.textContent = "تعذّر تحميل صورة القالب";
       }
-    });
+    }).then(done, function(err){ console.error("design render failed", err); done(); });
   }
 
   var EVENTS_MONTH_FIELD_BY_CATEGORY = { graduates: "graduationMonthGregorian", births: "birthMonthGregorian", marriages: "contractMonthGregorian", deaths: "deathMonthGregorian", congrats: "occasionMonthGregorian" };
@@ -9714,7 +10120,7 @@
           var tKey = toggleRow.dataset.fieldKey;
           tmplExpandedFieldKeys[tKey] = !tmplExpandedFieldKeys[tKey];
           toggleRow.classList.toggle("collapsed", !tmplExpandedFieldKeys[tKey]);
-          tmplActiveFieldKey = tKey;
+          tmplFocusField(tmplEditorOverlayEl, tKey, false);
         }
         break;
       }
@@ -9742,8 +10148,8 @@
         var nf = tmpl.fields.find(function(x){ return x.key === btn.dataset.key; });
         if(!nf) break;
         tmplNudgePan(nf, Number(btn.dataset.dx), Number(btn.dataset.dy));
-        saveDesignTemplate(tmpl);
-        renderTemplateEditor();
+        tmplSaveSoon(tmpl);
+        tmplSyncRowInputs(tmplEditorOverlayEl, tmpl, nf.key);
         break;
       }
     }
@@ -9870,18 +10276,18 @@
   tmplEditorOverlayEl.addEventListener("mouseup", function(e){
     var tmpl = tmplEditorCurrentTemplate();
     if(!tmpl || !tmplEditorState) return;
-    if(tmplEditorState.resizingKey){
+    if(tmplEditorState.resizingKey || tmplEditorState.movingKey){
+      var edKey = tmplEditorState.resizingKey || tmplEditorState.movingKey;
       saveDesignTemplate(tmpl);
       tmplEditorState.resizingKey = null;
       tmplEditorState.resizeStartSize = null;
-      renderTemplateEditor();
-      return;
-    }
-    if(tmplEditorState.movingKey){
-      saveDesignTemplate(tmpl);
       tmplEditorState.movingKey = null;
       tmplEditorState.moveOffset = null;
-      renderTemplateEditor();
+      var edWrap = document.getElementById("tmplCanvasWrap");
+      tmplClearGuides(edWrap);
+      tmplSyncRowInputs(tmplEditorOverlayEl, tmpl, edKey);
+      if(edWrap) tmplRenderMarkersOverlay(edWrap, tmpl);
+      tmplFocusField(tmplEditorOverlayEl, edKey, true);
       return;
     }
     if(!tmplEditorState.dragStart) return;
@@ -9950,11 +10356,18 @@
       else if(e.target.type === "number") val = Number(e.target.value) || 0;
       else if(prop === "hideValues") val = e.target.value.split(/[،,]/).map(function(s){ return s.trim(); }).filter(Boolean);
       else val = e.target.value;
-      var patch = {}; patch[prop] = val;
-      tmplUpdateField(tmpl, key, patch);
-      renderTemplateEditor();
+      var apEd = tmplApplyControl(tmpl, e.target, false);
+      if(!apEd) return;
+      saveDesignTemplate(tmpl);
+      if(apEd.rerender) renderTemplateEditor();
+      else { var apWrap = document.getElementById("tmplCanvasWrap"); if(apWrap) tmplRenderMarkersOverlay(apWrap, tmpl); }
     }
   });
+  tmplBindLiveInput(tmplEditorOverlayEl, tmplEditorCurrentTemplate, function(t){
+    var w = document.getElementById("tmplCanvasWrap");
+    if(w) tmplRenderMarkersOverlay(w, t);
+  });
+  tmplBindTouch(tmplEditorOverlayEl, function(){ return tmplEditorState; }, tmplEditorCurrentTemplate);
 
   var tmplGenerateOverlayEl = document.getElementById("tmplGenerateOverlay");
   tmplGenerateOverlayEl.addEventListener("click", function(e){
@@ -9984,6 +10397,7 @@
           var tKey2 = toggleRow2.dataset.fieldKey;
           tmplExpandedFieldKeys[tKey2] = !tmplExpandedFieldKeys[tKey2];
           toggleRow2.classList.toggle("collapsed", !tmplExpandedFieldKeys[tKey2]);
+          tmplFocusField(tmplGenerateOverlayEl, tKey2, false);
           tmplActiveFieldKey = tKey2;
         }
         break;
@@ -10023,8 +10437,9 @@
         var npf = npTmpl.fields.find(function(x){ return x.key === btn.dataset.key; });
         if(!npf) break;
         tmplNudgePan(npf, Number(btn.dataset.dx), Number(btn.dataset.dy));
-        saveDesignTemplate(npTmpl);
-        renderDesignGenerateModal();
+        tmplSaveSoon(npTmpl);
+        tmplSyncRowInputs(tmplGenerateOverlayEl, npTmpl, npf.key);
+        runDesignGenerate();
         break;
       }
       case "remove-field-bg": {
@@ -10122,11 +10537,14 @@
       else if(e.target.type === "number") val = Number(e.target.value) || 0;
       else if(prop === "hideValues") val = e.target.value.split(/[،,]/).map(function(s){ return s.trim(); }).filter(Boolean);
       else val = e.target.value;
-      var patch = {}; patch[prop] = val;
-      tmplUpdateField(tmpl, key, patch);
-      runDesignGenerate();
+      var apGen = tmplApplyControl(tmpl, e.target, false);
+      if(!apGen) return;
+      saveDesignTemplate(tmpl);
+      if(apGen.rerender) renderDesignGenerateModal(); else runDesignGenerate();
     }
   });
+  tmplBindLiveInput(tmplGenerateOverlayEl, function(){ return tmplGenerateState && findDesignTemplate(tmplGenerateState.templateId); }, tmplGenLive);
+  tmplBindTouch(tmplGenerateOverlayEl, function(){ return tmplGenerateState; }, function(){ return tmplGenerateState && findDesignTemplate(tmplGenerateState.templateId); });
   tmplGenerateOverlayEl.addEventListener("dragstart", function(e){
     var handle = e.target.closest(".tmpl-drag-handle");
     if(!handle){ e.preventDefault(); return; }
@@ -10231,6 +10649,7 @@
         }
       }
       tmplUpdateSpacingGuides(wrap, tmpl, rg, false);
+      tmplGenLive();
       return;
     }
     if(!tmplGenerateState.movingKey) return;
@@ -10249,23 +10668,23 @@
       }
     }
     tmplUpdateSpacingGuides(wrap, tmpl, g, f.type !== "image");
+    tmplGenLive();
   });
   tmplGenerateOverlayEl.addEventListener("mouseup", function(e){
     if(!tmplGenerateState) return;
     var tmpl = findDesignTemplate(tmplGenerateState.templateId);
     if(!tmpl) return;
-    if(tmplGenerateState.resizingKey){
+    if(tmplGenerateState.resizingKey || tmplGenerateState.movingKey){
+      var gnKey = tmplGenerateState.resizingKey || tmplGenerateState.movingKey;
       saveDesignTemplate(tmpl);
       tmplGenerateState.resizingKey = null;
       tmplGenerateState.resizeStartSize = null;
-      renderDesignGenerateModal();
-      return;
-    }
-    if(tmplGenerateState.movingKey){
-      saveDesignTemplate(tmpl);
       tmplGenerateState.movingKey = null;
       tmplGenerateState.moveOffset = null;
-      renderDesignGenerateModal();
+      tmplClearGuides(document.getElementById("tmplGenCanvasWrap"));
+      tmplSyncRowInputs(tmplGenerateOverlayEl, tmpl, gnKey);
+      tmplFocusField(tmplGenerateOverlayEl, gnKey, true);
+      runDesignGenerate();
       return;
     }
     if(tmplGenerateState.dragStart && tmplGenerateState.pendingKey){
@@ -10296,6 +10715,7 @@
     // الحد الأدنى كان 1 (يمنع التبعيد لأبعد من ملء الصندوق تماماً) — رُفع لـ0.4 للسماح بإظهار
     // مساحة أكبر من الصورة الأصلية لصور مقرَّبة جداً على الوجه (تبقى داخل الصندوق نفسه بلا تمدّد فارغ لأن drawImageCover يقتصّ عند الحدود)
     g.zoom = Math.max(0.4, Math.round((style.zoom + delta) * 100) / 100);
+    tmplSyncRowInputs(tmplGenerateOverlayEl, tmpl, f.key);
     runDesignGenerate();
     clearTimeout(tmplGenZoomSaveTimer);
     tmplGenZoomSaveTimer = setTimeout(function(){ saveDesignTemplate(tmpl); }, 500);
@@ -10320,8 +10740,11 @@
     if(e.key === "ArrowDown") g.y = Math.min(tmpl.height, g.y + step);
     if(e.key === "ArrowLeft") g.x = Math.max(0, g.x - step);
     if(e.key === "ArrowRight") g.x = Math.min(tmpl.width, g.x + step);
-    saveDesignTemplate(tmpl);
-    if(editorOpen) renderTemplateEditor(); else renderDesignGenerateModal();
+    tmplSaveSoon(tmpl);
+    var arOverlay = document.getElementById(editorOpen ? "tmplEditorOverlay" : "tmplGenerateOverlay");
+    tmplSyncRowInputs(arOverlay, tmpl, f.key);
+    if(editorOpen){ var arWrap = document.getElementById("tmplCanvasWrap"); if(arWrap) tmplRenderMarkersOverlay(arWrap, tmpl); }
+    else runDesignGenerate();
   });
 
   var eventsSettingsRootEl = document.getElementById("eventsSettingsRoot");
