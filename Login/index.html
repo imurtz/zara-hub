@@ -1873,6 +1873,29 @@
     .ws-links .ws-legacy{margin-inline-start:0;}
   }
 
+  /* ===================== الدردشة الفورية ===================== */
+  .chat-fab{position:fixed;}
+  .chat-fab-badge{position:absolute; top:-4px; inset-inline-end:-4px; min-width:22px; height:22px; padding:0 5px; border-radius:999px; background:#C4483B; color:#fff; font-style:normal; font-size:11.500px; font-weight:600; display:flex; align-items:center; justify-content:center; border:2px solid #fff;}
+  .chat-live-badge{display:inline-flex; align-items:center; gap:5px; color:var(--teal-dark); background:var(--teal-tint);}
+  .chat-live-badge::before{content:""; width:6px; height:6px; border-radius:50%; background:#2FA36B;}
+  .chat-list-row{text-align:start;}
+  .chat-list-info{flex:1; min-width:0; display:flex; flex-direction:column; gap:2px;}
+  .chat-list-last{white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .chat-list-row.has-unread .chat-list-name{font-weight:700;}
+  .chat-list-row.has-unread .chat-list-last{color:var(--ink); font-weight:500;}
+  .chat-list-side{display:flex; flex-direction:column; align-items:flex-end; gap:4px; flex:none;}
+  .chat-list-side small{font-size:11px; color:var(--ink-soft);}
+  .chat-list-side i{min-width:20px; height:20px; padding:0 6px; border-radius:999px; background:var(--teal); color:#fff; font-style:normal; font-size:11px; font-weight:600; display:flex; align-items:center; justify-content:center;}
+  .chat-avatar--all{background:var(--ink);}
+  .chat-thread-name{display:flex; flex-direction:column; line-height:1.4;}
+  .chat-thread-name small{font-size:11.500px; font-weight:400; color:var(--ink-soft);}
+  .chat-day{align-self:center; font-size:11px; color:var(--ink-soft); background:var(--field); border-radius:999px; padding:2px 12px; margin:4px 0;}
+  .chat-empty{margin:auto; font-size:13px; color:var(--ink-soft);}
+  .chat-bubble{border-radius:18px; padding:8px 13px 6px; white-space:pre-wrap;}
+  .chat-bubble b{display:block; font-size:11.500px; font-weight:600; color:var(--teal-dark); margin-bottom:1px;}
+  .chat-bubble small{display:block; font-size:10px; opacity:.65; margin-top:2px; text-align:end;}
+  .chat-bubble.me{background:var(--ink);}
+
 </style>
 </head>
 <body>
@@ -2189,11 +2212,10 @@
   <div class="chat-panel-head">
     <div>
       <h3>دردشة الموظفين</h3>
-      <span class="chat-preview-badge">معاينة تصميم</span>
+      <span class="chat-preview-badge chat-live-badge">مباشر</span>
     </div>
     <button type="button" class="chat-close-btn" id="chatCloseBtn">✕</button>
   </div>
-  <div class="chat-dev-note">الحضور الأونلاين والإشعارات الفورية قيد التطوير — تحتاج ربط الموقع بقاعدة بيانات حية لتعمل بين أجهزة الموظفين. الرسائل هنا محفوظة على جهازك فقط حالياً.</div>
   <div class="chat-panel-body" id="chatPanelBody"></div>
 </div>
 
@@ -2316,6 +2338,8 @@
     renderTaskBoard();
     wsStart();
     wsRender();
+    chatStart();
+    chatBadge();
     renderTaskSettingsPanel();
     renderAnnualReport();
     renderAnnualReportSettingsPanel();
@@ -12720,100 +12744,221 @@
   // تذكيرات الحملات والفعاليات تُحسب من الوقت الحالي — نعيد الرسم كل 5 دقائق ليظهر ما حان موعده
   setInterval(function(){ if(ws.ready && currentUser && !wsUI.drawer) wsRender(); }, 300000);
 
-  var CHAT_DEMO_KEY = "zaraHub.chatDemoMessages";
+  // ===========================================================================
+  // دردشة الموظفين الفورية — محادثات فردية + محادثة «الفريق كله»
+  // كل محادثة مستند واحد في chatConvs (آخر الرسائل داخله) فيكلّف وصول رسالة جديدة قراءة واحدة لكل طرف.
+  // chatMeta/{الموظف}: آخر قراءة لكل محادثة (للعدّاد) وآخر ظهور.
+  // ===========================================================================
   var chatUI = { activeEmpId: null };
-
-  function loadChatDemo(){
-    var raw = localStorage.getItem(CHAT_DEMO_KEY);
-    if(!raw) return {};
-    try{ return JSON.parse(raw); }catch(e){ return {}; }
-  }
-  function saveChatDemo(data){
-    try{ localStorage.setItem(CHAT_DEMO_KEY, JSON.stringify(data)); }catch(e){}
-  }
+  var chat = { convs: {}, meta: { read: {} }, seen: {}, seenAt: 0, started: false, ready: false, err: "" };
+  var ICON_CHAT_BACK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"/></svg>';
+  var ICON_CHAT_SEND = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12l16-7-6 16-3-6-7-3z"/></svg>';
   function chatOtherEmployees(){
     return loadEmployees().filter(function(e){ return currentUser && e.id !== currentUser.id; });
   }
-  function seedChatThread(emp){
-    var data = loadChatDemo();
-    if(!data[emp.id]){
-      data[emp.id] = [{ from: "them", text: "مرحباً! هذي معاينة شكل الدردشة — الرسائل الحقيقية بين الموظفين تحتاج ربط الموقع بقاعدة بيانات حية." }];
-      saveChatDemo(data);
-    }
-    return data[emp.id];
+  function chatConvId(otherId){ return otherId === "all" ? "all" : [currentUser.id, otherId].sort().join("__"); }
+  function chatMsgs(conv){ return (chat.convs[conv] && chat.convs[conv].msgs) || []; }
+  function chatUnread(conv){
+    var since = (chat.meta.read || {})[conv] || 0;
+    return chatMsgs(conv).filter(function(m){ return m.from !== currentUser.id && m.at > since; }).length;
+  }
+  function chatTotalUnread(){
+    return Object.keys(chat.convs).reduce(function(s, c){ return s + chatUnread(c); }, 0);
+  }
+  function chatPanelOpen(){ var p = document.getElementById("chatPanel"); return !!p && p.classList.contains("open"); }
+  function chatBadge(){
+    var fab = document.getElementById("chatFabBtn");
+    if(!fab) return;
+    var n = currentUser ? chatTotalUnread() : 0, b = fab.querySelector(".chat-fab-badge");
+    if(!n){ if(b) b.remove(); return; }
+    if(!b){ b = document.createElement("i"); b.className = "chat-fab-badge"; fab.appendChild(b); }
+    b.textContent = n > 9 ? "9+" : String(n);
+  }
+  function chatTime(ts){ return new Intl.DateTimeFormat("ar-EG-u-ca-gregory-nu-latn", { hour: "numeric", minute: "2-digit" }).format(new Date(ts)); }
+  function chatDay(ts){
+    var d = toISODate(new Date(ts)), t = toISODate(new Date());
+    if(d === t) return "اليوم";
+    var y = new Date(); y.setDate(y.getDate() - 1);
+    if(d === toISODate(y)) return "أمس";
+    return new Intl.DateTimeFormat("ar-EG-u-ca-gregory-nu-latn", { weekday: "long", day: "numeric", month: "long" }).format(new Date(ts));
+  }
+  function chatSeenLabel(empId){
+    var s = chat.seen[empId];
+    if(!s) return "";
+    var diff = Date.now() - s;
+    if(diff < 7 * 60000) return "متصل الآن";
+    if(diff < 3600000) return "آخر ظهور قبل " + Math.max(1, Math.round(diff / 60000)) + " د";
+    return "آخر ظهور " + chatDay(s) + " " + chatTime(s);
+  }
+  function chatMarkRead(conv){
+    if(!chatUnread(conv)) return;
+    var now = Date.now();
+    chat.meta.read = chat.meta.read || {};
+    chat.meta.read[conv] = now;
+    chatBadge();
+    if(WS_LOCAL) return;
+    var patch = { read: {} }; patch.read[conv] = now;
+    db.collection("chatMeta").doc(currentUser.id).set(patch, { merge: true }).catch(function(err){ console.error("chat read failed", err); });
+  }
+  function chatPing(){
+    if(WS_LOCAL || !currentUser || document.hidden) return;
+    db.collection("chatMeta").doc(currentUser.id).set({ seen: Date.now(), name: currentUser.name }, { merge: true }).catch(function(){});
+  }
+  function chatLoadSeen(){
+    if(WS_LOCAL || Date.now() - chat.seenAt < 120000) return;
+    chat.seenAt = Date.now();
+    db.collection("chatMeta").get().then(function(s){
+      s.docs.forEach(function(d){ chat.seen[d.id] = d.data().seen || 0; });
+      if(chatPanelOpen()) renderChatPanel(true);
+    }).catch(function(){});
+  }
+  function chatIncoming(doc, prev){
+    var msgs = doc.msgs || [], last = msgs[msgs.length - 1];
+    if(!last || last.from === currentUser.id) return;
+    var prevLast = prev && prev.msgs && prev.msgs.length ? prev.msgs[prev.msgs.length - 1].at : 0;
+    if(last.at <= prevLast) return;
+    var openHere = chatPanelOpen() && chatUI.activeEmpId && chatConvId(chatUI.activeEmpId) === doc.id && !document.hidden;
+    if(openHere) return;
+    showToast("رسالة من " + last.name + (doc.id === "all" ? " (الفريق)" : "") + ": " + last.text.slice(0, 60));
+    try{ playTone([659.25, 880], 0.12, 0.22, 0.07); }catch(e){}
+  }
+  function chatStart(){
+    if(chat.started || !currentUser) return;
+    chat.started = true;
+    if(WS_LOCAL){ chat.ready = true; chatBadge(); return; }
+    db.collection("chatConvs").where("parts", "array-contains-any", [currentUser.id, "all"]).onSnapshot(function(s){
+      var first = !chat.ready;
+      s.docChanges().forEach(function(ch){
+        var d = ch.doc.data(), prev = chat.convs[d.id];
+        if(ch.type === "removed"){ delete chat.convs[d.id]; return; }
+        chat.convs[d.id] = d;
+        if(!first) chatIncoming(d, prev);
+      });
+      chat.ready = true; chat.err = "";
+      chatBadge();
+      if(chatPanelOpen()) renderChatPanel(true);
+    }, function(err){ console.error("chat listener error", err); chat.err = (err && err.code) || "error"; if(chatPanelOpen()) renderChatPanel(); });
+    db.collection("chatMeta").doc(currentUser.id).onSnapshot(function(d){
+      var data = d.exists ? d.data() : {};
+      var local = chat.meta.read || {}, remote = data.read || {};
+      Object.keys(local).forEach(function(k){ if(!remote[k] || remote[k] < local[k]) remote[k] = local[k]; });
+      chat.meta = { read: remote };
+      chatBadge();
+      if(chatPanelOpen() && !chatUI.activeEmpId) renderChatPanel(true);
+    }, function(){});
+    chatPing();
+    setInterval(chatPing, 300000);
+    document.addEventListener("visibilitychange", function(){
+      if(!document.hidden && chatPanelOpen() && chatUI.activeEmpId){ chatMarkRead(chatConvId(chatUI.activeEmpId)); }
+    });
   }
 
-  function renderChatPanel(){
+  function renderChatPanel(soft){
     var body = document.getElementById("chatPanelBody");
     if(!body || !currentUser) return;
-    if(chatUI.activeEmpId) renderChatConversation(body);
+    if(chat.err){
+      body.innerHTML = '<p class="report-empty" style="padding:20px;">' + (chat.err === "resource-exhausted" ? "بلغت قاعدة البيانات حصتها اليومية — تعود الدردشة بعد تجدد الحصة." : chat.err === "permission-denied" ? "صلاحيات قاعدة البيانات لا تسمح بالدردشة — راجع قواعد Firestore." : "تعذّر الاتصال بالدردشة — تحقق من الشبكة.") + '</p>';
+      return;
+    }
+    if(chatUI.activeEmpId) renderChatConversation(body, soft);
     else renderChatList(body);
+  }
+  function chatRowHTML(id, name, sub, conv){
+    var msgs = chatMsgs(conv), last = msgs.length ? msgs[msgs.length - 1] : null, un = chatUnread(conv);
+    return '<button type="button" class="chat-list-row' + (un ? " has-unread" : "") + '" data-action="chat-open-emp" data-emp="' + id + '">' +
+      '<span class="chat-avatar' + (id === "all" ? " chat-avatar--all" : "") + '">' + (id === "all" ? "＃" : escapeHTML(initials(name))) + '</span>' +
+      '<span class="chat-list-info"><span class="chat-list-name">' + escapeHTML(name) + '</span>' +
+      '<span class="chat-list-last">' + (last ? escapeHTML((last.from === currentUser.id ? "أنت: " : (id === "all" ? last.name.split(" ")[0] + ": " : "")) + last.text) : escapeHTML(sub)) + '</span></span>' +
+      '<span class="chat-list-side">' + (last ? '<small>' + (toISODate(new Date(last.at)) === toISODate(new Date()) ? chatTime(last.at) : chatDay(last.at)) + '</small>' : '') + (un ? '<i>' + (un > 9 ? "9+" : un) + '</i>' : '') + '</span>' +
+    '</button>';
   }
   function renderChatList(body){
     var emps = chatOtherEmployees();
-    var data = loadChatDemo();
-    var html;
-    if(!emps.length){
-      html = '<p class="report-empty" style="padding:20px;">لا يوجد موظفون آخرون مسجّلون بعد</p>';
-    } else {
-      html = emps.map(function(e){
-        var thread = data[e.id] || [];
-        var last = thread.length ? thread[thread.length - 1] : null;
-        return '<button type="button" class="chat-list-row" data-action="chat-open-emp" data-emp="' + e.id + '">' +
-          '<span class="chat-avatar">' + initials(e.name) + '</span>' +
-          '<span class="chat-list-info"><span class="chat-list-name">' + escapeHTML(e.name) + '</span>' +
-          '<span class="chat-list-last">' + (last ? escapeHTML(last.text) : escapeHTML(e.dept || "موظف")) + '</span></span>' +
-        '</button>';
+    if(!emps.length){ body.innerHTML = '<p class="report-empty" style="padding:20px;">لا يوجد موظفون آخرون مسجّلون بعد</p>'; return; }
+    var lastAt = function(e){ var m = chatMsgs(chatConvId(e.id)); return m.length ? m[m.length - 1].at : 0; };
+    body.innerHTML = chatRowHTML("all", "الفريق كله", "محادثة جماعية لكل الموظفين", "all") +
+      emps.slice().sort(function(a, b){ return lastAt(b) - lastAt(a); }).map(function(e){
+        return chatRowHTML(e.id, e.name, chatSeenLabel(e.id) || e.dept || "موظف", chatConvId(e.id));
       }).join("");
-    }
-    setHTML(body, html);
   }
-  var ICON_CHAT_BACK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"/></svg>';
-  var ICON_CHAT_SEND = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12l16-7-6 16-3-6-7-3z"/></svg>';
-  function renderChatConversation(body){
-    var emp = loadEmployees().find(function(e){ return e.id === chatUI.activeEmpId; });
+  function chatMessagesHTML(conv, isGroup){
+    var msgs = chatMsgs(conv), html = "", lastDay = "";
+    if(!msgs.length) return '<p class="chat-empty">لا رسائل بعد — ابدأ المحادثة.</p>';
+    msgs.forEach(function(m){
+      var day = chatDay(m.at);
+      if(day !== lastDay){ html += '<div class="chat-day">' + day + '</div>'; lastDay = day; }
+      var mine = m.from === currentUser.id;
+      html += '<div class="chat-bubble ' + (mine ? "me" : "them") + '">' + (isGroup && !mine ? '<b>' + escapeHTML(m.name) + '</b>' : '') + escapeHTML(m.text) + '<small>' + chatTime(m.at) + '</small></div>';
+    });
+    return html;
+  }
+  function renderChatConversation(body, soft){
+    var isGroup = chatUI.activeEmpId === "all";
+    var emp = isGroup ? { id: "all", name: "الفريق كله" } : loadEmployees().find(function(e){ return e.id === chatUI.activeEmpId; });
     if(!emp){ chatUI.activeEmpId = null; renderChatList(body); return; }
-    var thread = seedChatThread(emp);
-    var data = loadChatDemo();
-    thread = data[emp.id] || thread;
-    var html = '<div class="chat-thread-head">' +
-      '<button type="button" class="chat-back-btn" data-action="chat-back"><span class="icon">' + ICON_CHAT_BACK + '</span></button>' +
-      '<span class="chat-avatar">' + initials(emp.name) + '</span>' +
-      '<span class="chat-thread-name">' + escapeHTML(emp.name) + '</span>' +
-    '</div>' +
-    '<div class="chat-messages" id="chatMessagesList">' +
-      thread.map(function(m){ return '<div class="chat-bubble ' + (m.from === "me" ? "me" : "them") + '">' + escapeHTML(m.text) + '</div>'; }).join("") +
-    '</div>' +
-    '<div class="chat-input-row">' +
-      '<input type="text" id="chatMessageInput" placeholder="اكتب رسالة..." autocomplete="off"/>' +
-      '<button type="button" class="chat-send-btn" data-action="chat-send"><span class="icon">' + ICON_CHAT_SEND + '</span></button>' +
-    '</div>';
-    setHTML(body, html);
-    var list = document.getElementById("chatMessagesList");
-    if(list) list.scrollTop = list.scrollHeight;
-    var input = document.getElementById("chatMessageInput");
-    if(input) input.focus();
+    var conv = chatConvId(emp.id), list = document.getElementById("chatMessagesList");
+    if(soft && list && list.dataset.conv === conv){
+      // تحديث خفيف: الرسائل فقط — يبقى ما يكتبه المستخدم في خانة الإدخال كما هو
+      var nearBottom = list.scrollHeight - list.scrollTop - list.clientHeight < 80;
+      list.innerHTML = chatMessagesHTML(conv, isGroup);
+      if(nearBottom) list.scrollTop = list.scrollHeight;
+      var sub = body.querySelector(".chat-thread-sub"); if(sub && !isGroup) sub.textContent = chatSeenLabel(emp.id);
+    } else {
+      body.innerHTML = '<div class="chat-thread-head">' +
+        '<button type="button" class="chat-back-btn" data-action="chat-back"><span class="icon">' + ICON_CHAT_BACK + '</span></button>' +
+        '<span class="chat-avatar' + (isGroup ? " chat-avatar--all" : "") + '">' + (isGroup ? "＃" : escapeHTML(initials(emp.name))) + '</span>' +
+        '<span class="chat-thread-name">' + escapeHTML(emp.name) + '<small class="chat-thread-sub">' + (isGroup ? (chatOtherEmployees().length + 1) + " موظفاً" : chatSeenLabel(emp.id)) + '</small></span>' +
+      '</div>' +
+      '<div class="chat-messages" id="chatMessagesList" data-conv="' + conv + '">' + chatMessagesHTML(conv, isGroup) + '</div>' +
+      '<div class="chat-input-row">' +
+        '<input type="text" id="chatMessageInput" placeholder="اكتب رسالة..." autocomplete="off" maxlength="1500"/>' +
+        '<button type="button" class="chat-send-btn" data-action="chat-send"><span class="icon">' + ICON_CHAT_SEND + '</span></button>' +
+      '</div>';
+      list = document.getElementById("chatMessagesList");
+      if(list) list.scrollTop = list.scrollHeight;
+      var input = document.getElementById("chatMessageInput");
+      if(input && !(window.matchMedia && matchMedia("(pointer:coarse)").matches)) input.focus();
+    }
+    if(!document.hidden) chatMarkRead(conv);
   }
   function sendChatMessage(){
     var input = document.getElementById("chatMessageInput");
     if(!input || !chatUI.activeEmpId) return;
     var text = input.value.trim();
     if(!text) return;
-    var data = loadChatDemo();
-    data[chatUI.activeEmpId] = data[chatUI.activeEmpId] || [];
-    data[chatUI.activeEmpId].push({ from: "me", text: text });
-    saveChatDemo(data);
-    renderChatPanel();
+    var other = chatUI.activeEmpId, conv = chatConvId(other), cur = chat.convs[conv];
+    var msg = { id: "m" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), from: currentUser.id, name: currentUser.name, text: text, at: Date.now() };
+    var base = cur || { id: conv, parts: other === "all" ? ["all"] : [currentUser.id, other], msgs: [] };
+    chat.convs[conv] = Object.assign({}, base, { msgs: (base.msgs || []).concat([msg]), last: msg.at });
+    input.value = "";
+    renderChatPanel(true);
+    var list = document.getElementById("chatMessagesList");
+    if(list) list.scrollTop = list.scrollHeight;
+    if(WS_LOCAL) return;
+    var ref = db.collection("chatConvs").doc(conv), op;
+    if(!cur) op = ref.set({ id: conv, parts: base.parts, msgs: [msg], last: msg.at }, { merge: true });
+    else if((cur.msgs || []).length > 300) op = ref.set({ id: conv, parts: base.parts, msgs: cur.msgs.slice(-200).concat([msg]), last: msg.at });
+    else op = ref.update({ msgs: firebase.firestore.FieldValue.arrayUnion(msg), last: msg.at });
+    op.catch(function(err){
+      console.error("chat send failed", err);
+      showToast("تعذّر إرسال الرسالة — تحقق من الاتصال");
+      var c = chat.convs[conv];
+      if(c) c.msgs = c.msgs.filter(function(m){ return m.id !== msg.id; });
+      input.value = text;
+      renderChatPanel(true);
+    });
   }
 
   var chatFabBtn = document.getElementById("chatFabBtn");
   var chatPanelEl = document.getElementById("chatPanel");
   chatFabBtn.addEventListener("click", function(){
     chatPanelEl.classList.add("open");
+    chatLoadSeen();
     renderChatPanel();
   });
   document.getElementById("chatCloseBtn").addEventListener("click", function(){
     chatPanelEl.classList.remove("open");
+    chatUI.activeEmpId = null;
   });
   chatPanelEl.addEventListener("click", function(e){
     var openBtn = e.target.closest('[data-action="chat-open-emp"]');
