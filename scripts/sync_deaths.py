@@ -311,6 +311,66 @@ def publish_short(pending_file, wait_seconds=300):
     print("رُبط %d رابطاً مختصراً" % done)
 
 
+# ================= روابط مختصرة عبر Bitly (حساب الجمعية المدفوع) =================
+# عند توفر BITLY_TOKEN يُختصر رابط خبر الوفاة مباشرة عبر Bitly ويُكتب بالسجل فوراً (الرابط يفتح خبر الجمعية مباشرة).
+# لو فشل Bitly لأي سبب (حد الباقة، انقطاع) نرجع تلقائياً لروابط gzara.org/s حتى لا يبقى الخبر بلا رابط مختصر.
+# BITLY_DOMAIN: النطاق (bit.ly افتراضياً أو نطاق خاص مربوط بالحساب). BITLY_PREFIX: بادئة عنوان خاص اختيارية (مثل zara-).
+BITLY_TOKEN = os.environ.get("BITLY_TOKEN", "").strip()
+BITLY_DOMAIN = (os.environ.get("BITLY_DOMAIN", "") or "bit.ly").strip()
+BITLY_PREFIX = os.environ.get("BITLY_PREFIX", "").strip()
+BITLY_API = "https://api-ssl.bitly.com/v4/"
+
+
+def bitly_call(path, payload=None):
+    hdr = {"Authorization": "Bearer " + BITLY_TOKEN, "Content-Type": "application/json"}
+    data = json.dumps(payload).encode("utf8") if payload is not None else None
+    st, body, _ = http(BITLY_API + path, data=data, headers=hdr, retries=2)
+    try:
+        js = json.loads(body.decode("utf8") or "{}")
+    except Exception:  # noqa: BLE001
+        js = {}
+    return st, js
+
+
+def bitly_short(url, title=""):
+    """يرجّع الرابط المختصر (https://…) أو نصاً فارغاً لو تعذّر."""
+    if not BITLY_TOKEN:
+        return ""
+    try:
+        target = urllib.parse.quote(urllib.parse.unquote(url), safe=":/%?=&#-_.~")
+        payload = {"long_url": target, "domain": BITLY_DOMAIN}
+        if title:
+            payload["title"] = title[:200]
+        st, js = bitly_call("bitlinks", payload)
+        if st not in (200, 201) or not js.get("id"):
+            print("  ! Bitly: تعذّر الاختصار (%s) %s" % (st, js.get("message") or js.get("description") or ""))
+            return ""
+        link = js.get("link") or ("https://" + js["id"])
+        if BITLY_PREFIX:
+            custom = "%s/%s%s" % (BITLY_DOMAIN, BITLY_PREFIX, short_code(url))
+            st2, js2 = bitly_call("custom_bitlinks", {"custom_bitlink": custom, "bitlink_id": js["id"]})
+            if st2 in (200, 201):
+                link = "https://" + custom
+            else:
+                print("  ! Bitly: تعذّر العنوان الخاص (%s) %s — استُخدم الرابط العادي" % (st2, js2.get("message") or js2.get("description") or ""))
+        return link
+    except Exception as e:  # noqa: BLE001
+        print("  ! Bitly: %s" % e)
+        return ""
+
+
+def bitly_check():
+    """تشخيص فقط: يعرض النطاقات المتاحة بالحساب — لا يُنشئ أي رابط."""
+    if not BITLY_TOKEN:
+        print("BITLY_TOKEN غير مضبوط")
+        return
+    st, js = bitly_call("bsds")
+    print("Bitly /bsds → %s | النطاقات الخاصة بالحساب: %s" % (st, ", ".join(js.get("bsds") or []) or "لا يوجد (bit.ly فقط)"))
+    st, js = bitly_call("user")
+    print("Bitly /user → %s | المجموعة الافتراضية: %s" % (st, "موجودة" if js.get("default_group_guid") else "غير معروفة"))
+    print("الإعداد الحالي: النطاق=%s | بادئة العنوان الخاص=%s" % (BITLY_DOMAIN, BITLY_PREFIX or "(بدون)"))
+
+
 def build_record(parsed, list_title, url, photo_r2, prev_ts=0):
     rec = {k: v for k, v in parsed.items() if v not in ("", None) and k not in ("photoUrl", "nickname")}
     nick = parsed.get("nickname")
@@ -446,8 +506,12 @@ def main():
     ap.add_argument("--initial-count", type=int, default=20, help="عدد أحدث الأخبار المسحوبة بأول تشغيل بلا أي سجلات")
     ap.add_argument("--publish-short", metavar="FILE", help="ينتظر نشر صفحات التحويل ثم يكتب الروابط المختصرة بالسجلات (يُشغَّل بعد دفع ملفات s/)")
     ap.add_argument("--no-short", action="store_true", help="لا تُنشئ روابط مختصرة")
+    ap.add_argument("--bitly-check", action="store_true", help="يعرض نطاقات حساب Bitly ويخرج بلا أي كتابة")
     ap.add_argument("--max-per-run", type=int, default=60, help="أقصى عدد أخبار جديدة يُسحب بالتشغيل الواحد")
     args = ap.parse_args()
+    if args.bitly_check:
+        bitly_check()
+        return
     if args.publish_short:
         publish_short(args.publish_short)
         return
@@ -544,10 +608,13 @@ def main():
             if args.dry_run:
                 print("  [dry] جديد: " + label)
             else:
+                bl = "" if args.no_short else bitly_short(it["url"], (it.get("og") or {}).get("title") or it.get("title") or "")
+                if bl:
+                    rec["shortLink"] = bl
                 fs_patch("events/" + rec["id"], dict(rec))
                 ids[url_key(it["url"])] = rec["id"]
-                print("  ✓ جديد: " + label)
-                if not args.no_short:
+                print("  ✓ جديد: " + label + ((" 🔗 " + bl) if bl else ""))
+                if not args.no_short and not bl:
                     c = short_code(it["url"]); write_redirect(c, it["url"], it.get("og") or {})
                     pending_short.append({"rid": rec["id"], "code": c, "label": label})
             collect_opts(rec)
@@ -567,8 +634,14 @@ def main():
             # لا نتوقف عند تطابق البصمة: قد يكون الحقل ناقصاً بالسجل رغم أن الخبر لم يتغيّر (مثلاً حُذفت قيمته أو كانت فارغة
             # وقت السحب الأول) — الدمج نفسه رخيص ولا يكتب شيئاً إلا لو وُجد فرق فعلي
             if not args.dry_run and not args.no_short and not doc.get("shortLink"):
-                c = short_code(it["url"]); write_redirect(c, it["url"], it.get("og") or {})
-                pending_short.append({"rid": ids[k], "code": c, "label": doc.get("deceasedName", "")[:30]})
+                bl2 = bitly_short(it["url"], (it.get("og") or {}).get("title") or it.get("title") or "")
+                if bl2:
+                    fs_patch("events/" + ids[k], {"shortLink": bl2}, mask=["shortLink"])
+                    doc["shortLink"] = bl2
+                    print("  🔗 %s ← %s" % (bl2, doc.get("deceasedName", "")[:30]))
+                else:
+                    c = short_code(it["url"]); write_redirect(c, it["url"], it.get("og") or {})
+                    pending_short.append({"rid": ids[k], "code": c, "label": doc.get("deceasedName", "")[:30]})
             ch, untouched = merge_changes(doc, parsed)
             if parsed.get("photoUrl") and not doc.get("photo") and not args.dry_run:
                 p = upload_photo(parsed["photoUrl"])

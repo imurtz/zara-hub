@@ -15,6 +15,10 @@ on:
         description: "تجربة فقط: يحلّل ويعرض بدون أي كتابة"
         type: boolean
         default: false
+      bitly_check:
+        description: "فحص حساب Bitly فقط: يعرض النطاقات المتاحة ولا يسحب ولا يكتب شيئاً"
+        type: boolean
+        default: false
 
 concurrency:
   group: sync-deaths
@@ -35,7 +39,12 @@ jobs:
           DRY_RUN: ${{ inputs.dry_run }}
           FETCH_PROXY_URL: ${{ secrets.FETCH_PROXY_URL }}
           FETCH_PROXY_KEY: ${{ secrets.FETCH_PROXY_KEY }}
+          BITLY_TOKEN: ${{ secrets.BITLY_TOKEN }}
+          BITLY_DOMAIN: ${{ vars.BITLY_DOMAIN }}
+          BITLY_PREFIX: ${{ vars.BITLY_PREFIX }}
+          BITLY_CHECK: ${{ inputs.bitly_check }}
         run: |
+          if [ "$BITLY_CHECK" = "true" ]; then python3 scripts/sync_deaths.py --bitly-check; exit 0; fi
           ARGS=""
           if [ "$BACKFILL" = "true" ]; then ARGS="--backfill --max-per-run 500"; fi
           if [ "$DRY_RUN" = "true" ]; then ARGS="$ARGS --dry-run"; fi
