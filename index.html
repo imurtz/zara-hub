@@ -69,13 +69,8 @@
   /* ===== الواجهة ===== */
   /* فيديو الواجهة: يعمل صامتاً تلقائياً، وزر ناعم لتشغيل الصوت */
   .film{position:relative; margin-top:26px; border-radius:32px; overflow:hidden; aspect-ratio:16 / 9; background:#fff; box-shadow:0 2px 4px rgba(20,28,27,.04), 0 30px 70px rgba(20,28,27,.18); animation:in .9s var(--ease) both;}
-  /* الكمبيوتر: البطاقة بعرض الصفحة كاملاً لكن بارتفاع أقل — الفيديو يظهر كاملاً في الوسط، وخلفه نسخة مموّهة منه تملأ الجانبين */
-  @media (min-width:900px){
-    .film{aspect-ratio:auto; height:clamp(300px, 30vw, 380px);}
-    .film #homeFilmVideo{position:relative; z-index:1; object-fit:contain;}
-    .film .film-bg{position:absolute; inset:-48px; width:calc(100% + 96px); height:calc(100% + 96px); object-fit:cover; filter:blur(38px) saturate(1.15); pointer-events:none;}
-    .film-sound{z-index:2;}
-  }
+  /* الكمبيوتر: نسخة عريضة 3:1 من الفيديو تملأ البطاقة كاملة؛ الجوال يبقى على نسخة 16:9 */
+  @media (min-width:900px){ .film{aspect-ratio:3 / 1;} }
   .film video{display:block; width:100%; height:100%; object-fit:cover;}
   .film-sound{position:absolute; bottom:16px; inset-inline-start:16px; display:inline-flex; align-items:center; gap:8px; padding:9px 15px 9px 13px; border:1px solid rgba(255,255,255,.28); border-radius:999px; background:rgba(20,28,27,.38); -webkit-backdrop-filter:blur(14px) saturate(160%); backdrop-filter:blur(14px) saturate(160%); color:#fff; font-family:inherit; font-size:13px; font-weight:500; cursor:pointer; transition:background .3s ease, transform .4s var(--ease);}
   .film-sound:hover{background:rgba(20,28,27,.55); transform:translateY(-2px);}
@@ -272,7 +267,16 @@
 
 <div class="shell">
   <div class="film" id="homeFilm">
-    <video id="homeFilmVideo" src="/assets/home/awamia.mp4" poster="/assets/home/awamia-poster.jpg" autoplay muted loop playsinline preload="metadata" aria-label="فيديو تعريفي — جمعية العوامية الخيرية"></video>
+    <video id="homeFilmVideo" autoplay muted loop playsinline preload="metadata" aria-label="فيديو تعريفي — جمعية العوامية الخيرية"></video>
+    <script>
+    // نسخة الفيديو حسب الشاشة: عريضة 3:1 للكمبيوتر، و16:9 للجوال — تُحدَّد قبل أي تحميل حتى لا يُحمَّل ملفان
+    (function(){
+      var v = document.getElementById("homeFilmVideo");
+      var wide = window.matchMedia && matchMedia("(min-width:900px)").matches;
+      v.poster = wide ? "/assets/home/awamia-wide-poster.jpg" : "/assets/home/awamia-poster.jpg";
+      v.src = wide ? "/assets/home/awamia-wide.mp4" : "/assets/home/awamia.mp4";
+    })();
+    </script>
     <button type="button" class="film-sound" id="homeFilmSound" aria-pressed="false" aria-label="تشغيل الصوت">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9.500v5h3.500l4.500 4v-13l-4.500 4H4z"/><path class="film-wave" d="M15.500 9.200a4 4 0 0 1 0 5.600M18 6.800a7.500 7.500 0 0 1 0 10.400"/><path class="film-mute" d="M16 9.500l5 5M21 9.500l-5 5"/></svg>
       <span>تشغيل الصوت</span>
@@ -374,21 +378,6 @@
     if(!v.muted){ v.volume = 1; var p = v.play(); if(p && p.catch) p.catch(function(){}); }
     paint();
   });
-  // الكمبيوتر فقط: نسخة مموّهة صامتة خلف الفيديو تملأ جانبي البطاقة
-  var bg = null;
-  if(window.matchMedia && matchMedia("(min-width:900px)").matches){
-    bg = document.createElement("video");
-    bg.className = "film-bg";
-    bg.muted = true; bg.loop = true; bg.playsInline = true;
-    bg.setAttribute("aria-hidden", "true");
-    bg.tabIndex = -1;
-    bg.src = v.currentSrc || v.src;
-    v.parentNode.insertBefore(bg, v);
-    v.addEventListener("play", function(){ try{ bg.currentTime = v.currentTime; }catch(e){} var bp = bg.play(); if(bp && bp.catch) bp.catch(function(){}); });
-    v.addEventListener("pause", function(){ bg.pause(); });
-    v.addEventListener("seeked", function(){ try{ bg.currentTime = v.currentTime; }catch(e){} });
-    if(!v.paused){ var bp0 = bg.play(); if(bp0 && bp0.catch) bp0.catch(function(){}); }
-  }
   if("IntersectionObserver" in window){
     new IntersectionObserver(function(es){
       if(es[0].isIntersecting){ var p = v.play(); if(p && p.catch) p.catch(function(){}); }
