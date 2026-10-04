@@ -1719,6 +1719,36 @@
   .ws-add svg{width:14px; height:14px;}
   .ws-add:hover{border-color:var(--teal); color:var(--teal-dark); background:#fff;}
 
+  /* علامة الصح للشطب السريع */
+  .ws-card-main{display:flex; align-items:flex-start; gap:9px; margin-bottom:8px;}
+  .ws-card-main .ws-card-title{margin:0; flex:1; min-width:0;}
+  .ws-check{flex:none; width:24px; height:24px; margin-top:1px; border-radius:50%; border:1.500px solid rgba(20,28,27,.28); background:#fff; color:transparent; display:inline-flex; align-items:center; justify-content:center; cursor:pointer; padding:0; transition:background .2s ease, border-color .2s ease, transform .2s ease;}
+  .ws-check svg, .ws-check .icon{width:14px; height:14px;}
+  .ws-check:hover{border-color:var(--teal); color:var(--teal); transform:scale(1.08);}
+  .ws-check.on{background:var(--teal); border-color:var(--teal); color:#fff;}
+  .ws-check--lg{width:auto; height:auto; gap:7px; border-radius:999px; padding:8px 16px; margin:0 0 10px; font:inherit; font-size:13px; font-weight:600; color:var(--ink-2);}
+  .ws-check--lg svg{width:16px; height:16px; color:var(--teal);}
+  .ws-check--lg.on svg{color:#fff;}
+  .ws-line i[data-ws]{cursor:pointer; width:16px; height:16px;}
+  .ws-line i[data-ws]:hover{border-color:var(--teal); background:var(--teal-tint);}
+  @media (pointer:coarse){ .ws-check{width:30px; height:30px;} }
+  /* لوحة المشروع */
+  .ws-pboard{display:flex; align-items:center; justify-content:space-between; gap:18px; flex-wrap:wrap; padding:16px 20px; margin-bottom:12px; border-radius:24px; color:#fff; background:linear-gradient(150deg, #5B8483 0%, var(--teal) 40%, var(--teal-dark) 100%);}
+  .ws-pboard-k{font-size:11.500px; font-weight:500; background:rgba(255,255,255,.18); border-radius:999px; padding:2px 11px;}
+  .ws-pboard h3{font-size:19px; font-weight:600; color:#fff; margin:6px 0 8px;}
+  .ws-team{display:flex; align-items:center; gap:0;}
+  .ws-team .ws-av{width:30px; height:30px; font-size:12.500px; background:#fff; color:var(--teal-dark); border:2px solid var(--teal); margin-inline-start:-7px;}
+  .ws-team .ws-av:first-child{margin-inline-start:0;}
+  .ws-team small{font-size:12px; color:rgba(255,255,255,.85); margin-inline-start:10px;}
+  .ws-pboard-side{min-width:230px; display:flex; flex-direction:column; gap:6px;}
+  .ws-pboard-side .ws-prog{color:#fff; margin:0;}
+  .ws-pboard-side .ws-prog > span{background:rgba(255,255,255,.28);}
+  .ws-pboard-side .ws-prog i{background:#fff;}
+  .ws-pboard-side small{font-size:12px; color:rgba(255,255,255,.85);}
+  .ws-pboard .ws-pill{background:rgba(255,255,255,.16); border-color:transparent; color:#fff;}
+  .ws-pboard .ws-pill:hover{background:#fff; color:var(--teal-dark);}
+  .ws-mine{font-style:normal; font-size:10.500px; font-weight:600; color:var(--teal-dark); background:var(--teal-tint); border-radius:999px; padding:1px 8px; margin-inline-start:6px;}
+  .ws-sec-head small{margin:0;}
   /* التقويم */
   .ws-cal{background:#fff; border:1px solid rgba(255,255,255,.95); border-radius:24px; padding:14px; box-shadow:var(--shadow-sm);}
   .ws-cal-bar{display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap; margin-bottom:8px;}
@@ -11952,7 +11982,20 @@
     return ws.roles[currentUser.id] || "member";
   }
   function wsCanManage(){ var r = wsRole(); return r === "admin" || r === "pm"; }
-  function wsCanEditTask(t){ return wsCanManage() || (wsRole() === "member" && t && t.assigneeId === currentUser.id); }
+  function wsProjectOf(id){ return id ? ws.projects.find(function(p){ return p.id === id; }) : null; }
+  function wsInTeam(p){ return !!p && !!currentUser && (p.ownerId === currentUser.id || (p.team || []).indexOf(currentUser.id) > -1); }
+  // مالك المشروع يدير المشروع نفسه (الفريق والبيانات)، وأعضاء الفريق يديرون مهامه
+  function wsCanManageProject(p){ return wsCanManage() || (wsRole() === "member" && !!p && p.ownerId === currentUser.id); }
+  function wsCanEditTask(t){
+    if(!t || wsRole() === "viewer") return false;
+    return wsCanManage() || t.assigneeId === currentUser.id || wsInTeam(wsProjectOf(t.projectId));
+  }
+  function wsCanAssign(t){ return wsCanManage() || (wsRole() !== "viewer" && wsInTeam(wsProjectOf(t.projectId))); }
+  function wsToggleDone(id){
+    var t = ws.tasks.find(function(x){ return x.id === id; });
+    if(!t) return;
+    wsMoveTask(id, t.status === "done" ? "todo" : "done");
+  }
   function wsCanCreate(){ return wsRole() !== "viewer"; }
   function wsEmpName(id){ return empNameById(id, loadEmployees()) || ""; }
   function wsList(col){ return ws[{ wsTasks: "tasks", wsProjects: "projects", wsEvents: "events", wsAssets: "assets", wsStandups: "standups", wsNotifs: "notifs", wsLogs: "logs" }[col]]; }
@@ -12147,7 +12190,8 @@
     var canEdit = wsCanEditTask(t);
     return '<div class="ws-card' + (late ? " is-late" : "") + '" draggable="' + (canEdit ? "true" : "false") + '" data-ws="open-task" data-id="' + t.id + '">' +
       '<div class="ws-card-top"><span class="ws-pr ws-pr--' + pr.k + '">' + pr.l + '</span>' + (proj ? '<span class="ws-proj">' + escapeHTML(proj.name) + '</span>' : '') + '</div>' +
-      '<p class="ws-card-title">' + escapeHTML(t.title) + '</p>' +
+      '<div class="ws-card-main">' + (canEdit ? '<button type="button" class="ws-check' + (t.status === "done" ? " on" : "") + '" data-ws="check-task" data-id="' + t.id + '" title="' + (t.status === "done" ? "إلغاء الإنجاز" : "تمّت المهمة") + '" aria-pressed="' + (t.status === "done") + '">' + TICON.check + '</button>' : '') +
+      '<p class="ws-card-title">' + escapeHTML(t.title) + '</p></div>' +
       (cs ? '<div class="ws-card-camp' + (cs.due.length ? " is-due" : "") + '">' + WSI.coin + (cs.due.length ? 'حان رصد النتائج' : (cs.latest != null ? wsMoney(cs.latest) + (cs.growth != null ? ' <b>' + (cs.growth >= 0 ? "+" : "") + cs.growth + '%</b>' : '') : 'حملة — بانتظار الرصد')) + '</div>' : '') +
       '<div class="ws-card-foot">' +
         (name ? '<span class="ws-av" title="' + escapeHTML(name) + '">' + escapeHTML(initials(name)) + '</span>' : '<span class="ws-av ws-av--none">؟</span>') +
@@ -12249,6 +12293,15 @@
       (wsRole() === "admin" ? '<button type="button" data-ws="panel" data-panel="roles">الأدوار</button>' : '') +
       '<button type="button" class="ws-legacy" data-ws="legacy">المهام السابقة على هذا الجهاز</button>' +
     '</div>';
+    var bp = wsProjectOf(wsUI.fProject);
+    if(bp){
+      var bst = wsProjectStats(bp), team = (bp.team || []).slice();
+      if(bp.ownerId && team.indexOf(bp.ownerId) === -1) team.unshift(bp.ownerId);
+      html += '<div class="ws-pboard"><div class="ws-pboard-main"><span class="ws-pboard-k">لوحة مشروع</span><h3>' + escapeHTML(bp.name) + '</h3>' +
+        '<div class="ws-team">' + (team.length ? team.map(function(id){ var nm = wsEmpName(id); return nm ? '<span class="ws-av" title="' + escapeHTML(nm) + (id === bp.ownerId ? " — مسؤول المشروع" : "") + '">' + escapeHTML(initials(nm)) + '</span>' : ''; }).join("") + '<small>' + team.length + ' في الفريق</small>' : '<small>لم يُشكَّل فريق بعد</small>') + '</div></div>' +
+        '<div class="ws-pboard-side"><div class="ws-prog ws-prog--lg"><span><i style="width:' + bst.pct + '%"></i></span>' + bst.pct + '%</div><small>' + bst.done + ' من ' + bst.total + ' مهمة' + (bp.dueDate ? ' · التسليم ' + wsFmtDate(bp.dueDate) : '') + '</small>' +
+        '<div class="ws-row"><button type="button" class="ws-pill" data-ws="open-project" data-id="' + bp.id + '">' + (wsCanManageProject(bp) ? "الفريق والتفاصيل" : "التفاصيل") + '</button><button type="button" class="ws-pill" data-ws="exit-board">كل المهام</button></div></div></div>';
+    }
     html += wsUI.view === "calendar" ? wsCalendarHTML(tasks) : wsKanbanHTML(tasks);
     var sc = root.querySelector(".ws-strip-row"), sx = sc ? sc.scrollLeft : 0;
     root.innerHTML = html;
@@ -12325,12 +12378,14 @@
   }
   function wsTaskDrawerHTML(t){
     var can = wsCanEditTask(t), manage = wsCanManage(), dis = can ? "" : " disabled", emps = loadEmployees();
+    var tproj = wsProjectOf(t.projectId), tteam = tproj ? (tproj.team || []).concat(tproj.ownerId ? [tproj.ownerId] : []) : [];
+    var assignable = tteam.length ? emps.filter(function(e){ return tteam.indexOf(e.id) > -1 || e.id === t.assigneeId; }) : emps;
     var html = wsHead("تفاصيل المهمة", t.createdAt ? "أُنشئت " + wsFmtTime(t.createdAt) : "");
     html += '<input type="text" class="ws-title-inp" data-wsf="title" value="' + escapeHTML(t.title) + '" placeholder="اسم المهمة"' + dis + '/>';
     html += '<div class="ws-grid2">' +
       wsField("الحالة", wsSel("status", t.status, WS_STATUS.map(function(s){ return [s.k, s.l]; }), dis)) +
       wsField("الأولوية", wsSel("priority", t.priority, WS_PRIORITY.map(function(s){ return [s.k, s.l]; }), dis)) +
-      wsField("المسند إليه", wsSel("assigneeId", t.assigneeId, [["", "بدون إسناد"]].concat(emps.map(function(e){ return [e.id, e.name]; })), manage ? "" : " disabled")) +
+      wsField(tteam.length ? "المسند إليه (من فريق المشروع)" : "المسند إليه", wsSel("assigneeId", t.assigneeId, [["", "بدون إسناد"]].concat(assignable.map(function(e){ return [e.id, e.name]; })), wsCanAssign(t) ? "" : " disabled")) +
       wsField("المشروع", wsSel("projectId", t.projectId, [["", "بدون مشروع"]].concat(ws.projects.map(function(p){ return [p.id, p.name]; })), dis)) +
       wsField("تاريخ البدء", '<input type="date" data-wsf="startDate" value="' + (t.startDate || "") + '"' + dis + '/>') +
       wsField("تاريخ الانتهاء", '<input type="date" data-wsf="dueDate" value="' + (t.dueDate || "") + '"' + dis + '/>') + '</div>';
@@ -12347,6 +12402,7 @@
       ((t.comments || []).length ? t.comments.map(function(c){ return '<div class="ws-cm"><span class="ws-av">' + escapeHTML(initials(c.name)) + '</span><div><b>' + escapeHTML(c.name) + '</b><small>' + wsFmtTime(c.at) + '</small><p>' + escapeHTML(c.text).replace(/@([^\s@،.]+(?: [^\s@،.]+)?)/g, '<mark>@$1</mark>') + '</p></div></div>'; }).join("") : '<p class="ws-hint">لا تعليقات بعد.</p>') +
       (wsRole() !== "viewer" ? '<div class="ws-cm-form"><textarea rows="2" id="wsCmText" placeholder="اكتب تعليقاً — للإشارة لزميل اختر اسمه من القائمة"></textarea><div class="ws-row"><select id="wsCmMention"><option value="">@ إشارة إلى…</option>' + emps.map(function(e){ return '<option value="' + e.id + '">' + escapeHTML(e.name) + '</option>'; }).join("") + '</select><button type="button" class="btn-primary" data-ws="add-comment">إرسال</button></div></div>' : '') + '</div>';
     html += '<details class="ws-sec ws-log"><summary>سجل التغييرات <i>' + (t.log || []).length + '</i></summary>' + ((t.log || []).slice().reverse().map(function(l){ return '<p><b>' + escapeHTML(l.by) + '</b> ' + escapeHTML(l.text) + '<small>' + wsFmtTime(l.at) + '</small></p>'; }).join("") || '<p class="ws-hint">لا تغييرات مسجّلة.</p>') + '</details>';
+    if(can) html = html.replace('<input type="text" class="ws-title-inp"', '<button type="button" class="ws-check ws-check--lg' + (t.status === "done" ? " on" : "") + '" data-ws="check-task" data-id="' + t.id + '">' + TICON.check + (t.status === "done" ? " منجزة — إلغاء" : " تمّت المهمة") + '</button><input type="text" class="ws-title-inp"');
     if(manage || (can && t.createdBy === currentUser.id)) html += '<button type="button" class="ws-danger" data-ws="del-task">حذف المهمة</button>';
     return html;
   }
@@ -12362,7 +12418,7 @@
     html += '<div class="ws-sec"><div class="ws-sec-head"><b>جاهزية التحضير</b>' + (manage ? '<button type="button" class="ws-pill" data-ws="new-task" data-event="' + ev.id + '">' + WSI.plus + ' مهمة تحضيرية</button>' : '') + '</div>';
     if(rd){
       html += '<div class="ws-prog ws-prog--lg"><span><i style="width:' + rd.pct + '%"></i></span>جاهزية الفعالية: ' + rd.pct + '%</div>' +
-        rd.tasks.map(function(t){ return '<button type="button" class="ws-line' + (t.status === "done" ? " is-done" : "") + '" data-ws="open-task" data-id="' + t.id + '"><i></i>' + escapeHTML(t.title) + '<small>' + (WS_STATUS.find(function(s){ return s.k === t.status; }) || {}).l + '</small></button>'; }).join("");
+        rd.tasks.map(function(t){ return '<button type="button" class="ws-line' + (t.status === "done" ? " is-done" : "") + '" data-ws="open-task" data-id="' + t.id + '"><i' + (wsCanEditTask(t) ? ' data-ws="check-task" data-id="' + t.id + '" title="شطب المهمة"' : '') + '></i>' + escapeHTML(t.title) + '<small>' + (WS_STATUS.find(function(s){ return s.k === t.status; }) || {}).l + '</small></button>'; }).join("");
     } else html += '<p class="ws-hint">اربط مهاماً تحضيرية بالفعالية لتظهر نسبة الجاهزية.</p>';
     html += '</div><div class="ws-sec"><div class="ws-sec-head"><b>الميزانية والموردون</b></div>' + wsField("ميزانية الفعالية", '<input type="number" inputmode="decimal" data-wse="budget" value="' + (ev.budget != null ? ev.budget : "") + '"' + dis + '/>');
     var total = 0;
@@ -12377,11 +12433,15 @@
     return html;
   }
   function wsProjectDrawerHTML(p){
-    var manage = wsCanManage(), dis = manage ? "" : " disabled", st = wsProjectStats(p), emps = loadEmployees();
+    var manage = wsCanManageProject(p), dis = manage ? "" : " disabled", st = wsProjectStats(p), emps = loadEmployees();
     var target = p.target != null && p.target !== "" ? Number(p.target) : null;
     var got = st.raised != null ? st.raised : (p.collected != null && p.collected !== "" ? Number(p.collected) : null);
     var html = wsHead("تفاصيل المشروع", st.total + " مهمة · أُنجز " + st.done);
     html += '<input type="text" class="ws-title-inp" data-wsp="name" value="' + escapeHTML(p.name) + '" placeholder="اسم المشروع"' + dis + '/>';
+    html += '<button type="button" class="btn-primary ws-block" data-ws="open-board" data-id="' + p.id + '">' + WSI.board + ' فتح لوحة مهام المشروع</button>';
+    html += '<div class="ws-sec" style="margin-top:0; margin-bottom:12px;"><div class="ws-sec-head"><b>فريق المشروع</b><small class="ws-hint">أعضاء الفريق يضيفون مهام المشروع ويتابعونها</small></div>' +
+      wsField("مسؤول المشروع", wsSel("ownerId", p.ownerId, [["", "غير محدد"]].concat(emps.map(function(e){ return [e.id, e.name]; })), wsCanManage() ? "" : " disabled").replace("data-wsf", "data-wsp")) +
+      '<div class="tf-chips">' + emps.map(function(e){ return '<label class="tf-chip"><input type="checkbox" data-ws-toggle="team" value="' + e.id + '"' + ((p.team || []).indexOf(e.id) > -1 ? " checked" : "") + dis + '/><span>' + escapeHTML(e.name) + '</span></label>'; }).join("") + '</div></div>';
     html += '<div class="ws-prog ws-prog--lg"><span><i style="width:' + st.pct + '%"></i></span>نسبة الإنجاز: ' + st.pct + '%</div>';
     html += '<div class="ws-roi"><div><span>الميزانية</span><b>' + wsMoney(p.budget) + '</b></div><div><span>المستهدف</span><b>' + wsMoney(target) + '</b></div><div><span>المحصّل</span><b>' + wsMoney(got) + '</b></div><div><span>من المستهدف</span><b class="up">' + (got != null && target ? Math.round(got / target * 100) + "%" : "—") + '</b></div></div>';
     html += '<div class="ws-grid2">' + wsField("الحالة", wsSel("status", p.status, [["active", "نشط"], ["paused", "متوقف"], ["done", "مكتمل"]], dis).replace("data-wsf", "data-wsp")) +
@@ -12391,19 +12451,19 @@
       wsField("المحصّل (يدوي)", '<input type="number" inputmode="decimal" data-wsp="collected" value="' + (p.collected != null ? p.collected : "") + '"' + dis + '/>') + '</div>';
     if(st.raised != null) html += '<p class="ws-hint">المحصّل المعروض مجموع آخر رصد في حملات مهام المشروع.</p>';
     html += wsField("الوصف", '<textarea rows="3" data-wsp="desc"' + dis + '>' + escapeHTML(p.desc || "") + '</textarea>');
-    html += '<p class="ws-label">الفريق المسؤول</p><div class="tf-chips">' + emps.map(function(e){ return '<label class="tf-chip"><input type="checkbox" data-ws-toggle="team" value="' + e.id + '"' + ((p.team || []).indexOf(e.id) > -1 ? " checked" : "") + dis + '/><span>' + escapeHTML(e.name) + '</span></label>'; }).join("") + '</div>';
-    html += '<div class="ws-sec"><div class="ws-sec-head"><b>مهام المشروع</b>' + (wsCanCreate() ? '<button type="button" class="ws-pill" data-ws="new-task" data-project="' + p.id + '">' + WSI.plus + ' مهمة</button>' : '') + '</div>' +
-      (ws.tasks.filter(function(t){ return t.projectId === p.id; }).map(function(t){ return '<button type="button" class="ws-line' + (t.status === "done" ? " is-done" : "") + '" data-ws="open-task" data-id="' + t.id + '"><i></i>' + escapeHTML(t.title) + '<small>' + (WS_STATUS.find(function(s){ return s.k === t.status; }) || {}).l + '</small></button>'; }).join("") || '<p class="ws-hint">لا مهام بعد.</p>') + '</div>';
+    html += '<div class="ws-sec"><div class="ws-sec-head"><b>مهام المشروع</b>' + ((wsCanManage() || wsInTeam(p)) ? '<button type="button" class="ws-pill" data-ws="new-task" data-project="' + p.id + '">' + WSI.plus + ' مهمة</button>' : '') + '</div>' +
+      (ws.tasks.filter(function(t){ return t.projectId === p.id; }).map(function(t){ return '<button type="button" class="ws-line' + (t.status === "done" ? " is-done" : "") + '" data-ws="open-task" data-id="' + t.id + '"><i' + (wsCanEditTask(t) ? ' data-ws="check-task" data-id="' + t.id + '" title="شطب المهمة"' : '') + '></i>' + escapeHTML(t.title) + '<small>' + (WS_STATUS.find(function(s){ return s.k === t.status; }) || {}).l + '</small></button>'; }).join("") || '<p class="ws-hint">لا مهام بعد.</p>') + '</div>';
     if(manage) html += '<button type="button" class="ws-danger" data-ws="del-project">حذف المشروع</button>';
+    else if(!wsInTeam(p)) html += '<p class="ws-hint" style="margin-top:12px;">لست ضمن فريق هذا المشروع — تستطيع المتابعة دون التعديل.</p>';
     return html;
   }
   function wsPanelHTML(name){
     var manage = wsCanManage(), emps = loadEmployees(), html = "";
     if(name === "projects"){
-      html = wsHead("المشاريع", ws.projects.length + " مشروع") + (manage ? '<button type="button" class="btn-primary ws-block" data-ws="new-project">' + WSI.plus + ' مشروع جديد</button>' : '');
-      ws.projects.slice().sort(function(a, b){ return (a.status === "done") - (b.status === "done"); }).forEach(function(p){
+      html = wsHead("المشاريع", ws.projects.length + " مشروع") + (wsCanCreate() ? '<button type="button" class="btn-primary ws-block" data-ws="new-project">' + WSI.plus + ' مشروع جديد وتشكيل فريقه</button>' : '');
+      ws.projects.slice().sort(function(a, b){ return ((a.status === "done") - (b.status === "done")) || (wsInTeam(b) - wsInTeam(a)); }).forEach(function(p){
         var st = wsProjectStats(p);
-        html += '<button type="button" class="ws-tile" data-ws="open-project" data-id="' + p.id + '"><b>' + escapeHTML(p.name) + '</b><small>' + ({ active: "نشط", paused: "متوقف", done: "مكتمل" }[p.status] || "نشط") + (p.dueDate ? " · التسليم " + wsFmtDate(p.dueDate) : "") + ' · ' + st.total + ' مهمة</small><span class="ws-prog"><span><i style="width:' + st.pct + '%"></i></span>' + st.pct + '%</span></button>';
+        html += '<button type="button" class="ws-tile" data-ws="open-project" data-id="' + p.id + '"><b>' + escapeHTML(p.name) + (wsInTeam(p) ? ' <i class="ws-mine">فريقي</i>' : '') + '</b><small>' + ((p.team || []).length ? (p.team || []).length + ' في الفريق · ' : '') + '' + ({ active: "نشط", paused: "متوقف", done: "مكتمل" }[p.status] || "نشط") + (p.dueDate ? " · التسليم " + wsFmtDate(p.dueDate) : "") + ' · ' + st.total + ' مهمة</small><span class="ws-prog"><span><i style="width:' + st.pct + '%"></i></span>' + st.pct + '%</span></button>';
       });
       if(!ws.projects.length) html += '<p class="ws-hint">لا مشاريع بعد.</p>';
     } else if(name === "events"){
@@ -12497,6 +12557,8 @@
     if(!wsCanCreate()) return;
     opts = opts || {};
     var manage = wsCanManage();
+    var np0 = wsProjectOf(opts.project || wsUI.fProject);
+    if(np0 && !manage && !wsInTeam(np0)){ showToast("إضافة المهام لهذا المشروع لأعضاء فريقه"); return; }
     var t = { id: wsId("tsk"), title: "مهمة جديدة", desc: "", assigneeId: manage ? (wsUI.fAssignee && wsUI.fAssignee !== "none" ? wsUI.fAssignee : null) : currentUser.id,
       projectId: opts.project || wsUI.fProject || null, status: "todo", priority: "medium", startDate: wsToday(), dueDate: "", attachments: [], comments: [],
       log: [{ by: currentUser.name, text: "أنشأ المهمة", at: Date.now() }], eventIds: opts.event ? [opts.event] : [], createdAt: Date.now(), createdBy: currentUser.id };
@@ -12554,7 +12616,10 @@
         wsOpenDrawer(b.dataset.panel); break;
       case "legacy": { var old = document.getElementById("taskBoardRoot"); if(old){ old.hidden = !old.hidden; if(!old.hidden){ renderTaskBoard(); old.scrollIntoView({ behavior: "smooth" }); } } break; }
       case "close-drawer": wsCloseDrawer(); break;
-      case "open-task": if(e.target.closest("[data-ws='step-task']")) break; wsOpenDrawer("task", b.dataset.id); break;
+      case "open-task": if(e.target.closest("[data-ws='step-task'], [data-ws='check-task']")) break; wsOpenDrawer("task", b.dataset.id); break;
+      case "check-task": e.stopPropagation(); wsToggleDone(b.dataset.id); break;
+      case "open-board": wsUI.fProject = b.dataset.id; wsUI.fAssignee = ""; wsUI.view = "kanban"; wsCloseDrawer(); wsRender(); window.scrollTo({ top: 0, behavior: "smooth" }); break;
+      case "exit-board": wsUI.fProject = ""; wsRender(); break;
       case "open-event": wsOpenDrawer("event", b.dataset.id); break;
       case "open-project": wsOpenDrawer("project", b.dataset.id); break;
       case "step-task": {
@@ -12571,8 +12636,8 @@
         wsSet("wsEvents", ne); wsLog("أنشأ فعالية", ne.title); wsOpenDrawer("event", ne.id); break;
       }
       case "new-project": {
-        if(!wsCanManage()) break;
-        var np = { id: wsId("prj"), name: "مشروع جديد", desc: "", team: [], startDate: wsToday(), dueDate: "", budget: null, target: null, collected: null, status: "active", createdAt: Date.now() };
+        if(!wsCanCreate()) break;
+        var np = { id: wsId("prj"), name: "مشروع جديد", desc: "", ownerId: currentUser.id, team: [currentUser.id], startDate: wsToday(), dueDate: "", budget: null, target: null, collected: null, status: "active", createdAt: Date.now() };
         wsSet("wsProjects", np); wsLog("أنشأ مشروعاً", np.name); wsOpenDrawer("project", np.id); break;
       }
       case "del-task": if(t && confirm("حذف المهمة «" + t.title + "»؟")){ wsLog("حذف مهمة", t.title); wsDel("wsTasks", t.id); wsCloseDrawer(); wsRender(); } break;
@@ -12664,6 +12729,7 @@
       if(f1 === "status"){ el.blur(); wsMoveTask(t.id, v); wsRenderDrawer(true); return; }
       if(f1 === "title"){ v = v.trim() || t.title; logText = "عدّل العنوان"; }
       if(f1 === "assigneeId"){
+        if(!wsCanAssign(t)){ wsRenderDrawer(true); return; }
         v = v || null;
         if(v && t.status === "doing" && ws.tasks.filter(function(x){ return x.id !== t.id && x.assigneeId === v && x.status === "doing"; }).length >= WS_WIP_LIMIT){ showToast("لدى " + wsEmpName(v) + " " + WS_WIP_LIMIT + " مهام قيد التنفيذ"); wsRenderDrawer(true); return; }
         logText = v ? "أسند المهمة إلى " + wsEmpName(v) : "ألغى الإسناد";
@@ -12699,14 +12765,17 @@
       var pe = {}; pe[k2] = v2; wsSet("wsEvents", Object.assign({}, ev, pe)); wsRefresh(); return;
     }
     if(p && el.dataset.wsp){
+      if(!wsCanManageProject(p)) return;
       var k3 = el.dataset.wsp, v3 = el.value;
       if(k3 === "budget" || k3 === "target" || k3 === "collected") v3 = wsNum(v3);
       if(k3 === "name") v3 = v3.trim() || p.name;
+      if(k3 === "ownerId"){ v3 = v3 || null; if(v3) wsNotify(v3, "project", "عُيّنت مسؤولاً عن مشروع «" + p.name + "»", null); }
       var pp = {}; pp[k3] = v3; wsSet("wsProjects", Object.assign({}, p, pp)); wsRefresh(); return;
     }
     if(p && el.dataset.wsToggle === "team"){
-      var tm = (p.team || []).filter(function(x){ return x !== el.value; }); if(el.checked) tm.push(el.value);
-      wsSet("wsProjects", Object.assign({}, p, { team: tm })); return;
+      if(!wsCanManageProject(p)) return;
+      var tm = (p.team || []).filter(function(x){ return x !== el.value; }); if(el.checked){ tm.push(el.value); wsNotify(el.value, "project", "أُضفت إلى فريق مشروع «" + p.name + "»", null); }
+      wsSet("wsProjects", Object.assign({}, p, { team: tm })); wsLog((el.checked ? "أضاف " : "أزال ") + wsEmpName(el.value) + (el.checked ? " إلى" : " من") + " فريق المشروع", p.name); wsRefresh(); return;
     }
   });
   // السحب والإسقاط بين أعمدة الكانبان
