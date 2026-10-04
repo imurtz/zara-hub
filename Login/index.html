@@ -1595,6 +1595,284 @@
     .rp-kpi{border:1px solid #ddd;}
   }
 
+  /* ===================== مساحة العمل: مهام ومشاريع وفعاليات وحملات ===================== */
+  .ws-state{padding:40px 20px; text-align:center; color:var(--ink-soft); background:#fff; border-radius:24px;}
+  .ws-state b{display:block; color:var(--ink); font-size:16px; margin-bottom:6px;}
+  .ws-empty{font-size:12.500px; color:var(--ink-soft); text-align:center; padding:14px 0; margin:0;}
+  .ws-hint{font-size:12px; line-height:1.8; color:var(--ink-soft); margin:0;}
+  .ws-label{font-size:12px; font-weight:600; color:var(--ink-soft); margin:14px 0 8px;}
+  .ws-grow{flex:1;}
+  .ws-pill{display:inline-flex; align-items:center; gap:5px; border:1px solid var(--line); background:#fff; color:var(--ink-2); font:inherit; font-size:12.500px; font-weight:500; padding:6px 12px; border-radius:999px; cursor:pointer;}
+  .ws-pill svg{width:13px; height:13px;}
+  .ws-pill:hover{background:var(--ink); color:#fff; border-color:var(--ink);}
+
+  /* الفعاليات القادمة */
+  .ws-strip{margin-bottom:14px;}
+  .ws-strip-head{display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:10px;}
+  .ws-strip-head b{font-size:14px; font-weight:600;}
+  .ws-strip-row{display:flex; gap:12px; overflow-x:auto; padding:4px 2px 10px; scrollbar-width:thin; scroll-snap-type:x proximity;}
+  .ws-ev{position:relative; flex:none; width:228px; text-align:start; font:inherit; cursor:pointer; scroll-snap-align:start; display:flex; flex-direction:column; gap:3px; padding:16px 18px; border-radius:24px; border:1px solid var(--line); background:#fff; color:var(--ink); overflow:hidden; transition:transform .4s var(--ease);}
+  .ws-ev:hover{transform:translateY(-3px);}
+  .ws-ev-count{display:flex; align-items:baseline; gap:6px; margin-top:2px;}
+  .ws-ev-count small{font-size:11.500px; color:var(--ink-soft);}
+  .ws-ev-count b{font-size:21px; font-weight:600; letter-spacing:-.3px;}
+  .ws-ev-title{font-size:14px; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .ws-ev-meta{font-size:11.500px; color:var(--ink-soft);}
+  .ws-badge, .ws-pulse{align-self:flex-start; font-style:normal; font-size:10.500px; font-weight:600; border-radius:999px; padding:2px 10px; margin-bottom:2px;}
+  .ws-ev--calm{background:linear-gradient(160deg, #fff, #EEF2F4);}
+  .ws-ev--calm .ws-ev-count b{color:var(--teal-dark);}
+  .ws-ev--warn{border:1.500px solid #E2A64A; background:#FFF8EC;}
+  .ws-ev--warn .ws-badge{background:#F6DFB6; color:#8A5A12;}
+  .ws-ev--urgent{border:none; background:linear-gradient(150deg, #C4483B, #8E2B22); color:#fff; order:-1;}
+  .ws-ev--urgent .ws-ev-meta, .ws-ev--urgent .ws-ev-count small{color:rgba(255,255,255,.82);}
+  .ws-pulse{background:#fff; color:#A93226; animation:wsPulse 1.5s ease-in-out infinite;}
+  @keyframes wsPulse{0%,100%{box-shadow:0 0 0 0 rgba(255,255,255,.7);} 50%{box-shadow:0 0 0 7px rgba(255,255,255,0);}}
+  .ws-ev--today{border:none; order:-2; color:#fff; background:linear-gradient(140deg, var(--tan), #8F6A45 55%, var(--teal-dark));}
+  .ws-ev--today .ws-badge{background:rgba(255,255,255,.24); color:#fff;}
+  .ws-ev--today .ws-ev-meta{color:rgba(255,255,255,.85);}
+  .ws-ev--today .ws-ev-count b{font-size:26px;}
+  .ws-ready{display:flex; align-items:center; gap:8px; font-size:11.500px; margin-top:6px;}
+  .ws-ready > span, .ws-prog > span{flex:1; height:6px; border-radius:999px; background:rgba(20,28,27,.10); overflow:hidden; display:flex;}
+  .ws-ready i, .ws-prog i{display:block; height:100%; border-radius:999px; background:var(--teal);}
+  .ws-ev--urgent .ws-ready > span, .ws-ev--today .ws-ready > span{background:rgba(255,255,255,.3);}
+  .ws-ev--urgent .ws-ready i, .ws-ev--today .ws-ready i{background:#fff;}
+  .ws-prog{display:flex; align-items:center; gap:10px; font-size:12px; color:var(--ink-2); width:100%;}
+  .ws-prog--lg{font-size:13px; font-weight:600; margin:10px 0;}
+  .ws-prog--lg > span{height:9px;}
+
+  /* شريط الأدوات */
+  .ws-bar{display:flex; align-items:center; gap:10px; flex-wrap:wrap; padding:10px 12px; margin-bottom:10px; background:#fff; border:1px solid rgba(255,255,255,.95); border-radius:22px; box-shadow:var(--shadow-sm);}
+  .ws-seg{display:inline-flex; padding:3px; background:var(--field); border-radius:14px;}
+  .ws-seg button{display:inline-flex; align-items:center; gap:6px; border:none; background:transparent; font:inherit; font-size:13px; font-weight:500; color:var(--ink-2); padding:8px 14px; border-radius:11px; cursor:pointer;}
+  .ws-seg button svg{width:16px; height:16px;}
+  .ws-seg button.on{background:#fff; color:var(--ink); font-weight:600; box-shadow:0 1px 2px rgba(20,28,27,.08), 0 4px 10px rgba(20,28,27,.08);}
+  .ws-seg--main button.on{background:var(--ink); color:#fff;}
+  .ws-sel{border:1px solid transparent; background-color:var(--field); border-radius:999px; font:inherit; font-size:13px; padding:9px 14px; max-width:190px; color:var(--ink); margin:0; width:auto;}
+  .ws-count{font-size:12.500px; color:var(--ink-soft);}
+  .ws-new{display:inline-flex; align-items:center; gap:6px; padding:10px 18px !important;}
+  .ws-new svg, .ws-block svg{width:15px; height:15px;}
+  .ws-icon-btn{position:relative; width:40px; height:40px; flex:none; border:none; border-radius:50%; background:var(--field); color:var(--ink-2); display:flex; align-items:center; justify-content:center; cursor:pointer;}
+  .ws-icon-btn svg{width:19px; height:19px;}
+  .ws-icon-btn:hover{background:var(--ink); color:#fff;}
+  .ws-icon-btn > i{position:absolute; top:-3px; inset-inline-end:-3px; min-width:18px; height:18px; padding:0 4px; border-radius:999px; background:#C4483B; color:#fff; font-style:normal; font-size:10.500px; font-weight:600; display:flex; align-items:center; justify-content:center; border:2px solid #fff;}
+  .ws-bell-wrap{position:relative;}
+  .ws-bell{position:absolute; top:48px; inset-inline-end:0; z-index:40; width:min(340px, 86vw); max-height:60vh; overflow-y:auto; background:#fff; border:1px solid var(--line); border-radius:22px; padding:8px; box-shadow:0 2px 4px rgba(20,28,27,.04), 0 24px 60px rgba(20,28,27,.18);}
+  .ws-bell-head{display:flex; align-items:center; justify-content:space-between; padding:8px 10px;}
+  .ws-bell-head button{border:none; background:none; font:inherit; font-size:12px; color:var(--teal-dark); cursor:pointer;}
+  .ws-ntf{display:block; width:100%; text-align:start; border:none; background:transparent; font:inherit; font-size:13px; line-height:1.7; color:var(--ink-2); padding:9px 12px; border-radius:14px; cursor:pointer;}
+  .ws-ntf:hover{background:var(--field);}
+  .ws-ntf.unread{color:var(--ink); font-weight:500; background:var(--teal-tint);}
+  .ws-ntf--campaign.unread{background:var(--tan-tint);}
+  .ws-ntf--event.unread, .ws-ntf--late.unread{background:#FBEDEC;}
+  .ws-ntf small{display:block; font-size:11px; font-weight:400; color:var(--ink-soft);}
+  .ws-links{display:flex; gap:6px; overflow-x:auto; margin-bottom:14px; padding-bottom:2px; scrollbar-width:none;}
+  .ws-links::-webkit-scrollbar{display:none;}
+  .ws-links button{flex:none; display:inline-flex; align-items:center; gap:6px; border:1px solid var(--line); background:rgba(255,255,255,.7); font:inherit; font-size:12.500px; font-weight:500; color:var(--ink-2); padding:7px 14px; border-radius:999px; cursor:pointer;}
+  .ws-links button:hover{background:#fff; color:var(--ink);}
+  .ws-links i{font-style:normal; font-size:11px; font-weight:600; color:var(--teal-dark); background:var(--teal-tint); border-radius:999px; padding:0 7px;}
+  .ws-links i.hot{color:#A93226; background:#FBEDEC;}
+  .ws-links .ws-legacy{margin-inline-start:auto; border-style:dashed; color:var(--ink-soft);}
+
+  /* كانبان */
+  .ws-kanban{display:grid; grid-template-columns:repeat(4, minmax(0, 1fr)); gap:12px; align-items:start;}
+  .ws-col{background:rgba(20,28,27,.035); border-radius:24px; padding:10px; min-height:220px; transition:background .25s ease, box-shadow .25s ease;}
+  .ws-col.is-over{background:var(--teal-tint); box-shadow:0 0 0 2px var(--teal) inset;}
+  .ws-col-head{display:flex; align-items:center; gap:8px; padding:6px 8px 10px; font-size:13.500px;}
+  .ws-col-head b{font-weight:600;}
+  .ws-col-head i{font-style:normal; font-size:11.500px; font-weight:600; color:var(--ink-2); background:#fff; border-radius:999px; padding:1px 9px;}
+  .ws-col-head span{margin-inline-start:auto; font-size:10.500px; color:var(--ink-soft);}
+  .ws-col--todo .ws-col-head b::before, .ws-col--doing .ws-col-head b::before, .ws-col--review .ws-col-head b::before, .ws-col--done .ws-col-head b::before{content:""; display:inline-block; width:8px; height:8px; border-radius:50%; margin-inline-end:7px; background:#9AA5A2;}
+  .ws-col--doing .ws-col-head b::before{background:var(--tan);}
+  .ws-col--review .ws-col-head b::before{background:#6E8F8A;}
+  .ws-col--done .ws-col-head b::before{background:var(--teal);}
+  .ws-col-body{display:flex; flex-direction:column; gap:8px;}
+  .ws-card{background:#fff; border:1px solid rgba(255,255,255,.95); border-radius:18px; padding:12px 13px; cursor:pointer; box-shadow:var(--shadow-sm); transition:transform .3s var(--ease), box-shadow .3s var(--ease), opacity .2s ease;}
+  .ws-card:hover{transform:translateY(-2px); box-shadow:var(--shadow);}
+  .ws-card.is-dragging{opacity:.4;}
+  .ws-card.is-late{box-shadow:0 0 0 1.500px #E0A39C inset, var(--shadow-sm);}
+  .ws-col--done .ws-card{opacity:.72;}
+  .ws-col--done .ws-card-title{text-decoration:line-through; text-decoration-color:rgba(20,28,27,.3);}
+  .ws-card-top{display:flex; align-items:center; gap:6px; margin-bottom:6px;}
+  .ws-pr{font-size:10.500px; font-weight:600; border-radius:999px; padding:1px 9px;}
+  .ws-pr--low{background:var(--field); color:var(--ink-soft);} .ws-pr--medium{background:var(--teal-tint); color:var(--teal-dark);}
+  .ws-pr--high{background:var(--tan-tint); color:#7A5630;} .ws-pr--urgent{background:#C4483B; color:#fff;}
+  .ws-proj{font-size:10.500px; color:var(--ink-soft); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; min-width:0;}
+  .ws-card-title{font-size:13.500px; font-weight:500; line-height:1.65; color:var(--ink); margin:0 0 8px; overflow-wrap:anywhere;}
+  .ws-card-camp{display:flex; align-items:center; gap:6px; font-size:11.500px; color:var(--teal-dark); background:var(--teal-tint); border-radius:10px; padding:4px 9px; margin-bottom:8px;}
+  .ws-card-camp svg{width:14px; height:14px; flex:none;}
+  .ws-card-camp b{font-weight:600;}
+  .ws-card-camp.is-due{background:var(--tan-tint); color:#7A5630; font-weight:600;}
+  .ws-card-foot{display:flex; align-items:center; gap:8px; font-size:11.500px; color:var(--ink-soft);}
+  .ws-av{width:24px; height:24px; flex:none; border-radius:50%; background:var(--teal); color:#fff; font-size:11.500px; font-weight:600; display:flex; align-items:center; justify-content:center;}
+  .ws-av--none{background:var(--field); color:var(--ink-soft);}
+  .is-late .ws-due{color:#A93226; font-weight:600;}
+  .ws-mini{display:inline-flex; align-items:center; gap:3px;}
+  .ws-mini svg{width:13px; height:13px;}
+  .ws-step{margin-inline-start:auto; display:none; gap:4px;}
+  .ws-step button{width:28px; height:28px; border:none; border-radius:50%; background:var(--field); color:var(--ink-2); display:flex; align-items:center; justify-content:center; cursor:pointer;}
+  .ws-step button svg{width:14px; height:14px;}
+  .ws-step button.fwd{background:var(--ink); color:#fff;}
+  .ws-step button.fwd svg, .ws-cal-nav button.fwd svg{transform:scaleX(-1);}
+  .ws-card:hover .ws-step{display:inline-flex;}
+  @media (pointer:coarse){ .ws-step{display:inline-flex;} }
+  .ws-add{display:flex; align-items:center; justify-content:center; gap:6px; border:1.500px dashed rgba(20,28,27,.16); background:transparent; border-radius:16px; padding:10px; font:inherit; font-size:12.500px; color:var(--ink-soft); cursor:pointer;}
+  .ws-add svg{width:14px; height:14px;}
+  .ws-add:hover{border-color:var(--teal); color:var(--teal-dark); background:#fff;}
+
+  /* التقويم */
+  .ws-cal{background:#fff; border:1px solid rgba(255,255,255,.95); border-radius:24px; padding:14px; box-shadow:var(--shadow-sm);}
+  .ws-cal-bar{display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap; margin-bottom:8px;}
+  .ws-cal-nav{display:flex; align-items:center; gap:8px;}
+  .ws-cal-nav b{font-size:15px; font-weight:600; min-width:150px; text-align:center;}
+  .ws-cal-nav > button:not(.ws-pill){width:34px; height:34px; border:none; border-radius:50%; background:var(--field); display:flex; align-items:center; justify-content:center; cursor:pointer; color:var(--ink-2);}
+  .ws-cal-nav > button svg{width:15px; height:15px;}
+  .ws-cal-legend{display:flex; gap:14px; flex-wrap:wrap; font-size:11.500px; color:var(--ink-soft); margin-bottom:10px;}
+  .ws-cal-legend span{display:inline-flex; align-items:center; gap:5px;}
+  .ws-cal-legend i{width:9px; height:9px; border-radius:3px; display:inline-block;}
+  .ws-cal-legend .e{background:var(--ink);} .ws-cal-legend .p{background:var(--tan);} .ws-cal-legend .t{background:var(--teal);} .ws-cal-legend .u{background:#C4483B;}
+  .ws-cal-grid{display:grid; grid-template-columns:repeat(7, minmax(0, 1fr)); gap:4px;}
+  .ws-cal-dow{font-size:11.500px; font-weight:600; color:var(--ink-soft); text-align:center; padding:4px 0;}
+  .ws-cal-day{min-height:96px; background:var(--field); border-radius:14px; padding:6px; display:flex; flex-direction:column; gap:3px; min-width:0;}
+  .ws-cal-grid--week .ws-cal-day{min-height:260px;}
+  .ws-cal-day.is-out{opacity:.45;}
+  .ws-cal-day.is-today{background:var(--teal-tint); box-shadow:0 0 0 1.500px var(--teal) inset;}
+  .ws-cal-num{font-size:12px; font-weight:600; color:var(--ink-2);}
+  .ws-cal-num small{font-weight:400; color:var(--ink-soft);}
+  .ws-ci{display:block; width:100%; border:none; text-align:start; font:inherit; font-size:11px; line-height:1.5; padding:3px 7px; border-radius:7px; cursor:pointer; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; background:var(--teal); color:#fff;}
+  .ws-ci--event{background:var(--ink);} .ws-ci--project{background:var(--tan);} .ws-ci--urgent{background:#C4483B;}
+  .ws-ci--low{background:#A9BDB4;} .ws-ci--high{background:#6E8F8A;}
+  .ws-ci--done{background:#fff; color:var(--ink-soft); text-decoration:line-through;}
+  .ws-ci--more{background:transparent; color:var(--ink-soft);}
+
+  /* اللوحة الجانبية */
+  .ws-drawer-overlay{position:fixed; inset:0; z-index:140; display:none; justify-content:flex-start; background:rgba(20,28,27,.30); -webkit-backdrop-filter:blur(2px); backdrop-filter:blur(2px);}
+  body:has(.ws-drawer-overlay.open) .chat-fab{display:none !important;}
+  .ws-drawer-overlay.open{display:flex; flex-direction:row-reverse;}
+  .ws-drawer-overlay.is-modal{align-items:center; justify-content:center;}
+  .ws-drawer{width:min(500px, 100%); height:100%; overflow-y:auto; background:var(--bg); padding:20px 20px 40px; box-shadow:0 0 60px rgba(20,28,27,.25); animation:wsIn .35s var(--ease);}
+  .ws-drawer--wide{width:min(860px, 100%);}
+  .ws-drawer--modal{height:auto; max-height:90vh; border-radius:28px; width:min(480px, 94vw); animation:wsPop .35s var(--ease);}
+  @keyframes wsIn{from{transform:translateX(-40px); opacity:0;} to{transform:none; opacity:1;}}
+  @keyframes wsPop{from{transform:translateY(20px) scale(.98); opacity:0;} to{transform:none; opacity:1;}}
+  .ws-dh{display:flex; align-items:flex-start; justify-content:space-between; gap:12px; margin-bottom:14px;}
+  .ws-dh h3{font-size:17px; font-weight:600; margin:0;}
+  .ws-dh p{font-size:12.500px; color:var(--ink-soft); margin:0;}
+  .ws-dh .ws-icon-btn{background:#fff;}
+  .ws-title-inp{width:100%; font:inherit; font-size:18px; font-weight:600; color:var(--ink); padding:12px 14px; border:1px solid transparent; border-radius:16px; background:#fff; margin-bottom:12px;}
+  .ws-drawer input:not([type=checkbox]):not([type=file]), .ws-drawer select, .ws-drawer textarea{width:100%; min-width:0; font:inherit; font-size:14px; color:var(--ink); padding:10px 12px; border:1px solid transparent; border-radius:13px; background-color:#fff; margin:0; box-shadow:none;}
+  .ws-drawer textarea{resize:vertical; line-height:1.8;}
+  .ws-drawer input:focus, .ws-drawer select:focus, .ws-drawer textarea:focus{outline:none; border-color:var(--teal); box-shadow:0 0 0 3px rgba(75,112,113,.12);}
+  .ws-drawer input:disabled, .ws-drawer select:disabled, .ws-drawer textarea:disabled{opacity:.7;}
+  .ws-drawer .ws-title-inp{font-size:18px;}
+  .ws-f{display:flex; flex-direction:column; gap:5px; font-size:12px; color:var(--ink-soft); margin-bottom:10px; min-width:0;}
+  .ws-grid2{display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:0 10px;}
+  .ws-sec{background:rgba(255,255,255,.7); border:1px solid rgba(255,255,255,.95); border-radius:20px; padding:14px; margin-top:12px;}
+  .ws-sec .ws-f input, .ws-sec .ws-f textarea, .ws-sec input:not([type=checkbox]):not([type=file]), .ws-sec textarea, .ws-sec select{background-color:var(--field);}
+  .ws-sec-head{display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:10px;}
+  .ws-sec-head b{font-size:14px; font-weight:600;}
+  .ws-roi{display:grid; grid-template-columns:repeat(4, minmax(0, 1fr)); gap:6px; margin-bottom:10px;}
+  .ws-roi div{background:var(--field); border-radius:14px; padding:9px 10px; min-width:0;}
+  .ws-roi span{display:block; font-size:11px; color:var(--ink-soft);}
+  .ws-roi b{font-size:15px; font-weight:600; font-variant-numeric:tabular-nums; white-space:nowrap;}
+  .ws-roi b.up{color:var(--teal-dark);} .ws-roi b.down{color:#A93226;}
+  .ws-point{background:var(--field); border-radius:14px; padding:10px 12px; margin-bottom:8px;}
+  .ws-point.is-due{background:var(--tan-tint); box-shadow:0 0 0 1.500px var(--tan) inset;}
+  .ws-point.is-rec{background:var(--teal-tint);}
+  .ws-point-head{display:flex; align-items:center; gap:8px; font-size:13px;}
+  .ws-point-head small{color:var(--ink-soft); font-size:11.500px; margin-inline-end:auto;}
+  .ws-point-val{font-size:14px; font-weight:600; margin:6px 0 0; display:flex; align-items:baseline; gap:8px; flex-wrap:wrap;}
+  .ws-point-val small{font-size:11px; font-weight:400; color:var(--ink-soft);}
+  .ws-point-form{display:grid; grid-template-columns:minmax(0, 1fr) minmax(0, 1fr) auto; gap:6px; margin-top:8px;}
+  .ws-point-form .btn-secondary, .ws-row .btn-secondary, .ws-row .btn-primary, .ws-upload{padding:9px 16px; font-size:13px; white-space:nowrap; min-height:0; width:auto;}
+  .ws-point .ws-point-form input{background-color:#fff !important;}
+  .ws-x{width:26px; height:26px; flex:none; border:none; border-radius:50%; background:transparent; color:var(--ink-soft); display:flex; align-items:center; justify-content:center; cursor:pointer;}
+  .ws-x svg{width:12px; height:12px;}
+  .ws-x:hover{background:#FBEDEC; color:#A93226;}
+  .ws-att{display:flex; align-items:center; gap:8px; padding:7px 10px; background:var(--field); border-radius:12px; margin-bottom:6px;}
+  .ws-att a{flex:1; min-width:0; display:flex; align-items:center; gap:7px; font-size:13px; color:var(--teal-dark); text-decoration:none; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .ws-att svg{width:15px; height:15px; flex:none;}
+  .ws-upload{display:inline-flex; margin-top:8px; cursor:pointer;}
+  .ws-row{display:flex; align-items:center; gap:8px;}
+  .ws-row select{flex:1;}
+  .ws-cm{display:flex; gap:9px; margin-bottom:10px;}
+  .ws-cm > div{flex:1; min-width:0; background:var(--field); border-radius:4px 16px 16px 16px; padding:8px 12px;}
+  .ws-cm b{font-size:12.500px; font-weight:600;}
+  .ws-cm small{font-size:11px; color:var(--ink-soft); margin-inline-start:8px;}
+  .ws-cm p{font-size:13.500px; line-height:1.8; margin:2px 0 0; white-space:pre-wrap; overflow-wrap:anywhere;}
+  .ws-cm mark{background:var(--teal-tint); color:var(--teal-dark); border-radius:6px; padding:0 4px; font-weight:500;}
+  .ws-cm-form{display:flex; flex-direction:column; gap:8px;}
+  .ws-log summary{font-size:13px; font-weight:600; cursor:pointer; list-style:none;}
+  .ws-log summary i{font-style:normal; font-size:11.500px; color:var(--teal-dark); background:var(--teal-tint); border-radius:999px; padding:0 8px; margin-inline-start:6px;}
+  .ws-log p, .ws-logrow{font-size:12.500px; line-height:1.8; color:var(--ink-2); margin:8px 0 0;}
+  .ws-log small, .ws-logrow small{display:block; font-size:11px; color:var(--ink-soft);}
+  .ws-logrow{background:#fff; border-radius:14px; padding:9px 12px;}
+  .ws-danger{display:block; width:100%; margin-top:16px; border:none; background:transparent; color:#A93226; font:inherit; font-size:13px; padding:10px; border-radius:14px; cursor:pointer;}
+  .ws-danger:hover{background:#FBEDEC;}
+  .ws-block{display:flex; align-items:center; justify-content:center; gap:7px; width:100%; margin-bottom:12px;}
+  .ws-tile{display:flex; flex-direction:column; gap:4px; width:100%; text-align:start; border:1px solid rgba(255,255,255,.95); background:#fff; font:inherit; border-radius:18px; padding:13px 15px; margin-bottom:8px; cursor:pointer;}
+  .ws-tile b{font-size:14px; font-weight:600; color:var(--ink);}
+  .ws-tile small{font-size:12px; color:var(--ink-soft);}
+  .ws-tile.is-past{opacity:.55;}
+  .ws-tile:hover{box-shadow:var(--shadow-sm);}
+  .ws-line{display:flex; align-items:center; gap:9px; width:100%; text-align:start; border:none; background:var(--field); font:inherit; font-size:13px; color:var(--ink); border-radius:12px; padding:8px 11px; margin-bottom:5px; cursor:pointer;}
+  .ws-line i{width:9px; height:9px; flex:none; border-radius:50%; border:1.500px solid var(--ink-soft);}
+  .ws-line.is-done i{background:var(--teal); border-color:var(--teal);}
+  .ws-line.is-done{color:var(--ink-soft); text-decoration:line-through;}
+  .ws-line small{margin-inline-start:auto; font-size:11px; color:var(--ink-soft); text-decoration:none; white-space:nowrap;}
+  .ws-vendor{display:flex; align-items:center; gap:10px; background:var(--field); border-radius:12px; padding:8px 11px; margin-bottom:6px; font-size:13px;}
+  .ws-vendor > div{flex:1; min-width:0;}
+  .ws-vendor small{display:block; font-size:11.500px; color:var(--ink-soft);}
+  .ws-vendor > span{font-weight:600; font-variant-numeric:tabular-nums;}
+  .ws-vendor-form{gap:6px 8px; margin:8px 0;}
+  .ws-goal{margin-bottom:8px !important;}
+  .ws-su{background:#fff; border-radius:16px; padding:11px 14px; margin-bottom:8px; font-size:13px;}
+  .ws-su.has-block{box-shadow:0 0 0 1.500px #E0A39C inset;}
+  .ws-su ol{margin:4px 18px 0 0; padding:0; color:var(--ink-2); line-height:1.9;}
+  .ws-su p{margin:6px 0 0; color:#A93226;}
+  .ws-su p i{font-style:normal; font-size:10.500px; font-weight:600; background:#FBEDEC; border-radius:999px; padding:1px 8px; margin-inline-end:6px;}
+  .ws-role{display:flex; align-items:center; justify-content:space-between; gap:10px; background:#fff; border-radius:14px; padding:8px 12px; margin-bottom:6px; font-size:13.500px;}
+  .ws-role select{width:auto !important; background-color:var(--field) !important;}
+  .ws-role span{font-size:12.500px; color:var(--ink-soft);}
+  .ws-heat-wrap{overflow-x:auto; background:#fff; border-radius:18px; padding:10px;}
+  .ws-heat{width:100%; border-collapse:separate; border-spacing:3px; font-size:12.500px;}
+  .ws-heat th{font-size:11px; font-weight:600; color:var(--ink-soft); padding:4px;}
+  .ws-heat td{text-align:center; border-radius:9px; padding:9px 4px; min-width:34px; font-weight:600; font-variant-numeric:tabular-nums;}
+  .ws-heat td:first-child{text-align:start; font-weight:500; white-space:nowrap; padding-inline:8px;}
+  .ws-heat td small{display:block; font-size:10.500px; font-weight:400; color:var(--ink-soft);}
+  .ws-heat .h0{background:var(--field); color:transparent;} .ws-heat .h1{background:#D5E3E1; color:var(--teal-dark);}
+  .ws-heat .h2{background:#8FB0AE; color:#fff;} .ws-heat .h3{background:var(--teal-dark); color:#fff;} .ws-heat .hl{background:#C4483B; color:#fff;}
+  #taskBoardRoot:not([hidden]){margin-top:26px; padding-top:20px; border-top:1px dashed var(--line);}
+
+  @media (max-width:980px){
+    .ws-kanban{grid-template-columns:repeat(4, minmax(250px, 1fr)); overflow-x:auto; padding-bottom:8px; scroll-snap-type:x proximity;}
+    .ws-col{scroll-snap-align:start;}
+  }
+  @media (max-width:760px){
+    .ws-bar{gap:8px; border-radius:20px;}
+    .ws-seg--main{order:-2; flex:1;}
+    .ws-seg--main button{flex:1; justify-content:center;}
+    .ws-bell-wrap{order:-1;}
+    .ws-sel{flex:1; max-width:none; font-size:16px;}
+    .ws-count{display:none;}
+    .ws-new{width:100%; justify-content:center;}
+    .ws-kanban{grid-template-columns:repeat(4, 82vw); margin-inline:-14px; padding-inline:14px;}
+    .ws-ev{width:200px;}
+    .ws-cal{padding:10px 6px; border-radius:20px;}
+    .ws-cal-day{min-height:70px; padding:4px 3px; border-radius:10px;}
+    .ws-cal-grid--month .ws-ci{font-size:0; padding:0; height:6px; border-radius:3px;}
+    .ws-cal-grid--month .ws-ci--more{font-size:9.500px; height:auto;}
+    .ws-cal-grid--week{grid-template-columns:1fr;}
+    .ws-cal-grid--week .ws-cal-dow{display:none;}
+    .ws-cal-grid--week .ws-cal-day{min-height:0; padding:8px;}
+    .ws-cal-nav b{min-width:0; font-size:14px;}
+    .ws-drawer{padding:16px 14px 90px;}
+    .ws-drawer input:not([type=checkbox]):not([type=file]), .ws-drawer select, .ws-drawer textarea{font-size:16px;}
+    .ws-roi{grid-template-columns:repeat(2, minmax(0, 1fr));}
+    .ws-point-form{grid-template-columns:minmax(0, 1fr) minmax(0, 1fr);}
+    .ws-point-form .btn-secondary{grid-column:1 / -1;}
+    .ws-links .ws-legacy{margin-inline-start:0;}
+  }
+
 </style>
 </head>
 <body>
@@ -1725,7 +2003,8 @@
 
   <div class="content">
     <div class="section-view active" id="view-tasks">
-      <div id="taskBoardRoot"></div>
+      <div id="wsRoot"></div>
+      <div id="taskBoardRoot" hidden></div>
     </div>
     <div class="section-view" id="view-annual">
       <div id="annualReportRoot"></div>
@@ -2035,6 +2314,8 @@
     applySectionPermissions(emp);
     renderEmployeeTable();
     renderTaskBoard();
+    wsStart();
+    wsRender();
     renderTaskSettingsPanel();
     renderAnnualReport();
     renderAnnualReportSettingsPanel();
@@ -2174,6 +2455,8 @@
     document.getElementById("chatFabBtn").style.display = "none";
     document.getElementById("chatPanel").classList.remove("open");
     chatUI.activeEmpId = null;
+    // مساحة العمل تستمع لبيانات المستخدم الحالي — نعيد التحميل حتى لا تبقى مستمعاته لمن يدخل بعده
+    if(ws.started) setTimeout(function(){ location.reload(); }, 60);
   });
 
   // ===== tab switching =====
@@ -11614,6 +11897,829 @@
   // ===========================================================================
   // دردشة الموظفين — معاينة تصميم محلية فقط (بدون تزامن حقيقي بين الأجهزة بعد)
   // ===========================================================================
+  // ===========================================================================
+  // مساحة العمل: مشاريع ومهام الفريق، الفعاليات، وتتبّع حملات النشر والتبرعات
+  // البيانات مشتركة بين كل الموظفين (Firestore): wsTasks / wsProjects / wsEvents / wsAssets / wsStandups / wsNotifs / wsLogs / wsMeta
+  // الأدوار: admin (كامل) · pm (إدارة المشاريع والمهام) · member (يحدّث مهامه فقط) · viewer (قراءة فقط)
+  // ===========================================================================
+  var WS_LOCAL = false;   // وضع المعاينة المحلية فقط (بلا قاعدة بيانات)
+  var WS_STATUS = [{ k: "todo", l: "قائمة المهام" }, { k: "doing", l: "قيد التنفيذ" }, { k: "review", l: "المراجعة" }, { k: "done", l: "منجزة" }];
+  var WS_PRIORITY = [{ k: "low", l: "منخفضة" }, { k: "medium", l: "متوسطة" }, { k: "high", l: "عالية" }, { k: "urgent", l: "عاجلة" }];
+  var WS_ROLES = [{ k: "admin", l: "أدمن — صلاحية كاملة" }, { k: "pm", l: "مدير مشاريع" }, { k: "member", l: "عضو — يحدّث مهامه" }, { k: "viewer", l: "مشاهد — قراءة فقط" }];
+  var WS_WIP_LIMIT = 3;
+  var ws = { tasks: [], projects: [], events: [], assets: [], standups: [], notifs: [], logs: [], roles: {}, started: false, ready: false, err: "" };
+  var wsUI = { view: "kanban", calMode: "month", calCursor: null, fProject: "", fAssignee: null, drawer: null, drawerId: null, bell: false, dragId: null, standupShown: false };
+  var WSI = {
+    board: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="4" width="5" height="16" rx="1.6"/><rect x="9.5" y="4" width="5" height="10" rx="1.6"/><rect x="15.5" y="4" width="5" height="13" rx="1.6"/></svg>',
+    cal: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="5" width="17" height="15" rx="3"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg>',
+    bell: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 16.5V11a6 6 0 0 1 12 0v5.5l1.5 2h-15l1.5-2z"/><path d="M10 20.5a2.2 2.2 0 0 0 4 0"/></svg>',
+    plus: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>',
+    x: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>',
+    clip: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M19 11.500l-7.200 7.200a4.500 4.500 0 0 1-6.400-6.400l7.600-7.600a3 3 0 0 1 4.300 4.300l-7.500 7.500a1.500 1.500 0 0 1-2.200-2.100l6.800-6.800"/></svg>',
+    chat: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4.500 5.500h15v10h-8l-4 3.500v-3.500h-3z"/></svg>',
+    coin: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 18l5-5 3.500 3.500L20 9"/><path d="M15 9h5v5"/></svg>',
+    chev: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>'
+  };
+  function wsId(p){ return p + "-" + Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
+  function wsToday(){ return toISODate(new Date()); }
+  function wsRole(){
+    if(!currentUser) return "viewer";
+    if(currentUser.role === "admin") return "admin";
+    return ws.roles[currentUser.id] || "member";
+  }
+  function wsCanManage(){ var r = wsRole(); return r === "admin" || r === "pm"; }
+  function wsCanEditTask(t){ return wsCanManage() || (wsRole() === "member" && t && t.assigneeId === currentUser.id); }
+  function wsCanCreate(){ return wsRole() !== "viewer"; }
+  function wsEmpName(id){ return empNameById(id, loadEmployees()) || ""; }
+  function wsList(col){ return ws[{ wsTasks: "tasks", wsProjects: "projects", wsEvents: "events", wsAssets: "assets", wsStandups: "standups", wsNotifs: "notifs", wsLogs: "logs" }[col]]; }
+  function wsLocalUpsert(col, doc){
+    var list = wsList(col), i = list.findIndex(function(x){ return x.id === doc.id; });
+    if(i > -1) list[i] = doc; else list.push(doc);
+  }
+  function wsSet(col, doc){
+    doc.updatedAt = Date.now();
+    if(col !== "wsNotifs" || doc.to === currentUser.id) wsLocalUpsert(col, doc);
+    if(WS_LOCAL){ wsRefresh(); return Promise.resolve(true); }
+    return db.collection(col).doc(doc.id).set(doc).then(function(){ return true; }).catch(function(err){
+      console.error("ws save failed", col, err);
+      showToast("تعذّر الحفظ — تحقق من الاتصال وحاول مجدداً");
+      return false;
+    });
+  }
+  function wsDel(col, id){
+    var list = wsList(col), i = list.findIndex(function(x){ return x.id === id; });
+    if(i > -1) list.splice(i, 1);
+    if(WS_LOCAL){ wsRefresh(); return; }
+    db.collection(col).doc(id).delete().catch(function(err){ console.error("ws delete failed", err); showToast("تعذّر الحذف"); });
+  }
+  function wsLog(action, target){
+    if(!currentUser) return;
+    wsSet("wsLogs", { id: wsId("log"), by: currentUser.id, name: currentUser.name, action: action, target: target || "", at: Date.now() });
+  }
+  function wsNotify(toId, type, text, ref){
+    if(!toId || !currentUser || toId === currentUser.id) return;
+    wsSet("wsNotifs", { id: wsId("ntf"), to: toId, type: type, text: text, ref: ref || null, from: currentUser.name, at: Date.now(), read: false });
+  }
+  function wsStart(){
+    if(ws.started || !currentUser) return;
+    ws.started = true;
+    wsUI.calCursor = wsToday();
+    if(wsUI.fAssignee === null) wsUI.fAssignee = "";
+    if(WS_LOCAL){ ws.ready = true; wsRefresh(); wsAfterReady(); return; }
+    var fail = function(err){ console.error("ws listener error", err); ws.err = (err && err.code) || "error"; wsRefresh(); };
+    var first = true;
+    db.collection("wsTasks").onSnapshot(function(s){
+      ws.tasks = s.docs.map(function(d){ return d.data(); });
+      ws.ready = true; ws.err = "";
+      wsRefresh();
+      if(first){ first = false; wsAfterReady(); }
+    }, fail);
+    db.collection("wsProjects").onSnapshot(function(s){ ws.projects = s.docs.map(function(d){ return d.data(); }); wsRefresh(); }, fail);
+    db.collection("wsEvents").onSnapshot(function(s){ ws.events = s.docs.map(function(d){ return d.data(); }); wsRefresh(); }, fail);
+    db.collection("wsAssets").onSnapshot(function(s){ ws.assets = s.docs.map(function(d){ return d.data(); }); wsRefresh(); }, fail);
+    db.collection("wsStandups").where("date", "==", wsToday()).onSnapshot(function(s){ ws.standups = s.docs.map(function(d){ return d.data(); }); wsRefresh(); wsMaybeStandup(); }, fail);
+    db.collection("wsNotifs").where("to", "==", currentUser.id).onSnapshot(function(s){
+      ws.notifs = s.docs.map(function(d){ return d.data(); }).sort(function(a, b){ return b.at - a.at; }).slice(0, 60);
+      wsRefresh();
+    }, fail);
+    db.collection("wsMeta").doc("roles").onSnapshot(function(d){ ws.roles = (d.exists && d.data().map) || {}; wsRefresh(); }, fail);
+  }
+  function wsAfterReady(){ wsMigrateLocal(); wsMaybeStandup(); }
+  // ينقل مهام ومشاريع ومواعيد هذا المتصفح (النظام القديم المحفوظ محلياً) إلى المساحة المشتركة مرة واحدة — النسخة المحلية تبقى كما هي
+  function wsMigrateLocal(){
+    var FLAG = "zaraHub.wsMigrated.v1";
+    if(WS_LOCAL || wsRole() === "viewer") return;
+    try{ if(localStorage.getItem(FLAG)) return; }catch(e){ return; }
+    var n = 0;
+    var has = function(list, id){ return list.some(function(x){ return x.id === id; }); };
+    loadTasks().forEach(function(t){
+      if(!t || !t.id || !t.title || has(ws.tasks, t.id)) return;
+      var st = getTaskStatus(t);
+      var doc = { id: t.id, title: t.title, desc: (t.subtasks || []).map(function(s){ return (s.done ? "✓ " : "• ") + (s.title || s.text || ""); }).join("\n"),
+        assigneeId: t.assigneeId || null, projectId: null, status: st === "done" ? "done" : (t.workingNow ? "doing" : "todo"), priority: t.pinned ? "high" : "medium",
+        startDate: "", dueDate: t.date || "", tag: t.tagName || "", attachments: [], comments: [], log: [], eventIds: [], createdAt: t.createdAt || Date.now(), createdBy: currentUser.id, migrated: true };
+      if(t.amountBefore != null || t.amountAfter != null){
+        doc.campaign = { on: true, publishedAt: t.date ? t.date + "T09:00" : "", initial: t.amountBefore, target: null, notes: "",
+          points: [{ id: "p-end", label: "نهاية الحملة", hours: 168, amount: t.amountAfter != null ? t.amountAfter : null, note: "", at: t.amountAfter != null ? Date.now() : null }] };
+      }
+      wsSet("wsTasks", doc); n++;
+    });
+    loadProjects().forEach(function(p){
+      if(!p || !p.id || !p.title || has(ws.projects, p.id)) return;
+      wsSet("wsProjects", { id: p.id, name: p.title, desc: [p.description, p.parties ? "الجهات: " + p.parties : ""].filter(Boolean).join("\n"), team: [], startDate: "", dueDate: "", budget: null, target: null, collected: null,
+        status: p.status === "done" ? "done" : (p.status === "paused" ? "paused" : "active"), createdAt: p.createdAt || Date.now(), migrated: true });
+      n++;
+    });
+    loadDates().forEach(function(d){
+      if(!d || !d.id || !d.date || has(ws.events, d.id)) return;
+      wsSet("wsEvents", { id: d.id, title: d.title || d.name || "موعد", details: d.note || "", date: d.date, time: "", category: "موعد", banner: "", notifyDays: [14, 7, 3, 1, 0], budget: null, vendors: [], createdAt: Date.now(), migrated: true });
+      n++;
+    });
+    try{ localStorage.setItem(FLAG, String(Date.now())); }catch(e){}
+    if(n){ wsLog("نقل " + n + " عنصراً من النظام السابق", ""); showToast("نُقل " + n + " عنصراً من مهامك السابقة إلى المساحة المشتركة"); }
+  }
+
+  // ---------- حسابات مشتركة ----------
+  function wsDaysTo(dateStr){
+    if(!dateStr || !isValidDateStr(dateStr)) return null;
+    return Math.round((new Date(dateStr + "T00:00:00") - new Date(wsToday() + "T00:00:00")) / 86400000);
+  }
+  function wsFmtDate(s){
+    if(!s || !isValidDateStr(s)) return "";
+    return new Intl.DateTimeFormat("ar-EG-u-ca-gregory-nu-latn", { day: "numeric", month: "short" }).format(new Date(s + "T00:00:00"));
+  }
+  function wsFmtTime(ts){
+    if(!ts) return "";
+    return new Intl.DateTimeFormat("ar-EG-u-ca-gregory-nu-latn", { day: "numeric", month: "short", hour: "numeric", minute: "2-digit" }).format(new Date(ts));
+  }
+  function wsMoney(n){ return n == null || isNaN(n) ? "—" : Number(n).toLocaleString("en-US"); }
+  function wsPointDue(c, p){
+    if(!c || !c.publishedAt) return null;
+    var t = new Date(c.publishedAt).getTime();
+    return isNaN(t) ? null : t + (Number(p.hours) || 0) * 3600000;
+  }
+  function wsCampaignStats(c){
+    if(!c || !c.on) return null;
+    var pts = (c.points || []).slice().sort(function(a, b){ return (a.hours || 0) - (b.hours || 0); });
+    var rec = pts.filter(function(p){ return p.amount != null && p.amount !== ""; });
+    var latest = rec.length ? Number(rec[rec.length - 1].amount) : null;
+    var initial = c.initial != null && c.initial !== "" ? Number(c.initial) : null;
+    var target = c.target != null && c.target !== "" ? Number(c.target) : null;
+    var now = Date.now();
+    var due = pts.filter(function(p){ var d = wsPointDue(c, p); return (p.amount == null || p.amount === "") && d && d <= now; });
+    return {
+      points: pts, latest: latest, initial: initial, target: target, due: due,
+      gain: latest != null && initial != null ? latest - initial : null,
+      growth: latest != null && initial ? Math.round((latest - initial) / initial * 100) : null,
+      ofTarget: latest != null && target ? Math.min(100, Math.round(latest / target * 100)) : null
+    };
+  }
+  function wsEventReadiness(ev){
+    var linked = ws.tasks.filter(function(t){ return (t.eventIds || []).indexOf(ev.id) > -1; });
+    if(!linked.length) return null;
+    return { pct: Math.round(linked.filter(function(t){ return t.status === "done"; }).length / linked.length * 100), total: linked.length, tasks: linked };
+  }
+  function wsProjectStats(p){
+    var list = ws.tasks.filter(function(t){ return t.projectId === p.id; });
+    var done = list.filter(function(t){ return t.status === "done"; }).length;
+    var raised = 0, any = false;
+    list.forEach(function(t){ var s = wsCampaignStats(t.campaign); if(s && s.latest != null){ raised += s.latest; any = true; } });
+    return { total: list.length, done: done, pct: list.length ? Math.round(done / list.length * 100) : 0, raised: any ? raised : null };
+  }
+  function wsVisibleTasks(){
+    return ws.tasks.filter(function(t){
+      if(wsUI.fProject && t.projectId !== wsUI.fProject) return false;
+      if(wsUI.fAssignee === "none" && t.assigneeId) return false;
+      if(wsUI.fAssignee && wsUI.fAssignee !== "none" && t.assigneeId !== wsUI.fAssignee) return false;
+      return true;
+    });
+  }
+  // إشعارات محسوبة لحظياً (لا تُخزَّن): تذكير رصد الحملات، اقتراب الفعاليات، مهام متأخرة
+  function wsComputedNotifs(){
+    var out = [], me = currentUser.id, manage = wsCanManage();
+    var dismissed = {};
+    try{ dismissed = JSON.parse(localStorage.getItem("zaraHub.wsDismissed." + wsToday()) || "{}"); }catch(e){}
+    ws.tasks.forEach(function(t){
+      var mine = t.assigneeId === me;
+      if(!mine && !manage) return;
+      var s = wsCampaignStats(t.campaign);
+      if(s) s.due.forEach(function(p){ out.push({ key: "cp-" + t.id + "-" + p.id, type: "campaign", text: "حان رصد نتائج «" + t.title + "» — " + p.label, ref: { task: t.id } }); });
+      if(mine && t.status !== "done" && t.dueDate && wsDaysTo(t.dueDate) < 0) out.push({ key: "late-" + t.id, type: "late", text: "مهمة متأخرة: «" + t.title + "»", ref: { task: t.id } });
+    });
+    ws.events.forEach(function(ev){
+      var d = wsDaysTo(ev.date);
+      if(d == null || d < 0) return;
+      var days = ev.notifyDays && ev.notifyDays.length ? ev.notifyDays : [14, 7, 3, 1, 0];
+      if(d < 7 || days.indexOf(d) > -1) out.push({ key: "ev-" + ev.id + "-" + d, type: "event", text: d === 0 ? "اليوم: «" + ev.title + "»" : "باقي " + dayWordAr(d) + " على «" + ev.title + "»", ref: { event: ev.id } });
+    });
+    return out.filter(function(n){ return !dismissed[n.key]; });
+  }
+  // ---------- العرض الرئيسي ----------
+  var _wsRaf = 0;
+  function wsRefresh(){
+    if(_wsRaf) return;
+    _wsRaf = requestAnimationFrame(function(){ _wsRaf = 0; wsRender(); wsRenderDrawer(false); });
+  }
+  function wsEventCardHTML(ev){
+    var d = wsDaysTo(ev.date);
+    var tone = d === 0 ? "today" : d < 7 ? "urgent" : d <= 14 ? "warn" : "calm";
+    var count = d === 0 ? "اليوم" : d >= 14 ? (Math.floor(d / 7) + " أسابيع" + (d % 7 ? " و" + dayWordAr(d % 7) : "")) : dayWordAr(d);
+    var rd = wsEventReadiness(ev);
+    return '<button type="button" class="ws-ev ws-ev--' + tone + '" data-ws="open-event" data-id="' + ev.id + '"' + (ev.banner ? ' style="--ws-banner:url(\'' + escapeHTML(ev.banner) + '\')"' : '') + '>' +
+      (tone === "urgent" ? '<i class="ws-pulse">عاجل</i>' : tone === "warn" ? '<i class="ws-badge">تنبيه مبكر</i>' : tone === "today" ? '<i class="ws-badge">انطلاق الحدث</i>' : '') +
+      '<span class="ws-ev-count">' + (d === 0 ? "" : "<small>باقي</small>") + '<b>' + count + '</b></span>' +
+      '<span class="ws-ev-title">' + escapeHTML(ev.title) + '</span>' +
+      '<span class="ws-ev-meta">' + escapeHTML(ev.category || "فعالية") + ' · ' + wsFmtDate(ev.date) + '</span>' +
+      (rd ? '<span class="ws-ready"><span><i style="width:' + rd.pct + '%"></i></span>جاهزية ' + rd.pct + '%</span>' : '') +
+    '</button>';
+  }
+  function wsTaskCardHTML(t){
+    var late = t.status !== "done" && t.dueDate && wsDaysTo(t.dueDate) < 0;
+    var pr = WS_PRIORITY.find(function(p){ return p.k === t.priority; }) || WS_PRIORITY[1];
+    var proj = t.projectId ? ws.projects.find(function(p){ return p.id === t.projectId; }) : null;
+    var cs = wsCampaignStats(t.campaign);
+    var name = t.assigneeId ? wsEmpName(t.assigneeId) : "";
+    var idx = WS_STATUS.findIndex(function(s){ return s.k === t.status; });
+    var canEdit = wsCanEditTask(t);
+    return '<div class="ws-card' + (late ? " is-late" : "") + '" draggable="' + (canEdit ? "true" : "false") + '" data-ws="open-task" data-id="' + t.id + '">' +
+      '<div class="ws-card-top"><span class="ws-pr ws-pr--' + pr.k + '">' + pr.l + '</span>' + (proj ? '<span class="ws-proj">' + escapeHTML(proj.name) + '</span>' : '') + '</div>' +
+      '<p class="ws-card-title">' + escapeHTML(t.title) + '</p>' +
+      (cs ? '<div class="ws-card-camp' + (cs.due.length ? " is-due" : "") + '">' + WSI.coin + (cs.due.length ? 'حان رصد النتائج' : (cs.latest != null ? wsMoney(cs.latest) + (cs.growth != null ? ' <b>' + (cs.growth >= 0 ? "+" : "") + cs.growth + '%</b>' : '') : 'حملة — بانتظار الرصد')) + '</div>' : '') +
+      '<div class="ws-card-foot">' +
+        (name ? '<span class="ws-av" title="' + escapeHTML(name) + '">' + escapeHTML(initials(name)) + '</span>' : '<span class="ws-av ws-av--none">؟</span>') +
+        (t.dueDate ? '<span class="ws-due">' + wsFmtDate(t.dueDate) + '</span>' : '') +
+        ((t.comments || []).length ? '<span class="ws-mini">' + WSI.chat + t.comments.length + '</span>' : '') +
+        ((t.attachments || []).length ? '<span class="ws-mini">' + WSI.clip + t.attachments.length + '</span>' : '') +
+        (canEdit ? '<span class="ws-step">' +
+          (idx > 0 ? '<button type="button" data-ws="step-task" data-id="' + t.id + '" data-dir="-1" title="إرجاع">' + WSI.chev + '</button>' : '') +
+          (idx < WS_STATUS.length - 1 ? '<button type="button" class="fwd" data-ws="step-task" data-id="' + t.id + '" data-dir="1" title="تقديم">' + WSI.chev + '</button>' : '') +
+        '</span>' : '') +
+      '</div></div>';
+  }
+  function wsKanbanHTML(tasks){
+    var order = { urgent: 0, high: 1, medium: 2, low: 3 };
+    return '<div class="ws-kanban">' + WS_STATUS.map(function(st){
+      var list = tasks.filter(function(t){ return (t.status || "todo") === st.k; }).sort(function(a, b){
+        return (order[a.priority] - order[b.priority]) || ((a.dueDate || "9999") > (b.dueDate || "9999") ? 1 : -1);
+      });
+      return '<div class="ws-col ws-col--' + st.k + '" data-ws-col="' + st.k + '">' +
+        '<div class="ws-col-head"><b>' + st.l + '</b><i>' + list.length + '</i>' + (st.k === "doing" ? '<span title="لا تزيد المهام قيد التنفيذ للموظف الواحد عن ' + WS_WIP_LIMIT + '">حدّ ' + WS_WIP_LIMIT + ' للموظف</span>' : '') + '</div>' +
+        '<div class="ws-col-body">' + (list.length ? list.map(wsTaskCardHTML).join("") : '<p class="ws-empty">لا مهام</p>') +
+        (st.k === "todo" && wsCanCreate() ? '<button type="button" class="ws-add" data-ws="new-task">' + WSI.plus + ' مهمة جديدة</button>' : '') + '</div></div>';
+    }).join("") + '</div>';
+  }
+  function wsCalItems(dateStr, tasks){
+    var out = [];
+    ws.events.forEach(function(ev){ if(ev.date === dateStr) out.push('<button type="button" class="ws-ci ws-ci--event" data-ws="open-event" data-id="' + ev.id + '">' + escapeHTML(ev.title) + '</button>'); });
+    ws.projects.forEach(function(p){ if(p.dueDate === dateStr) out.push('<button type="button" class="ws-ci ws-ci--project" data-ws="open-project" data-id="' + p.id + '">تسليم: ' + escapeHTML(p.name) + '</button>'); });
+    tasks.forEach(function(t){ if(t.dueDate === dateStr) out.push('<button type="button" class="ws-ci ws-ci--' + (t.status === "done" ? "done" : t.priority || "medium") + '" data-ws="open-task" data-id="' + t.id + '">' + escapeHTML(t.title) + '</button>'); });
+    return out;
+  }
+  function wsCalendarHTML(tasks){
+    var cur = new Date((wsUI.calCursor || wsToday()) + "T00:00:00"), today = wsToday(), days = [], title;
+    if(wsUI.calMode === "week"){
+      var ws0 = weekStartDate(toISODate(cur));
+      for(var i = 0; i < 7; i++){ var d = new Date(ws0); d.setDate(ws0.getDate() + i); days.push(d); }
+      title = formatDayNum(days[0]) + " – " + formatDayNum(days[6]) + " " + formatMonthYearAr(days[6]);
+    } else {
+      var first = new Date(cur.getFullYear(), cur.getMonth(), 1), start = weekStartDate(toISODate(first));
+      for(var k = 0; k < 42; k++){ var dd = new Date(start); dd.setDate(start.getDate() + k); days.push(dd); }
+      if(days[35].getMonth() !== cur.getMonth()) days = days.slice(0, 35);
+      title = formatMonthYearAr(cur);
+    }
+    var html = '<div class="ws-cal"><div class="ws-cal-bar"><div class="ws-cal-nav"><button type="button" data-ws="cal-nav" data-dir="-1" title="السابق">' + WSI.chev + '</button><b>' + title + '</b><button type="button" class="fwd" data-ws="cal-nav" data-dir="1" title="التالي">' + WSI.chev + '</button>' +
+      '<button type="button" class="ws-pill" data-ws="cal-today">اليوم</button></div>' +
+      '<div class="ws-seg"><button type="button" data-ws="cal-mode" data-mode="month" class="' + (wsUI.calMode === "month" ? "on" : "") + '">شهر</button><button type="button" data-ws="cal-mode" data-mode="week" class="' + (wsUI.calMode === "week" ? "on" : "") + '">أسبوع</button></div></div>' +
+      '<div class="ws-cal-legend"><span><i class="e"></i>فعالية</span><span><i class="p"></i>تسليم مشروع</span><span><i class="t"></i>موعد مهمة</span><span><i class="u"></i>عاجلة</span></div>' +
+      '<div class="ws-cal-grid ws-cal-grid--' + wsUI.calMode + '">' + ["السبت", "الأحد", "الاثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة"].map(function(n){ return '<div class="ws-cal-dow">' + n + '</div>'; }).join("");
+    days.forEach(function(d){
+      var ds = toISODate(d), items = wsCalItems(ds, tasks), cap = wsUI.calMode === "week" ? 20 : 3;
+      html += '<div class="ws-cal-day' + (ds === today ? " is-today" : "") + (wsUI.calMode === "month" && d.getMonth() !== cur.getMonth() ? " is-out" : "") + '"><span class="ws-cal-num">' + formatDayNum(d) + '<small>' + (wsUI.calMode === "week" ? " " + formatMonthShortAr(d) : "") + '</small></span>' +
+        items.slice(0, cap).join("") + (items.length > cap ? '<button type="button" class="ws-ci ws-ci--more" data-ws="cal-day" data-date="' + ds + '">+' + (items.length - cap) + ' أخرى</button>' : '') + '</div>';
+    });
+    return html + '</div></div>';
+  }
+  function wsBellHTML(){
+    var computed = wsComputedNotifs(), stored = ws.notifs;
+    var unread = stored.filter(function(n){ return !n.read; }).length + computed.length;
+    var html = '<div class="ws-bell-wrap"><button type="button" class="ws-icon-btn" data-ws="toggle-bell" title="الإشعارات">' + WSI.bell + (unread ? '<i>' + (unread > 9 ? "9+" : unread) + '</i>' : '') + '</button>';
+    if(wsUI.bell){
+      html += '<div class="ws-bell"><div class="ws-bell-head"><b>الإشعارات</b>' + (unread ? '<button type="button" data-ws="read-all">تعليم الكل كمقروء</button>' : '') + '</div>';
+      if(!computed.length && !stored.length) html += '<p class="ws-empty">لا إشعارات</p>';
+      computed.forEach(function(n){ html += '<button type="button" class="ws-ntf ws-ntf--' + n.type + ' unread" data-ws="open-ntf" data-key="' + n.key + '" data-ref=\'' + escapeHTML(JSON.stringify(n.ref)) + '\'>' + escapeHTML(n.text) + '<small>تذكير</small></button>'; });
+      stored.slice(0, 25).forEach(function(n){ html += '<button type="button" class="ws-ntf' + (n.read ? "" : " unread") + '" data-ws="open-ntf" data-id="' + n.id + '" data-ref=\'' + escapeHTML(JSON.stringify(n.ref || {})) + '\'>' + escapeHTML(n.text) + '<small>' + escapeHTML(n.from || "") + ' · ' + wsFmtTime(n.at) + '</small></button>'; });
+      html += '</div>';
+    }
+    return html + '</div>';
+  }
+  function wsRender(){
+    var root = document.getElementById("wsRoot");
+    if(!root || !currentUser) return;
+    if(ws.err){
+      root.innerHTML = '<div class="ws-state"><b>تعذّر تحميل مساحة العمل</b><p>' + (ws.err === "resource-exhausted" ? "بلغت قاعدة البيانات حصتها اليومية — تعود للعمل بعد تجدد الحصة." : ws.err === "permission-denied" ? "صلاحيات قاعدة البيانات لا تسمح بقراءة مساحة العمل — راجع قواعد Firestore." : "تحقق من الاتصال ثم أعد تحميل الصفحة.") + '</p><button type="button" class="btn-secondary" data-ws="legacy" style="margin-top:12px;">عرض المهام السابقة المحفوظة على هذا الجهاز</button></div>';
+      return;
+    }
+    if(!ws.ready){ root.innerHTML = '<div class="ws-state"><p>جارٍ تحميل مساحة العمل…</p></div>'; return; }
+    var manage = wsCanManage(), emps = loadEmployees(), tasks = wsVisibleTasks();
+    var upcoming = ws.events.filter(function(e){ var d = wsDaysTo(e.date); return d != null && d >= 0; })
+      .sort(function(a, b){ var da = wsDaysTo(a.date), db_ = wsDaysTo(b.date); return ((da < 7 ? 0 : 1) - (db_ < 7 ? 0 : 1)) || (da - db_); });
+    var html = "";
+    html += '<div class="ws-strip"><div class="ws-strip-head"><b>الفعاليات القادمة</b>' + (manage ? '<button type="button" class="ws-pill" data-ws="new-event">' + WSI.plus + ' فعالية</button>' : '') + '</div>' +
+      (upcoming.length ? '<div class="ws-strip-row">' + upcoming.map(wsEventCardHTML).join("") + '</div>' : '<p class="ws-empty" style="text-align:start;">لا فعاليات قادمة.</p>') + '</div>';
+    var doneN = tasks.filter(function(t){ return t.status === "done"; }).length;
+    html += '<div class="ws-bar">' +
+      '<div class="ws-seg ws-seg--main"><button type="button" data-ws="view" data-view="kanban" class="' + (wsUI.view === "kanban" ? "on" : "") + '">' + WSI.board + 'كانبان</button><button type="button" data-ws="view" data-view="calendar" class="' + (wsUI.view === "calendar" ? "on" : "") + '">' + WSI.cal + 'التقويم</button></div>' +
+      '<select id="wsFProject" class="ws-sel"><option value="">كل المشاريع</option>' + ws.projects.map(function(p){ return '<option value="' + p.id + '"' + (wsUI.fProject === p.id ? " selected" : "") + '>' + escapeHTML(p.name) + '</option>'; }).join("") + '</select>' +
+      '<select id="wsFAssignee" class="ws-sel"><option value="">كل الفريق</option><option value="' + currentUser.id + '"' + (wsUI.fAssignee === currentUser.id ? " selected" : "") + '>مهامي</option><option value="none"' + (wsUI.fAssignee === "none" ? " selected" : "") + '>غير مُسندة</option>' +
+        emps.filter(function(e){ return e.id !== currentUser.id; }).map(function(e){ return '<option value="' + e.id + '"' + (wsUI.fAssignee === e.id ? " selected" : "") + '>' + escapeHTML(e.name) + '</option>'; }).join("") + '</select>' +
+      '<span class="ws-count">' + tasks.length + ' مهمة · أُنجز ' + doneN + '</span>' +
+      '<span class="ws-grow"></span>' + wsBellHTML() +
+      (wsCanCreate() ? '<button type="button" class="btn-primary ws-new" data-ws="new-task">' + WSI.plus + ' مهمة</button>' : '') +
+    '</div>';
+    html += '<div class="ws-links">' +
+      '<button type="button" data-ws="panel" data-panel="projects">المشاريع <i>' + ws.projects.length + '</i></button>' +
+      '<button type="button" data-ws="panel" data-panel="events">الفعاليات <i>' + ws.events.length + '</i></button>' +
+      '<button type="button" data-ws="panel" data-panel="standup">إنجاز اليوم' + (ws.standups.some(function(s){ return s.blockers; }) && manage ? ' <i class="hot">عوائق</i>' : '') + '</button>' +
+      '<button type="button" data-ws="panel" data-panel="assets">القوالب والملفات <i>' + ws.assets.length + '</i></button>' +
+      (manage ? '<button type="button" data-ws="panel" data-panel="workload">عبء العمل</button><button type="button" data-ws="panel" data-panel="logs">سجل الحركات</button>' : '') +
+      (wsRole() === "admin" ? '<button type="button" data-ws="panel" data-panel="roles">الأدوار</button>' : '') +
+      '<button type="button" class="ws-legacy" data-ws="legacy">المهام السابقة على هذا الجهاز</button>' +
+    '</div>';
+    html += wsUI.view === "calendar" ? wsCalendarHTML(tasks) : wsKanbanHTML(tasks);
+    var sc = root.querySelector(".ws-strip-row"), sx = sc ? sc.scrollLeft : 0;
+    root.innerHTML = html;
+    var sc2 = root.querySelector(".ws-strip-row");
+    if(sc2 && sx) sc2.scrollLeft = sx;
+  }
+  function wsMoveTask(id, status){
+    var t = ws.tasks.find(function(x){ return x.id === id; });
+    if(!t || t.status === status) return;
+    if(!wsCanEditTask(t)){ showToast("لا تملك صلاحية تحديث هذه المهمة"); return; }
+    if(status === "doing" && t.assigneeId){
+      var n = ws.tasks.filter(function(x){ return x.id !== id && x.assigneeId === t.assigneeId && x.status === "doing"; }).length;
+      if(n >= WS_WIP_LIMIT){ showToast("لدى " + wsEmpName(t.assigneeId) + " " + WS_WIP_LIMIT + " مهام قيد التنفيذ — تُنهى واحدة أولاً"); return; }
+    }
+    var from = (WS_STATUS.find(function(s){ return s.k === t.status; }) || {}).l, to = WS_STATUS.find(function(s){ return s.k === status; }).l;
+    wsPatchTask(t, { status: status }, "نقل من «" + from + "» إلى «" + to + "»");
+    if(status === "done") try{ playDoneChime(); }catch(e){}
+    if(status === "review" && t.createdBy) wsNotify(t.createdBy, "review", "«" + t.title + "» بانتظار المراجعة", { task: t.id });
+  }
+  function wsPatchTask(t, patch, logText){
+    var doc = Object.assign({}, t, patch);
+    if(logText){
+      doc.log = (t.log || []).concat([{ by: currentUser.name, text: logText, at: Date.now() }]).slice(-40);
+      wsLog(logText, t.title);
+    }
+    wsSet("wsTasks", doc);
+    wsRefresh();
+    return doc;
+  }
+  // ---------- اللوحة الجانبية (تفاصيل المهمة/الفعالية/المشروع واللوحات المساندة) ----------
+  function wsDrawerEl(){
+    var ov = document.getElementById("wsDrawerOverlay");
+    if(ov) return ov;
+    ov = document.createElement("div");
+    ov.id = "wsDrawerOverlay";
+    ov.className = "ws-drawer-overlay";
+    ov.innerHTML = '<aside class="ws-drawer" id="wsDrawer"></aside>';
+    document.body.appendChild(ov);
+    ov.addEventListener("mousedown", function(e){ if(e.target === ov) wsCloseDrawer(); });
+    return ov;
+  }
+  function wsOpenDrawer(kind, id){ wsUI.drawer = kind; wsUI.drawerId = id || null; wsUI.bell = false; wsRenderDrawer(true); wsRender(); }
+  function wsCloseDrawer(){ wsUI.drawer = null; wsUI.drawerId = null; wsRenderDrawer(true); }
+  function wsSel(field, cur, opts, extra){
+    return '<select data-wsf="' + field + '"' + (extra || "") + '>' + opts.map(function(o){ return '<option value="' + escapeHTML(o[0]) + '"' + (String(cur || "") === String(o[0]) ? " selected" : "") + '>' + escapeHTML(o[1]) + '</option>'; }).join("") + '</select>';
+  }
+  function wsField(label, inner, cls){ return '<label class="ws-f' + (cls ? " " + cls : "") + '"><span>' + label + '</span>' + inner + '</label>'; }
+  function wsHead(title, sub){
+    return '<div class="ws-dh"><div><h3>' + title + '</h3>' + (sub ? '<p>' + sub + '</p>' : '') + '</div><button type="button" class="ws-icon-btn" data-ws="close-drawer" title="إغلاق">' + WSI.x + '</button></div>';
+  }
+  function wsCampaignHTML(t, can){
+    var c = t.campaign, dis = can ? "" : " disabled";
+    var html = '<div class="ws-sec"><div class="ws-sec-head"><b>حملة نشر / تبرعات</b>' + (can ? '<label class="tf-chip"><input type="checkbox" data-ws-toggle="campaign"' + (c && c.on ? " checked" : "") + '/><span>' + (c && c.on ? "مفعّلة" : "تفعيل التتبّع") + '</span></label>' : '') + '</div>';
+    if(!c || !c.on) return html + '<p class="ws-hint">فعّل التتبّع إذا كانت المهمة منشوراً أو حملة تُرصد مبالغها ونتائجها بعد النشر.</p></div>';
+    var s = wsCampaignStats(c);
+    html += '<div class="ws-roi"><div><span>المبدئي</span><b>' + wsMoney(s.initial) + '</b></div><div><span>المحقق</span><b>' + wsMoney(s.latest) + '</b></div><div><span>النمو</span><b class="' + (s.growth == null ? "" : s.growth >= 0 ? "up" : "down") + '">' + (s.growth == null ? "—" : (s.growth >= 0 ? "+" : "") + s.growth + "%") + '</b></div><div><span>المستهدف</span><b>' + wsMoney(s.target) + '</b></div></div>' +
+      (s.ofTarget != null ? '<div class="ws-prog"><span><i style="width:' + s.ofTarget + '%"></i></span>' + s.ofTarget + '% من المستهدف</div>' : '');
+    html += '<div class="ws-grid2">' + wsField("وقت النشر", '<input type="datetime-local" data-wsc="publishedAt" value="' + escapeHTML(c.publishedAt || "") + '"' + dis + '/>') +
+      wsField("المبلغ المبدئي وقت النشر", '<input type="number" inputmode="decimal" data-wsc="initial" value="' + (c.initial != null ? c.initial : "") + '"' + dis + '/>') +
+      wsField("المبلغ المستهدف (اختياري)", '<input type="number" inputmode="decimal" data-wsc="target" value="' + (c.target != null ? c.target : "") + '"' + dis + '/>') + '</div>';
+    html += '<p class="ws-label">نقاط المتابعة</p>';
+    s.points.forEach(function(p){
+      var due = wsPointDue(c, p), rec = p.amount != null && p.amount !== "", over = !rec && due && due <= Date.now();
+      html += '<div class="ws-point' + (over ? " is-due" : "") + (rec ? " is-rec" : "") + '"><div class="ws-point-head"><b>' + escapeHTML(p.label) + '</b><small>' + (due ? wsFmtTime(due) : "بعد " + p.hours + " ساعة من النشر") + '</small>' +
+        (can ? '<button type="button" class="ws-x" data-ws="del-point" data-pid="' + p.id + '" title="حذف النقطة">' + WSI.x + '</button>' : '') + '</div>';
+      if(rec) html += '<p class="ws-point-val">' + wsMoney(p.amount) + (p.note ? ' — ' + escapeHTML(p.note) : '') + '<small>رُصد ' + wsFmtTime(p.at) + '</small>' + (can ? '<button type="button" class="link-btn" data-ws="clear-point" data-pid="' + p.id + '">تعديل</button>' : '') + '</p>';
+      else if(can) html += '<div class="ws-point-form"><input type="number" inputmode="decimal" placeholder="المبلغ المحصّل" data-point-amount="' + p.id + '"/><input type="text" placeholder="ملاحظة" data-point-note="' + p.id + '"/><button type="button" class="btn-secondary" data-ws="rec-point" data-pid="' + p.id + '">رصد</button></div>';
+      else html += '<p class="ws-hint">' + (over ? "بانتظار الرصد" : "لم يحن وقتها") + '</p>';
+      html += '</div>';
+    });
+    if(can) html += '<div class="ws-point-form ws-point-add"><input type="text" placeholder="اسم النقطة — مثال: بعد 72 ساعة" id="wsNewPointLabel"/><input type="number" placeholder="بعد كم ساعة" id="wsNewPointHours"/><button type="button" class="btn-secondary" data-ws="add-point">إضافة</button></div>';
+    html += wsField("ملاحظات أداء الحملة", '<textarea rows="2" data-wsc="notes"' + dis + '>' + escapeHTML(c.notes || "") + '</textarea>');
+    return html + '</div>';
+  }
+  function wsTaskDrawerHTML(t){
+    var can = wsCanEditTask(t), manage = wsCanManage(), dis = can ? "" : " disabled", emps = loadEmployees();
+    var html = wsHead("تفاصيل المهمة", t.createdAt ? "أُنشئت " + wsFmtTime(t.createdAt) : "");
+    html += '<input type="text" class="ws-title-inp" data-wsf="title" value="' + escapeHTML(t.title) + '" placeholder="اسم المهمة"' + dis + '/>';
+    html += '<div class="ws-grid2">' +
+      wsField("الحالة", wsSel("status", t.status, WS_STATUS.map(function(s){ return [s.k, s.l]; }), dis)) +
+      wsField("الأولوية", wsSel("priority", t.priority, WS_PRIORITY.map(function(s){ return [s.k, s.l]; }), dis)) +
+      wsField("المسند إليه", wsSel("assigneeId", t.assigneeId, [["", "بدون إسناد"]].concat(emps.map(function(e){ return [e.id, e.name]; })), manage ? "" : " disabled")) +
+      wsField("المشروع", wsSel("projectId", t.projectId, [["", "بدون مشروع"]].concat(ws.projects.map(function(p){ return [p.id, p.name]; })), dis)) +
+      wsField("تاريخ البدء", '<input type="date" data-wsf="startDate" value="' + (t.startDate || "") + '"' + dis + '/>') +
+      wsField("تاريخ الانتهاء", '<input type="date" data-wsf="dueDate" value="' + (t.dueDate || "") + '"' + dis + '/>') + '</div>';
+    html += wsField("الوصف", '<textarea rows="3" data-wsf="desc" placeholder="تفاصيل المهمة"' + dis + '>' + escapeHTML(t.desc || "") + '</textarea>');
+    var evs = ws.events.filter(function(e){ var d = wsDaysTo(e.date); return (d != null && d >= 0) || (t.eventIds || []).indexOf(e.id) > -1; });
+    if(evs.length) html += '<p class="ws-label">مرتبطة بفعالية (تدخل في جاهزيتها)</p><div class="tf-chips">' + evs.map(function(e){
+      return '<label class="tf-chip"><input type="checkbox" data-ws-toggle="event" value="' + e.id + '"' + ((t.eventIds || []).indexOf(e.id) > -1 ? " checked" : "") + dis + '/><span>' + escapeHTML(e.title) + '</span></label>'; }).join("") + '</div>';
+    html += wsCampaignHTML(t, can);
+    html += '<div class="ws-sec"><div class="ws-sec-head"><b>المرفقات</b></div>' +
+      ((t.attachments || []).length ? t.attachments.map(function(a, i){ return '<div class="ws-att"><a href="' + escapeHTML(a.url) + '" target="_blank" rel="noopener">' + WSI.clip + escapeHTML(a.name || a.url) + '</a>' + (can ? '<button type="button" class="ws-x" data-ws="del-att" data-i="' + i + '">' + WSI.x + '</button>' : '') + '</div>'; }).join("") : '<p class="ws-hint">لا مرفقات.</p>') +
+      (can ? '<div class="ws-point-form"><input type="text" id="wsAttName" placeholder="اسم المرفق"/><input type="url" id="wsAttUrl" dir="ltr" placeholder="https://"/><button type="button" class="btn-secondary" data-ws="add-att">إضافة رابط</button></div>' +
+        '<label class="btn-secondary ws-upload">رفع صورة<input type="file" accept="image/png,image/jpeg" id="wsAttFile" hidden/></label>' : '') + '</div>';
+    html += '<div class="ws-sec"><div class="ws-sec-head"><b>التعليقات</b></div>' +
+      ((t.comments || []).length ? t.comments.map(function(c){ return '<div class="ws-cm"><span class="ws-av">' + escapeHTML(initials(c.name)) + '</span><div><b>' + escapeHTML(c.name) + '</b><small>' + wsFmtTime(c.at) + '</small><p>' + escapeHTML(c.text).replace(/@([^\s@،.]+(?: [^\s@،.]+)?)/g, '<mark>@$1</mark>') + '</p></div></div>'; }).join("") : '<p class="ws-hint">لا تعليقات بعد.</p>') +
+      (wsRole() !== "viewer" ? '<div class="ws-cm-form"><textarea rows="2" id="wsCmText" placeholder="اكتب تعليقاً — للإشارة لزميل اختر اسمه من القائمة"></textarea><div class="ws-row"><select id="wsCmMention"><option value="">@ إشارة إلى…</option>' + emps.map(function(e){ return '<option value="' + e.id + '">' + escapeHTML(e.name) + '</option>'; }).join("") + '</select><button type="button" class="btn-primary" data-ws="add-comment">إرسال</button></div></div>' : '') + '</div>';
+    html += '<details class="ws-sec ws-log"><summary>سجل التغييرات <i>' + (t.log || []).length + '</i></summary>' + ((t.log || []).slice().reverse().map(function(l){ return '<p><b>' + escapeHTML(l.by) + '</b> ' + escapeHTML(l.text) + '<small>' + wsFmtTime(l.at) + '</small></p>'; }).join("") || '<p class="ws-hint">لا تغييرات مسجّلة.</p>') + '</details>';
+    if(manage || (can && t.createdBy === currentUser.id)) html += '<button type="button" class="ws-danger" data-ws="del-task">حذف المهمة</button>';
+    return html;
+  }
+  function wsEventDrawerHTML(ev){
+    var manage = wsCanManage(), dis = manage ? "" : " disabled", rd = wsEventReadiness(ev), d = wsDaysTo(ev.date);
+    var html = wsHead("تفاصيل الفعالية", d == null ? "" : d < 0 ? "انتهت منذ " + dayWordAr(-d) : d === 0 ? "اليوم" : "باقي " + dayWordAr(d));
+    html += '<input type="text" class="ws-title-inp" data-wse="title" value="' + escapeHTML(ev.title) + '" placeholder="عنوان الفعالية"' + dis + '/>';
+    html += '<div class="ws-grid2">' + wsField("التاريخ", '<input type="date" data-wse="date" value="' + (ev.date || "") + '"' + dis + '/>') + wsField("الوقت", '<input type="time" data-wse="time" value="' + (ev.time || "") + '"' + dis + '/>') +
+      wsField("الفئة", '<input type="text" data-wse="category" value="' + escapeHTML(ev.category || "") + '" placeholder="مثال: فعالية، حملة، اجتماع"' + dis + '/>') +
+      wsField("التنبيه قبل (أيام)", '<input type="text" dir="ltr" data-wse="notifyDays" value="' + (ev.notifyDays || []).join(", ") + '" placeholder="14, 7, 3, 1, 0"' + dis + '/>') + '</div>';
+    html += wsField("رابط صورة الغلاف (اختياري)", '<input type="url" dir="ltr" data-wse="banner" value="' + escapeHTML(ev.banner || "") + '" placeholder="https://"' + dis + '/>');
+    html += wsField("التفاصيل", '<textarea rows="3" data-wse="details"' + dis + '>' + escapeHTML(ev.details || "") + '</textarea>');
+    html += '<div class="ws-sec"><div class="ws-sec-head"><b>جاهزية التحضير</b>' + (manage ? '<button type="button" class="ws-pill" data-ws="new-task" data-event="' + ev.id + '">' + WSI.plus + ' مهمة تحضيرية</button>' : '') + '</div>';
+    if(rd){
+      html += '<div class="ws-prog ws-prog--lg"><span><i style="width:' + rd.pct + '%"></i></span>جاهزية الفعالية: ' + rd.pct + '%</div>' +
+        rd.tasks.map(function(t){ return '<button type="button" class="ws-line' + (t.status === "done" ? " is-done" : "") + '" data-ws="open-task" data-id="' + t.id + '"><i></i>' + escapeHTML(t.title) + '<small>' + (WS_STATUS.find(function(s){ return s.k === t.status; }) || {}).l + '</small></button>'; }).join("");
+    } else html += '<p class="ws-hint">اربط مهاماً تحضيرية بالفعالية لتظهر نسبة الجاهزية.</p>';
+    html += '</div><div class="ws-sec"><div class="ws-sec-head"><b>الميزانية والموردون</b></div>' + wsField("ميزانية الفعالية", '<input type="number" inputmode="decimal" data-wse="budget" value="' + (ev.budget != null ? ev.budget : "") + '"' + dis + '/>');
+    var total = 0;
+    (ev.vendors || []).forEach(function(v, i){
+      total += Number(v.cost) || 0;
+      html += '<div class="ws-vendor"><div><b>' + escapeHTML(v.name) + '</b><small>' + escapeHTML([v.service, v.contact].filter(Boolean).join(" · ")) + '</small></div><span>' + wsMoney(v.cost) + '</span>' + (manage ? '<button type="button" class="ws-x" data-ws="del-vendor" data-i="' + i + '">' + WSI.x + '</button>' : '') + '</div>';
+    });
+    if((ev.vendors || []).length) html += '<p class="ws-hint">إجمالي الموردين: <b>' + wsMoney(total) + '</b>' + (ev.budget ? ' من ميزانية ' + wsMoney(ev.budget) : '') + '</p>';
+    if(manage) html += '<div class="ws-grid2 ws-vendor-form"><input type="text" id="wsVName" placeholder="اسم المورد"/><input type="text" id="wsVService" placeholder="الخدمة"/><input type="text" id="wsVContact" placeholder="بيانات التواصل"/><input type="number" id="wsVCost" placeholder="التكلفة"/></div><button type="button" class="btn-secondary" data-ws="add-vendor">إضافة مورد</button>';
+    html += '</div>';
+    if(manage) html += '<button type="button" class="ws-danger" data-ws="del-event">حذف الفعالية</button>';
+    return html;
+  }
+  function wsProjectDrawerHTML(p){
+    var manage = wsCanManage(), dis = manage ? "" : " disabled", st = wsProjectStats(p), emps = loadEmployees();
+    var target = p.target != null && p.target !== "" ? Number(p.target) : null;
+    var got = st.raised != null ? st.raised : (p.collected != null && p.collected !== "" ? Number(p.collected) : null);
+    var html = wsHead("تفاصيل المشروع", st.total + " مهمة · أُنجز " + st.done);
+    html += '<input type="text" class="ws-title-inp" data-wsp="name" value="' + escapeHTML(p.name) + '" placeholder="اسم المشروع"' + dis + '/>';
+    html += '<div class="ws-prog ws-prog--lg"><span><i style="width:' + st.pct + '%"></i></span>نسبة الإنجاز: ' + st.pct + '%</div>';
+    html += '<div class="ws-roi"><div><span>الميزانية</span><b>' + wsMoney(p.budget) + '</b></div><div><span>المستهدف</span><b>' + wsMoney(target) + '</b></div><div><span>المحصّل</span><b>' + wsMoney(got) + '</b></div><div><span>من المستهدف</span><b class="up">' + (got != null && target ? Math.round(got / target * 100) + "%" : "—") + '</b></div></div>';
+    html += '<div class="ws-grid2">' + wsField("الحالة", wsSel("status", p.status, [["active", "نشط"], ["paused", "متوقف"], ["done", "مكتمل"]], dis).replace("data-wsf", "data-wsp")) +
+      wsField("الميزانية", '<input type="number" inputmode="decimal" data-wsp="budget" value="' + (p.budget != null ? p.budget : "") + '"' + dis + '/>') +
+      wsField("تاريخ البدء", '<input type="date" data-wsp="startDate" value="' + (p.startDate || "") + '"' + dis + '/>') + wsField("تاريخ التسليم", '<input type="date" data-wsp="dueDate" value="' + (p.dueDate || "") + '"' + dis + '/>') +
+      wsField("التبرعات المستهدفة", '<input type="number" inputmode="decimal" data-wsp="target" value="' + (p.target != null ? p.target : "") + '"' + dis + '/>') +
+      wsField("المحصّل (يدوي)", '<input type="number" inputmode="decimal" data-wsp="collected" value="' + (p.collected != null ? p.collected : "") + '"' + dis + '/>') + '</div>';
+    if(st.raised != null) html += '<p class="ws-hint">المحصّل المعروض مجموع آخر رصد في حملات مهام المشروع.</p>';
+    html += wsField("الوصف", '<textarea rows="3" data-wsp="desc"' + dis + '>' + escapeHTML(p.desc || "") + '</textarea>');
+    html += '<p class="ws-label">الفريق المسؤول</p><div class="tf-chips">' + emps.map(function(e){ return '<label class="tf-chip"><input type="checkbox" data-ws-toggle="team" value="' + e.id + '"' + ((p.team || []).indexOf(e.id) > -1 ? " checked" : "") + dis + '/><span>' + escapeHTML(e.name) + '</span></label>'; }).join("") + '</div>';
+    html += '<div class="ws-sec"><div class="ws-sec-head"><b>مهام المشروع</b>' + (wsCanCreate() ? '<button type="button" class="ws-pill" data-ws="new-task" data-project="' + p.id + '">' + WSI.plus + ' مهمة</button>' : '') + '</div>' +
+      (ws.tasks.filter(function(t){ return t.projectId === p.id; }).map(function(t){ return '<button type="button" class="ws-line' + (t.status === "done" ? " is-done" : "") + '" data-ws="open-task" data-id="' + t.id + '"><i></i>' + escapeHTML(t.title) + '<small>' + (WS_STATUS.find(function(s){ return s.k === t.status; }) || {}).l + '</small></button>'; }).join("") || '<p class="ws-hint">لا مهام بعد.</p>') + '</div>';
+    if(manage) html += '<button type="button" class="ws-danger" data-ws="del-project">حذف المشروع</button>';
+    return html;
+  }
+  function wsPanelHTML(name){
+    var manage = wsCanManage(), emps = loadEmployees(), html = "";
+    if(name === "projects"){
+      html = wsHead("المشاريع", ws.projects.length + " مشروع") + (manage ? '<button type="button" class="btn-primary ws-block" data-ws="new-project">' + WSI.plus + ' مشروع جديد</button>' : '');
+      ws.projects.slice().sort(function(a, b){ return (a.status === "done") - (b.status === "done"); }).forEach(function(p){
+        var st = wsProjectStats(p);
+        html += '<button type="button" class="ws-tile" data-ws="open-project" data-id="' + p.id + '"><b>' + escapeHTML(p.name) + '</b><small>' + ({ active: "نشط", paused: "متوقف", done: "مكتمل" }[p.status] || "نشط") + (p.dueDate ? " · التسليم " + wsFmtDate(p.dueDate) : "") + ' · ' + st.total + ' مهمة</small><span class="ws-prog"><span><i style="width:' + st.pct + '%"></i></span>' + st.pct + '%</span></button>';
+      });
+      if(!ws.projects.length) html += '<p class="ws-hint">لا مشاريع بعد.</p>';
+    } else if(name === "events"){
+      html = wsHead("الفعاليات والمناسبات", ws.events.length + " فعالية") + (manage ? '<button type="button" class="btn-primary ws-block" data-ws="new-event">' + WSI.plus + ' فعالية جديدة</button>' : '');
+      ws.events.slice().sort(function(a, b){ return a.date > b.date ? 1 : -1; }).forEach(function(ev){
+        var d = wsDaysTo(ev.date), rd = wsEventReadiness(ev);
+        html += '<button type="button" class="ws-tile' + (d != null && d < 0 ? " is-past" : "") + '" data-ws="open-event" data-id="' + ev.id + '"><b>' + escapeHTML(ev.title) + '</b><small>' + wsFmtDate(ev.date) + ' · ' + (d == null ? "" : d < 0 ? "انتهت" : d === 0 ? "اليوم" : "باقي " + dayWordAr(d)) + '</small>' + (rd ? '<span class="ws-prog"><span><i style="width:' + rd.pct + '%"></i></span>جاهزية ' + rd.pct + '%</span>' : '') + '</button>';
+      });
+    } else if(name === "standup"){
+      var mine = ws.standups.find(function(s){ return s.userId === currentUser.id; }) || { goals: ["", "", ""], blockers: "" };
+      html = wsHead("إنجاز اليوم", new Intl.DateTimeFormat("ar-EG-u-ca-gregory-nu-latn", { weekday: "long", day: "numeric", month: "long" }).format(new Date()));
+      if(wsRole() !== "viewer"){
+        html += '<div class="ws-sec"><div class="ws-sec-head"><b>أهدافي الثلاثة لليوم</b></div>' + [0, 1, 2].map(function(i){ return '<input type="text" class="ws-goal" id="wsGoal' + i + '" value="' + escapeHTML((mine.goals || [])[i] || "") + '" placeholder="الهدف ' + (i + 1) + '"/>'; }).join("") +
+          wsField("عوائق تحتاج تدخل الإدارة (اختياري)", '<textarea rows="2" id="wsBlockers">' + escapeHTML(mine.blockers || "") + '</textarea>') +
+          '<div class="ws-row"><button type="button" class="btn-primary" data-ws="save-standup">حفظ</button>' + (wsUI.drawerId === "auto" ? '<button type="button" class="btn-secondary" data-ws="skip-standup">لاحقاً</button>' : '') + '</div></div>';
+      }
+      var others = ws.standups.filter(function(s){ return manage ? s.userId !== currentUser.id : false; });
+      if(manage){
+        html += '<p class="ws-label">الفريق اليوم (' + ws.standups.length + ' من ' + emps.length + ')</p>';
+        others.forEach(function(s){ html += '<div class="ws-su' + (s.blockers ? " has-block" : "") + '"><b>' + escapeHTML(s.name) + '</b><ol>' + (s.goals || []).filter(Boolean).map(function(g){ return '<li>' + escapeHTML(g) + '</li>'; }).join("") + '</ol>' + (s.blockers ? '<p><i>عائق</i>' + escapeHTML(s.blockers) + '</p>' : '') + '</div>'; });
+        var missing = emps.filter(function(e){ return !ws.standups.some(function(s){ return s.userId === e.id; }); });
+        if(missing.length) html += '<p class="ws-hint">لم يسجّلوا بعد: ' + missing.map(function(e){ return escapeHTML(e.name); }).join("، ") + '</p>';
+      }
+    } else if(name === "assets"){
+      html = wsHead("القوالب والملفات المعتمدة", ws.assets.length + " ملف");
+      if(manage) html += '<div class="ws-sec"><div class="ws-grid2"><input type="text" id="wsAsName" placeholder="اسم الملف أو القالب"/><input type="text" id="wsAsCat" placeholder="التصنيف — مثال: شعارات"/></div><input type="url" id="wsAsUrl" dir="ltr" placeholder="رابط الملف https://" style="margin-top:8px;"/><div class="ws-row" style="margin-top:8px;"><button type="button" class="btn-primary" data-ws="add-asset">إضافة رابط</button><label class="btn-secondary ws-upload">رفع صورة<input type="file" accept="image/png,image/jpeg" id="wsAsFile" hidden/></label></div></div>';
+      var cats = {};
+      ws.assets.forEach(function(a){ (cats[a.category || "عام"] = cats[a.category || "عام"] || []).push(a); });
+      Object.keys(cats).sort().forEach(function(cn){
+        html += '<p class="ws-label">' + escapeHTML(cn) + '</p>' + cats[cn].map(function(a){ return '<div class="ws-att"><a href="' + escapeHTML(a.url) + '" target="_blank" rel="noopener" download>' + WSI.clip + escapeHTML(a.name) + '</a>' + (manage ? '<button type="button" class="ws-x" data-ws="del-asset" data-id="' + a.id + '">' + WSI.x + '</button>' : '') + '</div>'; }).join("");
+      });
+      if(!ws.assets.length) html += '<p class="ws-hint">لا ملفات بعد.</p>';
+    } else if(name === "workload"){
+      html = wsHead("خريطة عبء العمل", "توزيع المهام المفتوحة على الفريق");
+      var days = []; for(var i = 0; i < 7; i++){ var d0 = new Date(); d0.setDate(d0.getDate() + i); days.push(toISODate(d0)); }
+      var heat = function(n){ return n === 0 ? 0 : n <= 2 ? 1 : n <= 4 ? 2 : 3; };
+      html += '<div class="ws-heat-wrap"><table class="ws-heat"><thead><tr><th>الموظف</th><th>قائمة</th><th>تنفيذ</th><th>مراجعة</th><th>متأخرة</th>' + days.map(function(ds){ return '<th>' + formatDayNum(new Date(ds + "T00:00:00")) + '</th>'; }).join("") + '</tr></thead><tbody>';
+      emps.concat([{ id: null, name: "غير مُسندة" }]).forEach(function(e){
+        var mineT = ws.tasks.filter(function(t){ return (t.assigneeId || null) === e.id && t.status !== "done"; });
+        var c = function(k){ return mineT.filter(function(t){ return t.status === k; }).length; };
+        var late = mineT.filter(function(t){ return t.dueDate && wsDaysTo(t.dueDate) < 0; }).length;
+        html += '<tr><td>' + escapeHTML(e.name) + '<small>' + mineT.length + ' مفتوحة</small></td>' + [c("todo"), c("doing"), c("review")].map(function(n){ return '<td class="h' + heat(n) + '">' + (n || "") + '</td>'; }).join("") + '<td class="' + (late ? "hl" : "h0") + '">' + (late || "") + '</td>' +
+          days.map(function(ds){ var n = mineT.filter(function(t){ return t.dueDate === ds; }).length; return '<td class="h' + heat(n) + '">' + (n || "") + '</td>'; }).join("") + '</tr>';
+      });
+      html += '</tbody></table></div><p class="ws-hint">الأعمدة المرقمة: المهام المستحقة في كل يوم من الأيام السبعة القادمة. اللون الأغمق يعني عبئاً أعلى.</p>';
+    } else if(name === "logs"){
+      html = wsHead("سجل الحركات", "آخر " + ws.logs.length + " حركة");
+      html += ws.logs.slice().sort(function(a, b){ return b.at - a.at; }).map(function(l){ return '<div class="ws-logrow"><b>' + escapeHTML(l.name) + '</b> ' + escapeHTML(l.action) + (l.target ? ' — «' + escapeHTML(l.target) + '»' : '') + '<small>' + wsFmtTime(l.at) + '</small></div>'; }).join("") || '<p class="ws-hint">لا حركات مسجّلة.</p>';
+    } else if(name === "roles"){
+      html = wsHead("أدوار مساحة العمل", "تحدد ما يستطيعه كل موظف في المهام والمشاريع");
+      emps.forEach(function(e){
+        html += '<div class="ws-role"><b>' + escapeHTML(e.name) + '</b>' + (e.role === "admin" ? '<span>أدمن — صلاحية كاملة</span>' : '<select data-ws-role="' + e.id + '">' + WS_ROLES.slice(1).map(function(r){ return '<option value="' + r.k + '"' + ((ws.roles[e.id] || "member") === r.k ? " selected" : "") + '>' + r.l + '</option>'; }).join("") + '</select>') + '</div>';
+      });
+      html += '<p class="ws-hint">الأدمن يُحدَّد من لوحة إدارة الموظفين. مدير المشاريع يدير المشاريع والمهام والفعاليات. العضو يحدّث مهامه فقط. المشاهد يقرأ فقط.</p>';
+    }
+    return html;
+  }
+  function wsRenderDrawer(force){
+    var ov = document.getElementById("wsDrawerOverlay");
+    if(!wsUI.drawer){ if(ov) ov.classList.remove("open"); return; }
+    ov = wsDrawerEl();
+    var el = document.getElementById("wsDrawer");
+    var ae = document.activeElement;
+    if(!force && ae && el.contains(ae) && /^(INPUT|TEXTAREA|SELECT)$/.test(ae.tagName)) return;
+    var html = "";
+    if(wsUI.drawer === "task"){ var t = ws.tasks.find(function(x){ return x.id === wsUI.drawerId; }); if(!t){ wsCloseDrawer(); return; } html = wsTaskDrawerHTML(t); }
+    else if(wsUI.drawer === "event"){ var ev = ws.events.find(function(x){ return x.id === wsUI.drawerId; }); if(!ev){ wsCloseDrawer(); return; } html = wsEventDrawerHTML(ev); }
+    else if(wsUI.drawer === "project"){ var p = ws.projects.find(function(x){ return x.id === wsUI.drawerId; }); if(!p){ wsCloseDrawer(); return; } html = wsProjectDrawerHTML(p); }
+    else html = wsPanelHTML(wsUI.drawer);
+    var st = el.scrollTop;
+    el.className = "ws-drawer" + (wsUI.drawer === "workload" ? " ws-drawer--wide" : "") + (wsUI.drawer === "standup" && wsUI.drawerId === "auto" ? " ws-drawer--modal" : "");
+    ov.className = "ws-drawer-overlay open" + (wsUI.drawer === "standup" && wsUI.drawerId === "auto" ? " is-modal" : "");
+    el.innerHTML = html;
+    el.scrollTop = st;
+  }
+  function wsMaybeStandup(){
+    if(wsUI.standupShown || !ws.ready || !currentUser || wsRole() === "viewer" || wsUI.drawer) return;
+    if(ws.standups.some(function(s){ return s.userId === currentUser.id; })) { wsUI.standupShown = true; return; }
+    try{ if(localStorage.getItem("zaraHub.wsStandupSkip") === wsToday() + ":" + currentUser.id) return; }catch(e){}
+    var tasksView = document.getElementById("view-tasks");
+    if(!tasksView || !tasksView.classList.contains("active")) return;
+    wsUI.standupShown = true;
+    setTimeout(function(){ if(!wsUI.drawer && !ws.standups.some(function(s){ return s.userId === currentUser.id; })) wsOpenDrawer("standup", "auto"); }, 900);
+  }
+  // ---------- التفاعل ----------
+  function wsCurTask(){ return wsUI.drawer === "task" ? ws.tasks.find(function(x){ return x.id === wsUI.drawerId; }) : null; }
+  function wsCurEvent(){ return wsUI.drawer === "event" ? ws.events.find(function(x){ return x.id === wsUI.drawerId; }) : null; }
+  function wsCurProject(){ return wsUI.drawer === "project" ? ws.projects.find(function(x){ return x.id === wsUI.drawerId; }) : null; }
+  function wsNum(v){ return v === "" || v == null ? null : Number(v); }
+  function wsNewTask(opts){
+    if(!wsCanCreate()) return;
+    opts = opts || {};
+    var manage = wsCanManage();
+    var t = { id: wsId("tsk"), title: "مهمة جديدة", desc: "", assigneeId: manage ? (wsUI.fAssignee && wsUI.fAssignee !== "none" ? wsUI.fAssignee : null) : currentUser.id,
+      projectId: opts.project || wsUI.fProject || null, status: "todo", priority: "medium", startDate: wsToday(), dueDate: "", attachments: [], comments: [],
+      log: [{ by: currentUser.name, text: "أنشأ المهمة", at: Date.now() }], eventIds: opts.event ? [opts.event] : [], createdAt: Date.now(), createdBy: currentUser.id };
+    wsSet("wsTasks", t);
+    wsLog("أنشأ مهمة", t.title);
+    wsOpenDrawer("task", t.id);
+    setTimeout(function(){ var i = document.querySelector("#wsDrawer .ws-title-inp"); if(i){ i.focus(); i.select(); } }, 60);
+  }
+  function wsUploadImage(file, done){
+    if(!file) return;
+    showToast("جارٍ رفع الصورة…");
+    compressEventImageFile(file, 1500 * 1024, function(dataUrl){
+      if(!dataUrl){ showToast("تعذّرت معالجة الصورة"); return; }
+      uploadDataUrlToR2(dataUrl, "events", function(url){
+        if(!url || url.indexOf("data:") === 0){ showToast("تعذّر رفع الصورة — أضفها كرابط"); return; }
+        done(url);
+      });
+    });
+  }
+  document.addEventListener("click", function(e){
+    var b = e.target.closest && e.target.closest("[data-ws]");
+    if(!b){
+      if(wsUI.bell && !(e.target.closest && e.target.closest(".ws-bell-wrap"))){ wsUI.bell = false; wsRender(); }
+      return;
+    }
+    var act = b.dataset.ws, t = wsCurTask(), ev = wsCurEvent(), p = wsCurProject();
+    switch(act){
+      case "view": wsUI.view = b.dataset.view; wsRender(); break;
+      case "cal-mode": wsUI.calMode = b.dataset.mode; wsRender(); break;
+      case "cal-today": wsUI.calCursor = wsToday(); wsRender(); break;
+      case "cal-nav": {
+        var c = new Date(wsUI.calCursor + "T00:00:00"), dir = Number(b.dataset.dir);
+        if(wsUI.calMode === "week") c.setDate(c.getDate() + 7 * dir); else { c.setDate(1); c.setMonth(c.getMonth() + dir); }
+        wsUI.calCursor = toISODate(c); wsRender(); break;
+      }
+      case "cal-day": wsUI.calMode = "week"; wsUI.calCursor = b.dataset.date; wsRender(); break;
+      case "toggle-bell": wsUI.bell = !wsUI.bell; wsRender(); break;
+      case "read-all": {
+        ws.notifs.filter(function(n){ return !n.read; }).forEach(function(n){ wsSet("wsNotifs", Object.assign({}, n, { read: true })); });
+        var dm = {}; wsComputedNotifs().forEach(function(n){ dm[n.key] = 1; });
+        try{ var k0 = "zaraHub.wsDismissed." + wsToday(); localStorage.setItem(k0, JSON.stringify(Object.assign(JSON.parse(localStorage.getItem(k0) || "{}"), dm))); }catch(err){}
+        wsRender(); break;
+      }
+      case "open-ntf": {
+        var ref = {}; try{ ref = JSON.parse(b.dataset.ref || "{}"); }catch(err){}
+        if(b.dataset.id){ var nn = ws.notifs.find(function(x){ return x.id === b.dataset.id; }); if(nn && !nn.read) wsSet("wsNotifs", Object.assign({}, nn, { read: true })); }
+        wsUI.bell = false;
+        if(ref.task) wsOpenDrawer("task", ref.task); else if(ref.event) wsOpenDrawer("event", ref.event); else wsRender();
+        break;
+      }
+      case "panel":
+        if(b.dataset.panel === "logs" && !WS_LOCAL){
+          db.collection("wsLogs").orderBy("at", "desc").limit(80).get().then(function(s){ ws.logs = s.docs.map(function(d){ return d.data(); }); wsRenderDrawer(true); }).catch(function(err){ console.error(err); });
+        }
+        wsOpenDrawer(b.dataset.panel); break;
+      case "legacy": { var old = document.getElementById("taskBoardRoot"); if(old){ old.hidden = !old.hidden; if(!old.hidden){ renderTaskBoard(); old.scrollIntoView({ behavior: "smooth" }); } } break; }
+      case "close-drawer": wsCloseDrawer(); break;
+      case "open-task": if(e.target.closest("[data-ws='step-task']")) break; wsOpenDrawer("task", b.dataset.id); break;
+      case "open-event": wsOpenDrawer("event", b.dataset.id); break;
+      case "open-project": wsOpenDrawer("project", b.dataset.id); break;
+      case "step-task": {
+        e.stopPropagation();
+        var st = ws.tasks.find(function(x){ return x.id === b.dataset.id; });
+        if(st){ var ni = WS_STATUS.findIndex(function(s){ return s.k === st.status; }) + Number(b.dataset.dir); if(WS_STATUS[ni]) wsMoveTask(st.id, WS_STATUS[ni].k); }
+        break;
+      }
+      case "new-task": wsNewTask({ event: b.dataset.event, project: b.dataset.project }); break;
+      case "new-event": {
+        if(!wsCanManage()) break;
+        var d14 = new Date(); d14.setDate(d14.getDate() + 14);
+        var ne = { id: wsId("evt"), title: "فعالية جديدة", details: "", date: toISODate(d14), time: "", category: "فعالية", banner: "", notifyDays: [14, 7, 3, 1, 0], budget: null, vendors: [], createdAt: Date.now() };
+        wsSet("wsEvents", ne); wsLog("أنشأ فعالية", ne.title); wsOpenDrawer("event", ne.id); break;
+      }
+      case "new-project": {
+        if(!wsCanManage()) break;
+        var np = { id: wsId("prj"), name: "مشروع جديد", desc: "", team: [], startDate: wsToday(), dueDate: "", budget: null, target: null, collected: null, status: "active", createdAt: Date.now() };
+        wsSet("wsProjects", np); wsLog("أنشأ مشروعاً", np.name); wsOpenDrawer("project", np.id); break;
+      }
+      case "del-task": if(t && confirm("حذف المهمة «" + t.title + "»؟")){ wsLog("حذف مهمة", t.title); wsDel("wsTasks", t.id); wsCloseDrawer(); wsRender(); } break;
+      case "del-event": if(ev && confirm("حذف الفعالية «" + ev.title + "»؟")){ wsLog("حذف فعالية", ev.title); wsDel("wsEvents", ev.id); wsCloseDrawer(); wsRender(); } break;
+      case "del-project": if(p && confirm("حذف المشروع «" + p.name + "»؟ مهامه تبقى بلا مشروع.")){ wsLog("حذف مشروعاً", p.name); wsDel("wsProjects", p.id); wsCloseDrawer(); wsRender(); } break;
+      case "add-point": {
+        if(!t) break;
+        var lbl = document.getElementById("wsNewPointLabel").value.trim(), hrs = Number(document.getElementById("wsNewPointHours").value);
+        if(!hrs || hrs <= 0){ showToast("اكتب عدد الساعات بعد النشر"); break; }
+        var cA = Object.assign({}, t.campaign); cA.points = (cA.points || []).concat([{ id: wsId("pt"), label: lbl || "بعد " + hrs + " ساعة", hours: hrs, amount: null, note: "", at: null }]);
+        wsPatchTask(t, { campaign: cA }, "أضاف نقطة متابعة للحملة"); wsRenderDrawer(true); break;
+      }
+      case "del-point": case "clear-point": case "rec-point": {
+        if(!t) break;
+        var cB = Object.assign({}, t.campaign), pid = b.dataset.pid, logT = "";
+        if(act === "del-point"){ cB.points = cB.points.filter(function(x){ return x.id !== pid; }); logT = "حذف نقطة متابعة"; }
+        else cB.points = cB.points.map(function(x){
+          if(x.id !== pid) return x;
+          if(act === "clear-point") return Object.assign({}, x, { amount: null, at: null });
+          var av = document.querySelector('[data-point-amount="' + pid + '"]').value, nv = document.querySelector('[data-point-note="' + pid + '"]').value.trim();
+          if(av === ""){ logT = null; return x; }
+          logT = "رصد " + wsMoney(Number(av)) + " عند «" + x.label + "»";
+          return Object.assign({}, x, { amount: Number(av), note: nv, at: Date.now() });
+        });
+        if(logT === null){ showToast("اكتب المبلغ المحصّل"); break; }
+        wsPatchTask(t, { campaign: cB }, logT || ""); wsRenderDrawer(true); break;
+      }
+      case "add-att": {
+        if(!t) break;
+        var un = document.getElementById("wsAttName").value.trim(), uu = document.getElementById("wsAttUrl").value.trim();
+        if(!/^https?:\/\//i.test(uu)){ showToast("اكتب رابطاً يبدأ بـ https://"); break; }
+        wsPatchTask(t, { attachments: (t.attachments || []).concat([{ name: un || uu, url: uu }]) }, "أضاف مرفقاً"); wsRenderDrawer(true); break;
+      }
+      case "del-att": if(t){ var at = (t.attachments || []).slice(); at.splice(Number(b.dataset.i), 1); wsPatchTask(t, { attachments: at }, "حذف مرفقاً"); wsRenderDrawer(true); } break;
+      case "add-comment": {
+        if(!t) break;
+        var ta = document.getElementById("wsCmText"), txt = ta.value.trim();
+        if(!txt) break;
+        var emps = loadEmployees(), mentions = emps.filter(function(x){ return txt.indexOf("@" + x.name) > -1; }).map(function(x){ return x.id; });
+        var cm = { id: wsId("cm"), by: currentUser.id, name: currentUser.name, text: txt, at: Date.now(), mentions: mentions };
+        wsPatchTask(t, { comments: (t.comments || []).concat([cm]).slice(-100) }, "");
+        mentions.forEach(function(mid){ wsNotify(mid, "mention", "أشار إليك في «" + t.title + "»", { task: t.id }); });
+        [t.assigneeId, t.createdBy].filter(function(x, i, a){ return x && a.indexOf(x) === i && mentions.indexOf(x) === -1; }).forEach(function(uid){ wsNotify(uid, "comment", "تعليق جديد على «" + t.title + "»", { task: t.id }); });
+        wsRenderDrawer(true); break;
+      }
+      case "add-vendor": {
+        if(!ev) break;
+        var vn = document.getElementById("wsVName").value.trim();
+        if(!vn){ showToast("اكتب اسم المورد"); break; }
+        wsSet("wsEvents", Object.assign({}, ev, { vendors: (ev.vendors || []).concat([{ name: vn, service: document.getElementById("wsVService").value.trim(), contact: document.getElementById("wsVContact").value.trim(), cost: wsNum(document.getElementById("wsVCost").value) }]) }));
+        wsRenderDrawer(true); break;
+      }
+      case "del-vendor": if(ev){ var vs = (ev.vendors || []).slice(); vs.splice(Number(b.dataset.i), 1); wsSet("wsEvents", Object.assign({}, ev, { vendors: vs })); wsRenderDrawer(true); } break;
+      case "save-standup": {
+        var goals = [0, 1, 2].map(function(i){ return document.getElementById("wsGoal" + i).value.trim(); });
+        if(!goals.some(Boolean)){ showToast("اكتب هدفاً واحداً على الأقل"); break; }
+        var blk = document.getElementById("wsBlockers").value.trim();
+        wsSet("wsStandups", { id: currentUser.id + "_" + wsToday(), userId: currentUser.id, name: currentUser.name, date: wsToday(), goals: goals, blockers: blk, at: Date.now() });
+        if(blk) loadEmployees().filter(function(x){ return x.role === "admin" || ws.roles[x.id] === "pm"; }).forEach(function(x){ wsNotify(x.id, "blocker", "عائق من " + currentUser.name + ": " + blk.slice(0, 80), null); });
+        showToast("تم حفظ أهداف اليوم"); wsCloseDrawer(); wsRender(); break;
+      }
+      case "skip-standup": try{ localStorage.setItem("zaraHub.wsStandupSkip", wsToday() + ":" + currentUser.id); }catch(err){} wsCloseDrawer(); break;
+      case "add-asset": {
+        var an = document.getElementById("wsAsName").value.trim(), au = document.getElementById("wsAsUrl").value.trim();
+        if(!an || !/^https?:\/\//i.test(au)){ showToast("اكتب الاسم ورابطاً يبدأ بـ https://"); break; }
+        wsSet("wsAssets", { id: wsId("ast"), name: an, category: document.getElementById("wsAsCat").value.trim() || "عام", url: au, by: currentUser.name, at: Date.now() });
+        wsLog("أضاف ملفاً للأرشيف", an); wsRenderDrawer(true); break;
+      }
+      case "del-asset": if(confirm("حذف هذا الملف من الأرشيف؟")){ wsDel("wsAssets", b.dataset.id); wsRenderDrawer(true); } break;
+    }
+  });
+  document.addEventListener("change", function(e){
+    var el = e.target;
+    if(!el || !el.dataset) return;
+    if(el.id === "wsFProject"){ wsUI.fProject = el.value; wsRender(); return; }
+    if(el.id === "wsFAssignee"){ wsUI.fAssignee = el.value; wsRender(); return; }
+    if(el.id === "wsCmMention"){ var ta = document.getElementById("wsCmText"), em = loadEmployees().find(function(x){ return x.id === el.value; }); if(ta && em){ ta.value += (ta.value && !/\s$/.test(ta.value) ? " " : "") + "@" + em.name + " "; ta.focus(); } el.value = ""; return; }
+    if(el.dataset.wsRole){
+      if(wsRole() !== "admin") return;
+      var map = Object.assign({}, ws.roles); map[el.dataset.wsRole] = el.value; ws.roles = map;
+      if(!WS_LOCAL) db.collection("wsMeta").doc("roles").set({ map: map }).catch(function(){ showToast("تعذّر حفظ الدور"); });
+      wsLog("غيّر دور " + wsEmpName(el.dataset.wsRole) + " إلى " + (WS_ROLES.find(function(r){ return r.k === el.value; }) || {}).l, ""); return;
+    }
+    var t = wsCurTask(), ev = wsCurEvent(), p = wsCurProject();
+    if(el.id === "wsAttFile" && t){ wsUploadImage(el.files[0], function(url){ var cur = wsCurTask(); if(cur){ wsPatchTask(cur, { attachments: (cur.attachments || []).concat([{ name: el.files[0].name, url: url }]) }, "رفع صورة مرفقة"); wsRenderDrawer(true); } }); return; }
+    if(el.id === "wsAsFile"){ var f = el.files[0]; wsUploadImage(f, function(url){ wsSet("wsAssets", { id: wsId("ast"), name: (document.getElementById("wsAsName").value.trim() || f.name), category: document.getElementById("wsAsCat").value.trim() || "عام", url: url, by: currentUser.name, at: Date.now() }); wsRenderDrawer(true); }); return; }
+    if(t && el.dataset.wsf){
+      var f1 = el.dataset.wsf, v = el.value, patch = {}, logText = "";
+      if(f1 === "status"){ el.blur(); wsMoveTask(t.id, v); wsRenderDrawer(true); return; }
+      if(f1 === "title"){ v = v.trim() || t.title; logText = "عدّل العنوان"; }
+      if(f1 === "assigneeId"){
+        v = v || null;
+        if(v && t.status === "doing" && ws.tasks.filter(function(x){ return x.id !== t.id && x.assigneeId === v && x.status === "doing"; }).length >= WS_WIP_LIMIT){ showToast("لدى " + wsEmpName(v) + " " + WS_WIP_LIMIT + " مهام قيد التنفيذ"); wsRenderDrawer(true); return; }
+        logText = v ? "أسند المهمة إلى " + wsEmpName(v) : "ألغى الإسناد";
+        if(v) wsNotify(v, "assign", "أُسندت إليك مهمة «" + t.title + "»", { task: t.id });
+      }
+      if(f1 === "projectId") v = v || null;
+      if(f1 === "priority") logText = "غيّر الأولوية إلى " + (WS_PRIORITY.find(function(x){ return x.k === v; }) || {}).l;
+      if(f1 === "dueDate") logText = "غيّر تاريخ الانتهاء";
+      patch[f1] = v;
+      wsPatchTask(t, patch, logText); return;
+    }
+    if(t && el.dataset.wsc){
+      var c = Object.assign({}, t.campaign), k = el.dataset.wsc;
+      c[k] = (k === "initial" || k === "target") ? wsNum(el.value) : el.value;
+      wsPatchTask(t, { campaign: c }, k === "notes" ? "" : "حدّث بيانات الحملة"); return;
+    }
+    if(t && el.dataset.wsToggle === "campaign"){
+      var c2 = Object.assign({ publishedAt: "", initial: null, target: null, notes: "", points: [
+        { id: "p24", label: "بعد 24 ساعة", hours: 24, amount: null, note: "", at: null }, { id: "p48", label: "بعد 48 ساعة", hours: 48, amount: null, note: "", at: null }, { id: "pend", label: "نهاية الحملة", hours: 168, amount: null, note: "", at: null }] }, t.campaign || {});
+      c2.on = el.checked;
+      if(el.checked && !c2.publishedAt){ var nw = new Date(); c2.publishedAt = toISODate(nw) + "T" + pad2(nw.getHours()) + ":" + pad2(nw.getMinutes()); }
+      wsPatchTask(t, { campaign: c2 }, el.checked ? "فعّل تتبّع الحملة" : "أوقف تتبّع الحملة"); wsRenderDrawer(true); return;
+    }
+    if(t && el.dataset.wsToggle === "event"){
+      var ids = (t.eventIds || []).filter(function(x){ return x !== el.value; }); if(el.checked) ids.push(el.value);
+      wsPatchTask(t, { eventIds: ids }, ""); return;
+    }
+    if(ev && el.dataset.wse){
+      var k2 = el.dataset.wse, v2 = el.value;
+      if(k2 === "notifyDays") v2 = v2.split(/[,،\s]+/).map(Number).filter(function(n){ return !isNaN(n) && n >= 0; });
+      if(k2 === "budget") v2 = wsNum(v2);
+      if(k2 === "title") v2 = v2.trim() || ev.title;
+      var pe = {}; pe[k2] = v2; wsSet("wsEvents", Object.assign({}, ev, pe)); wsRefresh(); return;
+    }
+    if(p && el.dataset.wsp){
+      var k3 = el.dataset.wsp, v3 = el.value;
+      if(k3 === "budget" || k3 === "target" || k3 === "collected") v3 = wsNum(v3);
+      if(k3 === "name") v3 = v3.trim() || p.name;
+      var pp = {}; pp[k3] = v3; wsSet("wsProjects", Object.assign({}, p, pp)); wsRefresh(); return;
+    }
+    if(p && el.dataset.wsToggle === "team"){
+      var tm = (p.team || []).filter(function(x){ return x !== el.value; }); if(el.checked) tm.push(el.value);
+      wsSet("wsProjects", Object.assign({}, p, { team: tm })); return;
+    }
+  });
+  // السحب والإسقاط بين أعمدة الكانبان
+  document.addEventListener("dragstart", function(e){
+    var card = e.target.closest && e.target.closest(".ws-card");
+    if(!card) return;
+    wsUI.dragId = card.dataset.id;
+    e.dataTransfer.effectAllowed = "move";
+    try{ e.dataTransfer.setData("text/plain", wsUI.dragId); }catch(err){}
+    card.classList.add("is-dragging");
+  });
+  document.addEventListener("dragend", function(){
+    wsUI.dragId = null;
+    var els = document.querySelectorAll(".ws-card.is-dragging, .ws-col.is-over");
+    for(var i = 0; i < els.length; i++) els[i].classList.remove("is-dragging", "is-over");
+  });
+  document.addEventListener("dragover", function(e){
+    if(!wsUI.dragId) return;
+    var col = e.target.closest && e.target.closest("[data-ws-col]");
+    if(!col) return;
+    e.preventDefault();
+    var over = document.querySelectorAll(".ws-col.is-over");
+    for(var i = 0; i < over.length; i++) if(over[i] !== col) over[i].classList.remove("is-over");
+    col.classList.add("is-over");
+  });
+  document.addEventListener("drop", function(e){
+    if(!wsUI.dragId) return;
+    var col = e.target.closest && e.target.closest("[data-ws-col]");
+    if(!col) return;
+    e.preventDefault();
+    var id = wsUI.dragId; wsUI.dragId = null;
+    wsMoveTask(id, col.dataset.wsCol);
+  });
+  document.addEventListener("keydown", function(e){ if(e.key === "Escape" && wsUI.drawer && !(wsUI.drawer === "standup" && wsUI.drawerId === "auto")) wsCloseDrawer(); });
+  // تذكيرات الحملات والفعاليات تُحسب من الوقت الحالي — نعيد الرسم كل 5 دقائق ليظهر ما حان موعده
+  setInterval(function(){ if(ws.ready && currentUser && !wsUI.drawer) wsRender(); }, 300000);
+
   var CHAT_DEMO_KEY = "zaraHub.chatDemoMessages";
   var chatUI = { activeEmpId: null };
 
