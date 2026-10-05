@@ -171,7 +171,9 @@ def fetch_listing():
         raise RuntimeError("تعذّر فتح قائمة أخبار الوفيات (%s)" % st)
     html = body.decode("utf8", "ignore")
     items = []
-    for m in re.finditer(r'<a class=generic1_block href="(pages/[^"]+)">(.*?)</a>', html, re.S):
+    # الموقع صار يكتب الروابط بشرطة مائلة في أولها ("/pages/…") بعد أن كانت بدونها، وقد يكتبها كاملة بالنطاق — نقبل الصيغ
+    # الثلاث ونوحّدها على "pages/…" حتى يبقى رابط كل خبر (ومفتاح مطابقته بالسجلات السابقة) كما كان فلا تتكرر السجلات
+    for m in re.finditer(r'<a\s+class="?generic1_block"?\s+href="(?:https?://(?:www\.)?awamiach\.sa)?/?(pages/[^"]+)"[^>]*>(.*?)</a>', html, re.S):
         title = re.search(r"<h2[^>]*>(.*?)</h2>", m.group(2), re.S)
         t = P.htmllib.unescape(re.sub(r"<[^>]+>", "", title.group(1))).strip() if title else ""
         items.append({"path": m.group(1), "url": P.BASE + m.group(1), "title": t})
