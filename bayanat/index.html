@@ -3081,9 +3081,13 @@
     card.innerHTML = '<div class="zx-track"><h2>متابعة الطلب</h2><p class="zx-sub">جاري جلب حالة الطلب…</p></div>';
     hit("track.view", true);
     if(!/^[A-Za-z0-9_-]{6,80}$/.test(id)){ card.innerHTML = '<div class="zx-track"><h2>رابط غير صحيح</h2><p class="zx-sub">تأكد من نسخ رابط المتابعة كاملاً.</p>' + back + '</div>'; return; }
-    var fields = ["category", "status", "createdAt", "fullName", "fatherName", "husbandName", "deceasedName"].map(function(f){ return "&mask.fieldPaths=" + f; }).join("");
-    Promise.all([getDoc("events/" + id, fields), getDoc("eventsMeta/publish", "&mask.fieldPaths=" + encodeURIComponent("`" + id + "`")).catch(function(){ return null; })]).then(function(res){
+    var fields = ["category", "status", "createdAt", "_m", "fullName", "fatherName", "husbandName", "deceasedName"].map(function(f){ return "&mask.fieldPaths=" + f; }).join("");
+    Promise.all([getDoc("events/" + id, fields), getDoc("eventsMeta/publish", "&mask.fieldPaths=" + encodeURIComponent("`" + id + "`")).catch(function(){ return null; }),
+      getDoc("eventsTrash/" + id, "&mask.fieldPaths=deletedAt").catch(function(){ return null; })]).then(function(res){
       var doc = res[0];
+      // المرفوض يُنقل لسلة المهملات؛ لو بقيت نسخته في السجلات فالعبرة بالسلة ما لم يُسترجع بعدها
+      var tr = res[2] && res[2].fields, live = doc && doc.fields;
+      if(tr && live && Number(fsVal(tr.deletedAt) || 0) >= Number(fsVal(live._m) || 0)) doc = null;
       if(!doc || !doc.fields){
         card.innerHTML = '<div class="zx-track"><h2>الطلب غير موجود في السجلات</h2><p class="zx-sub">قد يكون الرابط غير مكتمل، أو أن الطلب لم يُعتمد. للاستفسار تواصلوا مع الجمعية.</p>' + back + '</div>';
         return;
