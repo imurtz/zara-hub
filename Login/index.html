@@ -2756,7 +2756,11 @@
   }
   // بنود التقريرين: تُفتح وتُقفل لكل موظف حسب اختصاصه. وجود العلامة "<القسم>.scoped" يعني أن البنود محددة صراحةً؛
   // غيابها (الحسابات السابقة) يعني أن كل البنود مفتوحة كما كانت
-  function permItems(gkey){ return gkey === "annual" ? REPORT_CATEGORIES : gkey === "executive" ? EXEC_CATEGORIES : gkey === "docs" ? DOC_SECTIONS : null; }
+  function permItems(gkey){ return gkey === "annual" ? REPORT_CATEGORIES : gkey === "executive" ? EXEC_CATEGORIES : gkey === "docs" ? DOC_SECTIONS : gkey === "events" ? EVENTS_CATEGORIES : null; }
+  // تصنيفات المناسبات المفتوحة للموظف (خريجون، مواليد…): المقفل منها يختفي بسجلاته من كل تبويبات القسم
+  function evCatOpen(key){ return empSecOpen(currentUser, "events", key); }
+  function evOpenCats(){ return EVENTS_CATEGORIES.filter(function(c){ return evCatOpen(c.key); }); }
+  function evScoped(){ return !!currentUser && currentUser.role !== "admin" && empPerms(currentUser).indexOf("events.scoped") > -1 && evOpenCats().length < EVENTS_CATEGORIES.length; }
   function empSecOpen(emp, gkey, key){
     if(!emp) return false;
     if(emp.role === "admin") return true;
@@ -2814,7 +2818,7 @@
           (permItems(g.key) ? (function(){
             var scoped = perms.indexOf(g.key + ".scoped") > -1, items = permItems(g.key);
             var openN = items.filter(function(c){ return !scoped || perms.indexOf(g.key + ".s." + c.key) > -1; }).length;
-            return '<div class="perm-items"><div class="perm-items-head"><span>البنود المفتوحة له <i>' + (on ? openN + " من " + items.length : "—") + '</i></span><button type="button" class="link-btn" data-perm-act="items-all" data-g="' + g.key + '">فتح الكل</button><button type="button" class="link-btn" data-perm-act="items-none" data-g="' + g.key + '">قفل الكل</button></div>' +
+            return '<div class="perm-items"><div class="perm-items-head"><span>' + (g.key === "events" ? "التصنيفات المفتوحة له" : "البنود المفتوحة له") + ' <i>' + (on ? openN + " من " + items.length : "—") + '</i></span><button type="button" class="link-btn" data-perm-act="items-all" data-g="' + g.key + '">فتح الكل</button><button type="button" class="link-btn" data-perm-act="items-none" data-g="' + g.key + '">قفل الكل</button></div>' +
               '<div class="tf-chips">' + items.map(function(c){ return '<label class="tf-chip tf-chip--item"><input type="checkbox" class="emp-perm-cb perm-item" value="' + g.key + '.s.' + c.key + '"' + ((!scoped || perms.indexOf(g.key + ".s." + c.key) > -1) ? " checked" : "") + (on ? "" : " disabled") + '/><span>' + c.label + '</span></label>'; }).join("") + '</div></div>';
           })() : '') + '</div>';
       }).join("");
@@ -7509,10 +7513,18 @@
   });
   evBoot();
 
-  function loadEventsData(){ return _eventsRecordsCache.slice(); }
+  function loadEventsData(){
+    var l = _eventsRecordsCache.slice();
+    return evScoped() ? l.filter(function(r){ return evCatOpen(r.category); }) : l;
+  }
   // يرجع Promise دائماً — الكاش المحلي (وبالتالي الواجهة) لا يتحدث إلا بعد تأكد نجاح الكتابة الفعلية في Firestore،
   // حتى لا تظهر بيانات "محفوظة" وهمياً بينما فشلت الكتابة فعلياً في الخلفية دون أي تنبيه (كان هذا يحدث بصمت قبل هذا التعديل)
   function saveEventsData(list){
+    // موظف مقيَّد بتصنيفات: قائمته لا تحوي سجلات التصنيفات المقفلة — تُعاد إليها حتى لا تُحسب محذوفة
+    if(evScoped()){
+      var have = {}; list.forEach(function(r){ have[r.id] = 1; });
+      list = list.concat(_eventsRecordsCache.filter(function(r){ return !evCatOpen(r.category) && !have[r.id]; }));
+    }
     var oldIds = _eventsRecordsCache.map(function(r){ return r.id; });
     var newIds = list.map(function(r){ return r.id; });
     var ops = [];
@@ -7544,7 +7556,7 @@
     if(evPruneTrashed()) evPersistSoon();
     eventsFirestoreRefresh();
   }, function(err){ console.error("eventsTrash snapshot error", err); });
-  function loadEventsTrash(){ return _eventsTrashCache; }
+  function loadEventsTrash(){ return evScoped() ? _eventsTrashCache.filter(function(r){ return evCatOpen(r.category); }) : _eventsTrashCache; }
   // يرجع Promise يكتمل فقط بعد تأكد وصول كل السجلات لسلة المهملات فعلياً — أي كود يحذف من events بعدها
   // يجب أن ينتظر هذا الـ Promise أولاً، حتى لا يُحذف سجل من events قبل التأكد من وجود نسخة آمنة منه بالسلة
   function trashEventRecords(records){
@@ -8212,7 +8224,7 @@
   function eventsDashboardHTML(){
     var all = loadEventsData();
     var html = '<div class="stat-card-grid">';
-    EVENTS_CATEGORIES.forEach(function(cat){
+    evOpenCats().forEach(function(cat){
       var count = all.filter(function(r){ return r.category === cat.key; }).length;
       html += '<div class="stat-card" data-action="events-goto-category" data-cat="' + cat.key + '">' +
         '<span class="icon-lg" style="color:' + eventCategoryColor(cat.key) + ';">' + cat.icon + '</span>' +
@@ -8675,13 +8687,13 @@
   }
 
   function eventsDataEntryHTML(){
-    var cat = EVENTS_CATEGORIES.find(function(c){ return c.key === eventsUI.activeCategory; }) || EVENTS_CATEGORIES[0];
+    var cat = evOpenCats().find(function(c){ return c.key === eventsUI.activeCategory; }) || evOpenCats()[0] || EVENTS_CATEGORIES[0];
     if(!eventsUI.visibleCols[cat.key]) eventsUI.visibleCols[cat.key] = {};
     var settings = loadEventsSettings();
 
     var allRecs = loadEventsData();
     var html = '<div class="cat-tabs">';
-    EVENTS_CATEGORIES.forEach(function(c){
+    evOpenCats().forEach(function(c){
       if(settings[c.key + "Enabled"] === false) return;
       var pendingCount = allRecs.filter(function(r){ return r.category === c.key && r.status === "pending"; }).length;
       html += '<button type="button" class="cat-tab' + (c.key === cat.key ? " active" : "") + '" data-action="events-set-category" data-cat="' + c.key + '"><span class="icon" style="color:' + eventCategoryColor(c.key) + ';">' + c.icon + '</span>' + c.label +
@@ -9179,7 +9191,7 @@
     '</div>';
     html += '<div class="cat-tabs">' +
       '<button type="button" class="publish-type-chip' + (eventsUI.publishTypeFilter === "all" ? " active" : "") + '" data-action="publish-type-filter" data-type="all">الكل</button>' +
-      EVENTS_CATEGORIES.map(function(c){ return '<button type="button" class="publish-type-chip' + (eventsUI.publishTypeFilter === c.key ? " active" : "") + '" data-action="publish-type-filter" data-type="' + c.key + '">' + c.label + '</button>'; }).join("") +
+      evOpenCats().map(function(c){ return '<button type="button" class="publish-type-chip' + (eventsUI.publishTypeFilter === c.key ? " active" : "") + '" data-action="publish-type-filter" data-type="' + c.key + '">' + c.label + '</button>'; }).join("") +
     '</div>';
     html += '<div id="eventsPublishListContainer">' + eventsPublishBulkBarHTML() + eventsPublishListHTML() + '</div>';
     return html;
@@ -9208,7 +9220,7 @@
     var cat = EVENTS_CATEGORIES.find(function(c){ return c.key === catKey; });
     var list = templates[catKey] || [];
     var html = '<div class="panel-head"><h3>قوالب النشر</h3><button type="button" class="panel-close" data-action="close-event-templates">✕</button></div>';
-    html += '<div class="cat-tabs">' + EVENTS_CATEGORIES.map(function(c){
+    html += '<div class="cat-tabs">' + evOpenCats().map(function(c){
       return '<button type="button" class="cat-tab' + (c.key === catKey ? " active" : "") + '" data-action="set-templates-category" data-cat="' + c.key + '"><span class="icon">' + c.icon + '</span>' + c.label + '</button>';
     }).join("") + '</div>';
     var vars = cat.fields.filter(function(f){ return f.type !== "image"; }).concat(cat.templateExtraVars || []);
@@ -9512,7 +9524,7 @@
     var cat = eventsUI.designTmplCategory;
     var templates = loadDesignTemplates(cat);
     var html = '<div class="cat-tabs" style="margin-bottom:16px;">' +
-      EVENTS_CATEGORIES.map(function(c){
+      evOpenCats().map(function(c){
         return '<button type="button" class="cat-tab' + (c.key === cat ? " active" : "") + '" data-action="set-design-tmpl-cat" data-cat="' + c.key + '"><span class="icon" style="color:' + eventCategoryColor(c.key) + ';">' + c.icon + '</span>' + c.label + '</button>';
       }).join("") + '</div>';
     html += '<p class="hint" style="margin-bottom:14px;">ارفع قالب التصميم هنا فقط. بعدها كل شي — إضافة المتغيرات وضبط مواضعها وتوليد الصورة — يصير من زر داخل جدول البيانات، وأنت شايف بيانات السجل الحقيقية أثناء الضبط. "تعديل" هنا يفتح نفس الأدوات بس على القالب الفارغ بدون بيانات سجل، لو حبيت تجهّزه قبل أي تسجيل.</p>';
@@ -10811,7 +10823,7 @@
   }
   function rpTop(items){ return items[0] || null; }
   function eventsReportsHTML(){
-    var cat = EVENTS_CATEGORIES.find(function(c){ return c.key === eventsUI.reportsCategory; }) || EVENTS_CATEGORIES[0];
+    var cat = evOpenCats().find(function(c){ return c.key === eventsUI.reportsCategory; }) || evOpenCats()[0] || EVENTS_CATEGORIES[0];
     var all = loadEventsData().filter(function(r){ return r.category === cat.key; });
     var years = uniqueSorted(all.map(function(r){ return r.gregorianYear; }).filter(Boolean));
     var monthField = EVENTS_MONTH_FIELD_BY_CATEGORY[cat.key];
@@ -10826,7 +10838,7 @@
     }
 
     var html = '<div class="dept-selector rp-filters">' +
-      '<label>التصنيف</label><select id="reportsCategorySelect">' + EVENTS_CATEGORIES.map(function(c){ return '<option value="' + c.key + '"' + (c.key === cat.key ? " selected" : "") + '>' + c.label + '</option>'; }).join("") + '</select>' +
+      '<label>التصنيف</label><select id="reportsCategorySelect">' + evOpenCats().map(function(c){ return '<option value="' + c.key + '"' + (c.key === cat.key ? " selected" : "") + '>' + c.label + '</option>'; }).join("") + '</select>' +
       '<label>السنة</label><select id="reportsYearSelect"><option value="">كل السنوات</option>' + years.map(function(y){ return '<option value="' + escapeHTML(y) + '"' + (eventsUI.reportsYear === y ? " selected" : "") + '>' + escapeHTML(y) + '</option>'; }).join("") + '</select>' +
       reportsPeriodSelectorHTML() +
       '<button type="button" class="btn-secondary rp-print" data-action="print-events-report"><span class="icon">' + TICON.download + '</span> طباعة / حفظ PDF</button>' +
@@ -11026,7 +11038,7 @@
       '<select id="galYear" class="ws-sel"><option value="">كل السنوات</option>' + years.map(function(y){ return '<option value="' + escapeHTML(String(y)) + '"' + (galUI.year === String(y) ? " selected" : "") + '>' + escapeHTML(String(y)) + '</option>'; }).join("") + '</select>' +
       (galUI.missing ? '' : '<button type="button" class="btn-secondary gal-zip" data-gal="zip"' + (shown ? "" : " disabled") + '><span class="icon">' + TICON.download + '</span> تنزيل الظاهر ZIP</button>') + '</div></div>';
     html += '<div class="gal-cats"><button type="button" data-gal="cat" data-cat="" class="' + (!galUI.cat ? "on" : "") + '">الكل</button>' +
-      EVENTS_CATEGORIES.map(function(c){ return '<button type="button" data-gal="cat" data-cat="' + c.key + '" class="' + (galUI.cat === c.key ? "on" : "") + '">' + c.label + '</button>'; }).join("") +
+      evOpenCats().map(function(c){ return '<button type="button" data-gal="cat" data-cat="' + c.key + '" class="' + (galUI.cat === c.key ? "on" : "") + '">' + c.label + '</button>'; }).join("") +
       '<span class="ws-grow"></span><button type="button" data-gal="missing" class="gal-missing' + (galUI.missing ? " on" : "") + '">بلا صورة <i>' + (scope.length - withPhoto) + '</i></button></div>';
     html += '<p class="gal-count" id="galCount">' + (galUI.missing ? shown + " سجلاً بلا صورة — اضغط أي بطاقة لإضافة صورتها" : shown + " صورة") + '</p><div id="galBody">' + galGridHTML() + '</div>';
     return html;
@@ -11300,7 +11312,7 @@
       '<button type="button" class="btn-secondary" data-fs="reload">تحديث</button></div>';
     if(!fsUI.data){ if(!fsUI.error) fsLoad(); return html + '<p class="report-empty">' + (fsUI.error || "جاري جلب القياس…") + '</p>'; }
     var data = fsUI.data, days = Object.keys(data).sort();
-    var cats = EVENTS_CATEGORIES.filter(function(c){ return c.key !== "deaths"; });
+    var cats = evOpenCats().filter(function(c){ return c.key !== "deaths"; });
     var sums = {}, tot = { view: 0, start: 0, ok: 0 };
     cats.forEach(function(c){ sums[c.key] = fsSum(data, c.key); tot.view += sums[c.key].view; tot.start += sums[c.key].start; tot.ok += sums[c.key].ok; });
     var misc = function(group, key){ return days.reduce(function(s, d){ var g = data[d][group]; return s + (g && key ? Number(g[key]) || 0 : (g && !key ? Object.keys(g).reduce(function(a, k){ return a + (Number(g[k]) || 0); }, 0) : 0)); }, 0); };
@@ -11334,6 +11346,12 @@
     var root = document.getElementById("eventsRoot");
     if(!root || !currentUser) return;
     if(!permAllows(EVENT_TAB_PERMS[eventsUI.tab])) eventsUI.tab = "dashboard";
+    if(evScoped()){
+      var oc = evOpenCats(), first = oc[0] ? oc[0].key : "", isOpen = function(k){ return oc.some(function(c){ return c.key === k; }); };
+      ["activeCategory", "reportsCategory", "templatesCategory", "designTmplCategory"].forEach(function(k){ if(eventsUI[k] && !isOpen(eventsUI[k])) eventsUI[k] = first; });
+      if(eventsUI.publishTypeFilter && eventsUI.publishTypeFilter !== "all" && !isOpen(eventsUI.publishTypeFilter)) eventsUI.publishTypeFilter = "all";
+      if(galUI.cat && !isOpen(galUI.cat)) galUI.cat = "";
+    }
     var html = '<div class="events-subnav">' +
       eventsSubnavBtnHTML("dashboard", "لوحة القيادة", EVICON.grid) +
       eventsSubnavBtnHTML("data-entry", "إدخال البيانات", EVICON.doc) +
