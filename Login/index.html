@@ -2140,6 +2140,31 @@
   .dc-uploading{font-size:13px; font-weight:500; color:var(--teal-dark); background:var(--teal-tint); border-radius:12px; padding:9px 13px; margin:0;}
   .ev-fresh{display:flex; align-items:center; gap:10px; flex-wrap:wrap; font-size:12px; color:var(--ink-soft); margin-top:8px;}
 
+  /* الأسر والأشخاص + قياس النموذج */
+  .fam-list{display:flex; flex-direction:column; gap:6px; max-height:560px; overflow:auto;}
+  .fam-item{display:flex; align-items:center; justify-content:space-between; gap:10px; width:100%; text-align:right; padding:10px 14px; border-radius:16px; border:1px solid var(--line, #E3E8E6); background:#fff; cursor:pointer; font-family:inherit; color:var(--ink);}
+  .fam-item:hover{border-color:var(--teal);}
+  .fam-item b{font-size:13.5px; font-weight:600; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+  .fam-chips{display:flex; gap:5px; flex-wrap:wrap; justify-content:flex-end;}
+  .rp-card > .fam-chips{justify-content:flex-start; margin-bottom:14px;}
+  .fam-chip{font-size:11.5px; font-weight:600; padding:3px 10px; border-radius:999px; background:#EEF2F1; color:#324C4B; white-space:nowrap;}
+  .fam-chip--births{background:#F6EEE5; color:#8F6A45;}
+  .fam-chip--marriages{background:#E6EEED; color:#324C4B;}
+  .fam-chip--deaths{background:#ECECEC; color:#4A5351;}
+  .fam-chip--congrats{background:#F3EFE6; color:#7A6A45;}
+  .fam-tl{display:flex; flex-direction:column; gap:6px;}
+  .fam-row{display:flex; align-items:center; gap:10px; width:100%; text-align:right; padding:10px 14px; border-radius:16px; border:1px solid var(--line, #E3E8E6); background:#fff; cursor:pointer; font-family:inherit; color:var(--ink);}
+  .fam-row:hover{border-color:var(--teal);}
+  .fam-row em{font-style:normal; font-size:12px; color:var(--ink-soft, #6B7674); min-width:84px; direction:ltr; text-align:right;}
+  .fam-row b{font-size:13.5px; font-weight:600; flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+  .fam-pend{font-style:normal; font-size:11.5px; color:#8F6A45;}
+  .fs-steps{display:flex; flex-direction:column; gap:8px; margin-bottom:10px;}
+  .fs-step{display:grid; grid-template-columns:110px 1fr 44px; align-items:center; gap:10px; font-size:13px;}
+  .fs-bar{height:10px; border-radius:999px; background:#EEF2F1; overflow:hidden; display:block;}
+  .fs-bar i{display:block; height:100%; border-radius:999px; background:var(--teal);}
+  .fs-step b{text-align:left; font-weight:600;}
+  .fs-h4{font-size:12.5px; font-weight:600; color:var(--ink-soft, #6B7674); margin:14px 0 8px;}
+
 </style>
 </head>
 <body>
@@ -2754,7 +2779,7 @@
     "set-publish-status": "events.publish", "bulk-set-publish-status": "events.publish", "share-publish-whatsapp": "events.publish",
     "restore-event-trash": "events.trash", "permanent-delete-event-trash": "events.trash", "empty-events-trash": "events.trash"
   };
-  var EVENT_TAB_PERMS = { publish: "events.publish", templates: "events.templates", reports: "events.reports", gallery: "events.gallery", trash: "events.trash" };
+  var EVENT_TAB_PERMS = { publish: "events.publish", templates: "events.templates", reports: "events.reports", families: "events.reports", funnel: "events.reports", gallery: "events.gallery", trash: "events.trash" };
   function permAllows(need){ return !need || (need === "admin" ? (currentUser && currentUser.role === "admin") : can(need)); }
   function applyEventPermsToDOM(root){
     if(!root || !currentUser || currentUser.role === "admin") return;
@@ -11105,6 +11130,189 @@
   document.addEventListener("change", function(e){ if(e.target.id === "galYear"){ galUI.year = e.target.value; galUI.limit = 120; galRefresh(); } });
   document.addEventListener("keydown", function(e){ if(e.key === "Escape" && galUI.openId) galLightbox(null); });
 
+  // ================= الأسر والأشخاص: ربط سجلات المناسبات ببعضها =================
+  // يُحسب في المتصفح من السجلات المحمّلة أصلاً (بلا قراءات إضافية ولا حقول جديدة). الربط بالاسم
+  // بعد توحيد الكتابة: الشخص = اسم ثلاثي فأكثر متطابق، والأسرة = اللقب الأخير
+  var famUI = { q: "", open: "", person: "" };
+  var FAM_CAT = { graduates: "تخرّج", births: "مولود", marriages: "عقد قران", congrats: "تهنئة", deaths: "وفاة" };
+  function famNorm(s){
+    return String(s || "").replace(/[ً-ْـ]/g, "").replace(/[أإآ]/g, "ا").replace(/ى/g, "ي").replace(/ة(?=\s|$)/g, "ه")
+      .replace(/[^ء-ي\s]/g, " ").replace(/\s+/g, " ").trim();
+  }
+  function famTokens(name){ return famNorm(name).split(" ").filter(function(t){ return t && t !== "بن" && t !== "ابن" && t !== "بنت"; }); }
+  function famPersonKey(name){ var t = famTokens(name); return t.length >= 3 ? t.join(" ") : ""; }
+  function famFamilyKey(name){
+    var t = famTokens(name); if(t.length < 2) return "";
+    var last = t[t.length - 1];
+    return last.length > 4 && last.indexOf("ال") === 0 ? last.slice(2) : last;
+  }
+  function famFamilyLabel(name){
+    var t = String(name || "").replace(/\s+/g, " ").trim().split(" ");
+    var last = t[t.length - 1] || "", prev = t[t.length - 2] || "";
+    return (famNorm(prev) === "ال" ? "آل " : "") + last;
+  }
+  // من يظهر في السجل وبأي صفة
+  function famPeople(r){
+    var out = [], add = function(name, role){ name = String(name || "").replace(/\s+/g, " ").trim(); if(name) out.push({ name: name, role: role }); };
+    if(r.category === "graduates") add(r.fullName, "خريج");
+    else if(r.category === "births"){ add([r.fullName, r.fatherName].filter(Boolean).join(" "), "مولود"); add(r.fatherName, "أب لمولود"); }
+    else if(r.category === "marriages") add(r.husbandName, "عقد قران");
+    else if(r.category === "congrats"){ if(r.gender !== "جهة / مؤسسة") add(r.fullName, "تهنئة"); }
+    else if(r.category === "deaths"){
+      var n = String(r.deceasedName || "").trim(), f = String(r.deceasedFamily || "").trim();
+      add(f && famNorm(n).indexOf(famNorm(f)) < 0 ? n + " " + f : n, "وفاة");
+    }
+    return out;
+  }
+  function famDate(r){ return String(r.deathDateGregorian || r.birthDateGregorian || r.contractDateGregorian || r.occasionDateGregorian || r.gregorianYear || ""); }
+  function famIndex(){
+    var persons = {}, families = {};
+    loadEventsData().forEach(function(r){
+      var seenFam = {};
+      famPeople(r).forEach(function(p){
+        var item = { r: r, name: p.name, role: p.role, date: famDate(r) };
+        var pk = famPersonKey(p.name);
+        if(pk) (persons[pk] = persons[pk] || { key: pk, name: p.name, items: [] }).items.push(item);
+        var fk = famFamilyKey(p.name);
+        if(fk && !seenFam[fk]){
+          seenFam[fk] = 1;
+          var f = families[fk] = families[fk] || { key: fk, labels: {}, items: [] };
+          var lbl = famFamilyLabel(p.name); f.labels[lbl] = (f.labels[lbl] || 0) + 1;
+          f.items.push(item);
+        }
+      });
+    });
+    var fams = Object.keys(families).map(function(k){
+      var f = families[k];
+      f.label = Object.keys(f.labels).sort(function(a, b){ return f.labels[b] - f.labels[a]; })[0];
+      return f;
+    }).sort(function(a, b){ return b.items.length - a.items.length; });
+    // شخص واحد له أكثر من سجل (المولود وأبوه في نفس السجل لا يُحسبان تكراراً)
+    var multi = Object.keys(persons).map(function(k){ return persons[k]; }).filter(function(p){
+      var ids = {}; p.items.forEach(function(i){ ids[i.r.id] = 1; }); return Object.keys(ids).length > 1;
+    }).sort(function(a, b){ return b.items.length - a.items.length; });
+    return { families: fams, multi: multi, persons: persons };
+  }
+  function famChips(items){
+    var c = {}; items.forEach(function(i){ c[i.r.category] = (c[i.r.category] || 0) + 1; });
+    return Object.keys(FAM_CAT).filter(function(k){ return c[k]; }).map(function(k){ return '<span class="fam-chip fam-chip--' + k + '">' + FAM_CAT[k] + ' ' + c[k] + '</span>'; }).join("");
+  }
+  function famTimelineHTML(items){
+    return '<div class="fam-tl">' + items.slice().sort(function(a, b){ return a.date < b.date ? 1 : -1; }).map(function(i){
+      return '<button type="button" class="fam-row" data-fam="rec" data-id="' + i.r.id + '"><em>' + escapeHTML(i.date || "—") + '</em><span class="fam-chip fam-chip--' + i.r.category + '">' + escapeHTML(i.role) + '</span><b>' + escapeHTML(i.name) + '</b>' +
+        (i.r.status === "pending" ? '<i class="fam-pend">قيد المراجعة</i>' : '') + '</button>';
+    }).join("") + '</div>';
+  }
+  function eventsFamiliesHTML(){
+    var ix = famIndex(), q = famNorm(famUI.q);
+    var html = '<div class="dept-selector rp-filters"><label>بحث</label><input type="search" id="famSearch" placeholder="اسم شخص أو لقب أسرة" value="' + escapeHTML(famUI.q) + '">' +
+      (famUI.open || famUI.person ? '<button type="button" class="btn-secondary" data-fam="back">رجوع للقائمة</button>' : '') + '</div>';
+    if(famUI.open){
+      var f = ix.families.find(function(x){ return x.key === famUI.open; });
+      if(!f) return html + '<p class="report-empty">لا توجد سجلات لهذه الأسرة</p>';
+      return html + '<div class="report-section-card rp-card"><h3>أسرة ' + escapeHTML(f.label) + ' — ' + f.items.length + ' ظهوراً في السجلات</h3><div class="fam-chips">' + famChips(f.items) + '</div>' + famTimelineHTML(f.items) + '</div>';
+    }
+    if(famUI.person){
+      var p = ix.persons[famUI.person];
+      if(!p) return html + '<p class="report-empty">لا توجد سجلات</p>';
+      return html + '<div class="report-section-card rp-card"><h3>' + escapeHTML(p.name) + '</h3>' + famTimelineHTML(p.items) + '</div>';
+    }
+    var fams = ix.families.filter(function(x){ return !q || famNorm(x.label).indexOf(q) > -1 || x.key.indexOf(q.replace(/^ال\s?/, "")) > -1; });
+    var multi = ix.multi.filter(function(x){ return !q || x.key.indexOf(q) > -1; });
+    var big = ix.families[0];
+    html += '<div class="rp-kpis">' + rpKpi(ix.families.length, "أسرة في السجلات") + rpKpi(ix.multi.length, "شخص له أكثر من مناسبة", "اسم ثلاثي فأكثر متطابق", "tan") +
+      (big ? rpKpi(big.items.length, "أكثر الأسر ظهوراً", escapeHTML(big.label)) : "") + '</div>';
+    html += '<div class="rp-grid"><div class="report-section-card rp-card"><h3>أشخاص تكرّر ظهورهم</h3>' +
+      (multi.length ? '<div class="fam-list">' + multi.slice(0, 60).map(function(x){
+        return '<button type="button" class="fam-item" data-fam="person" data-key="' + escapeHTML(x.key) + '"><b>' + escapeHTML(x.name) + '</b><span class="fam-chips">' + famChips(x.items) + '</span></button>';
+      }).join("") + '</div>' + (multi.length > 60 ? '<p class="rp-more">و ' + (multi.length - 60) + ' آخرين — استخدم البحث</p>' : '') : '<p class="report-empty">لا يوجد تطابق</p>') +
+      '<p class="rp-more">قد يكون التطابق تكراراً لنفس المناسبة أو تشابه أسماء — افتح السجلات للتحقق.</p></div>' +
+      '<div class="report-section-card rp-card"><h3>الأسر</h3>' +
+      (fams.length ? '<div class="fam-list">' + fams.slice(0, 80).map(function(x){
+        return '<button type="button" class="fam-item" data-fam="family" data-key="' + escapeHTML(x.key) + '"><b>' + escapeHTML(x.label) + '</b><span class="fam-chips">' + famChips(x.items) + '</span></button>';
+      }).join("") + '</div>' + (fams.length > 80 ? '<p class="rp-more">و ' + (fams.length - 80) + ' أسرة أخرى — استخدم البحث</p>' : '') : '<p class="report-empty">لا يوجد تطابق</p>') + '</div></div>';
+    return html;
+  }
+  document.addEventListener("click", function(e){
+    var b = e.target.closest && e.target.closest("[data-fam]");
+    if(!b || !currentUser) return;
+    var a = b.dataset.fam;
+    if(a === "family"){ famUI.open = b.dataset.key; famUI.person = ""; }
+    else if(a === "person"){ famUI.person = b.dataset.key; famUI.open = ""; }
+    else if(a === "back"){ famUI.open = ""; famUI.person = ""; }
+    else if(a === "rec"){
+      var rec = findEventRecord(b.dataset.id);
+      if(rec && !can("events.edit")){ showToast("لا تملك صلاحية فتح السجلات"); return; }
+      if(rec) openEventModal(rec.category, rec.id);
+      return;
+    }
+    renderEventsHub(); window.scrollTo(0, 0);
+  });
+  document.addEventListener("input", function(e){
+    if(e.target.id !== "famSearch") return;
+    famUI.q = e.target.value; famUI.open = ""; famUI.person = "";
+    var sub = document.getElementById("eventsSubRoot");
+    if(sub){ setHTML(sub, eventsFamiliesHTML()); var i = document.getElementById("famSearch"); if(i){ i.focus(); i.setSelectionRange(i.value.length, i.value.length); } }
+  });
+
+  // ================= قياس نموذج التسجيل العام =================
+  // عدّادات يومية مجهولة يكتبها النموذج العام في formStats (مستند لكل يوم) — تُقرأ هنا عند الطلب فقط
+  var fsUI = { days: 30, data: null, loading: false, error: "" };
+  function fsLoad(){
+    if(fsUI.loading) return;
+    fsUI.loading = true; fsUI.error = "";
+    var since = new Date(Date.now() + 3 * 3600000 - (fsUI.days - 1) * 86400000).toISOString().slice(0, 10);
+    var p = window.__formStatsMock ? Promise.resolve(window.__formStatsMock) :
+      db.collection("formStats").where(firebase.firestore.FieldPath.documentId(), ">=", since).get().then(function(snap){ var o = {}; snap.forEach(function(d){ o[d.id] = d.data(); }); return o; });
+    p.then(function(o){ fsUI.data = o; }).catch(function(err){ console.error("formStats", err); fsUI.error = "تعذّر جلب القياس — حاول لاحقاً"; })
+      .then(function(){ fsUI.loading = false; if(eventsUI.tab === "funnel") renderEventsHub(); });
+  }
+  function fsSum(data, cat){
+    var t = { view: 0, start: 0, invalid: 0, ok: 0, miss: {}, drop: {} };
+    Object.keys(data).forEach(function(d){
+      var c = data[d][cat]; if(!c) return;
+      ["view", "start", "invalid", "ok"].forEach(function(k){ t[k] += Number(c[k]) || 0; });
+      ["miss", "drop"].forEach(function(m){ Object.keys(c[m] || {}).forEach(function(k){ t[m][k] = (t[m][k] || 0) + (Number(c[m][k]) || 0); }); });
+    });
+    return t;
+  }
+  function fsFieldLabel(cat, key){
+    if(key === "photo") return "الصورة"; if(key === "none") return "لم يبدأ بحقل محدد";
+    var f = (cat.fields || []).find(function(x){ return x.key === key; });
+    return f ? f.label : key;
+  }
+  function eventsFunnelHTML(){
+    var html = '<div class="dept-selector rp-filters"><label>الفترة</label><select id="fsDays">' + [7, 30, 90].map(function(n){ return '<option value="' + n + '"' + (fsUI.days === n ? " selected" : "") + '>آخر ' + n + ' يوماً</option>'; }).join("") + '</select>' +
+      '<button type="button" class="btn-secondary" data-fs="reload">تحديث</button></div>';
+    if(!fsUI.data){ if(!fsUI.error) fsLoad(); return html + '<p class="report-empty">' + (fsUI.error || "جاري جلب القياس…") + '</p>'; }
+    var data = fsUI.data, days = Object.keys(data).sort();
+    var cats = EVENTS_CATEGORIES.filter(function(c){ return c.key !== "deaths"; });
+    var sums = {}, tot = { view: 0, start: 0, ok: 0 };
+    cats.forEach(function(c){ sums[c.key] = fsSum(data, c.key); tot.view += sums[c.key].view; tot.start += sums[c.key].start; tot.ok += sums[c.key].ok; });
+    var misc = function(group, key){ return days.reduce(function(s, d){ var g = data[d][group]; return s + (g && key ? Number(g[key]) || 0 : (g && !key ? Object.keys(g).reduce(function(a, k){ return a + (Number(g[k]) || 0); }, 0) : 0)); }, 0); };
+    if(!days.length) return html + '<div class="report-section-card rp-card"><p class="report-empty">لا توجد قراءات بعد — يبدأ العدّ من أول زيارة لنموذج التسجيل بعد تفعيل القياس (6 أكتوبر 2026).</p></div>';
+    html += '<div class="rp-kpis">' + rpKpi(misc("page", "form"), "زيارة لصفحة التسجيل") + rpKpi(tot.start, "بدأوا التعبئة") + rpKpi(tot.ok, "أرسلوا الطلب", tot.start ? "إكمال " + rpPct(tot.ok, tot.start) + "% ممن بدأ" : "", "tan") +
+      rpKpi(misc("track", "view"), "فتح رابط المتابعة") + rpKpi(misc("give"), "نقرة على «تبرّع الآن»") + '</div>';
+    html += '<div class="report-section-card rp-card"><h3>الطلبات المرسلة يومياً</h3>' +
+      (rpColumns(days.slice(-14).map(function(d){ return { label: d.slice(5), value: cats.reduce(function(s, c){ return s + (Number((data[d][c.key] || {}).ok) || 0); }, 0) }; })) || '<p class="report-empty">لا طلبات مرسلة في الفترة</p>') + '</div>';
+    html += '<div class="rp-grid">';
+    cats.forEach(function(c){
+      var s = sums[c.key];
+      if(!s.view && !s.start && !s.ok) return;
+      var toItems = function(o){ return Object.keys(o).map(function(k){ return { label: fsFieldLabel(c, k), value: o[k] }; }).sort(function(a, b){ return b.value - a.value; }); };
+      html += '<div class="report-section-card rp-card"><h3>' + escapeHTML(c.label) + '</h3>' +
+        '<div class="fs-steps">' + [["فتحوا النموذج", s.view], ["بدأوا التعبئة", s.start], ["أرسلوا", s.ok]].map(function(x, i){
+          return '<div class="fs-step"><span>' + x[0] + '</span><span class="fs-bar"><i style="width:' + (s.view ? Math.max(2, Math.round(x[1] / Math.max(s.view, s.start, 1) * 100)) : 0) + '%;' + (i === 2 ? ' background:var(--tan);' : '') + '"></i></span><b>' + x[1] + '</b></div>';
+        }).join("") + '</div>' +
+        '<p class="rp-more">محاولات إرسال بحقول ناقصة: ' + s.invalid + '</p>' +
+        (Object.keys(s.miss).length ? '<h4 class="fs-h4">الحقول التي تُترك فارغة عند الإرسال</h4>' + rpRank(toItems(s.miss), 6) : '') +
+        (Object.keys(s.drop).length ? '<h4 class="fs-h4">آخر حقل وقف عنده من غادر دون إرسال</h4>' + rpRank(toItems(s.drop), 6) : '') + '</div>';
+    });
+    return html + '</div><p class="rp-more">عدّادات مجهولة تماماً: لا تُسجَّل أسماء ولا أرقام ولا هوية الزائر.</p>';
+  }
+  document.addEventListener("click", function(e){ var b = e.target.closest && e.target.closest("[data-fs]"); if(b && currentUser){ fsUI.data = null; fsUI.error = ""; renderEventsHub(); } });
+  document.addEventListener("change", function(e){ if(e.target.id === "fsDays"){ fsUI.days = Number(e.target.value) || 30; fsUI.data = null; fsUI.error = ""; renderEventsHub(); } });
+
   function eventsSubnavBtnHTML(key, label, icon){
     return '<button type="button" data-action="events-subnav" data-tab="' + key + '" class="' + (eventsUI.tab === key ? "active" : "") + '"><span class="icon">' + icon + '</span>' + label + '</button>';
   }
@@ -11118,6 +11326,7 @@
       (can("events.publish") ? eventsSubnavBtnHTML("publish", "مهام النشر", AICON.megaphone) : "") +
       (can("events.templates") ? eventsSubnavBtnHTML("templates", "قوالب التصميم", EVICON.grad) : "") +
       (can("events.reports") ? eventsSubnavBtnHTML("reports", "التقارير والإحصائيات", AICON.chart) : "") +
+      (can("events.reports") ? eventsSubnavBtnHTML("families", "الأسر", EVICON.rings) + eventsSubnavBtnHTML("funnel", "قياس النموذج", AICON.chart) : "") +
       (can("events.gallery") ? eventsSubnavBtnHTML("gallery", "أرشيف الصور", TPI.image) : "") +
       (can("events.trash") ? eventsSubnavBtnHTML("trash", "سلة المهملات" + (loadEventsTrash().length ? " (" + loadEventsTrash().length + ")" : ""), ICON_DELETE) : "") +
     '</div><div id="eventsSubRoot"></div>';
@@ -11127,6 +11336,8 @@
     else if(eventsUI.tab === "publish") setHTML(subRoot, eventsPublishHTML());
     else if(eventsUI.tab === "templates") setHTML(subRoot, tmplManagerHTML());
     else if(eventsUI.tab === "reports") setHTML(subRoot, eventsReportsHTML());
+    else if(eventsUI.tab === "families") setHTML(subRoot, eventsFamiliesHTML());
+    else if(eventsUI.tab === "funnel") setHTML(subRoot, eventsFunnelHTML());
     else if(eventsUI.tab === "gallery") setHTML(subRoot, eventsGalleryHTML());
     else if(eventsUI.tab === "trash") setHTML(subRoot, eventsTrashHTML());
     else setHTML(subRoot, eventsDashboardHTML());

@@ -113,6 +113,8 @@
   .tile--wide .tile-ico{margin-bottom:0; flex:none; background:#fff; color:var(--ink-2);}
   .tile--wide h3{margin-top:0;}
   .tile-note{font-size:13px; line-height:1.8; color:var(--ink-3); margin-top:6px;}
+  .tile-give{display:inline-block; margin-top:10px; font-size:13px; font-weight:700; color:var(--tan-deep, #8a623c); text-decoration:none; border-bottom:1px solid currentColor; padding-bottom:1px;}
+  .tile-give:hover{opacity:.75;}
   .tile--tan .tile-ico{background:var(--tan-soft); color:var(--tan-deep);}
   .tile--deep{color:#fff; border-color:transparent; background:linear-gradient(150deg, #5B8483 0%, var(--teal) 40%, var(--teal-deep) 100%); box-shadow:0 2px 4px rgba(50,76,75,.1), 0 22px 50px rgba(50,76,75,.30);}
   .tile--deep::after{content:""; position:absolute; width:220px; height:220px; border-radius:50%; inset-inline-end:-80px; bottom:-110px; background:radial-gradient(circle, rgba(184,141,102,.45), transparent 68%); pointer-events:none;}
@@ -327,6 +329,7 @@
           <h3>الوفيات</h3>
           <p class="tile-meta"><b data-count="deaths" data-label="وفاة موثّقة"></b><span></span></p>
           <p class="tile-note">تُنشر فور تأكيد الخبر من العائلة أو الجهات الرسمية.</p>
+          <a class="tile-give" href="https://www.awamiach.sa/projects/?utm_source=gzara&amp;utm_medium=occasion&amp;utm_campaign=deaths" target="_blank" rel="noopener">صدقة جارية عن روح المتوفى ←</a>
         </div>
       </div>
     </div>
@@ -425,7 +428,22 @@
       }
     })}).then(function(r){ return r.ok ? r.json() : null; }).then(function(d){
       var v = d && d[0] && d[0].result && d[0].result.aggregateFields && d[0].result.aggregateFields.n;
-      var n = v ? parseInt(v.integerValue, 10) : 0;
+      var total = v ? parseInt(v.integerValue, 10) : 0;
+      if(!(total > 0)) return 0;
+      // المعتمد فقط: يُطرح ما زال قيد المراجعة (السجلات المعتمدة بلا حقل حالة، فلا يصلح عدّها مباشرة)
+      return fetch(URL_, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({
+        structuredAggregationQuery: {
+          structuredQuery: { from: [{ collectionId: "events" }], where: { compositeFilter: { op: "AND", filters: [
+            { fieldFilter: { field: { fieldPath: "category" }, op: "EQUAL", value: { stringValue: cat } } },
+            { fieldFilter: { field: { fieldPath: "status" }, op: "EQUAL", value: { stringValue: "pending" } } } ] } } },
+          aggregations: [{ alias: "n", count: {} }]
+        }
+      })}).then(function(r){ return r.ok ? r.json() : null; }).then(function(p){
+        var pv = p && p[0] && p[0].result && p[0].result.aggregateFields && p[0].result.aggregateFields.n;
+        if(!pv) return 0;   // تعذّر عدّ المعلّق — لا نعرض رقماً غير مؤكد
+        return Math.max(0, total - parseInt(pv.integerValue, 10));
+      });
+    }).then(function(n){
       if(n > 0){
         if(n !== known) countUp(el, n);
         cache.n = cache.n || {}; cache.n[cat] = n; cache.t = Date.now();

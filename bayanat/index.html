@@ -557,6 +557,8 @@
   </div>
   <div class="ad-banner-carousel" id="adBannerCarousel" style="display:none;"></div>
 
+  <div id="zxMine"></div>
+  <div class="card" id="trackCard" style="display:none;"></div>
   <div class="card" id="formCard">
     <div class="cat-select" id="catSelect"></div>
     <div class="form-grid" id="formGrid"></div>
@@ -603,6 +605,7 @@
       </div>
       <p style="margin-top:10px; background:#fff7e8; border:1px solid #f0d9a8; color:#8a5a00; border-radius:10px; padding:10px 14px; font-size:12.5px; font-weight:600; text-align:center;">⚠️ هذه نسخة غير نهائية — ستراجعها الجمعية وتُعالج عند الحاجة قبل اعتمادها ونشرها رسمياً</p>
     </div>
+    <div id="zxAfter"></div>
     <button type="button" id="sendAnotherBtn">إرسال بيانات أخرى</button>
   </div>
 
@@ -2548,12 +2551,12 @@
     var cat = CATEGORIES.find(function(c){ return c.key === state.activeCategory; });
     var effectiveFields = getEffectiveFields(cat.key);
     var draft = {};
-    var missing = [];
+    var missing = [], missingKeys = [];
     effectiveFields.forEach(function(f){
       if(f.derived) return;
       var v = fieldValue(f);
       draft[f.key] = v;
-      if(f.required && !v) missing.push(f.label);
+      if(f.required && !v){ missing.push(f.label); missingKeys.push(f.key); }
     });
     if(cat.dateSource){
       var derived = deriveDateFieldsFromGregorian(draft[cat.dateSource.field]);
@@ -2566,9 +2569,10 @@
       }
     }
     var photoRequiredNow = cat.photoRequired === true || (cat.photoRequired === "maleOnly" && draft.gender === "ذكر");
-    if(photoRequiredNow && !state.photo) missing.push(cat.photoLabel || "صورة المناسبة");
+    if(photoRequiredNow && !state.photo){ missing.push(cat.photoLabel || "صورة المناسبة"); missingKeys.push("photo"); }
     var errEl = document.getElementById("errMsg");
     if(missing.length){
+      try{ window.dispatchEvent(new CustomEvent("zara:invalid", { detail: { category: cat.key, missing: missingKeys } })); }catch(e){}
       errEl.textContent = "الرجاء تعبئة الحقول المطلوبة: " + missing.join("، ");
       errEl.style.display = "block";
       return;
@@ -2619,6 +2623,10 @@
     db.collection("events").doc(rec.id).set(rec).then(function(){
       document.getElementById("formCard").style.display = "none";
       document.getElementById("thanksCard").style.display = "block";
+      // رابط المتابعة + التبرع باسم المناسبة + القياس (سكربت مستقل بآخر الصفحة)
+      try{ window.dispatchEvent(new CustomEvent("zara:submitted", { detail: { id: rec.id, category: cat.key,
+        name: String((cat.key === "marriages" ? rec.husbandName : cat.key === "births" ? [rec.fullName, rec.fatherName].filter(Boolean).join(" ") : rec.fullName) || "").trim(),
+        keep: { phone: rec.phone || "", email: rec.email || "", fatherName: rec.fatherName || "", motherName: rec.motherName || "" } } })); }catch(e){}
       // الأدمن يقدر يقفل المعاينة من لوحة التحكم فتبقى الصفحة لاستقبال البيانات فقط (والتصميم يُجهَّز من الداخل)
       if(loadPublicFormConfig().showDesignPreview !== false) showDesignPreview(rec);
     }).catch(function(err){
@@ -2907,6 +2915,210 @@
   check(true);
   setInterval(function(){ check(false); }, 180000);
   document.addEventListener("visibilitychange", function(){ if(!document.hidden) check(false); });
+})();
+</script>
+<style>
+  .zx-box{margin-top:18px; border:1px solid var(--line); border-radius:18px; padding:16px 18px; text-align:right; background:var(--white);}
+  .zx-box h3{font-size:14px; color:var(--teal-dark); margin:0 0 4px; font-weight:700;}
+  .zx-box p{font-size:12.5px; color:var(--ink-soft); line-height:1.8; margin:0;}
+  .zx-link{display:flex; gap:8px; align-items:center; margin-top:10px; flex-wrap:wrap;}
+  .zx-link code{flex:1; min-width:180px; direction:ltr; text-align:left; font-size:12px; background:var(--teal-tint); border-radius:10px; padding:9px 12px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:var(--teal-dark); font-family:inherit;}
+  .thanks .zx-btn, .zx-btn{margin-top:0; display:inline-flex; align-items:center; gap:6px; padding:9px 16px; border-radius:999px; border:1.5px solid var(--line); background:var(--white); color:var(--teal-dark); font-size:12.5px; font-weight:700; cursor:pointer; text-decoration:none; font-family:inherit;}
+  .zx-btn:hover{border-color:var(--teal);}
+  .thanks .zx-btn.solid, .zx-btn.solid{background:var(--teal); border-color:var(--teal); color:#fff;}
+  .zx-give{background:var(--tan-tint); border-color:transparent;}
+  .zx-give h3{color:var(--tan-deep, #8a623c);}
+  .thanks .zx-btn.give, .zx-btn.give{background:var(--tan); border-color:var(--tan); color:#fff; margin-top:10px;}
+  .zx-steps{list-style:none; margin:18px 0 4px; padding:0; text-align:right;}
+  .zx-steps li{position:relative; padding:0 34px 20px 0; font-size:13.5px; color:var(--ink-soft);}
+  .zx-steps li:last-child{padding-bottom:0;}
+  .zx-steps li::before{content:""; position:absolute; right:0; top:1px; width:20px; height:20px; border-radius:50%; border:2px solid var(--line); background:var(--white); box-sizing:border-box;}
+  .zx-steps li::after{content:""; position:absolute; right:9px; top:23px; bottom:-1px; width:2px; background:var(--line);}
+  .zx-steps li:last-child::after{display:none;}
+  .zx-steps li.done{color:var(--ink, #141C1B);}
+  .zx-steps li.done::before{background:var(--teal); border-color:var(--teal);}
+  .zx-steps li.done::after{background:var(--teal);}
+  .zx-steps li.now{color:var(--teal-dark); font-weight:700;}
+  .zx-steps li.now::before{border-color:var(--tan); box-shadow:0 0 0 4px var(--tan-tint);}
+  .zx-steps li small{display:block; font-weight:400; font-size:12px; color:var(--ink-soft); margin-top:2px;}
+  .zx-track{text-align:center; padding:26px 14px;}
+  .zx-track h2{font-size:17px; color:var(--teal-dark); margin:0 0 4px;}
+  .zx-track .zx-sub{font-size:13px; color:var(--ink-soft); margin:0;}
+  .zx-mine{display:flex; gap:8px; flex-wrap:wrap; justify-content:center; margin:0 0 16px;}
+  .zx-mine a{font-size:12.5px; font-weight:700; color:var(--teal-dark); background:var(--teal-tint); border-radius:999px; padding:7px 14px; text-decoration:none;}
+  .zx-fill{grid-column:1 / -1; font-size:12.5px; color:var(--teal-dark); background:var(--teal-tint); border-radius:12px; padding:9px 14px; display:flex; gap:10px; align-items:center; justify-content:space-between;}
+  .zx-fill button{border:0; background:none; color:var(--teal-dark); font-weight:700; text-decoration:underline; cursor:pointer; font-family:inherit; font-size:12.5px;}
+</style>
+<script>
+// إضافات مستقلة عن منطق النموذج: قياس مسار التسجيل، رابط متابعة الطلب، التبرع باسم المناسبة،
+// وتعبئة بيانات المسجِّل السابقة من جهازه. كلها تفشل بصمت ولا تعطّل الإرسال
+(function(){
+  var KEY = "AIzaSyBPos-QSrnK_x5HS742FJkNJVhXwGdq8j8";
+  var DOCS = "projects/awamia-zara/databases/(default)/documents";
+  var API = "https://firestore.googleapis.com/v1/" + DOCS;
+  var CAT_LABEL = { graduates: "تخرّج", births: "مولود", marriages: "عقد قران", congrats: "تهنئة", deaths: "وفاة" };
+  function esc(s){ return String(s == null ? "" : s).replace(/[&<>"']/g, function(c){ return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
+  function lsGet(k, d){ try{ return JSON.parse(localStorage.getItem(k)) || d; }catch(e){ return d; } }
+  function lsSet(k, v){ try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){} }
+  function $(id){ return document.getElementById(id); }
+
+  // ---------- القياس: عدّادات يومية مجهولة (لا أسماء ولا أرقام ولا معرّف زائر) ----------
+  // مستند واحد لكل يوم في formStats؛ الزيادات تُجمَّع وتُرسل دفعة واحدة تخفيفاً للكتابات
+  var queue = {}, timer = null, once = {};
+  function day(){ return new Date(Date.now() + 3 * 3600000).toISOString().slice(0, 10); }
+  function hit(path, uniq){
+    if(location.hostname !== "gzara.org" && !window.__zxDebug) return;   // لا تُحتسب التجارب المحلية
+    if(!/^[A-Za-z0-9_]+(\.[A-Za-z0-9_]+)*$/.test(path)) return;
+    if(uniq){ if(once[path]) return; once[path] = 1; }
+    queue[path] = (queue[path] || 0) + 1;
+    clearTimeout(timer); timer = setTimeout(flush, 5000);
+  }
+  function flush(){
+    var keys = Object.keys(queue);
+    if(!keys.length || !window.fetch) return;
+    var body = JSON.stringify({ writes: [{ transform: { document: DOCS + "/formStats/" + day(),
+      fieldTransforms: keys.map(function(k){ return { fieldPath: k, increment: { integerValue: String(queue[k]) } }; }) } }] });
+    queue = {};
+    try{ fetch(API + ":commit?key=" + KEY, { method: "POST", headers: { "Content-Type": "application/json" }, body: body, keepalive: true }).catch(function(){}); }catch(e){}
+  }
+  var cur = null, started = {}, lastKey = {}, sent = {};
+  // النموذج يُعاد رسمه عند اختيار نوع المناسبة — نلتقط ذلك من الصفحة نفسها دون التدخل في منطق النموذج
+  function onForm(){
+    var grid = $("formGrid"), act = document.querySelector("#catSelect button.active");
+    if(!grid || !act || grid.querySelector("[data-zx-mark]") || !grid.querySelector("[data-key]")) return;
+    grid.insertAdjacentHTML("beforeend", '<i data-zx-mark hidden></i>');
+    cur = act.dataset.cat; hit(cur + ".view", true); autofill(cur);
+  }
+  if(window.MutationObserver && $("formGrid")){ new MutationObserver(onForm).observe($("formGrid"), { childList: true }); setTimeout(onForm, 0); }
+  document.addEventListener("input", touch, true);
+  document.addEventListener("change", touch, true);
+  function touch(e){
+    var el = e.target, grid = $("formGrid");
+    if(!cur || !grid || !grid.contains(el)) return;
+    var k = (el.dataset && el.dataset.key) || (el.type === "file" ? "photo" : "");
+    if(!k) return;
+    lastKey[cur] = k;
+    if(!started[cur]){ started[cur] = 1; hit(cur + ".start", true); }
+  }
+  window.addEventListener("zara:invalid", function(e){
+    var d = e.detail || {}; if(!d.category) return;
+    hit(d.category + ".invalid");
+    (d.missing || []).forEach(function(k){ hit(d.category + ".miss." + k); });
+  });
+  // من بدأ التعبئة وغادر دون إرسال: نسجّل آخر حقل وقف عنده
+  window.addEventListener("pagehide", function(){
+    Object.keys(started).forEach(function(c){
+      if(sent[c] || once[c + ".drop"]) return;
+      once[c + ".drop"] = 1;
+      hit(c + ".drop." + (lastKey[c] || "none"));
+    });
+    flush();
+  });
+  document.addEventListener("visibilitychange", function(){ if(document.visibilityState === "hidden") flush(); });
+
+  // ---------- التبرع باسم المناسبة ----------
+  var GIVE = {
+    births: ["صدقة عن المولود", "اجعل قدومه بركة لغيره: صدقة باسم {n} تصل لأسرة محتاجة عبر مشاريع الجمعية."],
+    graduates: ["هدية تخرّج باسم {n}", "اشكر النعمة بصدقة باسم الخريج — تدعم بها طالباً آخر أو أسرة محتاجة."],
+    marriages: ["صدقة بمناسبة عقد القران", "ابدأ الحياة الجديدة بأثر طيب: صدقة باسم {n} عبر مشاريع الجمعية."],
+    congrats: ["شارك فرحتك بصدقة", "صدقة باسم المناسبة تجعل الفرحة فرحتين."],
+    deaths: ["صدقة جارية عن روح المتوفى", "أهدِ ثوابها له عبر مشاريع الجمعية."]
+  };
+  function giveHTML(cat, name){
+    var g = GIVE[cat]; if(!g) return "";
+    var n = name ? "«" + esc(name) + "»" : "صاحب المناسبة";
+    return '<div class="zx-box zx-give"><h3>' + g[0].replace("{n}", n) + '</h3><p>' + g[1].replace("{n}", n) + '</p>' +
+      '<a class="zx-btn give" data-zx="give" data-cat="' + cat + '" target="_blank" rel="noopener" href="https://www.awamiach.sa/projects/?utm_source=gzara&utm_medium=occasion&utm_campaign=' + cat + '">تبرّع الآن</a></div>';
+  }
+  document.addEventListener("click", function(e){
+    var b = e.target.closest && e.target.closest("[data-zx]");
+    if(!b) return;
+    if(b.dataset.zx === "give"){ hit("give." + b.dataset.cat); flush(); }
+    if(b.dataset.zx === "copy"){
+      var t = b.dataset.text, done = function(){ b.textContent = "تم النسخ"; setTimeout(function(){ b.textContent = "نسخ الرابط"; }, 1800); };
+      if(navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(t).then(done).catch(function(){});
+      else { var ta = document.createElement("textarea"); ta.value = t; document.body.appendChild(ta); ta.select(); try{ document.execCommand("copy"); done(); }catch(err){} document.body.removeChild(ta); }
+    }
+    if(b.dataset.zx === "forget"){ try{ localStorage.removeItem("zaraMyInfo"); }catch(err){} var grid = $("formGrid"); Array.prototype.forEach.call(grid.querySelectorAll("[data-zx-filled]"), function(i){ i.value = ""; i.removeAttribute("data-zx-filled"); }); var n = b.closest(".zx-fill"); if(n) n.remove(); }
+  });
+
+  // ---------- رابط متابعة الطلب ----------
+  function trackUrl(id){ return location.origin + location.pathname + "?track=" + encodeURIComponent(id); }
+  function recName(cat, r){ return String((cat === "marriages" ? r.husbandName : cat === "deaths" ? r.deceasedName : cat === "births" ? [r.fullName, r.fatherName].filter(Boolean).join(" ") : r.fullName) || "").trim(); }
+  window.addEventListener("zara:submitted", function(e){
+    var d = e.detail || {}; if(!d.id) return;
+    sent[d.category] = 1; hit(d.category + ".ok"); flush();
+    var mine = lsGet("zaraMyRequests", []);
+    mine.unshift({ id: d.id, cat: d.category, name: d.name || "", t: Date.now() });
+    lsSet("zaraMyRequests", mine.slice(0, 8));
+    if(d.keep) lsSet("zaraMyInfo", d.keep);
+    var box = $("zxAfter"); if(!box) return;
+    var url = trackUrl(d.id), msg = "رابط متابعة طلب تسجيل المناسبة في بوابة زارة:\n" + url;
+    box.innerHTML = '<div class="zx-box"><h3>رابط متابعة طلبك</h3><p>احتفظ به لمعرفة حالة الطلب (المراجعة ← الاعتماد ← النشر) دون الحاجة للاتصال.</p>' +
+      '<div class="zx-link"><code>' + esc(url) + '</code>' +
+      '<button type="button" class="zx-btn solid" data-zx="copy" data-text="' + esc(url) + '">نسخ الرابط</button>' +
+      '<a class="zx-btn" target="_blank" rel="noopener" href="https://wa.me/?text=' + encodeURIComponent(msg) + '">حفظه في الواتساب</a></div></div>' + giveHTML(d.category, d.name);
+  });
+  document.addEventListener("click", function(e){ if(e.target && e.target.id === "sendAnotherBtn"){ var b = $("zxAfter"); if(b) b.innerHTML = ""; started = {}; lastKey = {}; sent = {}; once = {}; mineLinks(); } });
+
+  function fsVal(v){ if(!v) return ""; var k = Object.keys(v)[0]; return v[k]; }
+  function getDoc(path, mask){
+    return fetch(API + "/" + path + "?key=" + KEY + (mask || "")).then(function(r){ if(r.status === 404) return null; if(!r.ok) throw new Error("http_" + r.status); return r.json(); });
+  }
+  function showTrack(id){
+    var card = $("trackCard"); if(!card) return;
+    ["formCard", "adBannerCarousel"].forEach(function(x){ var el = $(x); if(el) el.style.display = "none"; });
+    var head = document.querySelector(".wrap .head"); if(head) head.style.display = "none";
+    card.style.display = "block";
+    var back = '<p style="margin-top:20px;"><a class="zx-btn" href="' + location.pathname + '">تسجيل مناسبة جديدة</a></p>';
+    card.innerHTML = '<div class="zx-track"><h2>متابعة الطلب</h2><p class="zx-sub">جاري جلب حالة الطلب…</p></div>';
+    hit("track.view", true);
+    if(!/^[A-Za-z0-9_-]{6,80}$/.test(id)){ card.innerHTML = '<div class="zx-track"><h2>رابط غير صحيح</h2><p class="zx-sub">تأكد من نسخ رابط المتابعة كاملاً.</p>' + back + '</div>'; return; }
+    var fields = ["category", "status", "createdAt", "fullName", "fatherName", "husbandName", "deceasedName"].map(function(f){ return "&mask.fieldPaths=" + f; }).join("");
+    Promise.all([getDoc("events/" + id, fields), getDoc("eventsMeta/publish", "&mask.fieldPaths=" + encodeURIComponent("`" + id + "`")).catch(function(){ return null; })]).then(function(res){
+      var doc = res[0];
+      if(!doc || !doc.fields){
+        card.innerHTML = '<div class="zx-track"><h2>الطلب غير موجود في السجلات</h2><p class="zx-sub">قد يكون الرابط غير مكتمل، أو أن الطلب لم يُعتمد. للاستفسار تواصلوا مع الجمعية.</p>' + back + '</div>';
+        return;
+      }
+      var r = {}; Object.keys(doc.fields).forEach(function(k){ r[k] = fsVal(doc.fields[k]); });
+      var pub = res[1] && res[1].fields && res[1].fields[id] ? fsVal(res[1].fields[id]) : "";
+      var approved = r.status !== "pending", published = approved && pub === "published", wont = approved && pub === "wontPublish";
+      var when = r.createdAt ? new Date(Number(r.createdAt)).toLocaleDateString("ar-SA-u-ca-gregory-nu-latn", { day: "numeric", month: "long", year: "numeric" }) : "";
+      var name = recName(r.category, r);
+      function li(cls, t, s){ return '<li class="' + cls + '">' + t + (s ? '<small>' + s + '</small>' : '') + '</li>'; }
+      card.innerHTML = '<div class="zx-track"><h2>' + (r.category === "deaths" ? "خبر وفاة" : CAT_LABEL[r.category] ? "طلب تسجيل " + CAT_LABEL[r.category] : "متابعة الطلب") + '</h2>' +
+        (name ? '<p class="zx-sub">' + esc(name) + '</p>' : '') +
+        '<ol class="zx-steps">' +
+          li("done", "استلمنا الطلب", when) +
+          li(approved ? "done" : "now", approved ? "تمت المراجعة" : "قيد المراجعة", approved ? "" : "يراجع فريق الجمعية البيانات قبل اعتمادها.") +
+          li(approved ? "done" : "", "اعتُمد ضمن سجلات الجمعية", "") +
+          li(published ? "done" : (approved ? "now" : ""), published ? "تم النشر" : (wont ? "لن تُنشر على حسابات الجمعية" : "النشر على حسابات الجمعية"), published ? "تجدونها على حسابات جمعية العوامية الخيرية." : (wont ? "الطلب موثّق في السجلات فقط." : (approved ? "بانتظار دورها في النشر." : ""))) +
+        '</ol>' + (approved ? giveHTML(r.category, name) : "") + back + '</div>';
+    }).catch(function(){
+      card.innerHTML = '<div class="zx-track"><h2>تعذّر جلب الحالة الآن</h2><p class="zx-sub">حاول مرة أخرى بعد قليل.</p>' + back + '</div>';
+    });
+  }
+  function mineLinks(){
+    var box = $("zxMine"); if(!box) return;
+    var mine = lsGet("zaraMyRequests", []).slice(0, 3);
+    box.innerHTML = mine.length ? '<div class="zx-mine">' + mine.map(function(m){ return '<a href="?track=' + encodeURIComponent(m.id) + '">متابعة طلب ' + (CAT_LABEL[m.cat] || "") + (m.name ? " — " + esc(m.name.split(" ").slice(0, 2).join(" ")) : "") + '</a>'; }).join("") + '</div>' : "";
+  }
+
+  // ---------- تعبئة بيانات المسجِّل السابقة (محفوظة في جهازه فقط) ----------
+  function autofill(cat){
+    var info = lsGet("zaraMyInfo", null), grid = $("formGrid"); if(!info || !grid) return;
+    var n = 0;
+    Object.keys(info).forEach(function(k){
+      var el = grid.querySelector('input[data-key="' + k + '"]');
+      if(el && !el.value && info[k] && (el.type === "text" || el.type === "tel" || el.type === "email")){ el.value = info[k]; el.setAttribute("data-zx-filled", "1"); n++; }
+    });
+    if(n && !grid.querySelector(".zx-fill")) grid.insertAdjacentHTML("afterbegin", '<div class="zx-fill"><span>عبّأنا بعض الحقول من تسجيلك السابق على هذا الجهاز — راجعها قبل الإرسال.</span><button type="button" data-zx="forget">مسح</button></div>');
+  }
+
+  var tid = new URLSearchParams(location.search).get("track");
+  hit("page." + (tid ? "track" : "form"), true);
+  if(tid) showTrack(tid); else mineLinks();
 })();
 </script>
 </body>
