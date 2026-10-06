@@ -1926,6 +1926,60 @@
   .chat-bubble small{display:block; font-size:10px; opacity:.65; margin-top:2px; text-align:end;}
   .chat-bubble.me{background:var(--ink);}
 
+  /* ===================== أرشيف صور المناسبات ===================== */
+  .gal-head{display:flex; align-items:center; justify-content:space-between; gap:14px; flex-wrap:wrap; padding:14px 16px; margin-bottom:12px; background:#fff; border:1px solid rgba(255,255,255,.95); border-radius:22px; box-shadow:var(--shadow-sm);}
+  .gal-stat{display:flex; align-items:baseline; gap:8px; flex-wrap:wrap; min-width:230px;}
+  .gal-stat b{font-size:28px; font-weight:600; letter-spacing:-.4px;}
+  .gal-stat > span{font-size:13px; color:var(--ink-2);}
+  .gal-stat .ws-prog{flex-basis:100%; max-width:260px;}
+  .gal-tools{display:flex; align-items:center; gap:8px; flex-wrap:wrap;}
+  .gal-tools .events-search{margin:0; min-width:210px;}
+  .gal-zip{display:inline-flex; align-items:center; gap:7px; white-space:nowrap;}
+  .gal-zip .icon{width:16px; height:16px;}
+  .gal-cats{display:flex; gap:6px; overflow-x:auto; margin-bottom:10px; scrollbar-width:none;}
+  .gal-cats::-webkit-scrollbar{display:none;}
+  .gal-cats button{flex:none; border:1px solid var(--line); background:rgba(255,255,255,.7); font:inherit; font-size:13px; font-weight:500; color:var(--ink-2); padding:8px 16px; border-radius:999px; cursor:pointer;}
+  .gal-cats button.on{background:var(--ink); border-color:var(--ink); color:#fff;}
+  .gal-cats .gal-missing{border-style:dashed;}
+  .gal-cats .gal-missing i{font-style:normal; font-size:11.500px; font-weight:600; background:var(--tan-tint); color:#7A5630; border-radius:999px; padding:0 8px; margin-inline-start:4px;}
+  .gal-cats .gal-missing.on{background:var(--tan); border-color:var(--tan);}
+  .gal-count{font-size:12.500px; color:var(--ink-soft); margin:0 0 10px;}
+  .gal-grid{display:grid; grid-template-columns:repeat(auto-fill, minmax(150px, 1fr)); gap:12px;}
+  .gal-card{display:flex; flex-direction:column; gap:3px; text-align:start; font:inherit; border:1px solid rgba(255,255,255,.95); background:#fff; border-radius:20px; padding:8px 8px 12px; cursor:pointer; box-shadow:var(--shadow-sm); transition:transform .35s var(--ease), box-shadow .35s var(--ease); min-width:0;}
+  .gal-card:hover{transform:translateY(-3px); box-shadow:var(--shadow);}
+  .gal-img{display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px; aspect-ratio:1 / 1; border-radius:14px; overflow:hidden; margin-bottom:6px; background:repeating-conic-gradient(#EEF1F0 0% 25%, #F7F8F7 0% 50%) 50% / 18px 18px;}
+  .gal-img img{width:100%; height:100%; object-fit:cover; object-position:50% 20%; display:block;}
+  .gal-card.is-empty .gal-img{background:var(--field);}
+  .gal-img i{font-style:normal; width:54px; height:54px; border-radius:50%; background:#fff; color:var(--ink-soft); font-size:22px; font-weight:600; display:flex; align-items:center; justify-content:center;}
+  .gal-img small{font-size:11.500px; color:var(--ink-soft);}
+  .gal-card b{font-size:13px; font-weight:600; color:var(--ink); padding:0 4px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .gal-card > small{font-size:11.500px; color:var(--ink-soft); padding:0 4px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .gal-more{display:block; margin:16px auto 0;}
+  .gal-lb{position:fixed; inset:0; z-index:170; display:none; align-items:center; justify-content:center; padding:18px; background:rgba(20,28,27,.6);}
+  .gal-lb.open{display:flex;}
+  .gal-lb-box{position:relative; display:grid; grid-template-columns:minmax(0, 1.25fr) minmax(240px, .75fr); width:min(880px, 100%); max-height:90vh; background:#fff; border-radius:28px; overflow:hidden;}
+  .gal-lb-img{background:repeating-conic-gradient(#EEF1F0 0% 25%, #F7F8F7 0% 50%) 50% / 20px 20px; display:flex; align-items:center; justify-content:center; min-height:300px;}
+  .gal-lb-img img{max-width:100%; max-height:90vh; display:block; object-fit:contain;}
+  .gal-lb-info{padding:56px 22px 22px; display:flex; flex-direction:column; gap:6px;}
+  .gal-lb-info b{font-size:18px; font-weight:600; line-height:1.6;}
+  .gal-lb-info > small{font-size:13px; color:var(--ink-soft);}
+  .gal-lb-actions{display:flex; flex-direction:column; gap:8px; margin-top:16px;}
+  .gal-lb-actions .btn-primary, .gal-lb-actions .btn-secondary{width:100%; text-align:center; text-decoration:none; justify-content:center; display:flex;}
+  .gal-lb-nav{margin-top:auto; padding-top:16px; display:flex; align-items:center; justify-content:space-between; gap:8px;}
+  .gal-lb-nav small{font-size:12px; color:var(--ink-soft);}
+  .gal-lb-x{position:absolute; top:14px; inset-inline-end:14px; z-index:2;}
+  body:has(.gal-lb.open) .chat-fab{display:none !important;}
+  @media (max-width:760px){
+    .gal-grid{grid-template-columns:repeat(2, minmax(0, 1fr)); gap:10px;}
+    .gal-tools{width:100%;}
+    .gal-tools .events-search-wrap, .gal-tools .events-search{flex:1; min-width:0; width:100%;}
+    .gal-zip{width:100%; justify-content:center;}
+    .gal-lb{padding:0; align-items:flex-end;}
+    .gal-lb-box{grid-template-columns:1fr; border-radius:26px 26px 0 0; max-height:94vh; overflow-y:auto;}
+    .gal-lb-img img{max-height:52vh;}
+    .gal-lb-info{padding:18px 18px calc(22px + env(safe-area-inset-bottom, 0px));}
+  }
+
 </style>
 </head>
 <body>
@@ -2383,7 +2437,7 @@
 
   // ===== توجيه بالرابط (Hash Routing) — كل قسم/تبويب/تصنيف له رابط خاص، يدعم الرجوع/التقدم بالمتصفح ولا يفقد الموضع الحالي عند التحديث =====
   var suppressHashHandler = false;
-  var EVENTS_TAB_KEYS = ["dashboard", "data-entry", "publish", "templates", "reports", "trash"];
+  var EVENTS_TAB_KEYS = ["dashboard", "data-entry", "publish", "templates", "reports", "gallery", "trash"];
   function syncHashFromApp(){
     var activeTab = document.querySelector(".nav-tab.active");
     var section = activeTab ? activeTab.dataset.section : "tasks";
@@ -2523,6 +2577,7 @@
       var target = document.getElementById("view-" + tab.dataset.section);
       if(target) target.classList.add("active");
       syncHashFromApp();
+      if(tab.dataset.section === "tasks") wsMaybeStandup();
     });
   });
 
@@ -10377,6 +10432,144 @@
   }
 
   // ----- الموزّع الرئيسي -----
+  // ----- أرشيف الصور: صورة صاحب كل مناسبة في معرض واحد قابل للبحث والتصفية والتنزيل -----
+  var galUI = { cat: "", year: "", q: "", limit: 120, missing: false, openId: null, busy: false };
+  function galName(r){ return String(r.fullName || r.husbandName || r.deceasedName || "").trim() || "(بدون اسم)"; }
+  function galMonth(r){ return r[EVENTS_MONTH_FIELD_BY_CATEGORY[r.category]] || ""; }
+  function galRecords(){
+    var q = galUI.q.trim();
+    return loadEventsData().filter(function(r){
+      if(galUI.cat && r.category !== galUI.cat) return false;
+      if(galUI.year && String(r.gregorianYear || "") !== galUI.year) return false;
+      if(galUI.missing ? !!r.photo : !r.photo) return false;
+      if(q && galName(r).indexOf(q) === -1 && String(r.deceasedFamily || "").indexOf(q) === -1) return false;
+      return true;
+    }).sort(function(a, b){ return (b.createdAt || b.updatedAt || 0) - (a.createdAt || a.updatedAt || 0); });
+  }
+  function galCardHTML(r){
+    var cat = EVENTS_CATEGORIES.find(function(c){ return c.key === r.category; });
+    var sub = [cat ? cat.label : "", galMonth(r), r.gregorianYear].filter(Boolean).join(" · ");
+    return '<button type="button" class="gal-card' + (r.photo ? "" : " is-empty") + '" data-gal="' + (r.photo ? "open" : "edit") + '" data-id="' + r.id + '">' +
+      (r.photo ? '<span class="gal-img"><img src="' + escapeHTML(r.photo) + '" alt="" loading="lazy" decoding="async"/></span>' : '<span class="gal-img"><i>' + escapeHTML(initials(galName(r))) + '</i><small>أضف صورة</small></span>') +
+      '<b>' + escapeHTML(galName(r)) + '</b><small>' + escapeHTML(sub) + '</small></button>';
+  }
+  function galGridHTML(){
+    var list = galRecords();
+    if(!list.length) return '<p class="report-empty">' + (galUI.missing ? "كل السجلات المطابقة لها صور." : "لا صور مطابقة.") + '</p>';
+    return '<div class="gal-grid">' + list.slice(0, galUI.limit).map(galCardHTML).join("") + '</div>' +
+      (list.length > galUI.limit ? '<button type="button" class="btn-secondary gal-more" data-gal="more">عرض المزيد (' + (list.length - galUI.limit) + ' متبقية)</button>' : '');
+  }
+  function eventsGalleryHTML(){
+    var all = loadEventsData(), scope = all.filter(function(r){ return !galUI.cat || r.category === galUI.cat; });
+    var withPhoto = scope.filter(function(r){ return r.photo; }).length;
+    var years = uniqueSorted(scope.map(function(r){ return r.gregorianYear; }).filter(Boolean)).reverse();
+    var shown = galRecords().length;
+    var html = '<div class="gal-head"><div class="gal-stat"><b>' + withPhoto + '</b><span>صورة مؤرشفة من ' + scope.length + ' سجلاً</span><span class="ws-prog"><span><i style="width:' + (scope.length ? Math.round(withPhoto / scope.length * 100) : 0) + '%"></i></span>' + (scope.length ? Math.round(withPhoto / scope.length * 100) : 0) + '%</span></div>' +
+      '<div class="gal-tools"><div class="events-search-wrap"><input type="search" class="events-search" id="galSearch" placeholder="بحث بالاسم أو العائلة" value="' + escapeHTML(galUI.q) + '"/></div>' +
+      '<select id="galYear" class="ws-sel"><option value="">كل السنوات</option>' + years.map(function(y){ return '<option value="' + escapeHTML(String(y)) + '"' + (galUI.year === String(y) ? " selected" : "") + '>' + escapeHTML(String(y)) + '</option>'; }).join("") + '</select>' +
+      (galUI.missing ? '' : '<button type="button" class="btn-secondary gal-zip" data-gal="zip"' + (shown ? "" : " disabled") + '><span class="icon">' + TICON.download + '</span> تنزيل الظاهر ZIP</button>') + '</div></div>';
+    html += '<div class="gal-cats"><button type="button" data-gal="cat" data-cat="" class="' + (!galUI.cat ? "on" : "") + '">الكل</button>' +
+      EVENTS_CATEGORIES.map(function(c){ return '<button type="button" data-gal="cat" data-cat="' + c.key + '" class="' + (galUI.cat === c.key ? "on" : "") + '">' + c.label + '</button>'; }).join("") +
+      '<span class="ws-grow"></span><button type="button" data-gal="missing" class="gal-missing' + (galUI.missing ? " on" : "") + '">بلا صورة <i>' + (scope.length - withPhoto) + '</i></button></div>';
+    html += '<p class="gal-count" id="galCount">' + (galUI.missing ? shown + " سجلاً بلا صورة — اضغط أي بطاقة لإضافة صورتها" : shown + " صورة") + '</p><div id="galBody">' + galGridHTML() + '</div>';
+    return html;
+  }
+  function galRefresh(soft){
+    if(eventsUI.tab !== "gallery") return;
+    var body = document.getElementById("galBody"), cnt = document.getElementById("galCount");
+    if(soft && body){ body.innerHTML = galGridHTML(); if(cnt){ var n = galRecords().length; cnt.textContent = galUI.missing ? n + " سجلاً بلا صورة — اضغط أي بطاقة لإضافة صورتها" : n + " صورة"; } return; }
+    var subRoot = document.getElementById("eventsSubRoot");
+    if(subRoot) subRoot.innerHTML = eventsGalleryHTML();
+  }
+  function galFileName(r, used){
+    var base = (galName(r).replace(/[^\w؀-ۿ ]/g, "").trim() || "صورة"), name = base, k = 2;
+    while(used && used[name]) name = base + " " + (k++);
+    if(used) used[name] = true;
+    return name;
+  }
+  function galExt(blob, url){
+    if(blob && /png/.test(blob.type)) return ".png";
+    if(blob && /webp/.test(blob.type)) return ".webp";
+    if(/\.png(\?|$)/i.test(url)) return ".png";
+    return ".jpg";
+  }
+  function galFetchBlob(url){ return fetch(url, { mode: "cors" }).then(function(r){ if(!r.ok) throw new Error("http_" + r.status); return r.blob(); }); }
+  function galDownloadOne(r){
+    galFetchBlob(r.photo).then(function(blob){
+      var a = document.createElement("a");
+      a.download = galFileName(r) + galExt(blob, r.photo);
+      a.href = URL.createObjectURL(blob);
+      a.click();
+      setTimeout(function(){ URL.revokeObjectURL(a.href); }, 5000);
+    }).catch(function(){ window.open(r.photo, "_blank"); });
+  }
+  async function galDownloadZip(btn){
+    if(galUI.busy) return;
+    var list = galRecords().slice(0, 200), files = [], used = {}, failed = 0;
+    if(!list.length) return;
+    galUI.busy = true;
+    var orig = btn.innerHTML;
+    for(var i = 0; i < list.length; i++){
+      btn.textContent = "جارٍ التجهيز " + (i + 1) + " / " + list.length;
+      try {
+        var blob = await galFetchBlob(list[i].photo);
+        var cat = EVENTS_CATEGORIES.find(function(c){ return c.key === list[i].category; });
+        files.push({ name: (galUI.cat ? "" : ((cat ? cat.label : "أخرى") + "/")) + galFileName(list[i], used) + galExt(blob, list[i].photo), data: new Uint8Array(await blob.arrayBuffer()) });
+      } catch(err){ failed++; }
+    }
+    galUI.busy = false;
+    btn.innerHTML = orig;
+    if(!files.length){ showToast("تعذّر تنزيل الصور"); return; }
+    var a = document.createElement("a");
+    a.download = "أرشيف صور المناسبات (" + files.length + ").zip";
+    a.href = URL.createObjectURL(tmplZipStore(files));
+    a.click();
+    setTimeout(function(){ URL.revokeObjectURL(a.href); }, 8000);
+    showToast("نُزّلت " + files.length + " صورة" + (failed ? " — تعذّر " + failed : "") + (galRecords().length > 200 ? " (أول 200 فقط؛ صفِّ لتنزيل الباقي)" : ""));
+  }
+  function galLightbox(id){
+    var ov = document.getElementById("galLightbox");
+    if(!id){ if(ov) ov.classList.remove("open"); galUI.openId = null; return; }
+    var r = findEventRecord(id);
+    if(!r || !r.photo) return;
+    if(!ov){
+      ov = document.createElement("div"); ov.id = "galLightbox"; ov.className = "gal-lb";
+      document.body.appendChild(ov);
+      ov.addEventListener("click", function(e){ if(e.target === ov) galLightbox(null); });
+    }
+    galUI.openId = id;
+    var cat = EVENTS_CATEGORIES.find(function(c){ return c.key === r.category; });
+    var list = galRecords(), idx = list.findIndex(function(x){ return x.id === id; });
+    ov.innerHTML = '<div class="gal-lb-box"><button type="button" class="ws-icon-btn gal-lb-x" data-gal="close">' + WSI.x + '</button>' +
+      '<div class="gal-lb-img"><img src="' + escapeHTML(r.photo) + '" alt=""/></div>' +
+      '<div class="gal-lb-info"><b>' + escapeHTML(galName(r)) + '</b><small>' + escapeHTML([cat ? cat.label : "", galMonth(r), r.gregorianYear].filter(Boolean).join(" · ")) + '</small>' +
+      '<div class="gal-lb-actions"><button type="button" class="btn-primary" data-gal="download" data-id="' + r.id + '">تنزيل الصورة</button>' +
+      (r.photoOrig && r.photoOrig !== r.photo ? '<a class="btn-secondary" href="' + escapeHTML(r.photoOrig) + '" target="_blank" rel="noopener">الصورة الأصلية</a>' : '') +
+      '<button type="button" class="btn-secondary" data-gal="edit" data-id="' + r.id + '">فتح السجل</button></div>' +
+      '<div class="gal-lb-nav">' + (idx > 0 ? '<button type="button" class="ws-pill" data-gal="open" data-id="' + list[idx - 1].id + '">السابق</button>' : '<span></span>') + '<small>' + (idx + 1) + ' / ' + list.length + '</small>' + (idx > -1 && idx < list.length - 1 ? '<button type="button" class="ws-pill" data-gal="open" data-id="' + list[idx + 1].id + '">التالي</button>' : '<span></span>') + '</div></div></div>';
+    ov.classList.add("open");
+  }
+  document.addEventListener("click", function(e){
+    var b = e.target.closest && e.target.closest("[data-gal]");
+    if(!b) return;
+    var act = b.dataset.gal;
+    if(act === "cat"){ galUI.cat = b.dataset.cat; galUI.year = ""; galUI.limit = 120; galRefresh(); }
+    else if(act === "missing"){ galUI.missing = !galUI.missing; galUI.limit = 120; galRefresh(); }
+    else if(act === "more"){ galUI.limit += 120; galRefresh(true); }
+    else if(act === "open") galLightbox(b.dataset.id);
+    else if(act === "close") galLightbox(null);
+    else if(act === "download"){ var r = findEventRecord(b.dataset.id); if(r) galDownloadOne(r); }
+    else if(act === "zip") galDownloadZip(b);
+    else if(act === "edit"){
+      galLightbox(null);
+      var rec = findEventRecord(b.dataset.id);
+      if(rec) openEventModal(rec.category, rec.id);
+    }
+  });
+  document.addEventListener("input", function(e){ if(e.target.id === "galSearch"){ galUI.q = e.target.value; galUI.limit = 120; galRefresh(true); } });
+  document.addEventListener("change", function(e){ if(e.target.id === "galYear"){ galUI.year = e.target.value; galUI.limit = 120; galRefresh(); } });
+  document.addEventListener("keydown", function(e){ if(e.key === "Escape" && galUI.openId) galLightbox(null); });
+
   function eventsSubnavBtnHTML(key, label, icon){
     return '<button type="button" data-action="events-subnav" data-tab="' + key + '" class="' + (eventsUI.tab === key ? "active" : "") + '"><span class="icon">' + icon + '</span>' + label + '</button>';
   }
@@ -10389,6 +10582,7 @@
       eventsSubnavBtnHTML("publish", "مهام النشر", AICON.megaphone) +
       eventsSubnavBtnHTML("templates", "قوالب التصميم", EVICON.grad) +
       eventsSubnavBtnHTML("reports", "التقارير والإحصائيات", AICON.chart) +
+      eventsSubnavBtnHTML("gallery", "أرشيف الصور", TPI.image) +
       eventsSubnavBtnHTML("trash", "سلة المهملات" + (loadEventsTrash().length ? " (" + loadEventsTrash().length + ")" : ""), ICON_DELETE) +
     '</div><div id="eventsSubRoot"></div>';
     setHTML(root, html);
@@ -10397,6 +10591,7 @@
     else if(eventsUI.tab === "publish") setHTML(subRoot, eventsPublishHTML());
     else if(eventsUI.tab === "templates") setHTML(subRoot, tmplManagerHTML());
     else if(eventsUI.tab === "reports") setHTML(subRoot, eventsReportsHTML());
+    else if(eventsUI.tab === "gallery") setHTML(subRoot, eventsGalleryHTML());
     else if(eventsUI.tab === "trash") setHTML(subRoot, eventsTrashHTML());
     else setHTML(subRoot, eventsDashboardHTML());
   }
@@ -12546,7 +12741,11 @@
     var tasksView = document.getElementById("view-tasks");
     if(!tasksView || !tasksView.classList.contains("active")) return;
     wsUI.standupShown = true;
-    setTimeout(function(){ if(!wsUI.drawer && !ws.standups.some(function(s){ return s.userId === currentUser.id; })) wsOpenDrawer("standup", "auto"); }, 900);
+    setTimeout(function(){
+      var tv = document.getElementById("view-tasks");
+      if(!tv || !tv.classList.contains("active")){ wsUI.standupShown = false; return; }   // انتقل لقسم آخر قبل ظهورها — تُعرض عند عودته للمهام
+      if(!wsUI.drawer && !ws.standups.some(function(s){ return s.userId === currentUser.id; })) wsOpenDrawer("standup", "auto");
+    }, 900);
   }
   // ---------- التفاعل ----------
   function wsCurTask(){ return wsUI.drawer === "task" ? ws.tasks.find(function(x){ return x.id === wsUI.drawerId; }) : null; }
