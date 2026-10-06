@@ -7535,7 +7535,7 @@
   // تُعدّ قيمة واحدة وتُعرض بالصيغة المعتمدة (الموجودة في قائمة الخيارات، وإلا الأكثر تكراراً). تعمل على أي هفوة جديدة تلقائياً
   function evNormKey(v){
     return String(v).replace(/[\u064B-\u0652\u0640]/g, "").replace(/[أإآ]/g, "ا").replace(/ى/g, "ي").replace(/ة/g, "ه")
-      .replace(/(^|\s)ال(?=\S{2})/g, "$1").replace(/\s+/g, "").toLowerCase();
+      .replace(/(^|\s)(و\s*)?ال(?=\S{2})/g, "$1$2").replace(/\s+/g, "").toLowerCase();
   }
   var EV_NORM_EXTRA = { deaths: ["condolenceStart"] }, _evUnifiedFor = null, _evUnifiedLen = -1;
   function evUnifyVariants(){
