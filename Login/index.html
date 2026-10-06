@@ -2055,6 +2055,14 @@
   .ws-strip-actions{display:inline-flex; gap:8px; flex-wrap:wrap; justify-content:flex-end;}
   .ws-pill--deep{background:var(--ink); border-color:var(--ink); color:#fff;}
   .ws-pill--deep:hover{background:var(--teal-dark); border-color:var(--teal-dark);}
+  /* بنود التقريرين في صلاحيات الموظف */
+  .perm-items{margin-top:12px; padding-top:10px; border-top:1px dashed var(--line);}
+  .perm-items-head{display:flex; align-items:center; gap:12px; margin-bottom:8px; font-size:12.500px; color:var(--ink-2);}
+  .perm-items-head > span{flex:1; font-weight:600;}
+  .perm-items-head i{font-style:normal; font-weight:500; font-size:11.500px; color:var(--teal-dark); background:var(--teal-tint); border-radius:999px; padding:1px 9px; margin-inline-start:6px;}
+  .perm-card:not(.is-on) .perm-items{opacity:.45;}
+  .tf-chip--item input:checked + span{background:var(--teal); color:#fff;}
+  .report-locked-note{font-size:12.500px; color:var(--ink-soft); background:rgba(20,28,27,.04); border:1px dashed var(--line); border-radius:16px; padding:12px 16px; margin:4px 0 0; text-align:center;}
 
 </style>
 </head>
@@ -2632,6 +2640,19 @@
     });
     return out;
   }
+  // بنود التقريرين: تُفتح وتُقفل لكل موظف حسب اختصاصه. وجود العلامة "<القسم>.scoped" يعني أن البنود محددة صراحةً؛
+  // غيابها (الحسابات السابقة) يعني أن كل البنود مفتوحة كما كانت
+  function permItems(gkey){ return gkey === "annual" ? REPORT_CATEGORIES : gkey === "executive" ? EXEC_CATEGORIES : null; }
+  function empSecOpen(emp, gkey, key){
+    if(!emp) return false;
+    if(emp.role === "admin") return true;
+    var p = empPerms(emp);
+    if(p.indexOf(gkey + ".view") === -1) return false;
+    if(p.indexOf(gkey + ".scoped") === -1) return true;
+    return p.indexOf(gkey + ".s." + key) > -1;
+  }
+  function reportSecOpen(gkey, key){ return empSecOpen(currentUser, gkey, key); }
+  function lockedNoteHTML(n){ return n ? '<p class="report-locked-note">' + n + ' بنود أخرى مقفلة — ليست ضمن اختصاصك. للاطلاع عليها تواصل مع الأدمن.</p>' : ''; }
   function empCan(emp, perm){ return !!emp && (emp.role === "admin" || empPerms(emp).indexOf(perm) > -1); }
   function can(perm){ return empCan(currentUser, perm); }
   function kindLabel(role){ var k = EMP_KINDS.find(function(x){ return x.k === role; }); return k ? k.l : "موظف"; }
@@ -2675,7 +2696,13 @@
         var view = g.perms[0], on = perms.indexOf(view.k) > -1, n = g.perms.filter(function(p){ return perms.indexOf(p.k) > -1; }).length;
         return '<div class="perm-card' + (on ? " is-on" : "") + '" data-perm-group="' + g.key + '"><div class="perm-card-head"><label class="perm-switch"><input type="checkbox" class="emp-perm-cb perm-master" value="' + view.k + '"' + (on ? " checked" : "") + '/><i></i><b>' + g.label + '</b></label>' +
           '<small>' + (on ? n + " من " + g.perms.length : "مغلق") + '</small>' + (g.perms.length > 2 ? '<button type="button" class="link-btn" data-perm-act="all" data-g="' + g.key + '">الكل</button>' : '') + '</div>' +
-          (g.perms.length > 1 ? '<div class="tf-chips">' + g.perms.slice(1).map(function(p){ return '<label class="tf-chip"><input type="checkbox" class="emp-perm-cb" value="' + p.k + '"' + (perms.indexOf(p.k) > -1 ? " checked" : "") + (on ? "" : " disabled") + '/><span>' + p.l + '</span></label>'; }).join("") + '</div>' : '') + '</div>';
+          (g.perms.length > 1 ? '<div class="tf-chips">' + g.perms.slice(1).map(function(p){ return '<label class="tf-chip"><input type="checkbox" class="emp-perm-cb" value="' + p.k + '"' + (perms.indexOf(p.k) > -1 ? " checked" : "") + (on ? "" : " disabled") + '/><span>' + p.l + '</span></label>'; }).join("") + '</div>' : '') +
+          (permItems(g.key) ? (function(){
+            var scoped = perms.indexOf(g.key + ".scoped") > -1, items = permItems(g.key);
+            var openN = items.filter(function(c){ return !scoped || perms.indexOf(g.key + ".s." + c.key) > -1; }).length;
+            return '<div class="perm-items"><div class="perm-items-head"><span>البنود المفتوحة له <i>' + (on ? openN + " من " + items.length : "—") + '</i></span><button type="button" class="link-btn" data-perm-act="items-all" data-g="' + g.key + '">فتح الكل</button><button type="button" class="link-btn" data-perm-act="items-none" data-g="' + g.key + '">قفل الكل</button></div>' +
+              '<div class="tf-chips">' + items.map(function(c){ return '<label class="tf-chip tf-chip--item"><input type="checkbox" class="emp-perm-cb perm-item" value="' + g.key + '.s.' + c.key + '"' + ((!scoped || perms.indexOf(g.key + ".s." + c.key) > -1) ? " checked" : "") + (on ? "" : " disabled") + '/><span>' + c.label + '</span></label>'; }).join("") + '</div></div>';
+          })() : '') + '</div>';
       }).join("");
   }
   function collectEmpPerms(){
@@ -2687,6 +2714,7 @@
       if(!master || !master.checked) return;
       var cbs = card.querySelectorAll(".emp-perm-cb:checked");
       for(var i = 0; i < cbs.length; i++) out.push(cbs[i].value);
+      if(permItems(g.key)) out.push(g.key + ".scoped");
     });
     return out;
   }
@@ -2706,6 +2734,7 @@
       out.push(master.value);
       var cbs = card.querySelectorAll(".emp-perm-cb:not(.perm-master):checked");
       for(var i = 0; i < cbs.length; i++) out.push(cbs[i].value);
+      if(permItems(g.key)) out.push(g.key + ".scoped");
     });
     return out;
   }
@@ -2716,6 +2745,13 @@
     if(b.dataset.permAct === "preset") cur = (KIND_PRESETS[role] || []).slice();
     else if(b.dataset.permAct === "none") cur = [];
     else if(b.dataset.permAct === "all"){ var g = PERM_GROUPS.find(function(x){ return x.key === b.dataset.g; }); g.perms.forEach(function(p){ if(cur.indexOf(p.k) === -1) cur.push(p.k); }); }
+    else if(b.dataset.permAct === "items-all" || b.dataset.permAct === "items-none"){
+      var gk = b.dataset.g, pre = gk + ".s.";
+      cur = cur.filter(function(k){ return k.indexOf(pre) !== 0; });
+      if(cur.indexOf(gk + ".view") === -1) cur.push(gk + ".view");
+      if(cur.indexOf(gk + ".scoped") === -1) cur.push(gk + ".scoped");
+      if(b.dataset.permAct === "items-all") permItems(gk).forEach(function(c){ cur.push(pre + c.key); });
+    }
     renderEmpPerms(cur, role);
   });
 
@@ -2897,7 +2933,8 @@
         ? '<span class="sec-badge">كل الصلاحيات</span>'
         : (PERM_GROUPS.filter(function(g){ return ep.indexOf(g.perms[0].k) > -1; }).map(function(g){
               var n = g.perms.filter(function(p){ return ep.indexOf(p.k) > -1; }).length;
-              return '<span class="sec-badge" title="' + g.perms.filter(function(p){ return ep.indexOf(p.k) > -1; }).map(function(p){ return p.l; }).join("، ") + '">' + g.label + (g.perms.length > 1 ? ' <i>' + n + '/' + g.perms.length + '</i>' : '') + '</span>';
+              var its = permItems(g.key), itOpen = its ? its.filter(function(c){ return empSecOpen(emp, g.key, c.key); }) : null;
+              return '<span class="sec-badge" title="' + g.perms.filter(function(p){ return ep.indexOf(p.k) > -1; }).map(function(p){ return p.l; }).join("، ") + (its ? " — البنود: " + (itOpen.map(function(c){ return c.label; }).join("، ") || "لا شيء") : "") + '">' + g.label + (its ? ' <i>' + itOpen.length + '/' + its.length + ' بند</i>' : (g.perms.length > 1 ? ' <i>' + n + '/' + g.perms.length + '</i>' : '')) + '</span>';
             }).join("") || '<span style="color:var(--ink-soft); font-size:12px;">لا شيء</span>');
       tr.innerHTML =
         '<td>' + escapeHTML(emp.name) + '</td>' +
@@ -4821,6 +4858,8 @@
     var depts = distinctDepts();
     var dept = currentReportDept();
     var reportSettings = loadReportSettings();
+    var annualLocked = 0;
+    REPORT_CATEGORIES.forEach(function(c){ if(reportSettings[c.key + "Enabled"] && !reportSecOpen("annual", c.key)){ reportSettings[c.key + "Enabled"] = false; annualLocked++; } });
 
     var html = "";
 
@@ -4896,6 +4935,7 @@
         html += '<div class="report-section-card"><h3><span class="icon">' + AICON.note + '</span>ملاحظات إضافية' + respBadgeHTML("notes") + '</h3>' +
           '<textarea id="reportNotesInput" data-rec="' + rec.id + '" rows="4" placeholder="أي تفاصيل إضافية تريد إضافتها للتقرير..." style="width:100%; padding:10px 12px; border:1.5px solid var(--line); border-radius:10px; font-size:13px; font-family:inherit; resize:vertical;">' + escapeHTML(rec.notes || "") + '</textarea></div>';
       }
+      html += lockedNoteHTML(annualLocked);
     }
     html += '</div>';
 
@@ -5677,6 +5717,8 @@
     var depts = distinctDepts();
     var dept = currentExecDept();
     var settings = loadExecSettings();
+    var execLocked = 0;
+    EXEC_CATEGORIES.forEach(function(c){ if(settings[c.key + "Enabled"] && !reportSecOpen("executive", c.key)){ settings[c.key + "Enabled"] = false; execLocked++; } });
 
     var html = '<div class="dept-selector">' +
       '<label>السنة</label><input type="number" id="execYearInput" value="' + execUI.year + '" style="width:100px;"/>' +
@@ -5829,6 +5871,7 @@
       html += '<div class="report-section-card"><h3><span class="icon">' + AICON.note + '</span>ملاحظات إضافية' + execRespBadgeHTML("notes") + '</h3>' +
         '<textarea id="execNotesInput" data-rec="' + rec.id + '" rows="4" placeholder="أي تفاصيل إضافية..." style="width:100%; padding:10px 12px; border:1.5px solid var(--line); border-radius:10px; font-size:13px; font-family:inherit; resize:vertical;">' + escapeHTML(rec.notes || "") + '</textarea></div>';
     }
+    html += lockedNoteHTML(execLocked);
 
     setHTML(root, html);
   }
