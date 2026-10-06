@@ -413,14 +413,14 @@
   }
   // آخر عدد معروف يُحفظ في المتصفح: يُعرض لو تعذّر الجلب (مثلاً عند استنفاد حصة القراءة اليومية)،
   // ولا يُعاد الجلب إلا بعد ساعة تخفيفاً للقراءات
-  // رابط «صدقة جارية» يحدده الأدمن من لوحة التحكم — يُجلب مرة كل 6 ساعات
+  // رابط «صدقة جارية» يحدده الأدمن من لوحة التحكم — يُجلب مرة كل 10 دقائق على الأكثر
   (function(){
     var a = document.getElementById("deathsGive"), GK = "zaraGiveDeaths", g = {};
     if(!a || !window.fetch) return;
     try{ g = JSON.parse(localStorage.getItem(GK) || "{}") || {}; }catch(e){ g = {}; }
     function apply(u){ if(u && /^https:\/\//i.test(u)) a.href = u + (u.indexOf("?") < 0 ? "?" : "&") + "utm_source=gzara&utm_medium=occasion&utm_campaign=deaths"; }
     apply(g.u);
-    if(g.t && Date.now() - g.t < 21600000) return;
+    if(g.t && Date.now() - g.t < 600000) return;
     fetch("https://firestore.googleapis.com/v1/projects/awamia-zara/databases/(default)/documents/eventsMeta/publicFormConfig?mask.fieldPaths=giveLinks.deaths&key=" + KEY)
       .then(function(r){ return r.ok ? r.json() : null; }).then(function(d){
         if(!d) return;
