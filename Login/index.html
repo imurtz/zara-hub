@@ -1980,6 +1980,42 @@
     .gal-lb-info{padding:18px 18px calc(22px + env(safe-area-inset-bottom, 0px));}
   }
 
+  /* ===================== لوحة التحكم: الموظف، التصنيف، الصلاحيات ===================== */
+  .modal.modal-emp{max-width:680px; width:100%;}
+  .emp-grid{display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:0 14px;}
+  .emp-pw{display:flex; gap:8px;}
+  .emp-pw input{flex:1; min-width:0; font-variant-numeric:tabular-nums; letter-spacing:.5px;}
+  .emp-pw .btn-secondary{flex:none; padding:10px 16px; white-space:nowrap;}
+  .perm-bar{display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-bottom:10px;}
+  .perm-bar > span{flex:1; min-width:160px; font-size:12.500px; color:var(--ink-soft);}
+  .perm-admin-note{font-size:13px; color:var(--teal-dark); background:var(--teal-tint); border-radius:16px; padding:12px 16px; margin:0;}
+  .perm-card{border:1px solid var(--line); border-radius:18px; padding:12px 14px; margin-bottom:8px; background:#fff; transition:border-color .25s ease, background .25s ease;}
+  .perm-card.is-on{border-color:rgba(75,112,113,.45); background:#FBFDFC;}
+  .perm-card-head{display:flex; align-items:center; gap:10px;}
+  .perm-card-head small{font-size:11.500px; color:var(--ink-soft); margin-inline-start:auto;}
+  .perm-card .tf-chips{margin-top:10px;}
+  .perm-card:not(.is-on) .tf-chips{opacity:.45;}
+  .perm-card .perm-switch{display:inline-flex; align-items:center; gap:10px; cursor:pointer; margin:0; position:relative;}
+  .perm-card label{margin:0;}
+  .perm-switch input{position:absolute; opacity:0; pointer-events:none;}
+  .perm-switch i{display:block; position:relative; width:38px; height:22px; flex:none; border-radius:999px; background:rgba(20,28,27,.16); transition:background .25s ease;}
+  .perm-switch i::after{content:""; position:absolute; top:3px; inset-inline-start:3px; width:16px; height:16px; border-radius:50%; background:#fff; transition:inset-inline-start .25s var(--ease);}
+  .perm-switch input:checked + i{background:var(--teal);}
+  .perm-switch input:checked + i::after{inset-inline-start:19px;}
+  .perm-switch b{font-size:14px; font-weight:600; color:var(--ink);}
+  .role-pill.chair{background:var(--ink); color:#fff;}
+  .role-pill.board{background:#E6E3EE; color:#4C4470;}
+  .role-pill.volunteer{background:#E8F1E4; color:#4A6B3A;}
+  .sec-badge i{font-style:normal; font-size:10.500px; opacity:.7; margin-inline-start:3px;}
+  .icon-btn.pw-btn{color:#1FA855;}
+  .icon-btn.pw-btn:hover{background:#E6F6EC;}
+  /* قراءة فقط للتقارير لمن لا يملك صلاحية التعديل */
+  .perm-ro .report-section-card input, .perm-ro .report-section-card textarea, .perm-ro .report-section-card select{pointer-events:none; background-color:transparent !important;}
+  .perm-ro [data-action^="add-"], .perm-ro [data-action^="delete-"], .perm-ro [data-action^="save-"], .perm-ro [data-action^="remove-"], .perm-ro input[type="file"], .perm-ro .add-row, .perm-ro .task-icon-btn{display:none !important;}
+  .ws-links .ws-standup-btn{background:var(--ink); color:#fff; border-color:var(--ink);}
+  .ws-links .ws-standup-btn:hover{background:#000; color:#fff;}
+  @media (max-width:640px){ .emp-grid{grid-template-columns:minmax(0, 1fr);} }
+
 </style>
 </head>
 <body>
@@ -2148,9 +2184,9 @@
                   <tr>
                     <th>الاسم</th>
                     <th>البريد الإلكتروني</th>
-                    <th>الصلاحية</th>
+                    <th>التصنيف</th>
                     <th>القسم</th>
-                    <th>الأقسام المتاحة</th>
+                    <th>الصلاحيات</th>
                     <th title="هل انتقل هذا الموظف لتسجيل دخول آمن عبر Firebase بعد آخر تحديث؟">الدخول الآمن</th>
                     <th></th>
                   </tr>
@@ -2226,36 +2262,45 @@
 
 <!-- ===== Employee modal ===== -->
 <div class="modal-overlay" id="empModalOverlay">
-  <div class="modal">
+  <div class="modal modal-emp">
     <h3 id="empModalTitle">إضافة موظف جديد</h3>
     <form id="empForm">
       <input type="hidden" id="empId" />
-      <div class="field">
-        <label>الاسم الكامل</label>
-        <input type="text" id="empName" required />
+      <div class="emp-grid">
+        <div class="field">
+          <label>الاسم الكامل</label>
+          <input type="text" id="empName" required />
+        </div>
+        <div class="field">
+          <label>التصنيف</label>
+          <select id="empRole">
+            <option value="employee">موظف</option>
+            <option value="admin">أدمن</option>
+            <option value="chair">رئيس مجلس الإدارة</option>
+            <option value="board">عضو مجلس الإدارة</option>
+            <option value="volunteer">متطوع</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>البريد الإلكتروني</label>
+          <input type="email" id="empEmail" dir="ltr" required />
+        </div>
+        <div class="field">
+          <label>رقم الجوال (واتساب)</label>
+          <input type="tel" id="empPhone" dir="ltr" placeholder="05xxxxxxxx" />
+        </div>
+        <div class="field">
+          <label>كلمة المرور</label>
+          <div class="emp-pw"><input type="text" id="empPassword" dir="ltr" required /><button type="button" class="btn-secondary" id="empGenPwBtn">توليد</button></div>
+        </div>
+        <div class="field">
+          <label>القسم / الجهة</label>
+          <input type="text" id="empDept" placeholder="مثال: الإعلام، الموارد البشرية..." />
+        </div>
       </div>
       <div class="field">
-        <label>البريد الإلكتروني</label>
-        <input type="email" id="empEmail" required />
-      </div>
-      <div class="field">
-        <label>الرقم السري</label>
-        <input type="text" id="empPassword" required />
-      </div>
-      <div class="field">
-        <label>القسم</label>
-        <input type="text" id="empDept" placeholder="مثال: الإعلام، الموارد البشرية..." />
-      </div>
-      <div class="field">
-        <label>الصلاحية</label>
-        <select id="empRole">
-          <option value="employee">موظف</option>
-          <option value="admin">أدمن</option>
-        </select>
-      </div>
-      <div class="field">
-        <label>الأقسام المسموح فتحها</label>
-        <div class="sections-check-group" id="empSectionsGroup"></div>
+        <label>الصلاحيات</label>
+        <div id="empPermsGroup"></div>
       </div>
       <div class="modal-actions">
         <button type="button" class="btn-secondary" id="empCancelBtn">إلغاء</button>
@@ -2373,6 +2418,14 @@
       local.forEach(function(emp){ db.collection("employees").doc(emp.id).set(emp); });
     }
     if(typeof employees !== "undefined") employees = loadEmployees();
+    // تغيّرت صلاحيات المستخدم الحالي من جهاز الأدمن ← تُطبَّق فوراً بلا إعادة دخول
+    if(typeof currentUser !== "undefined" && currentUser){
+      var meNow = merged.find(function(e){ return e.id === currentUser.id; });
+      if(meNow && JSON.stringify([meNow.role, meNow.perms, meNow.sections]) !== JSON.stringify([currentUser.role, currentUser.perms, currentUser.sections])){
+        currentUser = meNow;
+        try{ applySectionPermissions(currentUser); applyGlobalPerms(); renderEventsHub(); wsRender(); }catch(e){}
+      }
+    }
   }, function(err){ console.error("employees snapshot error", err); });
   function getSession(){
     try{ return JSON.parse(sessionStorage.getItem(SESSION_KEY)); }catch(e){ return null; }
@@ -2409,7 +2462,7 @@
     loginScreen.style.display = "none";
     appScreen.style.display = "flex";
     document.getElementById("userName").textContent = emp.name;
-    document.getElementById("userRoleLabel").textContent = emp.role === "admin" ? "أدمن" : (emp.dept || "موظف");
+    document.getElementById("userRoleLabel").textContent = emp.role === "admin" ? "أدمن" : (emp.dept || kindLabel(emp.role));
     document.getElementById("userAvatar").textContent = initials(emp.name);
     var adminBtn = document.getElementById("adminTabBtn");
     if(emp.role === "admin"){
@@ -2432,6 +2485,7 @@
     renderEventsHub();
     renderEventsSettingsPanel();
     document.getElementById("chatFabBtn").style.display = "flex";
+    applyGlobalPerms();
     applyHashToApp();
   }
 
@@ -2481,9 +2535,185 @@
   });
 
   // ===== section-level permissions =====
+  // ===== التصنيفات والصلاحيات الدقيقة =====
+  // role: تصنيف الحساب — "admin" وحده يملك كل شيء ولوحة التحكم؛ الباقي تُحدَّد صلاحياته بالتفصيل في perms
+  var EMP_KINDS = [
+    { k: "employee", l: "موظف" }, { k: "admin", l: "أدمن" }, { k: "chair", l: "رئيس مجلس الإدارة" },
+    { k: "board", l: "عضو مجلس الإدارة" }, { k: "volunteer", l: "متطوع" }
+  ];
+  var PERM_GROUPS = [
+    { key: "tasks", label: "المهام الوظيفية", perms: [
+      { k: "tasks.view", l: "فتح القسم ومتابعة المهام" },
+      { k: "tasks.edit", l: "إنشاء مهامه وتحديثها والعمل ضمن فرق المشاريع" },
+      { k: "tasks.projects", l: "إنشاء مشاريع وتشكيل فرقها" },
+      { k: "tasks.manage", l: "إدارة كل المهام والمشاريع والفعاليات وعبء العمل" }
+    ] },
+    { key: "events", label: "المناسبات الاجتماعية", perms: [
+      { k: "events.view", l: "فتح القسم وعرض السجلات" },
+      { k: "events.add", l: "إضافة سجلات" },
+      { k: "events.edit", l: "تعديل السجلات" },
+      { k: "events.delete", l: "حذف السجلات" },
+      { k: "events.approve", l: "قبول ورفض التسجيلات" },
+      { k: "events.publish", l: "مهام النشر" },
+      { k: "events.design", l: "توليد التصاميم" },
+      { k: "events.templates", l: "إدارة قوالب التصميم" },
+      { k: "events.reports", l: "التقارير والإحصائيات" },
+      { k: "events.gallery", l: "أرشيف الصور" },
+      { k: "events.excel", l: "استيراد وتصدير Excel" },
+      { k: "events.sync", l: "مزامنة أخبار الوفيات" },
+      { k: "events.trash", l: "سلة المهملات" }
+    ] },
+    { key: "annual", label: "التقرير السنوي", perms: [
+      { k: "annual.view", l: "فتح التقرير" }, { k: "annual.edit", l: "تعديل محتواه" }
+    ] },
+    { key: "executive", label: "التقرير التنفيذي", perms: [
+      { k: "executive.view", l: "فتح التقرير" }, { k: "executive.edit", l: "تعديل محتواه" }
+    ] },
+    { key: "chat", label: "دردشة الموظفين", perms: [
+      { k: "chat.use", l: "استخدام الدردشة" }
+    ] }
+  ];
+  var PERM_ALL = PERM_GROUPS.reduce(function(a, g){ return a.concat(g.perms.map(function(p){ return p.k; })); }, []);
+  var KIND_PRESETS = {
+    employee: ["tasks.view", "tasks.edit", "tasks.projects", "events.view", "events.add", "events.edit", "events.publish", "events.design", "events.reports", "events.gallery", "chat.use"],
+    chair: ["tasks.view", "events.view", "events.reports", "events.gallery", "annual.view", "executive.view", "chat.use"],
+    board: ["tasks.view", "events.view", "events.reports", "events.gallery", "annual.view", "executive.view", "chat.use"],
+    volunteer: ["tasks.view", "tasks.edit", "chat.use"]
+  };
+  // الحسابات السابقة (قبل الصلاحيات الدقيقة) كانت تملك كل ما في أقسامها عدا القبول/الرفض وإدارة كل المهام — نحافظ على ذلك
+  function empPerms(emp){
+    if(!emp) return [];
+    if(emp.role === "admin") return PERM_ALL;
+    if(Array.isArray(emp.perms)) return emp.perms;
+    var out = ["chat.use"];
+    (emp.sections || []).forEach(function(sk){
+      var g = PERM_GROUPS.find(function(x){ return x.key === sk; });
+      if(g) g.perms.forEach(function(p){ if(p.k !== "events.approve" && p.k !== "tasks.manage") out.push(p.k); });
+    });
+    return out;
+  }
+  function empCan(emp, perm){ return !!emp && (emp.role === "admin" || empPerms(emp).indexOf(perm) > -1); }
+  function can(perm){ return empCan(currentUser, perm); }
+  function kindLabel(role){ var k = EMP_KINDS.find(function(x){ return x.k === role; }); return k ? k.l : "موظف"; }
+  // أزرار وإجراءات قسم المناسبات ← الصلاحية المطلوبة لكل منها
+  var EVENT_ACTION_PERMS = {
+    "open-add-event": "events.add", "edit-event": "events.edit", "delete-event": "events.delete",
+    "approve-event": "events.approve", "reject-event": "events.approve", "delete-all-events": "admin",
+    "export-events-excel": "events.excel", "open-events-import": "events.excel", "open-events-import-update": "events.excel",
+    "deaths-sync-now": "events.sync", "generate-design": "events.design",
+    "edit-design-tmpl": "events.templates", "open-tmpl-copy": "events.templates", "delete-design-tmpl": "events.templates",
+    "open-uni-logos": "events.templates", "open-event-templates": "events.templates",
+    "set-publish-status": "events.publish", "bulk-set-publish-status": "events.publish", "share-publish-whatsapp": "events.publish",
+    "restore-event-trash": "events.trash", "permanent-delete-event-trash": "events.trash", "empty-events-trash": "events.trash"
+  };
+  var EVENT_TAB_PERMS = { publish: "events.publish", templates: "events.templates", reports: "events.reports", gallery: "events.gallery", trash: "events.trash" };
+  function permAllows(need){ return !need || (need === "admin" ? (currentUser && currentUser.role === "admin") : can(need)); }
+  function applyEventPermsToDOM(root){
+    if(!root || !currentUser || currentUser.role === "admin") return;
+    var els = root.querySelectorAll("[data-action]");
+    for(var i = 0; i < els.length; i++){
+      if(!permAllows(EVENT_ACTION_PERMS[els[i].dataset.action])) els[i].style.display = "none";
+    }
+  }
+  // قراءة فقط للتقارير لمن لا يملك صلاحية التعديل، وإظهار الدردشة حسب صلاحيتها
+  function applyGlobalPerms(){
+    if(!currentUser) return;
+    var a = document.getElementById("annualReportRoot"), x = document.getElementById("execReportRoot"), fab = document.getElementById("chatFabBtn");
+    if(a) a.classList.toggle("perm-ro", !can("annual.edit"));
+    if(x) x.classList.toggle("perm-ro", !can("executive.edit"));
+    if(fab) fab.style.display = can("chat.use") ? "flex" : "none";
+  }
+
+  // ----- نافذة الموظف: الصلاحيات كبطاقات لكل قسم -----
+  function renderEmpPerms(perms, role){
+    var group = document.getElementById("empPermsGroup");
+    if(!group) return;
+    if(role === "admin"){ group.innerHTML = '<p class="perm-admin-note">الأدمن يملك كل الصلاحيات ولوحة التحكم — لا حاجة لتحديدها.</p>'; return; }
+    perms = perms || [];
+    group.innerHTML = '<div class="perm-bar"><span>حدّد ما يستطيعه داخل كل قسم</span><button type="button" class="ws-pill" data-perm-act="preset">صلاحيات «' + kindLabel(role) + '» المقترحة</button><button type="button" class="ws-pill" data-perm-act="none">إلغاء الكل</button></div>' +
+      PERM_GROUPS.map(function(g){
+        var view = g.perms[0], on = perms.indexOf(view.k) > -1, n = g.perms.filter(function(p){ return perms.indexOf(p.k) > -1; }).length;
+        return '<div class="perm-card' + (on ? " is-on" : "") + '" data-perm-group="' + g.key + '"><div class="perm-card-head"><label class="perm-switch"><input type="checkbox" class="emp-perm-cb perm-master" value="' + view.k + '"' + (on ? " checked" : "") + '/><i></i><b>' + g.label + '</b></label>' +
+          '<small>' + (on ? n + " من " + g.perms.length : "مغلق") + '</small>' + (g.perms.length > 2 ? '<button type="button" class="link-btn" data-perm-act="all" data-g="' + g.key + '">الكل</button>' : '') + '</div>' +
+          (g.perms.length > 1 ? '<div class="tf-chips">' + g.perms.slice(1).map(function(p){ return '<label class="tf-chip"><input type="checkbox" class="emp-perm-cb" value="' + p.k + '"' + (perms.indexOf(p.k) > -1 ? " checked" : "") + (on ? "" : " disabled") + '/><span>' + p.l + '</span></label>'; }).join("") + '</div>' : '') + '</div>';
+      }).join("");
+  }
+  function collectEmpPerms(){
+    var out = [];
+    PERM_GROUPS.forEach(function(g){
+      var card = document.querySelector('[data-perm-group="' + g.key + '"]');
+      if(!card) return;
+      var master = card.querySelector(".perm-master");
+      if(!master || !master.checked) return;
+      var cbs = card.querySelectorAll(".emp-perm-cb:checked");
+      for(var i = 0; i < cbs.length; i++) out.push(cbs[i].value);
+    });
+    return out;
+  }
+  document.addEventListener("change", function(e){
+    var el = e.target;
+    if(el.id === "empRole"){ renderEmpPerms(el.value === "admin" ? [] : (document.getElementById("empId").value ? collectEmpPerms() : KIND_PRESETS[el.value] || []), el.value); return; }
+    if(el.classList && el.classList.contains("emp-perm-cb")) renderEmpPerms(collectEmpPermsLoose(), document.getElementById("empRole").value);
+  });
+  // أثناء التحرير: نقرأ كل المحدَّد (حتى لو أُغلق القسم للتو) ثم نسقط ما تحت قسم مغلق
+  function collectEmpPermsLoose(){
+    var out = [];
+    PERM_GROUPS.forEach(function(g){
+      var card = document.querySelector('[data-perm-group="' + g.key + '"]');
+      if(!card) return;
+      var master = card.querySelector(".perm-master");
+      if(!master || !master.checked) return;
+      out.push(master.value);
+      var cbs = card.querySelectorAll(".emp-perm-cb:not(.perm-master):checked");
+      for(var i = 0; i < cbs.length; i++) out.push(cbs[i].value);
+    });
+    return out;
+  }
+  document.addEventListener("click", function(e){
+    var b = e.target.closest && e.target.closest("[data-perm-act]");
+    if(!b) return;
+    var role = document.getElementById("empRole").value, cur = collectEmpPermsLoose();
+    if(b.dataset.permAct === "preset") cur = (KIND_PRESETS[role] || []).slice();
+    else if(b.dataset.permAct === "none") cur = [];
+    else if(b.dataset.permAct === "all"){ var g = PERM_GROUPS.find(function(x){ return x.key === b.dataset.g; }); g.perms.forEach(function(p){ if(cur.indexOf(p.k) === -1) cur.push(p.k); }); }
+    renderEmpPerms(cur, role);
+  });
+
+  // ----- كلمة مرور جديدة وإرسالها للموظف بالواتساب -----
+  function genPassword(){
+    var chars = "abcdefghjkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789", out = "", rnd = new Uint32Array(10);
+    (window.crypto || window.msCrypto).getRandomValues(rnd);
+    for(var i = 0; i < 10; i++) out += chars.charAt(rnd[i] % chars.length);
+    return out;
+  }
+  function waPhone(p){
+    var d = String(p || "").replace(/[^\d]/g, "");
+    if(!d) return "";
+    if(d.indexOf("00") === 0) d = d.slice(2);
+    if(d.indexOf("05") === 0 && d.length === 10) d = "966" + d.slice(1);
+    else if(d.indexOf("5") === 0 && d.length === 9) d = "966" + d;
+    return d;
+  }
+  function empResetPassword(id){
+    employees = loadEmployees();
+    var idx = employees.findIndex(function(x){ return x.id === id; });
+    if(idx === -1) return;
+    var emp = employees[idx];
+    if(!confirm("توليد كلمة مرور جديدة لـ " + emp.name + " وإرسالها بالواتساب؟\nكلمة المرور الحالية ستتوقف عن العمل.")) return;
+    var pw = genPassword();
+    employees[idx] = Object.assign({}, emp, { password: pw, passwordSetAt: Date.now() });
+    saveEmployees(employees);
+    renderEmployeeTable();
+    var msg = "مرحباً " + emp.name + "،\nبيانات دخولك إلى بوابة زارة:\n\nالرابط: https://gzara.org/Login/\nالبريد الإلكتروني: " + emp.email + "\nكلمة المرور: " + pw + "\n\nيُرجى عدم مشاركة هذه البيانات مع أحد.";
+    try{ copyToClipboard(msg); }catch(e){}
+    var phone = waPhone(emp.phone);
+    window.open("https://wa.me/" + phone + "?text=" + encodeURIComponent(msg), "_blank");
+    showToast(phone ? "وُلّدت كلمة المرور ونُسخت الرسالة — أرسلها من نافذة الواتساب" : "وُلّدت كلمة المرور — لا يوجد رقم جوال مسجّل، اختر جهة الاتصال في الواتساب");
+  }
   function empSections(emp){
     if(emp.role === "admin") return SECTION_DEFS.map(function(s){ return s.key; });
-    return emp.sections || [];
+    var perms = empPerms(emp);
+    return SECTION_DEFS.map(function(s){ return s.key; }).filter(function(k){ return perms.indexOf(k + ".view") > -1; });
   }
 
   function applySectionPermissions(emp){
@@ -2533,6 +2763,8 @@
     catch(e){ authAttempt = Promise.reject(e); }
     return authAttempt.then(function(){
       var emp = employees.find(function(e){ return e.email.toLowerCase() === email; });
+      // بعد توليد كلمة مرور جديدة من لوحة التحكم تبقى القديمة مسجّلة بخدمة الدخول — نرفضها هنا حتى لا تعمل الاثنتان
+      if(emp && emp.password && emp.password !== password) return null;
       return emp || legacyCheck();
     }).catch(legacyCheck);
   }
@@ -2600,7 +2832,7 @@
   var ICON_DELETE = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 7h14M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2M6 7l1 13a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1l1-13"/><path d="M10 11v6M14 11v6"/></svg>';
   var ICON_COPY = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"/></svg>';
   var ICON_WA = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12.02 2C6.5 2 2 6.48 2 12c0 1.85.5 3.58 1.36 5.08L2 22l5.08-1.33A9.96 9.96 0 0012.02 22C17.5 22 22 17.52 22 12S17.5 2 12.02 2zm0 18.13c-1.66 0-3.2-.46-4.52-1.26l-.32-.19-3.02.79.8-2.94-.21-.33A8.1 8.1 0 013.9 12c0-4.48 3.65-8.13 8.13-8.13S20.15 7.52 20.15 12s-3.65 8.13-8.13 8.13zm4.47-6.08c-.24-.12-1.44-.71-1.66-.79-.22-.08-.39-.12-.55.12-.16.24-.63.79-.78.95-.14.16-.29.18-.53.06-.24-.12-1.02-.38-1.94-1.2-.72-.64-1.2-1.43-1.34-1.67-.14-.24-.02-.37.11-.49.11-.11.24-.29.36-.43.12-.14.16-.24.24-.4.08-.16.04-.3-.02-.42-.06-.12-.55-1.33-.76-1.82-.2-.48-.4-.42-.55-.42-.14-.01-.3-.01-.46-.01a.9.9 0 00-.65.3c-.22.24-.85.83-.85 2.03 0 1.2.87 2.36.99 2.52.12.16 1.71 2.61 4.14 3.66.58.25 1.03.4 1.38.51.58.18 1.11.16 1.53.1.47-.07 1.44-.59 1.64-1.16.2-.57.2-1.06.14-1.16-.06-.11-.22-.17-.46-.29z"/></svg>';
-  function roleLabel(role){ return role === "admin" ? "أدمن" : "موظف"; }
+  function roleLabel(role){ return kindLabel(role); }
   function escapeHTML(s){
     return String(s == null ? "" : s).replace(/[&<>"']/g, function(c){
       return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
@@ -2620,22 +2852,22 @@
     body.innerHTML = "";
     employees.forEach(function(emp){
       var tr = document.createElement("tr");
+      var ep = empPerms(emp);
       var secBadges = emp.role === "admin"
-        ? '<span class="sec-badge">كل الأقسام</span>'
-        : ((emp.sections && emp.sections.length)
-            ? emp.sections.map(function(k){
-                var def = SECTION_DEFS.find(function(s){ return s.key === k; });
-                return '<span class="sec-badge">' + (def ? def.label : k) + '</span>';
-              }).join("")
-            : '<span style="color:var(--ink-soft); font-size:12px;">لا شيء</span>');
+        ? '<span class="sec-badge">كل الصلاحيات</span>'
+        : (PERM_GROUPS.filter(function(g){ return ep.indexOf(g.perms[0].k) > -1; }).map(function(g){
+              var n = g.perms.filter(function(p){ return ep.indexOf(p.k) > -1; }).length;
+              return '<span class="sec-badge" title="' + g.perms.filter(function(p){ return ep.indexOf(p.k) > -1; }).map(function(p){ return p.l; }).join("، ") + '">' + g.label + (g.perms.length > 1 ? ' <i>' + n + '/' + g.perms.length + '</i>' : '') + '</span>';
+            }).join("") || '<span style="color:var(--ink-soft); font-size:12px;">لا شيء</span>');
       tr.innerHTML =
         '<td>' + escapeHTML(emp.name) + '</td>' +
         '<td>' + escapeHTML(emp.email) + '</td>' +
-        '<td><span class="role-pill ' + emp.role + '">' + roleLabel(emp.role) + '</span></td>' +
+        '<td><span class="role-pill ' + escapeHTML(emp.role || "employee") + '">' + roleLabel(emp.role) + '</span></td>' +
         '<td>' + escapeHTML(emp.dept || "—") + '</td>' +
         '<td>' + secBadges + '</td>' +
         '<td>' + (emp.authMigrated ? '<span class="role-pill admin" title="سجّل دخوله عبر النظام الآمن الجديد">✔ آمن</span>' : '<span class="role-pill employee" title="لم يسجّل دخوله بعد منذ تفعيل النظام الآمن">⏳ بانتظار أول دخول</span>') + '</td>' +
         '<td><div class="row-actions">' +
+          '<button class="icon-btn pw-btn" data-id="' + emp.id + '" title="كلمة مرور جديدة وإرسالها بالواتساب"><span class="icon">' + ICON_WA + '</span></button>' +
           '<button class="icon-btn edit-btn" data-id="' + emp.id + '" title="تعديل"><span class="icon">' + ICON_EDIT + '</span></button>' +
           '<button class="icon-btn danger del-btn" data-id="' + emp.id + '" title="حذف"><span class="icon">' + ICON_DELETE + '</span></button>' +
         '</div></td>';
@@ -2647,6 +2879,9 @@
     });
     body.querySelectorAll(".del-btn").forEach(function(btn){
       btn.addEventListener("click", function(){ deleteEmployee(btn.dataset.id); });
+    });
+    body.querySelectorAll(".pw-btn").forEach(function(btn){
+      btn.addEventListener("click", function(){ empResetPassword(btn.dataset.id); });
     });
     body.classList.remove("fade-in-content");
     void body.offsetWidth;
@@ -2667,12 +2902,14 @@
       document.getElementById("empEmail").value = emp.email;
       document.getElementById("empPassword").value = emp.password;
       document.getElementById("empDept").value = emp.dept || "";
-      document.getElementById("empRole").value = emp.role;
-      renderEmpSectionCheckboxes(emp.sections || []);
+      document.getElementById("empRole").value = EMP_KINDS.some(function(k){ return k.k === emp.role; }) ? emp.role : "employee";
+      document.getElementById("empPhone").value = emp.phone || "";
+      renderEmpPerms(empPerms(emp), emp.role);
     } else {
       document.getElementById("empModalTitle").textContent = "إضافة موظف جديد";
       document.getElementById("empId").value = "";
-      renderEmpSectionCheckboxes([]);
+      document.getElementById("empPassword").value = genPassword();
+      renderEmpPerms(KIND_PRESETS.employee, "employee");
     }
     empModalOverlay.classList.add("active");
   }
@@ -2682,6 +2919,7 @@
 
   document.getElementById("addEmpBtn").addEventListener("click", function(){ openEmpModal(null); });
   document.getElementById("empCancelBtn").addEventListener("click", closeEmpModal);
+  document.getElementById("empGenPwBtn").addEventListener("click", function(){ document.getElementById("empPassword").value = genPassword(); });
   empModalOverlay.addEventListener("click", function(e){
     if(e.target === empModalOverlay) closeEmpModal();
   });
@@ -2694,7 +2932,10 @@
     var password = document.getElementById("empPassword").value;
     var dept = document.getElementById("empDept").value.trim();
     var role = document.getElementById("empRole").value;
-    var sections = Array.prototype.slice.call(document.querySelectorAll(".emp-section-cb:checked")).map(function(cb){ return cb.value; });
+    var phone = document.getElementById("empPhone").value.trim();
+    var perms = role === "admin" ? [] : collectEmpPerms();
+    // sections تبقى للتوافق مع النسخ السابقة: الأقسام التي يملك فتحها
+    var sections = SECTION_DEFS.map(function(sd){ return sd.key; }).filter(function(k){ return perms.indexOf(k + ".view") > -1; });
 
     employees = loadEmployees();
     var dupe = employees.find(function(emp){ return emp.email.toLowerCase() === email && emp.id !== id; });
@@ -2706,13 +2947,13 @@
     if(id){
       var idx = employees.findIndex(function(emp){ return emp.id === id; });
       if(idx > -1){
-        employees[idx] = { id: id, name: name, email: email, password: password, dept: dept, role: role, sections: sections };
+        employees[idx] = Object.assign({}, employees[idx], { id: id, name: name, email: email, phone: phone, password: password, dept: dept, role: role, sections: sections, perms: perms });
       }
       showToast("تم تحديث بيانات الموظف");
     } else {
       employees.push({
         id: "emp-" + Date.now(),
-        name: name, email: email, password: password, dept: dept, role: role, sections: sections
+        name: name, email: email, phone: phone, password: password, dept: dept, role: role, sections: sections, perms: perms
       });
       showToast("تمت إضافة الموظف بنجاح");
     }
@@ -2721,7 +2962,7 @@
     closeEmpModal();
     if(currentUser){
       var refreshedSelf = employees.find(function(e){ return e.id === currentUser.id; });
-      if(refreshedSelf){ currentUser = refreshedSelf; applySectionPermissions(currentUser); }
+      if(refreshedSelf){ currentUser = refreshedSelf; applySectionPermissions(currentUser); applyGlobalPerms(); wsRender(); }
     }
     renderTaskBoard();
     renderAnnualReport();
@@ -8099,7 +8340,7 @@
         html += '<td class="row-actions"><div class="row-menu-wrap">' +
           '<button type="button" class="row-menu-trigger" data-action="toggle-row-menu" title="إجراءات">⋮</button>' +
           '<div class="row-menu-dropdown">';
-        if(pending && currentUser.role === "admin"){
+        if(pending && can("events.approve")){
           html += '<button type="button" class="row-menu-item" data-action="approve-event" data-id="' + r.id + '"><span class="icon">' + TICON.check + '</span> قبول</button>' +
             '<button type="button" class="row-menu-item danger" data-action="reject-event" data-id="' + r.id + '"><span class="icon" style="font-weight:700;">✕</span> رفض</button>';
         }
@@ -10563,6 +10804,7 @@
     else if(act === "edit"){
       galLightbox(null);
       var rec = findEventRecord(b.dataset.id);
+      if(rec && !can("events.edit")){ showToast("لا تملك صلاحية تعديل السجلات"); return; }
       if(rec) openEventModal(rec.category, rec.id);
     }
   });
@@ -10576,14 +10818,15 @@
   function renderEventsHub(){
     var root = document.getElementById("eventsRoot");
     if(!root || !currentUser) return;
+    if(!permAllows(EVENT_TAB_PERMS[eventsUI.tab])) eventsUI.tab = "dashboard";
     var html = '<div class="events-subnav">' +
       eventsSubnavBtnHTML("dashboard", "لوحة القيادة", EVICON.grid) +
       eventsSubnavBtnHTML("data-entry", "إدخال البيانات", EVICON.doc) +
-      eventsSubnavBtnHTML("publish", "مهام النشر", AICON.megaphone) +
-      eventsSubnavBtnHTML("templates", "قوالب التصميم", EVICON.grad) +
-      eventsSubnavBtnHTML("reports", "التقارير والإحصائيات", AICON.chart) +
-      eventsSubnavBtnHTML("gallery", "أرشيف الصور", TPI.image) +
-      eventsSubnavBtnHTML("trash", "سلة المهملات" + (loadEventsTrash().length ? " (" + loadEventsTrash().length + ")" : ""), ICON_DELETE) +
+      (can("events.publish") ? eventsSubnavBtnHTML("publish", "مهام النشر", AICON.megaphone) : "") +
+      (can("events.templates") ? eventsSubnavBtnHTML("templates", "قوالب التصميم", EVICON.grad) : "") +
+      (can("events.reports") ? eventsSubnavBtnHTML("reports", "التقارير والإحصائيات", AICON.chart) : "") +
+      (can("events.gallery") ? eventsSubnavBtnHTML("gallery", "أرشيف الصور", TPI.image) : "") +
+      (can("events.trash") ? eventsSubnavBtnHTML("trash", "سلة المهملات" + (loadEventsTrash().length ? " (" + loadEventsTrash().length + ")" : ""), ICON_DELETE) : "") +
     '</div><div id="eventsSubRoot"></div>';
     setHTML(root, html);
     var subRoot = document.getElementById("eventsSubRoot");
@@ -10594,6 +10837,7 @@
     else if(eventsUI.tab === "gallery") setHTML(subRoot, eventsGalleryHTML());
     else if(eventsUI.tab === "trash") setHTML(subRoot, eventsTrashHTML());
     else setHTML(subRoot, eventsDashboardHTML());
+    applyEventPermsToDOM(root);
   }
 
   // ----- إعدادات المناسبات الاجتماعية (لوحة تحكم الأدمن) -----
@@ -10765,6 +11009,7 @@
   eventsRootEl.addEventListener("click", function(e){
     var btn = e.target.closest("[data-action]");
     if(!btn) return;
+    if(!permAllows(EVENT_ACTION_PERMS[btn.dataset.action])){ showToast("لا تملك صلاحية هذا الإجراء"); return; }
     switch(btn.dataset.action){
       case "events-subnav": eventsUI.tab = btn.dataset.tab; renderEventsHub(); syncHashFromApp(); break;
       case "events-goto-category":
@@ -12174,7 +12419,9 @@
   function wsRole(){
     if(!currentUser) return "viewer";
     if(currentUser.role === "admin") return "admin";
-    return ws.roles[currentUser.id] || "member";
+    if(can("tasks.manage")) return "pm";
+    if(can("tasks.edit")) return "member";
+    return "viewer";
   }
   function wsCanManage(){ var r = wsRole(); return r === "admin" || r === "pm"; }
   function wsProjectOf(id){ return id ? ws.projects.find(function(p){ return p.id === id; }) : null; }
@@ -12244,7 +12491,6 @@
       ws.notifs = s.docs.map(function(d){ return d.data(); }).sort(function(a, b){ return b.at - a.at; }).slice(0, 60);
       wsRefresh();
     }, fail);
-    db.collection("wsMeta").doc("roles").onSnapshot(function(d){ ws.roles = (d.exists && d.data().map) || {}; wsRefresh(); }, fail);
   }
   function wsAfterReady(){ wsMigrateLocal(); wsMaybeStandup(); }
   // ينقل مهام ومشاريع ومواعيد هذا المتصفح (النظام القديم المحفوظ محلياً) إلى المساحة المشتركة مرة واحدة — النسخة المحلية تبقى كما هي
@@ -12482,10 +12728,10 @@
     html += '<div class="ws-links">' +
       '<button type="button" data-ws="panel" data-panel="projects">المشاريع <i>' + ws.projects.length + '</i></button>' +
       '<button type="button" data-ws="panel" data-panel="events">الفعاليات <i>' + ws.events.length + '</i></button>' +
-      '<button type="button" data-ws="panel" data-panel="standup">إنجاز اليوم' + (ws.standups.some(function(s){ return s.blockers; }) && manage ? ' <i class="hot">عوائق</i>' : '') + '</button>' +
+      '<button type="button" class="ws-standup-btn" data-ws="panel" data-panel="standup">' + (ws.standups.some(function(s){ return s.userId === currentUser.id; }) ? '✓ ' : '') + 'إنجاز اليوم' + (ws.standups.some(function(s){ return s.blockers; }) && manage ? ' <i class="hot">عوائق</i>' : '') + '</button>' +
       '<button type="button" data-ws="panel" data-panel="assets">القوالب والملفات <i>' + ws.assets.length + '</i></button>' +
       (manage ? '<button type="button" data-ws="panel" data-panel="workload">عبء العمل</button><button type="button" data-ws="panel" data-panel="logs">سجل الحركات</button>' : '') +
-      (wsRole() === "admin" ? '<button type="button" data-ws="panel" data-panel="roles">الأدوار</button>' : '') +
+
       '<button type="button" class="ws-legacy" data-ws="legacy">المهام السابقة على هذا الجهاز</button>' +
     '</div>';
     var bp = wsProjectOf(wsUI.fProject);
@@ -12655,7 +12901,7 @@
   function wsPanelHTML(name){
     var manage = wsCanManage(), emps = loadEmployees(), html = "";
     if(name === "projects"){
-      html = wsHead("المشاريع", ws.projects.length + " مشروع") + (wsCanCreate() ? '<button type="button" class="btn-primary ws-block" data-ws="new-project">' + WSI.plus + ' مشروع جديد وتشكيل فريقه</button>' : '');
+      html = wsHead("المشاريع", ws.projects.length + " مشروع") + ((wsCanManage() || can("tasks.projects")) ? '<button type="button" class="btn-primary ws-block" data-ws="new-project">' + WSI.plus + ' مشروع جديد وتشكيل فريقه</button>' : '');
       ws.projects.slice().sort(function(a, b){ return ((a.status === "done") - (b.status === "done")) || (wsInTeam(b) - wsInTeam(a)); }).forEach(function(p){
         var st = wsProjectStats(p);
         html += '<button type="button" class="ws-tile" data-ws="open-project" data-id="' + p.id + '"><b>' + escapeHTML(p.name) + (wsInTeam(p) ? ' <i class="ws-mine">فريقي</i>' : '') + '</b><small>' + ((p.team || []).length ? (p.team || []).length + ' في الفريق · ' : '') + '' + ({ active: "نشط", paused: "متوقف", done: "مكتمل" }[p.status] || "نشط") + (p.dueDate ? " · التسليم " + wsFmtDate(p.dueDate) : "") + ' · ' + st.total + ' مهمة</small><span class="ws-prog"><span><i style="width:' + st.pct + '%"></i></span>' + st.pct + '%</span></button>';
@@ -12735,6 +12981,7 @@
     el.scrollTop = st;
   }
   function wsMaybeStandup(){
+    return;   // بطلب المستخدم: «إنجاز اليوم» زر يضغطه الموظف متى أراد — لا تظهر النافذة تلقائياً
     if(wsUI.standupShown || !ws.ready || !currentUser || wsRole() === "viewer" || wsUI.drawer) return;
     if(ws.standups.some(function(s){ return s.userId === currentUser.id; })) { wsUI.standupShown = true; return; }
     try{ if(localStorage.getItem("zaraHub.wsStandupSkip") === wsToday() + ":" + currentUser.id) return; }catch(e){}
@@ -12835,7 +13082,7 @@
         wsSet("wsEvents", ne); wsLog("أنشأ فعالية", ne.title); wsOpenDrawer("event", ne.id); break;
       }
       case "new-project": {
-        if(!wsCanCreate()) break;
+        if(!wsCanManage() && !can("tasks.projects")){ showToast("لا تملك صلاحية إنشاء المشاريع"); break; }
         var np = { id: wsId("prj"), name: "مشروع جديد", desc: "", ownerId: currentUser.id, team: [currentUser.id], startDate: wsToday(), dueDate: "", budget: null, target: null, collected: null, status: "active", createdAt: Date.now() };
         wsSet("wsProjects", np); wsLog("أنشأ مشروعاً", np.name); wsOpenDrawer("project", np.id); break;
       }
@@ -12895,7 +13142,7 @@
         if(!goals.some(Boolean)){ showToast("اكتب هدفاً واحداً على الأقل"); break; }
         var blk = document.getElementById("wsBlockers").value.trim();
         wsSet("wsStandups", { id: currentUser.id + "_" + wsToday(), userId: currentUser.id, name: currentUser.name, date: wsToday(), goals: goals, blockers: blk, at: Date.now() });
-        if(blk) loadEmployees().filter(function(x){ return x.role === "admin" || ws.roles[x.id] === "pm"; }).forEach(function(x){ wsNotify(x.id, "blocker", "عائق من " + currentUser.name + ": " + blk.slice(0, 80), null); });
+        if(blk) loadEmployees().filter(function(x){ return empCan(x, "tasks.manage"); }).forEach(function(x){ wsNotify(x.id, "blocker", "عائق من " + currentUser.name + ": " + blk.slice(0, 80), null); });
         showToast("تم حفظ أهداف اليوم"); wsCloseDrawer(); wsRender(); break;
       }
       case "skip-standup": try{ localStorage.setItem("zaraHub.wsStandupSkip", wsToday() + ":" + currentUser.id); }catch(err){} wsCloseDrawer(); break;
