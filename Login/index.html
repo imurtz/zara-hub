@@ -2138,6 +2138,7 @@
     .dc-metrics{grid-template-columns:repeat(2, minmax(0, 1fr));}
   }
   .dc-uploading{font-size:13px; font-weight:500; color:var(--teal-dark); background:var(--teal-tint); border-radius:12px; padding:9px 13px; margin:0;}
+  .ev-fresh{display:flex; align-items:center; gap:10px; flex-wrap:wrap; font-size:12px; color:var(--ink-soft); margin-top:8px;}
 
 </style>
 </head>
@@ -7379,10 +7380,107 @@
     }
   }
   var _eventsRecordsCache = [];
-  db.collection("events").onSnapshot(function(snap){
-    _eventsRecordsCache = snap.docs.map(function(d){ return d.data(); });
-    eventsFirestoreRefresh();
-  }, function(err){ console.error("events snapshot error", err); });
+  // ===== تحميل سجلات المناسبات: نسخة محلية بالمتصفح + مزامنة الفروقات فقط =====
+  // السابق: كل فتح للصفحة يقرأ كل السجلات (1,600+ قراءة) فتُستنفد حصة القراءة اليومية المجانية بعد عشرات الفتحات.
+  // الآن: القراءة الكاملة مرة كل 12 ساعة لكل جهاز (أو بزر «تحديث البيانات»)، وبينها يُقرأ ما تغيّر فقط:
+  //   • كل كتابة لسجل (من اللوحة، نموذج الجمهور، مزامنة الوفيات) تختم الحقل _m بوقتها
+  //   • المستمع الحي يسأل فقط عن السجلات التي _m فيها أحدث من آخر مزامنة (مع هامش 10 دقائق لفروق ساعات الأجهزة)
+  //   • الحذف يُلتقط من سلة المهملات (كل حذف يمر بها أولاً) أو من المستمع نفسه
+  var EV_FULL_EVERY = 12 * 3600 * 1000, EV_MARGIN = 10 * 60 * 1000;
+  var _evFullAt = 0, _evSyncAt = 0, _evUnsub = null, _evPersistTimer = null, _evState = "loading";
+  function evIdb(){
+    return new Promise(function(res){
+      try {
+        var rq = indexedDB.open("zaraHubCache", 1);
+        rq.onupgradeneeded = function(){ rq.result.createObjectStore("kv"); };
+        rq.onsuccess = function(){ res(rq.result); };
+        rq.onerror = function(){ res(null); };
+      } catch(e){ res(null); }
+    });
+  }
+  function evCacheGet(){
+    return evIdb().then(function(dbx){
+      if(!dbx) return null;
+      return new Promise(function(res){
+        try { var g = dbx.transaction("kv").objectStore("kv").get("events"); g.onsuccess = function(){ res(g.result || null); }; g.onerror = function(){ res(null); }; }
+        catch(e){ res(null); }
+      });
+    });
+  }
+  function evPersistSoon(){
+    clearTimeout(_evPersistTimer);
+    _evPersistTimer = setTimeout(function(){
+      var payload = { fullAt: _evFullAt, syncAt: _evSyncAt, list: _eventsRecordsCache };
+      evIdb().then(function(dbx){ if(!dbx) return; try { dbx.transaction("kv", "readwrite").objectStore("kv").put(payload, "events"); } catch(e){} });
+    }, 1500);
+  }
+  // سجل موجود بالسلة بتاريخ حذف أحدث من آخر تعديل له = محذوف (الاسترجاع يعيد كتابته بختم أحدث فيبقى)
+  function evPruneTrashed(){
+    if(!_eventsRecordsCache.length || !_eventsTrashCache || !_eventsTrashCache.length) return false;
+    var del = {}; _eventsTrashCache.forEach(function(t){ del[t.id] = t.deletedAt || 0; });
+    var kept = _eventsRecordsCache.filter(function(r){ return !(del[r.id] != null && del[r.id] >= (r._m || 0)); });
+    if(kept.length === _eventsRecordsCache.length) return false;
+    _eventsRecordsCache = kept;
+    return true;
+  }
+  function evListenDelta(since){
+    if(_evUnsub){ try{ _evUnsub(); }catch(e){} }
+    _evUnsub = db.collection("events").where("_m", ">", since).onSnapshot(function(snap){
+      var changed = false, list = _eventsRecordsCache.slice();
+      snap.docChanges().forEach(function(ch){
+        var d = ch.doc.data(), i = list.findIndex(function(r){ return r.id === d.id; });
+        if(ch.type === "removed"){ if(i > -1){ list.splice(i, 1); changed = true; } return; }   // _m لا ينقص، فخروج السجل من النتيجة = حذفه
+        if(i > -1){ if(JSON.stringify(list[i]) !== JSON.stringify(d)){ list[i] = d; changed = true; } }
+        else { list.push(d); changed = true; }
+      });
+      if(!snap.metadata.fromCache) _evSyncAt = Date.now();
+      _evState = "ready";
+      if(changed){ _eventsRecordsCache = list; evPruneTrashed(); eventsFirestoreRefresh(); }
+      evPersistSoon();
+    }, function(err){ console.error("events delta listener error", err); _evState = "error"; });
+  }
+  function evLoadFull(){
+    var started = Date.now();
+    _evState = "loading";
+    return db.collection("events").get().then(function(snap){
+      _eventsRecordsCache = snap.docs.map(function(d){ return d.data(); });
+      _evFullAt = started; _evSyncAt = started; _evState = "ready";
+      evPruneTrashed();
+      eventsFirestoreRefresh();
+      evPersistSoon();
+      evListenDelta(started - EV_MARGIN);
+      return true;
+    }).catch(function(err){
+      console.error("events full load error", err);
+      _evState = "error";
+      // تعذّرت القراءة الكاملة (مثلاً استُنفدت الحصة): نبقى على النسخة المحلية إن وُجدت ونستمع للفروقات من آخر مزامنة
+      if(_eventsRecordsCache.length) evListenDelta((_evSyncAt || _evFullAt || started) - EV_MARGIN);
+      return false;
+    });
+  }
+  function evBoot(){
+    evCacheGet().then(function(c){
+      if(c && c.list && c.list.length){
+        _eventsRecordsCache = c.list; _evFullAt = c.fullAt || 0; _evSyncAt = c.syncAt || c.fullAt || 0;
+        evPruneTrashed();
+        eventsFirestoreRefresh();
+        if(Date.now() - _evFullAt < EV_FULL_EVERY){ evListenDelta(_evSyncAt - EV_MARGIN); return; }
+      }
+      evLoadFull();
+    });
+  }
+  function evFreshLabel(){
+    if(!_evFullAt) return _evState === "error" ? "تعذّر تحميل السجلات" : "جارٍ تحميل السجلات…";
+    var mins = Math.round((Date.now() - _evFullAt) / 60000);
+    return "آخر تحميل كامل: " + (mins < 2 ? "الآن" : mins < 60 ? "قبل " + mins + " دقيقة" : "قبل " + Math.round(mins / 60) + " ساعة") + " — الجديد والمعدَّل يصل مباشرة";
+  }
+  document.addEventListener("click", function(e){
+    var b = e.target.closest && e.target.closest("[data-ev-refresh]");
+    if(!b) return;
+    b.disabled = true; b.textContent = "جارٍ التحديث…";
+    evLoadFull().then(function(ok){ showToast(ok ? "حُدّثت السجلات من القاعدة" : "تعذّر التحديث — ربما بلغت القاعدة حصتها اليومية"); });
+  });
+  evBoot();
 
   function loadEventsData(){ return _eventsRecordsCache.slice(); }
   // يرجع Promise دائماً — الكاش المحلي (وبالتالي الواجهة) لا يتحدث إلا بعد تأكد نجاح الكتابة الفعلية في Firestore،
@@ -7396,10 +7494,11 @@
     });
     list.forEach(function(rec){
       var old = _eventsRecordsCache.find(function(r){ return r.id === rec.id; });
-      if(!old || JSON.stringify(old) !== JSON.stringify(rec)) ops.push(db.collection("events").doc(rec.id).set(rec));
+      if(!old || JSON.stringify(old) !== JSON.stringify(rec)){ rec._m = Date.now(); ops.push(db.collection("events").doc(rec.id).set(rec)); }
     });
     return Promise.all(ops).then(function(){
       _eventsRecordsCache = list;
+      evPersistSoon();
       return true;
     }).catch(function(err){
       console.error("saveEventsData failed", err);
@@ -7415,6 +7514,7 @@
   var _eventsTrashCache = [];
   db.collection("eventsTrash").onSnapshot(function(snap){
     _eventsTrashCache = snap.docs.map(function(d){ return d.data(); });
+    if(evPruneTrashed()) evPersistSoon();
     eventsFirestoreRefresh();
   }, function(err){ console.error("eventsTrash snapshot error", err); });
   function loadEventsTrash(){ return _eventsTrashCache; }
@@ -8093,6 +8193,7 @@
     });
     html += '</div>';
     html += '<p style="font-size:12.5px; color:var(--ink-soft);">إجمالي السجلات: <b style="color:var(--teal-dark);">' + all.length + '</b> — اضغط أي بطاقة للانتقال مباشرة لإدخال بياناتها</p>';
+    html += '<p class="ev-fresh">' + evFreshLabel() + ' <button type="button" class="ws-pill" data-ev-refresh>تحديث البيانات</button></p>';
     return html;
   }
 
@@ -8935,6 +9036,9 @@
     var rec = _eventsRecordsCache.find(function(x){ return x.id === recId; });
     if(rec){ if(val) rec.shortLink = val; else delete rec.shortLink; }
     var patch = val ? { shortLink: val } : { shortLink: firebase.firestore.FieldValue.delete() };
+    patch._m = Date.now();
+    if(rec) rec._m = patch._m;
+    evPersistSoon();
     db.collection("events").doc(recId).update(patch).catch(function(err){ console.error("shortLink save failed", err); showToast("تعذّر حفظ الرابط"); });
     refreshEventsPublishList();
     showToast(val ? "✔ تم حفظ الرابط المختصر" : "تمت إزالة الرابط المختصر");

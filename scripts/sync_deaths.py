@@ -109,6 +109,12 @@ def fs_get(path):
 
 
 def fs_patch(path, fields, mask=None):
+    # ختم التعديل _m لسجلات المناسبات: لوحة الموظفين تحتفظ بنسخة محلية وتجلب ما تغيّر بعد آخر مزامنة فقط
+    if path.startswith("events/"):
+        fields = dict(fields)
+        fields["_m"] = int(time.time() * 1000)
+        if mask is not None and "_m" not in mask:
+            mask = list(mask) + ["_m"]
     q = "key=" + FIREBASE_KEY
     for k in (mask or []):
         q += "&updateMask.fieldPaths=" + urllib.parse.quote(k)

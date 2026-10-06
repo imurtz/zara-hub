@@ -2455,6 +2455,7 @@
   }
   function savePanPhotoToFirestore(rec){
     db.collection("events").doc(rec.id).update({
+      _m: Date.now(),
       photo: rec.photo,
       photoPanX: rec.photoPanX || 0,
       photoPanY: rec.photoPanY || 0,
@@ -2532,6 +2533,7 @@
     var btn = document.getElementById("savePhotoPositionBtn");
     if(btn){ btn.disabled = true; btn.textContent = "جارٍ الحفظ..."; }
     db.collection("events").doc(rec.id).update({
+      _m: Date.now(),
       photoPanX: rec.photoPanX || 0,
       photoPanY: rec.photoPanY || 0,
       photoZoomAdj: rec.photoZoomAdj || 1
@@ -2613,6 +2615,7 @@
     var submitBtn = document.getElementById("submitBtn");
     submitBtn.disabled = true;
     submitBtn.textContent = "جاري الإرسال...";
+    rec._m = Date.now();   // ختم التعديل — لوحة الموظفين تجلب ما تغيّر بعد آخر مزامنة فقط
     db.collection("events").doc(rec.id).set(rec).then(function(){
       document.getElementById("formCard").style.display = "none";
       document.getElementById("thanksCard").style.display = "block";
