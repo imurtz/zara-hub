@@ -2137,6 +2137,7 @@
     .dc-attach .ws-upload{flex:1; justify-content:center;}
     .dc-metrics{grid-template-columns:repeat(2, minmax(0, 1fr));}
   }
+  .dc-uploading{font-size:13px; font-weight:500; color:var(--teal-dark); background:var(--teal-tint); border-radius:12px; padding:9px 13px; margin:0;}
 
 </style>
 </head>
@@ -13622,18 +13623,21 @@
     var d = docUI.draft;
     if(!d || docUI.busy) return;
     docUI.busy = true;
+    d.uploadErrors = [];
     for(var i = 0; i < files.length; i++){
       var f = files[i];
-      showToast("جارٍ رفع " + (i + 1) + " من " + files.length + " — " + f.name);
+      d.uploading = "جارٍ رفع " + (i + 1) + " من " + files.length + " — " + f.name + " (" + docSize(f.size) + ")";
+      docRender();
       try {
         if(WS_LOCAL){ var lu = URL.createObjectURL(f); (kind === "photo" ? d.photos : d.files).push({ url: lu, thumb: lu, name: f.name, size: f.size, type: f.type }); continue; }
         var url = await docUploadRaw(f);
         if(kind === "photo") d.photos.push({ url: url, thumb: await docThumb(f), name: f.name, size: f.size, type: f.type, caption: "" });
         else d.files.push({ url: url, name: f.name, size: f.size, type: f.type });
-      } catch(e){ showToast(f.name + ": " + docUploadErr(e)); }
+      } catch(e){ d.uploadErrors.push(f.name + " — " + docUploadErr(e) + (/\.hei[cf]$/i.test(f.name) ? " (صيغة HEIC — حوّلها إلى JPEG)" : f.size > 15 * 1048576 ? " (أكبر من 15 م.ب)" : "")); }
     }
     docUI.busy = false;
-    showToast("اكتمل الرفع");
+    d.uploading = "";
+    showToast(d.uploadErrors.length ? "تعذّر رفع " + d.uploadErrors.length + " ملف — التفاصيل تحت خانة الكتابة" : "اكتمل الرفع");
     docRender();
   }
   function docReadExcel(file){
@@ -13832,6 +13836,9 @@
         '<label class="ws-f dc-grow"><span>البند' + (d.sectionAuto && sug ? ' — مقترح تلقائياً، غيّره إن لزم' : '') + '</span><select id="docSection"><option value="">' + (sug ? "" : "يُقترح بعد الكتابة") + '</option>' + mine.map(function(s){ return '<option value="' + s.key + '"' + (sug === s.key ? " selected" : "") + '>' + s.label + '</option>'; }).join("") + '</select></label></div>' +
         (nums.length ? '<p class="ws-hint">أرقام وردت في النص: ' + nums.map(function(n){ return '<b>' + escapeHTML(n) + '</b>'; }).join("، ") + ' — تبقى ضمن النص كما كتبتها.</p>' : '') +
         docPhotosHTML(d.photos, true) + docFilesHTML(d.files, true) +
+        (d.uploading ? '<p class="dc-uploading">' + escapeHTML(d.uploading) + '</p>' : '') +
+        ((d.uploadErrors || []).length ? '<p class="dc-note">لم تُرفع ولن تدخل التوثيق:<br>' + d.uploadErrors.map(escapeHTML).join("<br>") + '</p>' : '') +
+        (d.photos.length ? '<p class="ws-hint">' + d.photos.length + ' صورة مرفقة بجودتها الأصلية (' + docSize(d.photos.reduce(function(n, p){ return n + (p.size || 0); }, 0)) + ').</p>' : '') +
         '<div class="dc-row dc-attach"><label class="btn-secondary ws-upload">' + TPI.image + ' إضافة صور بجودتها الأصلية<input type="file" id="docPhotoInput" accept="image/*" multiple hidden/></label>' +
         '<label class="btn-secondary ws-upload">' + WSI.clip + ' إرفاق ملف<input type="file" id="docFileInput" accept=".pdf,.docx,.xlsx" multiple hidden/></label></div>';
     } else if(d.mode === "number"){
@@ -13862,7 +13869,7 @@
         '<label class="btn-secondary ws-upload">' + WSI.clip + ' إرفاق Word أو PDF<input type="file" id="docFileInput" accept=".pdf,.docx" multiple hidden/></label></div>' +
         '<input type="text" id="docNote" placeholder="ملاحظة (اختياري)" value="' + escapeHTML(d.note) + '"/>';
     }
-    html += '<div class="dc-submit"><span class="ws-hint">' + (can("docs.review") ? "توثيقك يُعتمد مباشرة." : "يُرسل للمراجعة قبل دخوله التقرير.") + '</span><button type="button" class="btn-primary" data-doc="submit"' + (docUI.busy ? " disabled" : "") + '>' + TICON.check + ' توثيق</button></div></div>';
+    html += '<div class="dc-submit"><span class="ws-hint">' + (docUI.busy ? "انتظر اكتمال رفع الملفات ثم اضغط توثيق." : can("docs.review") ? "توثيقك يُعتمد مباشرة." : "يُرسل للمراجعة قبل دخوله التقرير.") + '</span><button type="button" class="btn-primary" data-doc="submit"' + (docUI.busy ? " disabled" : "") + '>' + TICON.check + (docUI.busy ? ' جارٍ الرفع…' : ' توثيق') + '</button></div></div>';
     return html;
   }
   function docScope(kind){
@@ -13929,7 +13936,7 @@
     var cnt = function(list){ var ok = list.filter(function(e){ return e.status === "approved"; }); return { ok: ok.length, pend: list.filter(function(e){ return e.status === "pending"; }).length, ph: ok.reduce(function(n, e){ return n + (e.photos || []).length; }, 0), mb: ok.reduce(function(n, e){ return n + (e.photos || []).concat(e.files || []).reduce(function(m, f){ return m + (f.size || 0); }, 0); }, 0) }; };
     var ca = cnt(a), cx = cnt(x);
     var card = function(kind, title, c){
-      return '<div class="report-section-card rp-card dc-export"><h3>' + title + '</h3><p class="dc-text">' + c.ok + ' توثيقاً معتمداً · ' + c.ph + ' صورة أصلية · نحو ' + docSize(c.mb) + '</p>' +
+      return '<div class="report-section-card rp-card dc-export"><h3>' + title + '</h3><p class="dc-text">' + c.ok + ' توثيقاً معتمداً · ' + (c.ph ? c.ph + ' صورة أصلية · نحو ' + docSize(c.mb) : 'لا صور مرفقة بهذه التوثيقات') + '</p>' +
         (c.pend ? '<p class="dc-note">' + c.pend + ' توثيقاً ما زال بانتظار المراجعة ولن يدخل الحزمة.</p>' : '') +
         '<div class="dc-row"><button type="button" class="btn-primary" data-doc="export" data-kind="' + kind + '" data-photos="1"' + (c.ok ? "" : " disabled") + '>' + TPI.download + ' الحزمة الكاملة مع الصور (ZIP)</button>' +
         '<button type="button" class="btn-secondary" data-doc="export" data-kind="' + kind + '" data-photos="0"' + (c.ok ? "" : " disabled") + '>المحتوى والأرقام فقط</button></div></div>';
@@ -13998,10 +14005,10 @@
             try { var blob = await galFetchBlob(p.url); files.push({ name: "الصور/" + folder + "/" + fname, data: new Uint8Array(await blob.arrayBuffer()) }); }
             catch(err){ state = "تعذّر تنزيلها — استخدم الرابط"; }
           } else state = "غير مضمَّنة — استخدم الرابط";
-          names.push(fname);
+          names.push(state === "في الحزمة" ? '<br><img src="' + esc("الصور/" + folder + "/" + fname) + '" alt="" style="max-width:420px; max-height:320px; margin:6px 0;"><br>' + fname : fname + ' (' + esc(p.url) + ')');
           index.push(["الصور/" + folder + "/" + fname, s.label, e.date, e.text, e.dept || "", e.byName || "", p.url, state]);
         }
-        html += '<h3>' + esc(e.date) + '</h3><p>' + esc(e.text).replace(/\n/g, "<br>") + '</p><p class="m">' + esc([e.dept, e.byName].filter(Boolean).join(" — ")) + '</p>' + (names.length ? '<p class="ph">الصور: ' + names.join("، ") + '</p>' : '') +
+        html += '<h3>' + esc(e.date) + '</h3><p>' + esc(e.text).replace(/\n/g, "<br>") + '</p><p class="m">' + esc([e.dept, e.byName].filter(Boolean).join(" — ")) + '</p>' + (names.length ? '<p class="ph">الصور (' + names.length + '): ' + names.join(" ") + '</p>' : '') +
           ((e.files || []).length ? '<p class="ph">مرفقات: ' + e.files.map(function(f){ return esc(f.name) + ' (' + esc(f.url) + ')'; }).join("، ") + '</p>' : '');
       }
       var tabs = mine.filter(function(e){ return e.kind === "file"; });
@@ -14028,7 +14035,7 @@
     files.unshift({ name: "الأرقام والجداول والفهرس.xlsx", data: new Uint8Array(window.XLSX.write(wb2, { bookType: "xlsx", type: "array" })) });
     files.unshift({ name: "المحتوى.html", data: enc.encode(html) });
     files.unshift({ name: "المحتوى.doc", data: enc.encode("﻿" + html) });
-    files.unshift({ name: "اقرأني.txt", data: enc.encode("﻿" + title + "\n\nالمحتوى.doc: كل النصوص والجداول مرتبة بالبنود، كما كتبها أصحابها (يُفتح ببرنامج Word).\nالمحتوى.html: نفس المحتوى للعرض في المتصفح.\nالأرقام والجداول والفهرس.xlsx: الأحداث، المؤشرات، الجداول، وفهرس يربط كل صورة ببندها وحدثها.\nالصور: الصور بجودتها الأصلية في مجلد لكل بند، وأسماؤها مذكورة تحت كل حدث في ملف المحتوى.\n") });
+    files.unshift({ name: "اقرأني.txt", data: enc.encode("﻿" + title + "\n\nالمحتوى.doc: كل النصوص والجداول مرتبة بالبنود، كما كتبها أصحابها (يُفتح ببرنامج Word).\nالمحتوى.html: نفس المحتوى للعرض في المتصفح.\nالأرقام والجداول والفهرس.xlsx: الأحداث، المؤشرات، الجداول، وفهرس يربط كل صورة ببندها وحدثها.\nالصور: الصور بجودتها الأصلية في مجلد لكل بند، وأسماؤها مذكورة تحت كل حدث في ملف المحتوى.\n\nمهم: فكّ ضغط الملف كاملاً أولاً ثم افتح «المحتوى» من داخل المجلد، حتى تظهر الصور داخله (تُقرأ من مجلد «الصور» المجاور).\n") });
     var a = document.createElement("a");
     a.download = "حزمة " + title + ".zip";
     a.href = URL.createObjectURL(tmplZipStore(files));
