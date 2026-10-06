@@ -8127,7 +8127,7 @@
   var FOOTER_CREDIT_DEFAULT = "صُنع بحب من قبل جمعية العوامية الخيرية";
   var PHOTO_PAN_PROMPT_DEFAULT = "مو راضين عن موضع صورتكم داخل التصميم؟ عدّلوها بأنفسكم:";
   function loadPublicFormConfig(){
-    var cfg = { footerMessage: "", footerCredit: FOOTER_CREDIT_DEFAULT, photoPanPrompt: PHOTO_PAN_PROMPT_DEFAULT, defaultFemalePhotos: {}, showDesignPreview: true, banner: { enabled: BANNER_DEFAULTS.enabled, intervalSeconds: BANNER_DEFAULTS.intervalSeconds, slides: BANNER_DEFAULTS.slides.map(copyBannerSlide) } };
+    var cfg = { footerMessage: "", footerCredit: FOOTER_CREDIT_DEFAULT, photoPanPrompt: PHOTO_PAN_PROMPT_DEFAULT, defaultFemalePhotos: {}, showDesignPreview: true, giveLinks: {}, banner: { enabled: BANNER_DEFAULTS.enabled, intervalSeconds: BANNER_DEFAULTS.intervalSeconds, slides: BANNER_DEFAULTS.slides.map(copyBannerSlide) } };
     EVENTS_CATEGORIES.forEach(function(c){ cfg[c.key] = { hidden: [], hints: {}, labels: {}, custom: [] }; });
     var p = _publicFormConfigCache;
     if(p){
@@ -8138,6 +8138,8 @@
       // congrats...)، بدل حقل واحد كان مخصصاً للخريجات فقط
       if(p.defaultFemalePhotos && typeof p.defaultFemalePhotos === "object") cfg.defaultFemalePhotos = p.defaultFemalePhotos;
       if(typeof p.showDesignPreview === "boolean") cfg.showDesignPreview = p.showDesignPreview;
+      // روابط «تبرّع الآن» حسب نوع المناسبة — الفارغ منها يستخدم صفحة مشاريع الجمعية العامة
+      if(p.giveLinks && typeof p.giveLinks === "object") cfg.giveLinks = p.giveLinks;
       if(p.banner){
         if(typeof p.banner.enabled === "boolean") cfg.banner.enabled = p.banner.enabled;
         if(typeof p.banner.intervalSeconds === "number" && p.banner.intervalSeconds >= 2) cfg.banner.intervalSeconds = p.banner.intervalSeconds;
@@ -11404,6 +11406,14 @@
       '<p class="hint" style="margin:6px 0 0;">أزل العلامة لتصير الصفحة لاستقبال البيانات فقط — تُجهَّز التصاميم من لوحة التحكم</p>' +
     '</div>';
     html += '<div style="margin-bottom:18px; padding-bottom:16px; border-bottom:1px solid var(--line);">' +
+      '<label style="display:block; font-size:13px; font-weight:700; color:var(--teal-dark); margin-bottom:4px;">روابط التبرع باسم المناسبة</label>' +
+      '<p class="hint" style="margin:0 0 10px;">رابط زر «تبرّع الآن» الذي يظهر للمسجِّل بعد الإرسال وفي صفحة متابعة الطلب. اترك الخانة فارغة لاستخدام صفحة مشاريع الجمعية العامة.</p>' +
+      EVENTS_CATEGORIES.map(function(c){
+        return '<div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;"><label style="font-size:12.5px; color:var(--ink-soft); width:92px; flex:none;">' + c.label + '</label>' +
+          '<input type="url" dir="ltr" data-action="public-cfg-give" data-cat="' + c.key + '" value="' + escapeHTML(cfg.giveLinks[c.key] || "") + '" placeholder="https://www.awamiach.sa/projects/" style="flex:1; min-width:0; border:1.5px solid var(--line); border-radius:8px; padding:7px 10px; font-size:12.5px; text-align:left;"/></div>';
+      }).join("") +
+    '</div>';
+    html += '<div style="margin-bottom:18px; padding-bottom:16px; border-bottom:1px solid var(--line);">' +
       '<label style="display:flex; align-items:center; gap:8px; font-size:12.5px; font-weight:700; color:var(--teal-dark); margin-bottom:12px;">' +
         '<input type="checkbox" data-action="public-cfg-banner-toggle"' + (cfg.banner.enabled ? " checked" : "") + '/> إظهار البنر الإعلاني أعلى صفحة التسجيل العام' +
       '</label>' +
@@ -12777,6 +12787,14 @@
       var pCfg3c = loadPublicFormConfig();
       pCfg3c.photoPanPrompt = e.target.value;
       savePublicFormConfig(pCfg3c);
+    } else if(e.target.matches('[data-action="public-cfg-give"]')){
+      var gUrl = e.target.value.trim();
+      if(gUrl && !/^https:\/\/[^\s"'<>]+$/i.test(gUrl)){ showToast("الرابط يجب أن يبدأ بـ https://"); return; }
+      var pCfgG = loadPublicFormConfig();
+      pCfgG.giveLinks = Object.assign({}, pCfgG.giveLinks);
+      if(gUrl) pCfgG.giveLinks[e.target.dataset.cat] = gUrl; else delete pCfgG.giveLinks[e.target.dataset.cat];
+      savePublicFormConfig(pCfgG);
+      showToast(gUrl ? "حُفظ رابط التبرع" : "أُزيل الرابط — يُستخدم الرابط العام");
     } else if(e.target.matches('[data-action="public-cfg-preview-toggle"]')){
       var pCfgPv = loadPublicFormConfig();
       pCfgPv.showDesignPreview = e.target.checked;

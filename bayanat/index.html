@@ -2833,6 +2833,7 @@
   renderBanner();
   db.collection("eventsMeta").doc("publicFormConfig").get().then(function(doc){
     _publicFormConfigCache = doc.exists ? doc.data() : null;
+    window.__zaraGive = (_publicFormConfigCache && _publicFormConfigCache.giveLinks) || {};
     renderCatSelect();
     renderForm();
     renderFooterMessage();
@@ -3028,12 +3029,18 @@
     var g = GIVE[cat]; if(!g) return "";
     var n = name ? "«" + esc(name) + "»" : "صاحب المناسبة";
     return '<div class="zx-box zx-give"><h3>' + g[0].replace("{n}", n) + '</h3><p>' + g[1].replace("{n}", n) + '</p>' +
-      '<a class="zx-btn give" data-zx="give" data-cat="' + cat + '" target="_blank" rel="noopener" href="https://www.awamiach.sa/projects/?utm_source=gzara&utm_medium=occasion&utm_campaign=' + cat + '">تبرّع الآن</a></div>';
+      '<a class="zx-btn give" data-zx="give" data-cat="' + cat + '" target="_blank" rel="noopener" href="' + esc(giveUrl(cat)) + '">تبرّع الآن</a></div>';
+  }
+  // الرابط يحدده الأدمن لكل نوع من لوحة التحكم؛ وإلا فصفحة مشاريع الجمعية العامة
+  function giveUrl(cat){
+    var u = (window.__zaraGive || {})[cat];
+    if(!u || !/^https:\/\//i.test(u)) u = "https://www.awamiach.sa/projects/";
+    return u + (u.indexOf("?") < 0 ? "?" : "&") + "utm_source=gzara&utm_medium=occasion&utm_campaign=" + cat;
   }
   document.addEventListener("click", function(e){
     var b = e.target.closest && e.target.closest("[data-zx]");
     if(!b) return;
-    if(b.dataset.zx === "give"){ hit("give." + b.dataset.cat); flush(); }
+    if(b.dataset.zx === "give"){ b.href = giveUrl(b.dataset.cat); hit("give." + b.dataset.cat); flush(); }
     if(b.dataset.zx === "copy"){
       var t = b.dataset.text, done = function(){ b.textContent = "تم النسخ"; setTimeout(function(){ b.textContent = "نسخ الرابط"; }, 1800); };
       if(navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(t).then(done).catch(function(){});

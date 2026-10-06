@@ -329,7 +329,7 @@
           <h3>الوفيات</h3>
           <p class="tile-meta"><b data-count="deaths" data-label="وفاة موثّقة"></b><span></span></p>
           <p class="tile-note">تُنشر فور تأكيد الخبر من العائلة أو الجهات الرسمية.</p>
-          <a class="tile-give" href="https://www.awamiach.sa/projects/?utm_source=gzara&amp;utm_medium=occasion&amp;utm_campaign=deaths" target="_blank" rel="noopener">صدقة جارية عن روح المتوفى ←</a>
+          <a class="tile-give" id="deathsGive" href="https://www.awamiach.sa/projects/?utm_source=gzara&amp;utm_medium=occasion&amp;utm_campaign=deaths" target="_blank" rel="noopener">صدقة جارية عن روح المتوفى ←</a>
         </div>
       </div>
     </div>
@@ -413,6 +413,22 @@
   }
   // آخر عدد معروف يُحفظ في المتصفح: يُعرض لو تعذّر الجلب (مثلاً عند استنفاد حصة القراءة اليومية)،
   // ولا يُعاد الجلب إلا بعد ساعة تخفيفاً للقراءات
+  // رابط «صدقة جارية» يحدده الأدمن من لوحة التحكم — يُجلب مرة كل 6 ساعات
+  (function(){
+    var a = document.getElementById("deathsGive"), GK = "zaraGiveDeaths", g = {};
+    if(!a || !window.fetch) return;
+    try{ g = JSON.parse(localStorage.getItem(GK) || "{}") || {}; }catch(e){ g = {}; }
+    function apply(u){ if(u && /^https:\/\//i.test(u)) a.href = u + (u.indexOf("?") < 0 ? "?" : "&") + "utm_source=gzara&utm_medium=occasion&utm_campaign=deaths"; }
+    apply(g.u);
+    if(g.t && Date.now() - g.t < 21600000) return;
+    fetch("https://firestore.googleapis.com/v1/projects/awamia-zara/databases/(default)/documents/eventsMeta/publicFormConfig?mask.fieldPaths=giveLinks.deaths&key=" + KEY)
+      .then(function(r){ return r.ok ? r.json() : null; }).then(function(d){
+        if(!d) return;
+        var f = d.fields && d.fields.giveLinks && d.fields.giveLinks.mapValue && d.fields.giveLinks.mapValue.fields && d.fields.giveLinks.mapValue.fields.deaths;
+        var u = f ? f.stringValue : "";
+        apply(u); try{ localStorage.setItem(GK, JSON.stringify({ u: u || "", t: Date.now() })); }catch(e){}
+      }).catch(function(){});
+  })();
   var CK = "zaraHomeCounts", cache = {};
   try{ cache = JSON.parse(localStorage.getItem(CK) || "{}") || {}; }catch(e){ cache = {}; }
   var fresh = cache.t && (Date.now() - cache.t) < 3600000;
