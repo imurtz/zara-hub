@@ -10743,6 +10743,12 @@
     return keys.map(function(k){ return { label: k, value: counts[k] }; });
   }
   function rpField(key){ return function(r){ return r[key]; }; }
+  // سجلات مستوردة كُتب فيها الجنس «انثى» بلا همزة فكانت تسقط من إحصاءات الجنس — تُوحَّد للعرض فقط (نسخة، بلا تعديل السجل)
+  function rpNormGender(r){
+    var g = String(r.gender || "").trim(), n = /^[اأإ]نث[ىيئ]$/.test(g) ? "أنثى" : /^ذكر$/.test(g) ? "ذكر" : g;
+    if(n === r.gender) return r;
+    var c = shallowCopy(r); c.gender = n; return c;
+  }
   // اسم العائلة من الاسم الكامل: آخر كلمة، مع ضم «آل/أبو/بو/بن» السابقة لها
   function rpFamily(name){
     var p = String(name || "").replace(/[()،,]/g, " ").trim().split(/\s+/);
@@ -10824,7 +10830,7 @@
   function rpTop(items){ return items[0] || null; }
   function eventsReportsHTML(){
     var cat = evOpenCats().find(function(c){ return c.key === eventsUI.reportsCategory; }) || evOpenCats()[0] || EVENTS_CATEGORIES[0];
-    var all = loadEventsData().filter(function(r){ return r.category === cat.key; });
+    var all = loadEventsData().filter(function(r){ return r.category === cat.key; }).map(rpNormGender);
     var years = uniqueSorted(all.map(function(r){ return r.gregorianYear; }).filter(Boolean));
     var monthField = EVENTS_MONTH_FIELD_BY_CATEGORY[cat.key];
     var byYear = eventsUI.reportsYear ? all.filter(function(r){ return r.gregorianYear === eventsUI.reportsYear; }) : all;
