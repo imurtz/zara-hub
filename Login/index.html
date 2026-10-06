@@ -11021,7 +11021,13 @@
     if(/\.png(\?|$)/i.test(url)) return ".png";
     return ".jpg";
   }
-  function galFetchBlob(url){ return fetch(url, { mode: "cors" }).then(function(r){ if(!r.ok) throw new Error("http_" + r.status); return r.blob(); }); }
+  // الصورة قد تكون مخزّنة بكاش المتصفح من عرضها كـ<img> (بلا ترويسات CORS) فيفشل الجلب الأول — نعيد المحاولة متجاوزين الكاش
+  function galFetchBlob(url){
+    var get = function(mode){ return fetch(url, { mode: "cors", cache: mode }).then(function(r){ if(!r.ok) throw new Error("http_" + r.status); return r.blob(); }); };
+    return get("default").catch(function(){ return get("reload"); }).catch(function(){
+      url += (url.indexOf("?") < 0 ? "?" : "&") + "cors=1"; return get("reload");
+    });
+  }
   function galDownloadOne(r){
     galFetchBlob(r.photo).then(function(blob){
       var a = document.createElement("a");
