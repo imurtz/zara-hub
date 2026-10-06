@@ -7513,7 +7513,62 @@
   });
   evBoot();
 
+  // توحيد كتابة القيم المتكررة بصيغ مختلفة في السجلات المستوردة (انثى/أنثى، اغسطس/أغسطس، أسماء جامعات وتخصصات…)
+  // يُطبَّق على النسخة المحمّلة في المتصفح فقط — فتتطابق الإحصاءات والفلاتر وقواعد التصميم — ولا يكتب شيئاً في القاعدة؛
+  // السجل يُحفظ بالصيغة الموحّدة تلقائياً عند أول تعديل لاحق عليه
+  var EV_NORM_MAP = {"university": {"جامعة الملك فيصل بالأحساء": "جامعة الملك فيصل بالاحساء", "كلية التقنية بالقطيف": "الكلية التقنية بالقطيف", "جامعة الملك فهد للبترول و المعادن": "جامعة الملك فهد للبترول والمعادن", "الجامعة السعودية الالكترونية": "الجامعة السعودية الإلكترونية", "كلية التقنية بالدمام": "الكلية التقنية بالدمام", "wisconsin milwaukee,USA": "Wisconsin milwaukee ,USA", "كلية التقنية بحفر الباطن": "الكلية التقنية بحفر الباطن"}, "country": {"استراليا": "أستراليا", "أسبانيا": "إسبانيا"}, "specializationType": {"الادارية": "الإدارية", "علمي": "العلمي"}, "specialization": {"الطب وجراحة الفم والأسنان": "طب وجراحة الفم والأسنان", "تمريض": "التمريض", "هندسة مدنية": "الهندسة المدنية", "التغذية الاكلينيكية": "التغذية الإكلينيكية", "ادارة الاعمال": "إدارة الأعمال", "الاحصاء": "الإحصاء", "العلوم الاشعاعية": "العلوم الإشعاعية", "التربيةالخاصة": "التربية الخاصة", "الأتصال الإستراتيجي": "الاتصال الاستراتيجي"}};
+  var EV_MONTH_FIX = { "اغسطس": "أغسطس", "إبريل": "أبريل", "ابريل": "أبريل", "اكتوبر": "أكتوبر", "إكتوبر": "أكتوبر" };
+  var _evNormed = typeof WeakSet === "function" ? new WeakSet() : null;
+  function evNormalize(r){
+    if(!r || !_evNormed || _evNormed.has(r)) return r;
+    _evNormed.add(r);
+    if(typeof r.gender === "string" && /^\s*[اأإ]نث[ىيئ]\s*$/.test(r.gender)) r.gender = "أنثى";
+    else if(typeof r.gender === "string" && /^\s*ذكر\s*$/.test(r.gender)) r.gender = "ذكر";
+    for(var k in r){
+      if(typeof r[k] !== "string") continue;
+      if(/MonthGregorian$/.test(k) && EV_MONTH_FIX[r[k].trim()]) r[k] = EV_MONTH_FIX[r[k].trim()];
+      else if(r.category === "graduates" && EV_NORM_MAP[k] && EV_NORM_MAP[k][r[k]]) r[k] = EV_NORM_MAP[k][r[k]];
+    }
+    return r;
+  }
+  // المراقبة المستمرة: لكل حقل اختيار في كل تصنيف، القيم التي لا تختلف إلا في الهمزات/المسافات/«ال» التعريف/التاء المربوطة
+  // تُعدّ قيمة واحدة وتُعرض بالصيغة المعتمدة (الموجودة في قائمة الخيارات، وإلا الأكثر تكراراً). تعمل على أي هفوة جديدة تلقائياً
+  function evNormKey(v){
+    return String(v).replace(/[\u064B-\u0652\u0640]/g, "").replace(/[أإآ]/g, "ا").replace(/ى/g, "ي").replace(/ة/g, "ه")
+      .replace(/(^|\s)ال(?=\S{2})/g, "$1").replace(/\s+/g, "").toLowerCase();
+  }
+  var EV_NORM_EXTRA = { deaths: ["condolenceStart"] }, _evUnifiedFor = null, _evUnifiedLen = -1;
+  function evUnifyVariants(){
+    if(_evUnifiedFor === _eventsRecordsCache && _evUnifiedLen === _eventsRecordsCache.length) return;
+    _evUnifiedFor = _eventsRecordsCache; _evUnifiedLen = _eventsRecordsCache.length;
+    _eventsRecordsCache.forEach(evNormalize);
+    EVENTS_CATEGORIES.forEach(function(cat){
+      var recs = _eventsRecordsCache.filter(function(r){ return r.category === cat.key; });
+      if(!recs.length) return;
+      var fields = cat.fields.filter(function(f){ return (f.type === "select" || f.type === "growSelect" || f.type === "selectOther") && f.key !== "gregorianYear" && f.key !== "hijriYear"; })
+        .concat((EV_NORM_EXTRA[cat.key] || []).map(function(k){ return { key: k }; }));
+      fields.forEach(function(f){
+        var groups = {}, n = 0;
+        recs.forEach(function(r){
+          var v = r[f.key]; if(typeof v !== "string" || !v.trim()) return;
+          var k = evNormKey(v); if(!k) return;
+          var g = groups[k] = groups[k] || {}; if(!g[v]){ g[v] = 0; } g[v]++; n++;
+        });
+        var map = {}, any = false, opts = Array.isArray(f.options) ? f.options : [];
+        Object.keys(groups).forEach(function(k){
+          var vs = Object.keys(groups[k]);
+          var inOpt = opts.filter(function(o){ return evNormKey(o) === k; })[0];
+          if(vs.length < 2 && (!inOpt || inOpt === vs[0]) && vs[0] === vs[0].trim()) return;
+          var best = inOpt || vs.slice().sort(function(a, b){ return (groups[k][b] - groups[k][a]) || ((b.match(/[أإآ]/g) || []).length - (a.match(/[أإآ]/g) || []).length); })[0].trim();
+          if(EV_NORM_MAP[f.key] && EV_NORM_MAP[f.key][best]) best = EV_NORM_MAP[f.key][best];
+          vs.forEach(function(v){ if(v !== best){ map[v] = best; any = true; } });
+        });
+        if(any) recs.forEach(function(r){ if(typeof r[f.key] === "string" && map[r[f.key]]) r[f.key] = map[r[f.key]]; });
+      });
+    });
+  }
   function loadEventsData(){
+    evUnifyVariants();
     var l = _eventsRecordsCache.slice();
     return evScoped() ? l.filter(function(r){ return evCatOpen(r.category); }) : l;
   }
