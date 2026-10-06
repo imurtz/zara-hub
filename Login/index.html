@@ -2164,6 +2164,8 @@
   .fs-bar i{display:block; height:100%; border-radius:999px; background:var(--teal);}
   .fs-step b{text-align:left; font-weight:600;}
   .fs-h4{font-size:12.5px; font-weight:600; color:var(--ink-soft, #6B7674); margin:14px 0 8px;}
+  .fam-row b small{display:block; font-size:11.5px; font-weight:400; color:var(--ink-soft, #6B7674); margin-top:2px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+  .fam-dup{font-style:normal; font-size:11.5px; font-weight:600; color:#8F6A45; background:#F6EEE5; border-radius:999px; padding:3px 10px; white-space:nowrap;}
 
 </style>
 </head>
@@ -11199,9 +11201,19 @@
     var c = {}; items.forEach(function(i){ c[i.r.category] = (c[i.r.category] || 0) + 1; });
     return Object.keys(FAM_CAT).filter(function(k){ return c[k]; }).map(function(k){ return '<span class="fam-chip fam-chip--' + k + '">' + FAM_CAT[k] + ' ' + c[k] + '</span>'; }).join("");
   }
+  // ما يميّز السجل عن شبيهه: تفاصيل المناسبة، هل له صورة، ومتى ومن أين دخل
+  function famDetail(r){
+    var d = r.category === "graduates" ? [r.degree, r.specialization, r.university] : r.category === "congrats" ? [r.occasionType] : r.category === "marriages" ? [r.wifeGuardian] : r.category === "births" ? [r.motherName] : [];
+    var src = r.source === "public" ? "من النموذج العام" : /import/.test(r.source || "") ? "استيراد" : r.source === "website-sync" ? "من موقع الجمعية" : "";
+    var when = r.createdAt ? new Date(Number(r.createdAt)).toLocaleDateString("ar-SA-u-ca-gregory-nu-latn", { day: "numeric", month: "short", year: "numeric" }) : "";
+    return d.filter(Boolean).concat([r.photo ? "بصورة" : "بلا صورة", src, when ? "أُدخل " + when : ""]).filter(Boolean).join(" · ");
+  }
+  function famDupKey(i){ return i.r.category + "|" + i.role + "|" + famNorm(i.name) + "|" + (i.r.gregorianYear || i.date) + "|" + famNorm(i.r.category === "graduates" ? (i.r.degree || "") : i.r.category === "congrats" ? (i.r.occasionType || "") : ""); }
   function famTimelineHTML(items){
+    var seen = {}; items.forEach(function(i){ var k = famDupKey(i); seen[k] = (seen[k] || 0) + 1; });
     return '<div class="fam-tl">' + items.slice().sort(function(a, b){ return a.date < b.date ? 1 : -1; }).map(function(i){
-      return '<button type="button" class="fam-row" data-fam="rec" data-id="' + i.r.id + '"><em>' + escapeHTML(i.date || "—") + '</em><span class="fam-chip fam-chip--' + i.r.category + '">' + escapeHTML(i.role) + '</span><b>' + escapeHTML(i.name) + '</b>' +
+      return '<button type="button" class="fam-row" data-fam="rec" data-id="' + i.r.id + '"><em>' + escapeHTML(i.date || "—") + '</em><span class="fam-chip fam-chip--' + i.r.category + '">' + escapeHTML(i.role) + '</span><b>' + escapeHTML(i.name) + '<small>' + escapeHTML(famDetail(i.r)) + '</small></b>' +
+        (seen[famDupKey(i)] > 1 ? '<i class="fam-dup">تكرار محتمل</i>' : '') +
         (i.r.status === "pending" ? '<i class="fam-pend">قيد المراجعة</i>' : '') + '</button>';
     }).join("") + '</div>';
   }
