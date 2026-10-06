@@ -2701,12 +2701,6 @@
       { k: "docs.review", l: "مراجعة واعتماد التوثيقات" },
       { k: "docs.export", l: "تنزيل الحزمة" }
     ] },
-    { key: "annual", label: "التقرير السنوي", perms: [
-      { k: "annual.view", l: "فتح التقرير" }, { k: "annual.edit", l: "تعديل محتواه" }
-    ] },
-    { key: "executive", label: "التقرير التنفيذي", perms: [
-      { k: "executive.view", l: "فتح التقرير" }, { k: "executive.edit", l: "تعديل محتواه" }
-    ] },
     { key: "chat", label: "دردشة الموظفين", perms: [
       { k: "chat.use", l: "استخدام الدردشة" }
     ] }
@@ -2900,6 +2894,8 @@
     tabs.forEach(function(tab){
       var key = tab.dataset.section;
       if(key === "admin") return;
+      // التقرير السنوي والتنفيذي صارا داخل «وثّق» — تبويباهما السابقان مخفيان (محتواهما نُقل، ونسخته المحلية باقية)
+      if(key === "annual" || key === "executive"){ tab.style.display = "none"; return; }
       var canSee = allowed.indexOf(key) > -1;
       tab.style.display = canSee ? "flex" : "none";
       if(canSee && !firstAllowedTab) firstAllowedTab = tab;
@@ -13579,8 +13575,10 @@
     if(WS_LOCAL){ doc.ready = true; docRender(); return; }
     db.collection("docEntries").onSnapshot(function(s){
       doc.entries = s.docs.map(function(d){ return d.data(); });
+      var firstLoad = !doc.ready;
       doc.ready = true; doc.err = "";
       docRender(true);
+      if(firstLoad) docMigrateLocal();
     }, function(err){ console.error("docs listener error", err); doc.err = (err && err.code) || "error"; docRender(); });
   }
   function docSave(entry){
@@ -13689,6 +13687,92 @@
     showToast(made + (made === 1 ? " توثيق" : " توثيقات") + (base.status === "approved" ? " — حُفظ واعتُمد" : " — أُرسل للمراجعة"));
     docRender();
   }
+  // ---------- نقل محتوى تبويبي التقرير السنوي والتنفيذي السابقين (كان محفوظاً في متصفح كل موظف) إلى «وثّق» ----------
+  // يُنفَّذ مرة واحدة لكل متصفح؛ النسخة المحلية تبقى كما هي. كل عنصر منقول يحمل only = التقرير الذي جاء منه حتى لا يظهر في الآخر.
+  var DOC_OLD_EXEC = {
+    programs: ["البرامج والأنشطة", "programs"], assistance: ["المساعدات", "assistance"], partnerships: ["الشراكات والاتفاقيات", "partnerships"], partnershipEvents: ["الفعاليات والبرامج للشراكات", "partnerships"],
+    visits: ["الزيارات واللقاءات", "visits"], internalActivities: ["النشاطات الداخلية", "adminFinance"], ambulancePatients: ["تحركات الإسعاف للمرضى", "socialService"], ambulanceClub: ["تحركات الإسعاف لنادي السلام", "socialService"],
+    employment: ["التوظيف", "adminFinance"], training: ["التدريب", "adminFinance"], sustainabilityItems: ["الاستدامة المالية", "sustainability"], organization: ["التنظيم", "adminFinance"],
+    mediaGreetings: ["تهنئات أخبار المجتمع", "media"], mediaFollowers: ["عدد المتابعين على وسائل التواصل", "media"], websiteStats: ["إحصائيات الموقع الرسمي", "media"], topPosts: ["أعلى المنشورات", "media"],
+    newspapers: ["الصحف — عدد الأخبار المنشورة", "media"], newsTitles: ["الصحف — عناوين الأخبار", "media"], financialCommittees: ["الإقرارات المالية بحسب اللجنة", "finance"], expenseCategories: ["المصروفات بحسب البند", "finance"],
+    topSupporters: ["أبرز الداعمين", "supporters"], volunteering: ["التطوع", "volunteering"], bloodDonation: ["التبرع بالدم", "socialService"], deceasedServices: ["خدمات الموتى", "socialService"], instagramStats: ["إحصائيات انستقرام", "media"]
+  };
+  var DOC_OLD_COLS = { title: "العنوان", date: "التاريخ", result: "النتائج", committee: "اللجنة", received: "الحالات الواردة", rejected: "المرفوضة", accepted: "المقبولة", disbursements: "الإقرارات المالية", description: "الوصف",
+    facility: "الجهة أو المستشفى", beneficiaries: "عدد المستفيدين", trips: "عدد التحركات", location: "الموقع", detail: "التفاصيل", category: "التصنيف", count: "العدد", platform: "المنصة", label: "البند", views: "المشاهدات",
+    likes: "الإعجاب", comments: "التعليقات", shares: "المشاركة", name: "الاسم", amount: "المبلغ", before: "قبل", after: "بعد", value: "القيمة" };
+  async function docMigrateLocal(){
+    var FLAG = "zaraHub.docMigrated.v1";
+    if(WS_LOCAL || !can("docs.add")) return;
+    try{ if(localStorage.getItem(FLAG)) return; localStorage.setItem(FLAG, String(Date.now())); }catch(e){ return; }
+    var n = 0, st = can("docs.review") ? "approved" : "pending";
+    var has = function(id){ return doc.entries.some(function(x){ return x.id === id; }); };
+    var up = async function(list){
+      var out = [];
+      for(var i = 0; i < (list || []).length; i++){
+        var src = typeof list[i] === "string" ? list[i] : (list[i] && (list[i].dataUrl || list[i].url || list[i].src));
+        if(!src) continue;
+        if(src.indexOf("data:") !== 0){ out.push({ url: src, thumb: src, name: "صورة", size: 0 }); continue; }
+        var url = await new Promise(function(res){ uploadDataUrlToR2(src, "events", res); });
+        if(url && url.indexOf("data:") !== 0) out.push({ url: url, thumb: url, name: "صورة منقولة", size: 0 });
+      }
+      return out;
+    };
+    var put = function(id, e){
+      if(has(id)) return;
+      docSave(Object.assign({ id: id, by: currentUser.id, byName: currentUser.name, status: st, createdAt: Date.now(), migrated: true, photos: [], files: [] }, e));
+      n++;
+    };
+    var tableOf = function(rows){
+      var keys = []; rows.forEach(function(r){ Object.keys(r || {}).forEach(function(k){ if(k !== "id" && k !== "photos" && keys.indexOf(k) === -1) keys.push(k); }); });
+      return { cols: keys.map(function(k){ return DOC_OLD_COLS[k] || k; }), rows: rows.map(function(r){ return { c: keys.map(function(k){ return r[k] == null ? "" : String(r[k]); }) }; }), total: rows.length, fileName: "منقول من التبويب السابق" };
+    };
+    try {
+      var annual = loadReportData();
+      for(var a = 0; a < annual.length; a++){
+        var r = annual[a], y = String(r.year), base = { year: y, quarter: "4", date: y + "-12-31", dept: r.dept || "", only: "annual" }, pid = "old-" + r.id + "-";
+        (r.achievements || []).forEach(function(t, i){ if(t) put(pid + "ach" + i, Object.assign({ kind: "event", section: "achievements", text: String(t) }, base)); });
+        (r.partnerships || []).forEach(function(t, i){ if(t) put(pid + "par" + i, Object.assign({ kind: "event", section: "partnerships", text: String(t) }, base)); });
+        (r.mediaHighlights || []).forEach(function(t, i){ if(t) put(pid + "med" + i, Object.assign({ kind: "event", section: "media", text: String(t) }, base)); });
+        (r.visits || []).forEach(function(v, i){ if(v && v.description) put(pid + "vis" + i, Object.assign({ kind: "event", section: "visits", text: v.description }, base, v.date ? { date: v.date, quarter: docQuarterOf(v.date) } : {})); });
+        (r.invitations || []).forEach(function(v, i){ if(v && v.title) put(pid + "inv" + i, Object.assign({ kind: "event", section: "invitations", text: v.title }, base, v.date ? { date: v.date, quarter: docQuarterOf(v.date) } : {})); });
+        for(var p = 0; p < (r.programs || []).length; p++){
+          var pg = r.programs[p];
+          if(!pg || !pg.title || has(pid + "prg" + p)) continue;
+          put(pid + "prg" + p, Object.assign({ kind: "event", section: "programs", text: [pg.title + (pg.type ? " (" + pg.type + ")" : ""), pg.description, pg.beneficiaryCount ? "عدد المستفيدين: " + pg.beneficiaryCount : ""].filter(Boolean).join(" — "), photos: await up(pg.photos) }, base));
+        }
+        for(var o = 0; o < (r.openContent || []).length; o++){
+          var oc = r.openContent[o];
+          if(!oc || !oc.title || has(pid + "opn" + o)) continue;
+          put(pid + "opn" + o, Object.assign({ kind: "event", section: "openContent", text: [oc.title, oc.content].filter(Boolean).join(" — "), photos: await up(oc.photos) }, base));
+        }
+        if((r.generalPhotos || []).length && !has(pid + "pho")) put(pid + "pho", Object.assign({ kind: "event", section: "openContent", text: "صور إضافية — " + (r.dept || "") + " " + y, photos: await up(r.generalPhotos) }, base));
+        (r.stats || []).forEach(function(s, i){
+          if(!s || !s.label) return;
+          var num = Number(String(s.value).replace(/[,٬]/g, ""));
+          if(String(s.value).trim() !== "" && !isNaN(num)) put(pid + "sta" + i, Object.assign({ kind: "number", section: "stats", metric: s.label, value: num, note: "" }, base));
+          else put(pid + "sta" + i, Object.assign({ kind: "event", section: "stats", text: s.label + ": " + (s.value || "") }, base));
+        });
+        if((r.topSupporters || []).length) put(pid + "sup", Object.assign({ kind: "file", section: "supporters", tableKey: "topSupporters", text: "أبرز الداعمين", table: tableOf(r.topSupporters) }, base));
+        if((r.mediaFollowers || []).length) put(pid + "fol", Object.assign({ kind: "file", section: "media", text: "عدد المتابعين (قبل / بعد)", table: tableOf(r.mediaFollowers) }, base));
+        if(r.notes && String(r.notes).trim()) put(pid + "not", Object.assign({ kind: "event", section: "notes", text: String(r.notes).trim() }, base));
+      }
+      loadExecData().forEach(function(r){
+        var y = String(r.year), q = String(r.quarter || 1), base = { year: y, quarter: q, date: y + "-" + pad2(Number(q) * 3) + "-28", dept: r.dept || "", only: "exec" }, pid = "oldx-" + r.id + "-";
+        Object.keys(DOC_OLD_EXEC).forEach(function(k){
+          var v = r[k], def = DOC_OLD_EXEC[k];
+          if(Array.isArray(v) && v.length) put(pid + k, Object.assign({ kind: "file", section: def[1], text: def[0], table: tableOf(v) }, base));
+          else if(v && typeof v === "object" && !Array.isArray(v)){
+            var rows = Object.keys(v).filter(function(kk){ return v[kk] !== "" && v[kk] != null; }).map(function(kk){ return { label: kk, value: v[kk] }; });
+            if(rows.length) put(pid + k, Object.assign({ kind: "file", section: def[1], text: def[0], table: tableOf(rows) }, base));
+          }
+        });
+        if(r.mediaPublications && String(r.mediaPublications).trim()) put(pid + "pub", Object.assign({ kind: "event", section: "media", text: "عدد المنشورات: " + r.mediaPublications }, base));
+        if(r.investmentRevenue && String(r.investmentRevenue).trim()) put(pid + "rev", Object.assign({ kind: "event", section: "sustainability", text: "إيرادات الاستثمار: " + r.investmentRevenue }, base));
+        if(r.notes && String(r.notes).trim()) put(pid + "not", Object.assign({ kind: "event", section: "notes", text: String(r.notes).trim() }, base));
+      });
+    } catch(err){ console.error("doc migration failed", err); try{ localStorage.removeItem(FLAG); }catch(e){} }
+    if(n){ showToast("نُقل " + n + " عنصراً من تبويبي التقرير السابقين إلى «وثّق»"); wsLog("نقل " + n + " عنصراً من التقريرين السابقين إلى «وثّق»", ""); docRender(true); }
+  }
   // ---------- العرض ----------
   function docPeriods(){
     var y = new Date().getFullYear(), out = [];
@@ -13785,7 +13869,7 @@
     // kind: "annual" | "exec" — التوثيقات الداخلة في التقرير المعروض حسب السنة/الربع والقسم
     return doc.entries.filter(function(e){
       var s = docSec(e.section);
-      if(kind === "annual" ? !s.a : !s.e) return false;
+      if(e.only ? e.only !== kind : (kind === "annual" ? !s.a : !s.e)) return false;
       if(String(e.year) !== docUI.year) return false;
       if(kind === "exec" && String(e.quarter) !== docUI.quarter) return false;
       if(docUI.dept && (e.dept || "") !== docUI.dept) return false;
@@ -13804,7 +13888,7 @@
       (review ? '<label class="tf-chip"><input type="checkbox" id="docShowPending"' + (docUI.fStatus === "all" ? " checked" : "") + '/><span>إظهار ما ينتظر المراجعة' + (pending ? " (" + pending + ")" : "") + '</span></label>' : '') + '</div>';
     var ev = shown.filter(function(e){ return e.kind === "event"; }), ph = ev.reduce(function(n, e){ return n + (e.photos || []).length; }, 0);
     html += '<div class="rp-kpis">' + rpKpi(ev.length, "حدثاً موثَّقاً", "", "deep") + rpKpi(shown.filter(function(e){ return e.kind === "number"; }).length, "رقماً مسجَّلاً") + rpKpi(shown.filter(function(e){ return e.kind === "file"; }).length, "جدولاً وملفاً") + rpKpi(ph, "صورة أصلية") + (pending ? rpKpi(pending, "بانتظار المراجعة", "", "tan") : "") + '</div>';
-    var secs = DOC_SECTIONS.filter(function(s){ return (kind === "annual" ? s.a : s.e) && (review || docCanSec(s.key)); }), empty = [];
+    var secs = DOC_SECTIONS.filter(function(s){ return ((kind === "annual" ? s.a : s.e) || shown.some(function(e){ return e.section === s.key; })) && (review || docCanSec(s.key)); }), empty = [];
     secs.forEach(function(s){
       var list = shown.filter(function(e){ return e.section === s.key; });
       if(!list.length){ empty.push(s.label); return; }
@@ -13888,7 +13972,7 @@
     docUI.busy = true;
     var status = document.getElementById("docExportStatus"), say = function(t){ if(status) status.textContent = t; };
     var title = kind === "annual" ? "التقرير السنوي " + docUI.year : "التقرير التنفيذي — " + QUARTER_LABELS[docUI.quarter] + " " + docUI.year;
-    var secs = DOC_SECTIONS.filter(function(s){ return kind === "annual" ? s.a : s.e; });
+    var secs = DOC_SECTIONS.filter(function(s){ return (kind === "annual" ? s.a : s.e) || list.some(function(e){ return e.section === s.key; }); });
     var files = [], index = [["الملف", "البند", "التاريخ", "نص الحدث", "القسم", "الموثِّق", "الرابط الأصلي", "الحالة"]], enc = new TextEncoder();
     var esc = escapeHTML, html = '<html dir="rtl" lang="ar"><head><meta charset="utf-8"><title>' + esc(title) + '</title><style>body{font-family:Arial,Tahoma,sans-serif; direction:rtl; line-height:1.9;} h1{font-size:22pt;} h2{font-size:16pt; border-bottom:2px solid #4B7071; padding-bottom:4px; margin-top:28px;} h3{font-size:12pt; margin:18px 0 2px;} table{border-collapse:collapse; margin:8px 0;} td,th{border:1px solid #999; padding:4px 10px; font-size:10.5pt;} .m{color:#666; font-size:9.5pt;} .ph{color:#324C4B; font-size:9.5pt;}</style></head><body><h1>' + esc(title) + '</h1><p class="m">مواد مجمَّعة من خدمة «وثّق» في بوابة زارة — النصوص كما كتبها أصحابها دون تعديل. تاريخ التصدير: ' + wsToday() + '</p>';
     var wb = window.XLSX.utils.book_new(), numRows = [["البند", "المؤشر", "السنة", "الربع", "القيمة", "القسم", "ملاحظة"]], evRows = [["البند", "التاريخ", "النص", "القسم", "الموثِّق", "عدد الصور"]], sheetNames = {};
