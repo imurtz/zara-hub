@@ -2721,7 +2721,18 @@
   document.addEventListener("change", function(e){
     var el = e.target;
     if(el.id === "empRole"){ renderEmpPerms(el.value === "admin" ? [] : (document.getElementById("empId").value ? collectEmpPerms() : KIND_PRESETS[el.value] || []), el.value); return; }
-    if(el.classList && el.classList.contains("emp-perm-cb")) renderEmpPerms(collectEmpPermsLoose(), document.getElementById("empRole").value);
+    if(el.classList && el.classList.contains("emp-perm-cb")){
+      var curP = collectEmpPermsLoose();
+      // فتح قسم كان مغلقاً ← تُفعَّل كل صلاحياته وبنوده دفعة واحدة، ثم يُلغي الأدمن ما لا يريده
+      if(el.classList.contains("perm-master") && el.checked){
+        var gOn = PERM_GROUPS.find(function(x){ return x.perms[0].k === el.value; });
+        if(gOn){
+          gOn.perms.forEach(function(pp){ if(curP.indexOf(pp.k) === -1) curP.push(pp.k); });
+          if(permItems(gOn.key)) permItems(gOn.key).forEach(function(c){ var ik = gOn.key + ".s." + c.key; if(curP.indexOf(ik) === -1) curP.push(ik); });
+        }
+      }
+      renderEmpPerms(curP, document.getElementById("empRole").value);
+    }
   });
   // أثناء التحرير: نقرأ كل المحدَّد (حتى لو أُغلق القسم للتو) ثم نسقط ما تحت قسم مغلق
   function collectEmpPermsLoose(){
