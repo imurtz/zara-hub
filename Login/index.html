@@ -14090,9 +14090,9 @@
     var status = document.getElementById("docExportStatus"), say = function(t){ if(status) status.textContent = t; };
     var title = kind === "annual" ? "التقرير السنوي " + docUI.year : "التقرير التنفيذي — " + QUARTER_LABELS[docUI.quarter] + " " + docUI.year;
     var secs = DOC_SECTIONS.filter(function(s){ return (kind === "annual" ? s.a : s.e) || list.some(function(e){ return e.section === s.key; }); });
-    var files = [], index = [["الملف", "البند", "التاريخ", "نص الحدث", "القسم", "الموثِّق", "الرابط الأصلي", "الحالة"]], enc = new TextEncoder();
+    var files = [], index = [["رمز الحدث", "الملف", "البند", "التاريخ", "نص الحدث", "القسم", "الموثِّق", "الرابط الأصلي", "الحالة"]], enc = new TextEncoder();
     var esc = escapeHTML, html = '<html dir="rtl" lang="ar"><head><meta charset="utf-8"><title>' + esc(title) + '</title><style>body{font-family:Arial,Tahoma,sans-serif; direction:rtl; line-height:1.9;} h1{font-size:22pt;} h2{font-size:16pt; border-bottom:2px solid #4B7071; padding-bottom:4px; margin-top:28px;} h3{font-size:12pt; margin:18px 0 2px;} table{border-collapse:collapse; margin:8px 0;} td,th{border:1px solid #999; padding:4px 10px; font-size:10.5pt;} .m{color:#666; font-size:9.5pt;} .ph{color:#324C4B; font-size:9.5pt;}</style></head><body><h1>' + esc(title) + '</h1><p class="m">مواد مجمَّعة من خدمة «وثّق» في بوابة زارة — النصوص كما كتبها أصحابها دون تعديل. تاريخ التصدير: ' + wsToday() + '</p>';
-    var wb = window.XLSX.utils.book_new(), numRows = [["البند", "المؤشر", "السنة", "الربع", "القيمة", "القسم", "ملاحظة"]], evRows = [["البند", "التاريخ", "النص", "القسم", "الموثِّق", "عدد الصور"]], sheetNames = {};
+    var wb = window.XLSX.utils.book_new(), numRows = [["البند", "المؤشر", "السنة", "الربع", "القيمة", "القسم", "ملاحظة"]], evRows = [["رمز الحدث", "البند", "التاريخ", "النص", "القسم", "الموثِّق", "عدد الصور", "مجلد الصور"]], sheetNames = {};
     for(var si = 0; si < secs.length; si++){
       var s = secs[si], mine = list.filter(function(e){ return e.section === s.key; });
       if(!mine.length) continue;
@@ -14105,20 +14105,23 @@
       }
       var evs = mine.filter(function(e){ return e.kind === "event"; }).sort(function(a, b){ return a.date > b.date ? 1 : -1; });
       for(var ei = 0; ei < evs.length; ei++){
-        var e = evs[ei], names = [];
-        evRows.push([s.label, e.date, e.text, e.dept || "", e.byName || "", (e.photos || []).length]);
+        // لكل حدث رمز ثابت داخل الحزمة ومجلد خاص بصوره — فلا تنفصل الصورة عن نصها
+        var e = evs[ei], names = [], code = pad2(si + 1) + "-E" + pad2(ei + 1), got = 0;
+        var evDir = "الصور/" + folder + "/" + code + " - " + [e.date, String(e.text || "").replace(/[\\\/:*?"<>|\r\n\t]+/g, " ").replace(/\s+/g, " ").trim().slice(0, 40).trim()].filter(Boolean).join(" - ");
+        evRows.push([code, s.label, e.date, e.text, e.dept || "", e.byName || "", (e.photos || []).length, (e.photos || []).length ? evDir : ""]);
         for(var pi = 0; pi < (e.photos || []).length; pi++){
           var p = e.photos[pi], ext = (/\.([a-z0-9]{2,5})(?:\?|$)/i.exec(p.url) || [0, "jpg"])[1].toLowerCase();
-          var fname = pad2(si + 1) + "-" + String(++pn).padStart(3, "0") + "." + ext, state = "في الحزمة";
+          var fname = code + "-" + pad2(pi + 1) + "." + ext, state = "في الحزمة"; pn++;
           if(withPhotos){
             say("تنزيل الصور الأصلية — " + s.label + " (" + pn + ")…");
-            try { var blob = await galFetchBlob(p.url); files.push({ name: "الصور/" + folder + "/" + fname, data: new Uint8Array(await blob.arrayBuffer()) }); }
+            try { var blob = await galFetchBlob(p.url); files.push({ name: evDir + "/" + fname, data: new Uint8Array(await blob.arrayBuffer()) }); got++; }
             catch(err){ state = "تعذّر تنزيلها — استخدم الرابط"; }
           } else state = "غير مضمَّنة — استخدم الرابط";
-          names.push(state === "في الحزمة" ? '<br><img src="' + esc("الصور/" + folder + "/" + fname) + '" alt="" style="max-width:420px; max-height:320px; margin:6px 0;"><br>' + fname : fname + ' (' + esc(p.url) + ')');
-          index.push(["الصور/" + folder + "/" + fname, s.label, e.date, e.text, e.dept || "", e.byName || "", p.url, state]);
+          names.push(state === "في الحزمة" ? '<br><img src="' + esc(evDir + "/" + fname) + '" alt="" style="max-width:420px; max-height:320px; margin:6px 0;"><br>' + fname : fname + ' (' + esc(p.url) + ')');
+          index.push([code, evDir + "/" + fname, s.label, e.date, e.text, e.dept || "", e.byName || "", p.url, state]);
         }
-        html += '<h3>' + esc(e.date) + '</h3><p>' + esc(e.text).replace(/\n/g, "<br>") + '</p><p class="m">' + esc([e.dept, e.byName].filter(Boolean).join(" — ")) + '</p>' + (names.length ? '<p class="ph">الصور (' + names.length + '): ' + names.join(" ") + '</p>' : '') +
+        if(got) files.push({ name: evDir + "/نص الحدث.txt", data: enc.encode("\uFEFF" + "رمز الحدث: " + code + "\nالبند: " + s.label + "\nالتاريخ: " + (e.date || "") + "\nالقسم: " + (e.dept || "") + "\nالموثِّق: " + (e.byName || "") + "\nعدد الصور في هذا المجلد: " + got + "\n\n" + (e.text || "")) });
+        html += '<h3>[' + code + '] ' + esc(e.date) + '</h3><p>' + esc(e.text).replace(/\n/g, "<br>") + '</p><p class="m">' + esc([e.dept, e.byName].filter(Boolean).join(" — ")) + '</p>' + (names.length ? '<p class="ph">الصور (' + names.length + '): ' + names.join(" ") + '</p>' : '') +
           ((e.files || []).length ? '<p class="ph">مرفقات: ' + e.files.map(function(f){ return esc(f.name) + ' (' + esc(f.url) + ')'; }).join("، ") + '</p>' : '');
       }
       var tabs = mine.filter(function(e){ return e.kind === "file"; });
@@ -14145,14 +14148,14 @@
     files.unshift({ name: "الأرقام والجداول والفهرس.xlsx", data: new Uint8Array(window.XLSX.write(wb2, { bookType: "xlsx", type: "array" })) });
     files.unshift({ name: "المحتوى.html", data: enc.encode(html) });
     files.unshift({ name: "المحتوى.doc", data: enc.encode("﻿" + html) });
-    files.unshift({ name: "اقرأني.txt", data: enc.encode("﻿" + title + "\n\nالمحتوى.doc: كل النصوص والجداول مرتبة بالبنود، كما كتبها أصحابها (يُفتح ببرنامج Word).\nالمحتوى.html: نفس المحتوى للعرض في المتصفح.\nالأرقام والجداول والفهرس.xlsx: الأحداث، المؤشرات، الجداول، وفهرس يربط كل صورة ببندها وحدثها.\nالصور: الصور بجودتها الأصلية في مجلد لكل بند، وأسماؤها مذكورة تحت كل حدث في ملف المحتوى.\n\nمهم: فكّ ضغط الملف كاملاً أولاً ثم افتح «المحتوى» من داخل المجلد، حتى تظهر الصور داخله (تُقرأ من مجلد «الصور» المجاور).\n") });
+    files.unshift({ name: "اقرأني.txt", data: enc.encode("﻿" + title + "\n\nإلى مصمم الكتاب — ربط الصور بالأحداث:\n- لكل حدث رمز مثل 03-E02 (البند 3، الحدث 2) يظهر بين قوسين بجانب عنوانه في ملف المحتوى، وفي ورقتي «الأحداث» و«فهرس الصور».\n- صور كل حدث في مجلد خاص يبدأ بالرمز نفسه داخل مجلد بنده، ومعها ملف «نص الحدث.txt». كل صورة يبدأ اسمها برمز حدثها (03-E02-01).\n- لا تُستخدم صورة مع نص حدث آخر؛ الصورة تتبع الحدث الذي يحمل رمزها فقط.\n- الصور بجودتها الأصلية كما رُفعت.\n\nالمحتوى.doc: كل النصوص والجداول مرتبة بالبنود، كما كتبها أصحابها (يُفتح ببرنامج Word).\nالمحتوى.html: نفس المحتوى للعرض في المتصفح.\nالأرقام والجداول والفهرس.xlsx: الأحداث، المؤشرات، الجداول، وفهرس يربط كل صورة ببندها وحدثها.\nالصور: الصور بجودتها الأصلية في مجلد لكل بند، وأسماؤها مذكورة تحت كل حدث في ملف المحتوى.\n\nمهم: فكّ ضغط الملف كاملاً أولاً ثم افتح «المحتوى» من داخل المجلد، حتى تظهر الصور داخله (تُقرأ من مجلد «الصور» المجاور).\n") });
     var a = document.createElement("a");
     a.download = "حزمة " + title + ".zip";
     a.href = URL.createObjectURL(tmplZipStore(files));
     a.click();
     setTimeout(function(){ URL.revokeObjectURL(a.href); }, 15000);
     docUI.busy = false;
-    var failed = index.filter(function(r){ return /تعذّر/.test(r[7]); }).length;
+    var failed = index.filter(function(r){ return /تعذّر/.test(r[8]); }).length;
     say("نُزّلت الحزمة: " + list.length + " توثيقاً" + (withPhotos ? "، " + (index.length - 1 - failed) + " صورة" + (failed ? " (تعذّر " + failed + " — روابطها في الفهرس)" : "") : " بلا صور (روابطها في الفهرس)") + ".");
     wsLog("نزّل حزمة " + title, "");
   }
