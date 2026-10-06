@@ -2064,6 +2064,80 @@
   .tf-chip--item input:checked + span{background:var(--teal); color:#fff;}
   .report-locked-note{font-size:12.500px; color:var(--ink-soft); background:rgba(20,28,27,.04); border:1px dashed var(--line); border-radius:16px; padding:12px 16px; margin:4px 0 0; text-align:center;}
 
+  /* ===================== وثّق ===================== */
+  .dc-nav{margin-bottom:16px;}
+  .dc-badge{font-style:normal; font-size:11px; font-weight:600; background:#C4483B; color:#fff; border-radius:999px; padding:0 7px; margin-inline-start:4px;}
+  .dc-hero{text-align:center; margin:6px 0 16px;}
+  .dc-hero h2{font-size:clamp(26px, 4vw, 36px); font-weight:300; letter-spacing:-.5px; color:var(--ink); margin:0 0 6px;}
+  .dc-hero h2 strong{font-weight:700; background:linear-gradient(100deg, var(--teal) 5%, var(--tan) 100%); -webkit-background-clip:text; background-clip:text; color:transparent;}
+  .dc-hero p{font-size:14px; color:var(--ink-2); max-width:54ch; margin:0 auto; line-height:1.9;}
+  .dc-compose{max-width:760px; margin:0 auto 22px; background:#fff; border:1px solid rgba(255,255,255,.95); border-radius:28px; padding:18px; box-shadow:var(--shadow); display:flex; flex-direction:column; gap:12px;}
+  .dc-modes{align-self:center;}
+  .dc-modes button{padding:9px 26px;}
+  .dc-modes button.on{background:var(--ink); color:#fff;}
+  .dc-compose textarea, .dc-compose input:not([type=checkbox]):not([type=file]), .dc-compose select{width:100%; min-width:0; margin:0; font:inherit; font-size:14.500px; color:var(--ink); padding:12px 14px; background-color:var(--field); border:1px solid transparent; border-radius:16px;}
+  .dc-compose textarea{font-size:16px; line-height:1.9; resize:vertical; min-height:96px;}
+  .dc-compose textarea:focus, .dc-compose input:focus, .dc-compose select:focus{outline:none; background-color:#fff; border-color:var(--teal); box-shadow:0 0 0 4px rgba(75,112,113,.12);}
+  .dc-row{display:flex; gap:10px; flex-wrap:wrap; align-items:flex-end;}
+  .dc-row .ws-f{margin:0;}
+  .dc-grow{flex:1; min-width:200px;}
+  .dc-attach .ws-upload{margin:0; display:inline-flex; align-items:center; gap:7px;}
+  .dc-attach svg{width:16px; height:16px;}
+  .dc-row > input{flex:1;}
+  .dc-row > .btn-secondary{padding:11px 16px; white-space:nowrap; min-height:0; width:auto;}
+  .dc-submit{display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; padding-top:4px;}
+  .dc-submit .btn-primary{display:inline-flex; align-items:center; gap:8px; padding:13px 34px; font-size:15px;}
+  .dc-submit .btn-primary svg{width:17px; height:17px;}
+  .dc-metrics{display:grid; grid-template-columns:repeat(auto-fill, minmax(190px, 1fr)); gap:10px;}
+  .dc-metric{display:flex; flex-direction:column; gap:4px; background:var(--field); border-radius:16px; padding:10px 12px;}
+  .dc-metric span{font-size:12.500px; font-weight:500; color:var(--ink-2);}
+  .dc-metric input{background-color:#fff !important; font-size:18px !important; font-weight:600; padding:8px 12px !important; font-variant-numeric:tabular-nums;}
+  .dc-metric small{font-size:11px; color:var(--ink-soft);}
+  .dc-photos{display:flex; flex-wrap:wrap; gap:8px;}
+  .dc-ph{position:relative; width:88px; height:88px; border-radius:14px; overflow:hidden; background:var(--field); flex:none;}
+  .dc-ph img{width:100%; height:100%; object-fit:cover; display:block;}
+  .dc-ph .ws-x{position:absolute; top:4px; inset-inline-end:4px; background:rgba(20,28,27,.6); color:#fff; width:22px; height:22px;}
+  .dc-entry{background:#fff; border:1px solid rgba(255,255,255,.95); border-radius:20px; padding:14px 16px; margin-bottom:10px; box-shadow:var(--shadow-sm); display:flex; flex-direction:column; gap:8px;}
+  .dc-sec .dc-entry{background:var(--field); box-shadow:none; border:none;}
+  .dc-entry--returned{box-shadow:0 0 0 1.500px #E0A39C inset;}
+  .dc-entry--pending{box-shadow:0 0 0 1.500px #E9D3B8 inset;}
+  .dc-entry-head{display:flex; align-items:center; gap:8px; flex-wrap:wrap; font-size:13px;}
+  .dc-entry-head b{font-weight:600;}
+  .dc-entry-head small{font-size:11.500px; color:var(--ink-soft);}
+  .dc-kind{font-size:10.500px; font-weight:600; border-radius:999px; padding:1px 9px; background:var(--teal-tint); color:var(--teal-dark);}
+  .dc-kind--number{background:var(--tan-tint); color:#7A5630;} .dc-kind--file{background:var(--ink); color:#fff;}
+  .dc-st{margin-inline-start:auto; font-size:11px; font-weight:600; border-radius:999px; padding:2px 10px;}
+  .dc-st--pending{background:var(--tan-tint); color:#7A5630;} .dc-st--approved{background:var(--teal-tint); color:var(--teal-dark);} .dc-st--returned{background:#FBEDEC; color:#A93226;}
+  .dc-text{font-size:14.500px; line-height:1.95; color:var(--ink); margin:0; white-space:pre-wrap; overflow-wrap:anywhere;}
+  .dc-num{display:flex; align-items:baseline; gap:10px; margin:0;}
+  .dc-num b{font-size:24px; font-weight:600; font-variant-numeric:tabular-nums;}
+  .dc-num span{font-size:13.500px; color:var(--ink-2);}
+  .dc-note{font-size:12.500px; color:#A93226; background:#FBEDEC; border-radius:12px; padding:8px 12px; margin:0;}
+  .dc-actions{display:flex; align-items:center; gap:8px; flex-wrap:wrap;}
+  .dc-actions .btn-primary, .dc-actions .btn-secondary{padding:8px 16px; font-size:13px; min-height:0; width:auto; flex:none;}
+  .dc-actions select{font:inherit; font-size:12.500px; padding:8px 12px; border:1px solid var(--line); border-radius:999px; background-color:#fff; width:auto; margin:0;}
+  .dc-del{margin-inline-start:auto; color:#A93226;}
+  .dc-table-wrap{overflow-x:auto; border-radius:14px; background:#fff; border:1px solid var(--line);}
+  .dc-table{width:100%; border-collapse:collapse; font-size:12.500px;}
+  .dc-table th{text-align:start; font-size:11.500px; font-weight:600; color:var(--ink-soft); padding:8px 10px; background:var(--field); white-space:nowrap;}
+  .dc-table td{padding:7px 10px; border-top:1px solid var(--line); color:var(--ink-2);}
+  .dc-table--num td:not(:first-child), .dc-table--num th:not(:first-child){text-align:center; font-variant-numeric:tabular-nums;}
+  .dc-sec h3 i{font-style:normal; font-size:11.500px; font-weight:600; color:var(--teal-dark); background:var(--teal-tint); border-radius:999px; padding:1px 9px; margin-inline-start:6px;}
+  .dc-sec{display:flex; flex-direction:column; gap:10px;}
+  .dc-sec h3{margin-bottom:2px;}
+  .dc-export .dc-row{margin-top:12px;}
+  .dc-export .btn-primary, .dc-export .btn-secondary{display:inline-flex; align-items:center; gap:8px; width:auto;}
+  .dc-export svg{width:16px; height:16px;}
+  .dc-stage{border:1.500px dashed var(--line) !important; background:transparent !important; box-shadow:none !important;}
+  @media (max-width:760px){
+    .dc-compose{border-radius:24px; padding:14px;}
+    .dc-modes{align-self:stretch;} .dc-modes button{flex:1; padding:10px 8px;}
+    .dc-compose input:not([type=checkbox]):not([type=file]), .dc-compose select{font-size:16px;}
+    .dc-submit .btn-primary{width:100%; justify-content:center;}
+    .dc-attach .ws-upload{flex:1; justify-content:center;}
+    .dc-metrics{grid-template-columns:repeat(2, minmax(0, 1fr));}
+  }
+
 </style>
 </head>
 <body>
@@ -2174,6 +2248,10 @@
       <span class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4V3a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v1"/><path d="M9 13l2 2 4-4"/></svg></span>
       المهام الوظيفية
     </div>
+    <div class="nav-tab" data-section="docs">
+      <span class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3.500h9l4 4V20a.5.5 0 0 1-.5.500h-12.500a.5.5 0 0 1-.5-.5V4a.5.5 0 0 1 .5-.500z"/><path d="M14.500 3.500v4.500H19"/><path d="M9 14.500l2.200 2.200L15.500 12"/></svg></span>
+      وثّق
+    </div>
     <div class="nav-tab" data-section="annual">
       <span class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M8 3v4M16 3v4M4 10h16"/></svg></span>
       التقرير السنوي
@@ -2196,6 +2274,9 @@
     <div class="section-view active" id="view-tasks">
       <div id="wsRoot"></div>
       <div id="taskBoardRoot" hidden></div>
+    </div>
+    <div class="section-view" id="view-docs">
+      <div id="docsRoot"></div>
     </div>
     <div class="section-view" id="view-annual">
       <div id="annualReportRoot"></div>
@@ -2421,6 +2502,7 @@
 
   var SECTION_DEFS = [
     { key: "tasks", label: "المهام الوظيفية" },
+    { key: "docs", label: "وثّق" },
     { key: "annual", label: "التقرير السنوي" },
     { key: "executive", label: "التقرير التنفيذي" },
     { key: "events", label: "المناسبات الاجتماعية" }
@@ -2535,6 +2617,8 @@
     document.getElementById("chatFabBtn").style.display = "flex";
     applyGlobalPerms();
     applyHashToApp();
+    var docsView = document.getElementById("view-docs");
+    if(docsView && docsView.classList.contains("active")){ docStart(); docRender(); }
   }
 
   // ===== توجيه بالرابط (Hash Routing) — كل قسم/تبويب/تصنيف له رابط خاص، يدعم الرجوع/التقدم بالمتصفح ولا يفقد الموضع الحالي عند التحديث =====
@@ -2611,6 +2695,12 @@
       { k: "events.sync", l: "مزامنة أخبار الوفيات" },
       { k: "events.trash", l: "سلة المهملات" }
     ] },
+    { key: "docs", label: "وثّق — جمع بيانات التقريرين", perms: [
+      { k: "docs.view", l: "فتح القسم والاطلاع على التقريرين المجمَّعين" },
+      { k: "docs.add", l: "توثيق الأحداث والأرقام والملفات" },
+      { k: "docs.review", l: "مراجعة واعتماد التوثيقات" },
+      { k: "docs.export", l: "تنزيل الحزمة" }
+    ] },
     { key: "annual", label: "التقرير السنوي", perms: [
       { k: "annual.view", l: "فتح التقرير" }, { k: "annual.edit", l: "تعديل محتواه" }
     ] },
@@ -2623,9 +2713,9 @@
   ];
   var PERM_ALL = PERM_GROUPS.reduce(function(a, g){ return a.concat(g.perms.map(function(p){ return p.k; })); }, []);
   var KIND_PRESETS = {
-    employee: ["tasks.view", "tasks.edit", "tasks.projects", "events.view", "events.add", "events.edit", "events.publish", "events.design", "events.reports", "events.gallery", "chat.use"],
-    chair: ["tasks.view", "events.view", "events.reports", "events.gallery", "annual.view", "executive.view", "chat.use"],
-    board: ["tasks.view", "events.view", "events.reports", "events.gallery", "annual.view", "executive.view", "chat.use"],
+    employee: ["docs.view", "docs.add", "tasks.view", "tasks.edit", "tasks.projects", "events.view", "events.add", "events.edit", "events.publish", "events.design", "events.reports", "events.gallery", "chat.use"],
+    chair: ["docs.view", "tasks.view", "events.view", "events.reports", "events.gallery", "annual.view", "executive.view", "chat.use"],
+    board: ["docs.view", "tasks.view", "events.view", "events.reports", "events.gallery", "annual.view", "executive.view", "chat.use"],
     volunteer: ["tasks.view", "tasks.edit", "chat.use"]
   };
   // الحسابات السابقة (قبل الصلاحيات الدقيقة) كانت تملك كل ما في أقسامها عدا القبول/الرفض وإدارة كل المهام — نحافظ على ذلك
@@ -2634,6 +2724,7 @@
     if(emp.role === "admin") return PERM_ALL;
     if(Array.isArray(emp.perms)) return emp.perms;
     var out = ["chat.use"];
+    if((emp.sections || []).indexOf("annual") > -1 || (emp.sections || []).indexOf("executive") > -1) out.push("docs.view", "docs.add");
     (emp.sections || []).forEach(function(sk){
       var g = PERM_GROUPS.find(function(x){ return x.key === sk; });
       if(g) g.perms.forEach(function(p){ if(p.k !== "events.approve" && p.k !== "tasks.manage") out.push(p.k); });
@@ -2642,7 +2733,7 @@
   }
   // بنود التقريرين: تُفتح وتُقفل لكل موظف حسب اختصاصه. وجود العلامة "<القسم>.scoped" يعني أن البنود محددة صراحةً؛
   // غيابها (الحسابات السابقة) يعني أن كل البنود مفتوحة كما كانت
-  function permItems(gkey){ return gkey === "annual" ? REPORT_CATEGORIES : gkey === "executive" ? EXEC_CATEGORIES : null; }
+  function permItems(gkey){ return gkey === "annual" ? REPORT_CATEGORIES : gkey === "executive" ? EXEC_CATEGORIES : gkey === "docs" ? DOC_SECTIONS : null; }
   function empSecOpen(emp, gkey, key){
     if(!emp) return false;
     if(emp.role === "admin") return true;
@@ -2897,6 +2988,7 @@
       if(target) target.classList.add("active");
       syncHashFromApp();
       if(tab.dataset.section === "tasks") wsMaybeStandup();
+      if(tab.dataset.section === "docs"){ docStart(); docRender(); }
     });
   });
 
@@ -13407,6 +13499,524 @@
   document.addEventListener("keydown", function(e){ if(e.key === "Escape" && wsUI.drawer && !(wsUI.drawer === "standup" && wsUI.drawerId === "auto")) wsCloseDrawer(); });
   // تذكيرات الحملات والفعاليات تُحسب من الوقت الحالي — نعيد الرسم كل 5 دقائق ليظهر ما حان موعده
   setInterval(function(){ if(ws.ready && currentUser && !wsUI.drawer) wsRender(); }, 300000);
+
+  // ===========================================================================
+  // «وثّق»: نقطة جمع بيانات التقرير السنوي والتنفيذي طوال السنة
+  // كل توثيق مستند في docEntries (مشترك بين كل الأجهزة): حدث (نص + صور أصلية) · رقم دوري · جدول من Excel/ملف مرفق
+  // التوثيق الواحد يغذي التقريرين: التنفيذي حسب ربعه، والسنوي حسب سنته. يُعتمد من المراجع قبل دخوله الحزمة.
+  // ===========================================================================
+  var DOC_SECTIONS = [
+    { key: "achievements", label: "الإنجازات وأبرز الأعمال", a: 1, e: 0 },
+    { key: "programs", label: "البرامج والأنشطة", a: 1, e: 1 },
+    { key: "visits", label: "الزيارات واللقاءات", a: 1, e: 1 },
+    { key: "invitations", label: "دعوات المشاركة", a: 1, e: 0 },
+    { key: "partnerships", label: "الشراكات والاتفاقيات", a: 1, e: 1 },
+    { key: "assistance", label: "المساعدات", a: 0, e: 1 },
+    { key: "volunteering", label: "التطوع", a: 0, e: 1 },
+    { key: "socialService", label: "الخدمة الاجتماعية", a: 0, e: 1 },
+    { key: "adminFinance", label: "الإدارية والمالية", a: 0, e: 1 },
+    { key: "media", label: "الإعلام", a: 1, e: 1 },
+    { key: "finance", label: "الإقرارات المالية والمصروفات", a: 0, e: 1 },
+    { key: "sustainability", label: "الاستدامة المالية", a: 0, e: 1 },
+    { key: "supporters", label: "أبرز الداعمين", a: 1, e: 1 },
+    { key: "stats", label: "المؤشرات والإحصائيات", a: 1, e: 0 },
+    { key: "openContent", label: "محتوى مفتوح ولقطات خاصة", a: 1, e: 0 },
+    { key: "notes", label: "ملاحظات إضافية", a: 1, e: 1 }
+  ];
+  // المؤشرات الرقمية الدورية المعروفة لكل بند (ويمكن إضافة مؤشر باسم حر)
+  var DOC_METRICS = {
+    programs: ["عدد البرامج المنفذة", "عدد المستفيدين"],
+    assistance: ["الحالات الواردة", "الحالات المقبولة", "الحالات المرفوضة", "مبلغ المساعدات"],
+    volunteering: ["عدد المتطوعين", "عدد ساعات التطوع", "العائد الاقتصادي", "نسبة رضا المتطوعين"],
+    socialService: ["تحركات الإسعاف للمرضى", "مستفيدو الإسعاف", "تحركات الإسعاف للنادي", "متقدمون للتبرع بالدم", "متبرعون بالدم", "نقل الموتى", "تغسيل وتكفين", "دفن"],
+    media: ["متابعو انستقرام", "متابعو إكس", "متابعو سناب شات", "عدد المنشورات", "عدد الريلز", "الإعجابات", "التعليقات", "زيارات الموقع"],
+    adminFinance: ["عدد الموظفين", "عدد الدورات التدريبية", "عدد المتدربين"],
+    finance: ["إجمالي الإقرارات المالية", "إجمالي المصروفات"],
+    sustainability: ["إيرادات الاستدامة"],
+    supporters: ["عدد الداعمين", "إجمالي الدعم"],
+    stats: []
+  };
+  // جداول معروفة لها قوالب Excel جاهزة
+  var DOC_TABLES = [
+    { key: "financialCommittees", section: "finance", label: "الإقرارات المالية بحسب اللجنة", cols: ["اللجنة", "المبلغ"] },
+    { key: "expenseCategories", section: "finance", label: "المصروفات بحسب البند", cols: ["بند المصروف", "المبلغ"] },
+    { key: "sustainabilityItems", section: "sustainability", label: "بنود الاستدامة المالية", cols: ["البند", "التفاصيل", "المبلغ"] },
+    { key: "topSupporters", section: "supporters", label: "أبرز الداعمين", cols: ["اسم الداعم", "المبلغ"] },
+    { key: "assistanceByCommittee", section: "assistance", label: "المساعدات بحسب اللجنة", cols: ["اللجنة", "الحالات الواردة", "المرفوضة", "المقبولة", "المبلغ"] },
+    { key: "topPosts", section: "media", label: "أعلى المنشورات", cols: ["عنوان المنشور", "المشاهدات", "الإعجاب", "التعليقات", "المشاركة"] },
+    { key: "newspapers", section: "media", label: "الأخبار المنشورة في الصحف", cols: ["عنوان الخبر", "الصحيفة أو الموقع", "التاريخ"] },
+    { key: "ambulance", section: "socialService", label: "تحركات الإسعاف", cols: ["الجهة أو المستشفى", "عدد المستفيدين", "عدد التحركات"] },
+    { key: "training", section: "adminFinance", label: "الدورات التدريبية", cols: ["الدورة", "المدة", "عدد المشاركين"] }
+  ];
+  var DOC_STATUS = { pending: "بانتظار المراجعة", approved: "معتمد", returned: "مُعاد للتعديل" };
+  var doc = { entries: [], started: false, ready: false, err: "" };
+  var docUI = { tab: "add", mode: "event", draft: null, year: String(new Date().getFullYear()), quarter: String(currentQuarterNum()), dept: "", fStatus: "", busy: false, expanded: {} };
+  function docSec(key){ return DOC_SECTIONS.find(function(s){ return s.key === key; }) || { key: key, label: key, a: 1, e: 1 }; }
+  function docCanSec(key){ return empSecOpen(currentUser, "docs", key); }
+  function docMySections(){ return DOC_SECTIONS.filter(function(s){ return docCanSec(s.key); }); }
+  function docQuarterOf(dateStr){ var m = Number(String(dateStr || "").slice(5, 7)) || (new Date().getMonth() + 1); return String(Math.ceil(m / 3)); }
+  function docNewDraft(mode){
+    var mine = docMySections();
+    return { mode: mode, text: "", section: "", sectionAuto: true, date: wsToday(), photos: [], files: [], metrics: {}, metricSection: mine.filter(function(s){ return DOC_METRICS[s.key]; })[0] ? mine.filter(function(s){ return DOC_METRICS[s.key]; })[0].key : "",
+      customMetric: "", period: docUI.year + "-Q" + docUI.quarter, tableKey: "", tableSection: "", table: null, tableName: "", note: "" };
+  }
+  // اقتراح البند من نص الحدث بكلمات مفتاحية — اقتراح فقط، والموظف يؤكد أو يغيّر
+  var DOC_HINTS = [
+    ["visits", /زيار|لقاء|استقبل|استقبال|وفد|اجتماع مع/], ["partnerships", /شراك|اتفاقي|مذكرة تفاهم|توقيع/], ["invitations", /دعو[ةه]|تلبية|مشارك[ةه] في/],
+    ["volunteering", /تطوع|متطوع/], ["socialService", /إسعاف|اسعاف|تبرع بالدم|تغسيل|تكفين|دفن|نقل المو/], ["assistance", /مساعد|كفال|سلة غذائ|إعان|اعان|مستفيد من المساعد/],
+    ["media", /تغطي|منشور|ريلز|صحيف|إعلام|مقطع|تصوير|انستقرام|متابع/], ["supporters", /داعم|دعم مالي|تبرع من|راعي|رعاية من/], ["adminFinance", /توظيف|تعيين|دورة تدريب|تدريب الموظف|لائحة|تنظيم إداري/],
+    ["sustainability", /استدام|استثمار|وقف|إيراد/], ["finance", /مصروف|إقرار مالي|ميزاني/], ["programs", /برنامج|نشاط|فعالي|دورة|ورشة|مهرجان|حملة|مسابق|احتفال/], ["achievements", /إنجاز|انجاز|جائزة|تكريم|حصلت|فوز|اعتماد/]
+  ];
+  function docSuggestSection(text){
+    var mine = docMySections().map(function(s){ return s.key; });
+    for(var i = 0; i < DOC_HINTS.length; i++){ if(DOC_HINTS[i][1].test(text) && mine.indexOf(DOC_HINTS[i][0]) > -1) return DOC_HINTS[i][0]; }
+    return mine.indexOf("programs") > -1 ? "programs" : (mine[0] || "");
+  }
+  function docNumbersIn(text){ return (String(text).match(/[0-9٠-٩][0-9٠-٩,.]*/g) || []).slice(0, 4); }
+  function docStart(){
+    if(doc.started || !currentUser) return;
+    doc.started = true;
+    if(WS_LOCAL){ doc.ready = true; docRender(); return; }
+    db.collection("docEntries").onSnapshot(function(s){
+      doc.entries = s.docs.map(function(d){ return d.data(); });
+      doc.ready = true; doc.err = "";
+      docRender(true);
+    }, function(err){ console.error("docs listener error", err); doc.err = (err && err.code) || "error"; docRender(); });
+  }
+  function docSave(entry){
+    entry.updatedAt = Date.now();
+    var i = doc.entries.findIndex(function(x){ return x.id === entry.id; });
+    if(i > -1) doc.entries[i] = entry; else doc.entries.push(entry);
+    if(WS_LOCAL) return Promise.resolve(true);
+    return db.collection("docEntries").doc(entry.id).set(entry).then(function(){ return true; }).catch(function(err){
+      console.error("doc save failed", err); showToast("تعذّر الحفظ — تحقق من الاتصال"); return false;
+    });
+  }
+  function docDelete(id){
+    doc.entries = doc.entries.filter(function(x){ return x.id !== id; });
+    if(!WS_LOCAL) db.collection("docEntries").doc(id).delete().catch(function(){ showToast("تعذّر الحذف"); });
+  }
+  // رفع ملف بحالته الأصلية (بلا ضغط) إلى المخزن — للصور بجودتها الكاملة وللملفات المرفقة
+  function docUploadRaw(file){
+    return fetch(MEDIA_UPLOAD_ENDPOINT, { method: "POST", headers: { "Content-Type": file.type || "application/octet-stream", "X-Folder": "reports" }, body: file }).then(function(res){
+      return res.json().catch(function(){ return {}; }).then(function(d){
+        if(!res.ok || !d.url) throw new Error(d.error || ("http_" + res.status));
+        return d.url;
+      });
+    });
+  }
+  function docThumb(file){
+    return new Promise(function(resolve){
+      if(!/^image\/(png|jpeg|webp)$/.test(file.type)){ resolve(""); return; }
+      compressEventImageFile(file, 160 * 1024, function(dataUrl){
+        if(!dataUrl){ resolve(""); return; }
+        uploadDataUrlToR2(dataUrl, "events", function(url){ resolve(url && url.indexOf("data:") !== 0 ? url : ""); });
+      });
+    });
+  }
+  function docUploadErr(e){
+    var m = String((e && e.message) || e);
+    if(/file_too_large|413/.test(m)) return "الملف أكبر من الحد المسموح حالياً";
+    if(/unsupported_type/.test(m)) return "نوع الملف غير مدعوم في خدمة الرفع الحالية";
+    return "تعذّر الرفع";
+  }
+  async function docAttach(files, kind){
+    var d = docUI.draft;
+    if(!d || docUI.busy) return;
+    docUI.busy = true;
+    for(var i = 0; i < files.length; i++){
+      var f = files[i];
+      showToast("جارٍ رفع " + (i + 1) + " من " + files.length + " — " + f.name);
+      try {
+        if(WS_LOCAL){ var lu = URL.createObjectURL(f); (kind === "photo" ? d.photos : d.files).push({ url: lu, thumb: lu, name: f.name, size: f.size, type: f.type }); continue; }
+        var url = await docUploadRaw(f);
+        if(kind === "photo") d.photos.push({ url: url, thumb: await docThumb(f), name: f.name, size: f.size, type: f.type, caption: "" });
+        else d.files.push({ url: url, name: f.name, size: f.size, type: f.type });
+      } catch(e){ showToast(f.name + ": " + docUploadErr(e)); }
+    }
+    docUI.busy = false;
+    showToast("اكتمل الرفع");
+    docRender();
+  }
+  function docReadExcel(file){
+    return file.arrayBuffer().then(function(buf){
+      var wb = window.XLSX.read(buf, { type: "array" });
+      var rows = window.XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { header: 1, defval: "", raw: false });
+      rows = rows.filter(function(r){ return r.some(function(c){ return String(c).trim() !== ""; }); });
+      if(!rows.length) throw new Error("empty");
+      var cols = rows[0].map(function(c, i){ return String(c).trim() || ("عمود " + (i + 1)); });
+      return { cols: cols, rows: rows.slice(1, 501).map(function(r){ return cols.map(function(_, i){ return r[i] == null ? "" : String(r[i]); }); }), total: rows.length - 1, fileName: file.name };
+    });
+  }
+  function docDownloadTemplate(key){
+    var t = DOC_TABLES.find(function(x){ return x.key === key; });
+    if(!t) return;
+    var wb = window.XLSX.utils.book_new();
+    window.XLSX.utils.book_append_sheet(wb, window.XLSX.utils.aoa_to_sheet([t.cols]), "البيانات");
+    window.XLSX.writeFile(wb, "قالب — " + t.label + ".xlsx");
+  }
+  function docSubmit(){
+    var d = docUI.draft;
+    if(!d || docUI.busy) return;
+    var base = { by: currentUser.id, byName: currentUser.name, dept: currentUser.dept || "", status: can("docs.review") ? "approved" : "pending", createdAt: Date.now() };
+    if(can("docs.review")){ base.reviewedBy = currentUser.name; base.reviewedAt = Date.now(); }
+    var made = 0;
+    if(d.mode === "event"){
+      var text = d.text.trim(), sec = d.section || docSuggestSection(text);
+      if(!text){ showToast("اكتب ما حدث في سطر واحد على الأقل"); return; }
+      if(!sec){ showToast("لا يوجد بند مفتوح لك للتوثيق — تواصل مع الأدمن"); return; }
+      docSave(Object.assign({ id: wsId("doc"), kind: "event", section: sec, text: text, date: d.date || wsToday(), year: (d.date || wsToday()).slice(0, 4), quarter: docQuarterOf(d.date), photos: d.photos, files: d.files }, base));
+      made = 1;
+    } else if(d.mode === "number"){
+      var pm = /^(\d{4})-Q([1-4])$/.exec(d.period) || [0, docUI.year, docUI.quarter];
+      Object.keys(d.metrics).forEach(function(label){
+        var v = d.metrics[label];
+        if(v === "" || v == null || isNaN(Number(v))) return;
+        docSave(Object.assign({ id: wsId("doc"), kind: "number", section: d.metricSection, metric: label, value: Number(v), note: d.note || "", year: pm[1], quarter: pm[2], date: wsToday() }, base));
+        made++;
+      });
+      if(!made){ showToast("اكتب قيمة مؤشر واحد على الأقل"); return; }
+    } else {
+      var tsec = d.tableSection || (DOC_TABLES.find(function(x){ return x.key === d.tableKey; }) || {}).section || "";
+      if(!d.table && !d.files.length){ showToast("ارفع ملفاً أولاً"); return; }
+      if(!tsec){ showToast("اختر البند الذي يتبعه الملف"); return; }
+      var pf = /^(\d{4})-Q([1-4])$/.exec(d.period) || [0, docUI.year, docUI.quarter];
+      docSave(Object.assign({ id: wsId("doc"), kind: "file", section: tsec, tableKey: d.tableKey || "", text: d.tableName || (DOC_TABLES.find(function(x){ return x.key === d.tableKey; }) || {}).label || (d.files[0] && d.files[0].name) || "ملف مرفق",
+        table: d.table ? { cols: d.table.cols, rows: d.table.rows.map(function(r){ return { c: r }; }), total: d.table.total, fileName: d.table.fileName } : null, files: d.files, note: d.note || "", year: pf[1], quarter: pf[2], date: wsToday() }, base));
+      made = 1;
+    }
+    docUI.draft = docNewDraft(d.mode);
+    showToast(made + (made === 1 ? " توثيق" : " توثيقات") + (base.status === "approved" ? " — حُفظ واعتُمد" : " — أُرسل للمراجعة"));
+    docRender();
+  }
+  // ---------- العرض ----------
+  function docPeriods(){
+    var y = new Date().getFullYear(), out = [];
+    [y, y - 1].forEach(function(yy){ [4, 3, 2, 1].forEach(function(q){ out.push([yy + "-Q" + q, QUARTER_LABELS[q] + " " + yy]); }); });
+    return out;
+  }
+  function docYears(){
+    var set = {}; set[String(new Date().getFullYear())] = 1;
+    doc.entries.forEach(function(e){ if(e.year) set[String(e.year)] = 1; });
+    return Object.keys(set).sort().reverse();
+  }
+  function docSize(n){ return n > 1048576 ? (n / 1048576).toFixed(1) + " م.ب" : Math.max(1, Math.round(n / 1024)) + " ك.ب"; }
+  function docStatusBadge(e){ return '<span class="dc-st dc-st--' + e.status + '">' + DOC_STATUS[e.status] + '</span>'; }
+  function docPhotosHTML(photos, removable){
+    if(!photos || !photos.length) return "";
+    return '<div class="dc-photos">' + photos.map(function(p, i){
+      return '<span class="dc-ph"><a href="' + escapeHTML(p.url) + '" target="_blank" rel="noopener" title="' + escapeHTML(p.name || "") + ' — ' + docSize(p.size || 0) + '"><img src="' + escapeHTML(p.thumb || p.url) + '" alt="" loading="lazy"/></a>' +
+        (removable ? '<button type="button" class="ws-x" data-doc="rm-photo" data-i="' + i + '">' + WSI.x + '</button>' : '') + '</span>'; }).join("") + '</div>';
+  }
+  function docFilesHTML(files, removable){
+    if(!files || !files.length) return "";
+    return files.map(function(f, i){ return '<div class="ws-att"><a href="' + escapeHTML(f.url) + '" target="_blank" rel="noopener">' + WSI.clip + escapeHTML(f.name) + ' <small>' + docSize(f.size || 0) + '</small></a>' + (removable ? '<button type="button" class="ws-x" data-doc="rm-file" data-i="' + i + '">' + WSI.x + '</button>' : '') + '</div>'; }).join("");
+  }
+  function docTableHTML(t, cap){
+    if(!t) return "";
+    var rows = (t.rows || []).map(function(r){ return r.c || r; });
+    return '<div class="dc-table-wrap"><table class="dc-table"><thead><tr>' + t.cols.map(function(c){ return '<th>' + escapeHTML(c) + '</th>'; }).join("") + '</tr></thead><tbody>' +
+      rows.slice(0, cap || 8).map(function(r){ return '<tr>' + r.map(function(c){ return '<td>' + escapeHTML(c) + '</td>'; }).join("") + '</tr>'; }).join("") + '</tbody></table></div>' +
+      (rows.length > (cap || 8) ? '<p class="ws-hint">و ' + (rows.length - (cap || 8)) + ' صفاً آخر — تظهر كاملة في الملف المُصدَّر.</p>' : '');
+  }
+  function docEntryHTML(e, opts){
+    opts = opts || {};
+    var sec = docSec(e.section), body = "";
+    if(e.kind === "event") body = '<p class="dc-text">' + escapeHTML(e.text) + '</p>' + docPhotosHTML(e.photos) + docFilesHTML(e.files);
+    else if(e.kind === "number") body = '<p class="dc-num"><b>' + wsMoney(e.value) + '</b><span>' + escapeHTML(e.metric) + '</span></p>' + (e.note ? '<p class="ws-hint">' + escapeHTML(e.note) + '</p>' : '');
+    else body = '<p class="dc-text">' + escapeHTML(e.text) + '</p>' + docTableHTML(e.table) + docFilesHTML(e.files) + (e.note ? '<p class="ws-hint">' + escapeHTML(e.note) + '</p>' : '');
+    var mine = e.by === currentUser.id, review = can("docs.review");
+    return '<div class="dc-entry dc-entry--' + e.status + '"><div class="dc-entry-head"><span class="dc-kind dc-kind--' + e.kind + '">' + ({ event: "حدث", number: "رقم", file: "ملف" })[e.kind] + '</span><b>' + escapeHTML(sec.label) + '</b>' +
+      '<small>' + (e.kind === "event" ? wsFmtDate(e.date) + " " + e.year : QUARTER_LABELS[e.quarter] + " " + e.year) + ' · ' + escapeHTML(e.byName || "") + (e.dept ? ' — ' + escapeHTML(e.dept) : '') + '</small>' + (opts.noStatus ? '' : docStatusBadge(e)) + '</div>' + body +
+      (e.status === "returned" && e.reviewNote ? '<p class="dc-note">ملاحظة المراجع: ' + escapeHTML(e.reviewNote) + '</p>' : '') +
+      ((opts.actions && (review || (mine && e.status !== "approved"))) ? '<div class="dc-actions">' +
+        (review && e.status !== "approved" ? '<button type="button" class="btn-primary" data-doc="approve" data-id="' + e.id + '">اعتماد</button>' : '') +
+        (review && e.status !== "returned" ? '<button type="button" class="btn-secondary" data-doc="return" data-id="' + e.id + '">إعادة بملاحظة</button>' : '') +
+        (review ? '<select data-doc-move="' + e.id + '" title="نقل لبند آخر">' + DOC_SECTIONS.map(function(s){ return '<option value="' + s.key + '"' + (s.key === e.section ? " selected" : "") + '>' + s.label + '</option>'; }).join("") + '</select>' : '') +
+        (mine && e.status === "returned" && e.kind === "event" ? '<button type="button" class="btn-secondary" data-doc="edit-text" data-id="' + e.id + '">تعديل النص وإعادة الإرسال</button>' : '') +
+        '<button type="button" class="link-btn dc-del" data-doc="delete" data-id="' + e.id + '">حذف</button></div>' : '') + '</div>';
+  }
+  function docComposerHTML(){
+    var d = docUI.draft || (docUI.draft = docNewDraft(docUI.mode)), mine = docMySections();
+    if(!mine.length) return '<div class="ws-state"><b>لا يوجد بند مفتوح لك للتوثيق</b><p>يحدّد الأدمن البنود التي تدخل ضمن اختصاصك من لوحة التحكم.</p></div>';
+    var html = '<div class="dc-compose"><div class="ws-seg dc-modes">' + [["event", "حدث", "شيء حصل: برنامج، زيارة، شراكة، إنجاز"], ["number", "رقم", "مؤشر يتجدد كل فترة"], ["file", "ملف", "جدول Excel أو مستند مرفق"]].map(function(m){
+      return '<button type="button" data-doc="mode" data-mode="' + m[0] + '" class="' + (d.mode === m[0] ? "on" : "") + '" title="' + m[2] + '">' + m[1] + '</button>'; }).join("") + '</div>';
+    if(d.mode === "event"){
+      var sug = d.section || (d.text.trim() ? docSuggestSection(d.text) : ""), nums = docNumbersIn(d.text);
+      html += '<textarea id="docText" rows="3" placeholder="اكتب ما حدث في سطر أو سطرين — مثال: دورة الإسعافات الأولية، 25 مشاركاً، ثلاثة أيام">' + escapeHTML(d.text) + '</textarea>' +
+        '<div class="dc-row"><label class="ws-f"><span>التاريخ</span><input type="date" id="docDate" value="' + d.date + '"/></label>' +
+        '<label class="ws-f dc-grow"><span>البند' + (d.sectionAuto && sug ? ' — مقترح تلقائياً، غيّره إن لزم' : '') + '</span><select id="docSection"><option value="">' + (sug ? "" : "يُقترح بعد الكتابة") + '</option>' + mine.map(function(s){ return '<option value="' + s.key + '"' + (sug === s.key ? " selected" : "") + '>' + s.label + '</option>'; }).join("") + '</select></label></div>' +
+        (nums.length ? '<p class="ws-hint">أرقام وردت في النص: ' + nums.map(function(n){ return '<b>' + escapeHTML(n) + '</b>'; }).join("، ") + ' — تبقى ضمن النص كما كتبتها.</p>' : '') +
+        docPhotosHTML(d.photos, true) + docFilesHTML(d.files, true) +
+        '<div class="dc-row dc-attach"><label class="btn-secondary ws-upload">' + TPI.image + ' إضافة صور بجودتها الأصلية<input type="file" id="docPhotoInput" accept="image/*" multiple hidden/></label>' +
+        '<label class="btn-secondary ws-upload">' + WSI.clip + ' إرفاق ملف<input type="file" id="docFileInput" accept=".pdf,.docx,.xlsx" multiple hidden/></label></div>';
+    } else if(d.mode === "number"){
+      var msecs = mine.filter(function(s){ return DOC_METRICS[s.key]; });
+      if(!msecs.length) return html + '<p class="ws-hint">لا توجد مؤشرات رقمية ضمن البنود المفتوحة لك.</p></div>';
+      if(!d.metricSection || !msecs.some(function(s){ return s.key === d.metricSection; })) d.metricSection = msecs[0].key;
+      var pm = /^(\d{4})-Q([1-4])$/.exec(d.period) || [0, docUI.year, docUI.quarter];
+      var last = function(label){
+        var prev = doc.entries.filter(function(e){ return e.kind === "number" && e.section === d.metricSection && e.metric === label && e.status !== "returned" && (!currentUser.dept || !e.dept || e.dept === currentUser.dept); })
+          .sort(function(a, b){ return (b.year + b.quarter) > (a.year + a.quarter) ? 1 : -1; })[0];
+        return prev ? 'آخر قيمة: ' + wsMoney(prev.value) + ' (' + QUARTER_LABELS[prev.quarter] + ' ' + prev.year + ')' : 'لا قيمة سابقة';
+      };
+      var labels = DOC_METRICS[d.metricSection].concat(Object.keys(d.metrics).filter(function(k){ return DOC_METRICS[d.metricSection].indexOf(k) === -1; }));
+      html += '<div class="dc-row"><label class="ws-f dc-grow"><span>البند</span><select id="docMetricSection">' + msecs.map(function(s){ return '<option value="' + s.key + '"' + (s.key === d.metricSection ? " selected" : "") + '>' + s.label + '</option>'; }).join("") + '</select></label>' +
+        '<label class="ws-f"><span>الفترة</span><select id="docPeriod">' + docPeriods().map(function(p){ return '<option value="' + p[0] + '"' + (p[0] === d.period ? " selected" : "") + '>' + p[1] + '</option>'; }).join("") + '</select></label></div>' +
+        '<div class="dc-metrics">' + labels.map(function(l){ return '<label class="dc-metric"><span>' + escapeHTML(l) + '</span><input type="number" inputmode="decimal" data-doc-metric="' + escapeHTML(l) + '" value="' + (d.metrics[l] != null ? d.metrics[l] : "") + '" placeholder="—"/><small>' + last(l) + '</small></label>'; }).join("") + '</div>' +
+        '<div class="dc-row"><input type="text" id="docCustomMetric" placeholder="مؤشر آخر — اكتب اسمه" value="' + escapeHTML(d.customMetric) + '"/><button type="button" class="btn-secondary" data-doc="add-metric">إضافة مؤشر</button></div>' +
+        '<input type="text" id="docNote" placeholder="ملاحظة على الأرقام (اختياري)" value="' + escapeHTML(d.note) + '"/>';
+    } else {
+      var tables = DOC_TABLES.filter(function(t){ return docCanSec(t.section); });
+      html += '<div class="dc-row"><label class="ws-f dc-grow"><span>نوع الملف</span><select id="docTableKey"><option value="">ملف آخر — يُحفظ كمرجع مرفق</option>' + tables.map(function(t){ return '<option value="' + t.key + '"' + (t.key === d.tableKey ? " selected" : "") + '>' + t.label + '</option>'; }).join("") + '</select></label>' +
+        '<label class="ws-f"><span>الفترة</span><select id="docPeriod">' + docPeriods().map(function(p){ return '<option value="' + p[0] + '"' + (p[0] === d.period ? " selected" : "") + '>' + p[1] + '</option>'; }).join("") + '</select></label></div>' +
+        (d.tableKey ? '<p class="ws-hint">لقراءة الجدول بدقة عبّئ القالب الجاهز ثم ارفعه. <button type="button" class="link-btn" data-doc="template" data-key="' + d.tableKey + '">تنزيل قالب Excel</button></p>' :
+          '<div class="dc-row"><label class="ws-f dc-grow"><span>البند الذي يتبعه الملف</span><select id="docTableSection"><option value="">اختر البند</option>' + mine.map(function(s){ return '<option value="' + s.key + '"' + (s.key === d.tableSection ? " selected" : "") + '>' + s.label + '</option>'; }).join("") + '</select></label>' +
+          '<label class="ws-f dc-grow"><span>عنوان الملف</span><input type="text" id="docTableName" value="' + escapeHTML(d.tableName) + '" placeholder="مثال: كشف المصروفات"/></label></div>') +
+        (d.table ? '<p class="ws-label">معاينة ما سيُسجَّل من «' + escapeHTML(d.table.fileName) + '» — ' + d.table.total + ' صفاً</p>' + docTableHTML(d.table, 6) : '') + docFilesHTML(d.files, true) +
+        '<div class="dc-row dc-attach"><label class="btn-secondary ws-upload">' + TPI.swap + ' رفع Excel<input type="file" id="docExcelInput" accept=".xlsx,.xls,.csv" hidden/></label>' +
+        '<label class="btn-secondary ws-upload">' + WSI.clip + ' إرفاق Word أو PDF<input type="file" id="docFileInput" accept=".pdf,.docx" multiple hidden/></label></div>' +
+        '<input type="text" id="docNote" placeholder="ملاحظة (اختياري)" value="' + escapeHTML(d.note) + '"/>';
+    }
+    html += '<div class="dc-submit"><span class="ws-hint">' + (can("docs.review") ? "توثيقك يُعتمد مباشرة." : "يُرسل للمراجعة قبل دخوله التقرير.") + '</span><button type="button" class="btn-primary" data-doc="submit"' + (docUI.busy ? " disabled" : "") + '>' + TICON.check + ' توثيق</button></div></div>';
+    return html;
+  }
+  function docScope(kind){
+    // kind: "annual" | "exec" — التوثيقات الداخلة في التقرير المعروض حسب السنة/الربع والقسم
+    return doc.entries.filter(function(e){
+      var s = docSec(e.section);
+      if(kind === "annual" ? !s.a : !s.e) return false;
+      if(String(e.year) !== docUI.year) return false;
+      if(kind === "exec" && String(e.quarter) !== docUI.quarter) return false;
+      if(docUI.dept && (e.dept || "") !== docUI.dept) return false;
+      if(!can("docs.review") && !docCanSec(e.section)) return false;
+      return true;
+    });
+  }
+  function docReportHTML(kind){
+    var all = docScope(kind), review = can("docs.review");
+    var shown = all.filter(function(e){ return e.status === "approved" || (review && docUI.fStatus === "all" && e.status === "pending"); });
+    var pending = all.filter(function(e){ return e.status === "pending"; }).length;
+    var depts = distinctDepts();
+    var html = '<div class="dept-selector rp-filters"><label>السنة</label><select id="docYear">' + docYears().map(function(y){ return '<option' + (y === docUI.year ? " selected" : "") + '>' + y + '</option>'; }).join("") + '</select>' +
+      (kind === "exec" ? '<label>الربع</label><select id="docQuarter">' + [1, 2, 3, 4].map(function(q){ return '<option value="' + q + '"' + (String(q) === docUI.quarter ? " selected" : "") + '>' + QUARTER_LABELS[q] + '</option>'; }).join("") + '</select>' : '') +
+      (review && depts.length ? '<label>القسم</label><select id="docDept"><option value="">كل الأقسام</option>' + depts.map(function(dn){ return '<option' + (dn === docUI.dept ? " selected" : "") + '>' + escapeHTML(dn) + '</option>'; }).join("") + '</select>' : '') +
+      (review ? '<label class="tf-chip"><input type="checkbox" id="docShowPending"' + (docUI.fStatus === "all" ? " checked" : "") + '/><span>إظهار ما ينتظر المراجعة' + (pending ? " (" + pending + ")" : "") + '</span></label>' : '') + '</div>';
+    var ev = shown.filter(function(e){ return e.kind === "event"; }), ph = ev.reduce(function(n, e){ return n + (e.photos || []).length; }, 0);
+    html += '<div class="rp-kpis">' + rpKpi(ev.length, "حدثاً موثَّقاً", "", "deep") + rpKpi(shown.filter(function(e){ return e.kind === "number"; }).length, "رقماً مسجَّلاً") + rpKpi(shown.filter(function(e){ return e.kind === "file"; }).length, "جدولاً وملفاً") + rpKpi(ph, "صورة أصلية") + (pending ? rpKpi(pending, "بانتظار المراجعة", "", "tan") : "") + '</div>';
+    var secs = DOC_SECTIONS.filter(function(s){ return (kind === "annual" ? s.a : s.e) && (review || docCanSec(s.key)); }), empty = [];
+    secs.forEach(function(s){
+      var list = shown.filter(function(e){ return e.section === s.key; });
+      if(!list.length){ empty.push(s.label); return; }
+      var nums = list.filter(function(e){ return e.kind === "number"; }), evs = list.filter(function(e){ return e.kind === "event"; }).sort(function(a, b){ return a.date > b.date ? 1 : -1; }), files = list.filter(function(e){ return e.kind === "file"; });
+      html += '<div class="report-section-card rp-card dc-sec"><h3>' + escapeHTML(s.label) + ' <i>' + list.length + '</i></h3>';
+      if(nums.length){
+        var labels = []; nums.forEach(function(n){ if(labels.indexOf(n.metric) === -1) labels.push(n.metric); });
+        var qs = kind === "annual" ? ["1", "2", "3", "4"] : [docUI.quarter];
+        html += '<div class="dc-table-wrap"><table class="dc-table dc-table--num"><thead><tr><th>المؤشر</th>' + qs.map(function(q){ return '<th>' + QUARTER_LABELS[q] + '</th>'; }).join("") + (kind === "annual" ? '<th>المجموع</th>' : '') + '</tr></thead><tbody>' +
+          labels.map(function(l){
+            var vals = qs.map(function(q){ var hit = nums.filter(function(n){ return n.metric === l && String(n.quarter) === q; }); return hit.length ? hit.reduce(function(a, b){ return a + (Number(b.value) || 0); }, 0) : null; });
+            return '<tr><td>' + escapeHTML(l) + '</td>' + vals.map(function(v){ return '<td>' + (v == null ? "—" : wsMoney(v)) + '</td>'; }).join("") + (kind === "annual" ? '<td><b>' + wsMoney(vals.reduce(function(a, b){ return a + (b || 0); }, 0)) + '</b></td>' : '') + '</tr>'; }).join("") + '</tbody></table></div>' +
+          (kind === "annual" ? '<p class="ws-hint">عمود المجموع يجمع الأرباع؛ للمؤشرات التراكمية مثل عدد المتابعين اعتمد قيمة آخر ربع.</p>' : '');
+      }
+      evs.forEach(function(e){ html += docEntryHTML(e, { noStatus: e.status === "approved" }); });
+      files.forEach(function(e){ html += docEntryHTML(e, { noStatus: e.status === "approved" }); });
+      html += '</div>';
+    });
+    if(!shown.length) html += '<p class="report-empty">لا توثيقات معتمدة لهذه الفترة بعد.</p>';
+    else if(empty.length) html += '<p class="report-locked-note">بنود بلا توثيق في هذه الفترة: ' + empty.map(escapeHTML).join("، ") + '</p>';
+    return html;
+  }
+  function docReviewHTML(){
+    var pend = doc.entries.filter(function(e){ return e.status === "pending"; }).sort(function(a, b){ return a.createdAt - b.createdAt; });
+    var ret = doc.entries.filter(function(e){ return e.status === "returned"; });
+    var yearE = doc.entries.filter(function(e){ return String(e.year) === docUI.year && e.status === "approved"; }), depts = distinctDepts();
+    var html = '<div class="rp-kpis">' + rpKpi(pend.length, "بانتظار مراجعتك", "", pend.length ? "tan" : "") + rpKpi(ret.length, "مُعاد للتعديل") + rpKpi(yearE.length, "معتمد في " + docUI.year, "", "deep") + '</div>';
+    if(depts.length){
+      html += '<div class="report-section-card rp-card"><h3>التغطية في ' + docUI.year + ' — المعتمد لكل قسم وبند</h3><div class="ws-heat-wrap"><table class="ws-heat"><thead><tr><th>القسم</th>' + DOC_SECTIONS.map(function(s){ return '<th title="' + escapeHTML(s.label) + '">' + escapeHTML(s.label.split(" ")[0]) + '</th>'; }).join("") + '</tr></thead><tbody>' +
+        depts.map(function(dn){ return '<tr><td>' + escapeHTML(dn) + '</td>' + DOC_SECTIONS.map(function(s){ var n = yearE.filter(function(e){ return e.dept === dn && e.section === s.key; }).length; return '<td class="h' + (n === 0 ? 0 : n <= 2 ? 1 : n <= 6 ? 2 : 3) + '">' + (n || "") + '</td>'; }).join("") + '</tr>'; }).join("") + '</tbody></table></div></div>';
+    }
+    html += pend.length ? pend.map(function(e){ return docEntryHTML(e, { actions: true }); }).join("") : '<p class="report-empty">لا توثيقات بانتظار المراجعة.</p>';
+    if(ret.length) html += '<p class="ws-label">مُعادة لأصحابها</p>' + ret.map(function(e){ return docEntryHTML(e, { actions: true }); }).join("");
+    return html;
+  }
+  function docExportHTML(){
+    var a = (function(){ docUI._k = "annual"; return docScope("annual"); })(), x = docScope("exec");
+    var cnt = function(list){ var ok = list.filter(function(e){ return e.status === "approved"; }); return { ok: ok.length, pend: list.filter(function(e){ return e.status === "pending"; }).length, ph: ok.reduce(function(n, e){ return n + (e.photos || []).length; }, 0), mb: ok.reduce(function(n, e){ return n + (e.photos || []).concat(e.files || []).reduce(function(m, f){ return m + (f.size || 0); }, 0); }, 0) }; };
+    var ca = cnt(a), cx = cnt(x);
+    var card = function(kind, title, c){
+      return '<div class="report-section-card rp-card dc-export"><h3>' + title + '</h3><p class="dc-text">' + c.ok + ' توثيقاً معتمداً · ' + c.ph + ' صورة أصلية · نحو ' + docSize(c.mb) + '</p>' +
+        (c.pend ? '<p class="dc-note">' + c.pend + ' توثيقاً ما زال بانتظار المراجعة ولن يدخل الحزمة.</p>' : '') +
+        '<div class="dc-row"><button type="button" class="btn-primary" data-doc="export" data-kind="' + kind + '" data-photos="1"' + (c.ok ? "" : " disabled") + '>' + TPI.download + ' الحزمة الكاملة مع الصور (ZIP)</button>' +
+        '<button type="button" class="btn-secondary" data-doc="export" data-kind="' + kind + '" data-photos="0"' + (c.ok ? "" : " disabled") + '>المحتوى والأرقام فقط</button></div></div>';
+    };
+    return '<div class="dept-selector rp-filters"><label>السنة</label><select id="docYear">' + docYears().map(function(y){ return '<option' + (y === docUI.year ? " selected" : "") + '>' + y + '</option>'; }).join("") + '</select>' +
+      '<label>ربع التقرير التنفيذي</label><select id="docQuarter">' + [1, 2, 3, 4].map(function(q){ return '<option value="' + q + '"' + (String(q) === docUI.quarter ? " selected" : "") + '>' + QUARTER_LABELS[q] + '</option>'; }).join("") + '</select></div>' +
+      '<p class="ws-hint" id="docExportStatus" style="margin-bottom:10px;">الحزمة ملف ZIP: المحتوى كما كُتب (Word)، الأرقام والجداول (Excel)، الصور بجودتها الأصلية في مجلد لكل بند، وفهرس يربط كل صورة ببندها.</p>' +
+      '<div class="rp-grid">' + card("annual", "حزمة التقرير السنوي " + docUI.year, ca) + card("exec", "حزمة التقرير التنفيذي — " + QUARTER_LABELS[docUI.quarter] + " " + docUI.year, cx) + '</div>' +
+      '<div class="report-section-card rp-card dc-stage"><h3>المرحلة الأخيرة: طلب تصميم الكتاب</h3><p class="dc-text">بعد اكتمال المراجعة يُرفع طلب تصميم الكتاب من هنا بمحتوى الحزمة المعتمد.</p><p class="ws-hint">لم تُفعَّل بعد — تحتاج ربط حساب Claude بالمنصة، وهي الخطوة التالية.</p></div>';
+  }
+  function docRender(soft){
+    var root = document.getElementById("docsRoot");
+    if(!root || !currentUser) return;
+    if(doc.err){ root.innerHTML = '<div class="ws-state"><b>تعذّر تحميل «وثّق»</b><p>' + (doc.err === "resource-exhausted" ? "بلغت قاعدة البيانات حصتها اليومية — تعود بعد تجدد الحصة." : doc.err === "permission-denied" ? "صلاحيات قاعدة البيانات لا تسمح — راجع قواعد Firestore." : "تحقق من الاتصال ثم أعد تحميل الصفحة.") + '</p></div>'; return; }
+    if(!doc.ready){ root.innerHTML = '<div class="ws-state"><p>جارٍ التحميل…</p></div>'; return; }
+    var ae = document.activeElement;
+    if(soft && ae && root.contains(ae) && /^(INPUT|TEXTAREA|SELECT)$/.test(ae.tagName)) return;
+    var tabs = [["add", "وثّق", "docs.add"], ["annual", "التقرير السنوي", "docs.view"], ["exec", "التقرير التنفيذي", "docs.view"], ["review", "المراجعة والاعتماد", "docs.review"], ["export", "الحزمة والتصدير", "docs.export"]].filter(function(t){ return can(t[2]); });
+    if(!tabs.some(function(t){ return t[0] === docUI.tab; })) docUI.tab = tabs[0] ? tabs[0][0] : "";
+    var pendN = can("docs.review") ? doc.entries.filter(function(e){ return e.status === "pending"; }).length : 0;
+    var html = '<div class="events-subnav dc-nav">' + tabs.map(function(t){ return '<button type="button" data-doc="tab" data-tab="' + t[0] + '" class="' + (docUI.tab === t[0] ? "active" : "") + '">' + t[1] + (t[0] === "review" && pendN ? ' <i class="dc-badge">' + pendN + '</i>' : '') + '</button>'; }).join("") + '</div>';
+    if(docUI.tab === "add"){
+      var mineE = doc.entries.filter(function(e){ return e.by === currentUser.id; }).sort(function(a, b){ return b.createdAt - a.createdAt; });
+      html += '<div class="dc-hero"><h2>وثّق <strong>ما حدث الآن</strong></h2><p>دقيقة واحدة وقت الحدث تغني عن أسابيع جمع آخر السنة. ما توثّقه يدخل التقرير التنفيذي والسنوي معاً.</p></div>' + docComposerHTML() +
+        '<p class="ws-label">توثيقاتي الأخيرة' + (mineE.length ? ' (' + mineE.length + ')' : '') + '</p>' + (mineE.length ? mineE.slice(0, 20).map(function(e){ return docEntryHTML(e, { actions: true }); }).join("") : '<p class="report-empty">لم توثّق شيئاً بعد.</p>');
+    }
+    else if(docUI.tab === "annual") html += docReportHTML("annual");
+    else if(docUI.tab === "exec") html += docReportHTML("exec");
+    else if(docUI.tab === "review") html += docReviewHTML();
+    else if(docUI.tab === "export") html += docExportHTML();
+    var y = window.scrollY;
+    root.innerHTML = html;
+    if(soft) window.scrollTo(0, y);
+  }
+  // ---------- الحزمة: المحتوى كما كُتب + الأرقام والجداول + الصور الأصلية + فهرس ----------
+  async function docExport(kind, withPhotos, btn){
+    if(docUI.busy) return;
+    var list = docScope(kind).filter(function(e){ return e.status === "approved"; });
+    if(!list.length) return;
+    docUI.busy = true;
+    var status = document.getElementById("docExportStatus"), say = function(t){ if(status) status.textContent = t; };
+    var title = kind === "annual" ? "التقرير السنوي " + docUI.year : "التقرير التنفيذي — " + QUARTER_LABELS[docUI.quarter] + " " + docUI.year;
+    var secs = DOC_SECTIONS.filter(function(s){ return kind === "annual" ? s.a : s.e; });
+    var files = [], index = [["الملف", "البند", "التاريخ", "نص الحدث", "القسم", "الموثِّق", "الرابط الأصلي", "الحالة"]], enc = new TextEncoder();
+    var esc = escapeHTML, html = '<html dir="rtl" lang="ar"><head><meta charset="utf-8"><title>' + esc(title) + '</title><style>body{font-family:Arial,Tahoma,sans-serif; direction:rtl; line-height:1.9;} h1{font-size:22pt;} h2{font-size:16pt; border-bottom:2px solid #4B7071; padding-bottom:4px; margin-top:28px;} h3{font-size:12pt; margin:18px 0 2px;} table{border-collapse:collapse; margin:8px 0;} td,th{border:1px solid #999; padding:4px 10px; font-size:10.5pt;} .m{color:#666; font-size:9.5pt;} .ph{color:#324C4B; font-size:9.5pt;}</style></head><body><h1>' + esc(title) + '</h1><p class="m">مواد مجمَّعة من خدمة «وثّق» في بوابة زارة — النصوص كما كتبها أصحابها دون تعديل. تاريخ التصدير: ' + wsToday() + '</p>';
+    var wb = window.XLSX.utils.book_new(), numRows = [["البند", "المؤشر", "السنة", "الربع", "القيمة", "القسم", "ملاحظة"]], evRows = [["البند", "التاريخ", "النص", "القسم", "الموثِّق", "عدد الصور"]], sheetNames = {};
+    for(var si = 0; si < secs.length; si++){
+      var s = secs[si], mine = list.filter(function(e){ return e.section === s.key; });
+      if(!mine.length) continue;
+      var folder = pad2(si + 1) + " - " + s.label, pn = 0;
+      html += '<h2>' + esc(s.label) + '</h2>';
+      var nums = mine.filter(function(e){ return e.kind === "number"; });
+      if(nums.length){
+        html += '<table><tr><th>المؤشر</th><th>الفترة</th><th>القيمة</th><th>القسم</th><th>ملاحظة</th></tr>' + nums.map(function(n){ return '<tr><td>' + esc(n.metric) + '</td><td>' + QUARTER_LABELS[n.quarter] + ' ' + n.year + '</td><td>' + n.value + '</td><td>' + esc(n.dept || "") + '</td><td>' + esc(n.note || "") + '</td></tr>'; }).join("") + '</table>';
+        nums.forEach(function(n){ numRows.push([s.label, n.metric, n.year, QUARTER_LABELS[n.quarter], n.value, n.dept || "", n.note || ""]); });
+      }
+      var evs = mine.filter(function(e){ return e.kind === "event"; }).sort(function(a, b){ return a.date > b.date ? 1 : -1; });
+      for(var ei = 0; ei < evs.length; ei++){
+        var e = evs[ei], names = [];
+        evRows.push([s.label, e.date, e.text, e.dept || "", e.byName || "", (e.photos || []).length]);
+        for(var pi = 0; pi < (e.photos || []).length; pi++){
+          var p = e.photos[pi], ext = (/\.([a-z0-9]{2,5})(?:\?|$)/i.exec(p.url) || [0, "jpg"])[1].toLowerCase();
+          var fname = pad2(si + 1) + "-" + String(++pn).padStart(3, "0") + "." + ext, state = "في الحزمة";
+          if(withPhotos){
+            say("تنزيل الصور الأصلية — " + s.label + " (" + pn + ")…");
+            try { var blob = await galFetchBlob(p.url); files.push({ name: "الصور/" + folder + "/" + fname, data: new Uint8Array(await blob.arrayBuffer()) }); }
+            catch(err){ state = "تعذّر تنزيلها — استخدم الرابط"; }
+          } else state = "غير مضمَّنة — استخدم الرابط";
+          names.push(fname);
+          index.push(["الصور/" + folder + "/" + fname, s.label, e.date, e.text, e.dept || "", e.byName || "", p.url, state]);
+        }
+        html += '<h3>' + esc(e.date) + '</h3><p>' + esc(e.text).replace(/\n/g, "<br>") + '</p><p class="m">' + esc([e.dept, e.byName].filter(Boolean).join(" — ")) + '</p>' + (names.length ? '<p class="ph">الصور: ' + names.join("، ") + '</p>' : '') +
+          ((e.files || []).length ? '<p class="ph">مرفقات: ' + e.files.map(function(f){ return esc(f.name) + ' (' + esc(f.url) + ')'; }).join("، ") + '</p>' : '');
+      }
+      var tabs = mine.filter(function(e){ return e.kind === "file"; });
+      tabs.forEach(function(t){
+        html += '<h3>' + esc(t.text) + ' — ' + QUARTER_LABELS[t.quarter] + ' ' + t.year + '</h3>' + (t.note ? '<p class="m">' + esc(t.note) + '</p>' : '');
+        if(t.table){
+          var rows = t.table.rows.map(function(r){ return r.c || r; });
+          html += '<table><tr>' + t.table.cols.map(function(c){ return '<th>' + esc(c) + '</th>'; }).join("") + '</tr>' + rows.map(function(r){ return '<tr>' + r.map(function(c){ return '<td>' + esc(c) + '</td>'; }).join("") + '</tr>'; }).join("") + '</table>';
+          var sn = (t.text || "جدول").replace(/[\\\/\?\*\[\]:]/g, " ").slice(0, 28), k = 2, base = sn;
+          while(sheetNames[sn]) sn = base.slice(0, 25) + " " + (k++);
+          sheetNames[sn] = 1;
+          window.XLSX.utils.book_append_sheet(wb, window.XLSX.utils.aoa_to_sheet([t.table.cols].concat(rows)), sn);
+        }
+        if((t.files || []).length) html += '<p class="ph">الملف الأصلي: ' + t.files.map(function(f){ return esc(f.name) + ' (' + esc(f.url) + ')'; }).join("، ") + '</p>';
+      });
+    }
+    html += '</body></html>';
+    say("تجهيز الملفات…");
+    var wb2 = window.XLSX.utils.book_new();
+    window.XLSX.utils.book_append_sheet(wb2, window.XLSX.utils.aoa_to_sheet(evRows), "الأحداث");
+    window.XLSX.utils.book_append_sheet(wb2, window.XLSX.utils.aoa_to_sheet(numRows), "المؤشرات");
+    window.XLSX.utils.book_append_sheet(wb2, window.XLSX.utils.aoa_to_sheet(index), "فهرس الصور");
+    wb.SheetNames.forEach(function(n){ window.XLSX.utils.book_append_sheet(wb2, wb.Sheets[n], n); });
+    files.unshift({ name: "الأرقام والجداول والفهرس.xlsx", data: new Uint8Array(window.XLSX.write(wb2, { bookType: "xlsx", type: "array" })) });
+    files.unshift({ name: "المحتوى.html", data: enc.encode(html) });
+    files.unshift({ name: "المحتوى.doc", data: enc.encode("﻿" + html) });
+    files.unshift({ name: "اقرأني.txt", data: enc.encode("﻿" + title + "\n\nالمحتوى.doc: كل النصوص والجداول مرتبة بالبنود، كما كتبها أصحابها (يُفتح ببرنامج Word).\nالمحتوى.html: نفس المحتوى للعرض في المتصفح.\nالأرقام والجداول والفهرس.xlsx: الأحداث، المؤشرات، الجداول، وفهرس يربط كل صورة ببندها وحدثها.\nالصور: الصور بجودتها الأصلية في مجلد لكل بند، وأسماؤها مذكورة تحت كل حدث في ملف المحتوى.\n") });
+    var a = document.createElement("a");
+    a.download = "حزمة " + title + ".zip";
+    a.href = URL.createObjectURL(tmplZipStore(files));
+    a.click();
+    setTimeout(function(){ URL.revokeObjectURL(a.href); }, 15000);
+    docUI.busy = false;
+    var failed = index.filter(function(r){ return /تعذّر/.test(r[7]); }).length;
+    say("نُزّلت الحزمة: " + list.length + " توثيقاً" + (withPhotos ? "، " + (index.length - 1 - failed) + " صورة" + (failed ? " (تعذّر " + failed + " — روابطها في الفهرس)" : "") : " بلا صور (روابطها في الفهرس)") + ".");
+    wsLog("نزّل حزمة " + title, "");
+  }
+
+  // ---------- التفاعل ----------
+  document.addEventListener("click", function(e){
+    var b = e.target.closest && e.target.closest("[data-doc]");
+    if(!b || !currentUser) return;
+    var act = b.dataset.doc, d = docUI.draft, ent = b.dataset.id ? doc.entries.find(function(x){ return x.id === b.dataset.id; }) : null;
+    switch(act){
+      case "tab": docUI.tab = b.dataset.tab; docRender(); break;
+      case "mode": docUI.mode = b.dataset.mode; docUI.draft = docNewDraft(docUI.mode); docRender(); break;
+      case "submit": docSubmit(); break;
+      case "rm-photo": if(d){ d.photos.splice(Number(b.dataset.i), 1); docRender(); } break;
+      case "rm-file": if(d){ d.files.splice(Number(b.dataset.i), 1); docRender(); } break;
+      case "add-metric": { var nm = (document.getElementById("docCustomMetric").value || "").trim(); if(!nm){ showToast("اكتب اسم المؤشر"); break; } if(d.metrics[nm] == null) d.metrics[nm] = ""; d.customMetric = ""; docRender(); break; }
+      case "template": docDownloadTemplate(b.dataset.key); break;
+      case "export": docExport(b.dataset.kind, b.dataset.photos === "1", b); break;
+      case "approve": if(ent && can("docs.review")){ docSave(Object.assign({}, ent, { status: "approved", reviewNote: "", reviewedBy: currentUser.name, reviewedAt: Date.now() })); wsNotify(ent.by, "doc", "اعتُمد توثيقك في «" + docSec(ent.section).label + "»", null); docRender(); } break;
+      case "return": if(ent && can("docs.review")){ var note = prompt("ملاحظتك لصاحب التوثيق — ما المطلوب تعديله؟", ent.reviewNote || ""); if(note === null) break; docSave(Object.assign({}, ent, { status: "returned", reviewNote: note.trim(), reviewedBy: currentUser.name, reviewedAt: Date.now() })); wsNotify(ent.by, "doc", "أُعيد توثيقك للتعديل: " + note.trim().slice(0, 70), null); docRender(); } break;
+      case "edit-text": if(ent && ent.by === currentUser.id){ var nt = prompt("عدّل النص ثم أعد إرساله للمراجعة", ent.text); if(nt === null || !nt.trim()) break; docSave(Object.assign({}, ent, { text: nt.trim(), status: can("docs.review") ? "approved" : "pending" })); docRender(); } break;
+      case "delete": if(ent && (can("docs.review") || (ent.by === currentUser.id && ent.status !== "approved")) && confirm("حذف هذا التوثيق؟ الصور المرفوعة تبقى في المخزن.")){ docDelete(ent.id); docRender(); } break;
+    }
+  });
+  document.addEventListener("input", function(e){
+    var el = e.target, d = docUI.draft;
+    if(!d || !el) return;
+    if(el.id === "docText"){
+      d.text = el.value;
+      var sel = document.getElementById("docSection");
+      if(sel && d.sectionAuto && !d.section){ var sg = el.value.trim() ? docSuggestSection(el.value) : ""; if(sg) sel.value = sg; }
+    }
+    else if(el.id === "docCustomMetric") d.customMetric = el.value;
+    else if(el.id === "docNote") d.note = el.value;
+    else if(el.id === "docTableName") d.tableName = el.value;
+    else if(el.dataset && el.dataset.docMetric != null) d.metrics[el.dataset.docMetric] = el.value;
+  });
+  document.addEventListener("change", function(e){
+    var el = e.target, d = docUI.draft;
+    if(!el || !currentUser) return;
+    if(el.id === "docYear"){ docUI.year = el.value; docRender(); return; }
+    if(el.id === "docQuarter"){ docUI.quarter = el.value; docRender(); return; }
+    if(el.id === "docDept"){ docUI.dept = el.value; docRender(); return; }
+    if(el.id === "docShowPending"){ docUI.fStatus = el.checked ? "all" : ""; docRender(); return; }
+    if(el.dataset && el.dataset.docMove){ var me = doc.entries.find(function(x){ return x.id === el.dataset.docMove; }); if(me && can("docs.review")){ docSave(Object.assign({}, me, { section: el.value })); showToast("نُقل إلى «" + docSec(el.value).label + "»"); } return; }
+    if(!d) return;
+    if(el.id === "docSection"){ d.section = el.value; d.sectionAuto = !el.value; }
+    else if(el.id === "docDate") d.date = el.value || wsToday();
+    else if(el.id === "docMetricSection"){ d.metricSection = el.value; d.metrics = {}; docRender(); }
+    else if(el.id === "docPeriod") d.period = el.value;
+    else if(el.id === "docTableKey"){ d.tableKey = el.value; docRender(); }
+    else if(el.id === "docTableSection") d.tableSection = el.value;
+    else if(el.id === "docPhotoInput"){ docAttach(Array.prototype.slice.call(el.files || []), "photo"); }
+    else if(el.id === "docFileInput"){ docAttach(Array.prototype.slice.call(el.files || []), "file"); }
+    else if(el.id === "docExcelInput"){
+      var f = el.files && el.files[0];
+      if(!f) return;
+      docReadExcel(f).then(function(t){
+        d.table = t;
+        if(!d.tableName) d.tableName = f.name.replace(/\.[^.]+$/, "");
+        docRender();
+        if(!WS_LOCAL) docUploadRaw(f).then(function(url){ d.files.push({ url: url, name: f.name, size: f.size, type: f.type }); docRender(); }).catch(function(){});   // الأصل يُرفق إن سمحت خدمة الرفع
+      }).catch(function(){ showToast("تعذّرت قراءة الملف — تأكد أنه Excel وفيه صف عناوين"); });
+    }
+  });
 
   // ===========================================================================
   // دردشة الموظفين الفورية — محادثات فردية + محادثة «الفريق كله»

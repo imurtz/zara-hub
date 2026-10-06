@@ -12,9 +12,11 @@ const ALLOWED_ORIGINS = [
 const PUBLIC_BASE_URL = "https://media.gzara.org";
 
 // المجلدات المسموح الرفع إليها — يمنع تخزين ملفات بمسارات عشوائية غير متوقعة
-const ALLOWED_FOLDERS = ["events", "logos", "templates", "fonts"];
+// "reports": أصول التقريرين (صور بجودتها الأصلية وملفات) — تُرفع من خدمة «وثّق» بلا أي ضغط
+const ALLOWED_FOLDERS = ["events", "logos", "templates", "fonts", "reports"];
 
-const MAX_UPLOAD_BYTES = 15 * 1024 * 1024; // 15 ميقابايت
+// رُفع من 15 إلى 95 ميقابايت لصور الكاميرات الاحترافية بجودتها الأصلية (حد الطلب الواحد على الباقة المجانية 100)
+const MAX_UPLOAD_BYTES = 95 * 1024 * 1024;
 
 function corsHeaders(origin) {
   const allowed = ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0];
@@ -31,6 +33,11 @@ function extFromContentType(ct) {
   if (ct === "image/jpeg") return "jpg";
   if (ct === "font/woff2") return "woff2";
   if (ct === "font/woff") return "woff";
+  if (ct === "image/webp") return "webp";
+  if (ct === "image/heic") return "heic";
+  if (ct === "application/pdf") return "pdf";
+  if (ct === "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet") return "xlsx";
+  if (ct === "application/vnd.openxmlformats-officedocument.wordprocessingml.document") return "docx";
   return "bin";
 }
 
@@ -50,7 +57,8 @@ export default {
     }
 
     const contentType = (request.headers.get("Content-Type") || "").split(";")[0].trim();
-    const allowedTypes = ["image/png", "image/jpeg", "font/woff2", "font/woff"];
+    const allowedTypes = ["image/png", "image/jpeg", "image/webp", "image/heic", "font/woff2", "font/woff", "application/pdf",
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"];
     if (!allowedTypes.includes(contentType)) {
       return json({ error: "unsupported_type" }, 400, headers);
     }
