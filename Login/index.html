@@ -2016,6 +2016,46 @@
   .ws-links .ws-standup-btn:hover{background:#000; color:#fff;}
   @media (max-width:640px){ .emp-grid{grid-template-columns:minmax(0, 1fr);} }
 
+  /* ===================== اختصارات المهام ===================== */
+  .ws-quick{display:flex; align-items:center; gap:6px; flex-wrap:wrap; margin-bottom:10px;}
+  .ws-quick-k{font-size:12px; font-weight:600; color:var(--ink-soft); margin-inline-end:4px;}
+  .ws-quick-add{position:relative; flex:1 1 260px; max-width:380px;}
+  .ws-quick-add input{width:100%; margin:0; font:inherit; font-size:13.500px; color:var(--ink); padding:10px 16px; padding-inline-end:38px; background:#fff; border:1px solid var(--line); border-radius:999px;}
+  .ws-quick-add input:focus{outline:none; border-color:var(--teal); box-shadow:0 0 0 3px rgba(75,112,113,.12);}
+  .ws-quick-add kbd{position:absolute; top:50%; inset-inline-end:12px; transform:translateY(-50%); font:inherit; font-size:11px; color:var(--ink-soft); background:var(--field); border-radius:6px; padding:0 7px; pointer-events:none;}
+  .ws-qchip{flex:none; display:inline-flex; align-items:center; gap:6px; border:1px solid var(--line); background:#fff; font:inherit; font-size:12.500px; font-weight:500; color:var(--ink-2); padding:8px 13px; border-radius:999px; cursor:pointer;}
+  .ws-qchip i{font-style:normal; font-size:11px; font-weight:600; background:var(--field); color:var(--ink-2); border-radius:999px; padding:0 7px;}
+  .ws-qchip:hover{border-color:var(--teal);}
+  .ws-qchip.on{background:var(--teal); border-color:var(--teal); color:#fff;}
+  .ws-qchip.on i{background:rgba(255,255,255,.25); color:#fff;}
+  .ws-qchip.is-hot:not(.on) i{background:#FBEDEC; color:#A93226;}
+  .ws-qhelp{padding:8px 11px;}
+
+  /* ===================== نوافذ منبثقة في المنتصف (بدل اللوحة الجانبية) ===================== */
+  .ws-drawer-overlay.open{display:flex; flex-direction:row; align-items:center; justify-content:center; padding:20px;}
+  .ws-drawer{width:min(720px, 100%); height:auto; max-height:calc(100vh - 40px); max-height:calc(100dvh - 40px); border-radius:28px; padding:22px 24px 26px; animation:wsPop .3s var(--ease);}
+  .ws-drawer--wide{width:min(940px, 100%);}
+  .ws-drawer--modal{width:min(480px, 100%);}
+  .ws-drawer .ws-dh{position:sticky; top:-22px; z-index:3; margin:-22px -24px 14px; padding:18px 24px 12px; background:var(--bg); border-radius:28px 28px 0 0;}
+  /* نافذة الموظف: تُضبط على ارتفاع الشاشة ويُمرَّر داخلها مع بقاء أزرار الحفظ ظاهرة */
+  .modal.modal-emp{max-height:calc(100vh - 32px); max-height:calc(100dvh - 32px); overflow-y:auto; padding:0 24px;}
+  .modal.modal-emp > h3{position:sticky; top:-1px; z-index:3; background:#fff; margin:0 -24px 14px; padding:22px 24px 12px; border-radius:28px 28px 0 0;}
+  .modal.modal-emp .modal-actions{position:sticky; bottom:0; z-index:3; background:#fff; margin:16px -24px 0 !important; padding:12px 24px 18px !important; border-top:1px solid var(--line); bottom:0 !important;}
+  @media (max-width:760px){
+    .ws-quick{flex-wrap:nowrap; overflow-x:auto; margin-inline:-14px; padding:0 14px 2px; scrollbar-width:none;}
+    .ws-quick::-webkit-scrollbar{display:none;}
+    .ws-quick-k, .ws-quick-add kbd, .ws-qhelp{display:none;}
+    .ws-quick-add{flex:none; width:230px;}
+    .ws-quick-add input{font-size:16px;}
+    .ws-drawer-overlay.open{align-items:flex-end; padding:0;}
+    .ws-drawer, .ws-drawer--wide, .ws-drawer--modal{width:100%; max-height:94vh; max-height:94dvh; border-radius:26px 26px 0 0; padding:18px 14px calc(26px + env(safe-area-inset-bottom, 0px));}
+    .ws-drawer .ws-dh{top:-18px; margin:-18px -14px 12px; padding:16px 14px 10px; border-radius:26px 26px 0 0;}
+    .modal.modal-emp{max-height:94vh; max-height:94dvh;}
+  }
+  .ws-strip-actions{display:inline-flex; gap:8px; flex-wrap:wrap; justify-content:flex-end;}
+  .ws-pill--deep{background:var(--ink); border-color:var(--ink); color:#fff;}
+  .ws-pill--deep:hover{background:var(--teal-dark); border-color:var(--teal-dark);}
+
 </style>
 </head>
 <body>
@@ -12579,6 +12619,11 @@
       if(wsUI.fProject && t.projectId !== wsUI.fProject) return false;
       if(wsUI.fAssignee === "none" && t.assigneeId) return false;
       if(wsUI.fAssignee && wsUI.fAssignee !== "none" && t.assigneeId !== wsUI.fAssignee) return false;
+      if(wsUI.quick === "mine" && t.assigneeId !== currentUser.id) return false;
+      if(wsUI.quick === "late" && !(t.status !== "done" && t.dueDate && wsDaysTo(t.dueDate) < 0)) return false;
+      if(wsUI.quick === "today" && !(t.status !== "done" && t.dueDate === wsToday())) return false;
+      if(wsUI.quick === "week" && !(t.status !== "done" && t.dueDate && wsDaysTo(t.dueDate) >= 0 && wsDaysTo(t.dueDate) <= 7)) return false;
+      if(wsUI.quick === "campaign"){ var qs = wsCampaignStats(t.campaign); if(!qs || !qs.due.length) return false; }
       return true;
     });
   }
@@ -12713,7 +12758,7 @@
     var upcoming = ws.events.filter(function(e){ var d = wsDaysTo(e.date); return d != null && d >= 0; })
       .sort(function(a, b){ var da = wsDaysTo(a.date), db_ = wsDaysTo(b.date); return ((da < 7 ? 0 : 1) - (db_ < 7 ? 0 : 1)) || (da - db_); });
     var html = "";
-    html += '<div class="ws-strip"><div class="ws-strip-head"><b>الفعاليات القادمة</b>' + (manage ? '<button type="button" class="ws-pill" data-ws="new-event">' + WSI.plus + ' فعالية</button>' : '') + '</div>' +
+    html += '<div class="ws-strip"><div class="ws-strip-head"><b>الفعاليات القادمة</b><span class="ws-strip-actions">' + ((manage || can("tasks.projects")) ? '<button type="button" class="ws-pill ws-pill--deep" data-ws="new-project" title="مشروع يتشارك فيه فريق: تُشكّل فريقه ثم تُدار مهامه في لوحته">' + WSI.plus + ' مشروع مشترك</button>' : '') + (manage ? '<button type="button" class="ws-pill" data-ws="new-event">' + WSI.plus + ' فعالية</button>' : '') + '</span></div>' +
       (upcoming.length ? '<div class="ws-strip-row">' + upcoming.map(wsEventCardHTML).join("") + '</div>' : '<p class="ws-empty" style="text-align:start;">لا فعاليات قادمة.</p>') + '</div>';
     var doneN = tasks.filter(function(t){ return t.status === "done"; }).length;
     html += '<div class="ws-bar">' +
@@ -12724,6 +12769,19 @@
       '<span class="ws-count">' + tasks.length + ' مهمة · أُنجز ' + doneN + '</span>' +
       '<span class="ws-grow"></span>' + wsBellHTML() +
       (wsCanCreate() ? '<button type="button" class="btn-primary ws-new" data-ws="new-task">' + WSI.plus + ' مهمة</button>' : '') +
+    '</div>';
+    var qAll = ws.tasks, qCount = function(fn){ return qAll.filter(fn).length; };
+    var qDefs = [
+      ["mine", "مهامي", qCount(function(t){ return t.assigneeId === currentUser.id && t.status !== "done"; }), "M"],
+      ["today", "مستحقة اليوم", qCount(function(t){ return t.status !== "done" && t.dueDate === wsToday(); }), "D"],
+      ["week", "هذا الأسبوع", qCount(function(t){ return t.status !== "done" && t.dueDate && wsDaysTo(t.dueDate) >= 0 && wsDaysTo(t.dueDate) <= 7; }), "W"],
+      ["late", "متأخرة", qCount(function(t){ return t.status !== "done" && t.dueDate && wsDaysTo(t.dueDate) < 0; }), "L"],
+      ["campaign", "حملات تنتظر الرصد", qCount(function(t){ var cs = wsCampaignStats(t.campaign); return cs && cs.due.length; }), "R"]
+    ];
+    html += '<div class="ws-quick"><span class="ws-quick-k">اختصارات</span>' +
+      (wsCanCreate() ? '<div class="ws-quick-add"><input type="text" id="wsQuickAdd" placeholder="مهمة سريعة — اكتب العنوان ثم Enter" autocomplete="off" maxlength="200"/><kbd>/</kbd></div>' : '') +
+      qDefs.map(function(q){ return '<button type="button" class="ws-qchip' + (wsUI.quick === q[0] ? " on" : "") + (q[0] === "late" && q[2] ? " is-hot" : "") + '" data-ws="quick" data-q="' + q[0] + '" title="اختصار لوحة المفاتيح: ' + q[3] + '">' + q[1] + ' <i>' + q[2] + '</i></button>'; }).join("") +
+      '<button type="button" class="ws-qchip ws-qhelp" data-ws="keys" title="اختصارات لوحة المفاتيح">⌨</button>' +
     '</div>';
     html += '<div class="ws-links">' +
       '<button type="button" data-ws="panel" data-panel="projects">المشاريع <i>' + ws.projects.length + '</i></button>' +
@@ -13033,6 +13091,8 @@
     var act = b.dataset.ws, t = wsCurTask(), ev = wsCurEvent(), p = wsCurProject();
     switch(act){
       case "view": wsUI.view = b.dataset.view; wsRender(); break;
+      case "quick": wsUI.quick = wsUI.quick === b.dataset.q ? "" : b.dataset.q; wsRender(); break;
+      case "keys": showToast("N مهمة جديدة · / مهمة سريعة · K كانبان · C تقويم · M مهامي · D اليوم · W الأسبوع · L متأخرة · R رصد الحملات · P المشاريع · Esc إغلاق"); break;
       case "cal-mode": wsUI.calMode = b.dataset.mode; wsRender(); break;
       case "cal-today": wsUI.calCursor = wsToday(); wsRender(); break;
       case "cal-nav": {
@@ -13254,6 +13314,41 @@
     e.preventDefault();
     var id = wsUI.dragId; wsUI.dragId = null;
     wsMoveTask(id, col.dataset.wsCol);
+  });
+  function wsQuickAddTask(title){
+    title = String(title || "").trim();
+    if(!title || !wsCanCreate()) return;
+    var qp = wsProjectOf(wsUI.fProject);
+    if(qp && !wsCanManage() && !wsInTeam(qp)){ showToast("إضافة المهام لهذا المشروع لأعضاء فريقه"); return; }
+    var t = { id: wsId("tsk"), title: title, desc: "", assigneeId: currentUser.id, projectId: wsUI.fProject || null, status: "todo", priority: "medium", startDate: wsToday(), dueDate: wsUI.quick === "today" ? wsToday() : "",
+      attachments: [], comments: [], log: [{ by: currentUser.name, text: "أنشأ المهمة", at: Date.now() }], eventIds: [], createdAt: Date.now(), createdBy: currentUser.id };
+    wsSet("wsTasks", t);
+    wsLog("أنشأ مهمة", t.title);
+    wsRender();
+    var inp = document.getElementById("wsQuickAdd");
+    if(inp) inp.focus();
+    showToast("أُضيفت: " + title);
+  }
+  document.addEventListener("keydown", function(e){
+    if(!currentUser || !ws.ready) return;
+    if(e.target && e.target.id === "wsQuickAdd"){
+      if(e.key === "Enter"){ e.preventDefault(); var v = e.target.value; e.target.value = ""; wsQuickAddTask(v); }
+      else if(e.key === "Escape") e.target.blur();
+      return;
+    }
+    if(e.ctrlKey || e.metaKey || e.altKey) return;
+    var tag = document.activeElement && document.activeElement.tagName;
+    if(tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT" || (document.activeElement && document.activeElement.isContentEditable)) return;
+    var tv = document.getElementById("view-tasks");
+    if(!tv || !tv.classList.contains("active") || wsUI.drawer) return;
+    if(document.querySelector(".modal-overlay.active, .panel-overlay.active, .chat-panel.open, .gal-lb.open")) return;
+    var k = e.key.toLowerCase(), qmap = { m: "mine", d: "today", w: "week", l: "late", r: "campaign", "ة": "mine", "ي": "today", "ص": "week", "م": "late", "ق": "campaign" };
+    if(e.key === "/"){ var qi = document.getElementById("wsQuickAdd"); if(qi){ e.preventDefault(); qi.focus(); } }
+    else if(k === "n" || k === "ى"){ e.preventDefault(); wsNewTask({}); }
+    else if(k === "k" || k === "ن"){ wsUI.view = "kanban"; wsRender(); }
+    else if(k === "c" || k === "ؤ"){ wsUI.view = "calendar"; wsRender(); }
+    else if(k === "p" || k === "ح"){ wsOpenDrawer("projects"); }
+    else if(qmap[k]){ wsUI.quick = wsUI.quick === qmap[k] ? "" : qmap[k]; wsRender(); }
   });
   document.addEventListener("keydown", function(e){ if(e.key === "Escape" && wsUI.drawer && !(wsUI.drawer === "standup" && wsUI.drawerId === "auto")) wsCloseDrawer(); });
   // تذكيرات الحملات والفعاليات تُحسب من الوقت الحالي — نعيد الرسم كل 5 دقائق ليظهر ما حان موعده
