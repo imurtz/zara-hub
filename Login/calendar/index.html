@@ -407,7 +407,7 @@ body.embedded header.top{justify-content:flex-start}
 .d-e .photo img{width:100%;height:100%;object-fit:cover;display:block}
 .d-e .phimg{width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:repeating-linear-gradient(135deg,#dfe6e2 0 3mm,#d3dcd7 3mm 6mm)}
 .d-e .phimg span{font-size:2.8mm;color:var(--cg);opacity:.6}
-.d-e .credit{left:0;bottom:0;width:64mm;padding:10mm 5mm 7mm;text-align:center;font-size:2.4mm;font-weight:500;color:#fff;background:linear-gradient(transparent,rgba(0,0,0,.5))}
+.d-e .credit{left:0;bottom:0;width:64mm;padding:44mm 5mm 7mm;text-align:center;font-size:2.3mm;font-weight:500;color:rgba(255,255,255,.85);background:linear-gradient(transparent,rgba(0,0,0,.28) 45%,rgba(0,0,0,.62))}
 .d-e .logo{left:78mm;top:11mm;width:36mm;mix-blend-mode:multiply}
 .d-e .sp{right:15mm;top:10.5mm;height:11mm;display:flex;align-items:center;gap:3mm}
 .d-e .sp em{font-style:normal;font-size:2.5mm;color:var(--cb);font-weight:600;white-space:nowrap}
@@ -418,9 +418,9 @@ body.embedded header.top{justify-content:flex-start}
 .d-e .meta{right:15mm;top:45mm;display:flex;align-items:center;gap:3mm}
 .d-e .meta i{font-style:normal;background:#e6e7e8;color:var(--cb);font-weight:700;font-size:3.1mm;padding:1mm 4mm;border-radius:5mm}
 .d-e .meta span{font-size:3mm;font-weight:600;color:var(--cb)}
-.d-e .slogan{left:78mm;top:26.6mm;width:36mm;display:flex;flex-direction:column;align-items:flex-start;font-family:var(--fb)}
-.d-e .slogan b{display:inline-block;white-space:nowrap;font-size:3.7mm;font-weight:700;color:var(--cg);line-height:1.5}
-.d-e .slogan span{display:inline-block;white-space:nowrap;font-size:3.4mm;font-weight:500;color:var(--cb);line-height:1.5}
+.d-e .slogan{left:0;bottom:14.5mm;width:64mm;padding:0 6mm;display:flex;flex-direction:column;align-items:center;text-align:center;font-family:var(--fb)}
+.d-e .slogan b{font-size:4.1mm;font-weight:700;color:#fff;line-height:1.5}
+.d-e .slogan span{font-size:3.5mm;font-weight:500;color:#f1dcc0;line-height:1.5}
 .d-e .grid{left:78mm;top:53mm;width:117mm;border-collapse:collapse;table-layout:fixed;direction:rtl}
 .d-e .grid th{height:6mm;font-size:2.8mm;font-weight:700;color:var(--cg);border-bottom:.45mm solid var(--cg);vertical-align:middle}
 .d-e .grid th.fri{color:var(--cb)}
@@ -429,10 +429,10 @@ body.embedded header.top{justify-content:flex-start}
 .d-e .grid td i{display:block;font-style:normal;font-size:5.2mm;font-weight:700;line-height:5.9mm;margin:0 auto;width:5.9mm;height:5.9mm;border-radius:50%}
 .d-e .grid td i.ev{color:#fff;font-size:4.3mm;width:5.9mm;height:5.9mm;line-height:5.9mm}
 .d-e .grid td s{display:block;text-decoration:none;font-size:2.3mm;color:var(--cb);font-weight:600;line-height:2.4mm}
-.d-e .legend{left:78mm;right:15mm;top:113.5mm;display:flex;flex-wrap:wrap;gap:.75mm 3.2mm;font-size:2.2mm;font-weight:500;line-height:2.5mm}
+.d-e .legend{left:78mm;right:15mm;bottom:8mm;display:flex;flex-wrap:wrap;gap:.75mm 3.2mm;font-size:2.2mm;font-weight:500;line-height:2.5mm}
 .d-e .legend span{display:inline-flex;align-items:center;gap:1.1mm;white-space:nowrap}
 .d-e .legend b{flex:none;min-width:3.5mm;height:2.5mm;padding:0 .7mm;border-radius:1.25mm;color:#fff;font-size:2mm;font-weight:700;line-height:2.5mm;text-align:center}
-.d-e .dock{left:78mm;right:15mm;top:124.2mm;display:flex;justify-content:space-between;align-items:center}
+.d-e .dock{left:78mm;right:15mm;top:114.6mm;display:flex;justify-content:space-between;align-items:center}
 .d-e .q{display:flex;align-items:center;gap:2.4mm}
 .d-e .qrbox{background:#fff;border-radius:2.2mm;padding:1.1mm;border:.3mm solid var(--cb);display:inline-block;line-height:0}
 .d-e .qt{display:flex;flex-direction:column}
@@ -463,18 +463,19 @@ body.embedded header.top{justify-content:flex-start}
 .d-e .s img{max-height:8.6mm;max-width:92%;object-fit:contain}
 .d-e .s .ph{font-size:2.3mm;color:var(--cb);border:.25mm dashed var(--cb);border-radius:2mm;padding:2mm 3mm;white-space:nowrap}
 .d-e .handle{left:15mm;top:139.5mm;font-size:2.6mm;color:var(--cb);font-weight:600;letter-spacing:.4mm;direction:ltr}
-/* ---- نقش الخلفية من أيقونة الشعار: ثلاث أيقونات كبيرة شفافة في أطراف المساحة البيضاء، تخفت نحو الوسط ---- */
+/* ---- نقش الخلفية: أيقونة الشعار بخط رفيع ناعم (كما في تقويم 2026)، أربع أيقونات كبيرة تخرج من أطراف الصفحة ---- */
 .d-e .pat{top:0;height:150mm;overflow:hidden;pointer-events:none}
-.d-e .pat.m{left:64mm;width:146mm;-webkit-mask-image:linear-gradient(105deg,#000 0,rgba(0,0,0,.25) 38%,rgba(0,0,0,.25) 62%,#000 100%);mask-image:linear-gradient(105deg,#000 0,rgba(0,0,0,.25) 38%,rgba(0,0,0,.25) 62%,#000 100%)}
+.d-e .pat.m{left:64mm;width:146mm}
 .d-e .pat.g{left:0;width:210mm}
-.d-e .mk{position:absolute;width:var(--w);height:calc(var(--w)*1.06);overflow:hidden;mix-blend-mode:multiply;direction:ltr}
-.d-e .mk img{width:calc(var(--w)*2.94);max-width:none;display:block}
-.d-e .pat.m .mk.a{--w:84mm;right:-24mm;top:-26mm;opacity:.07}
-.d-e .pat.m .mk.b{--w:58mm;left:-10mm;bottom:-18mm;opacity:.06}
-.d-e .pat.m .mk.c{--w:36mm;right:46mm;bottom:-14mm;opacity:.045}
-.d-e .pat.g .mk.a{--w:96mm;right:-26mm;top:-30mm;opacity:.06}
-.d-e .pat.g .mk.b{--w:70mm;left:-18mm;bottom:-24mm;opacity:.055}
-.d-e .pat.g .mk.c{--w:40mm;left:86mm;top:-16mm;opacity:.04}
+.d-e .mk{position:absolute;width:var(--w);height:auto;fill:none;stroke:var(--cg);stroke-width:1.5;stroke-linejoin:round;opacity:.11;overflow:visible}
+.d-e .pat.m .mk.a{--w:62mm;right:-14mm;top:-20mm}
+.d-e .pat.m .mk.b{--w:62mm;right:38mm;top:-34mm;opacity:.07}
+.d-e .pat.m .mk.c{--w:50mm;left:-8mm;bottom:-22mm}
+.d-e .pat.m .mk.d{--w:50mm;right:-18mm;bottom:-14mm;opacity:.08}
+.d-e .pat.g .mk.a{--w:74mm;right:-18mm;top:-24mm}
+.d-e .pat.g .mk.b{--w:74mm;right:50mm;top:-44mm;opacity:.07}
+.d-e .pat.g .mk.c{--w:60mm;left:-14mm;bottom:-24mm}
+.d-e .pat.g .mk.d{--w:60mm;left:42mm;bottom:-40mm;opacity:.07}
 /* ---- «أثر الخير»: قائمة المناسبات أضيق قليلاً لتتسع لثلاثة أسطر في الأشهر المزدحمة دون ملامسة العبارة ---- */
 .d-a .legend{gap:.15mm 3mm;font-size:2.2mm;line-height:3mm}
 
@@ -2980,10 +2981,13 @@ function dGift(g){const [l1,l2,l3]=lc();return `<section class="page d-d gift"><
 
 /* ---------- design E «الرحابة»: شبكة وأرقام A + صورة جانبية كاملة الارتفاع، بفراغات أوسع ---------- */
 /* نقش الخلفية: أيقونة الشعار نفسها مكبَّرة وشفافة في أطراف الصفحة (على نهج تقويم 2026) */
-const pat=k=>`<div class="pat ${k}"><div class="mk a"><img src="${LG()}" alt=""></div><div class="mk b"><img src="${LG()}" alt=""></div><div class="mk c"><img src="${LG()}" alt=""></div></div>`;
+/* أيقونة شعار الجمعية كمسارات متجهة (من ملف الهوية المعتمد Motion 01.svg) — تُستخدم لنقش الخلفية بخط رفيع */
+const MARK_D=["M139.04,66.65v48.64c0,1,.4,1.96,1.11,2.67l32.68,32.67c2.27,2.27,6.14.85,6.43-2.34,1.7-18.76,2.04-66.25-34.69-84.99-2.53-1.29-5.53.51-5.53,3.35", "M151.01,172.45l-32.68-32.68c-.71-.71-1.67-1.11-2.67-1.11h-48.64c-2.84,0-4.64,3-3.35,5.53,18.75,36.72,66.23,36.38,84.99,34.69,3.19-.29,4.61-4.16,2.34-6.43", "M104.96,56.18h-44.64c-2.09,0-3.78,1.69-3.78,3.77v44.64c0,2.08,1.69,3.77,3.78,3.77h44.64c2.08,0,3.77-1.69,3.77-3.77v-44.64c0-2.08-1.69-3.77-3.77-3.77", "M126.32,2.65C96.39-.9,60.04-.16,14.02.77l-9.36.19c-2.03.04-3.66,1.67-3.7,3.7l-.19,9.36C0,51.89-.63,83.22,1.14,109.8c.38,5.72.87,11.22,1.5,16.52,4.07,34.36,13.56,57.16,30.76,73.91,18.96,18.47,46.92,29.08,91.34,33.17,18.58,1.71,40.03,2.28,64.91,1.82,10.09-.19,20.73-.55,31.98-1.08l8.51-.4c1.95-.09,3.5-1.65,3.6-3.59l.4-8.51c.15-3.16.28-6.27.4-9.33.08-2.14-1.63-3.92-3.77-3.92h-22.35v.03c-51.57,1.93-88.64-.01-115.1-6.44-18.7-4.54-32.11-11.32-41.59-20.55-10.3-10.03-16.59-23.67-20.35-41.39-5.67-26.74-5.56-62.75-4.67-109.62.04-2.03,1.68-3.67,3.71-3.71,77.91-1.48,125.84-.82,151,25.02,19.17,19.68,27.76,56.26,27.71,122.02,0,2.08,1.69,3.78,3.77,3.78h18.69c2.09,0,3.78-1.7,3.78-3.78.02-74.21-10.64-115.19-35.14-140.34-16.75-17.2-39.54-26.68-73.91-30.76"];
+
+const mkSvg=c=>`<svg class="mk ${c}" xmlns="http://www.w3.org/2000/svg" viewBox="-3 -3 256 242">${MARK_D.map(d=>`<path d="${d}"/>`).join("")}</svg>`;
+const pat=k=>`<div class="pat ${k}">${mkSvg("a")}${mkSvg("b")}${mkSvg("c")}${mkSvg("d")}</div>`;
 /* العبارة العلوية تُطابق عرض الشعار تماماً: كل سطر يُكبَّر أو يُصغَّر حتى يبدأ وينتهي مع حدَّي الشعار */
-function fitE(root){root.querySelectorAll(".d-e.month").forEach(pg=>{const lg=pg.querySelector(".logo"),sl=pg.querySelector(".slogan");if(!lg||!sl)return;const W=lg.offsetWidth;if(!W)return;
- sl.querySelectorAll("b,span").forEach(el=>{el.style.fontSize="";const w=el.offsetWidth;if(w){const fs=parseFloat(getComputedStyle(el).fontSize);el.style.fontSize=(Math.max(.72,Math.min(1.5,W/w))*fs).toFixed(3)+"px"}})})}
+function fitE(root){}
 function eMonth(mo,m){const g=gridData(mo),mt=monthMeta(mo);
  const body=trs(g,c=>c.v?`<td class="${c.fri?"fri":""}"></td>`:`<td class="${c.fri?"fri":""}">${c.ev?`<i class="ev" style="background:${c.ev[1]}">${c.d}</i>`:`<i>${c.d}</i>`}<s>${c.hj}</s></td>`);
  const chips=g.legend.map(l=>`<span><b style="background:${l.c}">${l.d}</b>${esc(l.t)}</span>`).join("");

@@ -60,10 +60,11 @@ rep('const DESIGNS=[["a","أثر الخير","قوس وصورة"],["b","الأف
 # أي إعداد محفوظ على تصميم ملغى يُعرض بالتصميم A
 rep('const R={a:[aMonth,aGift],b:[bMonth,bGift],c:[cMonth,cGift],d:[dMonth,dGift]};', r'''/* ---------- design E «الرحابة»: شبكة وأرقام A + صورة جانبية كاملة الارتفاع، بفراغات أوسع ---------- */
 /* نقش الخلفية: أيقونة الشعار نفسها مكبَّرة وشفافة في أطراف الصفحة (على نهج تقويم 2026) */
-const pat=k=>`<div class="pat ${k}"><div class="mk a"><img src="${LG()}" alt=""></div><div class="mk b"><img src="${LG()}" alt=""></div><div class="mk c"><img src="${LG()}" alt=""></div></div>`;
+/*@MARK@*/
+const mkSvg=c=>`<svg class="mk ${c}" xmlns="http://www.w3.org/2000/svg" viewBox="-3 -3 256 242">${MARK_D.map(d=>`<path d="${d}"/>`).join("")}</svg>`;
+const pat=k=>`<div class="pat ${k}">${mkSvg("a")}${mkSvg("b")}${mkSvg("c")}${mkSvg("d")}</div>`;
 /* العبارة العلوية تُطابق عرض الشعار تماماً: كل سطر يُكبَّر أو يُصغَّر حتى يبدأ وينتهي مع حدَّي الشعار */
-function fitE(root){root.querySelectorAll(".d-e.month").forEach(pg=>{const lg=pg.querySelector(".logo"),sl=pg.querySelector(".slogan");if(!lg||!sl)return;const W=lg.offsetWidth;if(!W)return;
- sl.querySelectorAll("b,span").forEach(el=>{el.style.fontSize="";const w=el.offsetWidth;if(w){const fs=parseFloat(getComputedStyle(el).fontSize);el.style.fontSize=(Math.max(.72,Math.min(1.5,W/w))*fs).toFixed(3)+"px"}})})}
+function fitE(root){}
 function eMonth(mo,m){const g=gridData(mo),mt=monthMeta(mo);
  const body=trs(g,c=>c.v?`<td class="${c.fri?"fri":""}"></td>`:`<td class="${c.fri?"fri":""}">${c.ev?`<i class="ev" style="background:${c.ev[1]}">${c.d}</i>`:`<i>${c.d}</i>`}<s>${c.hj}</s></td>`);
  const chips=g.legend.map(l=>`<span><b style="background:${l.c}">${l.d}</b>${esc(l.t)}</span>`).join("");
@@ -159,7 +160,7 @@ doc = '<!DOCTYPE html>\n<html lang="ar" dir="rtl">\n<head>\n<meta charset="UTF-8
 assert "</style>" in doc
 doc = doc.replace("</style>\n<div id=\"app\"", "</style>\n</head>\n<body>\n<div id=\"app\"", 1) + "\n</body>\n</html>\n"
 logo = "data:image/png;base64," + base64.b64encode(open(os.path.join(HERE, "logo_web.png"), "rb").read()).decode()
-out = doc.replace("/*@DESIGNS@*/", rd("designs.css") + "\n" + rd("design-e.css")).replace("/*@DEMO@*/", rd("demo.js")).replace("/*@EVENTS@*/", rd("events.js")).replace("/*@QR@*/", rd("qrcode.js").replace("</script", "<\\/script")).replace("/*@LOGO@*/", logo)
+out = doc.replace("/*@DESIGNS@*/", rd("designs.css") + "\n" + rd("design-e.css")).replace("/*@DEMO@*/", rd("demo.js")).replace("/*@EVENTS@*/", rd("events.js")).replace("/*@MARK@*/", rd("logo-mark.js")).replace("/*@QR@*/", rd("qrcode.js").replace("</script", "<\\/script")).replace("/*@LOGO@*/", logo)
 dest = os.path.join(HERE, "..", "Login", "calendar", "index.html")
 os.makedirs(os.path.dirname(dest), exist_ok=True)
 io.open(dest, "w", encoding="utf-8").write(out)

@@ -5,7 +5,7 @@
 .d-e .photo img{width:100%;height:100%;object-fit:cover;display:block}
 .d-e .phimg{width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:repeating-linear-gradient(135deg,#dfe6e2 0 3mm,#d3dcd7 3mm 6mm)}
 .d-e .phimg span{font-size:2.8mm;color:var(--cg);opacity:.6}
-.d-e .credit{left:0;bottom:0;width:64mm;padding:10mm 5mm 7mm;text-align:center;font-size:2.4mm;font-weight:500;color:#fff;background:linear-gradient(transparent,rgba(0,0,0,.5))}
+.d-e .credit{left:0;bottom:0;width:64mm;padding:44mm 5mm 7mm;text-align:center;font-size:2.3mm;font-weight:500;color:rgba(255,255,255,.85);background:linear-gradient(transparent,rgba(0,0,0,.28) 45%,rgba(0,0,0,.62))}
 .d-e .logo{left:78mm;top:11mm;width:36mm;mix-blend-mode:multiply}
 .d-e .sp{right:15mm;top:10.5mm;height:11mm;display:flex;align-items:center;gap:3mm}
 .d-e .sp em{font-style:normal;font-size:2.5mm;color:var(--cb);font-weight:600;white-space:nowrap}
@@ -16,9 +16,9 @@
 .d-e .meta{right:15mm;top:45mm;display:flex;align-items:center;gap:3mm}
 .d-e .meta i{font-style:normal;background:#e6e7e8;color:var(--cb);font-weight:700;font-size:3.1mm;padding:1mm 4mm;border-radius:5mm}
 .d-e .meta span{font-size:3mm;font-weight:600;color:var(--cb)}
-.d-e .slogan{left:78mm;top:26.6mm;width:36mm;display:flex;flex-direction:column;align-items:flex-start;font-family:var(--fb)}
-.d-e .slogan b{display:inline-block;white-space:nowrap;font-size:3.7mm;font-weight:700;color:var(--cg);line-height:1.5}
-.d-e .slogan span{display:inline-block;white-space:nowrap;font-size:3.4mm;font-weight:500;color:var(--cb);line-height:1.5}
+.d-e .slogan{left:0;bottom:14.5mm;width:64mm;padding:0 6mm;display:flex;flex-direction:column;align-items:center;text-align:center;font-family:var(--fb)}
+.d-e .slogan b{font-size:4.1mm;font-weight:700;color:#fff;line-height:1.5}
+.d-e .slogan span{font-size:3.5mm;font-weight:500;color:#f1dcc0;line-height:1.5}
 .d-e .grid{left:78mm;top:53mm;width:117mm;border-collapse:collapse;table-layout:fixed;direction:rtl}
 .d-e .grid th{height:6mm;font-size:2.8mm;font-weight:700;color:var(--cg);border-bottom:.45mm solid var(--cg);vertical-align:middle}
 .d-e .grid th.fri{color:var(--cb)}
@@ -27,10 +27,10 @@
 .d-e .grid td i{display:block;font-style:normal;font-size:5.2mm;font-weight:700;line-height:5.9mm;margin:0 auto;width:5.9mm;height:5.9mm;border-radius:50%}
 .d-e .grid td i.ev{color:#fff;font-size:4.3mm;width:5.9mm;height:5.9mm;line-height:5.9mm}
 .d-e .grid td s{display:block;text-decoration:none;font-size:2.3mm;color:var(--cb);font-weight:600;line-height:2.4mm}
-.d-e .legend{left:78mm;right:15mm;top:113.5mm;display:flex;flex-wrap:wrap;gap:.75mm 3.2mm;font-size:2.2mm;font-weight:500;line-height:2.5mm}
+.d-e .legend{left:78mm;right:15mm;bottom:8mm;display:flex;flex-wrap:wrap;gap:.75mm 3.2mm;font-size:2.2mm;font-weight:500;line-height:2.5mm}
 .d-e .legend span{display:inline-flex;align-items:center;gap:1.1mm;white-space:nowrap}
 .d-e .legend b{flex:none;min-width:3.5mm;height:2.5mm;padding:0 .7mm;border-radius:1.25mm;color:#fff;font-size:2mm;font-weight:700;line-height:2.5mm;text-align:center}
-.d-e .dock{left:78mm;right:15mm;top:124.2mm;display:flex;justify-content:space-between;align-items:center}
+.d-e .dock{left:78mm;right:15mm;top:114.6mm;display:flex;justify-content:space-between;align-items:center}
 .d-e .q{display:flex;align-items:center;gap:2.4mm}
 .d-e .qrbox{background:#fff;border-radius:2.2mm;padding:1.1mm;border:.3mm solid var(--cb);display:inline-block;line-height:0}
 .d-e .qt{display:flex;flex-direction:column}
@@ -61,17 +61,18 @@
 .d-e .s img{max-height:8.6mm;max-width:92%;object-fit:contain}
 .d-e .s .ph{font-size:2.3mm;color:var(--cb);border:.25mm dashed var(--cb);border-radius:2mm;padding:2mm 3mm;white-space:nowrap}
 .d-e .handle{left:15mm;top:139.5mm;font-size:2.6mm;color:var(--cb);font-weight:600;letter-spacing:.4mm;direction:ltr}
-/* ---- نقش الخلفية من أيقونة الشعار: ثلاث أيقونات كبيرة شفافة في أطراف المساحة البيضاء، تخفت نحو الوسط ---- */
+/* ---- نقش الخلفية: أيقونة الشعار بخط رفيع ناعم (كما في تقويم 2026)، أربع أيقونات كبيرة تخرج من أطراف الصفحة ---- */
 .d-e .pat{top:0;height:150mm;overflow:hidden;pointer-events:none}
-.d-e .pat.m{left:64mm;width:146mm;-webkit-mask-image:linear-gradient(105deg,#000 0,rgba(0,0,0,.25) 38%,rgba(0,0,0,.25) 62%,#000 100%);mask-image:linear-gradient(105deg,#000 0,rgba(0,0,0,.25) 38%,rgba(0,0,0,.25) 62%,#000 100%)}
+.d-e .pat.m{left:64mm;width:146mm}
 .d-e .pat.g{left:0;width:210mm}
-.d-e .mk{position:absolute;width:var(--w);height:calc(var(--w)*1.06);overflow:hidden;mix-blend-mode:multiply;direction:ltr}
-.d-e .mk img{width:calc(var(--w)*2.94);max-width:none;display:block}
-.d-e .pat.m .mk.a{--w:84mm;right:-24mm;top:-26mm;opacity:.07}
-.d-e .pat.m .mk.b{--w:58mm;left:-10mm;bottom:-18mm;opacity:.06}
-.d-e .pat.m .mk.c{--w:36mm;right:46mm;bottom:-14mm;opacity:.045}
-.d-e .pat.g .mk.a{--w:96mm;right:-26mm;top:-30mm;opacity:.06}
-.d-e .pat.g .mk.b{--w:70mm;left:-18mm;bottom:-24mm;opacity:.055}
-.d-e .pat.g .mk.c{--w:40mm;left:86mm;top:-16mm;opacity:.04}
+.d-e .mk{position:absolute;width:var(--w);height:auto;fill:none;stroke:var(--cg);stroke-width:1.5;stroke-linejoin:round;opacity:.11;overflow:visible}
+.d-e .pat.m .mk.a{--w:62mm;right:-14mm;top:-20mm}
+.d-e .pat.m .mk.b{--w:62mm;right:38mm;top:-34mm;opacity:.07}
+.d-e .pat.m .mk.c{--w:50mm;left:-8mm;bottom:-22mm}
+.d-e .pat.m .mk.d{--w:50mm;right:-18mm;bottom:-14mm;opacity:.08}
+.d-e .pat.g .mk.a{--w:74mm;right:-18mm;top:-24mm}
+.d-e .pat.g .mk.b{--w:74mm;right:50mm;top:-44mm;opacity:.07}
+.d-e .pat.g .mk.c{--w:60mm;left:-14mm;bottom:-24mm}
+.d-e .pat.g .mk.d{--w:60mm;left:42mm;bottom:-40mm;opacity:.07}
 /* ---- «أثر الخير»: قائمة المناسبات أضيق قليلاً لتتسع لثلاثة أسطر في الأشهر المزدحمة دون ملامسة العبارة ---- */
 .d-a .legend{gap:.15mm 3mm;font-size:2.2mm;line-height:3mm}
