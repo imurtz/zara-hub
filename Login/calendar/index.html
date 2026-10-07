@@ -529,7 +529,7 @@ body.embedded header.top{justify-content:flex-start}
   <nav class="sections" id="sections" aria-label="أقسام التقاويم الميلادية"><button data-sec="approved" aria-pressed="false">التقويم الميلادي المعتمد</button><button data-sec="design" aria-pressed="true">تصميم التقويم الميلادي للعام</button></nav>
   <div class="layout">
     <section class="preview" aria-label="معاينة الصفحة">
-      <div class="stage" id="stage"><div class="mk-shade"></div><div class="mk-body" id="mkbody"></div><div class="rig" id="rig"><div class="pagebox" id="pagebox"></div></div><div id="mockcells"></div><div class="mk-over" id="mkover"></div></div><div class="mockbar"><button class="btn" id="mkdl">تنزيل صورة الموك أب</button><label class="btn" id="mkuplbl" hidden>رفع صورة خلفية<input type="file" id="mkup" accept="image/png,image/jpeg,image/webp" hidden></label><button class="btn" id="mkreset" hidden>الخلفية الافتراضية</button><span class="mkhint" id="mkhint" hidden>مقاس صورة الخلفية: 2400 × 1920 بكسل (أفقية، نسبة 5:4) بصيغة JPG أو PNG — والتقويم يقف في منتصف الصورة وقاعدته في ثلثها السفلي.</span><span class="mkmsg" id="mkmsg" role="status"></span></div>
+      <div class="stage" id="stage"><div class="mk-shade"></div><div class="mk-body" id="mkbody"></div><div class="rig" id="rig"><div class="pagebox" id="pagebox"></div></div><div id="mockcells"></div><div class="mk-over" id="mkover"></div></div><div class="mockbar"><button class="btn" id="mkdl">تنزيل صورة الموك أب</button><label class="btn" id="mkuplbl" hidden>رفع صورة خلفية<input type="file" id="mkup" accept="image/png,image/jpeg,image/webp" hidden></label><button class="btn" id="mkreset" hidden>الخلفية الافتراضية</button><span class="mkhint" id="mkhint" hidden>مقاس صورة الخلفية: 4000 × 3200 بكسل لأعلى نقاوة (وأقلّه 2400 × 1920) — أفقية بنسبة 5:4 وبصيغة JPG أو PNG — والتقويم يقف في منتصف الصورة وقاعدته في ثلثها السفلي.</span><span class="mkmsg" id="mkmsg" role="status"></span></div>
       <div class="navrow">
         <button class="btn" id="prev" aria-label="الصفحة السابقة">‹ السابقة</button>
         <div class="seg" id="kind" role="group" aria-label="نوع الصفحة"><button data-k="g">صفحة الإهداء</button><button data-k="m">صفحة الشهر</button></div>
@@ -3137,15 +3137,16 @@ function mockRender(w){const box=$("#mockcells"),st=$("#stage");if(SEC!=="mockup
 /* ---------- خلفية الموك أب (يرفعها المحرِّر وتُحفظ مع تقويم السنة) وتنزيل المشهد صورةً ---------- */
 // MKS حجم التقويم داخل المشهد نسبةً لحجمه في ملف الـPSD و MKO نقطة ارتكاز التصغير و MKT إزاحته (نسبةً لأبعاد المشهد) — تطابق ‎.stage.mock‎ في portal.css.
 // القيم مضبوطة على الخلفية الافتراضية: قاعدة التقويم تنطبق على الحافة القريبة للظل المرسوم في الصورة.
-let MOCKBG="";const MKW=2400,MKH=1920,MKBG0="mockup/bg3.jpg",MKS=1,MKO=[.5,.8],MKT=[.013,.006];
+// MKW×MKH مقاس الصورة المنزّلة = المقاس الأصلي لملف الـPSD، وطبقتا الجسم والحلقات لها بنفس الدقة (body4k / rings4k)
+let MOCKBG="";const MKW=4000,MKH=3200,MKBG0="mockup/bg3.jpg",MKS=1,MKO=[.5,.8],MKT=[.013,.006];
 const mkEl=id=>document.getElementById(id),mkMsg=(t,bad)=>{const e=mkEl("mkmsg");e.textContent=t||"";e.classList.toggle("bad",!!bad)};
 function mockBgApply(){const st=mkEl("stage");if(MOCKBG)st.style.setProperty("--mkbg",'url("'+MOCKBG+'")');else st.style.removeProperty("--mkbg");
  const w=CANW===true&&typeof ASSETS!=="undefined"&&!!ASSETS;mkEl("mkuplbl").hidden=!w;mkEl("mkhint").hidden=!w;mkEl("mkreset").hidden=!w||!MOCKBG}
 async function mockUpload(file){if(!file)return;try{mkMsg("جارٍ رفع الخلفية…");
   // تُقصّ الصورة من الوسط إلى المقاس المعتمد كي تطابق المشهد أياً كان مقاسها الأصلي
-  const bmp=await createImageBitmap(file),c=document.createElement("canvas");c.width=MKW;c.height=MKH;
-  const k=Math.max(MKW/bmp.width,MKH/bmp.height),w=bmp.width*k,h=bmp.height*k;c.getContext("2d").drawImage(bmp,(MKW-w)/2,(MKH-h)/2,w,h);
-  const b=await new Promise(r=>c.toBlob(r,"image/jpeg",.9)),r=await ASSETS.upload(b);
+  const bmp=await createImageBitmap(file),c=document.createElement("canvas"),UW=Math.round(Math.min(MKW,Math.max(2400,Math.min(bmp.width,bmp.height*1.25)))),UH=Math.round(UW*.8);c.width=UW;c.height=UH;
+  const k=Math.max(UW/bmp.width,UH/bmp.height),w=bmp.width*k,h=bmp.height*k,g=c.getContext("2d");g.imageSmoothingQuality="high";g.drawImage(bmp,(UW-w)/2,(UH-h)/2,w,h);
+  const b=await new Promise(r=>c.toBlob(r,"image/jpeg",.92)),r=await ASSETS.upload(b);
   MOCKBG=r.id;mockBgApply();await DB.doc("cal/_mock").set({bg:MOCKBG});mkMsg("تم اعتماد الخلفية الجديدة.")}
  catch(e){mkMsg("تعذّر رفع الخلفية، أعد المحاولة.",true)}}
 async function mockBgReset(){try{MOCKBG="";mockBgApply();await DB.doc("cal/_mock").set({bg:""});mkMsg("عادت الخلفية الافتراضية.")}catch(e){mkMsg("تعذّر الحفظ.",true)}}
@@ -3163,13 +3164,13 @@ async function mockDownload(){const btn=mkEl("mkdl");if(btn.disabled)return;btn.
    try{const bl=await mkBlob(u),du=await new Promise((ok,no)=>{const fr=new FileReader();fr.onload=()=>ok(fr.result);fr.onerror=no;fr.readAsDataURL(bl)});i.removeAttribute("srcset");i.src=du}catch(_){i.src=MKPX}}));
   await Promise.all([...hold.querySelectorAll("img")].map(i=>i.complete?(i.decode?i.decode().catch(()=>{}):0):new Promise(r=>{i.onload=i.onerror=r})));
   if(document.fonts&&document.fonts.ready)await document.fonts.ready;
-  const opt={pixelRatio:2.2,width:PXW,height:PXH,backgroundColor:"#ffffff",fetchRequestInit:{mode:"cors"},imagePlaceholder:MKPX,style:{opacity:"1"}};
+  const opt={pixelRatio:4,width:PXW,height:PXH,backgroundColor:"#ffffff",fetchRequestInit:{mode:"cors"},imagePlaceholder:MKPX,style:{opacity:"1"}};
   await htmlToImage.toCanvas(page,opt);const flat=await htmlToImage.toCanvas(page,opt);
-  const [bg,body,rings]=await Promise.all([mkPic(MOCKBG||MKBG0).catch(()=>mkPic(MKBG0)),mkPic("mockup/body.webp"),mkPic("mockup/rings.png")]);
+  const [bg,body,rings]=await Promise.all([mkPic(MOCKBG||MKBG0).catch(()=>mkPic(MKBG0)),mkPic("mockup/body4k.webp"),mkPic("mockup/rings4k.png")]);
   const cv=document.createElement("canvas");cv.width=MKW;cv.height=MKH;const x=cv.getContext("2d");x.imageSmoothingQuality="high";
   const k=Math.max(MKW/bg.width,MKH/bg.height);x.drawImage(bg,(MKW-bg.width*k)/2,(MKH-bg.height*k)/2,bg.width*k,bg.height*k);x.save();x.translate((MKO[0]+MKT[0])*MKW,(MKO[1]+MKT[1])*MKH);x.scale(MKS,MKS);x.translate(-MKO[0]*MKW,-MKO[1]*MKH);x.drawImage(body,0,0,MKW,MKH);
-  const NX=48,NY=34,fw=flat.width,fh=flat.height,P=[];for(let j=0;j<=NY;j++){P.push([]);for(let i=0;i<=NX;i++)P[j].push(mkFwd(i/NX,j/NY,MKW,MKH))}
-  const tri=(s0,s1,s2,d0,d1,d2)=>{const cx=(d0[0]+d1[0]+d2[0])/3,cy=(d0[1]+d1[1]+d2[1])/3,ex=p=>{const dx=p[0]-cx,dy=p[1]-cy,l=Math.hypot(dx,dy)||1;return[p[0]+dx/l*1.1,p[1]+dy/l*1.1]};
+  const NX=64,NY=46,fw=flat.width,fh=flat.height,P=[];for(let j=0;j<=NY;j++){P.push([]);for(let i=0;i<=NX;i++)P[j].push(mkFwd(i/NX,j/NY,MKW,MKH))}
+  const tri=(s0,s1,s2,d0,d1,d2)=>{const cx=(d0[0]+d1[0]+d2[0])/3,cy=(d0[1]+d1[1]+d2[1])/3,ex=p=>{const dx=p[0]-cx,dy=p[1]-cy,l=Math.hypot(dx,dy)||1;return[p[0]+dx/l*1.6,p[1]+dy/l*1.6]};
    const e0=ex(d0),e1=ex(d1),e2=ex(d2);x.save();x.beginPath();x.moveTo(e0[0],e0[1]);x.lineTo(e1[0],e1[1]);x.lineTo(e2[0],e2[1]);x.closePath();x.clip();
    const den=(s1[0]-s0[0])*(s2[1]-s0[1])-(s2[0]-s0[0])*(s1[1]-s0[1]);
    const a=((d1[0]-d0[0])*(s2[1]-s0[1])-(d2[0]-d0[0])*(s1[1]-s0[1]))/den,c=((d2[0]-d0[0])*(s1[0]-s0[0])-(d1[0]-d0[0])*(s2[0]-s0[0]))/den;
@@ -3178,7 +3179,7 @@ async function mockDownload(){const btn=mkEl("mkdl");if(btn.disabled)return;btn.
   for(let j=0;j<NY;j++)for(let i=0;i<NX;i++){const sa=[i/NX*fw,j/NY*fh],sb=[(i+1)/NX*fw,j/NY*fh],sc=[(i+1)/NX*fw,(j+1)/NY*fh],sd=[i/NX*fw,(j+1)/NY*fh];
    tri(sa,sb,sc,P[j][i],P[j][i+1],P[j+1][i+1]);tri(sa,sc,sd,P[j][i],P[j+1][i+1],P[j+1][i])}
   x.drawImage(rings,0,0,MKW,MKH);x.restore();
-  const blob=await new Promise(r=>cv.toBlob(r,"image/jpeg",.94));if(!blob)throw 0;window.__mkLast=cv;
+  const blob=await new Promise(r=>cv.toBlob(r,"image/jpeg",.97));if(!blob)throw 0;window.__mkLast=cv;
   const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="موك-أب-تقويم-"+YEAR+"-"+(cur.kind==="g"?"الإهداء":MONTH_AR[cur.mo-1])+".jpg";a.click();setTimeout(()=>URL.revokeObjectURL(a.href),8000);mkMsg("تم تنزيل الصورة.")}
  catch(e){console.error("mock download",e);mkMsg("تعذّر تجهيز الصورة، أعد المحاولة.",true)}
  finally{if(hold)hold.remove();btn.disabled=false}}
