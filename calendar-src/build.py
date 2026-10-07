@@ -59,17 +59,22 @@ rep('const DESIGNS=[["a","أثر الخير","قوس وصورة"],["b","الأف
     'const DESIGNS=[["a","أثر الخير","قوس وصورة"],["c","الهدوء","فراغ وبساطة"],["e","الرحابة","صورة جانبية ومتنفَّس"]];')
 # أي إعداد محفوظ على تصميم ملغى يُعرض بالتصميم A
 rep('const R={a:[aMonth,aGift],b:[bMonth,bGift],c:[cMonth,cGift],d:[dMonth,dGift]};', r'''/* ---------- design E «الرحابة»: شبكة وأرقام A + صورة جانبية كاملة الارتفاع، بفراغات أوسع ---------- */
+/* نقش الخلفية: أيقونة الشعار نفسها مكبَّرة وشفافة في أطراف الصفحة (على نهج تقويم 2026) */
+const pat=k=>`<div class="pat ${k}"><div class="mk a"><img src="${LG()}" alt=""></div><div class="mk b"><img src="${LG()}" alt=""></div><div class="mk c"><img src="${LG()}" alt=""></div></div>`;
+/* العبارة العلوية تُطابق عرض الشعار تماماً: كل سطر يُكبَّر أو يُصغَّر حتى يبدأ وينتهي مع حدَّي الشعار */
+function fitE(root){root.querySelectorAll(".d-e.month").forEach(pg=>{const lg=pg.querySelector(".logo"),sl=pg.querySelector(".slogan");if(!lg||!sl)return;const W=lg.offsetWidth;if(!W)return;
+ sl.querySelectorAll("b,span").forEach(el=>{el.style.fontSize="";const w=el.offsetWidth;if(w){const fs=parseFloat(getComputedStyle(el).fontSize);el.style.fontSize=(Math.max(.72,Math.min(1.5,W/w))*fs).toFixed(3)+"px"}})})}
 function eMonth(mo,m){const g=gridData(mo),mt=monthMeta(mo);
  const body=trs(g,c=>c.v?`<td class="${c.fri?"fri":""}"></td>`:`<td class="${c.fri?"fri":""}">${c.ev?`<i class="ev" style="background:${c.ev[1]}">${c.d}</i>`:`<i>${c.d}</i>`}<s>${c.hj}</s></td>`);
  const chips=g.legend.map(l=>`<span><u style="background:${l.c}"></u>${l.d} · ${esc(l.t)}</span>`).join("");
  const q=k=>`<div class="q"><div class="qrbox">${qrEl(m["q"+k+"u"],16,m["q"+k+"img"])}</div><div class="qt"><b>${esc(m["q"+k+"a"])}</b><span>${esc(m["q"+k+"b"])}</span></div></div>`;
- return `<section class="page d-e month"><div class="photo">${photoEl(m,mo,"e")}</div><div class="credit">${esc(S().lblArtist)}: ${esc(m.artist)}</div>${logo()}
+ return `<section class="page d-e month">${pat("m")}<div class="photo">${photoEl(m,mo,"e")}</div><div class="credit">${esc(S().lblArtist)}: ${esc(m.artist)}</div>${logo()}
  <div class="sp"><em>${esc(S().lblSponsor)}</em><div class="sb">${spBox(m)}</div></div>
  <h1>${MONTH_AR[mo-1]}</h1><div class="meta"><i>${mt.label}</i><span>${YEAR} م &nbsp;·&nbsp; ${hy(mt.year)} هـ</span></div>
  <div class="slogan"><b>${esc(m.s1)}</b><span>${esc(m.s2)}</span></div>
- <table class="grid" style="--rh:${(54/g.rows).toFixed(2)}mm"><thead><tr>${head()}</tr></thead><tbody>${body}</tbody></table><div class="legend">${chips}</div>
+ <table class="grid" style="--rh:${(52.5/g.rows).toFixed(2)}mm"><thead><tr>${head()}</tr></thead><tbody>${body}</tbody></table><div class="legend">${chips}</div>
  <div class="dock">${q(1)}${q(2)}${q(3)}</div></section>`}
-function eGift(g){return `<section class="page d-e gift">${logo()}
+function eGift(g){return `<section class="page d-e gift">${pat("g")}${logo()}
  <div class="gtitle">${g.titleImg?`<img src="${blob(g.titleImg)}" alt="">`:`<h2><b>${esc(g.h1)}</b><span>${esc(g.h2)}</span></h2>`}</div>${form()}
  <div class="bigqr"><div class="qrbox">${qrEl(g.url,44,g.qrImg)}</div><div class="cname">${esc(g.camp)}</div><div class="go">${esc(S().lblGo)}</div></div>
  <div class="spt">${esc(S().lblSponsors)}</div><div class="sponsors">${allSp()}</div><div class="handle">${esc(draft.settings.handle)}</div></section>`}
@@ -86,7 +91,14 @@ rep('const GF=[["h1","عنوان الإهداء — السطر الأول","t"],
 
 # ---------- السنة والمسارات ----------
 rep('const YEAR=2027, G=', 'const YEAR=(function(){const y=+new URLSearchParams(location.search).get("year");return y>=2026&&y<=2040?y:2027})(), G=')
-rep('for(let m=2;m<=12;m++){const nd=new Date(Date.UTC(YEAR,m,0))', 'for(let m=(YEAR===2027?2:1);m<=12;m++){const nd=new Date(Date.UTC(YEAR,m,0))')
+# المناسبات: القائمة المرجعية من تقويم 2026 (events.js) تُحسب لكل عام، واليوم الواحد يقبل أكثر من مناسبة
+cut('(function(){const add=(m,d,t,c)=>{const k=YEAR+"-"+pad(m)+"-"+pad(d);if(!EVENTS[k])EVENTS[k]=[[t,c]]};', 'FIX.forEach(e=>add(e[0],e[1],e[2],e[3]))})();',
+    """(function(){const add=(m,d,t,c)=>{const k=YEAR+"-"+pad(m)+"-"+pad(d),a=EVENTS[k]||(EVENTS[k]=[]);if(!a.some(x=>x[0]===t))a.push([t,c])};
+/*@EVENTS@*/
+ for(let m=1;m<=12;m++){const nd=new Date(Date.UTC(YEAR,m,0)).getUTCDate();for(let d=1;d<=nd;d++){const h=hij(m,d);HJ.forEach(e=>{if(h.month===e[0]&&h.day===e[1])add(m,d,e[2],e[3])})}}
+ FIX.forEach(e=>add(e[0],e[1],e[2],e[3]));MOV.forEach(e=>add(e[0],nth(e[0],e[1],e[2]),e[3],e[4]))})();""")
+rep('if(ev)legend.push({d,t:ev[0][0],c:ev[0][1]});', 'if(ev)ev.forEach(x=>legend.push({d,t:x[0],c:x[1]}));')
+rep('requestAnimationFrame(()=>{$("#pagebox").innerHTML=viewHtml();fit()})}', 'requestAnimationFrame(()=>{$("#pagebox").innerHTML=viewHtml();fit();fitE($("#pagebox"))})}\nif(document.fonts&&document.fonts.ready)document.fonts.ready.then(()=>drawPreview());')
 rep('const blob=id=>"/_blob/"+id;', 'const blob=id=>/^(https?:|data:|blob:)/.test(id)?id:"/_blob/"+id;')
 rep('lblGo:"${esc(S().lblGo)}"', 'lblGo:"ابدأ خَيْرَكَ الآن"')
 rep('${APPROVED.year||2027}', '${APPROVED.year||YEAR}')
@@ -115,6 +127,7 @@ rep('''/* ---------- navigation ---------- */''', '''/* ---------- print all (24
 function printAll(){const keep={mo:cur.mo,kind:cur.kind};let h="";
  for(let mo=1;mo<=12;mo++)for(const k of ["g","m"]){cur.mo=mo;cur.kind=k;h+=viewHtml()}
  cur.mo=keep.mo;cur.kind=keep.kind;const box=$("#printall");box.innerHTML=h;
+ box.style.cssText="display:block;position:absolute;left:-99999px;top:0;width:210mm";fitE(box);box.style.cssText="";
  const imgs=[...box.querySelectorAll("img")].filter(i=>!i.complete);
  Promise.all(imgs.map(i=>new Promise(r=>{i.onload=i.onerror=r}))).then(()=>(document.fonts&&document.fonts.ready)||0).then(()=>{window.print();setTimeout(()=>{box.innerHTML=""},1500)})}
 
@@ -144,7 +157,7 @@ doc = '<!DOCTYPE html>\n<html lang="ar" dir="rtl">\n<head>\n<meta charset="UTF-8
 assert "</style>" in doc
 doc = doc.replace("</style>\n<div id=\"app\"", "</style>\n</head>\n<body>\n<div id=\"app\"", 1) + "\n</body>\n</html>\n"
 logo = "data:image/png;base64," + base64.b64encode(open(os.path.join(HERE, "logo_web.png"), "rb").read()).decode()
-out = doc.replace("/*@DESIGNS@*/", rd("designs.css") + "\n" + rd("design-e.css")).replace("/*@DEMO@*/", rd("demo.js")).replace("/*@QR@*/", rd("qrcode.js").replace("</script", "<\\/script")).replace("/*@LOGO@*/", logo)
+out = doc.replace("/*@DESIGNS@*/", rd("designs.css") + "\n" + rd("design-e.css")).replace("/*@DEMO@*/", rd("demo.js")).replace("/*@EVENTS@*/", rd("events.js")).replace("/*@QR@*/", rd("qrcode.js").replace("</script", "<\\/script")).replace("/*@LOGO@*/", logo)
 dest = os.path.join(HERE, "..", "Login", "calendar", "index.html")
 os.makedirs(os.path.dirname(dest), exist_ok=True)
 io.open(dest, "w", encoding="utf-8").write(out)
