@@ -97,13 +97,19 @@ rep('<div class="tabs" id="designs" role="group" aria-label="التصميم"></d
 
 # ---------- قسم ثالث: موك أب التقويم المكتبي — صفحة الشهر مُسقطة على تقويم مكتبي مجسَّم ----------
 rep('<div class="stage" id="stage"><div class="pagebox" id="pagebox"></div></div>',
-    '<div class="stage" id="stage"><div class="mk-shadow"></div><div class="rig" id="rig"><div class="mk-back"></div><div class="pagebox" id="pagebox"></div><div class="mk-rings"></div><div class="mk-base"></div></div></div>')
+    '<div class="stage" id="stage"><div class="rig" id="rig"><div class="pagebox" id="pagebox"></div></div><div class="mk-over"></div></div>')
 rep('function fit(){const st=$("#stage"),w=st.clientWidth,s=w/PXW;st.style.height=PXH*s+"px";$("#pagebox").style.transform="scale("+s+")"}',
     """function fit(){const st=$("#stage"),rig=$("#rig"),w=st.clientWidth;st.classList.toggle("mock",SEC==="mockup");
  if(SEC!=="mockup"){const s=w/PXW;st.style.height=PXH*s+"px";rig.style.transformOrigin="0 0";rig.style.transform="scale("+s+")";return}
- // الموك أب: التقويم في وسط المشهد، مائل قليلاً بمنظور، وحجمه نحو 58% من عرض المشهد
- const h=Math.round(w*.64),k=(w*.58)/PXW;st.style.height=h+"px";rig.style.transformOrigin="50% 50%";
- rig.style.transform="translate("+((w-PXW)/2)+"px,"+((h-PXH)/2-h*.035)+"px) perspective(2200px) rotateY(-17deg) rotateX(5deg) scale("+k+")"}""")
+ // الموك أب: صورة تقويم مكتبي حقيقية (mockup/desk.jpg من ملف PSD الجمعية)، والصفحة تُسقط على سطحه بمصفوفة منظور تطابق أركانه الأربعة
+ const h=Math.round(w*.8);st.style.height=h+"px";rig.style.transformOrigin="0 0";
+ rig.style.transform=quadMatrix(PXW,PXH,MOCK_QUAD.map(q=>[q[0]*w,q[1]*h]))}
+/* أركان سطح التقويم في الصورة (نسبةً إلى عرضها وارتفاعها): أعلى-يسار، أعلى-يمين، أسفل-يمين، أسفل-يسار */
+const MOCK_QUAD=[[.23025,.18656],[.7715,.24063],[.7125,.82938],[.1655,.70688]];
+function quadMatrix(W,H,q){const x0=q[0][0],y0=q[0][1],x1=q[1][0],y1=q[1][1],x2=q[2][0],y2=q[2][1],x3=q[3][0],y3=q[3][1];
+ const dx1=x1-x2,dx2=x3-x2,dx3=x0-x1+x2-x3,dy1=y1-y2,dy2=y3-y2,dy3=y0-y1+y2-y3,den=dx1*dy2-dx2*dy1,g=(dx3*dy2-dx2*dy3)/den,k=(dx1*dy3-dx3*dy1)/den;
+ const a=x1-x0+g*x1,b=x3-x0+k*x3,d=y1-y0+g*y1,e=y3-y0+k*y3;
+ return "matrix3d("+[a/W,d/W,0,g/W,b/H,e/H,0,k/H,0,0,1,0,x0,y0,0,1].join(",")+")"}""")
 rep('function viewHtml(){if(SEC!=="approved")return pageHtml();', 'function viewHtml(){if(SEC==="design"||(SEC==="mockup"&&!APPROVED))return pageHtml();')
 
 # ---------- السنة والمسارات ----------

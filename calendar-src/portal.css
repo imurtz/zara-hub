@@ -42,16 +42,13 @@ body.embedded header.top{justify-content:flex-start}
 .tabs[hidden]{display:none}
 /* ---- حامل الصفحة (يُكبَّر/يُصغَّر مع المعاينة) وعناصر الموك أب ---- */
 .rig{position:absolute;left:0;top:0;width:210mm;height:150mm;transform-origin:0 0}
-.mk-rings,.mk-back,.mk-base,.mk-shadow{display:none}
-/* ---- موك أب التقويم المكتبي ---- */
+.mk-over{display:none}
+/* ---- موك أب التقويم المكتبي: صورة حقيقية + الصفحة مُسقطة على سطحها + حلقات السلك تُعاد فوق الصفحة ---- */
 #app[data-sec="mockup"] .only-design{display:none!important}
 #app[data-sec="mockup"] .layout{grid-template-columns:minmax(0,1fr);max-width:1040px;margin-inline:auto}
 #app[data-sec="mockup"] .preview{position:static}
-.stage.mock{background:radial-gradient(120% 90% at 30% 18%,#ffffff 0,#f1f3f2 46%,#e3e8e6 100%);border:1px solid rgba(20,28,27,.08)}
-.stage.mock::after{content:"";position:absolute;left:0;right:0;bottom:0;height:27%;background:linear-gradient(#d9dfdc,#cdd5d2);box-shadow:inset 0 1px 0 rgba(255,255,255,.75)}
-.stage.mock .rig{z-index:2;filter:drop-shadow(0 26px 30px rgba(20,28,27,.26)) drop-shadow(0 6px 8px rgba(20,28,27,.16))}
-.stage.mock .pagebox{border-radius:1.6mm;box-shadow:inset 0 0 0 .2mm rgba(20,28,27,.10)}
-.stage.mock .mk-back{display:block;position:absolute;left:1.5mm;right:-2.5mm;top:1.2mm;bottom:-1mm;border-radius:2mm;background:linear-gradient(120deg,#f3f1ec,#d8d4cb);transform:translateZ(-1px)}
-.stage.mock .mk-rings{display:block;position:absolute;left:9mm;right:9mm;top:-4.6mm;height:9mm;background:repeating-linear-gradient(90deg,transparent 0 5.2mm,#5f6b69 5.2mm 5.55mm,#dfe5e3 5.55mm 6.15mm,#8d9896 6.15mm 6.6mm,transparent 6.6mm 7.2mm);border-radius:4.5mm;-webkit-mask-image:linear-gradient(#000 0 42%,transparent 42% 58%,#000 58% 100%);mask-image:linear-gradient(#000 0 42%,transparent 42% 58%,#000 58% 100%)}
-.stage.mock .mk-base{display:block;position:absolute;left:-2mm;right:-2mm;top:100%;height:4.2mm;margin-top:-.6mm;border-radius:0 0 2mm 2mm;background:linear-gradient(#b9c2bf,#8f9a97)}
-.stage.mock .mk-shadow{display:block;position:absolute;z-index:1;left:22%;right:14%;bottom:13%;height:9%;background:radial-gradient(closest-side,rgba(20,28,27,.30),transparent);filter:blur(6px)}
+.stage.mock{background:#fff url(mockup/desk.jpg) center/100% 100% no-repeat;border:1px solid rgba(20,28,27,.08)}
+.stage.mock .rig{z-index:2}
+.stage.mock .pagebox{background:#fff}
+/* شريط الحلقات المعدنية من الصورة نفسها يُضرب (multiply) فوق أعلى الصفحة، فتبدو الحلقات وظلالها خارجة من الورقة */
+.stage.mock .mk-over{display:block;position:absolute;inset:0;z-index:3;pointer-events:none;background:url(mockup/desk.jpg) center/100% 100% no-repeat;mix-blend-mode:multiply;clip-path:polygon(23.025% 18.656%,77.15% 24.063%,76.95% 28.6%,22.8% 23.1%)}
