@@ -1,0 +1,38 @@
+/* ---- التصميم E «الرحابة»: شبكة وأرقام «أثر الخير» + صورة جانبية بطول الصفحة كما في «الهدوء»، بفراغات أوسع ---- */
+.d-e.page{position:relative;width:210mm;height:150mm;overflow:hidden;background:#fff;page-break-after:always;color:var(--cg);font-family:var(--fb),sans-serif}
+.d-e.page>*{position:absolute}
+.d-e .photo{left:0;top:0;width:64mm;height:150mm;overflow:hidden}
+.d-e .photo img{width:100%;height:100%;object-fit:cover;display:block}
+.d-e .phimg{width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:repeating-linear-gradient(135deg,#dfe6e2 0 3mm,#d3dcd7 3mm 6mm)}
+.d-e .phimg span{font-size:2.8mm;color:var(--cg);opacity:.6}
+.d-e .credit{left:0;bottom:0;width:64mm;padding:10mm 4mm 3.4mm;text-align:center;font-size:2.4mm;font-weight:500;color:#fff;background:linear-gradient(transparent,rgba(0,0,0,.5))}
+.d-e .logo{left:78mm;top:8.5mm;width:32mm;mix-blend-mode:multiply}
+.d-e .sp{right:12mm;top:8mm;height:11mm;display:flex;align-items:center;gap:3mm}
+.d-e .sp em{font-style:normal;font-size:2.5mm;color:var(--cb);font-weight:600;white-space:nowrap}
+.d-e .sp .sb{height:11mm;min-width:26mm;max-width:46mm;display:flex;align-items:center;justify-content:center}
+.d-e .sp .sb img{height:11mm;width:auto;max-width:46mm;object-fit:contain}
+.d-e .sp .ph{font-size:2.6mm;color:var(--cb);font-weight:500;border:.25mm dashed var(--cb);border-radius:2mm;padding:2.6mm 6mm;white-space:nowrap}
+.d-e h1{right:12mm;top:24.5mm;font-family:var(--fd);font-weight:700;font-size:15mm;line-height:1;color:var(--cg)}
+.d-e .meta{right:12mm;top:42.6mm;display:flex;align-items:center;gap:3mm}
+.d-e .meta i{font-style:normal;background:#e6e7e8;color:var(--cb);font-weight:700;font-size:3.1mm;padding:1mm 4mm;border-radius:5mm}
+.d-e .meta span{font-size:3mm;font-weight:600;color:var(--cb)}
+.d-e .slogan{left:78mm;top:27.5mm;width:60mm;display:flex;flex-direction:column;text-align:left;font-family:var(--fb)}
+.d-e .slogan b{font-size:3.9mm;font-weight:700;color:var(--cg);line-height:1.45}
+.d-e .slogan span{font-size:3.4mm;font-weight:500;color:var(--cb);line-height:1.45}
+.d-e .grid{left:78mm;top:51mm;width:120mm;border-collapse:collapse;table-layout:fixed;direction:rtl}
+.d-e .grid th{height:6mm;font-size:2.8mm;font-weight:700;color:var(--cg);border-bottom:.45mm solid var(--cg);vertical-align:middle}
+.d-e .grid th.fri{color:var(--cb)}
+.d-e .grid td{height:var(--rh);text-align:center;vertical-align:middle;border-bottom:.2mm solid #e6e7e8;padding:0}
+.d-e .grid td.fri,.d-e .grid th.fri{background:color-mix(in srgb,var(--cb) 13%,transparent)}
+.d-e .grid td i{display:block;font-style:normal;font-size:5.4mm;font-weight:700;line-height:6.3mm;margin:0 auto;width:6.3mm;height:6.3mm;border-radius:50%}
+.d-e .grid td i.ev{color:#fff;font-size:4.5mm;width:6.4mm;height:6.4mm;line-height:6.4mm}
+.d-e .grid td s{display:block;text-decoration:none;font-size:2.35mm;color:var(--cb);font-weight:600;line-height:2.6mm}
+.d-e .legend{left:78mm;right:12mm;top:113.4mm;display:flex;flex-wrap:wrap;gap:.8mm 3.6mm;font-size:2.35mm;font-weight:500;line-height:3.4mm}
+.d-e .legend span{white-space:nowrap}
+.d-e .legend u{display:inline-block;width:1.9mm;height:1.9mm;border-radius:50%;margin-left:1.1mm;vertical-align:-.15mm}
+.d-e .dock{left:78mm;right:12mm;top:124.6mm;display:flex;justify-content:space-between;align-items:center}
+.d-e .q{display:flex;align-items:center;gap:2.4mm}
+.d-e .qrbox{background:#fff;border-radius:2.2mm;padding:1.1mm;border:.3mm solid var(--cb);display:inline-block;line-height:0}
+.d-e .qt{display:flex;flex-direction:column}
+.d-e .qt b{font-size:2.7mm;font-weight:700;line-height:1.35;white-space:nowrap}
+.d-e .qt span{font-size:2.35mm;color:var(--cb);font-weight:500;line-height:1.35;white-space:nowrap}

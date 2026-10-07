@@ -399,6 +399,45 @@ body.embedded header.top{justify-content:flex-start}
 .d-d .bigqr{top:24mm}
 .d-d .cn{top:91mm;gap:1.4mm}
 .d-d .title{font-size:26mm}
+/* ---- التصميم E «الرحابة»: شبكة وأرقام «أثر الخير» + صورة جانبية بطول الصفحة كما في «الهدوء»، بفراغات أوسع ---- */
+.d-e.page{position:relative;width:210mm;height:150mm;overflow:hidden;background:#fff;page-break-after:always;color:var(--cg);font-family:var(--fb),sans-serif}
+.d-e.page>*{position:absolute}
+.d-e .photo{left:0;top:0;width:64mm;height:150mm;overflow:hidden}
+.d-e .photo img{width:100%;height:100%;object-fit:cover;display:block}
+.d-e .phimg{width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:repeating-linear-gradient(135deg,#dfe6e2 0 3mm,#d3dcd7 3mm 6mm)}
+.d-e .phimg span{font-size:2.8mm;color:var(--cg);opacity:.6}
+.d-e .credit{left:0;bottom:0;width:64mm;padding:10mm 4mm 3.4mm;text-align:center;font-size:2.4mm;font-weight:500;color:#fff;background:linear-gradient(transparent,rgba(0,0,0,.5))}
+.d-e .logo{left:78mm;top:8.5mm;width:32mm;mix-blend-mode:multiply}
+.d-e .sp{right:12mm;top:8mm;height:11mm;display:flex;align-items:center;gap:3mm}
+.d-e .sp em{font-style:normal;font-size:2.5mm;color:var(--cb);font-weight:600;white-space:nowrap}
+.d-e .sp .sb{height:11mm;min-width:26mm;max-width:46mm;display:flex;align-items:center;justify-content:center}
+.d-e .sp .sb img{height:11mm;width:auto;max-width:46mm;object-fit:contain}
+.d-e .sp .ph{font-size:2.6mm;color:var(--cb);font-weight:500;border:.25mm dashed var(--cb);border-radius:2mm;padding:2.6mm 6mm;white-space:nowrap}
+.d-e h1{right:12mm;top:24.5mm;font-family:var(--fd);font-weight:700;font-size:15mm;line-height:1;color:var(--cg)}
+.d-e .meta{right:12mm;top:42.6mm;display:flex;align-items:center;gap:3mm}
+.d-e .meta i{font-style:normal;background:#e6e7e8;color:var(--cb);font-weight:700;font-size:3.1mm;padding:1mm 4mm;border-radius:5mm}
+.d-e .meta span{font-size:3mm;font-weight:600;color:var(--cb)}
+.d-e .slogan{left:78mm;top:27.5mm;width:60mm;display:flex;flex-direction:column;text-align:left;font-family:var(--fb)}
+.d-e .slogan b{font-size:3.9mm;font-weight:700;color:var(--cg);line-height:1.45}
+.d-e .slogan span{font-size:3.4mm;font-weight:500;color:var(--cb);line-height:1.45}
+.d-e .grid{left:78mm;top:51mm;width:120mm;border-collapse:collapse;table-layout:fixed;direction:rtl}
+.d-e .grid th{height:6mm;font-size:2.8mm;font-weight:700;color:var(--cg);border-bottom:.45mm solid var(--cg);vertical-align:middle}
+.d-e .grid th.fri{color:var(--cb)}
+.d-e .grid td{height:var(--rh);text-align:center;vertical-align:middle;border-bottom:.2mm solid #e6e7e8;padding:0}
+.d-e .grid td.fri,.d-e .grid th.fri{background:color-mix(in srgb,var(--cb) 13%,transparent)}
+.d-e .grid td i{display:block;font-style:normal;font-size:5.4mm;font-weight:700;line-height:6.3mm;margin:0 auto;width:6.3mm;height:6.3mm;border-radius:50%}
+.d-e .grid td i.ev{color:#fff;font-size:4.5mm;width:6.4mm;height:6.4mm;line-height:6.4mm}
+.d-e .grid td s{display:block;text-decoration:none;font-size:2.35mm;color:var(--cb);font-weight:600;line-height:2.6mm}
+.d-e .legend{left:78mm;right:12mm;top:113.4mm;display:flex;flex-wrap:wrap;gap:.8mm 3.6mm;font-size:2.35mm;font-weight:500;line-height:3.4mm}
+.d-e .legend span{white-space:nowrap}
+.d-e .legend u{display:inline-block;width:1.9mm;height:1.9mm;border-radius:50%;margin-left:1.1mm;vertical-align:-.15mm}
+.d-e .dock{left:78mm;right:12mm;top:124.6mm;display:flex;justify-content:space-between;align-items:center}
+.d-e .q{display:flex;align-items:center;gap:2.4mm}
+.d-e .qrbox{background:#fff;border-radius:2.2mm;padding:1.1mm;border:.3mm solid var(--cb);display:inline-block;line-height:0}
+.d-e .qt{display:flex;flex-direction:column}
+.d-e .qt b{font-size:2.7mm;font-weight:700;line-height:1.35;white-space:nowrap}
+.d-e .qt span{font-size:2.35mm;color:var(--cb);font-weight:500;line-height:1.35;white-space:nowrap}
+
 </style>
 </head>
 <body>
@@ -2741,7 +2780,7 @@ const YEAR=(function(){const y=+new URLSearchParams(location.search).get("year")
 const MONTH_AR=["يناير","فبراير","مارس","أبريل","مايو","يونيو","يوليو","أغسطس","سبتمبر","أكتوبر","نوفمبر","ديسمبر"];
 const H_AR=["محرم","صفر","ربيع الأول","ربيع الآخر","جمادى الأولى","جمادى الآخرة","رجب","شعبان","رمضان","شوال","ذو القعدة","ذو الحجة"];
 const DAYS=["الأحد","الاثنين","الثلاثاء","الأربعاء","الخميس","الجمعة","السبت"];
-const DESIGNS=[["a","أثر الخير","قوس وصورة"],["c","الهدوء","فراغ وبساطة"]];
+const DESIGNS=[["a","أثر الخير","قوس وصورة"],["c","الهدوء","فراغ وبساطة"],["e","الرحابة","صورة جانبية ومتنفَّس"]];
 // Dates & events: fixed, as in the approved data sheet (not editable here).
 const EVENTS={"2027-01-04":[["اليوم العالمي للغة برايل","#2f9e5b"]],"2027-01-05":[["المبعث النبوي","#8e4aa8"]],"2027-01-06":[["تأسيس الجمعية","#b8892b"]],"2027-01-14":[["إجازة منتصف العام","#d9822b"]],"2027-01-24":[["اليوم الدولي للتعليم","#4f9a8f"]]};
 
@@ -2813,7 +2852,7 @@ const lic=()=>{const s=draft.settings;return[s.licNo||"—",s.licStart||"—",s.
 const hy=y=>y.replace("-"," - ");
 function sadu(h){const t=6,W=210;return `<svg class="band" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${h}" width="${W}mm" height="${h}mm"><defs><pattern id="sadu" width="${t}" height="${t}" patternUnits="userSpaceOnUse"><rect width="${t}" height="${t}" style="fill:var(--cg)"/><polygon points="3,0.45 5.55,3 3,5.55 0.45,3" style="fill:var(--cb)"/><polygon points="3,1.55 4.45,3 3,4.45 1.55,3" style="fill:var(--cg)"/><rect x="2.6" y="2.6" width=".8" height=".8" fill="#fff"/><rect x="-.25" y="-.25" width=".5" height=".5" fill="#fff"/><rect x="5.75" y="-.25" width=".5" height=".5" fill="#fff"/><rect x="-.25" y="5.75" width=".5" height=".5" fill="#fff"/><rect x="5.75" y="5.75" width=".5" height=".5" fill="#fff"/></pattern></defs><rect width="${W}" height="${h}" fill="url(#sadu)"/></svg>`}
 const form=()=>{const t=S(),o=String(t.fOpts).split(/[،,]/).map(x=>x.trim()).filter(Boolean).map(x=>`<span>${esc(x)}</span>`).join("");return `<div class="form"><div class="ft"><i></i>${esc(t.fTitle)}</div><div class="f"><label>${esc(t.fName)}</label><p></p></div><div class="f"><label>${esc(t.fTo)}<sup>*</sup></label><p></p></div><div class="f"><label>${esc(t.fPhone)}<sup>*</sup></label><p></p></div><div class="f"><label>${esc(t.fModel)}<sup>*</sup></label><p class="sel">${o}</p></div></div>`};
-const allSp=()=>{let h="";for(let i=1;i<=12;i++)h+=`<div class="s">${spBox(draft["m"+pad(i)])}</div>`;return h};
+const allSp=()=>{let h="";for(let i=1;i<=12;i++)h+=`<div class="s">${spBox(demo(i,draft["m"+pad(i)]))}</div>`;return h};
 const lc=()=>{const [a,b,c]=lic();return[esc(a),esc(b),esc(c)]};
 
 /* ---------- design A ---------- */
@@ -2877,8 +2916,24 @@ function dGift(g){const [l1,l2,l3]=lc();return `<section class="page d-d gift"><
  <h2><b>${esc(g.h1)}</b><span>${esc(g.h2)}</span></h2>${form()}<div class="bar"><div class="spt">${esc(S().lblSponsors)}</div><div class="sponsors">${allSp()}</div></div>
  <div class="lic">${esc(S().lblLicNo)}: ${l1} &nbsp;·&nbsp; ${esc(S().lblLicStart)}: ${l2} &nbsp;·&nbsp; ${esc(S().lblLicEnd)}: ${l3}</div></section>`}
 
-const R={a:[aMonth,aGift],c:[cMonth,cGift]};
-function pageHtml(){const f=R[draft.settings.design]||R.a;return cur.kind==="m"?f[0](cur.mo,draft["m"+pad(cur.mo)]):f[1](draft["g"+pad(cur.mo)])}
+/* ---------- design E «الرحابة»: شبكة وأرقام A + صورة جانبية كاملة الارتفاع، بفراغات أوسع ---------- */
+function eMonth(mo,m){const g=gridData(mo),mt=monthMeta(mo);
+ const body=trs(g,c=>c.v?`<td class="${c.fri?"fri":""}"></td>`:`<td class="${c.fri?"fri":""}">${c.ev?`<i class="ev" style="background:${c.ev[1]}">${c.d}</i>`:`<i>${c.d}</i>`}<s>${c.hj}</s></td>`);
+ const chips=g.legend.map(l=>`<span><u style="background:${l.c}"></u>${l.d} · ${esc(l.t)}</span>`).join("");
+ const q=k=>`<div class="q"><div class="qrbox">${qrEl(m["q"+k+"u"],16,m["q"+k+"img"])}</div><div class="qt"><b>${esc(m["q"+k+"a"])}</b><span>${esc(m["q"+k+"b"])}</span></div></div>`;
+ return `<section class="page d-e month"><div class="photo">${photoEl(m,mo,"e")}</div><div class="credit">${esc(S().lblArtist)}: ${esc(m.artist)}</div>${logo()}
+ <div class="sp"><em>${esc(S().lblSponsor)}</em><div class="sb">${spBox(m)}</div></div>
+ <h1>${MONTH_AR[mo-1]}</h1><div class="meta"><i>${mt.label}</i><span>${YEAR} م &nbsp;·&nbsp; ${hy(mt.year)} هـ</span></div>
+ <div class="slogan"><b>${esc(m.s1)}</b><span>${esc(m.s2)}</span></div>
+ <table class="grid" style="--rh:${(54/g.rows).toFixed(2)}mm"><thead><tr>${head()}</tr></thead><tbody>${body}</tbody></table><div class="legend">${chips}</div>
+ <div class="dock">${q(1)}${q(2)}${q(3)}</div></section>`}
+/* بيانات توضيحية ليناير (اسم وشعار راعٍ وصورة وفنان) تظهر في المعاينة فقط ما دامت الخانات فارغة — لا تُحفظ ولا تُعدّ في قائمة المراجعة */
+const svgUri=x=>"data:image/svg+xml;charset=utf-8,"+encodeURIComponent(x);
+const DEMO_LOGO=svgUri(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 260 70" width="520" height="140"><g fill="none" stroke="#b8926d" stroke-width="4" stroke-linejoin="round"><path d="M225 12l22 23-22 23-22-23z"/><path d="M225 24l11 11-11 11-11-11z" fill="#517670" stroke="none"/></g><text x="190" y="33" text-anchor="end" font-family="Tahoma,Arial,sans-serif" font-size="25" font-weight="700" fill="#517670">مؤسسة الواحة</text><text x="190" y="57" text-anchor="end" font-family="Tahoma,Arial,sans-serif" font-size="15" fill="#b8926d">للتجارة والمقاولات</text></svg>`);
+const DEMO_PHOTO=svgUri(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 1500" preserveAspectRatio="xMidYMid slice"><defs><linearGradient id="s" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2f4a47"/><stop offset=".45" stop-color="#7fa39b"/><stop offset=".72" stop-color="#e9c9a0"/><stop offset="1" stop-color="#d59a62"/></linearGradient></defs><rect width="640" height="1500" fill="url(#s)"/><circle cx="430" cy="930" r="120" fill="#f6e3c3" opacity=".9"/><path d="M0 1080c120-70 250-60 380 0s200 40 260 10v410H0z" fill="#b8926d"/><path d="M0 1200c160-80 300-30 420 20s160 20 220-10v290H0z" fill="#8f6a45"/><path d="M0 1330c140-50 280-20 400 10s180 10 240-10v170H0z" fill="#3d5b56"/><g stroke="#24393a" stroke-width="14" stroke-linecap="round" fill="none"><path d="M150 1340c10-150 0-300-20-430"/><path d="M130 910c-60-50-120-50-170-10M130 910c-30-70-90-100-150-90M130 910c40-70 110-90 170-70M130 910c70-30 140-10 180 40M130 910c10-70-20-130-70-160"/></g></svg>`);
+const demo=(mo,m)=>mo!==1?m:Object.assign({},m,{sponsorImg:m.sponsorImg||DEMO_LOGO,photo:m.photo||DEMO_PHOTO,artist:m.artist==="اسم الفنان"?"سارة علي الزاهر":m.artist});
+const R={a:[aMonth,aGift],c:[cMonth,cGift],e:[eMonth,cGift]};
+function pageHtml(){const f=R[draft.settings.design]||R.a;return cur.kind==="m"?f[0](cur.mo,demo(cur.mo,draft["m"+pad(cur.mo)])):f[1](draft["g"+pad(cur.mo)])}
 
 /* ---------- preview ---------- */
 const PXW=210*96/25.4,PXH=150*96/25.4;
@@ -2917,7 +2972,7 @@ function fieldHtml(id,[k,label,type]){const v=draft[id][k]||"";
  return `<div class="field"><label>${label}</label><input type="${type==="u"?"url":"text"}" ${type==="u"?'dir="ltr"':""} data-k="${k}" value="${esc(v)}"></div>`}
 function qrGroup(id,n,title){return `<h3>${title}</h3><div class="row3">${["a","b"].map((c,i)=>fieldHtml(id,["q"+n+c,i?"السطر الثاني":"السطر الأول","t"])).join("")}</div>${fieldHtml(id,["q"+n+"u","الرابط (يتولّد منه الـQR تلقائيًا)","u"])}${fieldHtml(id,["q"+n+"img","أو ارفع صورة QR جاهزة (تحلّ محل المولَّد)","i"])}`}
 function renderEditor(){const id=curId(),isM=cur.kind==="m",name=MONTH_AR[cur.mo-1];
- let h=`<h2>${isM?"صفحة شهر "+name:"صفحة الإهداء قبل "+name}</h2>`;
+ let h=`<h2>${isM?"صفحة شهر "+name:"صفحة الإهداء قبل "+name}</h2>`;if(isM&&cur.mo===1&&(!draft.m01.sponsorImg||!draft.m01.photo))h+=`<p class="hint" style="background:#F6EEE5;border-radius:14px;padding:9px 14px;color:#8F6A45">الشعار والصورة واسم الفنان الظاهرة في معاينة يناير بيانات توضيحية لتخيّل الشكل، وتختفي عند رفع الحقيقية. لا تُحفظ ولا تدخل في التقويم المعتمد إلا إذا تركت الخانات فارغة.</p>`;
  if(isM){h+=MF.slice(0,4).map(f=>fieldHtml(id,f)).join("")+MF.slice(4).map(f=>fieldHtml(id,f)).join("")+qrGroup(id,1,"رمز QR الأول")+qrGroup(id,2,"رمز QR الثاني (حملة الشهر)")+qrGroup(id,3,"رمز QR الثالث (صدقة الجمعة)")}
  else{h+=GF.map(f=>fieldHtml(id,f)).join("")+`<p class="hint">الرعاة في أسفل الصفحة يؤخذون تلقائيًا من صفحات الأشهر الاثني عشر.</p>`}
  h+=`<div class="savebar"><button class="btn primary" id="save">حفظ</button><button class="btn" id="revert">تراجع</button><button class="btn ghost" id="saveall">حفظ الكل</button><span class="pill" id="dpill"></span></div><div id="status" role="status" aria-live="polite"></div>`;

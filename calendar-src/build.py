@@ -56,9 +56,28 @@ rep('''    </section>
 
 # ---------- التصاميم المتاحة: A (أثر الخير) و C (الهدوء) فقط — أُلغي B و D بطلب صاحب المشروع (2026-10-07) ----------
 rep('const DESIGNS=[["a","أثر الخير","قوس وصورة"],["b","الأفق","صورة بانورامية"],["c","الهدوء","فراغ وبساطة"],["d","الدفء","رمال ونحاس"]];',
-    'const DESIGNS=[["a","أثر الخير","قوس وصورة"],["c","الهدوء","فراغ وبساطة"]];')
+    'const DESIGNS=[["a","أثر الخير","قوس وصورة"],["c","الهدوء","فراغ وبساطة"],["e","الرحابة","صورة جانبية ومتنفَّس"]];')
 # أي إعداد محفوظ على تصميم ملغى يُعرض بالتصميم A
-rep('const R={a:[aMonth,aGift],b:[bMonth,bGift],c:[cMonth,cGift],d:[dMonth,dGift]};', 'const R={a:[aMonth,aGift],c:[cMonth,cGift]};')
+rep('const R={a:[aMonth,aGift],b:[bMonth,bGift],c:[cMonth,cGift],d:[dMonth,dGift]};', r'''/* ---------- design E «الرحابة»: شبكة وأرقام A + صورة جانبية كاملة الارتفاع، بفراغات أوسع ---------- */
+function eMonth(mo,m){const g=gridData(mo),mt=monthMeta(mo);
+ const body=trs(g,c=>c.v?`<td class="${c.fri?"fri":""}"></td>`:`<td class="${c.fri?"fri":""}">${c.ev?`<i class="ev" style="background:${c.ev[1]}">${c.d}</i>`:`<i>${c.d}</i>`}<s>${c.hj}</s></td>`);
+ const chips=g.legend.map(l=>`<span><u style="background:${l.c}"></u>${l.d} · ${esc(l.t)}</span>`).join("");
+ const q=k=>`<div class="q"><div class="qrbox">${qrEl(m["q"+k+"u"],16,m["q"+k+"img"])}</div><div class="qt"><b>${esc(m["q"+k+"a"])}</b><span>${esc(m["q"+k+"b"])}</span></div></div>`;
+ return `<section class="page d-e month"><div class="photo">${photoEl(m,mo,"e")}</div><div class="credit">${esc(S().lblArtist)}: ${esc(m.artist)}</div>${logo()}
+ <div class="sp"><em>${esc(S().lblSponsor)}</em><div class="sb">${spBox(m)}</div></div>
+ <h1>${MONTH_AR[mo-1]}</h1><div class="meta"><i>${mt.label}</i><span>${YEAR} م &nbsp;·&nbsp; ${hy(mt.year)} هـ</span></div>
+ <div class="slogan"><b>${esc(m.s1)}</b><span>${esc(m.s2)}</span></div>
+ <table class="grid" style="--rh:${(54/g.rows).toFixed(2)}mm"><thead><tr>${head()}</tr></thead><tbody>${body}</tbody></table><div class="legend">${chips}</div>
+ <div class="dock">${q(1)}${q(2)}${q(3)}</div></section>`}
+/* بيانات توضيحية ليناير (اسم وشعار راعٍ وصورة وفنان) تظهر في المعاينة فقط ما دامت الخانات فارغة — لا تُحفظ ولا تُعدّ في قائمة المراجعة */
+const svgUri=x=>"data:image/svg+xml;charset=utf-8,"+encodeURIComponent(x);
+const DEMO_LOGO=svgUri(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 260 70" width="520" height="140"><g fill="none" stroke="#b8926d" stroke-width="4" stroke-linejoin="round"><path d="M225 12l22 23-22 23-22-23z"/><path d="M225 24l11 11-11 11-11-11z" fill="#517670" stroke="none"/></g><text x="190" y="33" text-anchor="end" font-family="Tahoma,Arial,sans-serif" font-size="25" font-weight="700" fill="#517670">مؤسسة الواحة</text><text x="190" y="57" text-anchor="end" font-family="Tahoma,Arial,sans-serif" font-size="15" fill="#b8926d">للتجارة والمقاولات</text></svg>`);
+const DEMO_PHOTO=svgUri(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 1500" preserveAspectRatio="xMidYMid slice"><defs><linearGradient id="s" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2f4a47"/><stop offset=".45" stop-color="#7fa39b"/><stop offset=".72" stop-color="#e9c9a0"/><stop offset="1" stop-color="#d59a62"/></linearGradient></defs><rect width="640" height="1500" fill="url(#s)"/><circle cx="430" cy="930" r="120" fill="#f6e3c3" opacity=".9"/><path d="M0 1080c120-70 250-60 380 0s200 40 260 10v410H0z" fill="#b8926d"/><path d="M0 1200c160-80 300-30 420 20s160 20 220-10v290H0z" fill="#8f6a45"/><path d="M0 1330c140-50 280-20 400 10s180 10 240-10v170H0z" fill="#3d5b56"/><g stroke="#24393a" stroke-width="14" stroke-linecap="round" fill="none"><path d="M150 1340c10-150 0-300-20-430"/><path d="M130 910c-60-50-120-50-170-10M130 910c-30-70-90-100-150-90M130 910c40-70 110-90 170-70M130 910c70-30 140-10 180 40M130 910c10-70-20-130-70-160"/></g></svg>`);
+const demo=(mo,m)=>mo!==1?m:Object.assign({},m,{sponsorImg:m.sponsorImg||DEMO_LOGO,photo:m.photo||DEMO_PHOTO,artist:m.artist==="اسم الفنان"?"سارة علي الزاهر":m.artist});
+const R={a:[aMonth,aGift],c:[cMonth,cGift],e:[eMonth,cGift]};''')
+rep('return cur.kind==="m"?f[0](cur.mo,draft["m"+pad(cur.mo)]):f[1](draft["g"+pad(cur.mo)])}', 'return cur.kind==="m"?f[0](cur.mo,demo(cur.mo,draft["m"+pad(cur.mo)])):f[1](draft["g"+pad(cur.mo)])}')
+rep('h+=`<div class="s">${spBox(draft["m"+pad(i)])}</div>`', 'h+=`<div class="s">${spBox(demo(i,draft["m"+pad(i)]))}</div>`')
+rep('let h=`<h2>${isM?"صفحة شهر "+name:"صفحة الإهداء قبل "+name}</h2>`;', 'let h=`<h2>${isM?"صفحة شهر "+name:"صفحة الإهداء قبل "+name}</h2>`;if(isM&&cur.mo===1&&(!draft.m01.sponsorImg||!draft.m01.photo))h+=`<p class="hint" style="background:#F6EEE5;border-radius:14px;padding:9px 14px;color:#8F6A45">الشعار والصورة واسم الفنان الظاهرة في معاينة يناير بيانات توضيحية لتخيّل الشكل، وتختفي عند رفع الحقيقية. لا تُحفظ ولا تدخل في التقويم المعتمد إلا إذا تركت الخانات فارغة.</p>`;')
 rep('b.setAttribute("aria-pressed",b.dataset.d===draft.settings.design)', 'b.setAttribute("aria-pressed",b.dataset.d===(R[draft.settings.design]?draft.settings.design:"a"))')
 
 # ---------- السنة والمسارات ----------
@@ -121,7 +140,7 @@ doc = '<!DOCTYPE html>\n<html lang="ar" dir="rtl">\n<head>\n<meta charset="UTF-8
 assert "</style>" in doc
 doc = doc.replace("</style>\n<div id=\"app\"", "</style>\n</head>\n<body>\n<div id=\"app\"", 1) + "\n</body>\n</html>\n"
 logo = "data:image/png;base64," + base64.b64encode(open(os.path.join(HERE, "logo_web.png"), "rb").read()).decode()
-out = doc.replace("/*@DESIGNS@*/", rd("designs.css")).replace("/*@QR@*/", rd("qrcode.js").replace("</script", "<\\/script")).replace("/*@LOGO@*/", logo)
+out = doc.replace("/*@DESIGNS@*/", rd("designs.css") + "\n" + rd("design-e.css")).replace("/*@QR@*/", rd("qrcode.js").replace("</script", "<\\/script")).replace("/*@LOGO@*/", logo)
 dest = os.path.join(HERE, "..", "Login", "calendar", "index.html")
 os.makedirs(os.path.dirname(dest), exist_ok=True)
 io.open(dest, "w", encoding="utf-8").write(out)
