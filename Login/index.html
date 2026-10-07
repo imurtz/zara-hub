@@ -7783,17 +7783,25 @@
   var DEATH_MSG_KINDS = [
     { kind: "announce", title: "رسالة إعلان الوفاة", hasImage: true, show: "always" },
     { kind: "funeral", title: "رسالة التشييع", hasImage: false, show: "funeral" },
-    { kind: "condolenceMen", title: "رسالة عزاء الرجال", hasImage: false, show: "condolenceMen" },
-    { kind: "condolenceWomen", title: "رسالة عزاء النساء", hasImage: false, show: "condolenceWomen" }
+    { kind: "condolenceMen", title: "رسالة أماكن العزاء — المتوفى ذكر", hasImage: false, show: "condolence", gender: "male" },
+    { kind: "condolenceWomen", title: "رسالة أماكن العزاء — المتوفاة أنثى", hasImage: false, show: "condolence", gender: "female" }
   ];
+  var DEATH_GENDER_OPTIONS = [["all", "أي متوفى"], ["male", "المتوفى ذكر"], ["female", "المتوفاة أنثى"]];
   var DEATH_SHOW_OPTIONS = [["always", "دائماً"], ["funeral", "عند وجود بيانات التشييع"], ["condolence", "عند وجود أي مكان عزاء"], ["condolenceMen", "عند وجود عزاء الرجال"], ["condolenceWomen", "عند وجود عزاء النساء"]];
   DEATH_TEMPLATE_DEFAULTS.push(
-    { id: "tpl-death-condolence-men", kind: "condolenceMen", text: "*▣ عزاء الرجال — {deceasedFullName}*\n\n{condolenceMenBody}\n\n*يتقدم رئيس وأعضاء مجلس إدارة جمعية العوامية الخيرية بخالص التعازي والمواساة*\n——————\n*القسم الإعلامي - خيرية العوامية*" },
-    { id: "tpl-death-condolence-women", kind: "condolenceWomen", text: "*▣ عزاء النساء — {deceasedFullName}*\n\n{condolenceWomenBody}\n\n*يتقدم رئيس وأعضاء مجلس إدارة جمعية العوامية الخيرية بخالص التعازي والمواساة*\n——————\n*القسم الإعلامي - خيرية العوامية*" }
+    { id: "tpl-death-condolence-men", kind: "condolenceMen", text: "*▣ أماكن عزاء المرحوم {deceasedFullName}*\n\n{condolenceBody}\n\n*يتقدم رئيس وأعضاء مجلس إدارة جمعية العوامية الخيرية بخالص التعازي والمواساة*\n——————\n*القسم الإعلامي - خيرية العوامية*" },
+    { id: "tpl-death-condolence-women", kind: "condolenceWomen", text: "*▣ أماكن عزاء المرحومة {deceasedFullName}*\n\n{condolenceBody}\n\n*يتقدم رئيس وأعضاء مجلس إدارة جمعية العوامية الخيرية بخالص التعازي والمواساة*\n——————\n*القسم الإعلامي - خيرية العوامية*" }
   );
   function deathTplMeta(t){
     var km = DEATH_MSG_KINDS.find(function(k){ return k.kind === t.kind; });
-    return { title: t.title || (km ? km.title : "رسالة إضافية"), show: t.show || (km ? km.show : "always"), hasImage: !!(km && km.hasImage), builtin: !!km };
+    return { title: t.title || (km ? km.title : "رسالة إضافية"), show: t.show || (km ? km.show : "always"), gender: t.gender || (km && km.gender) || "all", hasImage: !!(km && km.hasImage), builtin: !!km };
+  }
+  // الرسالة المخصّصة لجنس تظهر لسجلات ذلك الجنس فقط؛ السجل الذي لم يُسجَّل جنسه تظهر له الرسالتان ليختار الموظف
+  function deathMsgGenderOk(gender, r){
+    if(!gender || gender === "all") return true;
+    var g = String(r.gender || "").trim(), fem = /^[اأإ]نث[ىيئ]$/.test(g);
+    if(!fem && g !== "ذكر") return true;
+    return gender === "female" ? fem : !fem;
   }
   function deathMsgHasData(show, r){
     var men = !!(r.condolenceMenPlace || r.condolenceMenTimes || r.condolenceMenLink), women = !!(r.condolenceWomenPlace || r.condolenceWomenTimes || r.condolenceWomenLink);
@@ -9115,27 +9123,10 @@
     out.condolenceBlock = cl.length ? "▣ *أماكن العزاء" + (rec.condolenceStart ? " (بدءًا من " + rec.condolenceStart + ")" : "") + "*\n" + cl.join("\n") : "";
     return out;
   }
-  // الصيغ المزدوجة في نص القالب تُحسم تلقائياً حسب جنس صاحب السجل:
-  //   «المرحوم/ـة» ← المرحوم | المرحومة،  «يتغمده/ـا» ← يتغمده | يتغمدها،  «المتوفى/ـاة» ← المتوفى | المتوفاة،  «الفقيد/الفقيدة» ← أحدهما.
-  // تُطبَّق على نص القالب قبل تعبئة المتغيرات، فلا تمسّ الأسماء والبيانات. إذا لم يُعرف الجنس يبقى النص كما هو
-  function tplGenderForms(text, gender){
-    var g = String(gender || "").trim(), fem = /^[اأإ]نث[ىيئ]$/.test(g);
-    if(!fem && g !== "ذكر") return text;
-    var AR = "[\u0621-\u063A\u0641-\u064A]";
-    var join = function(base, suf){
-      if(/^ا/.test(suf) && /ى$/.test(base)) return base.slice(0, -1) + suf;
-      return base + suf;
-    };
-    return String(text || "").replace(new RegExp("(" + AR + "+)\\/(ـ?)(" + AR + "+)", "g"), function(m, base, tat, suf){
-      if(base === "و" || base === "أو") return m;
-      if(tat || suf.length <= 2) return fem ? join(base, suf) : base;
-      return fem ? suf : base;
-    });
-  }
   function renderTemplateText(text, rec){
     var vars = rec || {};
     var extra = eventTemplateComputedVars(vars);
-    var txt = tplGenderForms(text, vars.gender).replace(/\{(\w+)\}/g, function(m, key){
+    var txt = String(text || "").replace(/\{(\w+)\}/g, function(m, key){
       if(extra[key] !== undefined) return extra[key];
       if(key === "funeralTime") return eventTime12(vars[key]) || (vars[key] || "");
       return (vars[key] != null && vars[key] !== "") ? vars[key] : "";
@@ -9233,7 +9224,7 @@
     '</div>';
     return linkRow + (templates.deaths || []).map(function(t){
       var km = deathTplMeta(t);
-      if(!deathMsgHasData(km.show, r)) return "";
+      if(!deathMsgHasData(km.show, r) || !deathMsgGenderOk(km.gender, r)) return "";
       var text = renderTemplateText(t.text, r);
       if(!text) return "";
       var img = km.hasImage && t.imageUrl ? t.imageUrl : "";
@@ -9403,16 +9394,15 @@
     var vars = cat.fields.filter(function(f){ return f.type !== "image"; }).concat(cat.templateExtraVars || []);
     html += '<details class="tpl-vars"><summary>المتغيرات (' + vars.length + ') — اضغط متغيراً لإدراجه</summary><div>' +
       vars.map(function(f){ return '<code data-insert-var="' + f.key + '" title="' + escapeHTML(f.label) + '">{' + f.key + '}</code>'; }).join("") +
-    '</div></details>' +
-    '<p class="tpl-gender-hint">للتذكير والتأنيث التلقائي اكتب الصيغتين هكذا: <b>المرحوم/ـة</b> ، <b>يتغمده/ـا</b> ، <b>المتوفى/ـاة</b> — وتظهر الصيغة المناسبة في الرسالة حسب جنس صاحب السجل.</p>';
+    '</div></details>';
     if(catKey === "deaths"){
       if(!list.length) html += '<p class="report-empty">لا توجد قوالب</p>';
       list.forEach(function(t){
         var km = deathTplMeta(t);
         html += '<div class="template-card">' +
-          (km.builtin ? '<div class="tpl-custom-head"><input type="text" data-template-title data-id="' + t.id + '" value="' + escapeHTML(km.title) + '" placeholder="عنوان الرسالة" title="عنوان الرسالة كما يظهر في مهام النشر"/></div>' :
-            '<div class="tpl-custom-head"><input type="text" data-template-title data-id="' + t.id + '" value="' + escapeHTML(t.title || "") + '" placeholder="عنوان الرسالة (مثل: تذكير ختام الفاتحة)"/>' +
-            '<select data-template-show data-id="' + t.id + '" title="متى تظهر في مهام النشر">' + DEATH_SHOW_OPTIONS.map(function(o){ return '<option value="' + o[0] + '"' + (km.show === o[0] ? " selected" : "") + '>تظهر: ' + o[1] + '</option>'; }).join("") + '</select></div>') +
+          '<div class="tpl-custom-head"><input type="text" data-template-title data-id="' + t.id + '" value="' + escapeHTML(km.builtin ? km.title : (t.title || "")) + '" placeholder="عنوان الرسالة" title="عنوان الرسالة كما يظهر في مهام النشر"/>' +
+            '<select data-template-show data-id="' + t.id + '" title="متى تظهر في مهام النشر">' + DEATH_SHOW_OPTIONS.map(function(o){ return '<option value="' + o[0] + '"' + (km.show === o[0] ? " selected" : "") + '>تظهر: ' + o[1] + '</option>'; }).join("") + '</select>' +
+            '<select data-template-gender data-id="' + t.id + '" title="لأي متوفى تظهر">' + DEATH_GENDER_OPTIONS.map(function(o){ return '<option value="' + o[0] + '"' + (km.gender === o[0] ? " selected" : "") + '>لـ: ' + o[1] + '</option>'; }).join("") + '</select></div>' +
           '<textarea rows="' + tplRows(t.text) + '" data-template-input data-id="' + t.id + '">' + escapeHTML(t.text) + '</textarea>' +
           (km.hasImage ? '<div class="tpl-image-row">' +
             (t.imageUrl ? '<img src="' + escapeHTML(t.imageUrl) + '" alt=""/><button type="button" class="btn-secondary" data-action="remove-template-image" data-id="' + t.id + '">إزالة الصورة</button>' : '') +
@@ -9503,7 +9493,7 @@
     var templates = loadEventsTemplates();
     var catKey = eventsUI.templatesCategory;
     templates[catKey] = templates[catKey] || [];
-    templates[catKey].push(catKey === "deaths" ? { id: genEventId(), kind: "custom", title: "", show: "always", text: "" } : { id: genEventId(), text: "" });
+    templates[catKey].push(catKey === "deaths" ? { id: genEventId(), kind: "custom", title: "", show: "always", gender: "all", text: "" } : { id: genEventId(), text: "" });
     saveEventsTemplates(templates);
     renderEventTemplatesPanel();
   }
@@ -9518,6 +9508,8 @@
     var ti = document.querySelector('[data-template-title][data-id="' + tplId + '"]'), sh = document.querySelector('[data-template-show][data-id="' + tplId + '"]');
     if(ti) tpl.title = ti.value.trim();
     if(sh) tpl.show = sh.value;
+    var ge = document.querySelector('[data-template-gender][data-id="' + tplId + '"]');
+    if(ge) tpl.gender = ge.value;
     saveEventsTemplates(templates);
     showToast("تم حفظ القالب");
   }
