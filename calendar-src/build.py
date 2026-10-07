@@ -97,21 +97,41 @@ rep('<div class="tabs" id="designs" role="group" aria-label="التصميم"></d
 
 # ---------- قسم ثالث: موك أب التقويم المكتبي — صفحة الشهر مُسقطة على تقويم مكتبي مجسَّم ----------
 rep('<div class="stage" id="stage"><div class="pagebox" id="pagebox"></div></div>',
-    '<div class="stage" id="stage"><div class="rig" id="rig"><div class="pagebox" id="pagebox"></div></div><div class="mk-over"></div></div>')
+    '<div class="stage" id="stage"><div class="mk-shade"></div><div class="mk-body" id="mkbody"></div><div class="rig" id="rig"><div class="pagebox" id="pagebox"></div></div><div id="mockcells"></div><div class="mk-over" id="mkover"></div></div>')
 rep('function fit(){const st=$("#stage"),w=st.clientWidth,s=w/PXW;st.style.height=PXH*s+"px";$("#pagebox").style.transform="scale("+s+")"}',
     """function fit(){const st=$("#stage"),rig=$("#rig"),w=st.clientWidth;st.classList.toggle("mock",SEC==="mockup");
- if(SEC!=="mockup"){const s=w/PXW;st.style.height=PXH*s+"px";rig.style.transformOrigin="0 0";rig.style.transform="scale("+s+")";return}
- // الموك أب: صورة تقويم مكتبي حقيقية (mockup/desk.jpg من ملف PSD الجمعية)، والصفحة تُسقط على سطحه بمصفوفة منظور تطابق أركانه الأربعة
- const h=Math.round(w*.8);st.style.height=h+"px";rig.style.transformOrigin="0 0";
- rig.style.transform=quadMatrix(PXW,PXH,MOCK_QUAD.map(q=>[q[0]*w,q[1]*h]))}
-/* أركان سطح التقويم في الصورة (نسبةً إلى عرضها وارتفاعها): أعلى-يسار، أعلى-يمين، أسفل-يمين، أسفل-يسار */
-/* المصدر: مصفوفة تحويل الكائن الذكي المخزّنة داخل ملف الـPSD نفسه (أعلى/يمين/أسفل السطح)، والحافة اليسرى مأخوذة من حد الورقة الظاهر
-   لأن لوحة الكائن الذكي تتجاوز الورقة يساراً فيُقصّ منها جزء في الملف الأصلي — هنا تظهر الصفحة كاملة على الورقة. */
-const MOCK_QUAD=[[.2306,.18369],[.77191,.24343],[.70593,.83317],[.16493,.71141]];
-function quadMatrix(W,H,q){const x0=q[0][0],y0=q[0][1],x1=q[1][0],y1=q[1][1],x2=q[2][0],y2=q[2][1],x3=q[3][0],y3=q[3][1];
+ if(SEC!=="mockup"){const s=w/PXW;st.style.height=PXH*s+"px";rig.style.transformOrigin="0 0";rig.style.transform="scale("+s+")";mockRender(w);return}
+ mockRender(w)}
+/* ---------- الموك أب: إسقاط الصفحة على سطح التقويم كما في ملف الـPSD تماماً ----------
+   السطح ليس مستوياً: الكائن الذكي في الملف يمرّ بشبكة انحناء 4×4 (Bezier) ثم بمنظور. القيم أدناه منقولة من الملف:
+   MK.PX/PY نقاط الشبكة مطبَّعة (0..1)، MK.Q أركان المنظور نسبةً لأبعاد الصورة، MK.U0/V0 إزاحة التصميم داخل اللوحة
+   (لوحة الكائن الذكي تتجاوز الورقة يساراً بنحو 3%، وغلاف 2026 موضوع فيها بهذه الإزاحة — تُحقِّق من ذلك بمطابقته).
+   الصفحة تُقسَّم خلايا، ولكل خلية نسخة من الصفحة بمصفوفة منظور خاصة، فتتبع الانحناء. */
+const MK={PX:[[0,.3118,.6427,1],[-.0266,.272,.5939,.9942],[-.0318,.2534,.5994,.9969],[0,.2957,.6441,1]],
+ PY:[[0,-.0012,-.0062,0],[.3376,.3389,.3251,.3278],[.6717,.6731,.6544,.641],[1,1.0017,1.0068,1]],
+ Q:[[.21171,.18163],[.77191,.24343],[.70593,.83317],[.1497,.70797]],U0:.03,V0:.006,NU:4,NV:7};
+const mkB=t=>[(1-t)**3,3*t*(1-t)**2,3*t*t*(1-t),t**3];
+function mkFwd(up,vp,w,h){const u=MK.U0+(1-MK.U0)*up,v=MK.V0+(1-MK.V0)*vp,bu=mkB(u),bv=mkB(v);let sx=0,sy=0;
+ for(let r=0;r<4;r++)for(let c=0;c<4;c++){const k=bv[r]*bu[c];sx+=k*MK.PX[r][c];sy+=k*MK.PY[r][c]}
+ const q=MK.Q,x0=q[0][0]*w,y0=q[0][1]*h,x1=q[1][0]*w,y1=q[1][1]*h,x2=q[2][0]*w,y2=q[2][1]*h,x3=q[3][0]*w,y3=q[3][1]*h;
  const dx1=x1-x2,dx2=x3-x2,dx3=x0-x1+x2-x3,dy1=y1-y2,dy2=y3-y2,dy3=y0-y1+y2-y3,den=dx1*dy2-dx2*dy1,g=(dx3*dy2-dx2*dy3)/den,k=(dx1*dy3-dx3*dy1)/den;
- const a=x1-x0+g*x1,b=x3-x0+k*x3,d=y1-y0+g*y1,e=y3-y0+k*y3;
- return "matrix3d("+[a/W,d/W,0,g/W,b/H,e/H,0,k/H,0,0,1,0,x0,y0,0,1].join(",")+")"}""")
+ const d=g*sx+k*sy+1;return[((x1-x0+g*x1)*sx+(x3-x0+k*x3)*sy+x0)/d,((y1-y0+g*y1)*sx+(y3-y0+k*y3)*sy+y0)/d]}
+/* مصفوفة منظور تنقل أربع نقاط مصدر إلى أربع نقاط هدف (حل 8 معادلات) */
+function mkH(src,dst){const A=[],B=[];for(let i=0;i<4;i++){const [x,y]=src[i],[X,Y]=dst[i];A.push([x,y,1,0,0,0,-X*x,-X*y]);B.push(X);A.push([0,0,0,x,y,1,-Y*x,-Y*y]);B.push(Y)}
+ for(let c=0;c<8;c++){let m=c;for(let r=c+1;r<8;r++)if(Math.abs(A[r][c])>Math.abs(A[m][c]))m=r;[A[c],A[m]]=[A[m],A[c]];[B[c],B[m]]=[B[m],B[c]];
+  for(let r=c+1;r<8;r++){const f=A[r][c]/A[c][c];for(let k=c;k<8;k++)A[r][k]-=f*A[c][k];B[r]-=f*B[c]}}
+ const X=new Array(8);for(let r=7;r>=0;r--){let t=B[r];for(let k=r+1;k<8;k++)t-=A[r][k]*X[k];X[r]=t/A[r][r]}
+ return "matrix3d("+[X[0],X[3],0,X[6],X[1],X[4],0,X[7],0,0,1,0,X[2],X[5],0,1].join(",")+")"}
+function mockRender(w){const box=$("#mockcells"),st=$("#stage");if(SEC!=="mockup"){if(box.innerHTML)box.innerHTML="";return}
+ const h=Math.round(w*.8);st.style.height=h+"px";const html=$("#pagebox").innerHTML;let out="";
+ for(let j=0;j<MK.NV;j++)for(let i=0;i<MK.NU;i++){const ua=i/MK.NU,ub=(i+1)/MK.NU,va=j/MK.NV,vb=(j+1)/MK.NV;
+  const src=[[ua*PXW,va*PXH],[ub*PXW,va*PXH],[ub*PXW,vb*PXH],[ua*PXW,vb*PXH]],dst=[mkFwd(ua,va,w,h),mkFwd(ub,va,w,h),mkFwd(ub,vb,w,h),mkFwd(ua,vb,w,h)];
+  // تداخل بسيط بين الخلايا المتجاورة يمنع ظهور خطوط شعرية بينها
+  const o=1.2;out+=`<div class="mcell" style="transform:${mkH(src,dst)};clip-path:inset(${Math.max(0,va*PXH-o)}px ${Math.max(0,PXW-ub*PXW-o)}px ${Math.max(0,PXH-vb*PXH-o)}px ${Math.max(0,ua*PXW-o)}px)">${html}</div>`}
+ box.innerHTML=out;
+ // شريط حلقات السلك: يتبع الحافة العليا المنحنية للصفحة ويمتد قليلاً تحتها
+ const pts=[],N=12;for(let i=0;i<=N;i++)pts.push(mkFwd(i/N,-.012,w,h));for(let i=N;i>=0;i--)pts.push(mkFwd(i/N,.082,w,h));
+ $("#mkover").style.clipPath="polygon("+pts.map(p=>(p[0]/w*100).toFixed(3)+"% "+(p[1]/h*100).toFixed(3)+"%").join(",")+")"}""")
 rep('function viewHtml(){if(SEC!=="approved")return pageHtml();', 'function viewHtml(){if(SEC==="design"||(SEC==="mockup"&&!APPROVED))return pageHtml();')
 
 # ---------- السنة والمسارات ----------
