@@ -132,7 +132,7 @@ function mockRender(w){const box=$("#mockcells"),st=$("#stage");if(SEC!=="mockup
 /* ---------- خلفية الموك أب (يرفعها المحرِّر وتُحفظ مع تقويم السنة) وتنزيل المشهد صورةً ---------- */
 // MKS حجم التقويم داخل المشهد نسبةً لحجمه في ملف الـPSD و MKO نقطة ارتكاز التصغير و MKT إزاحته (نسبةً لأبعاد المشهد) — تطابق ‎.stage.mock‎ في portal.css.
 // القيم مضبوطة على الخلفية الافتراضية: قاعدة التقويم تنطبق على الحافة القريبة للظل المرسوم في الصورة.
-let MOCKBG="";const MKW=2400,MKH=1920,MKBG0="mockup/bg3.jpg",MKS=1,MKO=[.5,.8],MKT=[.037,0];
+let MOCKBG="";const MKW=2400,MKH=1920,MKBG0="mockup/bg3.jpg",MKS=1,MKO=[.5,.8],MKT=[.013,.006];
 const mkEl=id=>document.getElementById(id),mkMsg=(t,bad)=>{const e=mkEl("mkmsg");e.textContent=t||"";e.classList.toggle("bad",!!bad)};
 function mockBgApply(){const st=mkEl("stage");if(MOCKBG)st.style.setProperty("--mkbg",'url("'+MOCKBG+'")');else st.style.removeProperty("--mkbg");
  const w=CANW===true&&typeof ASSETS!=="undefined"&&!!ASSETS;mkEl("mkuplbl").hidden=!w;mkEl("mkhint").hidden=!w;mkEl("mkreset").hidden=!w||!MOCKBG}
