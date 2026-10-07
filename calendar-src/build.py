@@ -54,6 +54,13 @@ rep('''    </section>
 </div>
 <script>''')
 
+# ---------- التصاميم المتاحة: A (أثر الخير) و C (الهدوء) فقط — أُلغي B و D بطلب صاحب المشروع (2026-10-07) ----------
+rep('const DESIGNS=[["a","أثر الخير","قوس وصورة"],["b","الأفق","صورة بانورامية"],["c","الهدوء","فراغ وبساطة"],["d","الدفء","رمال ونحاس"]];',
+    'const DESIGNS=[["a","أثر الخير","قوس وصورة"],["c","الهدوء","فراغ وبساطة"]];')
+# أي إعداد محفوظ على تصميم ملغى يُعرض بالتصميم A
+rep('const R={a:[aMonth,aGift],b:[bMonth,bGift],c:[cMonth,cGift],d:[dMonth,dGift]};', 'const R={a:[aMonth,aGift],c:[cMonth,cGift]};')
+rep('b.setAttribute("aria-pressed",b.dataset.d===draft.settings.design)', 'b.setAttribute("aria-pressed",b.dataset.d===(R[draft.settings.design]?draft.settings.design:"a"))')
+
 # ---------- السنة والمسارات ----------
 rep('const YEAR=2027, G=', 'const YEAR=(function(){const y=+new URLSearchParams(location.search).get("year");return y>=2026&&y<=2040?y:2027})(), G=')
 rep('for(let m=2;m<=12;m++){const nd=new Date(Date.UTC(YEAR,m,0))', 'for(let m=(YEAR===2027?2:1);m<=12;m++){const nd=new Date(Date.UTC(YEAR,m,0))')

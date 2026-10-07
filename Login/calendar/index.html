@@ -2741,7 +2741,7 @@ const YEAR=(function(){const y=+new URLSearchParams(location.search).get("year")
 const MONTH_AR=["يناير","فبراير","مارس","أبريل","مايو","يونيو","يوليو","أغسطس","سبتمبر","أكتوبر","نوفمبر","ديسمبر"];
 const H_AR=["محرم","صفر","ربيع الأول","ربيع الآخر","جمادى الأولى","جمادى الآخرة","رجب","شعبان","رمضان","شوال","ذو القعدة","ذو الحجة"];
 const DAYS=["الأحد","الاثنين","الثلاثاء","الأربعاء","الخميس","الجمعة","السبت"];
-const DESIGNS=[["a","أثر الخير","قوس وصورة"],["b","الأفق","صورة بانورامية"],["c","الهدوء","فراغ وبساطة"],["d","الدفء","رمال ونحاس"]];
+const DESIGNS=[["a","أثر الخير","قوس وصورة"],["c","الهدوء","فراغ وبساطة"]];
 // Dates & events: fixed, as in the approved data sheet (not editable here).
 const EVENTS={"2027-01-04":[["اليوم العالمي للغة برايل","#2f9e5b"]],"2027-01-05":[["المبعث النبوي","#8e4aa8"]],"2027-01-06":[["تأسيس الجمعية","#b8892b"]],"2027-01-14":[["إجازة منتصف العام","#d9822b"]],"2027-01-24":[["اليوم الدولي للتعليم","#4f9a8f"]]};
 
@@ -2877,7 +2877,7 @@ function dGift(g){const [l1,l2,l3]=lc();return `<section class="page d-d gift"><
  <h2><b>${esc(g.h1)}</b><span>${esc(g.h2)}</span></h2>${form()}<div class="bar"><div class="spt">${esc(S().lblSponsors)}</div><div class="sponsors">${allSp()}</div></div>
  <div class="lic">${esc(S().lblLicNo)}: ${l1} &nbsp;·&nbsp; ${esc(S().lblLicStart)}: ${l2} &nbsp;·&nbsp; ${esc(S().lblLicEnd)}: ${l3}</div></section>`}
 
-const R={a:[aMonth,aGift],b:[bMonth,bGift],c:[cMonth,cGift],d:[dMonth,dGift]};
+const R={a:[aMonth,aGift],c:[cMonth,cGift]};
 function pageHtml(){const f=R[draft.settings.design]||R.a;return cur.kind==="m"?f[0](cur.mo,draft["m"+pad(cur.mo)]):f[1](draft["g"+pad(cur.mo)])}
 
 /* ---------- preview ---------- */
@@ -2901,7 +2901,7 @@ function buildNav(){
  $("#designs").innerHTML=DESIGNS.map(d=>`<button class="tab" data-d="${d[0]}" aria-pressed="false"><b>${d[0].toUpperCase()} · ${d[1]}</b><span>${d[2]}</span></button>`).join("");
  $("#months").innerHTML=MONTH_AR.map((n,i)=>`<button class="mbtn" data-m="${i+1}" aria-pressed="false">${n}<i hidden></i></button>`).join("")}
 function syncNav(){
- document.querySelectorAll("#designs .tab").forEach(b=>b.setAttribute("aria-pressed",b.dataset.d===draft.settings.design));
+ document.querySelectorAll("#designs .tab").forEach(b=>b.setAttribute("aria-pressed",b.dataset.d===(R[draft.settings.design]?draft.settings.design:"a")));
  document.querySelectorAll("#kind button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.k===cur.kind));
  document.querySelectorAll("#months .mbtn").forEach(b=>{const n=+b.dataset.m;b.setAttribute("aria-pressed",n===cur.mo);b.querySelector("i").hidden=!(dirty("m"+pad(n))||dirty("g"+pad(n)))});
  const vs=(SEC==="approved"&&APPROVED&&APPROVED.data.settings)?Object.assign(defSettings(),APPROVED.data.settings):draft.settings;$("#app").style.setProperty("--cg",vs.colG);$("#app").style.setProperty("--cb",vs.colB);$("#app").dataset.font=vs.font;$("#fontsel").value=draft.settings.font}
