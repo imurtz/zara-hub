@@ -48,10 +48,10 @@ body.embedded header.top{justify-content:flex-start}
 #app[data-sec="mockup"] .layout{grid-template-columns:minmax(0,1fr);max-width:1040px;margin-inline:auto}
 #app[data-sec="mockup"] .preview{position:static}
 /* المشهد: صورة الموك أب الأصلية بخلفيتها البيضاء ← الصفحة المنحنية ← حلقات السلك (مقصوصة من الصورة بشفافية، فتبقى فضية فوق أي لون) */
-.stage.mock{border:1px solid rgba(20,28,27,.08);background:#fff}
+.stage.mock{border:1px solid rgba(20,28,27,.08);background:#3a2a1c url(mockup/bg.jpg) center/cover no-repeat}
 .stage.mock .rig{visibility:hidden}
 .mk-shade,.mk-body{display:none}
-.stage.mock .mk-shade{display:block;position:absolute;inset:0;z-index:1;background:url(mockup/desk.jpg) center/100% 100% no-repeat;pointer-events:none}
+.stage.mock .mk-shade{display:block;position:absolute;inset:0;z-index:1;background:url(mockup/body.webp) center/100% 100% no-repeat;pointer-events:none}
 .stage.mock .mk-body{display:none;position:absolute;inset:0;z-index:2;background:url(mockup/desk.jpg) center/100% 100% no-repeat;pointer-events:none;clip-path:polygon(22.95% 18.3%,77.7% 23.8%,81.45% 77.3%,71.55% 84.25%,16.25% 71.9%,16.35% 70.7%)}
 #mockcells{position:absolute;inset:0;z-index:3;pointer-events:none}
 .mcell{position:absolute;left:0;top:0;width:210mm;height:150mm;transform-origin:0 0;direction:rtl;overflow:hidden;background:#fff}
