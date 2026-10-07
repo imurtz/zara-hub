@@ -9390,7 +9390,7 @@
       list.forEach(function(t){
         var km = deathTplMeta(t);
         html += '<div class="template-card">' +
-          (km.builtin ? '<div class="tpl-card-title">' + km.title + '</div>' :
+          (km.builtin ? '<div class="tpl-custom-head"><input type="text" data-template-title data-id="' + t.id + '" value="' + escapeHTML(km.title) + '" placeholder="عنوان الرسالة" title="عنوان الرسالة كما يظهر في مهام النشر"/></div>' :
             '<div class="tpl-custom-head"><input type="text" data-template-title data-id="' + t.id + '" value="' + escapeHTML(t.title || "") + '" placeholder="عنوان الرسالة (مثل: تذكير ختام الفاتحة)"/>' +
             '<select data-template-show data-id="' + t.id + '" title="متى تظهر في مهام النشر">' + DEATH_SHOW_OPTIONS.map(function(o){ return '<option value="' + o[0] + '"' + (km.show === o[0] ? " selected" : "") + '>تظهر: ' + o[1] + '</option>'; }).join("") + '</select></div>') +
           '<textarea rows="' + tplRows(t.text) + '" data-template-input data-id="' + t.id + '">' + escapeHTML(t.text) + '</textarea>' +
