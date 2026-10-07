@@ -149,11 +149,11 @@ const mkPic=u=>mkBlob(u).then(b=>createImageBitmap(b));
 async function mockDownload(){const btn=mkEl("mkdl");if(btn.disabled)return;btn.disabled=true;mkMsg("جارٍ تجهيز الصورة…");let hold=null;
  try{if(!window.htmlToImage)await new Promise((ok,no)=>{const s=document.createElement("script");s.src="https://cdnjs.cloudflare.com/ajax/libs/html-to-image/1.11.13/html-to-image.min.js";s.onload=ok;s.onerror=no;document.head.appendChild(s)});
   // الصفحة المسطّحة تُرسم أولاً صورةً (خارج الشاشة)، ثم تُسقط على سطح التقويم بنفس شبكة الانحناء والمنظور
-  hold=document.createElement("div");hold.style.cssText="position:fixed;left:0;top:0;width:210mm;height:150mm;overflow:hidden;z-index:-1;opacity:0;pointer-events:none;direction:rtl";
+  hold=document.createElement("div");hold.className="mkpaper";hold.style.cssText="position:fixed;left:0;top:0;width:210mm;height:150mm;overflow:hidden;z-index:-1;opacity:0;pointer-events:none;direction:rtl";
   hold.innerHTML=viewHtml();mkEl("app").appendChild(hold);const page=hold.firstElementChild;
   await Promise.all([...hold.querySelectorAll("img")].filter(i=>!i.complete).map(i=>new Promise(r=>{i.onload=i.onerror=r})));
   if(document.fonts&&document.fonts.ready)await document.fonts.ready;
-  const opt={pixelRatio:2.2,width:PXW,height:PXH,backgroundColor:"#ffffff",fetchRequestInit:{mode:"cors"},style:{opacity:"1"}};
+  const opt={pixelRatio:2.2,width:PXW,height:PXH,backgroundColor:"#e8e3dd",fetchRequestInit:{mode:"cors"},style:{opacity:"1"}};
   await htmlToImage.toCanvas(page,opt);const flat=await htmlToImage.toCanvas(page,opt);
   const [bg,body,rings]=await Promise.all([mkPic(MOCKBG||MKBG0).catch(()=>mkPic(MKBG0)),mkPic("mockup/body.webp"),mkPic("mockup/rings.png")]);
   const cv=document.createElement("canvas");cv.width=MKW;cv.height=MKH;const x=cv.getContext("2d");x.imageSmoothingQuality="high";

@@ -129,7 +129,7 @@ body.embedded header.top{justify-content:flex-start}
 .stage.mock .mk-shade{display:block;position:absolute;inset:0;z-index:1;background:url(mockup/body.webp) center/100% 100% no-repeat;pointer-events:none}
 .stage.mock .mk-body{display:none;position:absolute;inset:0;z-index:2;background:url(mockup/desk.jpg) center/100% 100% no-repeat;pointer-events:none;clip-path:polygon(22.95% 18.3%,77.7% 23.8%,81.45% 77.3%,71.55% 84.25%,16.25% 71.9%,16.35% 70.7%)}
 #mockcells{position:absolute;inset:0;z-index:3;pointer-events:none}
-.mcell{position:absolute;left:0;top:0;width:210mm;height:150mm;transform-origin:0 0;direction:rtl;overflow:hidden;background:#fff}
+.mcell{position:absolute;left:0;top:0;width:210mm;height:150mm;transform-origin:0 0;direction:rtl;overflow:hidden;background:#e8e3dd}
 .stage.mock .mk-over{display:block;position:absolute;inset:0;z-index:4;pointer-events:none;background:url(mockup/rings.png) center/100% 100% no-repeat}
 /* ---- شريط أدوات الموك أب: تنزيل الصورة ورفع الخلفية ---- */
 .mockbar{display:none}
@@ -141,6 +141,8 @@ body.embedded header.top{justify-content:flex-start}
 .mockbar .mkmsg.bad{color:#b3261e}
 /* حجم التقويم وموضعه داخل المشهد (يطابق MKS و MKO و MKT في السكربت) */
 .stage.mock .mk-shade,.stage.mock #mockcells,.stage.mock .mk-over{transform-origin:50% 80%;transform:translate(1.3%,.6%) scale(1)}
+/* لون ورق التقويم في الموك أب فقط (المعاينة والصورة المنزّلة) — صفحات التصميم والطباعة تبقى بيضاء */
+#mockcells .page,.mkpaper .page{background:#e8e3dd}
 
 /* ---- the four designs (generated from the print templates) ---- */
 .page *{box-sizing:border-box;margin:0;padding:0}
@@ -3154,11 +3156,11 @@ const mkPic=u=>mkBlob(u).then(b=>createImageBitmap(b));
 async function mockDownload(){const btn=mkEl("mkdl");if(btn.disabled)return;btn.disabled=true;mkMsg("جارٍ تجهيز الصورة…");let hold=null;
  try{if(!window.htmlToImage)await new Promise((ok,no)=>{const s=document.createElement("script");s.src="https://cdnjs.cloudflare.com/ajax/libs/html-to-image/1.11.13/html-to-image.min.js";s.onload=ok;s.onerror=no;document.head.appendChild(s)});
   // الصفحة المسطّحة تُرسم أولاً صورةً (خارج الشاشة)، ثم تُسقط على سطح التقويم بنفس شبكة الانحناء والمنظور
-  hold=document.createElement("div");hold.style.cssText="position:fixed;left:0;top:0;width:210mm;height:150mm;overflow:hidden;z-index:-1;opacity:0;pointer-events:none;direction:rtl";
+  hold=document.createElement("div");hold.className="mkpaper";hold.style.cssText="position:fixed;left:0;top:0;width:210mm;height:150mm;overflow:hidden;z-index:-1;opacity:0;pointer-events:none;direction:rtl";
   hold.innerHTML=viewHtml();mkEl("app").appendChild(hold);const page=hold.firstElementChild;
   await Promise.all([...hold.querySelectorAll("img")].filter(i=>!i.complete).map(i=>new Promise(r=>{i.onload=i.onerror=r})));
   if(document.fonts&&document.fonts.ready)await document.fonts.ready;
-  const opt={pixelRatio:2.2,width:PXW,height:PXH,backgroundColor:"#ffffff",fetchRequestInit:{mode:"cors"},style:{opacity:"1"}};
+  const opt={pixelRatio:2.2,width:PXW,height:PXH,backgroundColor:"#e8e3dd",fetchRequestInit:{mode:"cors"},style:{opacity:"1"}};
   await htmlToImage.toCanvas(page,opt);const flat=await htmlToImage.toCanvas(page,opt);
   const [bg,body,rings]=await Promise.all([mkPic(MOCKBG||MKBG0).catch(()=>mkPic(MKBG0)),mkPic("mockup/body.webp"),mkPic("mockup/rings.png")]);
   const cv=document.createElement("canvas");cv.width=MKW;cv.height=MKH;const x=cv.getContext("2d");x.imageSmoothingQuality="high";
