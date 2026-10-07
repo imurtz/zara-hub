@@ -145,15 +145,20 @@ async function mockUpload(file){if(!file)return;try{mkMsg("جارٍ رفع ال�
  catch(e){mkMsg("تعذّر رفع الخلفية، أعد المحاولة.",true)}}
 async function mockBgReset(){try{MOCKBG="";mockBgApply();await DB.doc("cal/_mock").set({bg:""});mkMsg("عادت الخلفية الافتراضية.")}catch(e){mkMsg("تعذّر الحفظ.",true)}}
 const mkBlob=u=>{const g=(x,m)=>fetch(x,{mode:"cors",cache:m}).then(r=>{if(!r.ok)throw 0;return r.blob()});return g(u,"default").catch(()=>g(u,"reload")).catch(()=>g(u+(u.indexOf("?")<0?"?":"&")+"cors=1","reload"))};
+const MKPX="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7";
 const mkPic=u=>mkBlob(u).then(b=>createImageBitmap(b));
 async function mockDownload(){const btn=mkEl("mkdl");if(btn.disabled)return;btn.disabled=true;mkMsg("جارٍ تجهيز الصورة…");let hold=null;
  try{if(!window.htmlToImage)await new Promise((ok,no)=>{const s=document.createElement("script");s.src="https://cdnjs.cloudflare.com/ajax/libs/html-to-image/1.11.13/html-to-image.min.js";s.onload=ok;s.onerror=no;document.head.appendChild(s)});
   // الصفحة المسطّحة تُرسم أولاً صورةً (خارج الشاشة)، ثم تُسقط على سطح التقويم بنفس شبكة الانحناء والمنظور
   hold=document.createElement("div");hold.style.cssText="position:fixed;left:0;top:0;width:210mm;height:150mm;overflow:hidden;z-index:-1;opacity:0;pointer-events:none;direction:rtl";
   hold.innerHTML=viewHtml();mkEl("app").appendChild(hold);const page=hold.firstElementChild;
-  await Promise.all([...hold.querySelectorAll("img")].filter(i=>!i.complete).map(i=>new Promise(r=>{i.onload=i.onerror=r})));
+  // الصور المرفوعة (صورة الشهر، شعار الراعي…) تأتي من مخزن الوسائط على نطاق آخر، والمتصفح يحتفظ بنسخة منها بلا إذن CORS فتسقط من الصورة المنزّلة —
+  // لذا تُجلب هنا صراحةً (مع إعادة المحاولة) وتُضمَّن في الصفحة قبل تحويلها إلى صورة
+  await Promise.all([...hold.querySelectorAll("img")].map(async i=>{const u=i.getAttribute("src")||"";if(!/^https?:/i.test(u))return;
+   try{const bl=await mkBlob(u),du=await new Promise((ok,no)=>{const fr=new FileReader();fr.onload=()=>ok(fr.result);fr.onerror=no;fr.readAsDataURL(bl)});i.removeAttribute("srcset");i.src=du}catch(_){i.src=MKPX}}));
+  await Promise.all([...hold.querySelectorAll("img")].map(i=>i.complete?(i.decode?i.decode().catch(()=>{}):0):new Promise(r=>{i.onload=i.onerror=r})));
   if(document.fonts&&document.fonts.ready)await document.fonts.ready;
-  const opt={pixelRatio:2.2,width:PXW,height:PXH,backgroundColor:"#ffffff",fetchRequestInit:{mode:"cors"},style:{opacity:"1"}};
+  const opt={pixelRatio:2.2,width:PXW,height:PXH,backgroundColor:"#ffffff",fetchRequestInit:{mode:"cors"},imagePlaceholder:MKPX,style:{opacity:"1"}};
   await htmlToImage.toCanvas(page,opt);const flat=await htmlToImage.toCanvas(page,opt);
   const [bg,body,rings]=await Promise.all([mkPic(MOCKBG||MKBG0).catch(()=>mkPic(MKBG0)),mkPic("mockup/body.webp"),mkPic("mockup/rings.png")]);
   const cv=document.createElement("canvas");cv.width=MKW;cv.height=MKH;const x=cv.getContext("2d");x.imageSmoothingQuality="high";
