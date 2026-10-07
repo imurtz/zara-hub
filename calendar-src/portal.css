@@ -48,7 +48,7 @@ body.embedded header.top{justify-content:flex-start}
 #app[data-sec="mockup"] .layout{grid-template-columns:minmax(0,1fr);max-width:760px;margin-inline:auto}
 #app[data-sec="mockup"] .preview{position:static}
 /* المشهد: صورة الموك أب الأصلية بخلفيتها البيضاء ← الصفحة المنحنية ← حلقات السلك (مقصوصة من الصورة بشفافية، فتبقى فضية فوق أي لون) */
-.stage.mock{border:1px solid rgba(20,28,27,.08);background:#3a2a1c var(--mkbg,url(mockup/bg2.jpg)) center/cover no-repeat}
+.stage.mock{border:1px solid rgba(20,28,27,.08);background:#3a2a1c var(--mkbg,url(mockup/bg3.jpg)) center/cover no-repeat}
 .stage.mock .rig{visibility:hidden}
 .mk-shade,.mk-body{display:none}
 .stage.mock .mk-shade{display:block;position:absolute;inset:0;z-index:1;background:url(mockup/body.webp) center/100% 100% no-repeat;pointer-events:none}
@@ -64,5 +64,5 @@ body.embedded header.top{justify-content:flex-start}
 .mockbar .mkhint{flex:1 1 100%;font-size:12.5px;line-height:1.7;color:rgba(20,28,27,.62)}
 .mockbar .mkmsg{font-size:13px;color:#2f6f5e}
 .mockbar .mkmsg.bad{color:#b3261e}
-/* حجم التقويم داخل المشهد (يطابق MKS و MKO في السكربت) */
-.stage.mock .mk-shade,.stage.mock #mockcells,.stage.mock .mk-over{transform-origin:50% 80%;transform:scale(.82)}
+/* حجم التقويم وموضعه داخل المشهد (يطابق MKS و MKO و MKT في السكربت) */
+.stage.mock .mk-shade,.stage.mock #mockcells,.stage.mock .mk-over{transform-origin:50% 80%;transform:translate(3.7%,0) scale(1)}

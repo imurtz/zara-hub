@@ -130,8 +130,9 @@ function mockRender(w){const box=$("#mockcells"),st=$("#stage");if(SEC!=="mockup
   const o=1.2;out+=`<div class="mcell" style="transform:${mkH(src,dst)};clip-path:inset(${Math.max(0,va*PXH-o)}px ${Math.max(0,PXW-ub*PXW-o)}px ${Math.max(0,PXH-vb*PXH-o)}px ${Math.max(0,ua*PXW-o)}px)">${html}</div>`}
  box.innerHTML=out;mockBgApply()}
 /* ---------- خلفية الموك أب (يرفعها المحرِّر وتُحفظ مع تقويم السنة) وتنزيل المشهد صورةً ---------- */
-// MKS: حجم التقويم داخل المشهد نسبةً لحجمه في ملف الـPSD، و MKO نقطة الارتكاز (تطابقان ‎.stage.mock‎ في portal.css)
-let MOCKBG="";const MKW=2400,MKH=1920,MKBG0="mockup/bg2.jpg",MKS=.82,MKO=[.5,.8];
+// MKS حجم التقويم داخل المشهد نسبةً لحجمه في ملف الـPSD و MKO نقطة ارتكاز التصغير و MKT إزاحته (نسبةً لأبعاد المشهد) — تطابق ‎.stage.mock‎ في portal.css.
+// القيم مضبوطة على الخلفية الافتراضية: قاعدة التقويم تنطبق على الحافة القريبة للظل المرسوم في الصورة.
+let MOCKBG="";const MKW=2400,MKH=1920,MKBG0="mockup/bg3.jpg",MKS=1,MKO=[.5,.8],MKT=[.037,0];
 const mkEl=id=>document.getElementById(id),mkMsg=(t,bad)=>{const e=mkEl("mkmsg");e.textContent=t||"";e.classList.toggle("bad",!!bad)};
 function mockBgApply(){const st=mkEl("stage");if(MOCKBG)st.style.setProperty("--mkbg",'url("'+MOCKBG+'")');else st.style.removeProperty("--mkbg");
  const w=CANW===true&&typeof ASSETS!=="undefined"&&!!ASSETS;mkEl("mkuplbl").hidden=!w;mkEl("mkhint").hidden=!w;mkEl("mkreset").hidden=!w||!MOCKBG}
@@ -156,7 +157,7 @@ async function mockDownload(){const btn=mkEl("mkdl");if(btn.disabled)return;btn.
   await htmlToImage.toCanvas(page,opt);const flat=await htmlToImage.toCanvas(page,opt);
   const [bg,body,rings]=await Promise.all([mkPic(MOCKBG||MKBG0).catch(()=>mkPic(MKBG0)),mkPic("mockup/body.webp"),mkPic("mockup/rings.png")]);
   const cv=document.createElement("canvas");cv.width=MKW;cv.height=MKH;const x=cv.getContext("2d");x.imageSmoothingQuality="high";
-  const k=Math.max(MKW/bg.width,MKH/bg.height);x.drawImage(bg,(MKW-bg.width*k)/2,(MKH-bg.height*k)/2,bg.width*k,bg.height*k);x.save();x.translate(MKO[0]*MKW,MKO[1]*MKH);x.scale(MKS,MKS);x.translate(-MKO[0]*MKW,-MKO[1]*MKH);x.drawImage(body,0,0,MKW,MKH);
+  const k=Math.max(MKW/bg.width,MKH/bg.height);x.drawImage(bg,(MKW-bg.width*k)/2,(MKH-bg.height*k)/2,bg.width*k,bg.height*k);x.save();x.translate((MKO[0]+MKT[0])*MKW,(MKO[1]+MKT[1])*MKH);x.scale(MKS,MKS);x.translate(-MKO[0]*MKW,-MKO[1]*MKH);x.drawImage(body,0,0,MKW,MKH);
   const NX=48,NY=34,fw=flat.width,fh=flat.height,P=[];for(let j=0;j<=NY;j++){P.push([]);for(let i=0;i<=NX;i++)P[j].push(mkFwd(i/NX,j/NY,MKW,MKH))}
   const tri=(s0,s1,s2,d0,d1,d2)=>{const cx=(d0[0]+d1[0]+d2[0])/3,cy=(d0[1]+d1[1]+d2[1])/3,ex=p=>{const dx=p[0]-cx,dy=p[1]-cy,l=Math.hypot(dx,dy)||1;return[p[0]+dx/l*1.1,p[1]+dy/l*1.1]};
    const e0=ex(d0),e1=ex(d1),e2=ex(d2);x.save();x.beginPath();x.moveTo(e0[0],e0[1]);x.lineTo(e1[0],e1[1]);x.lineTo(e2[0],e2[1]);x.closePath();x.clip();
