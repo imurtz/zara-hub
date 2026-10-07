@@ -262,6 +262,32 @@ doc = doc.replace('<link rel="stylesheet" href="https://fonts.googleapis.com', '
 doc = doc.replace("</style>\n<div id=\"app\"", "</style>\n</head>\n<body>\n<div id=\"app\"", 1) + "\n</body>\n</html>\n"
 logo = "data:image/png;base64," + base64.b64encode(open(os.path.join(HERE, "logo_web.png"), "rb").read()).decode()
 out = doc.replace("/*@DESIGNS@*/", rd("designs.css") + "\n" + rd("design-e.css")).replace("/*@DEMO@*/", rd("demo.js")).replace("/*@EVENTS@*/", rd("events.js")).replace("/*@MARK@*/", rd("logo-mark.js")).replace("/*@HERITAGE@*/", rd("heritage.js")).replace("/*@QR@*/", rd("qrcode.js").replace("</script", "<\\/script")).replace("/*@LOGO@*/", logo)
+# ---------- تحريك صورة الشهر داخل إطارها (سحب مباشر في المعاينة + منزلقات في المحرِّر) ----------
+# تُحفظ مع صفحة الشهر: phx و phy موضع الصورة (0..100، الافتراضي 50) و phz التكبير (1..3).
+# الصورة تُرسم في صندوق أكبر من الإطار بنسبة التكبير ويُزاح بنفس النسبة، فيتحرك المنظور على كامل الفائض في الاتجاهين.
+def post(a, b):
+    global out
+    assert out.count(a) == 1, (a[:70], out.count(a))
+    out = out.replace(a, b)
+post('const photoEl=(m,mo,kind)=>m.photo?`<img src="${blob(m.photo)}" alt="">`:',
+     'const phv=m=>{const n=(v,d,lo,hi)=>{v=parseFloat(v);return isFinite(v)?Math.min(hi,Math.max(lo,v)):d};return{x:n(m.phx,50,0,100),y:n(m.phy,50,0,100),z:n(m.phz,1,1,3)}};\n'
+     'const phCss=m=>{const p=phv(m);return `position:absolute;width:${p.z*100}%;height:${p.z*100}%;left:${-(p.z-1)*p.x}%;top:${-(p.z-1)*p.y}%;object-fit:cover;object-position:${p.x}% ${p.y}%`};\n'
+     'const photoEl=(m,mo,kind)=>m.photo?`<img src="${blob(m.photo)}" alt="" draggable="false" style="${phCss(m)}">`:')
+post('MF.slice(0,4).map(f=>fieldHtml(id,f)).join("")+MF.slice(4).map(f=>fieldHtml(id,f)).join("")',
+     'MF.map(f=>fieldHtml(id,f)+(f[0]==="photo"&&draft[id].photo?phCtl(id):"")).join("")')
+post('new ResizeObserver(fit).observe($("#stage"));', r"""/* ---------- تحريك صورة الشهر داخل الإطار ---------- */
+function phCtl(id){const p=phv(draft[id]),row=(k,t,v,lo,hi,st)=>`<label class="phrow"><span>${t}</span><input type="range" min="${lo}" max="${hi}" step="${st}" value="${v}" data-k="${k}"></label>`;
+ return `<div class="field phctl"><label>موضع الصورة داخل الإطار</label><p class="hint">اسحب الصورة مباشرةً في المعاينة لتحريكها، أو استخدم المنزلقات.</p>${row("phx","أفقي",p.x,0,100,1)}${row("phy","عمودي",p.y,0,100,1)}${row("phz","تكبير",p.z,1,3,.01)}<div><button class="btn ghost" data-phreset="1">إعادة الضبط</button></div></div>`}
+document.addEventListener("click",e=>{const t=e.target.closest&&e.target.closest("[data-phreset]");if(!t)return;const m=draft[curId()];m.phx=50;m.phy=50;m.phz=1;renderEditor();drawPreview();refreshUi();autosaveSoon()});
+(function(){let d=null;const st=document.getElementById("stage");
+ st.addEventListener("pointerdown",e=>{if(SEC!=="design"||CANW===false||cur.kind!=="m")return;const img=e.target.closest&&e.target.closest("#pagebox .d-e .photo img");if(!img||!img.naturalWidth)return;
+  const m=draft[curId()];if(!m.photo)return;const fr=img.parentNode.getBoundingClientRect(),p=phv(m),k=Math.max(fr.width/img.naturalWidth,fr.height/img.naturalHeight)*p.z;
+  d={img,m,x0:e.clientX,y0:e.clientY,px:p.x,py:p.y,ox:img.naturalWidth*k-fr.width,oy:img.naturalHeight*k-fr.height};e.preventDefault();st.classList.add("phdrag")});
+ document.addEventListener("pointermove",e=>{if(!d)return;const c=v=>Math.round(Math.min(100,Math.max(0,v))*10)/10;
+  if(d.ox>1)d.m.phx=c(d.px-(e.clientX-d.x0)/d.ox*100);if(d.oy>1)d.m.phy=c(d.py-(e.clientY-d.y0)/d.oy*100);d.img.style.cssText=phCss(d.m)});
+ const end=()=>{if(!d)return;d=null;st.classList.remove("phdrag");renderEditor();drawPreview();refreshUi();autosaveSoon()};
+ document.addEventListener("pointerup",end);document.addEventListener("pointercancel",end)})();
+new ResizeObserver(fit).observe($("#stage"));""")
 dest = os.path.join(HERE, "..", "Login", "calendar", "index.html")
 os.makedirs(os.path.dirname(dest), exist_ok=True)
 io.open(dest, "w", encoding="utf-8").write(out)

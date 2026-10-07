@@ -141,6 +141,13 @@ body.embedded header.top{justify-content:flex-start}
 .mockbar .mkmsg.bad{color:#b3261e}
 /* حجم التقويم وموضعه داخل المشهد (يطابق MKS و MKO و MKT في السكربت) */
 .stage.mock .mk-shade,.stage.mock #mockcells,.stage.mock .mk-over{transform-origin:50% 80%;transform:translate(1.3%,.6%) scale(1)}
+/* ---- تحريك صورة الشهر داخل إطارها ---- */
+#app[data-sec="design"] #pagebox .d-e .photo img{cursor:grab;touch-action:none;user-select:none;-webkit-user-drag:none}
+#app[data-sec="design"] .stage.phdrag,#app[data-sec="design"] .stage.phdrag #pagebox .d-e .photo img{cursor:grabbing}
+.phctl .phrow{display:flex;align-items:center;gap:10px;margin-top:6px}
+.phctl .phrow span{flex:none;width:52px;font-size:13px;color:rgba(20,28,27,.7)}
+.phctl .phrow input[type=range]{flex:1;min-width:0;accent-color:#517670}
+.phctl>div{margin-top:8px}
 
 /* ---- the four designs (generated from the print templates) ---- */
 .page *{box-sizing:border-box;margin:0;padding:0}
@@ -2943,7 +2950,9 @@ function kashida(w){let o="";for(let i=0;i<w.length;i++){o+=w[i];if(i<w.length-1
 const LG=()=>S().logo?blob(S().logo):LOGO;
 const logo=()=>`<img class="logo" src="${LG()}" alt="شعار الجمعية">`;
 const spBox=(m)=>m.sponsorImg?`<img src="${blob(m.sponsorImg)}" alt="">`:`<span class="ph">${esc(m.sponsor)}</span>`;
-const photoEl=(m,mo,kind)=>m.photo?`<img src="${blob(m.photo)}" alt="">`:(kind==="a"?`<div class="phimg"><b>${MONTH_AR[mo-1]}</b><span>ارفع صورة الشهر</span></div>`:`<div class="phimg"><span>ارفع صورة الشهر</span></div>`);
+const phv=m=>{const n=(v,d,lo,hi)=>{v=parseFloat(v);return isFinite(v)?Math.min(hi,Math.max(lo,v)):d};return{x:n(m.phx,50,0,100),y:n(m.phy,50,0,100),z:n(m.phz,1,1,3)}};
+const phCss=m=>{const p=phv(m);return `position:absolute;width:${p.z*100}%;height:${p.z*100}%;left:${-(p.z-1)*p.x}%;top:${-(p.z-1)*p.y}%;object-fit:cover;object-position:${p.x}% ${p.y}%`};
+const photoEl=(m,mo,kind)=>m.photo?`<img src="${blob(m.photo)}" alt="" draggable="false" style="${phCss(m)}">`:(kind==="a"?`<div class="phimg"><b>${MONTH_AR[mo-1]}</b><span>ارفع صورة الشهر</span></div>`:`<div class="phimg"><span>ارفع صورة الشهر</span></div>`);
 const lic=()=>{const s=draft.settings;return[s.licNo||"—",s.licStart||"—",s.licEnd||"—"]};
 const hy=y=>y.replace("-"," - ");
 function sadu(h){const t=6,W=210;return `<svg class="band" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${h}" width="${W}mm" height="${h}mm"><defs><pattern id="sadu" width="${t}" height="${t}" patternUnits="userSpaceOnUse"><rect width="${t}" height="${t}" style="fill:var(--cg)"/><polygon points="3,0.45 5.55,3 3,5.55 0.45,3" style="fill:var(--cb)"/><polygon points="3,1.55 4.45,3 3,4.45 1.55,3" style="fill:var(--cg)"/><rect x="2.6" y="2.6" width=".8" height=".8" fill="#fff"/><rect x="-.25" y="-.25" width=".5" height=".5" fill="#fff"/><rect x="5.75" y="-.25" width=".5" height=".5" fill="#fff"/><rect x="-.25" y="5.75" width=".5" height=".5" fill="#fff"/><rect x="5.75" y="5.75" width=".5" height=".5" fill="#fff"/></pattern></defs><rect width="${W}" height="${h}" fill="url(#sadu)"/></svg>`}
@@ -3226,7 +3235,7 @@ function fieldHtml(id,[k,label,type]){const v=draft[id][k]||"";
 function qrGroup(id,n,title){return `<h3>${title}</h3><div class="row3">${["a","b"].map((c,i)=>fieldHtml(id,["q"+n+c,i?"السطر الثاني":"السطر الأول","t"])).join("")}</div>${fieldHtml(id,["q"+n+"u","الرابط (يتولّد منه الـQR تلقائيًا)","u"])}${fieldHtml(id,["q"+n+"img","أو ارفع صورة QR جاهزة (تحلّ محل المولَّد)","i"])}`}
 function renderEditor(){const id=curId(),isM=cur.kind==="m",name=MONTH_AR[cur.mo-1];
  let h=`<h2>${isM?"صفحة شهر "+name:"صفحة الإهداء قبل "+name}</h2>`;if(isM&&(!draft[id].sponsorImg||!draft[id].photo))h+=`<p class="hint" style="background:#F6EEE5;border-radius:14px;padding:9px 14px;color:#8F6A45">الشعار والصورة واسم الفنان الظاهرة في المعاينة بيانات توضيحية لتخيّل الشكل، وتختفي عند رفع الحقيقية. لا تُحفظ، وقائمة المراجعة تعدّها ناقصة.</p>`;
- if(isM){h+=MF.slice(0,4).map(f=>fieldHtml(id,f)).join("")+MF.slice(4).map(f=>fieldHtml(id,f)).join("")+qrGroup(id,1,"رمز QR الأول")+qrGroup(id,2,"رمز QR الثاني (حملة الشهر)")+qrGroup(id,3,"رمز QR الثالث (صدقة الجمعة)")}
+ if(isM){h+=MF.map(f=>fieldHtml(id,f)+(f[0]==="photo"&&draft[id].photo?phCtl(id):"")).join("")+qrGroup(id,1,"رمز QR الأول")+qrGroup(id,2,"رمز QR الثاني (حملة الشهر)")+qrGroup(id,3,"رمز QR الثالث (صدقة الجمعة)")}
  else{h+=GF.map(f=>fieldHtml(id,f)).join("")+`<p class="hint">الرعاة في أسفل الصفحة يؤخذون تلقائيًا من صفحات الأشهر الاثني عشر.</p>`}
  h+=`<div class="savebar"><button class="btn primary" id="save">حفظ</button><button class="btn" id="revert">تراجع</button><button class="btn ghost" id="saveall">حفظ الكل</button><span class="pill" id="dpill"></span></div><div id="status" role="status" aria-live="polite"></div>`;
  $("#editor").innerHTML=h;updatePill()}
@@ -3295,6 +3304,18 @@ document.addEventListener("click",e=>{const t=e.target.closest("button");if(!t)r
 document.addEventListener("input",e=>{const t=e.target;if(t.dataset.k)onInput(curId(),t.dataset.k,t.value);else if(t.dataset.gk){draft.settings[t.dataset.gk]=t.value;drawPreview();refreshUi();autosaveSoon()}});
 document.addEventListener("change",e=>{const t=e.target;if(t.dataset&&t.dataset.file&&t.files[0]){upload(t.dataset.id||curId(),t.dataset.file,t.files[0]);t.value=""}});
 $("#fontsel").addEventListener("change",e=>{draft.settings.font=e.target.value;renderAll();autosaveSoon()});
+/* ---------- تحريك صورة الشهر داخل الإطار ---------- */
+function phCtl(id){const p=phv(draft[id]),row=(k,t,v,lo,hi,st)=>`<label class="phrow"><span>${t}</span><input type="range" min="${lo}" max="${hi}" step="${st}" value="${v}" data-k="${k}"></label>`;
+ return `<div class="field phctl"><label>موضع الصورة داخل الإطار</label><p class="hint">اسحب الصورة مباشرةً في المعاينة لتحريكها، أو استخدم المنزلقات.</p>${row("phx","أفقي",p.x,0,100,1)}${row("phy","عمودي",p.y,0,100,1)}${row("phz","تكبير",p.z,1,3,.01)}<div><button class="btn ghost" data-phreset="1">إعادة الضبط</button></div></div>`}
+document.addEventListener("click",e=>{const t=e.target.closest&&e.target.closest("[data-phreset]");if(!t)return;const m=draft[curId()];m.phx=50;m.phy=50;m.phz=1;renderEditor();drawPreview();refreshUi();autosaveSoon()});
+(function(){let d=null;const st=document.getElementById("stage");
+ st.addEventListener("pointerdown",e=>{if(SEC!=="design"||CANW===false||cur.kind!=="m")return;const img=e.target.closest&&e.target.closest("#pagebox .d-e .photo img");if(!img||!img.naturalWidth)return;
+  const m=draft[curId()];if(!m.photo)return;const fr=img.parentNode.getBoundingClientRect(),p=phv(m),k=Math.max(fr.width/img.naturalWidth,fr.height/img.naturalHeight)*p.z;
+  d={img,m,x0:e.clientX,y0:e.clientY,px:p.x,py:p.y,ox:img.naturalWidth*k-fr.width,oy:img.naturalHeight*k-fr.height};e.preventDefault();st.classList.add("phdrag")});
+ document.addEventListener("pointermove",e=>{if(!d)return;const c=v=>Math.round(Math.min(100,Math.max(0,v))*10)/10;
+  if(d.ox>1)d.m.phx=c(d.px-(e.clientX-d.x0)/d.ox*100);if(d.oy>1)d.m.phy=c(d.py-(e.clientY-d.y0)/d.oy*100);d.img.style.cssText=phCss(d.m)});
+ const end=()=>{if(!d)return;d=null;st.classList.remove("phdrag");renderEditor();drawPreview();refreshUi();autosaveSoon()};
+ document.addEventListener("pointerup",end);document.addEventListener("pointercancel",end)})();
 new ResizeObserver(fit).observe($("#stage"));
 
 /* ---------- boot ---------- */

@@ -66,3 +66,10 @@ body.embedded header.top{justify-content:flex-start}
 .mockbar .mkmsg.bad{color:#b3261e}
 /* حجم التقويم وموضعه داخل المشهد (يطابق MKS و MKO و MKT في السكربت) */
 .stage.mock .mk-shade,.stage.mock #mockcells,.stage.mock .mk-over{transform-origin:50% 80%;transform:translate(1.3%,.6%) scale(1)}
+/* ---- تحريك صورة الشهر داخل إطارها ---- */
+#app[data-sec="design"] #pagebox .d-e .photo img{cursor:grab;touch-action:none;user-select:none;-webkit-user-drag:none}
+#app[data-sec="design"] .stage.phdrag,#app[data-sec="design"] .stage.phdrag #pagebox .d-e .photo img{cursor:grabbing}
+.phctl .phrow{display:flex;align-items:center;gap:10px;margin-top:6px}
+.phctl .phrow span{flex:none;width:52px;font-size:13px;color:rgba(20,28,27,.7)}
+.phctl .phrow input[type=range]{flex:1;min-width:0;accent-color:#517670}
+.phctl>div{margin-top:8px}
