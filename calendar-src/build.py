@@ -56,7 +56,7 @@ rep('''    </section>
 
 # ---------- التصاميم المتاحة: A (أثر الخير) و C (الهدوء) فقط — أُلغي B و D بطلب صاحب المشروع (2026-10-07) ----------
 rep('const DESIGNS=[["a","أثر الخير","قوس وصورة"],["b","الأفق","صورة بانورامية"],["c","الهدوء","فراغ وبساطة"],["d","الدفء","رمال ونحاس"]];',
-    'const DESIGNS=[["a","أثر الخير","قوس وصورة"],["c","الهدوء","فراغ وبساطة"],["e","الرحابة","صورة جانبية ومتنفَّس"]];')
+    'const DESIGNS=[["e","الرحابة","صورة جانبية ومتنفَّس"]];')
 # أي إعداد محفوظ على تصميم ملغى يُعرض بالتصميم A
 rep('const R={a:[aMonth,aGift],b:[bMonth,bGift],c:[cMonth,cGift],d:[dMonth,dGift]};', r'''/* ---------- design E «الرحابة»: شبكة وأرقام A + صورة جانبية كاملة الارتفاع، بفراغات أوسع ---------- */
 /* نقش الخلفية: أيقونة الشعار نفسها مكبَّرة وشفافة في أطراف الصفحة (على نهج تقويم 2026) */
@@ -81,15 +81,19 @@ function eGift(g){return `<section class="page d-e gift">${pat("g")}${logo()}
  <div class="bigqr"><div class="qrbox">${qrEl(g.url,44,g.qrImg)}</div><div class="cname">${esc(g.camp)}</div><div class="go">${esc(S().lblGo)}</div></div>
  <div class="spt">${esc(S().lblSponsors)}</div><div class="sponsors">${allSp()}</div><div class="handle">${esc(draft.settings.handle)}</div></section>`}
 /*@DEMO@*/
-const R={a:[aMonth,aGift],c:[cMonth,cGift],e:[eMonth,eGift]};''')
+const R={e:[eMonth,eGift]};''')
 rep('return cur.kind==="m"?f[0](cur.mo,draft["m"+pad(cur.mo)]):f[1](draft["g"+pad(cur.mo)])}', 'return cur.kind==="m"?f[0](cur.mo,demo(cur.mo,draft["m"+pad(cur.mo)])):f[1](draft["g"+pad(cur.mo)])}')
 rep('h+=`<div class="s">${spBox(draft["m"+pad(i)])}</div>`', 'h+=`<div class="s">${spBox(demo(i,draft["m"+pad(i)]))}</div>`')
 rep('let h=`<h2>${isM?"صفحة شهر "+name:"صفحة الإهداء قبل "+name}</h2>`;', 'let h=`<h2>${isM?"صفحة شهر "+name:"صفحة الإهداء قبل "+name}</h2>`;if(isM&&(!draft[id].sponsorImg||!draft[id].photo))h+=`<p class="hint" style="background:#F6EEE5;border-radius:14px;padding:9px 14px;color:#8F6A45">الشعار والصورة واسم الفنان الظاهرة في المعاينة بيانات توضيحية لتخيّل الشكل، وتختفي عند رفع الحقيقية. لا تُحفظ، وقائمة المراجعة تعدّها ناقصة.</p>`;')
-rep('b.setAttribute("aria-pressed",b.dataset.d===draft.settings.design)', 'b.setAttribute("aria-pressed",b.dataset.d===(R[draft.settings.design]?draft.settings.design:"a"))')
+rep('b.setAttribute("aria-pressed",b.dataset.d===draft.settings.design)', 'b.setAttribute("aria-pressed",b.dataset.d===(R[draft.settings.design]?draft.settings.design:"e"))')
 
 # ---------- صورة عبارة الإهداء (تصميم «الرحابة») ----------
 rep('camp:CAMP[i][0],url:"https://example.com/awamia/2027/gift-"+pad(i+1),qrImg:""}', 'camp:CAMP[i][0],url:"https://example.com/awamia/2027/gift-"+pad(i+1),qrImg:"",titleImg:""}')
 rep('const GF=[["h1","عنوان الإهداء — السطر الأول","t"],', 'const GF=[["titleImg","صورة عبارة الإهداء — تحلّ محل العنوان المكتوب (في تصميم «الرحابة»)","i"],["h1","عنوان الإهداء — السطر الأول","t"],')
+
+# العمل على «الرحابة» فقط (أُلغي «أثر الخير» و«الهدوء» بطلب صاحب المشروع 2026-10-07): أي تصميم محفوظ آخر يُعرض بها، وشريط اختيار التصميم يختفي
+rep('function pageHtml(){const f=R[draft.settings.design]||R.a;', 'function pageHtml(){const f=R[draft.settings.design]||R.e;')
+rep('<div class="tabs" id="designs" role="group" aria-label="التصميم"></div>', '<div class="tabs" id="designs" role="group" aria-label="التصميم" hidden></div>')
 
 # ---------- السنة والمسارات ----------
 rep('const YEAR=2027, G=', 'const YEAR=(function(){const y=+new URLSearchParams(location.search).get("year");return y>=2026&&y<=2040?y:2027})(), G=')

@@ -492,7 +492,7 @@ body.embedded header.top{justify-content:flex-start}
   <header class="top">
     <div class="brand"><h1>التقاويم الميلادية</h1><p>القالب الافتراضي · ٢١٠×١٥٠ مم · الشعار على اليسار</p></div>
     <div class="only-design" style="display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end">
-      <div class="tabs" id="designs" role="group" aria-label="التصميم"></div>
+      <div class="tabs" id="designs" role="group" aria-label="التصميم" hidden></div>
       <label class="fontsel">الخط
         <select id="fontsel"><option value="1">Alexandria + Readex Pro</option><option value="2">Readex Pro</option><option value="3">Cairo</option></select>
       </label>
@@ -2827,7 +2827,7 @@ const YEAR=(function(){const y=+new URLSearchParams(location.search).get("year")
 const MONTH_AR=["يناير","فبراير","مارس","أبريل","مايو","يونيو","يوليو","أغسطس","سبتمبر","أكتوبر","نوفمبر","ديسمبر"];
 const H_AR=["محرم","صفر","ربيع الأول","ربيع الآخر","جمادى الأولى","جمادى الآخرة","رجب","شعبان","رمضان","شوال","ذو القعدة","ذو الحجة"];
 const DAYS=["الأحد","الاثنين","الثلاثاء","الأربعاء","الخميس","الجمعة","السبت"];
-const DESIGNS=[["a","أثر الخير","قوس وصورة"],["c","الهدوء","فراغ وبساطة"],["e","الرحابة","صورة جانبية ومتنفَّس"]];
+const DESIGNS=[["e","الرحابة","صورة جانبية ومتنفَّس"]];
 // Dates & events: fixed, as in the approved data sheet (not editable here).
 const EVENTS={};
 
@@ -3072,8 +3072,8 @@ function demoPhoto(i){const s=DEMO_SCN[i],k=s[9];
 const DEMO_LOGOS=DEMO_SP.map((_,i)=>demoLogo(i)),DEMO_PHOTOS=DEMO_SCN.map((_,i)=>demoPhoto(i));
 const demo=(mo,m)=>Object.assign({},m,{sponsorImg:m.sponsorImg||DEMO_LOGOS[mo-1],photo:m.photo||DEMO_PHOTOS[mo-1],artist:m.artist==="اسم الفنان"?DEMO_ART[mo-1]:m.artist});
 
-const R={a:[aMonth,aGift],c:[cMonth,cGift],e:[eMonth,eGift]};
-function pageHtml(){const f=R[draft.settings.design]||R.a;return cur.kind==="m"?f[0](cur.mo,demo(cur.mo,draft["m"+pad(cur.mo)])):f[1](draft["g"+pad(cur.mo)])}
+const R={e:[eMonth,eGift]};
+function pageHtml(){const f=R[draft.settings.design]||R.e;return cur.kind==="m"?f[0](cur.mo,demo(cur.mo,draft["m"+pad(cur.mo)])):f[1](draft["g"+pad(cur.mo)])}
 
 /* ---------- preview ---------- */
 const PXW=210*96/25.4,PXH=150*96/25.4;
@@ -3098,7 +3098,7 @@ function buildNav(){
  $("#designs").innerHTML=DESIGNS.map(d=>`<button class="tab" data-d="${d[0]}" aria-pressed="false"><b>${d[0].toUpperCase()} · ${d[1]}</b><span>${d[2]}</span></button>`).join("");
  $("#months").innerHTML=MONTH_AR.map((n,i)=>`<button class="mbtn" data-m="${i+1}" aria-pressed="false">${n}<i hidden></i></button>`).join("")}
 function syncNav(){
- document.querySelectorAll("#designs .tab").forEach(b=>b.setAttribute("aria-pressed",b.dataset.d===(R[draft.settings.design]?draft.settings.design:"a")));
+ document.querySelectorAll("#designs .tab").forEach(b=>b.setAttribute("aria-pressed",b.dataset.d===(R[draft.settings.design]?draft.settings.design:"e")));
  document.querySelectorAll("#kind button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.k===cur.kind));
  document.querySelectorAll("#months .mbtn").forEach(b=>{const n=+b.dataset.m;b.setAttribute("aria-pressed",n===cur.mo);b.querySelector("i").hidden=!(dirty("m"+pad(n))||dirty("g"+pad(n)))});
  const vs=(SEC==="approved"&&APPROVED&&APPROVED.data.settings)?Object.assign(defSettings(),APPROVED.data.settings):draft.settings;$("#app").style.setProperty("--cg",vs.colG);$("#app").style.setProperty("--cb",vs.colB);$("#app").dataset.font=vs.font;$("#fontsel").value=draft.settings.font}
