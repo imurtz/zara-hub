@@ -105,7 +105,9 @@ rep('function fit(){const st=$("#stage"),w=st.clientWidth,s=w/PXW;st.style.heigh
  const h=Math.round(w*.8);st.style.height=h+"px";rig.style.transformOrigin="0 0";
  rig.style.transform=quadMatrix(PXW,PXH,MOCK_QUAD.map(q=>[q[0]*w,q[1]*h]))}
 /* أركان سطح التقويم في الصورة (نسبةً إلى عرضها وارتفاعها): أعلى-يسار، أعلى-يمين، أسفل-يمين، أسفل-يسار */
-const MOCK_QUAD=[[.23025,.18656],[.7715,.24063],[.7125,.82938],[.1655,.70688]];
+/* المصدر: مصفوفة تحويل الكائن الذكي المخزّنة داخل ملف الـPSD نفسه (أعلى/يمين/أسفل السطح)، والحافة اليسرى مأخوذة من حد الورقة الظاهر
+   لأن لوحة الكائن الذكي تتجاوز الورقة يساراً فيُقصّ منها جزء في الملف الأصلي — هنا تظهر الصفحة كاملة على الورقة. */
+const MOCK_QUAD=[[.2306,.18369],[.77191,.24343],[.70593,.83317],[.16493,.71141]];
 function quadMatrix(W,H,q){const x0=q[0][0],y0=q[0][1],x1=q[1][0],y1=q[1][1],x2=q[2][0],y2=q[2][1],x3=q[3][0],y3=q[3][1];
  const dx1=x1-x2,dx2=x3-x2,dx3=x0-x1+x2-x3,dy1=y1-y2,dy2=y3-y2,dy3=y0-y1+y2-y3,den=dx1*dy2-dx2*dy1,g=(dx3*dy2-dx2*dy3)/den,k=(dx1*dy3-dx3*dy1)/den;
  const a=x1-x0+g*x1,b=x3-x0+k*x3,d=y1-y0+g*y1,e=y3-y0+k*y3;

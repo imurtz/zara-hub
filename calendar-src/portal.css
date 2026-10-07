@@ -51,4 +51,4 @@ body.embedded header.top{justify-content:flex-start}
 .stage.mock .rig{z-index:2}
 .stage.mock .pagebox{background:#fff}
 /* شريط الحلقات المعدنية من الصورة نفسها يُضرب (multiply) فوق أعلى الصفحة، فتبدو الحلقات وظلالها خارجة من الورقة */
-.stage.mock .mk-over{display:block;position:absolute;inset:0;z-index:3;pointer-events:none;background:url(mockup/desk.jpg) center/100% 100% no-repeat;mix-blend-mode:multiply;clip-path:polygon(23.025% 18.656%,77.15% 24.063%,76.95% 28.6%,22.8% 23.1%)}
+.stage.mock .mk-over{display:block;position:absolute;inset:0;z-index:3;pointer-events:none;background:url(mockup/desk.jpg) center/100% 100% no-repeat;mix-blend-mode:multiply;clip-path:polygon(23.06% 18.369%,77.191% 24.343%,76.7% 28.72%,22.53% 22.69%)}
