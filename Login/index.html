@@ -2169,6 +2169,8 @@
   .tpl-custom-head{display:flex; gap:8px; margin-bottom:8px; flex-wrap:wrap;}
   .tpl-custom-head input{flex:1; min-width:160px; border:1.5px solid var(--line, #E3E8E6); border-radius:12px; padding:8px 12px; font-family:inherit; font-size:13.5px; font-weight:600;}
   .tpl-custom-head select{border:1.5px solid var(--line, #E3E8E6); border-radius:12px; padding:8px 10px; font-family:inherit; font-size:12.5px; background:#fff;}
+  .tpl-gender-hint{font-size:12.5px; line-height:1.8; color:var(--ink-soft, #6B7674); background:#F6EEE5; border-radius:14px; padding:9px 14px; margin:0 0 12px;}
+  .tpl-gender-hint b{color:#8F6A45; font-weight:600;}
 
 </style>
 </head>
@@ -9113,10 +9115,27 @@
     out.condolenceBlock = cl.length ? "▣ *أماكن العزاء" + (rec.condolenceStart ? " (بدءًا من " + rec.condolenceStart + ")" : "") + "*\n" + cl.join("\n") : "";
     return out;
   }
+  // الصيغ المزدوجة في نص القالب تُحسم تلقائياً حسب جنس صاحب السجل:
+  //   «المرحوم/ـة» ← المرحوم | المرحومة،  «يتغمده/ـا» ← يتغمده | يتغمدها،  «المتوفى/ـاة» ← المتوفى | المتوفاة،  «الفقيد/الفقيدة» ← أحدهما.
+  // تُطبَّق على نص القالب قبل تعبئة المتغيرات، فلا تمسّ الأسماء والبيانات. إذا لم يُعرف الجنس يبقى النص كما هو
+  function tplGenderForms(text, gender){
+    var g = String(gender || "").trim(), fem = /^[اأإ]نث[ىيئ]$/.test(g);
+    if(!fem && g !== "ذكر") return text;
+    var AR = "[\u0621-\u063A\u0641-\u064A]";
+    var join = function(base, suf){
+      if(/^ا/.test(suf) && /ى$/.test(base)) return base.slice(0, -1) + suf;
+      return base + suf;
+    };
+    return String(text || "").replace(new RegExp("(" + AR + "+)\\/(ـ?)(" + AR + "+)", "g"), function(m, base, tat, suf){
+      if(base === "و" || base === "أو") return m;
+      if(tat || suf.length <= 2) return fem ? join(base, suf) : base;
+      return fem ? suf : base;
+    });
+  }
   function renderTemplateText(text, rec){
     var vars = rec || {};
     var extra = eventTemplateComputedVars(vars);
-    var txt = String(text || "").replace(/\{(\w+)\}/g, function(m, key){
+    var txt = tplGenderForms(text, vars.gender).replace(/\{(\w+)\}/g, function(m, key){
       if(extra[key] !== undefined) return extra[key];
       if(key === "funeralTime") return eventTime12(vars[key]) || (vars[key] || "");
       return (vars[key] != null && vars[key] !== "") ? vars[key] : "";
@@ -9384,7 +9403,8 @@
     var vars = cat.fields.filter(function(f){ return f.type !== "image"; }).concat(cat.templateExtraVars || []);
     html += '<details class="tpl-vars"><summary>المتغيرات (' + vars.length + ') — اضغط متغيراً لإدراجه</summary><div>' +
       vars.map(function(f){ return '<code data-insert-var="' + f.key + '" title="' + escapeHTML(f.label) + '">{' + f.key + '}</code>'; }).join("") +
-    '</div></details>';
+    '</div></details>' +
+    '<p class="tpl-gender-hint">للتذكير والتأنيث التلقائي اكتب الصيغتين هكذا: <b>المرحوم/ـة</b> ، <b>يتغمده/ـا</b> ، <b>المتوفى/ـاة</b> — وتظهر الصيغة المناسبة في الرسالة حسب جنس صاحب السجل.</p>';
     if(catKey === "deaths"){
       if(!list.length) html += '<p class="report-empty">لا توجد قوالب</p>';
       list.forEach(function(t){
