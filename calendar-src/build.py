@@ -135,9 +135,12 @@ rep('''/* ---------- navigation ---------- */''', '''/* ---------- print all (24
 function printAll(){const keep={mo:cur.mo,kind:cur.kind};let h="";
  for(let mo=1;mo<=12;mo++)for(const k of ["g","m"]){cur.mo=mo;cur.kind=k;h+=viewHtml()}
  cur.mo=keep.mo;cur.kind=keep.kind;const box=$("#printall");box.innerHTML=h;
- box.style.cssText="display:block;position:absolute;left:-99999px;top:0;width:210mm";fitE(box);box.style.cssText="";
+ box.style.cssText="display:block;position:absolute;left:-99999px;top:0;width:210mm";fitE(box);
  const imgs=[...box.querySelectorAll("img")].filter(i=>!i.complete);
- Promise.all(imgs.map(i=>new Promise(r=>{i.onload=i.onerror=r}))).then(()=>(document.fonts&&document.fonts.ready)||0).then(()=>{window.print();setTimeout(()=>{box.innerHTML=""},1500)})}
+ // نقوش التراث تُستخدم كأقنعة CSS لا كصور، فلا ينتظرها المتصفح قبل الطباعة — تُحمَّل هنا صراحةً أولاً وإلا خرجت الصفحات بلا نقش
+ const masks=[...new Set([...box.querySelectorAll(".her")].map(e=>(/url\\(["']?([^"')]+)/.exec(e.getAttribute("style")||"")||[])[1]).filter(Boolean))];
+ const pre=masks.map(u=>new Promise(r=>{const im=new Image();im.onload=im.onerror=r;im.src=u;if(im.decode)im.decode().then(r,r)}));
+ Promise.all(imgs.map(i=>new Promise(r=>{i.onload=i.onerror=r})).concat(pre)).then(()=>(document.fonts&&document.fonts.ready)||0).then(()=>new Promise(r=>requestAnimationFrame(()=>setTimeout(r,250)))).then(()=>{window.print();setTimeout(()=>{box.innerHTML="";box.style.cssText=""},1500)})}
 
 /* ---------- navigation ---------- */''')
 
