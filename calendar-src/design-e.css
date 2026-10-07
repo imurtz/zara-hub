@@ -27,7 +27,7 @@
 .d-e .grid td i{display:block;font-style:normal;font-size:5.2mm;font-weight:700;line-height:5.9mm;margin:0 auto;width:5.9mm;height:5.9mm;border-radius:50%}
 .d-e .grid td i.ev{color:#fff;font-size:4.3mm;width:5.9mm;height:5.9mm;line-height:5.9mm}
 .d-e .grid td s{display:block;text-decoration:none;font-size:2.3mm;color:var(--cb);font-weight:600;line-height:2.4mm}
-.d-e .legend{left:78mm;right:15mm;bottom:13mm;display:flex;flex-wrap:wrap;gap:.75mm 3.2mm;font-size:2.2mm;font-weight:500;line-height:2.5mm}
+.d-e .legend{left:78mm;right:15mm;bottom:14.2mm;display:flex;flex-wrap:wrap;gap:.75mm 3.2mm;font-size:2.2mm;font-weight:500;line-height:2.5mm}
 .d-e .legend span{display:inline-flex;align-items:center;gap:1.1mm;white-space:nowrap}
 .d-e .legend b{flex:none;min-width:3.5mm;height:2.5mm;padding:0 .7mm;border-radius:1.25mm;color:#fff;font-size:2mm;font-weight:700;line-height:2.5mm;text-align:center}
 .d-e .dock{left:78mm;right:15mm;top:110.2mm;display:flex;justify-content:space-between;align-items:center}
@@ -78,5 +78,7 @@
 .d-a .legend{gap:.15mm 3mm;font-size:2.2mm;line-height:3mm}
 /* ---- رقم الشهر المفرَّغ (كما في «أثر الخير») تحت الشعار، بمحاذاة اسم الشهر ---- */
 .d-e .ghost{left:78mm;top:25.2mm;direction:ltr;font-family:var(--fb);font-weight:700;font-size:18.5mm;line-height:1;letter-spacing:-.3mm;color:transparent;-webkit-text-stroke:.26mm var(--cb);opacity:.8}
-/* ---- الشريط التراثي: خط رفيع خفيف في آخر الصفحة، بنفس أسلوب حدود الشعار، عنصر مختلف لكل شهر ---- */
-.d-e .her{left:78mm;bottom:3mm;width:117mm;height:8mm;fill:none;stroke:var(--cg);stroke-width:2.1;stroke-linecap:round;stroke-linejoin:round;opacity:.38;overflow:visible}
+/* ---- الشريط التراثي: نقش من تراث القطيف لكل شهر (ملفات Login/calendar/heritage/NN.png) يخرج من الحافة السفلية ومقطوع عندها، ويخفت نحو الأعلى ---- */
+.d-e .her{left:64mm;right:0;bottom:0;height:12.5mm;background:var(--cg);opacity:.42;
+ -webkit-mask-image:linear-gradient(to top,#000 70%,transparent 100%),var(--hm);-webkit-mask-size:100% 100%,58mm auto;-webkit-mask-position:0 0,left bottom;-webkit-mask-repeat:no-repeat,repeat-x;-webkit-mask-composite:source-in;
+ mask-image:linear-gradient(to top,#000 70%,transparent 100%),var(--hm);mask-size:100% 100%,58mm auto;mask-position:0 0,left bottom;mask-repeat:no-repeat,repeat-x;mask-composite:intersect}
