@@ -438,6 +438,31 @@ body.embedded header.top{justify-content:flex-start}
 .d-e .qt{display:flex;flex-direction:column}
 .d-e .qt b{font-size:2.7mm;font-weight:700;line-height:1.35;white-space:nowrap}
 .d-e .qt span{font-size:2.35mm;color:var(--cb);font-weight:500;line-height:1.35;white-space:nowrap}
+/* ---- صفحة إهداء «الرحابة»: بنية «أثر الخير» معكوسة — QR يميناً، عبارة الإهداء (صورة) والنموذج يساراً، بلا شريط السدو ---- */
+.d-e.gift .logo{left:12mm;top:8mm;width:36mm}
+.d-e .gtitle{left:12mm;top:24mm;width:104mm;height:34mm;display:flex;align-items:center;justify-content:flex-start}
+.d-e .gtitle img{max-width:100%;max-height:100%;object-fit:contain;display:block}
+.d-e .gtitle h2{font-family:var(--fd);line-height:1.12;display:flex;flex-direction:column}
+.d-e .gtitle h2 b{font-size:13mm;font-weight:700;color:var(--cg)}
+.d-e .gtitle h2 span{font-size:13mm;font-weight:700;color:var(--cb)}
+.d-e .form{left:12mm;top:62mm;width:104mm;background:#f1f2f2;border-radius:3mm;padding:3mm 4mm;display:flex;flex-direction:column;gap:1.7mm}
+.d-e .ft{font-size:2.8mm;color:#6b6b6b;font-weight:500;display:flex;align-items:center;gap:1.5mm;margin-bottom:.5mm}
+.d-e .ft i{width:3.2mm;height:3.2mm;border:.3mm solid #8a8a8a;border-radius:.8mm}
+.d-e .f{display:flex;align-items:center;gap:3mm}
+.d-e .f label{width:26mm;font-size:2.7mm;color:#555;font-weight:500;white-space:nowrap}
+.d-e .f sup{color:#c0392b;font-size:2.4mm}
+.d-e .f p{flex:1;height:4.2mm;border:.25mm solid #b9b9b9;border-radius:2.1mm;background:#fff}
+.d-e .f p.sel{height:auto;min-height:4.2mm;padding:.8mm 3mm;display:flex;gap:3mm;font-size:2.3mm;color:#777;border-radius:2mm;flex-wrap:wrap}
+.d-e .bigqr{right:18mm;top:24mm;width:58mm;display:flex;flex-direction:column;align-items:center;gap:2.2mm}
+.d-e .bigqr .qrbox{padding:2.2mm;border-radius:4mm}
+.d-e .cname{background:var(--cg);color:#fff;font-family:var(--fb);font-weight:700;font-size:4.4mm;padding:1.4mm 6mm;border-radius:5mm;white-space:nowrap}
+.d-e .go{font-family:var(--fb);font-weight:700;font-size:4mm;color:var(--cb)}
+.d-e .spt{left:0;right:0;top:112mm;text-align:center;font-size:2.5mm;color:var(--cb);font-weight:600;letter-spacing:.3mm}
+.d-e .sponsors{left:12mm;right:12mm;top:117mm;display:grid;grid-template-columns:repeat(6,1fr);gap:2.4mm 2.6mm}
+.d-e .s{height:10mm;display:flex;align-items:center;justify-content:center}
+.d-e .s img{max-height:8.6mm;max-width:92%;object-fit:contain}
+.d-e .s .ph{font-size:2.3mm;color:var(--cb);border:.25mm dashed var(--cb);border-radius:2mm;padding:2mm 3mm;white-space:nowrap}
+.d-e .handle{left:12mm;top:142mm;font-size:2.6mm;color:var(--cb);font-weight:600;letter-spacing:.4mm;direction:ltr}
 
 </style>
 </head>
@@ -2794,7 +2819,7 @@ function defMonth(i){const n=i+1,p=pad(n);return{sponsor:"الراعي "+p,spons
  q1a:"اشترك الآن",q1b:"أو جدد اشتراكك",q1u:"https://example.com/awamia/2027/"+p+"-sub",
  q2a:CAMP[i][0],q2b:CAMP[i][1],q2u:"https://example.com/awamia/2027/"+p+"-campaign",
  q3a:"صدقة",q3b:"يوم الجمعة",q3u:"https://example.com/awamia/2027/friday",q1img:"",q2img:"",q3img:""}}
-function defGift(i){return{h1:GIFT[i][0],h2:GIFT[i][1],camp:CAMP[i][0],url:"https://example.com/awamia/2027/gift-"+pad(i+1),qrImg:""}}
+function defGift(i){return{h1:GIFT[i][0],h2:GIFT[i][1],camp:CAMP[i][0],url:"https://example.com/awamia/2027/gift-"+pad(i+1),qrImg:"",titleImg:""}}
 const defSettings=()=>({licNo:"",licStart:"",licEnd:"",handle:"AwamiaCharity",design:"a",font:"1",logo:"",colG:"#517670",colB:"#b8926d",lblSponsor:"برعاية",lblSponsors:"رعاة التقويم",lblGo:"ابدأ خَيْرَكَ الآن",lblArtist:"الفنان",lblLicNo:"رقم ترخيص التبرعات",lblLicStart:"تاريخ البدء",lblLicEnd:"تاريخ الانتهاء",fTitle:"اريد جعل هذه المساهمة هدية",fName:"إسم المرسل",fTo:"إسم المهدي إليه",fPhone:"جوال المهدي إليه",fModel:"نموذج الإهداء",fOpts:"بدون، الوالدين، الإخوة، الأصدقاء"});
 function defaults(id){if(id==="settings")return defSettings();const n=+id.slice(1)-1;return id[0]==="m"?defMonth(n):defGift(n)}
 
@@ -2928,6 +2953,10 @@ function eMonth(mo,m){const g=gridData(mo),mt=monthMeta(mo);
  <div class="slogan"><b>${esc(m.s1)}</b><span>${esc(m.s2)}</span></div>
  <table class="grid" style="--rh:${(54/g.rows).toFixed(2)}mm"><thead><tr>${head()}</tr></thead><tbody>${body}</tbody></table><div class="legend">${chips}</div>
  <div class="dock">${q(1)}${q(2)}${q(3)}</div></section>`}
+function eGift(g){return `<section class="page d-e gift">${logo()}
+ <div class="gtitle">${g.titleImg?`<img src="${blob(g.titleImg)}" alt="">`:`<h2><b>${esc(g.h1)}</b><span>${esc(g.h2)}</span></h2>`}</div>${form()}
+ <div class="bigqr"><div class="qrbox">${qrEl(g.url,44,g.qrImg)}</div><div class="cname">${esc(g.camp)}</div><div class="go">${esc(S().lblGo)}</div></div>
+ <div class="spt">${esc(S().lblSponsors)}</div><div class="sponsors">${allSp()}</div><div class="handle">${esc(draft.settings.handle)}</div></section>`}
 /* بيانات توضيحية للأشهر الاثني عشر (راعٍ وشعاره، صورة الشهر، اسم الفنان) — كلها افتراضية ومرسومة هنا.
    تظهر في المعاينة والطباعة ما دامت الخانة فارغة، ولا تُحفظ في القاعدة، وقائمة المراجعة تعدّها ناقصة. */
 const svgUri=x=>"data:image/svg+xml;charset=utf-8,"+encodeURIComponent(x);
@@ -2972,7 +3001,7 @@ function demoPhoto(i){const s=DEMO_SCN[i],k=s[9];
 const DEMO_LOGOS=DEMO_SP.map((_,i)=>demoLogo(i)),DEMO_PHOTOS=DEMO_SCN.map((_,i)=>demoPhoto(i));
 const demo=(mo,m)=>Object.assign({},m,{sponsorImg:m.sponsorImg||DEMO_LOGOS[mo-1],photo:m.photo||DEMO_PHOTOS[mo-1],artist:m.artist==="اسم الفنان"?DEMO_ART[mo-1]:m.artist});
 
-const R={a:[aMonth,aGift],c:[cMonth,cGift],e:[eMonth,cGift]};
+const R={a:[aMonth,aGift],c:[cMonth,cGift],e:[eMonth,eGift]};
 function pageHtml(){const f=R[draft.settings.design]||R.a;return cur.kind==="m"?f[0](cur.mo,demo(cur.mo,draft["m"+pad(cur.mo)])):f[1](draft["g"+pad(cur.mo)])}
 
 /* ---------- preview ---------- */
@@ -3005,7 +3034,7 @@ function step(dir){let s=(cur.mo-1)*2+(cur.kind==="m"?1:0)+dir;s=Math.min(23,Mat
 
 /* ---------- editor ---------- */
 const MF=[["sponsor","اسم الراعي","t"],["sponsorImg","شعار الراعي","i"],["photo","صورة الشهر","i"],["artist","اسم الفنان","t"],["s1","الشعار أسفل الشهر — السطر الأول","t"],["s2","الشعار أسفل الشهر — السطر الثاني","t"]];
-const GF=[["h1","عنوان الإهداء — السطر الأول","t"],["h2","عنوان الإهداء — السطر الثاني","t"],["camp","اسم الحملة","t"],["url","رابط QR","u"],["qrImg","أو ارفع صورة QR جاهزة (تحلّ محل المولَّد)","i"]];
+const GF=[["titleImg","صورة عبارة الإهداء — تحلّ محل العنوان المكتوب (في تصميم «الرحابة»)","i"],["h1","عنوان الإهداء — السطر الأول","t"],["h2","عنوان الإهداء — السطر الثاني","t"],["camp","اسم الحملة","t"],["url","رابط QR","u"],["qrImg","أو ارفع صورة QR جاهزة (تحلّ محل المولَّد)","i"]];
 const status=(t,bad)=>{const s=$("#status");if(s){s.textContent=t;s.className=bad?"bad":""}};
 function fieldHtml(id,[k,label,type]){const v=draft[id][k]||"";
  if(type==="i")return `<div class="field"><label>${label}</label><div class="img"><div class="thumb" style="${v?`background-image:url(${blob(v)})`:""}"></div>${ASSETS?`<button class="btn" data-up="${k}" data-id="${id}">رفع صورة</button>${v?`<button class="btn ghost" data-rm="${k}" data-id="${id}">إزالة</button>`:""}<input type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml" hidden data-file="${k}" data-id="${id}">`:`<span class="hint">الرفع متاح للمحرّر فقط</span>`}</div></div>`;

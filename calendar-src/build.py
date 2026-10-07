@@ -69,12 +69,20 @@ function eMonth(mo,m){const g=gridData(mo),mt=monthMeta(mo);
  <div class="slogan"><b>${esc(m.s1)}</b><span>${esc(m.s2)}</span></div>
  <table class="grid" style="--rh:${(54/g.rows).toFixed(2)}mm"><thead><tr>${head()}</tr></thead><tbody>${body}</tbody></table><div class="legend">${chips}</div>
  <div class="dock">${q(1)}${q(2)}${q(3)}</div></section>`}
+function eGift(g){return `<section class="page d-e gift">${logo()}
+ <div class="gtitle">${g.titleImg?`<img src="${blob(g.titleImg)}" alt="">`:`<h2><b>${esc(g.h1)}</b><span>${esc(g.h2)}</span></h2>`}</div>${form()}
+ <div class="bigqr"><div class="qrbox">${qrEl(g.url,44,g.qrImg)}</div><div class="cname">${esc(g.camp)}</div><div class="go">${esc(S().lblGo)}</div></div>
+ <div class="spt">${esc(S().lblSponsors)}</div><div class="sponsors">${allSp()}</div><div class="handle">${esc(draft.settings.handle)}</div></section>`}
 /*@DEMO@*/
-const R={a:[aMonth,aGift],c:[cMonth,cGift],e:[eMonth,cGift]};''')
+const R={a:[aMonth,aGift],c:[cMonth,cGift],e:[eMonth,eGift]};''')
 rep('return cur.kind==="m"?f[0](cur.mo,draft["m"+pad(cur.mo)]):f[1](draft["g"+pad(cur.mo)])}', 'return cur.kind==="m"?f[0](cur.mo,demo(cur.mo,draft["m"+pad(cur.mo)])):f[1](draft["g"+pad(cur.mo)])}')
 rep('h+=`<div class="s">${spBox(draft["m"+pad(i)])}</div>`', 'h+=`<div class="s">${spBox(demo(i,draft["m"+pad(i)]))}</div>`')
 rep('let h=`<h2>${isM?"صفحة شهر "+name:"صفحة الإهداء قبل "+name}</h2>`;', 'let h=`<h2>${isM?"صفحة شهر "+name:"صفحة الإهداء قبل "+name}</h2>`;if(isM&&(!draft[id].sponsorImg||!draft[id].photo))h+=`<p class="hint" style="background:#F6EEE5;border-radius:14px;padding:9px 14px;color:#8F6A45">الشعار والصورة واسم الفنان الظاهرة في المعاينة بيانات توضيحية لتخيّل الشكل، وتختفي عند رفع الحقيقية. لا تُحفظ، وقائمة المراجعة تعدّها ناقصة.</p>`;')
 rep('b.setAttribute("aria-pressed",b.dataset.d===draft.settings.design)', 'b.setAttribute("aria-pressed",b.dataset.d===(R[draft.settings.design]?draft.settings.design:"a"))')
+
+# ---------- صورة عبارة الإهداء (تصميم «الرحابة») ----------
+rep('camp:CAMP[i][0],url:"https://example.com/awamia/2027/gift-"+pad(i+1),qrImg:""}', 'camp:CAMP[i][0],url:"https://example.com/awamia/2027/gift-"+pad(i+1),qrImg:"",titleImg:""}')
+rep('const GF=[["h1","عنوان الإهداء — السطر الأول","t"],', 'const GF=[["titleImg","صورة عبارة الإهداء — تحلّ محل العنوان المكتوب (في تصميم «الرحابة»)","i"],["h1","عنوان الإهداء — السطر الأول","t"],')
 
 # ---------- السنة والمسارات ----------
 rep('const YEAR=2027, G=', 'const YEAR=(function(){const y=+new URLSearchParams(location.search).get("year");return y>=2026&&y<=2040?y:2027})(), G=')

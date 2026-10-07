@@ -36,3 +36,28 @@
 .d-e .qt{display:flex;flex-direction:column}
 .d-e .qt b{font-size:2.7mm;font-weight:700;line-height:1.35;white-space:nowrap}
 .d-e .qt span{font-size:2.35mm;color:var(--cb);font-weight:500;line-height:1.35;white-space:nowrap}
+/* ---- صفحة إهداء «الرحابة»: بنية «أثر الخير» معكوسة — QR يميناً، عبارة الإهداء (صورة) والنموذج يساراً، بلا شريط السدو ---- */
+.d-e.gift .logo{left:12mm;top:8mm;width:36mm}
+.d-e .gtitle{left:12mm;top:24mm;width:104mm;height:34mm;display:flex;align-items:center;justify-content:flex-start}
+.d-e .gtitle img{max-width:100%;max-height:100%;object-fit:contain;display:block}
+.d-e .gtitle h2{font-family:var(--fd);line-height:1.12;display:flex;flex-direction:column}
+.d-e .gtitle h2 b{font-size:13mm;font-weight:700;color:var(--cg)}
+.d-e .gtitle h2 span{font-size:13mm;font-weight:700;color:var(--cb)}
+.d-e .form{left:12mm;top:62mm;width:104mm;background:#f1f2f2;border-radius:3mm;padding:3mm 4mm;display:flex;flex-direction:column;gap:1.7mm}
+.d-e .ft{font-size:2.8mm;color:#6b6b6b;font-weight:500;display:flex;align-items:center;gap:1.5mm;margin-bottom:.5mm}
+.d-e .ft i{width:3.2mm;height:3.2mm;border:.3mm solid #8a8a8a;border-radius:.8mm}
+.d-e .f{display:flex;align-items:center;gap:3mm}
+.d-e .f label{width:26mm;font-size:2.7mm;color:#555;font-weight:500;white-space:nowrap}
+.d-e .f sup{color:#c0392b;font-size:2.4mm}
+.d-e .f p{flex:1;height:4.2mm;border:.25mm solid #b9b9b9;border-radius:2.1mm;background:#fff}
+.d-e .f p.sel{height:auto;min-height:4.2mm;padding:.8mm 3mm;display:flex;gap:3mm;font-size:2.3mm;color:#777;border-radius:2mm;flex-wrap:wrap}
+.d-e .bigqr{right:18mm;top:24mm;width:58mm;display:flex;flex-direction:column;align-items:center;gap:2.2mm}
+.d-e .bigqr .qrbox{padding:2.2mm;border-radius:4mm}
+.d-e .cname{background:var(--cg);color:#fff;font-family:var(--fb);font-weight:700;font-size:4.4mm;padding:1.4mm 6mm;border-radius:5mm;white-space:nowrap}
+.d-e .go{font-family:var(--fb);font-weight:700;font-size:4mm;color:var(--cb)}
+.d-e .spt{left:0;right:0;top:112mm;text-align:center;font-size:2.5mm;color:var(--cb);font-weight:600;letter-spacing:.3mm}
+.d-e .sponsors{left:12mm;right:12mm;top:117mm;display:grid;grid-template-columns:repeat(6,1fr);gap:2.4mm 2.6mm}
+.d-e .s{height:10mm;display:flex;align-items:center;justify-content:center}
+.d-e .s img{max-height:8.6mm;max-width:92%;object-fit:contain}
+.d-e .s .ph{font-size:2.3mm;color:var(--cb);border:.25mm dashed var(--cb);border-radius:2mm;padding:2mm 3mm;white-space:nowrap}
+.d-e .handle{left:12mm;top:142mm;font-size:2.6mm;color:var(--cb);font-weight:600;letter-spacing:.4mm;direction:ltr}
