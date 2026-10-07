@@ -45,7 +45,7 @@ body.embedded header.top{justify-content:flex-start}
 .mk-over{display:none}
 /* ---- موك أب التقويم المكتبي: صورة حقيقية + الصفحة مُسقطة على سطحها + حلقات السلك تُعاد فوق الصفحة ---- */
 #app[data-sec="mockup"] .only-design{display:none!important}
-#app[data-sec="mockup"] .layout{grid-template-columns:minmax(0,1fr);max-width:1040px;margin-inline:auto}
+#app[data-sec="mockup"] .layout{grid-template-columns:minmax(0,1fr);max-width:760px;margin-inline:auto}
 #app[data-sec="mockup"] .preview{position:static}
 /* المشهد: صورة الموك أب الأصلية بخلفيتها البيضاء ← الصفحة المنحنية ← حلقات السلك (مقصوصة من الصورة بشفافية، فتبقى فضية فوق أي لون) */
 .stage.mock{border:1px solid rgba(20,28,27,.08);background:#3a2a1c var(--mkbg,url(mockup/bg2.jpg)) center/cover no-repeat}
@@ -64,3 +64,5 @@ body.embedded header.top{justify-content:flex-start}
 .mockbar .mkhint{flex:1 1 100%;font-size:12.5px;line-height:1.7;color:rgba(20,28,27,.62)}
 .mockbar .mkmsg{font-size:13px;color:#2f6f5e}
 .mockbar .mkmsg.bad{color:#b3261e}
+/* حجم التقويم داخل المشهد (يطابق MKS و MKO في السكربت) */
+.stage.mock .mk-shade,.stage.mock #mockcells,.stage.mock .mk-over{transform-origin:50% 80%;transform:scale(.82)}
