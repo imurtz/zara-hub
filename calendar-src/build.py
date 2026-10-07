@@ -129,9 +129,7 @@ function mockRender(w){const box=$("#mockcells"),st=$("#stage");if(SEC!=="mockup
   // تداخل بسيط بين الخلايا المتجاورة يمنع ظهور خطوط شعرية بينها
   const o=1.2;out+=`<div class="mcell" style="transform:${mkH(src,dst)};clip-path:inset(${Math.max(0,va*PXH-o)}px ${Math.max(0,PXW-ub*PXW-o)}px ${Math.max(0,PXH-vb*PXH-o)}px ${Math.max(0,ua*PXW-o)}px)">${html}</div>`}
  box.innerHTML=out;
- // شريط حلقات السلك: يتبع الحافة العليا المنحنية للصفحة ويمتد قليلاً تحتها
- const pts=[],N=12;for(let i=0;i<=N;i++)pts.push(mkFwd(i/N,-.012,w,h));for(let i=N;i>=0;i--)pts.push(mkFwd(i/N,.082,w,h));
- $("#mkover").style.clipPath="polygon("+pts.map(p=>(p[0]/w*100).toFixed(3)+"% "+(p[1]/h*100).toFixed(3)+"%").join(",")+")"}""")
+}""")
 rep('function viewHtml(){if(SEC!=="approved")return pageHtml();', 'function viewHtml(){if(SEC==="design"||(SEC==="mockup"&&!APPROVED))return pageHtml();')
 
 # ---------- السنة والمسارات ----------
