@@ -61,6 +61,7 @@ rep('const DESIGNS=[["a","أثر الخير","قوس وصورة"],["b","الأف
 rep('const R={a:[aMonth,aGift],b:[bMonth,bGift],c:[cMonth,cGift],d:[dMonth,dGift]};', r'''/* ---------- design E «الرحابة»: شبكة وأرقام A + صورة جانبية كاملة الارتفاع، بفراغات أوسع ---------- */
 /* نقش الخلفية: أيقونة الشعار نفسها مكبَّرة وشفافة في أطراف الصفحة (على نهج تقويم 2026) */
 /*@MARK@*/
+/*@HERITAGE@*/
 const mkSvg=c=>`<svg class="mk ${c}" xmlns="http://www.w3.org/2000/svg" viewBox="-3 -3 256 242">${MARK_D.map(d=>`<path d="${d}"/>`).join("")}</svg>`;
 const pat=k=>`<div class="pat ${k}">${mkSvg("a")}${mkSvg("b")}${mkSvg("c")}${mkSvg("d")}</div>`;
 /* العبارة العلوية تُطابق عرض الشعار تماماً: كل سطر يُكبَّر أو يُصغَّر حتى يبدأ وينتهي مع حدَّي الشعار */
@@ -71,10 +72,10 @@ function eMonth(mo,m){const g=gridData(mo),mt=monthMeta(mo);
  const q=k=>`<div class="q"><div class="qrbox">${qrEl(m["q"+k+"u"],16,m["q"+k+"img"])}</div><div class="qt"><b>${esc(m["q"+k+"a"])}</b><span>${esc(m["q"+k+"b"])}</span></div></div>`;
  return `<section class="page d-e month">${pat("m")}<div class="photo">${photoEl(m,mo,"e")}</div><div class="credit">${esc(S().lblArtist)}: ${esc(m.artist)}</div>${logo()}
  <div class="sp"><em>${esc(S().lblSponsor)}</em><div class="sb">${spBox(m)}</div></div>
- <h1>${MONTH_AR[mo-1]}</h1><div class="meta"><i>${mt.label}</i><span>${YEAR} م &nbsp;·&nbsp; ${hy(mt.year)} هـ</span></div>
+ <h1>${MONTH_AR[mo-1]}</h1><div class="ghost">${pad(mo)}</div><div class="meta"><i>${mt.label}</i><span>${YEAR} م &nbsp;·&nbsp; ${hy(mt.year)} هـ</span></div>
  <div class="slogan"><b>${esc(m.s1)}</b><span>${esc(m.s2)}</span></div>
- <table class="grid" style="--rh:${(52.5/g.rows).toFixed(2)}mm"><thead><tr>${head()}</tr></thead><tbody>${body}</tbody></table><div class="legend">${chips}</div>
- <div class="dock">${q(1)}${q(2)}${q(3)}</div></section>`}
+ <table class="grid" style="--rh:${(50/g.rows).toFixed(2)}mm"><thead><tr>${head()}</tr></thead><tbody>${body}</tbody></table><div class="legend">${chips}</div>
+ <div class="dock">${q(1)}${q(2)}${q(3)}</div>${heritage(mo)}</section>`}
 function eGift(g){return `<section class="page d-e gift">${pat("g")}${logo()}
  <div class="gtitle">${g.titleImg?`<img src="${blob(g.titleImg)}" alt="">`:`<h2><b>${esc(g.h1)}</b><span>${esc(g.h2)}</span></h2>`}</div>${form()}
  <div class="bigqr"><div class="qrbox">${qrEl(g.url,44,g.qrImg)}</div><div class="cname">${esc(g.camp)}</div><div class="go">${esc(S().lblGo)}</div></div>
@@ -160,7 +161,7 @@ doc = '<!DOCTYPE html>\n<html lang="ar" dir="rtl">\n<head>\n<meta charset="UTF-8
 assert "</style>" in doc
 doc = doc.replace("</style>\n<div id=\"app\"", "</style>\n</head>\n<body>\n<div id=\"app\"", 1) + "\n</body>\n</html>\n"
 logo = "data:image/png;base64," + base64.b64encode(open(os.path.join(HERE, "logo_web.png"), "rb").read()).decode()
-out = doc.replace("/*@DESIGNS@*/", rd("designs.css") + "\n" + rd("design-e.css")).replace("/*@DEMO@*/", rd("demo.js")).replace("/*@EVENTS@*/", rd("events.js")).replace("/*@MARK@*/", rd("logo-mark.js")).replace("/*@QR@*/", rd("qrcode.js").replace("</script", "<\\/script")).replace("/*@LOGO@*/", logo)
+out = doc.replace("/*@DESIGNS@*/", rd("designs.css") + "\n" + rd("design-e.css")).replace("/*@DEMO@*/", rd("demo.js")).replace("/*@EVENTS@*/", rd("events.js")).replace("/*@MARK@*/", rd("logo-mark.js")).replace("/*@HERITAGE@*/", rd("heritage.js")).replace("/*@QR@*/", rd("qrcode.js").replace("</script", "<\\/script")).replace("/*@LOGO@*/", logo)
 dest = os.path.join(HERE, "..", "Login", "calendar", "index.html")
 os.makedirs(os.path.dirname(dest), exist_ok=True)
 io.open(dest, "w", encoding="utf-8").write(out)

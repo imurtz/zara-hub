@@ -12,14 +12,14 @@
 .d-e .sp .sb{height:11mm;min-width:26mm;max-width:46mm;display:flex;align-items:center;justify-content:center}
 .d-e .sp .sb img{height:11mm;width:auto;max-width:46mm;object-fit:contain}
 .d-e .sp .ph{font-size:2.6mm;color:var(--cb);font-weight:500;border:.25mm dashed var(--cb);border-radius:2mm;padding:2.6mm 6mm;white-space:nowrap}
-.d-e h1{right:15mm;top:27mm;font-family:var(--fd);font-weight:700;font-size:15mm;line-height:1;color:var(--cg)}
-.d-e .meta{right:15mm;top:45mm;display:flex;align-items:center;gap:3mm}
+.d-e h1{right:15mm;top:26mm;font-family:var(--fd);font-weight:700;font-size:15mm;line-height:1;color:var(--cg)}
+.d-e .meta{right:15mm;top:43.8mm;display:flex;align-items:center;gap:3mm}
 .d-e .meta i{font-style:normal;background:#e6e7e8;color:var(--cb);font-weight:700;font-size:3.1mm;padding:1mm 4mm;border-radius:5mm}
 .d-e .meta span{font-size:3mm;font-weight:600;color:var(--cb)}
 .d-e .slogan{left:0;bottom:14.5mm;width:64mm;padding:0 6mm;display:flex;flex-direction:column;align-items:center;text-align:center;font-family:var(--fb)}
 .d-e .slogan b{font-size:4.1mm;font-weight:700;color:#fff;line-height:1.5}
 .d-e .slogan span{font-size:3.5mm;font-weight:500;color:#f1dcc0;line-height:1.5}
-.d-e .grid{left:78mm;top:53mm;width:117mm;border-collapse:collapse;table-layout:fixed;direction:rtl}
+.d-e .grid{left:78mm;top:51.5mm;width:117mm;border-collapse:collapse;table-layout:fixed;direction:rtl}
 .d-e .grid th{height:6mm;font-size:2.8mm;font-weight:700;color:var(--cg);border-bottom:.45mm solid var(--cg);vertical-align:middle}
 .d-e .grid th.fri{color:var(--cb)}
 .d-e .grid td{height:var(--rh);text-align:center;vertical-align:middle;border-bottom:.2mm solid #e6e7e8;padding:0}
@@ -27,10 +27,10 @@
 .d-e .grid td i{display:block;font-style:normal;font-size:5.2mm;font-weight:700;line-height:5.9mm;margin:0 auto;width:5.9mm;height:5.9mm;border-radius:50%}
 .d-e .grid td i.ev{color:#fff;font-size:4.3mm;width:5.9mm;height:5.9mm;line-height:5.9mm}
 .d-e .grid td s{display:block;text-decoration:none;font-size:2.3mm;color:var(--cb);font-weight:600;line-height:2.4mm}
-.d-e .legend{left:78mm;right:15mm;bottom:8mm;display:flex;flex-wrap:wrap;gap:.75mm 3.2mm;font-size:2.2mm;font-weight:500;line-height:2.5mm}
+.d-e .legend{left:78mm;right:15mm;bottom:13mm;display:flex;flex-wrap:wrap;gap:.75mm 3.2mm;font-size:2.2mm;font-weight:500;line-height:2.5mm}
 .d-e .legend span{display:inline-flex;align-items:center;gap:1.1mm;white-space:nowrap}
 .d-e .legend b{flex:none;min-width:3.5mm;height:2.5mm;padding:0 .7mm;border-radius:1.25mm;color:#fff;font-size:2mm;font-weight:700;line-height:2.5mm;text-align:center}
-.d-e .dock{left:78mm;right:15mm;top:114.6mm;display:flex;justify-content:space-between;align-items:center}
+.d-e .dock{left:78mm;right:15mm;top:110.2mm;display:flex;justify-content:space-between;align-items:center}
 .d-e .q{display:flex;align-items:center;gap:2.4mm}
 .d-e .qrbox{background:#fff;border-radius:2.2mm;padding:1.1mm;border:.3mm solid var(--cb);display:inline-block;line-height:0}
 .d-e .qt{display:flex;flex-direction:column}
@@ -68,11 +68,15 @@
 .d-e .mk{position:absolute;width:var(--w);height:auto;fill:none;stroke:var(--cg);stroke-width:1.5;stroke-linejoin:round;opacity:.11;overflow:visible}
 .d-e .pat.m .mk.a{--w:62mm;right:-14mm;top:-20mm}
 .d-e .pat.m .mk.b{display:none}
-.d-e .pat.m .mk.c{--w:50mm;left:-8mm;bottom:-22mm}
-.d-e .pat.m .mk.d{--w:50mm;right:-18mm;bottom:-14mm;opacity:.08}
+.d-e .pat.m .mk.c{display:none}
+.d-e .pat.m .mk.d{display:none}
 .d-e .pat.g .mk.a{--w:74mm;right:-18mm;top:-24mm}
 .d-e .pat.g .mk.b{--w:74mm;right:50mm;top:-44mm;opacity:.07}
 .d-e .pat.g .mk.c{--w:60mm;left:-14mm;bottom:-24mm}
 .d-e .pat.g .mk.d{--w:60mm;left:42mm;bottom:-40mm;opacity:.07}
 /* ---- «أثر الخير»: قائمة المناسبات أضيق قليلاً لتتسع لثلاثة أسطر في الأشهر المزدحمة دون ملامسة العبارة ---- */
 .d-a .legend{gap:.15mm 3mm;font-size:2.2mm;line-height:3mm}
+/* ---- رقم الشهر المفرَّغ (كما في «أثر الخير») تحت الشعار، بمحاذاة اسم الشهر ---- */
+.d-e .ghost{left:78mm;top:25.2mm;direction:ltr;font-family:var(--fb);font-weight:700;font-size:18.5mm;line-height:1;letter-spacing:-.3mm;color:transparent;-webkit-text-stroke:.26mm var(--cb);opacity:.8}
+/* ---- الشريط التراثي: خط رفيع خفيف في آخر الصفحة، بنفس أسلوب حدود الشعار، عنصر مختلف لكل شهر ---- */
+.d-e .her{left:78mm;bottom:3mm;width:117mm;height:8mm;fill:none;stroke:var(--cg);stroke-width:2.1;stroke-linecap:round;stroke-linejoin:round;opacity:.38;overflow:visible}

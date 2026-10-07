@@ -414,14 +414,14 @@ body.embedded header.top{justify-content:flex-start}
 .d-e .sp .sb{height:11mm;min-width:26mm;max-width:46mm;display:flex;align-items:center;justify-content:center}
 .d-e .sp .sb img{height:11mm;width:auto;max-width:46mm;object-fit:contain}
 .d-e .sp .ph{font-size:2.6mm;color:var(--cb);font-weight:500;border:.25mm dashed var(--cb);border-radius:2mm;padding:2.6mm 6mm;white-space:nowrap}
-.d-e h1{right:15mm;top:27mm;font-family:var(--fd);font-weight:700;font-size:15mm;line-height:1;color:var(--cg)}
-.d-e .meta{right:15mm;top:45mm;display:flex;align-items:center;gap:3mm}
+.d-e h1{right:15mm;top:26mm;font-family:var(--fd);font-weight:700;font-size:15mm;line-height:1;color:var(--cg)}
+.d-e .meta{right:15mm;top:43.8mm;display:flex;align-items:center;gap:3mm}
 .d-e .meta i{font-style:normal;background:#e6e7e8;color:var(--cb);font-weight:700;font-size:3.1mm;padding:1mm 4mm;border-radius:5mm}
 .d-e .meta span{font-size:3mm;font-weight:600;color:var(--cb)}
 .d-e .slogan{left:0;bottom:14.5mm;width:64mm;padding:0 6mm;display:flex;flex-direction:column;align-items:center;text-align:center;font-family:var(--fb)}
 .d-e .slogan b{font-size:4.1mm;font-weight:700;color:#fff;line-height:1.5}
 .d-e .slogan span{font-size:3.5mm;font-weight:500;color:#f1dcc0;line-height:1.5}
-.d-e .grid{left:78mm;top:53mm;width:117mm;border-collapse:collapse;table-layout:fixed;direction:rtl}
+.d-e .grid{left:78mm;top:51.5mm;width:117mm;border-collapse:collapse;table-layout:fixed;direction:rtl}
 .d-e .grid th{height:6mm;font-size:2.8mm;font-weight:700;color:var(--cg);border-bottom:.45mm solid var(--cg);vertical-align:middle}
 .d-e .grid th.fri{color:var(--cb)}
 .d-e .grid td{height:var(--rh);text-align:center;vertical-align:middle;border-bottom:.2mm solid #e6e7e8;padding:0}
@@ -429,10 +429,10 @@ body.embedded header.top{justify-content:flex-start}
 .d-e .grid td i{display:block;font-style:normal;font-size:5.2mm;font-weight:700;line-height:5.9mm;margin:0 auto;width:5.9mm;height:5.9mm;border-radius:50%}
 .d-e .grid td i.ev{color:#fff;font-size:4.3mm;width:5.9mm;height:5.9mm;line-height:5.9mm}
 .d-e .grid td s{display:block;text-decoration:none;font-size:2.3mm;color:var(--cb);font-weight:600;line-height:2.4mm}
-.d-e .legend{left:78mm;right:15mm;bottom:8mm;display:flex;flex-wrap:wrap;gap:.75mm 3.2mm;font-size:2.2mm;font-weight:500;line-height:2.5mm}
+.d-e .legend{left:78mm;right:15mm;bottom:13mm;display:flex;flex-wrap:wrap;gap:.75mm 3.2mm;font-size:2.2mm;font-weight:500;line-height:2.5mm}
 .d-e .legend span{display:inline-flex;align-items:center;gap:1.1mm;white-space:nowrap}
 .d-e .legend b{flex:none;min-width:3.5mm;height:2.5mm;padding:0 .7mm;border-radius:1.25mm;color:#fff;font-size:2mm;font-weight:700;line-height:2.5mm;text-align:center}
-.d-e .dock{left:78mm;right:15mm;top:114.6mm;display:flex;justify-content:space-between;align-items:center}
+.d-e .dock{left:78mm;right:15mm;top:110.2mm;display:flex;justify-content:space-between;align-items:center}
 .d-e .q{display:flex;align-items:center;gap:2.4mm}
 .d-e .qrbox{background:#fff;border-radius:2.2mm;padding:1.1mm;border:.3mm solid var(--cb);display:inline-block;line-height:0}
 .d-e .qt{display:flex;flex-direction:column}
@@ -470,14 +470,18 @@ body.embedded header.top{justify-content:flex-start}
 .d-e .mk{position:absolute;width:var(--w);height:auto;fill:none;stroke:var(--cg);stroke-width:1.5;stroke-linejoin:round;opacity:.11;overflow:visible}
 .d-e .pat.m .mk.a{--w:62mm;right:-14mm;top:-20mm}
 .d-e .pat.m .mk.b{display:none}
-.d-e .pat.m .mk.c{--w:50mm;left:-8mm;bottom:-22mm}
-.d-e .pat.m .mk.d{--w:50mm;right:-18mm;bottom:-14mm;opacity:.08}
+.d-e .pat.m .mk.c{display:none}
+.d-e .pat.m .mk.d{display:none}
 .d-e .pat.g .mk.a{--w:74mm;right:-18mm;top:-24mm}
 .d-e .pat.g .mk.b{--w:74mm;right:50mm;top:-44mm;opacity:.07}
 .d-e .pat.g .mk.c{--w:60mm;left:-14mm;bottom:-24mm}
 .d-e .pat.g .mk.d{--w:60mm;left:42mm;bottom:-40mm;opacity:.07}
 /* ---- «أثر الخير»: قائمة المناسبات أضيق قليلاً لتتسع لثلاثة أسطر في الأشهر المزدحمة دون ملامسة العبارة ---- */
 .d-a .legend{gap:.15mm 3mm;font-size:2.2mm;line-height:3mm}
+/* ---- رقم الشهر المفرَّغ (كما في «أثر الخير») تحت الشعار، بمحاذاة اسم الشهر ---- */
+.d-e .ghost{left:78mm;top:25.2mm;direction:ltr;font-family:var(--fb);font-weight:700;font-size:18.5mm;line-height:1;letter-spacing:-.3mm;color:transparent;-webkit-text-stroke:.26mm var(--cb);opacity:.8}
+/* ---- الشريط التراثي: خط رفيع خفيف في آخر الصفحة، بنفس أسلوب حدود الشعار، عنصر مختلف لكل شهر ---- */
+.d-e .her{left:78mm;bottom:3mm;width:117mm;height:8mm;fill:none;stroke:var(--cg);stroke-width:2.1;stroke-linecap:round;stroke-linejoin:round;opacity:.38;overflow:visible}
 
 </style>
 </head>
@@ -2984,6 +2988,26 @@ function dGift(g){const [l1,l2,l3]=lc();return `<section class="page d-d gift"><
 /* أيقونة شعار الجمعية كمسارات متجهة (من ملف الهوية المعتمد Motion 01.svg) — تُستخدم لنقش الخلفية بخط رفيع */
 const MARK_D=["M139.04,66.65v48.64c0,1,.4,1.96,1.11,2.67l32.68,32.67c2.27,2.27,6.14.85,6.43-2.34,1.7-18.76,2.04-66.25-34.69-84.99-2.53-1.29-5.53.51-5.53,3.35", "M151.01,172.45l-32.68-32.68c-.71-.71-1.67-1.11-2.67-1.11h-48.64c-2.84,0-4.64,3-3.35,5.53,18.75,36.72,66.23,36.38,84.99,34.69,3.19-.29,4.61-4.16,2.34-6.43", "M104.96,56.18h-44.64c-2.09,0-3.78,1.69-3.78,3.77v44.64c0,2.08,1.69,3.77,3.78,3.77h44.64c2.08,0,3.77-1.69,3.77-3.77v-44.64c0-2.08-1.69-3.77-3.77-3.77", "M126.32,2.65C96.39-.9,60.04-.16,14.02.77l-9.36.19c-2.03.04-3.66,1.67-3.7,3.7l-.19,9.36C0,51.89-.63,83.22,1.14,109.8c.38,5.72.87,11.22,1.5,16.52,4.07,34.36,13.56,57.16,30.76,73.91,18.96,18.47,46.92,29.08,91.34,33.17,18.58,1.71,40.03,2.28,64.91,1.82,10.09-.19,20.73-.55,31.98-1.08l8.51-.4c1.95-.09,3.5-1.65,3.6-3.59l.4-8.51c.15-3.16.28-6.27.4-9.33.08-2.14-1.63-3.92-3.77-3.92h-22.35v.03c-51.57,1.93-88.64-.01-115.1-6.44-18.7-4.54-32.11-11.32-41.59-20.55-10.3-10.03-16.59-23.67-20.35-41.39-5.67-26.74-5.56-62.75-4.67-109.62.04-2.03,1.68-3.67,3.71-3.71,77.91-1.48,125.84-.82,151,25.02,19.17,19.68,27.76,56.26,27.71,122.02,0,2.08,1.69,3.78,3.77,3.78h18.69c2.09,0,3.78-1.7,3.78-3.78.02-74.21-10.64-115.19-35.14-140.34-16.75-17.2-39.54-26.68-73.91-30.76"];
 
+/* شريط تراثي بخط رفيع أسفل صفحة الشهر في «الرحابة» — لكل شهر عنصر من تراث القطيف، يتكرر على امتداد الشريط.
+   كل عنصر مرسوم داخل مربع عرضه w وارتفاعه 70 (الأرض عند y=70)، و g المسافة بين التكرارات. الوحدة = عُشر مليمتر. */
+const HER=[
+ {n:"قلعة تاروت",w:176,g:34,s:`<path d="M8 70L13 26H41L46 70M13 26v-7h6v7m5 0v-7h6v7m5 0v-7h6v7M46 44H130M52 44v-6h7v6m8 0v-6h7v6m8 0v-6h7v6m8 0v-6h7v6m8 0v-6h7v6M130 70L135 26H163L168 70M135 26v-7h6v7m5 0v-7h6v7m5 0v-7h6v7M80 70V56q8-10 16 0V70M24 40v8M149 40v8"/>`},
+ {n:"النخيل",w:150,g:20,s:`<path d="M52 70C50 54 55 38 52 24M52 24c-10-11-24-9-32 1M52 24c10-11 24-9 32 1M52 24c-7-15-20-18-30-13M52 24c7-15 20-18 30-13M52 24c-1-9 0-15 0-21M112 70c-1-10 2-20 0-28M112 42c-7-8-17-6-23 1M112 42c7-8 17-6 23 1M112 42c-5-11-14-13-21-9M112 42c5-11 14-13 21-9M112 42c0-6 0-10 0-14"/>`},
+ {n:"السفينة الشراعية",w:210,g:40,s:`<path d="M26 50H178C168 66 60 68 40 60ZM98 50V6M98 9L160 44H98M98 16L66 44H98M0 70q9-7 18 0t18 0 18 0 18 0 18 0 18 0 18 0 18 0 18 0 18 0 18 0 12 0"/>`},
+ {n:"المحار واللؤلؤ",w:96,g:30,s:`<path d="M8 60a40 40 0 0 1 80 0ZM48 60L15 38M48 60L28 26M48 60V20M48 60L68 26M48 60L81 38M40 60q8 10 16 0"/><circle cx="48" cy="67" r="3"/>`},
+ {n:"الأقواس الجصية",w:64,g:0,s:`<path d="M4 70V36Q4 12 32 6Q60 12 60 36V70M13 70V38Q13 22 32 16Q51 22 51 38V70M4 36h9M51 36h9M32 6V0"/>`},
+ {n:"الفخار",w:150,g:26,s:`<path d="M22 70C4 60 6 34 24 27V19H50V27C68 34 70 60 52 70ZM19 19H55M12 44H62M24 27C14 28 12 36 14 40M50 27C60 28 62 36 60 40M98 70C88 64 88 46 98 40V34H122V40C132 46 132 64 122 70ZM95 34H125M92 54H128"/>`},
+ {n:"سلال الخوص",w:112,g:30,s:`<path d="M10 38H102L90 70H22ZM20 38Q56 2 92 38M14 49H98M18 60H94M28 38L36 70M44 38L48 70M56 38V70M68 38L64 70M84 38L76 70"/>`},
+ {n:"عيون الماء",w:170,g:30,s:`<path d="M10 56a75 12 0 1 0 150 0a75 12 0 1 0-150 0M38 56a47 7 0 1 0 94 0a47 7 0 1 0-94 0M66 56a19 3 0 1 0 38 0a19 3 0 1 0-38 0M85 8q10 16 0 24q-10-8 0-24M56 22q6 10 0 15q-6-5 0-15M114 22q6 10 0 15q-6-5 0-15"/>`},
+ {n:"صيد السمك",w:124,g:30,s:`<path d="M8 44Q44 16 84 44Q44 72 8 44ZM84 44L110 28V60ZM30 30Q40 44 30 58M52 26Q60 44 52 62"/><circle cx="22" cy="42" r="2.5"/>`},
+ {n:"البيوت التراثية",w:230,g:24,s:`<path d="M4 70V34H62V70M4 34v-6h8v6m7 0v-6h8v6m7 0v-6h8v6m7 0v-6h13v6M62 70V16H138V70M62 16v-7h10v7m9 0v-7h10v7m9 0v-7h10v7m9 0v-7h19v7M138 70V40H196V70M138 40v-6h8v6m7 0v-6h8v6m7 0v-6h8v6m7 0v-6h13v6M88 70V46q12-14 24 0V70M76 26h10v10H76ZM114 26h10v10H114ZM22 46h10v12H22ZM156 50h10v12H156ZM196 70h30"/>`},
+ {n:"عذوق الرطب",w:104,g:30,s:`<path d="M52 0V16M52 16Q30 20 24 40M52 16Q46 24 44 44M52 16Q58 24 60 44M52 16Q74 20 80 40"/><ellipse cx="22" cy="46" rx="4" ry="6.5"/><ellipse cx="31" cy="54" rx="4" ry="6.5"/><ellipse cx="43" cy="51" rx="4" ry="6.5"/><ellipse cx="52" cy="60" rx="4" ry="6.5"/><ellipse cx="61" cy="51" rx="4" ry="6.5"/><ellipse cx="73" cy="54" rx="4" ry="6.5"/><ellipse cx="82" cy="46" rx="4" ry="6.5"/><ellipse cx="37" cy="64" rx="4" ry="6"/><ellipse cx="67" cy="64" rx="4" ry="6"/>`},
+ {n:"النقوش الجصية",w:70,g:0,s:`<path d="M35 6L64 35L35 64L6 35ZM14 14H56V56H14ZM0 35H6M64 35H70"/><circle cx="35" cy="35" r="9"/>`}
+];
+function heritage(mo){const h=HER[mo-1],W=1170,n=Math.max(1,Math.floor((W+h.g)/(h.w+h.g))),off=(W-(n*h.w+(n-1)*h.g))/2;let g="";
+ for(let i=0;i<n;i++)g+=`<g transform="translate(${(off+i*(h.w+h.g)).toFixed(1)} 4)">${h.s}</g>`;
+ return `<svg class="her" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} 80" aria-label="${h.n}"><path d="M0 74H${W}"/>${g}</svg>`}
+
 const mkSvg=c=>`<svg class="mk ${c}" xmlns="http://www.w3.org/2000/svg" viewBox="-3 -3 256 242">${MARK_D.map(d=>`<path d="${d}"/>`).join("")}</svg>`;
 const pat=k=>`<div class="pat ${k}">${mkSvg("a")}${mkSvg("b")}${mkSvg("c")}${mkSvg("d")}</div>`;
 /* العبارة العلوية تُطابق عرض الشعار تماماً: كل سطر يُكبَّر أو يُصغَّر حتى يبدأ وينتهي مع حدَّي الشعار */
@@ -2994,10 +3018,10 @@ function eMonth(mo,m){const g=gridData(mo),mt=monthMeta(mo);
  const q=k=>`<div class="q"><div class="qrbox">${qrEl(m["q"+k+"u"],16,m["q"+k+"img"])}</div><div class="qt"><b>${esc(m["q"+k+"a"])}</b><span>${esc(m["q"+k+"b"])}</span></div></div>`;
  return `<section class="page d-e month">${pat("m")}<div class="photo">${photoEl(m,mo,"e")}</div><div class="credit">${esc(S().lblArtist)}: ${esc(m.artist)}</div>${logo()}
  <div class="sp"><em>${esc(S().lblSponsor)}</em><div class="sb">${spBox(m)}</div></div>
- <h1>${MONTH_AR[mo-1]}</h1><div class="meta"><i>${mt.label}</i><span>${YEAR} م &nbsp;·&nbsp; ${hy(mt.year)} هـ</span></div>
+ <h1>${MONTH_AR[mo-1]}</h1><div class="ghost">${pad(mo)}</div><div class="meta"><i>${mt.label}</i><span>${YEAR} م &nbsp;·&nbsp; ${hy(mt.year)} هـ</span></div>
  <div class="slogan"><b>${esc(m.s1)}</b><span>${esc(m.s2)}</span></div>
- <table class="grid" style="--rh:${(52.5/g.rows).toFixed(2)}mm"><thead><tr>${head()}</tr></thead><tbody>${body}</tbody></table><div class="legend">${chips}</div>
- <div class="dock">${q(1)}${q(2)}${q(3)}</div></section>`}
+ <table class="grid" style="--rh:${(50/g.rows).toFixed(2)}mm"><thead><tr>${head()}</tr></thead><tbody>${body}</tbody></table><div class="legend">${chips}</div>
+ <div class="dock">${q(1)}${q(2)}${q(3)}</div>${heritage(mo)}</section>`}
 function eGift(g){return `<section class="page d-e gift">${pat("g")}${logo()}
  <div class="gtitle">${g.titleImg?`<img src="${blob(g.titleImg)}" alt="">`:`<h2><b>${esc(g.h1)}</b><span>${esc(g.h2)}</span></h2>`}</div>${form()}
  <div class="bigqr"><div class="qrbox">${qrEl(g.url,44,g.qrImg)}</div><div class="cname">${esc(g.camp)}</div><div class="go">${esc(S().lblGo)}</div></div>
