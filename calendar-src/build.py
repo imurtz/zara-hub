@@ -97,7 +97,7 @@ rep('<div class="tabs" id="designs" role="group" aria-label="التصميم"></d
 
 # ---------- قسم ثالث: موك أب التقويم المكتبي — صفحة الشهر مُسقطة على تقويم مكتبي مجسَّم ----------
 rep('<div class="stage" id="stage"><div class="pagebox" id="pagebox"></div></div>',
-    '<div class="stage" id="stage"><div class="mk-shade"></div><div class="mk-body" id="mkbody"></div><div class="rig" id="rig"><div class="pagebox" id="pagebox"></div></div><div id="mockcells"></div><div class="mk-over" id="mkover"></div></div>')
+    '<div class="stage" id="stage"><div class="mk-shade"></div><div class="mk-body" id="mkbody"></div><div class="rig" id="rig"><div class="pagebox" id="pagebox"></div></div><div id="mockcells"></div><div class="mk-over" id="mkover"></div></div><div class="mockbar"><button class="btn" id="mkdl">تنزيل صورة الموك أب</button><label class="btn" id="mkuplbl" hidden>رفع صورة خلفية<input type="file" id="mkup" accept="image/png,image/jpeg,image/webp" hidden></label><button class="btn" id="mkreset" hidden>الخلفية الافتراضية</button><span class="mkhint" id="mkhint" hidden>مقاس صورة الخلفية: 2400 × 1920 بكسل (أفقية، نسبة 5:4) بصيغة JPG أو PNG — والتقويم يقف في منتصف الصورة وقاعدته في ثلثها السفلي.</span><span class="mkmsg" id="mkmsg" role="status"></span></div>')
 rep('function fit(){const st=$("#stage"),w=st.clientWidth,s=w/PXW;st.style.height=PXH*s+"px";$("#pagebox").style.transform="scale("+s+")"}',
     """function fit(){const st=$("#stage"),rig=$("#rig"),w=st.clientWidth;st.classList.toggle("mock",SEC==="mockup");
  if(SEC!=="mockup"){const s=w/PXW;st.style.height=PXH*s+"px";rig.style.transformOrigin="0 0";rig.style.transform="scale("+s+")";mockRender(w);return}
@@ -128,8 +128,53 @@ function mockRender(w){const box=$("#mockcells"),st=$("#stage");if(SEC!=="mockup
   const src=[[ua*PXW,va*PXH],[ub*PXW,va*PXH],[ub*PXW,vb*PXH],[ua*PXW,vb*PXH]],dst=[mkFwd(ua,va,w,h),mkFwd(ub,va,w,h),mkFwd(ub,vb,w,h),mkFwd(ua,vb,w,h)];
   // تداخل بسيط بين الخلايا المتجاورة يمنع ظهور خطوط شعرية بينها
   const o=1.2;out+=`<div class="mcell" style="transform:${mkH(src,dst)};clip-path:inset(${Math.max(0,va*PXH-o)}px ${Math.max(0,PXW-ub*PXW-o)}px ${Math.max(0,PXH-vb*PXH-o)}px ${Math.max(0,ua*PXW-o)}px)">${html}</div>`}
- box.innerHTML=out;
-}""")
+ box.innerHTML=out;mockBgApply()}
+/* ---------- خلفية الموك أب (يرفعها المحرِّر وتُحفظ مع تقويم السنة) وتنزيل المشهد صورةً ---------- */
+let MOCKBG="";const MKW=2400,MKH=1920,MKBG0="mockup/bg2.jpg";
+const mkEl=id=>document.getElementById(id),mkMsg=(t,bad)=>{const e=mkEl("mkmsg");e.textContent=t||"";e.classList.toggle("bad",!!bad)};
+function mockBgApply(){const st=mkEl("stage");if(MOCKBG)st.style.setProperty("--mkbg",'url("'+MOCKBG+'")');else st.style.removeProperty("--mkbg");
+ const w=CANW===true&&typeof ASSETS!=="undefined"&&!!ASSETS;mkEl("mkuplbl").hidden=!w;mkEl("mkhint").hidden=!w;mkEl("mkreset").hidden=!w||!MOCKBG}
+async function mockUpload(file){if(!file)return;try{mkMsg("جارٍ رفع الخلفية…");
+  // تُقصّ الصورة من الوسط إلى المقاس المعتمد كي تطابق المشهد أياً كان مقاسها الأصلي
+  const bmp=await createImageBitmap(file),c=document.createElement("canvas");c.width=MKW;c.height=MKH;
+  const k=Math.max(MKW/bmp.width,MKH/bmp.height),w=bmp.width*k,h=bmp.height*k;c.getContext("2d").drawImage(bmp,(MKW-w)/2,(MKH-h)/2,w,h);
+  const b=await new Promise(r=>c.toBlob(r,"image/jpeg",.9)),r=await ASSETS.upload(b);
+  MOCKBG=r.id;mockBgApply();await DB.doc("cal/_mock").set({bg:MOCKBG});mkMsg("تم اعتماد الخلفية الجديدة.")}
+ catch(e){mkMsg("تعذّر رفع الخلفية، أعد المحاولة.",true)}}
+async function mockBgReset(){try{MOCKBG="";mockBgApply();await DB.doc("cal/_mock").set({bg:""});mkMsg("عادت الخلفية الافتراضية.")}catch(e){mkMsg("تعذّر الحفظ.",true)}}
+const mkBlob=u=>{const g=(x,m)=>fetch(x,{mode:"cors",cache:m}).then(r=>{if(!r.ok)throw 0;return r.blob()});return g(u,"default").catch(()=>g(u,"reload")).catch(()=>g(u+(u.indexOf("?")<0?"?":"&")+"cors=1","reload"))};
+const mkPic=u=>mkBlob(u).then(b=>createImageBitmap(b));
+async function mockDownload(){const btn=mkEl("mkdl");if(btn.disabled)return;btn.disabled=true;mkMsg("جارٍ تجهيز الصورة…");let hold=null;
+ try{if(!window.htmlToImage)await new Promise((ok,no)=>{const s=document.createElement("script");s.src="https://cdnjs.cloudflare.com/ajax/libs/html-to-image/1.11.13/html-to-image.min.js";s.onload=ok;s.onerror=no;document.head.appendChild(s)});
+  // الصفحة المسطّحة تُرسم أولاً صورةً (خارج الشاشة)، ثم تُسقط على سطح التقويم بنفس شبكة الانحناء والمنظور
+  hold=document.createElement("div");hold.style.cssText="position:fixed;left:0;top:0;width:210mm;height:150mm;overflow:hidden;z-index:-1;opacity:0;pointer-events:none;direction:rtl";
+  hold.innerHTML=viewHtml();mkEl("app").appendChild(hold);const page=hold.firstElementChild;
+  await Promise.all([...hold.querySelectorAll("img")].filter(i=>!i.complete).map(i=>new Promise(r=>{i.onload=i.onerror=r})));
+  if(document.fonts&&document.fonts.ready)await document.fonts.ready;
+  const opt={pixelRatio:2.2,width:PXW,height:PXH,backgroundColor:"#ffffff",fetchRequestInit:{mode:"cors"},style:{opacity:"1"}};
+  await htmlToImage.toCanvas(page,opt);const flat=await htmlToImage.toCanvas(page,opt);
+  const [bg,body,rings]=await Promise.all([mkPic(MOCKBG||MKBG0).catch(()=>mkPic(MKBG0)),mkPic("mockup/body.webp"),mkPic("mockup/rings.png")]);
+  const cv=document.createElement("canvas");cv.width=MKW;cv.height=MKH;const x=cv.getContext("2d");x.imageSmoothingQuality="high";
+  const k=Math.max(MKW/bg.width,MKH/bg.height);x.drawImage(bg,(MKW-bg.width*k)/2,(MKH-bg.height*k)/2,bg.width*k,bg.height*k);x.drawImage(body,0,0,MKW,MKH);
+  const NX=48,NY=34,fw=flat.width,fh=flat.height,P=[];for(let j=0;j<=NY;j++){P.push([]);for(let i=0;i<=NX;i++)P[j].push(mkFwd(i/NX,j/NY,MKW,MKH))}
+  const tri=(s0,s1,s2,d0,d1,d2)=>{const cx=(d0[0]+d1[0]+d2[0])/3,cy=(d0[1]+d1[1]+d2[1])/3,ex=p=>{const dx=p[0]-cx,dy=p[1]-cy,l=Math.hypot(dx,dy)||1;return[p[0]+dx/l*1.1,p[1]+dy/l*1.1]};
+   const e0=ex(d0),e1=ex(d1),e2=ex(d2);x.save();x.beginPath();x.moveTo(e0[0],e0[1]);x.lineTo(e1[0],e1[1]);x.lineTo(e2[0],e2[1]);x.closePath();x.clip();
+   const den=(s1[0]-s0[0])*(s2[1]-s0[1])-(s2[0]-s0[0])*(s1[1]-s0[1]);
+   const a=((d1[0]-d0[0])*(s2[1]-s0[1])-(d2[0]-d0[0])*(s1[1]-s0[1]))/den,c=((d2[0]-d0[0])*(s1[0]-s0[0])-(d1[0]-d0[0])*(s2[0]-s0[0]))/den;
+   const b=((d1[1]-d0[1])*(s2[1]-s0[1])-(d2[1]-d0[1])*(s1[1]-s0[1]))/den,d=((d2[1]-d0[1])*(s1[0]-s0[0])-(d1[1]-d0[1])*(s2[0]-s0[0]))/den;
+   x.transform(a,b,c,d,d0[0]-a*s0[0]-c*s0[1],d0[1]-b*s0[0]-d*s0[1]);x.drawImage(flat,0,0);x.restore()};
+  for(let j=0;j<NY;j++)for(let i=0;i<NX;i++){const sa=[i/NX*fw,j/NY*fh],sb=[(i+1)/NX*fw,j/NY*fh],sc=[(i+1)/NX*fw,(j+1)/NY*fh],sd=[i/NX*fw,(j+1)/NY*fh];
+   tri(sa,sb,sc,P[j][i],P[j][i+1],P[j+1][i+1]);tri(sa,sc,sd,P[j][i],P[j+1][i+1],P[j+1][i])}
+  x.drawImage(rings,0,0,MKW,MKH);
+  const blob=await new Promise(r=>cv.toBlob(r,"image/jpeg",.94));if(!blob)throw 0;window.__mkLast=cv;
+  const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="موك-أب-تقويم-"+YEAR+"-"+(cur.kind==="g"?"الإهداء":MONTH_AR[cur.mo-1])+".jpg";a.click();setTimeout(()=>URL.revokeObjectURL(a.href),8000);mkMsg("تم تنزيل الصورة.")}
+ catch(e){console.error("mock download",e);mkMsg("تعذّر تجهيز الصورة، أعد المحاولة.",true)}
+ finally{if(hold)hold.remove();btn.disabled=false}}
+mkEl("mkdl").addEventListener("click",mockDownload);mkEl("mkreset").addEventListener("click",mockBgReset);
+mkEl("mkup").addEventListener("change",e=>{const f=e.target.files[0];e.target.value="";mockUpload(f)});
+""")
+rep('function applySnap(snap){let touched=false;snap.docs.forEach(d=>{const id=d.id,v=d.data();',
+    'function applySnap(snap){let touched=false;snap.docs.forEach(d=>{const id=d.id,v=d.data();if(id==="_mock"){MOCKBG=(v&&v.bg)||"";mockBgApply();return}')
 rep('function viewHtml(){if(SEC!=="approved")return pageHtml();', 'function viewHtml(){if(SEC==="design"||(SEC==="mockup"&&!APPROVED))return pageHtml();')
 
 # ---------- السنة والمسارات ----------
@@ -203,6 +248,9 @@ cut('(async function(){if(typeof claude==="undefined"||!claude.use)return;', ' r
 
 doc = '<!DOCTYPE html>\n<html lang="ar" dir="rtl">\n<head>\n<meta charset="UTF-8">\n<meta name="viewport" content="width=device-width, initial-scale=1">\n<meta name="robots" content="noindex">\n' + src
 assert "</style>" in doc
+# ورقة خطوط Google تُحمَّل بصلاحية CORS حتى يستطيع «تنزيل صورة الموك أب» قراءة قواعدها وتضمين الخطوط داخل الصورة
+assert doc.count('<link rel="stylesheet" href="https://fonts.googleapis.com') == 1
+doc = doc.replace('<link rel="stylesheet" href="https://fonts.googleapis.com', '<link rel="stylesheet" crossorigin="anonymous" href="https://fonts.googleapis.com')
 doc = doc.replace("</style>\n<div id=\"app\"", "</style>\n</head>\n<body>\n<div id=\"app\"", 1) + "\n</body>\n</html>\n"
 logo = "data:image/png;base64," + base64.b64encode(open(os.path.join(HERE, "logo_web.png"), "rb").read()).decode()
 out = doc.replace("/*@DESIGNS@*/", rd("designs.css") + "\n" + rd("design-e.css")).replace("/*@DEMO@*/", rd("demo.js")).replace("/*@EVENTS@*/", rd("events.js")).replace("/*@MARK@*/", rd("logo-mark.js")).replace("/*@HERITAGE@*/", rd("heritage.js")).replace("/*@QR@*/", rd("qrcode.js").replace("</script", "<\\/script")).replace("/*@LOGO@*/", logo)

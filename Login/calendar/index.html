@@ -7,7 +7,7 @@
 <title>التقاويم الميلادية | بوابة زارة</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&family=Alexandria:wght@400;500;600;700&family=Cairo:wght@400;500;600;700&family=Readex+Pro:wght@300;400;500;600;700&display=swap">
+<link rel="stylesheet" crossorigin="anonymous" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&family=Alexandria:wght@400;500;600;700&family=Cairo:wght@400;500;600;700&family=Readex+Pro:wght@300;400;500;600;700&display=swap">
 <style>
 :root{--bg:#f4f2ee;--panel:#ffffff;--fg:#25322e;--muted:#667570;--line:#dcd7cd;--accent:#517670;--accent-fg:#ffffff;--soft:#e7eeeb;--warn:#a87a22;--ok:#2d7a55;--bad:#b3402f;--stage:#e6e1d8;--focus:#b8926d}
 body{background:var(--bg);color:var(--fg);padding-inline:16px;font-family:'Readex Pro','Cairo',system-ui,sans-serif;font-size:15px;line-height:1.6}
@@ -123,7 +123,7 @@ body.embedded header.top{justify-content:flex-start}
 #app[data-sec="mockup"] .layout{grid-template-columns:minmax(0,1fr);max-width:1040px;margin-inline:auto}
 #app[data-sec="mockup"] .preview{position:static}
 /* المشهد: صورة الموك أب الأصلية بخلفيتها البيضاء ← الصفحة المنحنية ← حلقات السلك (مقصوصة من الصورة بشفافية، فتبقى فضية فوق أي لون) */
-.stage.mock{border:1px solid rgba(20,28,27,.08);background:#3a2a1c url(mockup/bg2.jpg) center/cover no-repeat}
+.stage.mock{border:1px solid rgba(20,28,27,.08);background:#3a2a1c var(--mkbg,url(mockup/bg2.jpg)) center/cover no-repeat}
 .stage.mock .rig{visibility:hidden}
 .mk-shade,.mk-body{display:none}
 .stage.mock .mk-shade{display:block;position:absolute;inset:0;z-index:1;background:url(mockup/body.webp) center/100% 100% no-repeat;pointer-events:none}
@@ -131,6 +131,14 @@ body.embedded header.top{justify-content:flex-start}
 #mockcells{position:absolute;inset:0;z-index:3;pointer-events:none}
 .mcell{position:absolute;left:0;top:0;width:210mm;height:150mm;transform-origin:0 0;direction:rtl;overflow:hidden;background:#fff}
 .stage.mock .mk-over{display:block;position:absolute;inset:0;z-index:4;pointer-events:none;background:url(mockup/rings.png) center/100% 100% no-repeat}
+/* ---- شريط أدوات الموك أب: تنزيل الصورة ورفع الخلفية ---- */
+.mockbar{display:none}
+#app[data-sec="mockup"] .mockbar{display:flex;flex-wrap:wrap;align-items:center;gap:8px 10px;margin-top:12px}
+.mockbar label.btn{cursor:pointer}
+.mockbar [hidden]{display:none!important}
+.mockbar .mkhint{flex:1 1 100%;font-size:12.5px;line-height:1.7;color:rgba(20,28,27,.62)}
+.mockbar .mkmsg{font-size:13px;color:#2f6f5e}
+.mockbar .mkmsg.bad{color:#b3261e}
 
 /* ---- the four designs (generated from the print templates) ---- */
 .page *{box-sizing:border-box;margin:0;padding:0}
@@ -519,7 +527,7 @@ body.embedded header.top{justify-content:flex-start}
   <nav class="sections" id="sections" aria-label="أقسام التقاويم الميلادية"><button data-sec="approved" aria-pressed="false">التقويم الميلادي المعتمد</button><button data-sec="design" aria-pressed="true">تصميم التقويم الميلادي للعام</button></nav>
   <div class="layout">
     <section class="preview" aria-label="معاينة الصفحة">
-      <div class="stage" id="stage"><div class="mk-shade"></div><div class="mk-body" id="mkbody"></div><div class="rig" id="rig"><div class="pagebox" id="pagebox"></div></div><div id="mockcells"></div><div class="mk-over" id="mkover"></div></div>
+      <div class="stage" id="stage"><div class="mk-shade"></div><div class="mk-body" id="mkbody"></div><div class="rig" id="rig"><div class="pagebox" id="pagebox"></div></div><div id="mockcells"></div><div class="mk-over" id="mkover"></div></div><div class="mockbar"><button class="btn" id="mkdl">تنزيل صورة الموك أب</button><label class="btn" id="mkuplbl" hidden>رفع صورة خلفية<input type="file" id="mkup" accept="image/png,image/jpeg,image/webp" hidden></label><button class="btn" id="mkreset" hidden>الخلفية الافتراضية</button><span class="mkhint" id="mkhint" hidden>مقاس صورة الخلفية: 2400 × 1920 بكسل (أفقية، نسبة 5:4) بصيغة JPG أو PNG — والتقويم يقف في منتصف الصورة وقاعدته في ثلثها السفلي.</span><span class="mkmsg" id="mkmsg" role="status"></span></div>
       <div class="navrow">
         <button class="btn" id="prev" aria-label="الصفحة السابقة">‹ السابقة</button>
         <div class="seg" id="kind" role="group" aria-label="نوع الصفحة"><button data-k="g">صفحة الإهداء</button><button data-k="m">صفحة الشهر</button></div>
@@ -3123,8 +3131,51 @@ function mockRender(w){const box=$("#mockcells"),st=$("#stage");if(SEC!=="mockup
   const src=[[ua*PXW,va*PXH],[ub*PXW,va*PXH],[ub*PXW,vb*PXH],[ua*PXW,vb*PXH]],dst=[mkFwd(ua,va,w,h),mkFwd(ub,va,w,h),mkFwd(ub,vb,w,h),mkFwd(ua,vb,w,h)];
   // تداخل بسيط بين الخلايا المتجاورة يمنع ظهور خطوط شعرية بينها
   const o=1.2;out+=`<div class="mcell" style="transform:${mkH(src,dst)};clip-path:inset(${Math.max(0,va*PXH-o)}px ${Math.max(0,PXW-ub*PXW-o)}px ${Math.max(0,PXH-vb*PXH-o)}px ${Math.max(0,ua*PXW-o)}px)">${html}</div>`}
- box.innerHTML=out;
-}
+ box.innerHTML=out;mockBgApply()}
+/* ---------- خلفية الموك أب (يرفعها المحرِّر وتُحفظ مع تقويم السنة) وتنزيل المشهد صورةً ---------- */
+let MOCKBG="";const MKW=2400,MKH=1920,MKBG0="mockup/bg2.jpg";
+const mkEl=id=>document.getElementById(id),mkMsg=(t,bad)=>{const e=mkEl("mkmsg");e.textContent=t||"";e.classList.toggle("bad",!!bad)};
+function mockBgApply(){const st=mkEl("stage");if(MOCKBG)st.style.setProperty("--mkbg",'url("'+MOCKBG+'")');else st.style.removeProperty("--mkbg");
+ const w=CANW===true&&typeof ASSETS!=="undefined"&&!!ASSETS;mkEl("mkuplbl").hidden=!w;mkEl("mkhint").hidden=!w;mkEl("mkreset").hidden=!w||!MOCKBG}
+async function mockUpload(file){if(!file)return;try{mkMsg("جارٍ رفع الخلفية…");
+  // تُقصّ الصورة من الوسط إلى المقاس المعتمد كي تطابق المشهد أياً كان مقاسها الأصلي
+  const bmp=await createImageBitmap(file),c=document.createElement("canvas");c.width=MKW;c.height=MKH;
+  const k=Math.max(MKW/bmp.width,MKH/bmp.height),w=bmp.width*k,h=bmp.height*k;c.getContext("2d").drawImage(bmp,(MKW-w)/2,(MKH-h)/2,w,h);
+  const b=await new Promise(r=>c.toBlob(r,"image/jpeg",.9)),r=await ASSETS.upload(b);
+  MOCKBG=r.id;mockBgApply();await DB.doc("cal/_mock").set({bg:MOCKBG});mkMsg("تم اعتماد الخلفية الجديدة.")}
+ catch(e){mkMsg("تعذّر رفع الخلفية، أعد المحاولة.",true)}}
+async function mockBgReset(){try{MOCKBG="";mockBgApply();await DB.doc("cal/_mock").set({bg:""});mkMsg("عادت الخلفية الافتراضية.")}catch(e){mkMsg("تعذّر الحفظ.",true)}}
+const mkBlob=u=>{const g=(x,m)=>fetch(x,{mode:"cors",cache:m}).then(r=>{if(!r.ok)throw 0;return r.blob()});return g(u,"default").catch(()=>g(u,"reload")).catch(()=>g(u+(u.indexOf("?")<0?"?":"&")+"cors=1","reload"))};
+const mkPic=u=>mkBlob(u).then(b=>createImageBitmap(b));
+async function mockDownload(){const btn=mkEl("mkdl");if(btn.disabled)return;btn.disabled=true;mkMsg("جارٍ تجهيز الصورة…");let hold=null;
+ try{if(!window.htmlToImage)await new Promise((ok,no)=>{const s=document.createElement("script");s.src="https://cdnjs.cloudflare.com/ajax/libs/html-to-image/1.11.13/html-to-image.min.js";s.onload=ok;s.onerror=no;document.head.appendChild(s)});
+  // الصفحة المسطّحة تُرسم أولاً صورةً (خارج الشاشة)، ثم تُسقط على سطح التقويم بنفس شبكة الانحناء والمنظور
+  hold=document.createElement("div");hold.style.cssText="position:fixed;left:0;top:0;width:210mm;height:150mm;overflow:hidden;z-index:-1;opacity:0;pointer-events:none;direction:rtl";
+  hold.innerHTML=viewHtml();mkEl("app").appendChild(hold);const page=hold.firstElementChild;
+  await Promise.all([...hold.querySelectorAll("img")].filter(i=>!i.complete).map(i=>new Promise(r=>{i.onload=i.onerror=r})));
+  if(document.fonts&&document.fonts.ready)await document.fonts.ready;
+  const opt={pixelRatio:2.2,width:PXW,height:PXH,backgroundColor:"#ffffff",fetchRequestInit:{mode:"cors"},style:{opacity:"1"}};
+  await htmlToImage.toCanvas(page,opt);const flat=await htmlToImage.toCanvas(page,opt);
+  const [bg,body,rings]=await Promise.all([mkPic(MOCKBG||MKBG0).catch(()=>mkPic(MKBG0)),mkPic("mockup/body.webp"),mkPic("mockup/rings.png")]);
+  const cv=document.createElement("canvas");cv.width=MKW;cv.height=MKH;const x=cv.getContext("2d");x.imageSmoothingQuality="high";
+  const k=Math.max(MKW/bg.width,MKH/bg.height);x.drawImage(bg,(MKW-bg.width*k)/2,(MKH-bg.height*k)/2,bg.width*k,bg.height*k);x.drawImage(body,0,0,MKW,MKH);
+  const NX=48,NY=34,fw=flat.width,fh=flat.height,P=[];for(let j=0;j<=NY;j++){P.push([]);for(let i=0;i<=NX;i++)P[j].push(mkFwd(i/NX,j/NY,MKW,MKH))}
+  const tri=(s0,s1,s2,d0,d1,d2)=>{const cx=(d0[0]+d1[0]+d2[0])/3,cy=(d0[1]+d1[1]+d2[1])/3,ex=p=>{const dx=p[0]-cx,dy=p[1]-cy,l=Math.hypot(dx,dy)||1;return[p[0]+dx/l*1.1,p[1]+dy/l*1.1]};
+   const e0=ex(d0),e1=ex(d1),e2=ex(d2);x.save();x.beginPath();x.moveTo(e0[0],e0[1]);x.lineTo(e1[0],e1[1]);x.lineTo(e2[0],e2[1]);x.closePath();x.clip();
+   const den=(s1[0]-s0[0])*(s2[1]-s0[1])-(s2[0]-s0[0])*(s1[1]-s0[1]);
+   const a=((d1[0]-d0[0])*(s2[1]-s0[1])-(d2[0]-d0[0])*(s1[1]-s0[1]))/den,c=((d2[0]-d0[0])*(s1[0]-s0[0])-(d1[0]-d0[0])*(s2[0]-s0[0]))/den;
+   const b=((d1[1]-d0[1])*(s2[1]-s0[1])-(d2[1]-d0[1])*(s1[1]-s0[1]))/den,d=((d2[1]-d0[1])*(s1[0]-s0[0])-(d1[1]-d0[1])*(s2[0]-s0[0]))/den;
+   x.transform(a,b,c,d,d0[0]-a*s0[0]-c*s0[1],d0[1]-b*s0[0]-d*s0[1]);x.drawImage(flat,0,0);x.restore()};
+  for(let j=0;j<NY;j++)for(let i=0;i<NX;i++){const sa=[i/NX*fw,j/NY*fh],sb=[(i+1)/NX*fw,j/NY*fh],sc=[(i+1)/NX*fw,(j+1)/NY*fh],sd=[i/NX*fw,(j+1)/NY*fh];
+   tri(sa,sb,sc,P[j][i],P[j][i+1],P[j+1][i+1]);tri(sa,sc,sd,P[j][i],P[j+1][i+1],P[j+1][i])}
+  x.drawImage(rings,0,0,MKW,MKH);
+  const blob=await new Promise(r=>cv.toBlob(r,"image/jpeg",.94));if(!blob)throw 0;window.__mkLast=cv;
+  const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="موك-أب-تقويم-"+YEAR+"-"+(cur.kind==="g"?"الإهداء":MONTH_AR[cur.mo-1])+".jpg";a.click();setTimeout(()=>URL.revokeObjectURL(a.href),8000);mkMsg("تم تنزيل الصورة.")}
+ catch(e){console.error("mock download",e);mkMsg("تعذّر تجهيز الصورة، أعد المحاولة.",true)}
+ finally{if(hold)hold.remove();btn.disabled=false}}
+mkEl("mkdl").addEventListener("click",mockDownload);mkEl("mkreset").addEventListener("click",mockBgReset);
+mkEl("mkup").addEventListener("change",e=>{const f=e.target.files[0];e.target.value="";mockUpload(f)});
+
 function viewHtml(){if(SEC==="design"||(SEC==="mockup"&&!APPROVED))return pageHtml();
  if(!APPROVED)return `<section class="page" style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4mm;color:#667570;font-family:var(--fb),sans-serif"><b style="font-size:7mm">لا يوجد تقويم ميلادي معتمد بعد</b><span style="font-size:3.6mm">يظهر هنا التقويم بعد اعتماده من قسم التصميم</span></section>`;
  const bak={};IDS.forEach(id=>{bak[id]=draft[id];draft[id]=Object.assign(defaults(id),APPROVED.data[id]||{})});
@@ -3211,7 +3262,7 @@ async function upload(id,k,file){status("جارٍ رفع الصورة…");try{l
   const r=await ASSETS.upload(b);draft[id][k]=r.id;renderEditor();renderGen();drawPreview();refreshUi();status("تم رفع الصورة.");autosaveSoon()}
  catch(e){const c=e&&e.code;status(c==="too_large"?"الصورة أكبر من الحد المسموح (٢٠ ميغابايت).":c==="unsupported_type"?"نوع الملف غير مدعوم (PNG أو JPG أو WebP أو SVG).":"تعذّر رفع الصورة.",true)}}
 
-function applySnap(snap){let touched=false;snap.docs.forEach(d=>{const id=d.id,v=d.data();if(!v||!(id in saved))return;const was=dirty(id);saved[id]=Object.assign(defaults(id),v);if(!was){draft[id]=clone(saved[id]);touched=true}});
+function applySnap(snap){let touched=false;snap.docs.forEach(d=>{const id=d.id,v=d.data();if(id==="_mock"){MOCKBG=(v&&v.bg)||"";mockBgApply();return}if(!v||!(id in saved))return;const was=dirty(id);saved[id]=Object.assign(defaults(id),v);if(!was){draft[id]=clone(saved[id]);touched=true}});
  if(touched){syncNav();drawPreview();if(!$("#app").contains(document.activeElement)||document.activeElement===document.body){renderEditor();renderGen()}else{updatePill();gpill()}}}
 
 /* ---------- events ---------- */
