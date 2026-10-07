@@ -78,7 +78,7 @@ rep('else if(t.dataset.rm){draft[t.dataset.id][t.dataset.rm]="";renderEditor();r
 rep('$("#fontsel").addEventListener("change",e=>{draft.settings.font=e.target.value;renderAll()});', '$("#fontsel").addEventListener("change",e=>{draft.settings.font=e.target.value;renderAll();autosaveSoon()});')
 rep('''else if(t.id==="apreopen"&&APPROVED){IDS.forEach''', '''else if(t.id==="apreopen"&&APPROVED){if(!confirm("سيُستبدل ما في قسم التصميم بنسخة من التقويم المعتمد. متابعة؟"))return;IDS.forEach''')
 rep('status("تم فتح نسخة من المعتمد للتعديل — اضغط «حفظ» لتثبيت أي تعديل.")}', 'status("تم فتح نسخة من المعتمد للتعديل.");autosaveSoon();if(BRIDGE&&BRIDGE.onSection)BRIDGE.onSection("design")}')
-rep('''const ERR={invalid_argument:''', '''const ERR={"permission-denied":"لا تملك صلاحية الكتابة على هذه البيانات.","resource-exhausted":"استُنفد رصيد قاعدة البيانات اليوم، أعد المحاولة لاحقاً.",invalid_argument:''')
+rep('''const ERR={invalid_argument:''', '''const ERR={"permission-denied":"لا تملك صلاحية الكتابة على هذه البيانات.","invalid-argument":"تعذّر الحفظ: صيغة البيانات غير مقبولة.","resource-exhausted":"استُنفد رصيد قاعدة البيانات اليوم، أعد المحاولة لاحقاً.",invalid_argument:''')
 
 # ---------- طباعة كل الصفحات ----------
 rep('''/* ---------- navigation ---------- */''', '''/* ---------- print all (24 pages, 210×150mm) ---------- */
@@ -100,7 +100,7 @@ cut('(async function(){if(typeof claude==="undefined"||!claude.use)return;', ' r
  const fs=P.db,base=fs.collection("calendars").doc(String(YEAR));
  // cal/<id> ← calendars/<السنة>/pages/<id> ،  approved/y<السنة> ← calendarsApproved/<السنة>
  const ref=path=>{const p=path.split("/");return p[0]==="approved"?fs.collection("calendarsApproved").doc(String(YEAR)):base.collection("pages").doc(p[1])};
- DB={doc:path=>({set:d=>ref(path).set(d).catch(e=>{throw{code:e&&e.code}}),onSnapshot:(a,b)=>ref(path).onSnapshot(a,b)}),
+ DB={doc:path=>({set:d=>Promise.resolve().then(()=>ref(path).set(P.plain(JSON.stringify(d)))).catch(e=>{console.error("calendar save",e);throw{code:e&&e.code}}),onSnapshot:(a,b)=>ref(path).onSnapshot(a,b)}),
      collection:()=>({onSnapshot:(a,b)=>base.collection("pages").onSnapshot(a,b)})};
  if(P.canEdit&&P.upload)ASSETS={upload:b=>P.upload(b).then(url=>({id:url}))};
  DL={save:o=>{const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([o.data],{type:"application/json"}));a.download=o.filename;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),5000);return Promise.resolve()}};

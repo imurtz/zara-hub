@@ -3038,7 +3038,7 @@
   // قسمان: «التقاويم المعتمدة» (قراءة فقط) و«تصميم التقويم الميلادي للعام» (تحرير بحفظ تلقائي ثم اعتماد).
   // المحرّر صفحة مستقلة مضمَّنة كي لا تتداخل تصاميم صفحات التقويم مع تنسيقات اللوحة؛ بياناتها في
   // calendars/<السنة>/pages/* والمعتمد في calendarsApproved/<السنة>
-  var CAL_BUILD = "1";
+  var CAL_BUILD = "2";
   var calUI = { sec: "approved", year: 2027, approved: null, frameKey: "" };
   function calYears(){ var y = new Date().getFullYear(), out = [2027]; for(var i = Math.max(2028, y); i <= Math.max(2029, y + 2); i++) out.push(i); return out; }
   window.__zaraCal = {
@@ -3046,6 +3046,8 @@
     get canEdit(){ return can("calendars.edit"); },
     get canApprove(){ return can("calendars.approve"); },
     get userName(){ return currentUser ? currentUser.name : ""; },
+    // Firestore يرفض كائناً أُنشئ داخل الإطار المضمَّن (نطاق JavaScript آخر) — يُعاد بناؤه هنا في نطاق اللوحة قبل الحفظ
+    plain: function(json){ return JSON.parse(json); },
     // الصور ترفع كما هي إلى مخزن الوسائط (نفس خدمة «وثّق»)، ويُحفظ رابطها في مستند الصفحة
     upload: function(blob){
       if(!can("calendars.edit")) return Promise.reject({ code: "permission-denied" });

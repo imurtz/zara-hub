@@ -2937,7 +2937,7 @@ function renderGen(){const s=draft.settings;
 function gpill(){const p=$("#gpill");if(!p)return;const d=dirty("settings");p.textContent=!DB?"مؤقت":d?"غير محفوظ":"محفوظ";p.className="pill "+(!DB||d?"warn":"ok");$("#gsave").disabled=!DB||!d||CANW===false;$("#gexport").hidden=!DL}
 
 /* ---------- save / load ---------- */
-const ERR={"permission-denied":"لا تملك صلاحية الكتابة على هذه البيانات.","resource-exhausted":"استُنفد رصيد قاعدة البيانات اليوم، أعد المحاولة لاحقاً.",invalid_argument:"لا تملك صلاحية الكتابة على هذه البيانات.",quota_exceeded:"امتلأت مساحة البيانات.",resource_exhausted:"محاولات كثيرة، أعد المحاولة بعد لحظات.",unavailable:"الخدمة غير متاحة الآن، أعد المحاولة.",revoked:"انتهت صلاحية الجلسة، أعد فتح الصفحة."};
+const ERR={"permission-denied":"لا تملك صلاحية الكتابة على هذه البيانات.","invalid-argument":"تعذّر الحفظ: صيغة البيانات غير مقبولة.","resource-exhausted":"استُنفد رصيد قاعدة البيانات اليوم، أعد المحاولة لاحقاً.",invalid_argument:"لا تملك صلاحية الكتابة على هذه البيانات.",quota_exceeded:"امتلأت مساحة البيانات.",resource_exhausted:"محاولات كثيرة، أعد المحاولة بعد لحظات.",unavailable:"الخدمة غير متاحة الآن، أعد المحاولة.",revoked:"انتهت صلاحية الجلسة، أعد فتح الصفحة."};
 async function saveId(id){if(!DB)throw{code:"not_granted"};await DB.doc("cal/"+id).set(clone(draft[id]));saved[id]=clone(draft[id])}
 async function doSave(ids,say){say("جارٍ الحفظ…");try{for(const id of ids)await saveId(id);say("تم الحفظ ✓ "+new Date().toLocaleTimeString("ar",{hour:"2-digit",minute:"2-digit"}));}catch(e){say(ERR[e&&e.code]||"تعذّر الحفظ.",true)}refreshUi()}
 function refreshUi(){syncNav();updatePill();gpill()}
@@ -3000,7 +3000,7 @@ buildNav();renderAll();
  const fs=P.db,base=fs.collection("calendars").doc(String(YEAR));
  // cal/<id> ← calendars/<السنة>/pages/<id> ،  approved/y<السنة> ← calendarsApproved/<السنة>
  const ref=path=>{const p=path.split("/");return p[0]==="approved"?fs.collection("calendarsApproved").doc(String(YEAR)):base.collection("pages").doc(p[1])};
- DB={doc:path=>({set:d=>ref(path).set(d).catch(e=>{throw{code:e&&e.code}}),onSnapshot:(a,b)=>ref(path).onSnapshot(a,b)}),
+ DB={doc:path=>({set:d=>Promise.resolve().then(()=>ref(path).set(P.plain(JSON.stringify(d)))).catch(e=>{console.error("calendar save",e);throw{code:e&&e.code}}),onSnapshot:(a,b)=>ref(path).onSnapshot(a,b)}),
      collection:()=>({onSnapshot:(a,b)=>base.collection("pages").onSnapshot(a,b)})};
  if(P.canEdit&&P.upload)ASSETS={upload:b=>P.upload(b).then(url=>({id:url}))};
  DL={save:o=>{const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([o.data],{type:"application/json"}));a.download=o.filename;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),5000);return Promise.resolve()}};
