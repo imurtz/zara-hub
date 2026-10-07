@@ -3038,7 +3038,7 @@
   // قسمان: «التقاويم المعتمدة» (قراءة فقط) و«تصميم التقويم الميلادي للعام» (تحرير بحفظ تلقائي ثم اعتماد).
   // المحرّر صفحة مستقلة مضمَّنة كي لا تتداخل تصاميم صفحات التقويم مع تنسيقات اللوحة؛ بياناتها في
   // calendars/<السنة>/pages/* والمعتمد في calendarsApproved/<السنة>
-  var CAL_BUILD = "17";
+  var CAL_BUILD = "18";
   var calUI = { sec: "approved", year: 2027, approved: null, frameKey: "" };
   function calYears(){ var y = new Date().getFullYear(), out = [2027]; for(var i = Math.max(2028, y); i <= Math.max(2029, y + 2); i++) out.push(i); return out; }
   window.__zaraCal = {
@@ -3064,7 +3064,7 @@
     var root = document.getElementById("calendarsRoot"); if(!root) return;
     Array.prototype.forEach.call(root.querySelectorAll("[data-cal-sec]"), function(b){ b.classList.toggle("active", b.dataset.calSec === calUI.sec); });
     var ys = root.querySelector(".cal-approved-years"); if(ys) ys.style.display = calUI.sec === "approved" ? "" : "none";
-    var yy = root.querySelector(".cal-year"); if(yy) yy.style.display = calUI.sec === "design" ? "" : "none";
+    var yy = root.querySelector(".cal-year"); if(yy) yy.style.display = calUI.sec === "approved" ? "none" : "";
   }
   function calApprovedHTML(){
     var a = calUI.approved;
@@ -3089,7 +3089,8 @@
       calUI.frameKey = key;
       setHTML(root, '<div class="cal-head"><div class="events-subnav" style="margin-bottom:0;">' +
           '<button type="button" data-cal-sec="approved">التقاويم المعتمدة</button>' +
-          (can("calendars.edit") ? '<button type="button" data-cal-sec="design">تصميم التقويم الميلادي للعام</button>' : '') + '</div>' +
+          (can("calendars.edit") ? '<button type="button" data-cal-sec="design">تصميم التقويم الميلادي للعام</button>' : '') +
+          '<button type="button" data-cal-sec="mockup">موك أب التقويم المكتبي</button></div>' +
           '<label class="cal-year">العام <select id="calYearSel">' + calYears().map(function(y){ return '<option value="' + y + '"' + (y === calUI.year ? " selected" : "") + '>' + y + '</option>'; }).join("") + '</select></label>' +
           '<div class="cal-approved-years">' + calApprovedHTML() + '</div></div>' +
         '<iframe class="cal-frame" title="التقاويم الميلادية" src="calendar/?year=' + calUI.year + '&sec=' + calUI.sec + '&v=' + CAL_BUILD + '"></iframe>');

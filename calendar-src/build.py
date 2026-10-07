@@ -95,6 +95,17 @@ rep('const GF=[["h1","عنوان الإهداء — السطر الأول","t"],
 rep('function pageHtml(){const f=R[draft.settings.design]||R.a;', 'function pageHtml(){const f=R[draft.settings.design]||R.e;')
 rep('<div class="tabs" id="designs" role="group" aria-label="التصميم"></div>', '<div class="tabs" id="designs" role="group" aria-label="التصميم" hidden></div>')
 
+# ---------- قسم ثالث: موك أب التقويم المكتبي — صفحة الشهر مُسقطة على تقويم مكتبي مجسَّم ----------
+rep('<div class="stage" id="stage"><div class="pagebox" id="pagebox"></div></div>',
+    '<div class="stage" id="stage"><div class="mk-shadow"></div><div class="rig" id="rig"><div class="mk-back"></div><div class="pagebox" id="pagebox"></div><div class="mk-rings"></div><div class="mk-base"></div></div></div>')
+rep('function fit(){const st=$("#stage"),w=st.clientWidth,s=w/PXW;st.style.height=PXH*s+"px";$("#pagebox").style.transform="scale("+s+")"}',
+    """function fit(){const st=$("#stage"),rig=$("#rig"),w=st.clientWidth;st.classList.toggle("mock",SEC==="mockup");
+ if(SEC!=="mockup"){const s=w/PXW;st.style.height=PXH*s+"px";rig.style.transformOrigin="0 0";rig.style.transform="scale("+s+")";return}
+ // الموك أب: التقويم في وسط المشهد، مائل قليلاً بمنظور، وحجمه نحو 58% من عرض المشهد
+ const h=Math.round(w*.64),k=(w*.58)/PXW;st.style.height=h+"px";rig.style.transformOrigin="50% 50%";
+ rig.style.transform="translate("+((w-PXW)/2)+"px,"+((h-PXH)/2-h*.035)+"px) perspective(2200px) rotateY(-17deg) rotateX(5deg) scale("+k+")"}""")
+rep('function viewHtml(){if(SEC!=="approved")return pageHtml();', 'function viewHtml(){if(SEC==="design"||(SEC==="mockup"&&!APPROVED))return pageHtml();')
+
 # ---------- السنة والمسارات ----------
 rep('const YEAR=2027, G=', 'const YEAR=(function(){const y=+new URLSearchParams(location.search).get("year");return y>=2026&&y<=2040?y:2027})(), G=')
 # المناسبات: القائمة المرجعية من تقويم 2026 (events.js) تُحسب لكل عام، واليوم الواحد يقبل أكثر من مناسبة
@@ -158,8 +169,8 @@ cut('(async function(){if(typeof claude==="undefined"||!claude.use)return;', ' r
      collection:()=>({onSnapshot:(a,b)=>base.collection("pages").onSnapshot(a,b)})};
  if(P.canEdit&&P.upload)ASSETS={upload:b=>P.upload(b).then(url=>({id:url}))};
  DL={save:o=>{const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([o.data],{type:"application/json"}));a.download=o.filename;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),5000);return Promise.resolve()}};
- window.__calSetSection=s=>{if(s!=="approved"&&s!=="design")return;if(s==="design"&&!P.canEdit)s="approved";SEC=s;renderSec()};
- SEC=(new URLSearchParams(location.search).get("sec")==="design"&&P.canEdit)?"design":"approved";
+ window.__calSetSection=s=>{if(s!=="approved"&&s!=="design"&&s!=="mockup")return;if(s==="design"&&!P.canEdit)s="approved";SEC=s;renderSec()};
+ {const qs=new URLSearchParams(location.search).get("sec");SEC=qs==="mockup"?"mockup":(qs==="design"&&P.canEdit)?"design":"approved"}
  try{DB.collection("cal").onSnapshot(applySnap,()=>{})}catch(_){}
  try{DB.doc("approved/y"+YEAR).onSnapshot(sn=>{APPROVED=sn.exists?sn.data():null;renderApprove();renderApBox();if(SEC==="approved"){syncNav();drawPreview()}},()=>{})}catch(_){}
  renderAll()})();''')
