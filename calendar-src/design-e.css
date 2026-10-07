@@ -6,39 +6,39 @@
 .d-e .phimg{width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:repeating-linear-gradient(135deg,#dfe6e2 0 3mm,#d3dcd7 3mm 6mm)}
 .d-e .phimg span{font-size:2.8mm;color:var(--cg);opacity:.6}
 .d-e .credit{left:0;bottom:0;width:64mm;padding:44mm 5mm 7mm;text-align:center;font-size:2.3mm;font-weight:500;color:rgba(255,255,255,.85);background:linear-gradient(transparent,rgba(0,0,0,.28) 45%,rgba(0,0,0,.62))}
-.d-e .logo{left:78mm;top:11mm;width:36mm;mix-blend-mode:multiply}
-.d-e .sp{right:15mm;top:10.5mm;height:11mm;display:flex;align-items:center;gap:3mm}
+.d-e .logo{left:78mm;top:14mm;width:32mm;mix-blend-mode:multiply}
+.d-e .sp{right:15mm;top:14.5mm;height:10.5mm;display:flex;align-items:center;gap:3mm}
 .d-e .sp em{font-style:normal;font-size:2.5mm;color:var(--cb);font-weight:600;white-space:nowrap}
-.d-e .sp .sb{height:11mm;min-width:26mm;max-width:46mm;display:flex;align-items:center;justify-content:center}
-.d-e .sp .sb img{height:11mm;width:auto;max-width:46mm;object-fit:contain}
+.d-e .sp .sb{height:10.5mm;min-width:26mm;max-width:46mm;display:flex;align-items:center;justify-content:center}
+.d-e .sp .sb img{height:10.5mm;width:auto;max-width:46mm;object-fit:contain}
 .d-e .sp .ph{font-size:2.6mm;color:var(--cb);font-weight:500;border:.25mm dashed var(--cb);border-radius:2mm;padding:2.6mm 6mm;white-space:nowrap}
-.d-e h1{right:15mm;top:26mm;font-family:var(--fd);font-weight:700;font-size:15mm;line-height:1;color:var(--cg)}
-.d-e .meta{right:15mm;top:43.8mm;display:flex;align-items:center;gap:3mm}
-.d-e .meta i{font-style:normal;background:#e6e7e8;color:var(--cb);font-weight:700;font-size:3.1mm;padding:1mm 4mm;border-radius:5mm}
-.d-e .meta span{font-size:3mm;font-weight:600;color:var(--cb)}
+.d-e h1{right:15mm;top:29.5mm;font-family:var(--fd);font-weight:700;font-size:13mm;line-height:1;color:var(--cg)}
+.d-e .meta{right:15mm;top:44.4mm;display:flex;align-items:center;gap:3mm}
+.d-e .meta i{font-style:normal;background:#e6e7e8;color:var(--cb);font-weight:700;font-size:2.9mm;padding:.8mm 3.6mm;border-radius:5mm}
+.d-e .meta span{font-size:2.9mm;font-weight:600;color:var(--cb)}
 .d-e .slogan{left:0;bottom:14.5mm;width:64mm;padding:0 6mm;display:flex;flex-direction:column;align-items:center;text-align:center;font-family:var(--fb)}
 .d-e .slogan b{font-size:4.1mm;font-weight:700;color:#fff;line-height:1.5}
 .d-e .slogan span{font-size:3.5mm;font-weight:500;color:#f1dcc0;line-height:1.5}
-.d-e .grid{left:78mm;top:51.5mm;width:117mm;border-collapse:collapse;table-layout:fixed;direction:rtl}
-.d-e .grid th{height:6mm;font-size:2.8mm;font-weight:700;color:var(--cg);border-bottom:.45mm solid var(--cg);vertical-align:middle}
+.d-e .grid{left:78mm;top:53.5mm;width:117mm;border-collapse:collapse;table-layout:fixed;direction:rtl}
+.d-e .grid th{height:5.5mm;font-size:2.7mm;font-weight:700;color:var(--cg);border-bottom:.45mm solid var(--cg);vertical-align:middle}
 .d-e .grid th.fri{color:var(--cb)}
 .d-e .grid td{height:var(--rh);text-align:center;vertical-align:middle;border-bottom:.2mm solid #e6e7e8;padding:0}
 .d-e .grid td.fri,.d-e .grid th.fri{background:color-mix(in srgb,var(--cb) 13%,transparent)}
-.d-e .grid td i{display:block;font-style:normal;font-size:5.2mm;font-weight:700;line-height:5.9mm;margin:0 auto;width:5.9mm;height:5.9mm;border-radius:50%}
-.d-e .grid td i.ev{color:#fff;font-size:4.3mm;width:5.9mm;height:5.9mm;line-height:5.9mm}
-.d-e .grid td s{display:block;text-decoration:none;font-size:2.3mm;color:var(--cb);font-weight:600;line-height:2.4mm}
-.d-e .legend{left:78mm;right:15mm;bottom:14.2mm;display:flex;flex-wrap:wrap;gap:.75mm 3.2mm;font-size:2.2mm;font-weight:500;line-height:2.5mm}
+.d-e .grid td i{display:block;font-style:normal;font-size:4.6mm;font-weight:700;line-height:5.1mm;margin:0 auto;width:5.1mm;height:5.1mm;border-radius:50%}
+.d-e .grid td i.ev{color:#fff;font-size:3.8mm;width:5.1mm;height:5.1mm;line-height:5.1mm}
+.d-e .grid td s{display:block;text-decoration:none;font-size:2.1mm;color:var(--cb);font-weight:600;line-height:2.1mm}
+.d-e .legend{left:78mm;right:15mm;bottom:16mm;display:flex;flex-wrap:wrap;gap:.75mm 3.2mm;font-size:2.2mm;font-weight:500;line-height:2.5mm}
 .d-e .legend span{display:inline-flex;align-items:center;gap:1.1mm;white-space:nowrap}
 .d-e .legend b{flex:none;min-width:3.5mm;height:2.5mm;padding:0 .7mm;border-radius:1.25mm;color:#fff;font-size:2mm;font-weight:700;line-height:2.5mm;text-align:center}
-.d-e .dock{left:78mm;right:15mm;top:110.2mm;display:flex;justify-content:space-between;align-items:center}
+.d-e .dock{left:78mm;right:15mm;top:107.5mm;display:flex;justify-content:space-between;align-items:center}
 .d-e .q{display:flex;align-items:center;gap:2.4mm}
 .d-e .qrbox{background:#fff;border-radius:2.2mm;padding:1.1mm;border:.3mm solid var(--cb);display:inline-block;line-height:0}
 .d-e .qt{display:flex;flex-direction:column}
 .d-e .qt b{font-size:2.7mm;font-weight:700;line-height:1.35;white-space:nowrap}
 .d-e .qt span{font-size:2.35mm;color:var(--cb);font-weight:500;line-height:1.35;white-space:nowrap}
 /* ---- صفحة إهداء «الرحابة»: بنية «أثر الخير» معكوسة — QR يميناً، عبارة الإهداء (صورة) والنموذج يساراً، بلا شريط السدو ---- */
-.d-e.gift .logo{left:15mm;top:11mm;width:36mm}
-.d-e .gtitle{left:15mm;top:26mm;width:101mm;height:34mm;display:flex;align-items:center;justify-content:flex-start}
+.d-e.gift .logo{left:15mm;top:14mm;width:32mm}
+.d-e .gtitle{left:15mm;top:30mm;width:101mm;height:30.5mm;display:flex;align-items:center;justify-content:flex-start}
 .d-e .gtitle img{max-width:100%;max-height:100%;object-fit:contain;display:block}
 .d-e .gtitle h2{font-family:var(--fd);line-height:1.12;display:flex;flex-direction:column}
 .d-e .gtitle h2 b{font-size:13mm;font-weight:700;color:var(--cg)}
@@ -51,7 +51,7 @@
 .d-e .f sup{color:#c0392b;font-size:2.4mm}
 .d-e .f p{flex:1;height:4.2mm;border:.25mm solid #b9b9b9;border-radius:2.1mm;background:#fff}
 .d-e .f p.sel{height:auto;min-height:4.2mm;padding:.8mm 3mm;display:flex;gap:3mm;font-size:2.3mm;color:#777;border-radius:2mm;flex-wrap:wrap}
-.d-e .bigqr{right:21mm;top:26mm;width:58mm;display:flex;flex-direction:column;align-items:center;gap:2.2mm}
+.d-e .bigqr{right:21mm;top:30mm;width:58mm;display:flex;flex-direction:column;align-items:center;gap:2.2mm}
 .d-e .bigqr .qrbox{padding:2.2mm;border-radius:4mm}
 .d-e .cname{background:var(--cg);color:#fff;font-family:var(--fb);font-weight:700;font-size:4.4mm;padding:1.4mm 6mm;border-radius:5mm;white-space:nowrap}
 .d-e .go{font-family:var(--fb);font-weight:700;font-size:4mm;color:var(--cb)}
@@ -77,8 +77,8 @@
 /* ---- «أثر الخير»: قائمة المناسبات أضيق قليلاً لتتسع لثلاثة أسطر في الأشهر المزدحمة دون ملامسة العبارة ---- */
 .d-a .legend{gap:.15mm 3mm;font-size:2.2mm;line-height:3mm}
 /* ---- رقم الشهر المفرَّغ (كما في «أثر الخير») تحت الشعار، بمحاذاة اسم الشهر ---- */
-.d-e .ghost{left:78mm;top:25.2mm;direction:ltr;font-family:var(--fb);font-weight:700;font-size:18.5mm;line-height:1;letter-spacing:-.3mm;color:transparent;-webkit-text-stroke:.26mm var(--cb);opacity:.8}
+.d-e .ghost{left:78mm;top:29mm;direction:ltr;font-family:var(--fb);font-weight:700;font-size:15.5mm;line-height:1;letter-spacing:-.3mm;color:transparent;-webkit-text-stroke:.26mm var(--cb);opacity:.8}
 /* ---- الشريط التراثي: نقش من تراث القطيف لكل شهر (ملفات Login/calendar/heritage/NN.png) يخرج من الحافة السفلية ومقطوع عندها، ويخفت نحو الأعلى ---- */
-.d-e .her{left:64mm;right:0;bottom:0;height:13.5mm;background:var(--cg);opacity:.27;
+.d-e .her{left:64mm;right:0;bottom:0;height:12.5mm;background:var(--cg);opacity:.27;
  -webkit-mask-image:linear-gradient(to top,#000 0%,rgba(0,0,0,.86) 18%,rgba(0,0,0,.62) 38%,rgba(0,0,0,.36) 58%,rgba(0,0,0,.15) 78%,rgba(0,0,0,.04) 92%,transparent 100%),var(--hm);-webkit-mask-size:100% 100%,58mm auto;-webkit-mask-position:0 0,left bottom;-webkit-mask-repeat:no-repeat,repeat-x;-webkit-mask-composite:source-in;
  mask-image:linear-gradient(to top,#000 0%,rgba(0,0,0,.86) 18%,rgba(0,0,0,.62) 38%,rgba(0,0,0,.36) 58%,rgba(0,0,0,.15) 78%,rgba(0,0,0,.04) 92%,transparent 100%),var(--hm);mask-size:100% 100%,58mm auto;mask-position:0 0,left bottom;mask-repeat:no-repeat,repeat-x;mask-composite:intersect}
