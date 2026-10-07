@@ -67,7 +67,7 @@
 .d-e .pat.g{left:0;width:210mm}
 .d-e .mk{position:absolute;width:var(--w);height:auto;fill:none;stroke:var(--cg);stroke-width:1.5;stroke-linejoin:round;opacity:.11;overflow:visible}
 .d-e .pat.m .mk.a{--w:62mm;right:-14mm;top:-20mm}
-.d-e .pat.m .mk.b{--w:62mm;right:38mm;top:-34mm;opacity:.07}
+.d-e .pat.m .mk.b{display:none}
 .d-e .pat.m .mk.c{--w:50mm;left:-8mm;bottom:-22mm}
 .d-e .pat.m .mk.d{--w:50mm;right:-18mm;bottom:-14mm;opacity:.08}
 .d-e .pat.g .mk.a{--w:74mm;right:-18mm;top:-24mm}
