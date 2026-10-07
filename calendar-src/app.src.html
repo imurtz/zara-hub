@@ -1,0 +1,363 @@
+<title>منصة تقويم العوامية</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Alexandria:wght@400;500;600;700&family=Cairo:wght@400;500;600;700&family=Readex+Pro:wght@300;400;500;600;700&display=swap">
+<style>
+:root{--bg:#f4f2ee;--panel:#ffffff;--fg:#25322e;--muted:#667570;--line:#dcd7cd;--accent:#517670;--accent-fg:#ffffff;--soft:#e7eeeb;--warn:#a87a22;--ok:#2d7a55;--bad:#b3402f;--stage:#e6e1d8;--focus:#b8926d}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#141d1a;--panel:#1d2825;--fg:#e8efec;--muted:#9aaca6;--line:#33433f;--accent:#86b9ae;--accent-fg:#10201c;--soft:#263531;--warn:#d9b46a;--ok:#6cc79a;--bad:#e5806f;--stage:#0f1614;--focus:#d9b46a;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#141d1a;--panel:#1d2825;--fg:#e8efec;--muted:#9aaca6;--line:#33433f;--accent:#86b9ae;--accent-fg:#10201c;--soft:#263531;--warn:#d9b46a;--ok:#6cc79a;--bad:#e5806f;--stage:#0f1614;--focus:#d9b46a;color-scheme:dark}
+body{background:var(--bg);color:var(--fg);padding-inline:16px;font-family:'Readex Pro','Cairo',system-ui,sans-serif;font-size:15px;line-height:1.6}
+#app{max-width:1280px;margin-inline:auto;padding-block:18px 48px;--fd:'Alexandria';--fb:'Readex Pro'}
+#app[data-font="2"]{--fd:'Readex Pro';--fb:'Readex Pro'}
+#app[data-font="3"]{--fd:'Cairo';--fb:'Cairo'}
+*{box-sizing:border-box}
+button,input,select{font:inherit;color:inherit}
+h1,h2,h3{margin:0;font-weight:600;text-wrap:balance}
+header.top{display:flex;flex-wrap:wrap;gap:14px 24px;align-items:flex-end;justify-content:space-between;margin-bottom:18px}
+.brand h1{font-size:1.45rem;letter-spacing:0}
+.brand p{margin:2px 0 0;color:var(--muted);font-size:.86rem}
+.tabs{display:flex;flex-wrap:wrap;gap:6px}
+.tab{border:1px solid var(--line);background:var(--panel);border-radius:10px;padding:7px 14px;cursor:pointer;display:flex;flex-direction:column;align-items:flex-start;min-width:92px;line-height:1.3}
+.tab b{font-weight:600;font-size:.95rem}.tab span{font-size:.72rem;color:var(--muted)}
+.tab[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-fg)}
+.tab[aria-pressed="true"] span{color:inherit;opacity:.85}
+.layout{display:grid;grid-template-columns:minmax(0,1.55fr) minmax(300px,1fr);gap:22px;align-items:start}
+@media (max-width:920px){.layout{grid-template-columns:minmax(0,1fr)}}
+.preview{position:sticky;top:env(safe-area-inset-top,0px);display:flex;flex-direction:column;gap:10px}
+@media (max-width:920px){.preview{position:static}}
+.stage{direction:ltr;position:relative;width:100%;overflow:hidden;border-radius:12px;background:var(--stage);box-shadow:0 1px 0 var(--line)}
+.pagebox{position:absolute;left:0;top:0;width:210mm;height:150mm;transform-origin:0 0;direction:rtl;overflow:hidden;background:#fff}
+.page{position:relative;width:210mm;height:150mm;overflow:hidden;background:#fff}
+.navrow{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--panel)}
+.seg button{border:0;background:none;padding:6px 14px;cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--soft);font-weight:600}
+.btn{border:1px solid var(--line);background:var(--panel);border-radius:10px;padding:7px 14px;cursor:pointer}
+.btn:hover{border-color:var(--accent)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-fg);font-weight:600}
+.btn:disabled{opacity:.5;cursor:default}
+.btn.ghost{background:none}
+.months{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:6px}
+@media (max-width:480px){.months{grid-template-columns:repeat(4,minmax(0,1fr))}}
+.mbtn{border:1px solid var(--line);background:var(--panel);border-radius:8px;padding:5px 2px;cursor:pointer;font-size:.82rem;position:relative}
+.mbtn[aria-pressed="true"]{background:var(--accent);color:var(--accent-fg);border-color:var(--accent)}
+.mbtn i{position:absolute;top:3px;inset-inline-start:4px;width:7px;height:7px;border-radius:50%;background:var(--warn)}
+.box{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px;display:flex;flex-direction:column;gap:14px;min-width:0}
+.box h2{font-size:1.05rem}
+.box h3{font-size:.86rem;color:var(--muted);font-weight:500;margin-top:4px}
+.field{display:flex;flex-direction:column;gap:4px;min-width:0}
+.field label{font-size:.8rem;color:var(--muted)}
+.field input[type=text],.field input[type=url]{border:1px solid var(--line);background:var(--bg);border-radius:8px;padding:7px 10px;min-width:0;width:100%}
+.field input:focus-visible,button:focus-visible,select:focus-visible{outline:2px solid var(--focus);outline-offset:1px}
+.row3{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.img{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.thumb{width:64px;height:48px;border-radius:6px;background:var(--soft) center/cover;border:1px solid var(--line);flex:none}
+.hint{font-size:.78rem;color:var(--muted);margin:0}
+.savebar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;border-top:1px solid var(--line);padding-top:12px}
+.pill{font-size:.76rem;border-radius:20px;padding:2px 10px;border:1px solid var(--line);color:var(--muted)}
+.pill.ok{color:var(--ok);border-color:var(--ok)}.pill.warn{color:var(--warn);border-color:var(--warn)}
+#status{font-size:.82rem;color:var(--muted);min-height:1.3em}
+#status.bad{color:var(--bad)}
+details.box>summary{cursor:pointer;font-weight:600}
+.fontsel{display:flex;align-items:center;gap:8px;font-size:.82rem;color:var(--muted)}
+.fontsel select{border:1px solid var(--line);background:var(--panel);border-radius:8px;padding:5px 8px}
+.evnote{font-size:.78rem;color:var(--muted);margin:0}
+.sections{display:flex;gap:0;margin-bottom:16px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+.sections button{border:0;background:none;padding:10px 18px;cursor:pointer;font-weight:500;color:var(--muted);border-bottom:3px solid transparent;margin-bottom:-1px}
+.sections button[aria-pressed="true"]{color:var(--accent);border-bottom-color:var(--accent);font-weight:600}
+#app[data-sec="approved"] .only-design{display:none!important}
+#app:not([data-sec="approved"]) .only-approved{display:none!important}
+.chk{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px;font-size:.86rem}
+.chk li{display:flex;gap:8px;align-items:flex-start}.chk b{flex:none;width:1.2em}.chk .w{color:var(--warn)}.chk .g{color:var(--ok)}
+/* ---- the four designs (generated from the print templates) ---- */
+/*@DESIGNS@*/
+</style>
+<div id="app" dir="rtl" lang="ar" data-font="1">
+  <header class="top">
+    <div class="brand"><h1>التقاويم الميلادية</h1><p>القالب الافتراضي · ٢١٠×١٥٠ مم · الشعار على اليسار</p></div>
+    <div class="only-design" style="display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end">
+      <div class="tabs" id="designs" role="group" aria-label="التصميم"></div>
+      <label class="fontsel">الخط
+        <select id="fontsel"><option value="1">Alexandria + Readex Pro</option><option value="2">Readex Pro</option><option value="3">Cairo</option></select>
+      </label>
+    </div>
+  </header>
+  <nav class="sections" id="sections" aria-label="أقسام التقاويم الميلادية"><button data-sec="approved" aria-pressed="false">التقويم الميلادي المعتمد</button><button data-sec="design" aria-pressed="true">تصميم التقويم الميلادي للعام ٢٠٢٧</button></nav>
+  <div class="layout">
+    <section class="preview" aria-label="معاينة الصفحة">
+      <div class="stage" id="stage"><div class="pagebox" id="pagebox"></div></div>
+      <div class="navrow">
+        <button class="btn" id="prev" aria-label="الصفحة السابقة">‹ السابقة</button>
+        <div class="seg" id="kind" role="group" aria-label="نوع الصفحة"><button data-k="g">صفحة الإهداء</button><button data-k="m">صفحة الشهر</button></div>
+        <button class="btn" id="next" aria-label="الصفحة التالية">التالية ›</button>
+      </div>
+      <div class="months" id="months" role="group" aria-label="الأشهر"></div>
+      <p class="evnote">التواريخ والمناسبات محسوبة تلقائيًا (أم القرى) وتبقى كما هي — لا تُعدَّل من هنا.</p>
+    </section>
+    <section style="display:flex;flex-direction:column;gap:14px;min-width:0">
+      <div class="box only-design" id="approve"></div>
+      <div class="box only-approved" id="apbox"></div>
+      <div class="box only-design" id="editor"></div>
+      <details class="box only-design" id="gen" open><summary>إعدادات عامة: الشعار، الألوان، الترخيص، النصوص الثابتة</summary><div id="genbody" style="display:flex;flex-direction:column;gap:12px;margin-top:10px"></div></details>
+    </section>
+  </div>
+</div>
+<script>
+/*@QR@*/
+</script>
+<script>
+(function(){
+"use strict";
+const LOGO="/*@LOGO@*/";
+const YEAR=2027, G="#517670", BG="#b8926d", GR="#e6e7e8";
+const MONTH_AR=["يناير","فبراير","مارس","أبريل","مايو","يونيو","يوليو","أغسطس","سبتمبر","أكتوبر","نوفمبر","ديسمبر"];
+const H_AR=["محرم","صفر","ربيع الأول","ربيع الآخر","جمادى الأولى","جمادى الآخرة","رجب","شعبان","رمضان","شوال","ذو القعدة","ذو الحجة"];
+const DAYS=["الأحد","الاثنين","الثلاثاء","الأربعاء","الخميس","الجمعة","السبت"];
+const DESIGNS=[["a","أثر الخير","قوس وصورة"],["b","الأفق","صورة بانورامية"],["c","الهدوء","فراغ وبساطة"],["d","الدفء","رمال ونحاس"]];
+// Dates & events: fixed, as in the approved data sheet (not editable here).
+const EVENTS={"2027-01-04":[["اليوم العالمي للغة برايل","#2f9e5b"]],"2027-01-05":[["المبعث النبوي","#8e4aa8"]],"2027-01-06":[["تأسيس الجمعية","#b8892b"]],"2027-01-14":[["إجازة منتصف العام","#d9822b"]],"2027-01-24":[["اليوم الدولي للتعليم","#4f9a8f"]]};
+
+/* ---------- new copy (slogans, gift headings, campaigns) ---------- */
+const SLOG=[["عامٌ جديد وخيرٌ يتجدّد","ابدأه بصدقةٍ تبقى أثرًا"],["رمضان على الأبواب","فافتح للخير أبوابك"],["شهرُ الجود وفرحةُ العيد","اجعل فرحتك فرحةً لغيرك"],["بعد العيد يبقى العطاء","فالخير لا يعرف موسمًا"],["عشرٌ مباركات وأجرٌ مضاعف","سابق إلى الخير بيدك"],["عامٌ هجريّ جديد يبدأ","وصدقتك أولى خطواته"],["في حرّ الصيف كن ظلًّا","وسُقيا الماء صدقةٌ جارية"],["مع كل مقعدٍ دراسيّ","حقيبةٌ تُهدى وحلمٌ يبدأ"],["وطنٌ يتّسع بالخير","وعطاؤكم يزيده عزًّا"],["ما نقص مالٌ من صدقة","فازدد من الخير تزدد بركة"],["مع برد الشتاء دفءُ العطاء","كسوةٌ تصل لمن يحتاجها"],["ختامُ عامٍ حافلٍ بالخير","وأنت في كل أثرٍ شريك"]];
+const GIFT=[["اهدِ بدايةً","عامٍ بخير"],["هديةٌ تستقبل","رمضان"],["فرحةُ العيد","تُهدى وتَبقى"],["أهدِ الخير","بعد العيد"],["عشرٌ مباركات","هديتها صدقة"],["عامٌ جديد","بإهداءٍ جميل"],["اسقِ عطشًا","وأهدِ الأجر"],["حقيبةُ أملٍ","تُهدى لطالب"],["أهدِ وطنك","خيرًا يدوم"],["صدقةٌ تُهدى","وبركةٌ تَنمو"],["دفءٌ يصل","بيدٍ مُهدية"],["اختم عامك","بهديةِ خير"]];
+const CAMP=[["صدقة رجب","ازرع أثرًا بخيرك"],["إفطار صائم","شاركهم مائدة الخير"],["زكاة الفطر","عيدٌ بلا حاجة"],["كفالة يتيم","كن سندًا ليتيم"],["عشر ذي الحجة","أيامٌ أحبّ إلى الله"],["صدقة جارية","تبقى بعد رحيلك"],["سُقيا الماء","قطرةٌ تحيي قلبًا"],["الحقيبة المدرسية","حلمٌ يبدأ بحقيبة"],["عطاء الوطن","خيرٌ بحجم الوطن"],["كفالة طالب","علمٌ ينفع صاحبه"],["كسوة الشتاء","دفءٌ يصل بيدك"],["ختام العام","اختم بالخير"]];
+const pad=n=>String(n).padStart(2,"0");
+function defMonth(i){const n=i+1,p=pad(n);return{sponsor:"الراعي "+p,sponsorImg:"",photo:"",artist:"اسم الفنان",s1:SLOG[i][0],s2:SLOG[i][1],
+ q1a:"اشترك الآن",q1b:"أو جدد اشتراكك",q1u:"https://example.com/awamia/2027/"+p+"-sub",
+ q2a:CAMP[i][0],q2b:CAMP[i][1],q2u:"https://example.com/awamia/2027/"+p+"-campaign",
+ q3a:"صدقة",q3b:"يوم الجمعة",q3u:"https://example.com/awamia/2027/friday",q1img:"",q2img:"",q3img:""}}
+function defGift(i){return{h1:GIFT[i][0],h2:GIFT[i][1],camp:CAMP[i][0],url:"https://example.com/awamia/2027/gift-"+pad(i+1),qrImg:""}}
+const defSettings=()=>({licNo:"",licStart:"",licEnd:"",handle:"AwamiaCharity",design:"a",font:"1",logo:"",colG:"#517670",colB:"#b8926d",lblSponsor:"برعاية",lblSponsors:"رعاة التقويم",lblGo:"${esc(S().lblGo)}",lblArtist:"الفنان",lblLicNo:"رقم ترخيص التبرعات",lblLicStart:"تاريخ البدء",lblLicEnd:"تاريخ الانتهاء",fTitle:"اريد جعل هذه المساهمة هدية",fName:"إسم المرسل",fTo:"إسم المهدي إليه",fPhone:"جوال المهدي إليه",fModel:"نموذج الإهداء",fOpts:"بدون، الوالدين، الإخوة، الأصدقاء"});
+function defaults(id){if(id==="settings")return defSettings();const n=+id.slice(1)-1;return id[0]==="m"?defMonth(n):defGift(n)}
+
+/* ---------- state ---------- */
+const clone=o=>JSON.parse(JSON.stringify(o));
+const IDS=["settings"];for(let i=1;i<=12;i++){IDS.push("m"+pad(i),"g"+pad(i))}
+const saved={},draft={};IDS.forEach(id=>{saved[id]=defaults(id);draft[id]=clone(saved[id])});
+const cur={mo:1,kind:"m"};
+let DB=null,ASSETS=null,DL=null,CANW=null,CANEDIT=null;
+let SEC="design",APPROVED=null,approveOpen=false;
+const dirty=id=>JSON.stringify(draft[id])!==JSON.stringify(saved[id]);
+const S=()=>draft.settings;
+const $=s=>document.querySelector(s);
+const esc=s=>String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const blob=id=>"/_blob/"+id;
+const curId=()=>cur.kind+pad(cur.mo);
+
+/* ---------- dates (Umm al-Qura via Intl) ---------- */
+const HF=new Intl.DateTimeFormat("en-u-ca-islamic-umalqura-nu-latn",{day:"numeric",month:"numeric",year:"numeric",timeZone:"UTC"});
+function hij(m,d){const o={};HF.formatToParts(new Date(Date.UTC(YEAR,m-1,d,12))).forEach(p=>{if(p.type!=="literal")o[p.type]=+p.value});return o}
+function monthMeta(mo){const nd=new Date(Date.UTC(YEAR,mo,0)).getUTCDate(),a=hij(mo,1),b=hij(mo,nd);
+ const an=H_AR[a.month-1],bn=H_AR[b.month-1];return{label:an===bn?an:an+" - "+bn,year:a.year===b.year?""+a.year:a.year+" - "+b.year}}
+/* Computed occasions for Feb–Dec (Hijri via Umm al-Qura + fixed dates). January stays exactly as approved. */
+(function(){const add=(m,d,t,c)=>{const k=YEAR+"-"+pad(m)+"-"+pad(d);if(!EVENTS[k])EVENTS[k]=[[t,c]]};
+ const HJ=[[9,1,"بداية شهر رمضان","#8e4aa8"],[10,1,"عيد الفطر","#d9822b"],[12,9,"يوم عرفة","#2f9e5b"],[12,10,"عيد الأضحى","#d9822b"],[1,1,"رأس السنة الهجرية","#4f9a8f"],[1,10,"يوم عاشوراء","#4f9a8f"],[9,27,"ليلة القدر (٢٧ رمضان)","#8e4aa8"]];
+ const FIX=[[2,22,"يوم التأسيس","#b8892b"],[3,11,"يوم العلم","#2f9e5b"],[4,7,"اليوم العالمي للصحة","#3b6fb5"],[9,8,"اليوم العالمي لمحو الأمية","#4f9a8f"],[9,23,"اليوم الوطني","#2f9e5b"],[10,1,"اليوم العالمي لكبار السن","#3b6fb5"],[11,20,"اليوم العالمي للطفل","#d9822b"],[12,3,"اليوم الدولي لذوي الإعاقة","#8e4aa8"],[12,18,"اليوم العالمي للغة العربية","#4f9a8f"],[2,20,"اليوم العالمي للعدالة الاجتماعية","#3b6fb5"],[5,8,"اليوم العالمي للهلال والصليب الأحمر","#c0392b"],[6,5,"اليوم العالمي للبيئة","#2f9e5b"],[7,30,"اليوم الدولي للصداقة","#d9822b"],[8,12,"اليوم الدولي للشباب","#3b6fb5"],[8,19,"اليوم العالمي للعمل الإنساني","#c0392b"],[10,10,"اليوم العالمي للصحة النفسية","#8e4aa8"],[10,15,"اليوم العالمي للعصا البيضاء","#4f9a8f"],[11,14,"اليوم العالمي للسكري","#3b6fb5"],[4,23,"اليوم العالمي للكتاب","#4f9a8f"],[7,11,"اليوم العالمي للسكان","#3b6fb5"]];
+ for(let m=2;m<=12;m++){const nd=new Date(Date.UTC(YEAR,m,0)).getUTCDate();for(let d=1;d<=nd;d++){const h=hij(m,d);HJ.forEach(e=>{if(h.month===e[0]&&h.day===e[1])add(m,d,e[2],e[3])})}}
+ FIX.forEach(e=>add(e[0],e[1],e[2],e[3]))})();
+function gridData(mo){const first=new Date(Date.UTC(YEAR,mo-1,1)).getUTCDay(),nd=new Date(Date.UTC(YEAR,mo,0)).getUTCDate(),rows=Math.ceil((first+nd)/7),cells=[],legend=[];
+ for(let i=0;i<rows*7;i++){const d=i-first+1,fri=i%7===5;if(d<1||d>nd){cells.push({v:true,fri});continue}
+  const ev=EVENTS[YEAR+"-"+pad(mo)+"-"+pad(d)];if(ev)legend.push({d,t:ev[0][0],c:ev[0][1]});cells.push({d,hj:hij(mo,d).day,fri,ev:ev?ev[0]:null})}
+ return{cells,rows,legend}}
+const head=()=>DAYS.map((n,i)=>`<th class="${i===5?"fri":""}">${n}</th>`).join("");
+const trs=(g,f)=>{let h="";for(let r=0;r<g.rows;r++)h+="<tr>"+g.cells.slice(r*7,r*7+7).map(f).join("")+"</tr>";return h};
+
+/* ---------- QR ---------- */
+function qrSvg(url,mm){const q=qrcode(0,"H");q.addData(url||"https://example.com");q.make();const n=q.getModuleCount();
+ const zone=(r,c)=>(r<8&&c<8)||(r<8&&c>=n-8)||(r>=n-8&&c<8);let dots="";
+ for(let r=0;r<n;r++)for(let c=0;c<n;c++)if(q.isDark(r,c)&&!zone(r,c))dots+=`<circle cx="${c+.5}" cy="${r+.5}" r=".47"/>`;
+ let eyes="";[[0,0],[0,n-7],[n-7,0]].forEach(([r0,c0])=>{eyes+=`<rect x="${c0}" y="${r0}" width="7" height="7" rx="1.2"/><rect x="${c0+1}" y="${r0+1}" width="5" height="5" rx=".6" fill="#fff"/><rect x="${c0+2}" y="${r0+2}" width="3" height="3" rx=".5"/>`});
+ return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${n} ${n}" width="${mm}mm" height="${mm}mm" style="fill:var(--cg)">${dots}${eyes}</svg>`}
+const QRMM=19;
+const qrEl=(url,mm,img)=>img?`<img src="${blob(img)}" alt="" style="width:${mm}mm;height:${mm}mm;object-fit:contain;display:block">`:qrSvg(url,mm);
+const NC=new Set("اأإآدذرزوؤءىة");
+function kashida(w){let o="";for(let i=0;i<w.length;i++){o+=w[i];if(i<w.length-1&&!NC.has(w[i]))o+="ـ"}return o}
+
+/* ---------- shared pieces ---------- */
+const LG=()=>S().logo?blob(S().logo):LOGO;
+const logo=()=>`<img class="logo" src="${LG()}" alt="شعار الجمعية">`;
+const spBox=(m)=>m.sponsorImg?`<img src="${blob(m.sponsorImg)}" alt="">`:`<span class="ph">${esc(m.sponsor)}</span>`;
+const photoEl=(m,mo,kind)=>m.photo?`<img src="${blob(m.photo)}" alt="">`:(kind==="a"?`<div class="phimg"><b>${MONTH_AR[mo-1]}</b><span>ارفع صورة الشهر</span></div>`:`<div class="phimg"><span>ارفع صورة الشهر</span></div>`);
+const lic=()=>{const s=draft.settings;return[s.licNo||"—",s.licStart||"—",s.licEnd||"—"]};
+const hy=y=>y.replace("-"," - ");
+function sadu(h){const t=6,W=210;return `<svg class="band" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${h}" width="${W}mm" height="${h}mm"><defs><pattern id="sadu" width="${t}" height="${t}" patternUnits="userSpaceOnUse"><rect width="${t}" height="${t}" style="fill:var(--cg)"/><polygon points="3,0.45 5.55,3 3,5.55 0.45,3" style="fill:var(--cb)"/><polygon points="3,1.55 4.45,3 3,4.45 1.55,3" style="fill:var(--cg)"/><rect x="2.6" y="2.6" width=".8" height=".8" fill="#fff"/><rect x="-.25" y="-.25" width=".5" height=".5" fill="#fff"/><rect x="5.75" y="-.25" width=".5" height=".5" fill="#fff"/><rect x="-.25" y="5.75" width=".5" height=".5" fill="#fff"/><rect x="5.75" y="5.75" width=".5" height=".5" fill="#fff"/></pattern></defs><rect width="${W}" height="${h}" fill="url(#sadu)"/></svg>`}
+const form=()=>{const t=S(),o=String(t.fOpts).split(/[،,]/).map(x=>x.trim()).filter(Boolean).map(x=>`<span>${esc(x)}</span>`).join("");return `<div class="form"><div class="ft"><i></i>${esc(t.fTitle)}</div><div class="f"><label>${esc(t.fName)}</label><p></p></div><div class="f"><label>${esc(t.fTo)}<sup>*</sup></label><p></p></div><div class="f"><label>${esc(t.fPhone)}<sup>*</sup></label><p></p></div><div class="f"><label>${esc(t.fModel)}<sup>*</sup></label><p class="sel">${o}</p></div></div>`};
+const allSp=()=>{let h="";for(let i=1;i<=12;i++)h+=`<div class="s">${spBox(draft["m"+pad(i)])}</div>`;return h};
+const lc=()=>{const [a,b,c]=lic();return[esc(a),esc(b),esc(c)]};
+
+/* ---------- design A ---------- */
+function qrA(m,k){return `<div class="qr"><div class="qrbox">${qrEl(m["q"+k+"u"],QRMM,m["q"+k+"img"])}</div><b>${esc(m["q"+k+"a"])}</b><span>${esc(m["q"+k+"b"])}</span></div>`}
+function aMonth(mo,m){const g=gridData(mo),mt=monthMeta(mo);
+ const body=trs(g,c=>c.v?`<td class="${c.fri?"fri":""}"></td>`:`<td class="${c.fri?"fri":""}">${c.ev?`<i class="ev" style="background:${c.ev[1]}">${c.d}</i>`:`<i>${c.d}</i>`}<s>${c.hj}</s></td>`);
+ const chips=g.legend.map(l=>`<span><u style="background:${l.c}"></u>${l.d} · ${esc(l.t)}</span>`).join("");
+ return `<section class="page d-a month"><div class="sp left"><em>${esc(S().lblSponsor)}</em>${spBox(m)}</div><div class="arch o"></div><div class="arch photo">${photoEl(m,mo,"a")}</div><div class="credit">${esc(S().lblArtist)}: ${esc(m.artist)}</div>
+ <div class="dock">${qrA(m,1)}${qrA(m,2)}${qrA(m,3)}</div>${logo()}
+ <div class="year"><b>${YEAR}</b><span>م</span><small>${hy(mt.year)} هـ</small></div><h1>${MONTH_AR[mo-1]}</h1><div class="hpill">${mt.label}</div><div class="ghost">${pad(mo)}</div>
+ <table class="grid" style="--rh:${(56.4/g.rows).toFixed(2)}mm"><thead><tr>${head()}</tr></thead><tbody>${body}</tbody></table><div class="legend">${chips}</div>
+ <div class="slogan"><b>${esc(m.s1)}</b><span>${esc(m.s2)}</span></div>${sadu(6)}</section>`}
+function aGift(g){return `<section class="page d-a gift">${logo()}<h2><b>${esc(g.h1)}</b><span>${esc(g.h2)}</span></h2>${form()}
+ <div class="bigqr"><div class="qrbox">${qrEl(g.url,44,g.qrImg)}</div><div class="cname">${esc(g.camp)}</div><div class="go">${esc(S().lblGo)}</div></div>
+ <div class="spt">${esc(S().lblSponsors)}</div><div class="sponsors">${allSp()}</div><div class="handle">${esc(draft.settings.handle)}</div>${sadu(6)}</section>`}
+
+/* ---------- design B ---------- */
+function bMonth(mo,m){const g=gridData(mo),mt=monthMeta(mo),rh=((79-5-(g.rows+1))/g.rows).toFixed(2),[l1,l2,l3]=lc();
+ const body=trs(g,c=>c.v?`<td class="void${c.fri?" fri":""}"></td>`:c.ev?`<td class="ev" style="background:${c.ev[1]}"><div class="tt"><b>${c.d}</b><s>${c.hj}</s></div><div class="en">${esc(c.ev[0])}</div></td>`:`<td class="${c.fri?"fri":""}"><div class="tt"><b>${c.d}</b><s>${c.hj}</s></div></td>`);
+ const qr=k=>`<div class="r"><div class="qrbox">${qrEl(m["q"+k+"u"],QRMM,m["q"+k+"img"])}</div><div class="t"><b>${esc(m["q"+k+"a"])}</b><span>${esc(m["q"+k+"b"])}</span></div></div>`;
+ return `<section class="page d-b month"><div class="photo">${photoEl(m,mo,"b")}</div><div class="shade"></div>
+ <div class="tabR"><em>${esc(S().lblSponsor)}</em><div class="sb">${spBox(m)}</div></div><div class="tabL">${logo()}</div>
+ <div class="slog"><b>${esc(m.s1)}</b><span>${esc(m.s2)}</span></div><div class="title">${MONTH_AR[mo-1]}</div>
+ <div class="meta"><i>${mt.label}</i><span>${YEAR} م &nbsp;·&nbsp; ${hy(mt.year)} هـ</span></div>
+ <div class="side">${qr(1)}${qr(2)}${qr(3)}</div>
+ <table class="cal" style="--rh:${rh}mm"><thead><tr>${head()}</tr></thead><tbody>${body}</tbody></table>
+ <div class="foot"><span>${esc(S().lblLicNo)}: ${l1}</span><span>${esc(S().lblLicStart)}: ${l2}</span><span>${esc(S().lblLicEnd)}: ${l3}</span><span class="h">${esc(draft.settings.handle)}</span></div></section>`}
+function bGift(g){const [l1,l2,l3]=lc();return `<section class="page d-b gift"><div class="dots"></div><div class="tabL">${logo()}</div><h2><b>${esc(g.h1)}</b><span>${esc(g.h2)}</span></h2>${form()}
+ <div class="bigqr"><div class="qrbox">${qrEl(g.url,44,g.qrImg)}</div><div class="cname">${esc(g.camp)}</div><div class="go">${esc(S().lblGo)}</div></div>
+ <div class="strip"></div><div class="spt">${esc(S().lblSponsors)}</div><div class="sponsors">${allSp()}</div>
+ <div class="lic">${esc(S().lblLicNo)}: ${l1} &nbsp;·&nbsp; ${esc(S().lblLicStart)}: ${l2} &nbsp;·&nbsp; ${esc(S().lblLicEnd)}: ${l3}</div></section>`}
+
+/* ---------- design C ---------- */
+const mark=c=>`<div class="${c}"><img src="${LG()}" alt=""></div>`;
+function cMonth(mo,m){const g=gridData(mo),mt=monthMeta(mo);
+ const body=trs(g,c=>c.v?`<td class="${c.fri?"fri":""}"></td>`:`<td class="${c.fri?"fri":""}">${c.ev?`<i class="ev" style="border-color:${c.ev[1]}">${c.d}</i>`:`<i>${c.d}</i>`}<s>${c.hj}</s></td>`);
+ const items=g.legend.slice(0,7).map(l=>`<li><u style="background:${l.c}"></u><b>${l.d}</b> ${esc(l.t)}</li>`).join("");
+ const q=k=>`<div class="q"><div class="qrbox">${qrEl(m["q"+k+"u"],QRMM,m["q"+k+"img"])}</div><div class="qt"><b>${esc(m["q"+k+"a"])}</b><span>${esc(m["q"+k+"b"])}</span></div></div>`;
+ return `<section class="page d-c month">${mark("mark")}<div class="photo">${photoEl(m,mo,"c")}</div><div class="credit">${esc(S().lblArtist)}: ${esc(m.artist)}</div>${logo()}
+ <div class="sp"><em>${esc(S().lblSponsor)}</em><div class="sb">${spBox(m)}</div></div><h1>${kashida(MONTH_AR[mo-1])}</h1><div class="hp"><i>${mt.label}</i><span>${YEAR} م</span></div>
+ <ul class="lg">${items}</ul><div class="dock">${q(1)}${q(2)}${q(3)}</div>
+ <table class="cal" style="--rh:${(56/g.rows).toFixed(2)}mm"><thead><tr>${head()}</tr></thead><tbody>${body}</tbody></table>
+ <div class="slogan"><b>${esc(m.s1)}</b><b>${esc(m.s2)}</b></div></section>`}
+function cGift(g){const [l1,l2,l3]=lc();return `<section class="page d-c gift"><div class="box"></div>${mark("mark g")}${logo()}
+ <div class="bigqr"><div class="qrbox">${qrEl(g.url,38,g.qrImg)}</div><div class="cname"><b>${esc(g.camp)}</b></div><div class="go">${esc(S().lblGo)}</div></div>
+ <h2><b>${esc(g.h1)}</b><span>${esc(g.h2)}</span></h2>${form()}<div class="spt">${esc(S().lblSponsors)}</div><div class="sponsors">${allSp()}</div>
+ <div class="lic">${esc(S().lblLicNo)}: ${l1} &nbsp;·&nbsp; ${esc(S().lblLicStart)}: ${l2} &nbsp;·&nbsp; ${esc(S().lblLicEnd)}: ${l3}</div></section>`}
+
+/* ---------- design D ---------- */
+function dMonth(mo,m){const g=gridData(mo),mt=monthMeta(mo);
+ const body=trs(g,c=>c.v?`<td class="${c.fri?"fri":""}"></td>`:`<td class="${c.fri?"fri":""}${c.ev?" ev":""}"${c.ev?` style="--c:${c.ev[1]}"`:""}><b>${c.d}</b><s>${c.hj}</s></td>`);
+ const chips=g.legend.slice(0,8).map(l=>`<span><u style="border-top-color:${l.c}"></u><b>${l.d}</b> ${esc(l.t)}</span>`).join("");
+ const q=k=>`<div class="q"><div class="qrbox">${qrEl(m["q"+k+"u"],QRMM,m["q"+k+"img"])}</div><b>${esc(m["q"+k+"a"])}</b><span>${esc(m["q"+k+"b"])}</span></div>`;
+ return `<section class="page d-d month"><div class="bg1"></div><div class="bg2"></div>${logo()}<div class="ring"></div><div class="photo">${photoEl(m,mo,"d")}</div>
+ <div class="spb"><em>${esc(S().lblSponsor)}</em><div class="sb">${spBox(m)}</div></div><div class="dock">${q(1)}${q(2)}${q(3)}</div>
+ <div class="slogan"><b>${esc(m.s1)}</b><span>${esc(m.s2)}</span></div><div class="title">${MONTH_AR[mo-1]}</div>
+ <div class="meta"><i>${mt.label}</i><span>${YEAR} م &nbsp;·&nbsp; ${hy(mt.year)} هـ</span></div>
+ <div class="card"><table class="cal" style="--rh:${(66/g.rows).toFixed(2)}mm"><thead><tr>${head()}</tr></thead><tbody>${body}</tbody></table><div class="legend">${chips}</div><div class="credit">${esc(S().lblArtist)}: ${esc(m.artist)}</div></div></section>`}
+function dGift(g){const [l1,l2,l3]=lc();return `<section class="page d-d gift"><div class="bg1"></div><div class="disc"></div>${logo()}
+ <div class="bigqr"><div class="qrbox">${qrEl(g.url,40,g.qrImg)}</div></div><div class="cn"><div class="cname">${esc(g.camp)}</div><div class="go">${esc(S().lblGo)}</div></div>
+ <h2><b>${esc(g.h1)}</b><span>${esc(g.h2)}</span></h2>${form()}<div class="bar"><div class="spt">${esc(S().lblSponsors)}</div><div class="sponsors">${allSp()}</div></div>
+ <div class="lic">${esc(S().lblLicNo)}: ${l1} &nbsp;·&nbsp; ${esc(S().lblLicStart)}: ${l2} &nbsp;·&nbsp; ${esc(S().lblLicEnd)}: ${l3}</div></section>`}
+
+const R={a:[aMonth,aGift],b:[bMonth,bGift],c:[cMonth,cGift],d:[dMonth,dGift]};
+function pageHtml(){const f=R[draft.settings.design]||R.a;return cur.kind==="m"?f[0](cur.mo,draft["m"+pad(cur.mo)]):f[1](draft["g"+pad(cur.mo)])}
+
+/* ---------- preview ---------- */
+const PXW=210*96/25.4,PXH=150*96/25.4;
+function fit(){const st=$("#stage"),w=st.clientWidth,s=w/PXW;st.style.height=PXH*s+"px";$("#pagebox").style.transform="scale("+s+")"}
+function viewHtml(){if(SEC!=="approved")return pageHtml();
+ if(!APPROVED)return `<section class="page" style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4mm;color:#667570;font-family:var(--fb),sans-serif"><b style="font-size:7mm">لا يوجد تقويم ميلادي معتمد بعد</b><span style="font-size:3.6mm">يظهر هنا التقويم بعد اعتماده من قسم التصميم</span></section>`;
+ const bak={};IDS.forEach(id=>{bak[id]=draft[id];draft[id]=Object.assign(defaults(id),APPROVED.data[id]||{})});
+ try{return pageHtml()}finally{IDS.forEach(id=>{draft[id]=bak[id]})}}
+let raf=0;function drawPreview(){cancelAnimationFrame(raf);raf=requestAnimationFrame(()=>{$("#pagebox").innerHTML=viewHtml();fit()})}
+
+/* ---------- navigation ---------- */
+function buildNav(){
+ $("#designs").innerHTML=DESIGNS.map(d=>`<button class="tab" data-d="${d[0]}" aria-pressed="false"><b>${d[0].toUpperCase()} · ${d[1]}</b><span>${d[2]}</span></button>`).join("");
+ $("#months").innerHTML=MONTH_AR.map((n,i)=>`<button class="mbtn" data-m="${i+1}" aria-pressed="false">${n}<i hidden></i></button>`).join("")}
+function syncNav(){
+ document.querySelectorAll("#designs .tab").forEach(b=>b.setAttribute("aria-pressed",b.dataset.d===draft.settings.design));
+ document.querySelectorAll("#kind button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.k===cur.kind));
+ document.querySelectorAll("#months .mbtn").forEach(b=>{const n=+b.dataset.m;b.setAttribute("aria-pressed",n===cur.mo);b.querySelector("i").hidden=!(dirty("m"+pad(n))||dirty("g"+pad(n)))});
+ const vs=(SEC==="approved"&&APPROVED&&APPROVED.data.settings)?Object.assign(defSettings(),APPROVED.data.settings):draft.settings;$("#app").style.setProperty("--cg",vs.colG);$("#app").style.setProperty("--cb",vs.colB);$("#app").dataset.font=vs.font;$("#fontsel").value=draft.settings.font}
+function go(mo,kind){cur.mo=Math.min(12,Math.max(1,mo));cur.kind=kind;renderAll()}
+function step(dir){let s=(cur.mo-1)*2+(cur.kind==="m"?1:0)+dir;s=Math.min(23,Math.max(0,s));go(Math.floor(s/2)+1,s%2?"m":"g")}
+
+/* ---------- editor ---------- */
+const MF=[["sponsor","اسم الراعي","t"],["sponsorImg","شعار الراعي","i"],["photo","صورة الشهر","i"],["artist","اسم الفنان","t"],["s1","الشعار أسفل الشهر — السطر الأول","t"],["s2","الشعار أسفل الشهر — السطر الثاني","t"]];
+const GF=[["h1","عنوان الإهداء — السطر الأول","t"],["h2","عنوان الإهداء — السطر الثاني","t"],["camp","اسم الحملة","t"],["url","رابط QR","u"],["qrImg","أو ارفع صورة QR جاهزة (تحلّ محل المولَّد)","i"]];
+const status=(t,bad)=>{const s=$("#status");if(s){s.textContent=t;s.className=bad?"bad":""}};
+function fieldHtml(id,[k,label,type]){const v=draft[id][k]||"";
+ if(type==="i")return `<div class="field"><label>${label}</label><div class="img"><div class="thumb" style="${v?`background-image:url(${blob(v)})`:""}"></div>${ASSETS?`<button class="btn" data-up="${k}" data-id="${id}">رفع صورة</button>${v?`<button class="btn ghost" data-rm="${k}" data-id="${id}">إزالة</button>`:""}<input type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml" hidden data-file="${k}" data-id="${id}">`:`<span class="hint">الرفع متاح للمحرّر فقط</span>`}</div></div>`;
+ return `<div class="field"><label>${label}</label><input type="${type==="u"?"url":"text"}" ${type==="u"?'dir="ltr"':""} data-k="${k}" value="${esc(v)}"></div>`}
+function qrGroup(id,n,title){return `<h3>${title}</h3><div class="row3">${["a","b"].map((c,i)=>fieldHtml(id,["q"+n+c,i?"السطر الثاني":"السطر الأول","t"])).join("")}</div>${fieldHtml(id,["q"+n+"u","الرابط (يتولّد منه الـQR تلقائيًا)","u"])}${fieldHtml(id,["q"+n+"img","أو ارفع صورة QR جاهزة (تحلّ محل المولَّد)","i"])}`}
+function renderEditor(){const id=curId(),isM=cur.kind==="m",name=MONTH_AR[cur.mo-1];
+ let h=`<h2>${isM?"صفحة شهر "+name:"صفحة الإهداء قبل "+name}</h2>`;
+ if(isM){h+=MF.slice(0,4).map(f=>fieldHtml(id,f)).join("")+MF.slice(4).map(f=>fieldHtml(id,f)).join("")+qrGroup(id,1,"رمز QR الأول")+qrGroup(id,2,"رمز QR الثاني (حملة الشهر)")+qrGroup(id,3,"رمز QR الثالث (صدقة الجمعة)")}
+ else{h+=GF.map(f=>fieldHtml(id,f)).join("")+`<p class="hint">الرعاة في أسفل الصفحة يؤخذون تلقائيًا من صفحات الأشهر الاثني عشر.</p>`}
+ h+=`<div class="savebar"><button class="btn primary" id="save">حفظ</button><button class="btn" id="revert">تراجع</button><button class="btn ghost" id="saveall">حفظ الكل</button><span class="pill" id="dpill"></span></div><div id="status" role="status" aria-live="polite"></div>`;
+ $("#editor").innerHTML=h;updatePill()}
+function updatePill(){const p=$("#dpill");if(!p)return;const d=dirty(curId());const n=IDS.filter(dirty).length;
+ p.textContent=!DB?"مؤقت — لا حفظ دائم":d?"تعديلات غير محفوظة":"محفوظ";p.className="pill "+(!DB?"warn":d?"warn":"ok");
+ $("#save").disabled=!DB||!d||CANW===false;$("#revert").disabled=!d;$("#saveall").disabled=!DB||n===0||CANW===false;$("#saveall").textContent=n>1?"حفظ الكل ("+n+")":"حفظ الكل"}
+function renderGen(){const s=draft.settings;
+ const f=(k,l,dir)=>`<div class="field"><label>${l}</label><input type="text" ${dir?'dir="ltr"':""} data-gk="${k}" value="${esc(s[k])}"></div>`;
+ const c=(k,l)=>`<div class="field"><label>${l}</label><input type="color" data-gk="${k}" value="${esc(s[k])}" style="width:100%;height:36px;border:1px solid var(--line);border-radius:8px;background:var(--bg);padding:2px"></div>`;
+ $("#genbody").innerHTML=`<h3>الشعار والألوان</h3>${fieldHtml("settings",["logo","شعار الجمعية (اتركه فارغًا لاستخدام الشعار الافتراضي)","i"])}<div class="row3">${c("colG","اللون الأساسي")}${c("colB","اللون الثانوي")}</div>`+
+ `<h3>الترخيص</h3>${f("licNo","رقم ترخيص التبرعات")}<div class="row3">${f("licStart","تاريخ البدء")}${f("licEnd","تاريخ الانتهاء")}</div>${f("handle","حساب الجمعية (يظهر في التصميم)",true)}`+
+ `<h3>نصوص ثابتة في الصفحات</h3><div class="row3">${f("lblSponsor","عبارة «برعاية»")}${f("lblSponsors","عنوان رعاة التقويم")}</div><div class="row3">${f("lblGo","عبارة تحت QR الإهداء")}${f("lblArtist","كلمة «الفنان»")}</div><div class="row3">${f("lblLicNo","تسمية رقم الترخيص")}${f("lblLicStart","تسمية البدء")}</div>${f("lblLicEnd","تسمية الانتهاء")}`+
+ `<h3>نموذج الإهداء</h3>${f("fTitle","عنوان النموذج")}<div class="row3">${f("fName","حقل المرسل")}${f("fTo","حقل المهدى إليه")}</div>${f("fPhone","حقل الجوال")}${f("fModel","حقل النموذج")}${f("fOpts","خيارات النموذج (افصل بفاصلة)")}`+
+ `<p class="hint">الشعار والألوان والنصوص هنا تنطبق على كل الصفحات والتصاميم. التصميم والخط المختاران يُحفظان أيضًا ويصبحان الافتراضي.</p><div class="savebar"><button class="btn primary" id="gsave">حفظ الإعدادات</button><button class="btn" id="gexport">تصدير البيانات JSON</button><span class="pill" id="gpill"></span></div><div id="gstatus" class="hint" role="status"></div>`;
+ gpill()}
+function gpill(){const p=$("#gpill");if(!p)return;const d=dirty("settings");p.textContent=!DB?"مؤقت":d?"غير محفوظ":"محفوظ";p.className="pill "+(!DB||d?"warn":"ok");$("#gsave").disabled=!DB||!d||CANW===false;$("#gexport").hidden=!DL}
+
+/* ---------- save / load ---------- */
+const ERR={invalid_argument:"لا تملك صلاحية الكتابة على هذه البيانات.",quota_exceeded:"امتلأت مساحة البيانات.",resource_exhausted:"محاولات كثيرة، أعد المحاولة بعد لحظات.",unavailable:"الخدمة غير متاحة الآن، أعد المحاولة.",revoked:"انتهت صلاحية الجلسة، أعد فتح الصفحة."};
+async function saveId(id){if(!DB)throw{code:"not_granted"};await DB.doc("cal/"+id).set(clone(draft[id]));saved[id]=clone(draft[id])}
+async function doSave(ids,say){say("جارٍ الحفظ…");try{for(const id of ids)await saveId(id);say("تم الحفظ ✓ "+new Date().toLocaleTimeString("ar",{hour:"2-digit",minute:"2-digit"}));}catch(e){say(ERR[e&&e.code]||"تعذّر الحفظ.",true)}refreshUi()}
+function refreshUi(){syncNav();updatePill();gpill()}
+const fmtDate=iso=>{try{return new Date(iso).toLocaleString("ar",{dateStyle:"long",timeStyle:"short"})}catch(_){return iso}};
+function checks(){const ms=[],gs=[];for(let i=1;i<=12;i++){ms.push(draft["m"+pad(i)]);gs.push(draft["g"+pad(i)])}
+ const ph=ms.filter(m=>/^الراعي \d\d$/.test(m.sponsor)).length,nl=ms.filter(m=>!m.sponsorImg).length,np=ms.filter(m=>!m.photo).length,na=ms.filter(m=>m.artist==="اسم الفنان").length;
+ let ex=0;ms.forEach(m=>[1,2,3].forEach(k=>{if(!m["q"+k+"img"]&&/example\.com/.test(m["q"+k+"u"]))ex++}));gs.forEach(g=>{if(!g.qrImg&&/example\.com/.test(g.url))ex++});
+ return[[!!draft.settings.licNo.trim(),"رقم ترخيص التبرعات وتاريخاه","غير مُدخل"],[ex===0,"روابط الـQR الحقيقية","يوجد "+ex+" رابط تجريبي من 48"],[np===0,"صور الأشهر","ينقص "+np+" من 12"],[nl===0,"شعارات الرعاة","ينقص "+nl+" من 12"],[ph===0,"أسماء الرعاة","يوجد "+ph+" اسم افتراضي"],[na===0,"أسماء الفنانين","يوجد "+na+" اسم افتراضي"]]}
+function renderApprove(){const a=$("#approve");if(!a)return;const n=IDS.filter(dirty).length;
+ let h=`<h2>الاعتماد</h2><p class="hint" style="font-size:.86rem">${APPROVED?"آخر اعتماد: "+fmtDate(APPROVED.approvedAt)+".":"لم يُعتمد هذا التقويم بعد — هو الآن قيد التصميم."} عند الاعتماد تُحفظ نسخة كاملة تظهر في قسم «التقويم الميلادي المعتمد».</p>`;
+ if(approveOpen){const c=checks();h+=`<ul class="chk">${c.map(x=>`<li><b class="${x[0]?"g":"w"}">${x[0]?"✓":"!"}</b><span>${x[1]}${x[0]?"":" — "+x[2]}</span></li>`).join("")}</ul><p class="hint">البنود المعلّمة بعلامة (!) لا تمنع الاعتماد، لكنها لن تكون جاهزة للطباعة.${n?" سيُحفظ أولًا ما لم يُحفظ من تعديلات ("+n+" صفحة).":""}</p><div class="savebar"><button class="btn primary" id="apgo">تأكيد الاعتماد</button><button class="btn" id="apno">إلغاء</button></div>`}
+ else h+=`<div class="savebar" style="border:0;padding:0"><button class="btn primary" id="apopen" ${!DB||CANEDIT===false?"disabled":""}>اعتماد التقويم…</button>${!DB?'<span class="pill warn">يتطلب الحفظ الدائم</span>':CANEDIT===false?'<span class="pill warn">للمحرّرين فقط</span>':""}</div>`;
+ h+='<div id="apstatus" class="hint" role="status"></div>';a.innerHTML=h}
+function renderApBox(){const a=$("#apbox");if(!a)return;
+ a.innerHTML=APPROVED?`<h2>التقويم الميلادي المعتمد — ${APPROVED.year||2027}</h2><p class="hint" style="font-size:.86rem">اعتُمد في ${fmtDate(APPROVED.approvedAt)}. هذه نسخة للقراءة فقط.</p><div class="savebar" style="border:0;padding:0"><button class="btn" id="apreopen">فتح نسخة منه في قسم التصميم</button></div><div id="apstatus2" class="hint"></div>`:`<h2>التقويم الميلادي المعتمد</h2><p class="hint" style="font-size:.86rem">لا يوجد تقويم معتمد حتى الآن. صمّم التقويم في القسم الثاني ثم اعتمده ليظهر هنا.</p>`}
+function renderSec(){$("#app").dataset.sec=SEC;document.querySelectorAll("#sections button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.sec===SEC));renderApprove();renderApBox();syncNav();drawPreview()}
+async function doApprove(){const say=t=>{const e=$("#apstatus");if(e)e.textContent=t};say("جارٍ الحفظ والاعتماد…");
+ try{for(const id of IDS.filter(dirty))await saveId(id);const data={};IDS.forEach(id=>data[id]=clone(draft[id]));await DB.doc("approved/y2027").set({year:2027,approvedAt:new Date().toISOString(),data});approveOpen=false;APPROVED={year:2027,approvedAt:new Date().toISOString(),data};SEC="approved";renderAll()}
+ catch(e){say(ERR[e&&e.code]||"تعذّر الاعتماد.")}}
+function renderAll(){syncNav();renderEditor();drawPreview();renderGen();renderApprove();renderApBox();$("#app").dataset.sec=SEC;document.querySelectorAll("#sections button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.sec===SEC))}
+function onInput(id,k,v){draft[id][k]=v;drawPreview();refreshUi()}
+async function upload(id,k,file){status("جارٍ رفع الصورة…");try{let b=file;
+  if(k==="photo"&&file.type!=="image/svg+xml"){const bmp=await createImageBitmap(file),sc=Math.min(1,2600/Math.max(bmp.width,bmp.height));if(sc<1){const c=document.createElement("canvas");c.width=Math.round(bmp.width*sc);c.height=Math.round(bmp.height*sc);c.getContext("2d").drawImage(bmp,0,0,c.width,c.height);b=await new Promise(r=>c.toBlob(r,"image/jpeg",.92))}}
+  const r=await ASSETS.upload(b);draft[id][k]=r.id;renderEditor();renderGen();drawPreview();refreshUi();status("تم رفع الصورة — اضغط «حفظ» لتثبيتها.")}
+ catch(e){const c=e&&e.code;status(c==="too_large"?"الصورة أكبر من الحد المسموح (٢٠ ميغابايت).":c==="unsupported_type"?"نوع الملف غير مدعوم (PNG أو JPG أو WebP أو SVG).":"تعذّر رفع الصورة.",true)}}
+
+function applySnap(snap){let touched=false;snap.docs.forEach(d=>{const id=d.id,v=d.data();if(!v||!(id in saved))return;const was=dirty(id);saved[id]=Object.assign(defaults(id),v);if(!was){draft[id]=clone(saved[id]);touched=true}});
+ if(touched){syncNav();drawPreview();if(!$("#app").contains(document.activeElement)||document.activeElement===document.body){renderEditor();renderGen()}else{updatePill();gpill()}}}
+
+/* ---------- events ---------- */
+document.addEventListener("click",e=>{const t=e.target.closest("button");if(!t)return;
+ if(t.dataset.sec){SEC=t.dataset.sec;renderSec()}
+ else if(t.id==="apopen"){approveOpen=true;renderApprove()}else if(t.id==="apno"){approveOpen=false;renderApprove()}else if(t.id==="apgo")doApprove();
+ else if(t.id==="apreopen"&&APPROVED){IDS.forEach(id=>{draft[id]=Object.assign(defaults(id),clone(APPROVED.data[id]||{}))});SEC="design";renderAll();status("تم فتح نسخة من المعتمد للتعديل — اضغط «حفظ» لتثبيت أي تعديل.")}
+ else if(t.dataset.d){draft.settings.design=t.dataset.d;renderAll()}
+ else if(t.dataset.m)go(+t.dataset.m,cur.kind);
+ else if(t.parentElement&&t.parentElement.id==="kind")go(cur.mo,t.dataset.k);
+ else if(t.id==="prev")step(-1);else if(t.id==="next")step(1);
+ else if(t.dataset.up){document.querySelector(`[data-file="${t.dataset.up}"][data-id="${t.dataset.id}"]`).click()}
+ else if(t.dataset.rm){draft[t.dataset.id][t.dataset.rm]="";renderEditor();renderGen();drawPreview();refreshUi()}
+ else if(t.id==="save")doSave([curId()],status);
+ else if(t.id==="saveall")doSave(IDS.filter(dirty),status);
+ else if(t.id==="revert"){draft[curId()]=clone(saved[curId()]);renderEditor();drawPreview();refreshUi()}
+ else if(t.id==="gsave")doSave(["settings"],(m,b)=>{const g=$("#gstatus");g.textContent=m;g.style.color=b?"var(--bad)":""});
+ else if(t.id==="gexport"&&DL){const out={};IDS.forEach(id=>out[id]=draft[id]);DL.save({filename:"awamia-calendar-2027.json",data:JSON.stringify(out,null,2)}).catch(()=>{})}});
+document.addEventListener("input",e=>{const t=e.target;if(t.dataset.k)onInput(curId(),t.dataset.k,t.value);else if(t.dataset.gk){draft.settings[t.dataset.gk]=t.value;drawPreview();refreshUi()}});
+document.addEventListener("change",e=>{const t=e.target;if(t.dataset&&t.dataset.file&&t.files[0]){upload(t.dataset.id||curId(),t.dataset.file,t.files[0]);t.value=""}});
+$("#fontsel").addEventListener("change",e=>{draft.settings.font=e.target.value;renderAll()});
+new ResizeObserver(fit).observe($("#stage"));
+
+/* ---------- boot ---------- */
+buildNav();renderAll();
+(async function(){if(typeof claude==="undefined"||!claude.use)return;
+ try{const u=await claude.use("user");if(u&&u.can)CANW=await u.can("data.write");if(u&&u.canEdit)CANEDIT=await u.canEdit()}catch(_){}
+ try{DB=await claude.use("db")}catch(_){}
+ try{ASSETS=await claude.use("assets")}catch(_){}
+ try{DL=await claude.use("downloads")}catch(_){}
+ if(DB){try{DB.collection("cal").onSnapshot(applySnap,()=>{})}catch(_){}try{DB.doc("approved/y2027").onSnapshot(sn=>{APPROVED=sn.exists?sn.data():null;renderApprove();renderApBox();if(SEC==="approved"){syncNav();drawPreview()}},()=>{})}catch(_){}}
+ renderAll()})();
+})();
+</script>

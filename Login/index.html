@@ -2171,6 +2171,14 @@
   .tpl-custom-head select{border:1.5px solid var(--line, #E3E8E6); border-radius:12px; padding:8px 10px; font-family:inherit; font-size:12.5px; background:#fff;}
   .tpl-gender-hint{font-size:12.5px; line-height:1.8; color:var(--ink-soft, #6B7674); background:#F6EEE5; border-radius:14px; padding:9px 14px; margin:0 0 12px;}
   .tpl-gender-hint b{color:#8F6A45; font-weight:600;}
+  /* التقاويم الميلادية */
+  .cal-head{display:flex; align-items:center; gap:12px; flex-wrap:wrap; margin-bottom:16px;}
+  .cal-year{display:inline-flex; align-items:center; gap:8px; font-size:13px; color:var(--ink-2);}
+  .cal-year select{border:1px solid rgba(20,28,27,.10); border-radius:999px; padding:8px 14px; background:#fff; font-family:inherit; font-size:13.5px;}
+  .cal-approved-years{display:flex; gap:8px; flex-wrap:wrap; align-items:center;}
+  .cal-approved-years .ws-pill small{opacity:.7; font-size:11.5px; margin-inline-start:4px;}
+  .cal-frame{display:block; width:100%; height:calc(100vh - 200px); min-height:700px; border:0; border-radius:24px; background:transparent;}
+  .cal-approved-years .ws-pill.on{background:var(--ink); color:#fff; border-color:var(--ink);}
 
 </style>
 </head>
@@ -2298,6 +2306,10 @@
       <span class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="9" width="16" height="11" rx="1.5"/><path d="M4 13h16M12 9v11"/><path d="M12 9c0-2.2-1.6-4-3.5-4S6 6.3 6 7.8 7.6 9 9.5 9H12zM12 9c0-2.2 1.6-4 3.5-4S18 6.3 18 7.8 16.4 9 14.5 9H12z"/></svg></span>
       المناسبات الاجتماعية
     </div>
+    <div class="nav-tab" data-section="calendars">
+      <span class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="5" width="16" height="15" rx="2.5"/><path d="M8 3v4M16 3v4M4 10h16"/><path d="M8.5 14h2M13.5 14h2M8.5 17h2"/></svg></span>
+      التقاويم الميلادية
+    </div>
     <div class="nav-tab admin-tab" data-section="admin" id="adminTabBtn" style="display:none;">
       <span class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3.2"/><path d="M12 2.5v3M12 18.5v3M21.5 12h-3M5.5 12h-3M18.5 5.5l-2 2M7.5 16.5l-2 2M18.5 18.5l-2-2M7.5 7.5l-2-2"/></svg></span>
       لوحة التحكم
@@ -2320,6 +2332,10 @@
     </div>
     <div class="section-view" id="view-events">
       <div id="eventsRoot"></div>
+    </div>
+    <!-- ===== التقاويم الميلادية: صفحة مستقلة (Login/calendar/) مضمَّنة، تتصل باللوحة عبر window.__zaraCal ===== -->
+    <div class="section-view" id="view-calendars">
+      <div id="calendarsRoot"></div>
     </div>
     <!-- ===== Admin section ===== -->
     <div class="section-view" id="view-admin">
@@ -2539,7 +2555,8 @@
     { key: "docs", label: "وثّق" },
     { key: "annual", label: "التقرير السنوي" },
     { key: "executive", label: "التقرير التنفيذي" },
-    { key: "events", label: "المناسبات الاجتماعية" }
+    { key: "events", label: "المناسبات الاجتماعية" },
+    { key: "calendars", label: "التقاويم الميلادية" }
   ];
 
   var currentUser = null;
@@ -2688,6 +2705,7 @@
     }
     var activeNow = document.querySelector(".nav-tab.active");
     var activeSectionNow = activeNow ? activeNow.dataset.section : null;
+    if(activeSectionNow === "calendars") calRender();
     if(activeSectionNow === "events"){
       var evTab = parts[1];
       if(evTab && EVENTS_TAB_KEYS.indexOf(evTab) > -1) eventsUI.tab = evTab;
@@ -2735,15 +2753,20 @@
       { k: "docs.review", l: "مراجعة واعتماد التوثيقات" },
       { k: "docs.export", l: "تنزيل الحزمة" }
     ] },
+    { key: "calendars", label: "التقاويم الميلادية", perms: [
+      { k: "calendars.view", l: "فتح القسم واستعراض التقاويم المعتمدة" },
+      { k: "calendars.edit", l: "تصميم التقويم وتعديل محتواه" },
+      { k: "calendars.approve", l: "اعتماد التقويم" }
+    ] },
     { key: "chat", label: "دردشة الموظفين", perms: [
       { k: "chat.use", l: "استخدام الدردشة" }
     ] }
   ];
   var PERM_ALL = PERM_GROUPS.reduce(function(a, g){ return a.concat(g.perms.map(function(p){ return p.k; })); }, []);
   var KIND_PRESETS = {
-    employee: ["docs.view", "docs.add", "tasks.view", "tasks.edit", "tasks.projects", "events.view", "events.add", "events.edit", "events.publish", "events.design", "events.reports", "events.gallery", "chat.use"],
-    chair: ["docs.view", "tasks.view", "events.view", "events.reports", "events.gallery", "annual.view", "executive.view", "chat.use"],
-    board: ["docs.view", "tasks.view", "events.view", "events.reports", "events.gallery", "annual.view", "executive.view", "chat.use"],
+    employee: ["docs.view", "docs.add", "tasks.view", "tasks.edit", "tasks.projects", "events.view", "events.add", "events.edit", "events.publish", "events.design", "events.reports", "events.gallery", "calendars.view", "chat.use"],
+    chair: ["docs.view", "tasks.view", "events.view", "events.reports", "events.gallery", "annual.view", "executive.view", "calendars.view", "chat.use"],
+    board: ["docs.view", "tasks.view", "events.view", "events.reports", "events.gallery", "annual.view", "executive.view", "calendars.view", "chat.use"],
     volunteer: ["tasks.view", "tasks.edit", "chat.use"]
   };
   // الحسابات السابقة (قبل الصلاحيات الدقيقة) كانت تملك كل ما في أقسامها عدا القبول/الرفض وإدارة كل المهام — نحافظ على ذلك
@@ -3011,6 +3034,82 @@
     if(ws.started) setTimeout(function(){ location.reload(); }, 60);
   });
 
+  // ===== التقاويم الميلادية =====
+  // قسمان: «التقاويم المعتمدة» (قراءة فقط) و«تصميم التقويم الميلادي للعام» (تحرير بحفظ تلقائي ثم اعتماد).
+  // المحرّر صفحة مستقلة مضمَّنة كي لا تتداخل تصاميم صفحات التقويم مع تنسيقات اللوحة؛ بياناتها في
+  // calendars/<السنة>/pages/* والمعتمد في calendarsApproved/<السنة>
+  var CAL_BUILD = "1";
+  var calUI = { sec: "approved", year: 2027, approved: null, frameKey: "" };
+  function calYears(){ var y = new Date().getFullYear(), out = [2027]; for(var i = Math.max(2028, y); i <= Math.max(2029, y + 2); i++) out.push(i); return out; }
+  window.__zaraCal = {
+    get db(){ return currentUser && can("calendars.view") ? db : null; },
+    get canEdit(){ return can("calendars.edit"); },
+    get canApprove(){ return can("calendars.approve"); },
+    get userName(){ return currentUser ? currentUser.name : ""; },
+    // الصور ترفع كما هي إلى مخزن الوسائط (نفس خدمة «وثّق»)، ويُحفظ رابطها في مستند الصفحة
+    upload: function(blob){
+      if(!can("calendars.edit")) return Promise.reject({ code: "permission-denied" });
+      return fetch(MEDIA_UPLOAD_ENDPOINT, { method: "POST", headers: { "Content-Type": blob.type || "application/octet-stream", "X-Folder": "reports" }, body: blob }).then(function(res){
+        return res.json().catch(function(){ return {}; }).then(function(d){
+          if(res.ok && d.url) return d.url;
+          throw { code: res.status === 413 ? "too_large" : (res.status === 415 || /type|نوع/i.test(d.error || "")) ? "unsupported_type" : "unavailable" };
+        });
+      });
+    },
+    onSection: function(sec){ calUI.sec = sec; calSyncNav(); }
+  };
+  function calSyncNav(){
+    var root = document.getElementById("calendarsRoot"); if(!root) return;
+    Array.prototype.forEach.call(root.querySelectorAll("[data-cal-sec]"), function(b){ b.classList.toggle("active", b.dataset.calSec === calUI.sec); });
+    var ys = root.querySelector(".cal-approved-years"); if(ys) ys.style.display = calUI.sec === "approved" ? "" : "none";
+    var yy = root.querySelector(".cal-year"); if(yy) yy.style.display = calUI.sec === "design" ? "" : "none";
+  }
+  function calApprovedHTML(){
+    var a = calUI.approved;
+    if(!a) return '<span class="ws-hint">جاري جلب التقاويم المعتمدة…</span>';
+    if(!a.length) return '<span class="ws-hint">لا يوجد تقويم معتمد بعد — يظهر هنا بعد اعتماده من قسم التصميم.</span>';
+    return a.map(function(x){ return '<button type="button" class="ws-pill' + (x.year === calUI.year ? " on" : "") + '" data-cal-year="' + x.year + '">تقويم ' + x.year + (x.at ? ' <small>اعتُمد ' + new Date(x.at).toLocaleDateString("ar-SA-u-ca-gregory-nu-latn", { day: "numeric", month: "short", year: "numeric" }) + '</small>' : '') + '</button>'; }).join("");
+  }
+  function calLoadApproved(){
+    db.collection("calendarsApproved").get().then(function(snap){
+      calUI.approved = snap.docs.map(function(d){ var v = d.data() || {}; return { year: Number(v.year || d.id), at: v.approvedAt || "" }; }).sort(function(a, b){ return b.year - a.year; });
+    }).catch(function(err){ console.error("calendarsApproved", err); calUI.approved = []; }).then(function(){
+      var box = document.querySelector("#calendarsRoot .cal-approved-years"); if(box) setHTML(box, calApprovedHTML());
+    });
+  }
+  function calRender(){
+    var root = document.getElementById("calendarsRoot");
+    if(!root || !currentUser || !can("calendars.view")) return;
+    if(!can("calendars.edit")) calUI.sec = "approved";
+    var key = calUI.year + "|" + (can("calendars.edit") ? 1 : 0) + (can("calendars.approve") ? 1 : 0);
+    var frame = root.querySelector("iframe");
+    if(!frame || calUI.frameKey !== key){
+      calUI.frameKey = key;
+      setHTML(root, '<div class="cal-head"><div class="events-subnav" style="margin-bottom:0;">' +
+          '<button type="button" data-cal-sec="approved">التقاويم المعتمدة</button>' +
+          (can("calendars.edit") ? '<button type="button" data-cal-sec="design">تصميم التقويم الميلادي للعام</button>' : '') + '</div>' +
+          '<label class="cal-year">العام <select id="calYearSel">' + calYears().map(function(y){ return '<option value="' + y + '"' + (y === calUI.year ? " selected" : "") + '>' + y + '</option>'; }).join("") + '</select></label>' +
+          '<div class="cal-approved-years">' + calApprovedHTML() + '</div></div>' +
+        '<iframe class="cal-frame" title="التقاويم الميلادية" src="calendar/?year=' + calUI.year + '&sec=' + calUI.sec + '&v=' + CAL_BUILD + '"></iframe>');
+      calLoadApproved();
+    }
+    calSyncNav();
+  }
+  function calSetSection(sec){
+    calUI.sec = sec;
+    var frame = document.querySelector("#calendarsRoot iframe");
+    try{ if(frame && frame.contentWindow && frame.contentWindow.__calSetSection) frame.contentWindow.__calSetSection(sec); }catch(e){}
+    calSyncNav();
+    if(sec === "approved") calLoadApproved();
+  }
+  document.addEventListener("click", function(e){
+    var b = e.target.closest && e.target.closest("[data-cal-sec], [data-cal-year]");
+    if(!b || !currentUser) return;
+    if(b.dataset.calSec) calSetSection(b.dataset.calSec);
+    else { calUI.year = Number(b.dataset.calYear); calUI.sec = "approved"; calRender(); }
+  });
+  document.addEventListener("change", function(e){ if(e.target.id === "calYearSel"){ calUI.year = Number(e.target.value) || 2027; calRender(); } });
+
   // ===== tab switching =====
   var tabs = document.querySelectorAll(".nav-tab");
   tabs.forEach(function(tab){
@@ -3023,6 +3122,7 @@
       syncHashFromApp();
       if(tab.dataset.section === "tasks") wsMaybeStandup();
       if(tab.dataset.section === "docs"){ docStart(); docRender(); }
+      if(tab.dataset.section === "calendars") calRender();
     });
   });
 
