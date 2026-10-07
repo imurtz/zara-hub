@@ -27,9 +27,9 @@
 .d-e .grid td i{display:block;font-style:normal;font-size:5.2mm;font-weight:700;line-height:5.9mm;margin:0 auto;width:5.9mm;height:5.9mm;border-radius:50%}
 .d-e .grid td i.ev{color:#fff;font-size:4.3mm;width:5.9mm;height:5.9mm;line-height:5.9mm}
 .d-e .grid td s{display:block;text-decoration:none;font-size:2.3mm;color:var(--cb);font-weight:600;line-height:2.4mm}
-.d-e .legend{left:78mm;right:15mm;top:113.6mm;display:flex;flex-wrap:wrap;gap:0 3.4mm;font-size:2.2mm;font-weight:500;line-height:3mm}
-.d-e .legend span{white-space:nowrap}
-.d-e .legend u{display:inline-block;width:1.9mm;height:1.9mm;border-radius:50%;margin-left:1.1mm;vertical-align:-.15mm}
+.d-e .legend{left:78mm;right:15mm;top:113.5mm;display:flex;flex-wrap:wrap;gap:.75mm 3.2mm;font-size:2.2mm;font-weight:500;line-height:2.5mm}
+.d-e .legend span{display:inline-flex;align-items:center;gap:1.1mm;white-space:nowrap}
+.d-e .legend b{flex:none;min-width:3.5mm;height:2.5mm;padding:0 .7mm;border-radius:1.25mm;color:#fff;font-size:2mm;font-weight:700;line-height:2.5mm;text-align:center}
 .d-e .dock{left:78mm;right:15mm;top:124.2mm;display:flex;justify-content:space-between;align-items:center}
 .d-e .q{display:flex;align-items:center;gap:2.4mm}
 .d-e .qrbox{background:#fff;border-radius:2.2mm;padding:1.1mm;border:.3mm solid var(--cb);display:inline-block;line-height:0}
@@ -73,3 +73,5 @@
 .d-e .pat.g .mk.a{--w:96mm;right:-26mm;top:-30mm;opacity:.06}
 .d-e .pat.g .mk.b{--w:70mm;left:-18mm;bottom:-24mm;opacity:.055}
 .d-e .pat.g .mk.c{--w:40mm;left:86mm;top:-16mm;opacity:.04}
+/* ---- «أثر الخير»: قائمة المناسبات أضيق قليلاً لتتسع لثلاثة أسطر في الأشهر المزدحمة دون ملامسة العبارة ---- */
+.d-a .legend{gap:.15mm 3mm;font-size:2.2mm;line-height:3mm}

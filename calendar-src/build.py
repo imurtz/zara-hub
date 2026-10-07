@@ -66,7 +66,7 @@ function fitE(root){root.querySelectorAll(".d-e.month").forEach(pg=>{const lg=pg
  sl.querySelectorAll("b,span").forEach(el=>{el.style.fontSize="";const w=el.offsetWidth;if(w){const fs=parseFloat(getComputedStyle(el).fontSize);el.style.fontSize=(Math.max(.72,Math.min(1.5,W/w))*fs).toFixed(3)+"px"}})})}
 function eMonth(mo,m){const g=gridData(mo),mt=monthMeta(mo);
  const body=trs(g,c=>c.v?`<td class="${c.fri?"fri":""}"></td>`:`<td class="${c.fri?"fri":""}">${c.ev?`<i class="ev" style="background:${c.ev[1]}">${c.d}</i>`:`<i>${c.d}</i>`}<s>${c.hj}</s></td>`);
- const chips=g.legend.map(l=>`<span><u style="background:${l.c}"></u>${l.d} · ${esc(l.t)}</span>`).join("");
+ const chips=g.legend.map(l=>`<span><b style="background:${l.c}">${l.d}</b>${esc(l.t)}</span>`).join("");
  const q=k=>`<div class="q"><div class="qrbox">${qrEl(m["q"+k+"u"],16,m["q"+k+"img"])}</div><div class="qt"><b>${esc(m["q"+k+"a"])}</b><span>${esc(m["q"+k+"b"])}</span></div></div>`;
  return `<section class="page d-e month">${pat("m")}<div class="photo">${photoEl(m,mo,"e")}</div><div class="credit">${esc(S().lblArtist)}: ${esc(m.artist)}</div>${logo()}
  <div class="sp"><em>${esc(S().lblSponsor)}</em><div class="sb">${spBox(m)}</div></div>
@@ -96,8 +96,10 @@ cut('(function(){const add=(m,d,t,c)=>{const k=YEAR+"-"+pad(m)+"-"+pad(d);if(!EV
     """(function(){const add=(m,d,t,c)=>{const k=YEAR+"-"+pad(m)+"-"+pad(d),a=EVENTS[k]||(EVENTS[k]=[]);if(!a.some(x=>x[0]===t))a.push([t,c])};
 /*@EVENTS@*/
  for(let m=1;m<=12;m++){const nd=new Date(Date.UTC(YEAR,m,0)).getUTCDate();for(let d=1;d<=nd;d++){const h=hij(m,d);HJ.forEach(e=>{if(h.month===e[0]&&h.day===e[1])add(m,d,e[2],e[3])})}}
- FIX.forEach(e=>add(e[0],e[1],e[2],e[3]));MOV.forEach(e=>add(e[0],nth(e[0],e[1],e[2]),e[3],e[4]))})();""")
-rep('if(ev)legend.push({d,t:ev[0][0],c:ev[0][1]});', 'if(ev)ev.forEach(x=>legend.push({d,t:x[0],c:x[1]}));')
+ FIX.forEach(e=>add(e[0],e[1],e[2],e[3]));MOV.forEach(e=>add(e[0],nth(e[0],e[1],e[2]),e[3],e[4]));(SCHOOL[YEAR]||[]).forEach(e=>add(e[0],e[1],e[2],"#d9822b"))})();""")
+# يناير لم يعد قائمة ثابتة: كل مناسباته صارت في القوائم المرجعية (events.js)
+cut('const EVENTS={"2027-01-04"', '};', 'const EVENTS={};')
+rep('if(ev)legend.push({d,t:ev[0][0],c:ev[0][1]});', 'if(ev)legend.push({d,t:ev.map(x=>x[0]).join(" · "),c:ev[0][1]});')
 rep('requestAnimationFrame(()=>{$("#pagebox").innerHTML=viewHtml();fit()})}', 'requestAnimationFrame(()=>{$("#pagebox").innerHTML=viewHtml();fit();fitE($("#pagebox"))})}\nif(document.fonts&&document.fonts.ready)document.fonts.ready.then(()=>drawPreview());')
 rep('const blob=id=>"/_blob/"+id;', 'const blob=id=>/^(https?:|data:|blob:)/.test(id)?id:"/_blob/"+id;')
 rep('lblGo:"${esc(S().lblGo)}"', 'lblGo:"ابدأ خَيْرَكَ الآن"')
