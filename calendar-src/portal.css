@@ -73,3 +73,4 @@ body.embedded header.top{justify-content:flex-start}
 .phctl .phrow span{flex:none;width:52px;font-size:13px;color:rgba(20,28,27,.7)}
 .phctl .phrow input[type=range]{flex:1;min-width:0;accent-color:#517670}
 .phctl>div{margin-top:8px}
+.stage.mock.mkwhite{background:#fff}
