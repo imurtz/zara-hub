@@ -109,7 +109,8 @@ body.embedded header.top{justify-content:flex-start}
   html,body{background:#fff!important;padding:0!important}
   #app{max-width:none;padding:0;margin:0}
   #app>*:not(#printall){display:none!important}
-  #printall{display:block}
+  #printall{display:block;direction:rtl}
+  #printall .page{direction:rtl;border-radius:0}
   #printall .page{page-break-after:always;break-after:page}
   #printall .page:last-child{page-break-after:auto;break-after:auto}
 }
@@ -471,7 +472,7 @@ body.embedded header.top{justify-content:flex-start}
       <details class="box only-design" id="gen" open><summary>إعدادات عامة: الشعار، الألوان، الترخيص، النصوص الثابتة</summary><div id="genbody" style="display:flex;flex-direction:column;gap:12px;margin-top:10px"></div></details>
     </section>
   </div>
-  <div id="printall" dir="ltr"></div>
+  <div id="printall" dir="rtl"></div>
 </div>
 <script>
 //---------------------------------------------------------------------

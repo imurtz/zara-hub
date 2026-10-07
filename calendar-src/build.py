@@ -50,7 +50,7 @@ rep('''    </section>
 </div>
 <script>''', '''    </section>
   </div>
-  <div id="printall" dir="ltr"></div>
+  <div id="printall" dir="rtl"></div>
 </div>
 <script>''')
 
