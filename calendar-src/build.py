@@ -163,7 +163,7 @@ async function mockDownload(){const btn=mkEl("mkdl");if(btn.disabled)return;btn.
   if(document.fonts&&document.fonts.ready)await document.fonts.ready;
   const opt={pixelRatio:4,width:PXW,height:PXH,backgroundColor:"#ffffff",fetchRequestInit:{mode:"cors"},imagePlaceholder:MKPX,style:{opacity:"1"}};
   await htmlToImage.toCanvas(page,opt);const flat=await htmlToImage.toCanvas(page,opt);
-  const [bg,body,rings]=await Promise.all([MOCKWHITE?null:mkPic(MOCKBG||MKBG0).catch(()=>mkPic(MKBG0)),mkPic("mockup/body4k.webp"),mkPic("mockup/rings4k.png")]);
+  const [bg,body,rings]=await Promise.all([MOCKWHITE?null:mkPic(MOCKBG||MKBG0).catch(()=>mkPic(MKBG0)),mkPic("mockup/body4k.webp"),mkPic("mockup/rings4k2.png")]);
   const cv=document.createElement("canvas");cv.width=MKW;cv.height=MKH;const x=cv.getContext("2d");x.imageSmoothingQuality="high";
   if(bg){const k=Math.max(MKW/bg.width,MKH/bg.height);x.drawImage(bg,(MKW-bg.width*k)/2,(MKH-bg.height*k)/2,bg.width*k,bg.height*k)}else{x.fillStyle="#fff";x.fillRect(0,0,MKW,MKH)}x.save();x.translate((MKO[0]+MKT[0])*MKW,(MKO[1]+MKT[1])*MKH);x.scale(MKS,MKS);x.translate(-MKO[0]*MKW,-MKO[1]*MKH);x.drawImage(body,0,0,MKW,MKH);
   const NX=64,NY=46,fw=flat.width,fh=flat.height,P=[];for(let j=0;j<=NY;j++){P.push([]);for(let i=0;i<=NX;i++)P[j].push(mkFwd(i/NX,j/NY,MKW,MKH))}
