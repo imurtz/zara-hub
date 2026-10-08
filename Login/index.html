@@ -2569,35 +2569,42 @@
     if(!raw) return [];
     try{ return JSON.parse(raw); }catch(e){ return []; }
   }
+  // قاعدة البيانات (Firestore) هي المرجع الوحيد لقائمة الموظفين، والنسخة المحلية مجرد مرآة لها.
+  // الحفظ يكتب فقط المستند الذي تغيّر فعلاً ويحذف المحذوف — لا يعيد كتابة القائمة كلها،
+  // حتى لا تدوس نسخة قديمة على جهازٍ ما تعديلاً أحدث جرى من جهاز آخر.
   function saveEmployees(list){
-    var prevRaw = localStorage.getItem(STORAGE_KEY);
-    var prevIds = [];
-    if(prevRaw){ try{ prevIds = JSON.parse(prevRaw).map(function(e){ return e.id; }); }catch(e){} }
+    var prev = loadEmployees();
+    var prevById = {};
+    prev.forEach(function(e){ if(e && e.id) prevById[e.id] = JSON.stringify(e); });
     localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
-    // مزامنة قائمة الموظفين مع فايرستور — كانت مخزَّنة محلياً فقط (localStorage)، فأي موظف يُضاف من جهاز
-    // لا يظهر إطلاقاً على أي جهاز آخر (بما فيه جهاز الموظف نفسه) إلى أن تتم هذي المزامنة
-    var newIds = list.map(function(e){ return e.id; });
-    prevIds.forEach(function(id){ if(newIds.indexOf(id) === -1) db.collection("employees").doc(id).delete(); });
-    list.forEach(function(emp){ db.collection("employees").doc(emp.id).set(emp); });
+    var fail = function(err){
+      console.error("employees save error", err);
+      try{ showToast(err && err.code === "resource-exhausted" ? "تعذّر الحفظ: استُنفد رصيد قاعدة البيانات اليوم — لم يُحفظ التعديل" : "تعذّر حفظ التعديل في قاعدة البيانات — أعد المحاولة"); }catch(e){}
+    };
+    var newIds = {};
+    list.forEach(function(emp){
+      if(!emp || !emp.id) return;
+      newIds[emp.id] = true;
+      if(prevById[emp.id] !== JSON.stringify(emp)) db.collection("employees").doc(emp.id).set(emp).catch(fail);
+    });
+    Object.keys(prevById).forEach(function(id){ if(!newIds[id]) db.collection("employees").doc(id).delete().catch(fail); });
   }
-  var _employeesFirestoreSynced = false;
   db.collection("employees").onSnapshot(function(snap){
     var remote = [];
-    snap.forEach(function(doc){ remote.push(doc.data()); });
-    var local = loadEmployees();
-    var merged = local.slice();
-    remote.forEach(function(rEmp){
-      var idx = merged.findIndex(function(e){ return e.id === rEmp.id; });
-      if(idx === -1) merged.push(rEmp);
-      else merged[idx] = rEmp;
-    });
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(merged));
-    if(!_employeesFirestoreSynced){
-      // أول مزامنة بعد فتح الصفحة: نرفع أي موظفين محليين لهذا الجهاز غير موجودين بعد بفايرستور
-      // (يغطي حالة إضافة موظف من جهاز الأدمن قبل نشر هذا الإصلاح)
-      _employeesFirestoreSynced = true;
-      local.forEach(function(emp){ db.collection("employees").doc(emp.id).set(emp); });
-    }
+    snap.forEach(function(doc){ var d = doc.data(); if(d && d.id) remote.push(d); });
+    // حماية: قائمة فارغة (قراءة من الذاكرة المؤقتة قبل الاتصال، أو خلل عابر) لا تمسح النسخة المحلية —
+    // القائمة الحقيقية لا تكون فارغة أبداً لأن آخر أدمن لا يُحذف
+    if(!remote.length) return;
+    // لقطة من الذاكرة المؤقتة قد تكون ناقصة (بعض المستندات فقط) — لا يُعتمد إلا ما أكّده الخادم
+    if(snap.metadata && snap.metadata.fromCache) return;
+    // النسخة المحلية تُستبدل بما في قاعدة البيانات كما هو: موظف حُذف من جهاز آخر يختفي هنا، وتعديل جرى هناك يظهر هنا.
+    // (كان الكود السابق يدمج المحلي مع البعيد ثم يرفع المحلي كله عند فتح الصفحة، فكان أي جهاز يحمل نسخة قديمة
+    //  يُرجع الموظفين المحذوفين ويعيد الصلاحيات المعدَّلة إلى حالها القديم)
+    var before = localStorage.getItem(STORAGE_KEY);
+    var after = JSON.stringify(remote);
+    localStorage.setItem(STORAGE_KEY, after);
+    var merged = remote;
+    if(before !== after){ try{ if(typeof renderEmployeeTable === "function" && document.getElementById("empTableBody") && currentUser && currentUser.role === "admin") renderEmployeeTable(); }catch(e){} }
     if(typeof employees !== "undefined") employees = loadEmployees();
     // تغيّرت صلاحيات المستخدم الحالي من جهاز الأدمن ← تُطبَّق فوراً بلا إعادة دخول
     if(typeof currentUser !== "undefined" && currentUser){
