@@ -256,7 +256,7 @@ cut('(async function(){if(typeof claude==="undefined"||!claude.use)return;', ' r
  try{DB.doc("approved/y"+YEAR).onSnapshot(sn=>{APPROVED=sn.exists?sn.data():null;renderApprove();renderApBox();if(SEC==="approved"){syncNav();drawPreview()}},()=>{})}catch(_){}
  renderAll()})();''')
 
-doc = '<!DOCTYPE html>\n<html lang="ar" dir="rtl">\n<head>\n<meta charset="UTF-8">\n<meta name="viewport" content="width=device-width, initial-scale=1">\n<meta name="robots" content="noindex">\n' + src
+doc = '<!DOCTYPE html>\n<html lang="ar" dir="rtl">\n<head>\n<meta charset="UTF-8">\n<meta name="viewport" content="width=device-width, initial-scale=1">\n<meta name="robots" content="noindex">\n<link rel="icon" href="/assets/favicon.png?v=2" sizes="any">\n<link rel="icon" href="/assets/favicon.svg?v=2" type="image/svg+xml">\n' + src
 assert "</style>" in doc
 # ورقة خطوط Google تُحمَّل بصلاحية CORS حتى يستطيع «تنزيل صورة الموك أب» قراءة قواعدها وتضمين الخطوط داخل الصورة
 assert doc.count('<link rel="stylesheet" href="https://fonts.googleapis.com') == 1
