@@ -8320,14 +8320,11 @@
   var GH_SYNC_TOKEN_KEY = "zaraGhSyncToken";
   var deathsSyncRunning = false;
   function ghSyncToken(){ try{ return localStorage.getItem(GH_SYNC_TOKEN_KEY) || ""; }catch(e){ return ""; } }
+  // الطريق الأساسي: خدمة وسيطة (sync-trigger-worker) تحمل المفتاح عندها، فيعمل الزر من أي جهاز ولأي موظف بلا إدخال مفتاح.
+  // إن لم تكن الخدمة منشورة أو مضبوطة بعد، يرجع الزر للطريقة القديمة: مفتاح يُدخله الأدمن ويُحفظ في متصفحه فقط.
+  var SYNC_TRIGGER_ENDPOINT = "https://zara-sync-trigger.murtada-ud.workers.dev/";
   function runDeathsSyncNow(btn){
     if(deathsSyncRunning) return;
-    var token = ghSyncToken();
-    if(!token){
-      token = (window.prompt("للمزامنة الفورية الصق مفتاح GitHub الخاص بك (يُحفظ بهذا المتصفح فقط).\n\nيُنشأ من: github.com/settings/personal-access-tokens/new\n— Repository access: zara-hub فقط\n— Permissions ← Actions: Read and write") || "").trim();
-      if(!token) return;
-      try{ localStorage.setItem(GH_SYNC_TOKEN_KEY, token); }catch(e){}
-    }
     deathsSyncRunning = true;
     var startedAt = Date.now();
     var label = btn ? btn.textContent : "";
@@ -8337,12 +8334,7 @@
       if(btn){ btn.disabled = false; btn.textContent = label; }
       if(msg) showToast(msg);
     };
-    fetch("https://api.github.com/repos/imurtz/zara-hub/actions/workflows/sync-deaths.yml/dispatches", {
-      method: "POST",
-      headers: { "Authorization": "Bearer " + token, "Accept": "application/vnd.github+json", "Content-Type": "application/json", "X-GitHub-Api-Version": "2022-11-28" },
-      body: JSON.stringify({ ref: "main" })
-    }).then(function(res){
-      if(res.status === 204){
+    var watch = function(){
         showToast("🔄 بدأت المزامنة — النتيجة خلال دقيقة تقريباً");
         // نراقب وثيقة الحالة: أول تحديث لوقت آخر فحص بعد الضغط = انتهت المزامنة
         var tries = 0;
@@ -8362,15 +8354,34 @@
             finish("لم تكتمل بعد — تحقق من سطر آخر فحص بعد قليل");
           }
         }, 3000);
-        return;
+    };
+    var viaToken = function(){
+      var token = ghSyncToken();
+      if(!token){
+        token = (window.prompt("للمزامنة الفورية الصق مفتاح GitHub الخاص بك (يُحفظ بهذا المتصفح فقط).\n\nيُنشأ من: github.com/settings/personal-access-tokens/new\n— Repository access: zara-hub فقط\n— Permissions ← Actions: Read and write") || "").trim();
+        if(!token){ finish(""); return; }
+        try{ localStorage.setItem(GH_SYNC_TOKEN_KEY, token); }catch(e){}
       }
-      if(res.status === 401 || res.status === 403 || res.status === 404){
-        try{ localStorage.removeItem(GH_SYNC_TOKEN_KEY); }catch(e){}
-        finish("المفتاح غير صالح أو ينقصه صلاحية Actions: Read and write — اضغط الزر وأدخل مفتاحاً جديداً");
-        return;
-      }
-      finish("تعذّر تشغيل المزامنة (" + res.status + ")");
-    }).catch(function(){ finish("تعذّر الاتصال بـGitHub — تحقق من الإنترنت"); });
+      fetch("https://api.github.com/repos/imurtz/zara-hub/actions/workflows/sync-deaths.yml/dispatches", {
+        method: "POST",
+        headers: { "Authorization": "Bearer " + token, "Accept": "application/vnd.github+json", "Content-Type": "application/json", "X-GitHub-Api-Version": "2022-11-28" },
+        body: JSON.stringify({ ref: "main" })
+      }).then(function(res){
+        if(res.status === 204){ watch(); return; }
+        if(res.status === 401 || res.status === 403 || res.status === 404){
+          try{ localStorage.removeItem(GH_SYNC_TOKEN_KEY); }catch(e){}
+          finish("المفتاح غير صالح أو ينقصه صلاحية Actions: Read and write — اضغط الزر وأدخل مفتاحاً جديداً");
+          return;
+        }
+        finish("تعذّر تشغيل المزامنة (" + res.status + ")");
+      }).catch(function(){ finish("تعذّر الاتصال بـGitHub — تحقق من الإنترنت"); });
+    };
+    fetch(SYNC_TRIGGER_ENDPOINT, { method: "POST" }).then(function(res){
+      // 429 = شُغّلت قبل لحظات من جهاز آخر — نراقب نتيجتها نفسها بدل تشغيل ثانٍ
+      if(res.status === 200 || res.status === 429){ watch(); return; }
+      if(res.status === 502){ finish("تعذّر تشغيل المزامنة — مفتاح خدمة المزامنة منتهٍ أو ينقصه صلاحية، أبلغ الأدمن"); return; }
+      viaToken();
+    }).catch(viaToken);
   }
   // المزامنة يدوية فقط (زر "مزامنة الآن") منذ إلغاء الجدولة الدورية — فلا معنى لتحذير "توقفت" لمجرد
   // مرور وقت طويل منذ آخر نقرة؛ التحذير الوحيد المستحق هو فشل فعلي بآخر محاولة
