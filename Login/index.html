@@ -7561,11 +7561,17 @@
       evIdb().then(function(dbx){ if(!dbx) return; try { dbx.transaction("kv", "readwrite").objectStore("kv").put(payload, "events"); } catch(e){} });
     }, 1500);
   }
+  var _evOrphans = {};
   // سجل موجود بالسلة بتاريخ حذف أحدث من آخر تعديل له = محذوف (الاسترجاع يعيد كتابته بختم أحدث فيبقى)
   function evPruneTrashed(){
     if(!_eventsRecordsCache.length || !_eventsTrashCache || !_eventsTrashCache.length) return false;
     var del = {}; _eventsTrashCache.forEach(function(t){ del[t.id] = t.deletedAt || 0; });
-    var kept = _eventsRecordsCache.filter(function(r){ return !(del[r.id] != null && del[r.id] >= (r._m || 0)); });
+    var kept = _eventsRecordsCache.filter(function(r){
+      var gone = del[r.id] != null && del[r.id] >= (r._m || 0);
+      // مستند ما زال في events مع أنه في السلة (بقايا الخلل القديم في الحذف) — يُسجَّل ليُحذف فعلياً عند الحذف النهائي من السلة
+      if(gone) _evOrphans[r.id] = 1;
+      return !gone;
+    });
     if(kept.length === _eventsRecordsCache.length) return false;
     _eventsRecordsCache = kept;
     return true;
@@ -7576,6 +7582,7 @@
       var changed = false, list = _eventsRecordsCache.slice();
       snap.docChanges().forEach(function(ch){
         var d = ch.doc.data(), i = list.findIndex(function(r){ return r.id === d.id; });
+        delete _evOrphans[d.id];   // وصلت نسخة أحدث (أو حُذف المستند) — يُعاد تقييمه في evPruneTrashed
         if(ch.type === "removed"){ if(i > -1){ list.splice(i, 1); changed = true; } return; }   // _m لا ينقص، فخروج السجل من النتيجة = حذفه
         if(i > -1){ if(JSON.stringify(list[i]) !== JSON.stringify(d)){ list[i] = d; changed = true; } }
         else { list.push(d); changed = true; }
@@ -7757,7 +7764,7 @@
     });
     list.forEach(function(rec){
       var old = _eventsRecordsCache.find(function(r){ return r.id === rec.id; });
-      if(!old || JSON.stringify(old) !== JSON.stringify(rec)){ rec._m = Date.now(); ops.push(db.collection("events").doc(rec.id).set(rec)); }
+      if(!old || JSON.stringify(old) !== JSON.stringify(rec)){ rec._m = Date.now(); delete _evOrphans[rec.id]; ops.push(db.collection("events").doc(rec.id).set(rec)); }
     });
     return Promise.all(ops).then(function(){
       _eventsRecordsCache = list;
@@ -7792,6 +7799,23 @@
     });
     return Promise.all(ops);
   }
+  // نقل سجل واحد للسلة: الكتابة في السلة والحذف من events في دفعة واحدة ذرّية (إما ينجحان معاً أو يفشلان معاً).
+  // الطريقة السابقة كانت تكتب في السلة ثم تعتمد على saveEventsData ليحذف من events، لكن لحظة ظهور السجل في السلة
+  // يُخفى من الكاش، فلا يراه saveEventsData «محذوفاً» ولا يحذف مستنده — فيبقى في events ويعود للظهور عند إفراغ السلة.
+  function evMoveToTrash(rec){
+    var trashRec = shallowCopy(rec);
+    trashRec.deletedAt = Date.now();
+    trashRec.deletedByName = currentUser ? currentUser.name : "";
+    var batch = db.batch();
+    batch.set(db.collection("eventsTrash").doc(rec.id), trashRec);
+    batch.delete(db.collection("events").doc(rec.id));
+    return batch.commit().then(function(){
+      _eventsRecordsCache = _eventsRecordsCache.filter(function(r){ return r.id !== rec.id; });
+      delete _evOrphans[rec.id];
+      evPersistSoon();
+      return true;
+    });
+  }
   function restoreEventFromTrash(id){
     var rec = _eventsTrashCache.find(function(r){ return r.id === id; });
     if(!rec) return;
@@ -7811,7 +7835,13 @@
   }
   function permanentlyDeleteFromTrash(id){
     if(!confirm("حذف هذا السجل نهائياً؟ لا يمكن التراجع عن هذا الإجراء.")) return;
-    db.collection("eventsTrash").doc(id).delete();
+    var b = db.batch();
+    b.delete(db.collection("eventsTrash").doc(id));
+    if(_evOrphans[id]){ b.delete(db.collection("events").doc(id)); }
+    b.commit().then(function(){ delete _evOrphans[id]; }).catch(function(err){
+      console.error("permanent delete failed", err);
+      showToast("⚠️ تعذّر الحذف النهائي — حاول مرة أخرى");
+    });
     renderEventsHub();
     showToast("تم الحذف النهائي");
   }
@@ -7819,8 +7849,11 @@
     if(!_eventsTrashCache.length) return;
     var count = _eventsTrashCache.length;
     if(!confirm("إفراغ سلة المهملات نهائياً (" + count + " سجل)؟ سيُحذف كل ما بها ولا يمكن التراجع عن ذلك.")) return;
-    var ops = _eventsTrashCache.map(function(r){
-      return function(batch){ batch.delete(db.collection("eventsTrash").doc(r.id)); };
+    var ops = [];
+    _eventsTrashCache.forEach(function(r){
+      // مستند events الباقي لنفس السجل يُحذف أولاً، حتى لا يعود السجل للظهور بعد زوال نسخته من السلة
+      if(_evOrphans[r.id]) ops.push(function(batch){ batch.delete(db.collection("events").doc(r.id)); });
+      ops.push(function(batch){ batch.delete(db.collection("eventsTrash").doc(r.id)); });
     });
     showToast("جارٍ إفراغ سلة المهملات...");
     commitInChunks(ops).then(function(){
@@ -8793,10 +8826,7 @@
     var rec = findEventRecord(id);
     if(!rec) return;
     if(!confirm("نقل هذا السجل لسلة المهملات؟ يمكن استرجاعه منها لاحقاً.")) return;
-    trashEventRecords([rec]).then(function(){
-      var all = loadEventsData().filter(function(r){ return r.id !== id; });
-      return saveEventsData(all);
-    }).then(function(ok){
+    evMoveToTrash(rec).then(function(ok){
       if(!ok) return;
       refreshEventsTable();
       showToast("تم نقل السجل لسلة المهملات");
@@ -8830,10 +8860,7 @@
     var rec = findEventRecord(id);
     if(!rec) return;
     if(!confirm("رفض هذا السجل ونقله لسلة المهملات؟")) return;
-    trashEventRecords([rec]).then(function(){
-      var all = loadEventsData().filter(function(r){ return r.id !== id; });
-      return saveEventsData(all);
-    }).then(function(ok){
+    evMoveToTrash(rec).then(function(ok){
       if(!ok) return;
       renderEventsHub();
       showToast("تم رفض السجل ونقله لسلة المهملات");
