@@ -9412,7 +9412,15 @@
 
     if(!filtered.length) return '<p class="report-empty" style="padding:30px 0;">🎉 لا توجد سجلات مطابقة</p>';
 
-    return filtered.map(function(r){
+    // القائمة تُبنى على دفعات: بناء بطاقة لكل سجل (مئات أو آلاف، كلٌّ بنص رسالته وأزراره) كان يجمّد التبويب قرابة ثانية أو أكثر
+    // عند فتحه ومع كل نقرة داخله. تُعرض أول دفعة والباقي بزر «عرض المزيد»؛ تغيير الفلتر أو البحث يعيد العدّ من البداية.
+    var pubKey = eventsUI.publishTypeFilter + "|" + (eventsUI.publishStatusFilter || "") + "|" + (eventsUI.publishSearch || "");
+    if(eventsUI._publishKey !== pubKey){ eventsUI._publishKey = pubKey; eventsUI.publishLimit = EV_PUBLISH_PAGE; }
+    var limit = Math.max(EV_PUBLISH_PAGE, eventsUI.publishLimit || 0);
+    var rest = Math.max(0, filtered.length - limit);
+    var moreBtn = rest ? '<div style="text-align:center; padding:14px 0 6px;"><button type="button" class="btn-secondary" data-action="publish-more">عرض المزيد (' + Math.min(rest, EV_PUBLISH_PAGE) + ' من ' + rest + ' متبقية)</button></div>' : "";
+
+    return filtered.slice(0, limit).map(function(r){
       var cat = EVENTS_CATEGORIES.find(function(c){ return c.key === r.category; });
       var status = statuses[r.id] || "pending";
       var tpl = r.category === "deaths" ? null : pickBestTextTemplateForRecord(templates[r.category] || [], r);
@@ -9454,8 +9462,9 @@
       }
       html += '</div>';
       return html;
-    }).join("");
+    }).join("") + moreBtn;
   }
+  var EV_PUBLISH_PAGE = 40;
   function refreshEventsPublishList(){
     var c = document.getElementById("eventsPublishListContainer");
     if(c) setHTML(c, eventsPublishBulkBarHTML() + eventsPublishListHTML());
@@ -11985,6 +11994,7 @@
       }
       case "open-event-templates": openEventTemplatesModal(); break;
       case "open-uni-logos": openUniLogosModal(); break;
+      case "publish-more": eventsUI.publishLimit = Math.max(EV_PUBLISH_PAGE, eventsUI.publishLimit || 0) + EV_PUBLISH_PAGE; refreshEventsPublishList(); break;
       case "publish-type-filter": eventsUI.publishTypeFilter = btn.dataset.type; renderEventsHub(); break;
       case "publish-status-filter": eventsUI.publishStatusFilter = btn.dataset.status; renderEventsHub(); break;
       case "set-publish-status": setEventPublishStatus(btn.dataset.id, btn.dataset.status); refreshEventsPublishList(); break;
