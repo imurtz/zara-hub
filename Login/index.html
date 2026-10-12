@@ -19,7 +19,7 @@
 <link rel="icon" href="/assets/favicon.svg?v=4" type="image/svg+xml" />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&family=Cairo:wght@300;400;500;600;700;800;900&family=Tajawal:wght@400;500;700&family=Almarai:wght@400;700&family=Amiri:wght@400;700&family=Reem+Kufi:wght@400;700&display=swap" rel="stylesheet" />
-<script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+<script async src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js" onload="window.__xlsxLoaded&&window.__xlsxLoaded()"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
@@ -2561,6 +2561,8 @@
   ];
 
   var currentUser = null;
+  // مكتبة Excel تُحمَّل بلا إيقاف لرسم الصفحة؛ عند اكتمالها يُزال تنبيه «جارٍ التحميل» إن كان ظاهراً
+  window.__xlsxLoaded = function(){ Array.prototype.forEach.call(document.querySelectorAll("[data-xlsx-wait]"), function(e){ e.remove(); }); };
 
   // لا يوجد بذر (seed) محلي لحساب افتراضي هنا عمداً — قائمة الموظفين الحقيقية تصل من Firestore
   // خلال لحظات من تحميل الصفحة (db.collection("employees").onSnapshot أدناه)؛ أي حساب افتراضي
@@ -3134,6 +3136,7 @@
       if(tab.dataset.section === "tasks") wsMaybeStandup();
       if(tab.dataset.section === "docs"){ docStart(); docRender(); }
       if(tab.dataset.section === "calendars") calRender();
+      if(tab.dataset.section === "events" && _evHubDirty) renderEventsHub();
     });
   });
 
@@ -3716,7 +3719,7 @@
       html += '<div class="excel-bar">' +
         '<button type="button" class="btn-secondary" data-action="export-excel"><span class="icon">' + TICON.download + '</span> تصدير Excel</button>' +
         '<button type="button" class="btn-secondary" data-action="open-import"><span class="icon">' + TICON.upload + '</span> استيراد من Excel</button>' +
-        (typeof window.XLSX === "undefined" ? '<span style="font-size:11.5px; color:var(--danger);">تعذّر تحميل مكتبة Excel — تحقق من الاتصال بالإنترنت</span>' : '') +
+        (typeof window.XLSX === "undefined" ? '<span style="font-size:11.5px; color:var(--ink-soft);" data-xlsx-wait>جارٍ تحميل مكتبة Excel…</span>' : '') +
       '</div>';
     }
 
@@ -7521,11 +7524,17 @@
   }
 
   // ----- تخزين (Firestore — يتزامن فوراً بين كل الأجهزة) -----
+  // عند فتح الصفحة تصل تحديثات نحو عشرة مستمعين متتابعةً، وكلٌّ منها كان يعيد بناء قسم المناسبات كاملاً — تُجمَع هنا في إعادة بناء واحدة
+  var _evRefreshTimer = null;
   function eventsFirestoreRefresh(){
-    if(currentUser){
-      renderEventsHub();
-      if(currentUser.role === "admin") renderEventsSettingsPanel();
-    }
+    if(_evRefreshTimer) return;
+    _evRefreshTimer = setTimeout(function(){
+      _evRefreshTimer = null;
+      if(currentUser){
+        renderEventsHub();
+        if(currentUser.role === "admin") renderEventsSettingsPanel();
+      }
+    }, 60);
   }
   var _eventsRecordsCache = [];
   // ===== تحميل سجلات المناسبات: نسخة محلية بالمتصفح + مزامنة الفروقات فقط =====
@@ -8229,6 +8238,15 @@
 
   // ----- قوالب التصميم (توليد صورة مخصصة لكل سجل من قالب جاهز) -----
   var _designTemplatesCache = [];
+  // قوالب التصميم وخطوطها ثقيلة (صورها وملفاتها مضمَّنة في مستنداتها، نحو 4.3 ميغابايت): كانت تُحمَّل عند كل فتح للصفحة لكل موظف.
+  // الآن يبدأ تحميلها عند أول ظهور لقسم المناسبات، وبعد رسمه، فلا تؤخّر الدخول ولا يحمّلها من لا يفتح القسم.
+  var _evDesignStarted = false;
+  function evEnsureDesignData(){
+    if(_evDesignStarted) return;
+    _evDesignStarted = true;
+    setTimeout(function(){ evStartDesignTemplates(); evStartDesignFonts(); }, 300);
+  }
+  function evStartDesignTemplates(){
   db.collection("designTemplates").onSnapshot(function(snap){
     var editingId = (tmplGenerateState && tmplGenerateState.templateId) || (tmplEditorState && tmplEditorState.templateId) || null;
     var liveTmpl = editingId ? findDesignTemplate(editingId) : null;
@@ -8236,6 +8254,7 @@
     if(editingId){ _tmplHubStale = true; return; }
     eventsFirestoreRefresh();
   }, function(err){ console.error("designTemplates snapshot error", err); });
+  }
   function loadDesignTemplates(catKey){
     return _designTemplatesCache.filter(function(t){ return t.category === catKey; });
   }
@@ -8319,10 +8338,12 @@
   }
 
   var _designFontsCache = [];
+  function evStartDesignFonts(){
   db.collection("designFonts").onSnapshot(function(snap){
     _designFontsCache = snap.docs.map(function(d){ return d.data(); });
     refreshTmplManager();
   }, function(err){ console.error("designFonts snapshot error", err); });
+  }
   function loadDesignFonts(){ return _designFontsCache; }
   function findDesignFont(id){ return _designFontsCache.find(function(f){ return f.id === id; }); }
   function saveDesignFont(font){ db.collection("designFonts").doc(font.id).set(font); }
@@ -8956,6 +8977,12 @@
     var cols = cat.columns.filter(function(k){ return visCols[k] !== false; });
     if(visCols.entryDate === true) cols = cols.concat(["entryDate"]);
 
+    // الجدول يُرسم على دفعات: رسم مئات الصفوف دفعة واحدة كان يثقل التبويب ويزداد ثقلاً مع نمو السجلات. تغيير التصنيف أو البحث أو الترتيب يعيد العدّ.
+    var tblKey = cat.key + "|" + q + "|" + (eventsUI.sortKey || "") + "|" + eventsUI.sortDir;
+    if(eventsUI._tableKey !== tblKey){ eventsUI._tableKey = tblKey; eventsUI.tableLimit = EV_TABLE_PAGE; }
+    var tblLimit = Math.max(EV_TABLE_PAGE, eventsUI.tableLimit || 0);
+    var tblRest = Math.max(0, filtered.length - tblLimit);
+    var hasDesignTmpl = loadDesignTemplates(cat.key).length > 0;
     var html = '<div style="display:flex; justify-content:flex-end; margin-bottom:10px;"><span class="events-count-badge">' + filtered.length + ' سجل</span></div>';
     html += '<div class="events-table-wrap"><table><thead><tr>';
     cols.forEach(function(colKey){
@@ -8966,7 +8993,7 @@
     if(!filtered.length){
       html += '<tr><td colspan="' + (cols.length + 1) + '" style="text-align:center; padding:30px; color:var(--ink-soft);">لا توجد سجلات بعد</td></tr>';
     } else {
-      filtered.forEach(function(r){
+      filtered.slice(0, tblLimit).forEach(function(r){
         var pending = r.status === "pending";
         var isDup = !!dupIds[r.id];
         html += '<tr' + (pending ? ' class="pending-row"' : '') + '>';
@@ -8982,7 +9009,7 @@
           html += '<button type="button" class="row-menu-item" data-action="approve-event" data-id="' + r.id + '"><span class="icon">' + TICON.check + '</span> قبول</button>' +
             '<button type="button" class="row-menu-item danger" data-action="reject-event" data-id="' + r.id + '"><span class="icon" style="font-weight:700;">✕</span> رفض</button>';
         }
-        if(loadDesignTemplates(cat.key).length){
+        if(hasDesignTmpl){
           html += '<button type="button" class="row-menu-item" data-action="generate-design" data-id="' + r.id + '"><span class="icon">' + TPI.design + '</span> توليد تصميم</button>';
         }
         html += '<button type="button" class="row-menu-item" data-action="edit-event" data-id="' + r.id + '"><span class="icon">' + ICON_EDIT + '</span> تعديل</button>' +
@@ -8991,8 +9018,10 @@
       });
     }
     html += '</tbody></table></div>';
+    if(tblRest) html += '<div style="text-align:center; padding:14px 0 6px;"><button type="button" class="btn-secondary" data-action="events-table-more">عرض المزيد (' + Math.min(tblRest, EV_TABLE_PAGE) + ' من ' + tblRest + ' متبقية)</button></div>';
     return html;
   }
+  var EV_TABLE_PAGE = 100;
   function refreshEventsTable(){
     var cat = EVENTS_CATEGORIES.find(function(c){ return c.key === eventsUI.activeCategory; });
     var container = document.getElementById("eventsTableContainer");
@@ -11714,9 +11743,15 @@
   function eventsSubnavBtnHTML(key, label, icon){
     return '<button type="button" data-action="events-subnav" data-tab="' + key + '" class="' + (eventsUI.tab === key ? "active" : "") + '"><span class="icon">' + icon + '</span>' + label + '</button>';
   }
+  var _evHubDirty = false;
   function renderEventsHub(){
     var root = document.getElementById("eventsRoot");
     if(!root || !currentUser) return;
+    // المستخدم في قسم آخر: لا يُبنى شيء الآن (كان يُعاد بناء القسم كاملاً في الخلفية مع كل تحديث من القاعدة)، ويُبنى عند العودة إليه
+    var evActiveView = document.querySelector(".section-view.active");
+    if(evActiveView && evActiveView.id !== "view-events"){ _evHubDirty = true; return; }
+    _evHubDirty = false;
+    evEnsureDesignData();
     if(!permAllows(EVENT_TAB_PERMS[eventsUI.tab])) eventsUI.tab = "dashboard";
     if(evScoped()){
       var oc = evOpenCats(), first = oc[0] ? oc[0].key : "", isOpen = function(k){ return oc.some(function(c){ return c.key === k; }); };
@@ -11994,6 +12029,7 @@
       }
       case "open-event-templates": openEventTemplatesModal(); break;
       case "open-uni-logos": openUniLogosModal(); break;
+      case "events-table-more": eventsUI.tableLimit = Math.max(EV_TABLE_PAGE, eventsUI.tableLimit || 0) + EV_TABLE_PAGE; refreshEventsTable(); break;
       case "publish-more": eventsUI.publishLimit = Math.max(EV_PUBLISH_PAGE, eventsUI.publishLimit || 0) + EV_PUBLISH_PAGE; refreshEventsPublishList(); break;
       case "publish-type-filter": eventsUI.publishTypeFilter = btn.dataset.type; renderEventsHub(); break;
       case "publish-status-filter": eventsUI.publishStatusFilter = btn.dataset.status; renderEventsHub(); break;
