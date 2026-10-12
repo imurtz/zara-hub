@@ -8253,7 +8253,33 @@
     _designTemplatesCache = snap.docs.map(function(d){ var v = d.data(); return (liveTmpl && v.id === liveTmpl.id) ? liveTmpl : v; });
     if(editingId){ _tmplHubStale = true; return; }
     eventsFirestoreRefresh();
+    setTimeout(evMigrateTemplateImages, 4000);
   }, function(err){ console.error("designTemplates snapshot error", err); });
+  }
+  // نقل صور القوالب القديمة من داخل القاعدة إلى مخزن الوسائط — قالباً قالباً، في جلسة الأدمن فقط، وبنفس مسار الرفع
+  // الذي تستخدمه القوالب الجديدة منذ سبتمبر. القالب القديم صورته مضمَّنة في مستنده (نحو 600 ك.ب) فتُحمَّل مع القائمة كل مرة.
+  // الأمان: يُستبدل الحقل image بالرابط فقط بعد التأكد أن الملف المرفوع يُقرأ فعلاً وبنفس حجم الأصل، وأن القالب لم يتغيّر
+  // أثناء الرفع ولا يُحرَّر الآن. أي فشل في أي خطوة = لا يتغيّر شيء في القاعدة، وتُعاد المحاولة في جلسة لاحقة.
+  var _tmplMigrating = false, _tmplMigrTried = {};
+  function evMigrateTemplateImages(){
+    if(_tmplMigrating || window.__SANDBOX_NO_WRITES || !currentUser || currentUser.role !== "admin" || tmplEditorState || tmplGenerateState) return;
+    var t = _designTemplatesCache.find(function(x){ return x && x.id && typeof x.image === "string" && x.image.indexOf("data:image/") === 0 && !_tmplMigrTried[x.id]; });
+    if(!t) return;
+    _tmplMigrating = true; _tmplMigrTried[t.id] = 1;
+    var original = t.image, id = t.id;
+    var next = function(){ _tmplMigrating = false; setTimeout(evMigrateTemplateImages, 2000); };
+    uploadDataUrlToR2(original, "templates", function(url){
+      if(!/^https:\/\/media\.gzara\.org\//.test(String(url || ""))){ next(); return; }
+      Promise.all([
+        fetch(url, { mode: "cors", cache: "reload" }).then(function(r){ if(!r.ok) throw new Error("http_" + r.status); return r.blob(); }),
+        fetch(original).then(function(r){ return r.blob(); })
+      ]).then(function(b){
+        if(!b[0].size || b[0].size !== b[1].size) throw new Error("size_mismatch");
+        var cur = findDesignTemplate(id);
+        if(!cur || cur.image !== original || tmplEditorState || tmplGenerateState) return;
+        return db.collection("designTemplates").doc(id).update({ image: url });
+      }).catch(function(e){ console.warn("template image migration skipped", id, e); }).then(next);
+    });
   }
   function loadDesignTemplates(catKey){
     return _designTemplatesCache.filter(function(t){ return t.category === catKey; });
