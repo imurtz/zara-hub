@@ -11420,6 +11420,12 @@
     return ".jpg";
   }
   // الصورة قد تكون مخزّنة بكاش المتصفح من عرضها كـ<img> (بلا ترويسات CORS) فيفشل الجلب الأول — نعيد المحاولة متجاوزين الكاش
+  // صورة السجل قد تكون نصاً مضمَّناً (data:) أو رابطاً في مخزن الوسائط. الرابط المحفوظ سبق أن حمّله المتصفح
+  // لعرضه بلا إذن CORS، فطلبه مباشرةً بـfetch يفشل بـ"Failed to fetch" — لذا يمرّ بنفس إعادة المحاولة المستخدمة في المعرض
+  function evImgBlob(src){
+    if(/^https?:/i.test(src)) return galFetchBlob(src);
+    return fetch(src).then(function(r){ return r.blob(); });
+  }
   function galFetchBlob(url){
     var get = function(mode){ return fetch(url, { mode: "cors", cache: mode }).then(function(r){ if(!r.ok) throw new Error("http_" + r.status); return r.blob(); }); };
     return get("default").catch(function(){ return get("reload"); }).catch(function(){
@@ -12262,7 +12268,7 @@
         }
         renderEventModal();
         var origThumbUrl = null;
-        fetch(srcImg).then(function(r){ return r.blob(); }).then(function(blob){
+        evImgBlob(srcImg).then(function(blob){
           // نرفع النسخة "قبل التفريغ" لـR2 بالتوازي مع طلب إزالة الخلفية نفسه بدل تتابعهما —
           // العمليتان مستقلتان (كلتاهما تحتاج فقط blob الأصلي)، فتشغيلهما معاً يوفّر ثانية إلى
           // ثانيتين من زمن كل رفع صورة بدل انتظار كل عملية على حدة
@@ -12816,7 +12822,7 @@
         btn.disabled = true;
         var bgSrcImg = bgSrcRec[bgFieldKey];
         var bgOrigThumbUrl = null;
-        fetch(bgSrcImg).then(function(r){ return r.blob(); }).then(function(blob){
+        evImgBlob(bgSrcImg).then(function(blob){
           // رفع النسخة الأصلية وإزالة الخلفية بالتوازي بدل تتابعهما — نفس منطق حقل الصورة بنموذج
           // الإدخال (يوفّر ثانية إلى ثانيتين من كل عملية)
           var origUploadPromise = new Promise(function(resolve){
