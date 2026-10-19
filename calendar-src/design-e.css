@@ -137,4 +137,4 @@
 /* ---- اسم الموسم: أصغر، وسطر بارتفاع يتسع للحروف النازلة (ع، ي، ر…) فلا يُقص أسفلها ---- */
 .d-e.gift .ssn h2{font-size:11.5mm;height:17mm;line-height:17mm;overflow:visible}
 /* ---- رمز QR أصغر داخل إطاره: الإطار بنفس مقاسه، والفراغ حول الرمز أوسع ---- */
-.d-e.gift .vis .qrbox{padding:3.1mm;border-radius:3mm}
+.d-e.gift .vis .qrbox{padding:1.85mm;border-radius:2.6mm}

@@ -576,7 +576,7 @@ body.embedded header.top{justify-content:flex-start}
 /* ---- اسم الموسم: أصغر، وسطر بارتفاع يتسع للحروف النازلة (ع، ي، ر…) فلا يُقص أسفلها ---- */
 .d-e.gift .ssn h2{font-size:11.5mm;height:17mm;line-height:17mm;overflow:visible}
 /* ---- رمز QR أصغر داخل إطاره: الإطار بنفس مقاسه، والفراغ حول الرمز أوسع ---- */
-.d-e.gift .vis .qrbox{padding:3.1mm;border-radius:3mm}
+.d-e.gift .vis .qrbox{padding:1.85mm;border-radius:2.6mm}
 
 </style>
 </head>
@@ -3202,7 +3202,7 @@ function eMonth(mo,m){const g=gridData(mo),mt=monthMeta(mo);
  <div class="dock">${q(1)}${q(2)}${q(3)}</div><div class="her" style="--hm:url(heritage/${pad(mo)}.png)"></div></section>`}
 function eGift(g){const mo=GIDX(g),mn=MONTH_AR[mo];return `<section class="page d-e gift">${pat("g")}${logo()}
  <div class="ssn"><div class="kick">موسم ${esc(mn)}</div><h2>${esc(g.sTitle)}</h2>${g.sWhen?`<div class="when">${esc(g.sWhen)}</div>`:""}<p>${esc(g.sLine)}</p>${g.proverb?`<blockquote>«${esc(g.proverb)}»</blockquote>`:""}</div>
- <div class="vis"><p>${esc(g.vLine)}</p><div class="vq"><div class="qrbox">${qrEl(g.url,20,g.qrImg)}</div><div class="vt"><b>${esc(g.camp)}</b><span>${esc(S().lblGo)}</span></div></div></div>
+ <div class="vis"><p>${esc(g.vLine)}</p><div class="vq"><div class="qrbox">${qrEl(g.url,22.5,g.qrImg)}</div><div class="vt"><b>${esc(g.camp)}</b><span>${esc(S().lblGo)}</span></div></div></div>
  <div class="spt">${esc(S().lblSponsors)}</div><div class="sponsors">${allSp()}</div><div class="handle">${esc(draft.settings.handle)}</div></section>`}
 const GIDX=g=>{for(let i=1;i<=12;i++)if(draft["g"+pad(i)]===g)return i-1;return Math.max(0,cur.mo-1)};
 /* بيانات توضيحية للأشهر الاثني عشر (راعٍ وشعاره، صورة الشهر، اسم الفنان) — كلها افتراضية ومرسومة هنا.
