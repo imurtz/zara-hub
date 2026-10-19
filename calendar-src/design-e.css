@@ -121,3 +121,18 @@
 .d-e.gift .vis .vq{position:absolute;left:5.5mm;right:5.5mm;bottom:6mm}
 .d-e.gift .vis{position:absolute}
 .d-e.gift .vis .vt b{display:block;white-space:nowrap;overflow:hidden;text-wrap:nowrap}
+/* ---- تعديلات: اسم الموسم أصغر، عبارة المربع في وسطه، وارتفاع المربع متناسب مع كتلة الموسم ---- */
+.d-e.gift .ssn h2{font-size:13mm;height:15.5mm}
+.d-e.gift .vis{top:31mm;height:70mm}
+.d-e.gift .vis p{position:absolute;left:5.5mm;right:5.5mm;top:6.5mm;height:19.6mm;text-align:center;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.d-e.gift .vis p .kl{margin:0 auto}
+.d-e.gift .vis .vq{bottom:6.5mm}
+/* ---- المربع الرمادي بترتيب عمودي في الوسط: العبارة ← الرمز ← العبارة الفرعية ---- */
+.d-e.gift .vis{top:30mm;height:72mm;padding:6mm 5.5mm 5mm;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:0}
+.d-e.gift .vis p{position:static;width:100%;height:19.6mm;flex:none}
+.d-e.gift .vis .vq{position:static;margin-top:3.6mm;flex-direction:column;align-items:center;gap:2.4mm;width:100%}
+.d-e.gift .vis .vt{flex:none;width:100%;align-items:center;text-align:center}
+.d-e.gift .vis .vt b{font-size:3.2mm;text-align:center}
+.d-e.gift .vis .vt span{text-align:center}
+/* ---- اسم الموسم: أصغر، وسطر بارتفاع يتسع للحروف النازلة (ع، ي، ر…) فلا يُقص أسفلها ---- */
+.d-e.gift .ssn h2{font-size:11.5mm;height:17mm;line-height:17mm;overflow:visible}

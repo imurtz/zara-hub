@@ -12,7 +12,7 @@
   const order=words.map((x,i)=>i).sort((a,b)=>words[b].length-words[a].length);
   const used=words.map(()=>0);
   while(w<target-.5&&guard++<240){let did=false;
-   for(const i of order){const sp=spots(words[i].replace(/ـ/g,""));if(!sp.length||used[i]>=Math.min(3,sp.length*2))continue;
+   for(const i of order){const sp=spots(words[i].replace(/ـ/g,""));if(!sp.length||used[i]>=Math.min(2,sp.length*2))continue;
     const base=words[i].replace(/ـ/g,""),k=sp[used[i]%sp.length],n=Math.floor(used[i]/sp.length)+1;
     // إعادة بناء الكلمة بعدد الكشيدات المتراكم في كل موضع
     const cnt={};for(let u=0;u<=used[i];u++){const kk=sp[u%sp.length];cnt[kk]=(cnt[kk]||0)+1}
@@ -20,7 +20,9 @@
     const prev=words[i];words[i]=nw;line.textContent=words.join(" ");const nwW=W();
     if(nwW>target+.5){words[i]=prev;line.textContent=words.join(" ");used[i]=99;continue}
     used[i]++;w=nwW;did=true;if(w>=target-.5)break}
-   if(!did)break}}
+   if(!did)break}
+  line.style.wordSpacing="";const gaps=(line.textContent.match(/ /g)||[]).length;w=W();
+  if(gaps&&target-w>.5){const fs=parseFloat(getComputedStyle(line).fontSize)||16;line.style.wordSpacing=Math.min((target-w)/gaps,fs*.18).toFixed(2)+"px"}}
  window.kashidaJustify=function(el){const text=el.textContent.replace(/ـ/g,"").replace(/\s+/g," ").trim();if(!text)return;
   el.style.textWrap="balance";el.textContent=text;
   el.innerHTML=text.split(" ").map(x=>`<span class="kw">${x}</span>`).join(" ");
@@ -29,7 +31,7 @@
   el.innerHTML=lines.map(l=>`<span class="kl" style="display:block;white-space:nowrap;width:max-content">${l.w.join(" ")}</span>`).join("");
   const ls=[...el.querySelectorAll(".kl")],target=Math.max(...ls.map(x=>x.getBoundingClientRect().width));ls.forEach(l=>stretch(l,target))};
  // سطران دائماً: يُختار موضع الكسر الذي يجعل السطرين أقرب طولاً، ثم يُشدّ الأقصر بالكشيدة — فيبقى شكل العبارة وموضعها ثابتين في كل الصفحات
- window.kashidaTwo=function(el){const text=el.textContent.replace(/ـ/g,"").replace(/\s*\|\s*/g," | ").replace(/\s+/g," ").trim(),words=text.split(" ");
+ window.kashidaTwo=function(el){if(el.dataset.ksrc==null)el.dataset.ksrc=el.textContent;const text=el.dataset.ksrc.replace(/ـ/g,"").replace(/\s*\|\s*/g," | ").replace(/\s+/g," ").trim(),words=text.split(" ");
   if(words.length<2){el.textContent=text;return 0}
   const st='display:block;white-space:nowrap;width:max-content';el.innerHTML=`<span class="kl" style="${st}"></span><span class="kl" style="${st}"></span>`;
   const a=el.children[0],b=el.children[1];let best=null;
