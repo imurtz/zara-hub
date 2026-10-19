@@ -290,6 +290,23 @@ document.addEventListener("click",e=>{const t=e.target.closest&&e.target.closest
  const end=()=>{if(!d)return;d=null;st.classList.remove("phdrag");renderEditor();drawPreview();refreshUi();autosaveSoon()};
  document.addEventListener("pointerup",end);document.addEventListener("pointercancel",end)})();
 new ResizeObserver(fit).observe($("#stage"));""")
+# ---------- ظهر التقويم «صفحة الموسم» (بدل صفحة الإهداء) ----------
+# الظهر يراه من يجلس أمام صاحب المكتب، فيُقرأ من مسافة: موسم الشهر من روزنامة الخليج والقطيف (اسمه وموعده وجملة عنه
+# وقول مأثور اختياري) في الأعلى، ورسالة قصيرة للزائر مع رمز المساهمة، ومنطقة الرعاة كما هي في الأسفل.
+# المحتوى الافتراضي مسودة تُراجَع وتُعدَّل من المحرِّر؛ القول المأثور لا يُطبع إن كان فارغاً.
+import re as _re
+_ssn = rd("seasons.js")
+post('function defGift(i){return{h1:GIFT[i][0],h2:GIFT[i][1],camp:CAMP[i][0],url:"https://example.com/awamia/2027/gift-"+pad(i+1),qrImg:"",titleImg:""}}',
+     _ssn + 'function defGift(i){return{h1:GIFT[i][0],h2:GIFT[i][1],camp:CAMP[i][0],url:"https://example.com/awamia/2027/gift-"+pad(i+1),qrImg:"",titleImg:"",sTitle:SSN[i][0],sWhen:SSN[i][1],sLine:SSN[i][2],proverb:SSN[i][3],vLine:SSN[i][4]}}')
+_m = _re.search(r'const GF=\[.*?\]\];', out)
+assert _m and out.count(_m.group(0)) == 1
+out = out.replace(_m.group(0), 'const GF=[["sTitle","الموسم — اسمه (يُكتب كبيراً)","t"],["sWhen","الموسم — موعده أو وصف قصير","t"],["sLine","الموسم — جملة واحدة عنه","t"],["proverb","مثل شعبي أو قول مأثور (اختياري — لا يُطبع إن كان فارغاً)","t"],["vLine","رسالة للجالس أمام التقويم (تُقرأ من بعيد، جملة قصيرة)","t"],["camp","اسم الحملة تحت الرمز","t"],["url","رابط QR","u"],["qrImg","أو ارفع صورة QR جاهزة (تحلّ محل المولَّد)","i"]];')
+_a = out.index('function eGift(g){return `<section class="page d-e gift">')
+_b = out.index('</section>`}', _a) + len('</section>`}')
+out = out[:_a] + rd("season-page.js").strip() + out[_b:]
+post('<button data-k="g">صفحة الإهداء</button>', '<button data-k="g">صفحة الموسم</button>')
+post('cur.kind==="g"?"الإهداء":MONTH_AR[cur.mo-1]', 'cur.kind==="g"?"الموسم-"+MONTH_AR[cur.mo-1]:MONTH_AR[cur.mo-1]')
+out = out.replace('"صفحة الإهداء قبل "+name', '"صفحة الموسم (ظهر التقويم) قبل "+name')
 dest = os.path.join(HERE, "..", "Login", "calendar", "index.html")
 os.makedirs(os.path.dirname(dest), exist_ok=True)
 io.open(dest, "w", encoding="utf-8").write(out)
