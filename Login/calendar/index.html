@@ -534,6 +534,22 @@ body.embedded header.top{justify-content:flex-start}
 .d-e .vis .vt{display:flex;flex-direction:column}
 .d-e .vis .vt b{font-size:3.2mm;font-weight:700;color:var(--cg);line-height:1.4}
 .d-e .vis .vt span{font-size:2.7mm;font-weight:600;color:var(--cb);line-height:1.4}
+/* ---- خط «ثمانية» لكتلة الموسم ورسالة الزائر (من الجهاز فقط — انظر build.py) ---- */
+@font-face{font-family:"ZThm";src:local("thmanyahsans-Light"),local("thmanyah sans Light");font-weight:300}
+@font-face{font-family:"ZThm";src:local("thmanyahsans-Regular"),local("thmanyah sans Regular");font-weight:400}
+@font-face{font-family:"ZThm";src:local("thmanyahsans-Medium"),local("thmanyah sans Medium");font-weight:500}
+@font-face{font-family:"ZThm";src:local("thmanyahsans-Bold"),local("thmanyah sans Bold");font-weight:700}
+.d-e.gift .ssn,.d-e.gift .ssn h2,.d-e.gift .ssn blockquote,.d-e.gift .vis p{font-family:"ZThm",var(--fd),sans-serif}
+/* ترتيب النصوص: عمود واحد بمحاذاة يمين ثابتة، ومسافات متدرجة من العنوان إلى القول */
+.d-e.gift .ssn .kick{font-size:3.3mm;font-weight:500;letter-spacing:0}
+.d-e.gift .ssn h2{margin-top:.6mm;font-size:17mm;line-height:1.05}
+.d-e.gift .ssn .when{margin-top:3mm;font-weight:500;font-size:3mm;padding:.9mm 3.8mm}
+.d-e.gift .ssn p{margin-top:5mm;max-width:96mm;font-size:4.4mm;font-weight:500;line-height:1.7}
+.d-e.gift .ssn blockquote{margin-top:4.6mm;font-size:4.6mm;font-weight:700}
+.d-e.gift .vis p{font-size:5.6mm;font-weight:700;line-height:1.55}
+.d-e.gift .vis .vt{min-width:0;flex:1}
+.d-e.gift .vis .vt b{text-wrap:balance;font-size:3mm}
+.d-e.gift .vis .vq{gap:2.6mm}
 
 </style>
 </head>
@@ -3081,7 +3097,48 @@ function heritage(mo){const h=HER[mo-1],W=1170,n=Math.max(1,Math.floor((W+h.g)/(
 const mkSvg=c=>`<svg class="mk ${c}" xmlns="http://www.w3.org/2000/svg" viewBox="-3 -3 256 242">${MARK_D.map(d=>`<path d="${d}"/>`).join("")}</svg>`;
 const pat=k=>`<div class="pat ${k}">${mkSvg("a")}${mkSvg("b")}${mkSvg("c")}${mkSvg("d")}</div>`;
 /* العبارة العلوية تُطابق عرض الشعار تماماً: كل سطر يُكبَّر أو يُصغَّر حتى يبدأ وينتهي مع حدَّي الشعار */
-function fitE(root){}
+/* توازي أطوال الأسطر بالكشيدة: يكسر العبارة على أسطر متوازنة، ثم يمدّ كل سطر أقصر بإضافة «ـ» في مواضع الوصل
+   حتى يساوي أطول سطر. لا يغيّر الكلمات ولا يمسّ النص المحفوظ — يعمل على العرض فقط. */
+(function(){
+ const DUAL="بتثجحخسشصضطظعغفقكلمنهيئ";            // حروف تتصل بما بعدها
+ const AR=/[ء-ي]/, MARK=/[ً-ٰٟ]/;
+ // مواضع الكشيدة في كلمة: بعد حرف يتصل بما بعده وقبل حرف عربي، مع تجنّب «لا» وأول حرف في الكلمة؛ الأفضل قبل آخر حرف
+ function spots(w){const out=[];for(let i=1;i<w.length;i++){const c=w[i];if(DUAL.indexOf(c)<0)continue;let j=i+1;while(j<w.length&&MARK.test(w[j]))j++;
+   if(j>=w.length||!AR.test(w[j]))continue;if(c==="ل"&&"اأإآ".indexOf(w[j])>-1)continue;out.push(j)}return out.reverse()}
+ function stretch(line,target){const words=line.textContent.split(" ");let guard=0;
+  const W=()=>line.getBoundingClientRect().width;let w=W();if(target-w<.5)return;
+  // ترتيب الكلمات: الأطول أولاً، وكشيدة واحدة لكل كلمة في كل جولة
+  const order=words.map((x,i)=>i).sort((a,b)=>words[b].length-words[a].length);
+  const used=words.map(()=>0);
+  while(w<target-.5&&guard++<240){let did=false;
+   for(const i of order){const sp=spots(words[i].replace(/ـ/g,""));if(!sp.length||used[i]>=Math.min(3,sp.length*2))continue;
+    const base=words[i].replace(/ـ/g,""),k=sp[used[i]%sp.length],n=Math.floor(used[i]/sp.length)+1;
+    // إعادة بناء الكلمة بعدد الكشيدات المتراكم في كل موضع
+    const cnt={};for(let u=0;u<=used[i];u++){const kk=sp[u%sp.length];cnt[kk]=(cnt[kk]||0)+1}
+    let nw="";for(let q=0;q<base.length;q++){if(cnt[q])nw+="ـ".repeat(cnt[q]);nw+=base[q]}
+    const prev=words[i];words[i]=nw;line.textContent=words.join(" ");const nwW=W();
+    if(nwW>target+.5){words[i]=prev;line.textContent=words.join(" ");used[i]=99;continue}
+    used[i]++;w=nwW;did=true;if(w>=target-.5)break}
+   if(!did)break}}
+ window.kashidaJustify=function(el){const text=el.textContent.replace(/ـ/g,"").replace(/\s+/g," ").trim();if(!text)return;
+  el.style.textWrap="balance";el.textContent=text;
+  el.innerHTML=text.split(" ").map(x=>`<span class="kw">${x}</span>`).join(" ");
+  const lines=[];el.querySelectorAll(".kw").forEach(s=>{const t=Math.round(s.offsetTop);let L=lines.find(l=>Math.abs(l.top-t)<3);if(!L){L={top:t,w:[]};lines.push(L)}L.w.push(s.textContent)});
+  if(lines.length<2){el.textContent=text;return}
+  el.innerHTML=lines.map(l=>`<span class="kl" style="display:block;white-space:nowrap;width:max-content">${l.w.join(" ")}</span>`).join("");
+  const ls=[...el.querySelectorAll(".kl")],target=Math.max(...ls.map(x=>x.getBoundingClientRect().width));ls.forEach(l=>stretch(l,target))};
+ // سطران منفصلان (كعبارة الصورة: سطر عريض وسطر تحته) يُشدّ الأقصر منهما ليساوي الأطول
+ window.kashidaPair=function(a,b){[a,b].forEach(e=>{e.textContent=e.textContent.replace(/ـ/g,"");e.style.width="max-content";e.style.whiteSpace="nowrap"});
+  const wa=a.getBoundingClientRect().width,wb=b.getBoundingClientRect().width;stretch(wa<wb?a:b,Math.max(wa,wb))};
+})();
+/* ضبط نصوص ظهر التقويم بعد رسمه: رسالة الزائر تصغُر تلقائياً إن طالت حتى لا تتجاوز مساحتها فوق الرمز،
+   ثم تُشدّ أسطر رسالة الزائر وجملة الموسم بالكشيدة لتتوازى أطوالها */
+function fitE(root){if(!window.kashidaJustify||!root)return;
+ root.querySelectorAll(".d-e.gift .vis").forEach(v=>{const p=v.querySelector("p"),q=v.querySelector(".vq");if(!p||!q)return;p.style.fontSize="";p.textContent=p.textContent.replace(/ـ/g,"");
+  const H=v.getBoundingClientRect().height,mm=H/74,room=H-q.getBoundingClientRect().height-16*mm;let fs=5.6,n=0;
+  while(p.getBoundingClientRect().height>room&&fs>4&&n++<12){fs-=.2;p.style.fontSize=fs.toFixed(1)+"mm"}});
+ root.querySelectorAll(".d-e.gift .vis p,.d-e.gift .ssn p").forEach(e=>{try{kashidaJustify(e)}catch(_){}})}
+
 function eMonth(mo,m){const g=gridData(mo),mt=monthMeta(mo);
  const body=trs(g,c=>c.v?`<td class="${c.fri?"fri":""}"></td>`:`<td class="${c.fri?"fri":""}">${c.ev?`<i class="ev" style="background:${c.ev[1]}">${c.d}</i>`:`<i>${c.d}</i>`}<s>${c.hj}</s></td>`);
  const chips=g.legend.map(l=>`<span><b style="background:${l.c}">${l.d}</b>${esc(l.t)}</span>`).join("");
@@ -3094,7 +3151,7 @@ function eMonth(mo,m){const g=gridData(mo),mt=monthMeta(mo);
  <div class="dock">${q(1)}${q(2)}${q(3)}</div><div class="her" style="--hm:url(heritage/${pad(mo)}.png)"></div></section>`}
 function eGift(g){const mo=GIDX(g),mn=MONTH_AR[mo];return `<section class="page d-e gift">${pat("g")}${logo()}
  <div class="ssn"><div class="kick">موسم ${esc(mn)}</div><h2>${esc(g.sTitle)}</h2>${g.sWhen?`<div class="when">${esc(g.sWhen)}</div>`:""}<p>${esc(g.sLine)}</p>${g.proverb?`<blockquote>«${esc(g.proverb)}»</blockquote>`:""}</div>
- <div class="vis"><p>${esc(g.vLine)}</p><div class="vq"><div class="qrbox">${qrEl(g.url,30,g.qrImg)}</div><div class="vt"><b>${esc(g.camp)}</b><span>${esc(S().lblGo)}</span></div></div></div>
+ <div class="vis"><p>${esc(g.vLine)}</p><div class="vq"><div class="qrbox">${qrEl(g.url,27,g.qrImg)}</div><div class="vt"><b>${esc(g.camp)}</b><span>${esc(S().lblGo)}</span></div></div></div>
  <div class="spt">${esc(S().lblSponsors)}</div><div class="sponsors">${allSp()}</div><div class="handle">${esc(draft.settings.handle)}</div></section>`}
 const GIDX=g=>{for(let i=1;i<=12;i++)if(draft["g"+pad(i)]===g)return i-1;return Math.max(0,cur.mo-1)};
 /* بيانات توضيحية للأشهر الاثني عشر (راعٍ وشعاره، صورة الشهر، اسم الفنان) — كلها افتراضية ومرسومة هنا.
@@ -3208,6 +3265,7 @@ async function mockDownload(){const btn=mkEl("mkdl");if(btn.disabled)return;btn.
    try{const bl=await mkBlob(u),du=await new Promise((ok,no)=>{const fr=new FileReader();fr.onload=()=>ok(fr.result);fr.onerror=no;fr.readAsDataURL(bl)});i.removeAttribute("srcset");i.src=du}catch(_){i.src=MKPX}}));
   await Promise.all([...hold.querySelectorAll("img")].map(i=>i.complete?(i.decode?i.decode().catch(()=>{}):0):new Promise(r=>{i.onload=i.onerror=r})));
   if(document.fonts&&document.fonts.ready)await document.fonts.ready;
+  fitE(hold);
   const opt={pixelRatio:4,width:PXW,height:PXH,backgroundColor:"#ffffff",fetchRequestInit:{mode:"cors"},imagePlaceholder:MKPX,style:{opacity:"1"}};
   await htmlToImage.toCanvas(page,opt);const flat=await htmlToImage.toCanvas(page,opt);
   const [bg,body,rings]=await Promise.all([MOCKWHITE?null:mkPic(MOCKBG||MKBG0).catch(()=>mkPic(MKBG0)),mkPic("mockup/body4k.webp"),mkPic("mockup/rings4k2.png")]);
@@ -3234,8 +3292,9 @@ function viewHtml(){if(SEC==="design"||(SEC==="mockup"&&!APPROVED))return pageHt
  if(!APPROVED)return `<section class="page" style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4mm;color:#667570;font-family:var(--fb),sans-serif"><b style="font-size:7mm">لا يوجد تقويم ميلادي معتمد بعد</b><span style="font-size:3.6mm">يظهر هنا التقويم بعد اعتماده من قسم التصميم</span></section>`;
  const bak={};IDS.forEach(id=>{bak[id]=draft[id];draft[id]=Object.assign(defaults(id),APPROVED.data[id]||{})});
  try{return pageHtml()}finally{IDS.forEach(id=>{draft[id]=bak[id]})}}
-let raf=0;function drawPreview(){cancelAnimationFrame(raf);raf=requestAnimationFrame(()=>{$("#pagebox").innerHTML=viewHtml();fit();fitE($("#pagebox"))})}
+let raf=0;function drawPreview(){cancelAnimationFrame(raf);raf=requestAnimationFrame(()=>{$("#pagebox").innerHTML=viewHtml();fitE($("#pagebox"));fit()})}
 if(document.fonts&&document.fonts.ready)document.fonts.ready.then(()=>drawPreview());
+if(document.fonts&&document.fonts.load)Promise.all(["700 20px ZThm","500 20px ZThm"].map(f=>document.fonts.load(f))).then(()=>drawPreview(),()=>{});
 
 /* ---------- print all (24 pages, 210×150mm) ---------- */
 function printAll(){const keep={mo:cur.mo,kind:cur.kind};let h="";

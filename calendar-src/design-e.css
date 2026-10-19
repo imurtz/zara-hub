@@ -95,3 +95,19 @@
 .d-e .vis .vt{display:flex;flex-direction:column}
 .d-e .vis .vt b{font-size:3.2mm;font-weight:700;color:var(--cg);line-height:1.4}
 .d-e .vis .vt span{font-size:2.7mm;font-weight:600;color:var(--cb);line-height:1.4}
+/* ---- خط «ثمانية» لكتلة الموسم ورسالة الزائر (من الجهاز فقط — انظر build.py) ---- */
+@font-face{font-family:"ZThm";src:local("thmanyahsans-Light"),local("thmanyah sans Light");font-weight:300}
+@font-face{font-family:"ZThm";src:local("thmanyahsans-Regular"),local("thmanyah sans Regular");font-weight:400}
+@font-face{font-family:"ZThm";src:local("thmanyahsans-Medium"),local("thmanyah sans Medium");font-weight:500}
+@font-face{font-family:"ZThm";src:local("thmanyahsans-Bold"),local("thmanyah sans Bold");font-weight:700}
+.d-e.gift .ssn,.d-e.gift .ssn h2,.d-e.gift .ssn blockquote,.d-e.gift .vis p{font-family:"ZThm",var(--fd),sans-serif}
+/* ترتيب النصوص: عمود واحد بمحاذاة يمين ثابتة، ومسافات متدرجة من العنوان إلى القول */
+.d-e.gift .ssn .kick{font-size:3.3mm;font-weight:500;letter-spacing:0}
+.d-e.gift .ssn h2{margin-top:.6mm;font-size:17mm;line-height:1.05}
+.d-e.gift .ssn .when{margin-top:3mm;font-weight:500;font-size:3mm;padding:.9mm 3.8mm}
+.d-e.gift .ssn p{margin-top:5mm;max-width:96mm;font-size:4.4mm;font-weight:500;line-height:1.7}
+.d-e.gift .ssn blockquote{margin-top:4.6mm;font-size:4.6mm;font-weight:700}
+.d-e.gift .vis p{font-size:5.6mm;font-weight:700;line-height:1.55}
+.d-e.gift .vis .vt{min-width:0;flex:1}
+.d-e.gift .vis .vt b{text-wrap:balance;font-size:3mm}
+.d-e.gift .vis .vq{gap:2.6mm}

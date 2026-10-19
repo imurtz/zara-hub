@@ -307,6 +307,13 @@ out = out[:_a] + rd("season-page.js").strip() + out[_b:]
 post('<button data-k="g">صفحة الإهداء</button>', '<button data-k="g">صفحة الموسم</button>')
 post('cur.kind==="g"?"الإهداء":MONTH_AR[cur.mo-1]', 'cur.kind==="g"?"الموسم-"+MONTH_AR[cur.mo-1]:MONTH_AR[cur.mo-1]')
 out = out.replace('"صفحة الإهداء قبل "+name', '"صفحة الموسم (ظهر التقويم) قبل "+name')
+# ---------- خط «ثمانية» وتوازي الأسطر بالكشيدة في ظهر التقويم «صفحة الموسم» ----------
+# الخط لا يُرفع إلى الموقع (رخصته تمنع استضافة ملفاته)؛ يُستخدم من نسخته المثبّتة على الجهاز (local) وإلا يرجع للخط الحالي.
+# الكشيدة تُضاف للعرض فقط بعد رسم الصفحة، قبل نسخها للموك أب وقبل الطباعة والتنزيل.
+post('function fitE(root){}', rd("kashida.js") + rd("fit-e.js"))
+post('$("#pagebox").innerHTML=viewHtml();fit();fitE($("#pagebox"))', '$("#pagebox").innerHTML=viewHtml();fitE($("#pagebox"));fit()')
+post('if(document.fonts&&document.fonts.ready)document.fonts.ready.then(()=>drawPreview());', 'if(document.fonts&&document.fonts.ready)document.fonts.ready.then(()=>drawPreview());\nif(document.fonts&&document.fonts.load)Promise.all(["700 20px ZThm","500 20px ZThm"].map(f=>document.fonts.load(f))).then(()=>drawPreview(),()=>{});')
+post('  if(document.fonts&&document.fonts.ready)await document.fonts.ready;\n', '  if(document.fonts&&document.fonts.ready)await document.fonts.ready;\n  fitE(hold);\n')
 dest = os.path.join(HERE, "..", "Login", "calendar", "index.html")
 os.makedirs(os.path.dirname(dest), exist_ok=True)
 io.open(dest, "w", encoding="utf-8").write(out)
