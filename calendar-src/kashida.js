@@ -28,6 +28,18 @@
   if(lines.length<2){el.textContent=text;return}
   el.innerHTML=lines.map(l=>`<span class="kl" style="display:block;white-space:nowrap;width:max-content">${l.w.join(" ")}</span>`).join("");
   const ls=[...el.querySelectorAll(".kl")],target=Math.max(...ls.map(x=>x.getBoundingClientRect().width));ls.forEach(l=>stretch(l,target))};
+ // سطران دائماً: يُختار موضع الكسر الذي يجعل السطرين أقرب طولاً، ثم يُشدّ الأقصر بالكشيدة — فيبقى شكل العبارة وموضعها ثابتين في كل الصفحات
+ window.kashidaTwo=function(el){const text=el.textContent.replace(/ـ/g,"").replace(/\s*\|\s*/g," | ").replace(/\s+/g," ").trim(),words=text.split(" ");
+  if(words.length<2){el.textContent=text;return 0}
+  const st='display:block;white-space:nowrap;width:max-content';el.innerHTML=`<span class="kl" style="${st}"></span><span class="kl" style="${st}"></span>`;
+  const a=el.children[0],b=el.children[1];let best=null;
+  // «|» في النص يحدد موضع الكسر يدوياً (حتى لا ينقسم المعنى)، وإلا يُختار الموضع الأكثر توازناً
+  const bar=words.indexOf("|");if(bar>0&&bar<words.length-1){words.splice(bar,1);a.textContent=words.slice(0,bar).join(" ");b.textContent=words.slice(bar).join(" ");
+   const wa=a.getBoundingClientRect().width,wb=b.getBoundingClientRect().width;stretch(wa<wb?a:b,Math.max(wa,wb));return Math.max(wa,wb)}
+  for(let k=1;k<words.length;k++){a.textContent=words.slice(0,k).join(" ");b.textContent=words.slice(k).join(" ");
+   const wa=a.getBoundingClientRect().width,wb=b.getBoundingClientRect().width,d=Math.abs(wa-wb);if(!best||d<best.d)best={k,d,wa,wb}}
+  a.textContent=words.slice(0,best.k).join(" ");b.textContent=words.slice(best.k).join(" ");
+  const target=Math.max(best.wa,best.wb);stretch(best.wa<best.wb?a:b,target);return target};
  // سطران منفصلان (كعبارة الصورة: سطر عريض وسطر تحته) يُشدّ الأقصر منهما ليساوي الأطول
  window.kashidaPair=function(a,b){[a,b].forEach(e=>{e.textContent=e.textContent.replace(/ـ/g,"");e.style.width="max-content";e.style.whiteSpace="nowrap"});
   const wa=a.getBoundingClientRect().width,wb=b.getBoundingClientRect().width;stretch(wa<wb?a:b,Math.max(wa,wb))};

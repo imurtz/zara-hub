@@ -111,3 +111,13 @@
 .d-e.gift .vis .vt{min-width:0;flex:1}
 .d-e.gift .vis .vt b{text-wrap:balance;font-size:3mm}
 .d-e.gift .vis .vq{gap:2.6mm}
+/* ---- مواضع ثابتة في كل صفحات الموسم: لا يتحرك أي عنصر مهما اختلف طول نصه ---- */
+.d-e.gift .ssn h2{width:104mm;height:19mm;white-space:nowrap;overflow:hidden;display:flex;align-items:center;justify-content:flex-start}
+.d-e.gift .ssn .when{height:5.6mm;box-sizing:border-box;display:flex;align-items:center;white-space:nowrap}
+.d-e.gift .ssn p{width:96mm;max-width:none;height:15.2mm;margin-top:5mm;line-height:7.6mm}
+.d-e.gift .ssn blockquote{height:7mm;display:flex;align-items:center;white-space:nowrap}
+.d-e.gift .vis{justify-content:flex-start}
+.d-e.gift .vis p{height:19.6mm;font-size:6.6mm;line-height:9.8mm}
+.d-e.gift .vis .vq{position:absolute;left:5.5mm;right:5.5mm;bottom:6mm}
+.d-e.gift .vis{position:absolute}
+.d-e.gift .vis .vt b{display:block;white-space:nowrap;overflow:hidden;text-wrap:nowrap}

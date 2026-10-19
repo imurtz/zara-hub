@@ -550,6 +550,16 @@ body.embedded header.top{justify-content:flex-start}
 .d-e.gift .vis .vt{min-width:0;flex:1}
 .d-e.gift .vis .vt b{text-wrap:balance;font-size:3mm}
 .d-e.gift .vis .vq{gap:2.6mm}
+/* ---- مواضع ثابتة في كل صفحات الموسم: لا يتحرك أي عنصر مهما اختلف طول نصه ---- */
+.d-e.gift .ssn h2{width:104mm;height:19mm;white-space:nowrap;overflow:hidden;display:flex;align-items:center;justify-content:flex-start}
+.d-e.gift .ssn .when{height:5.6mm;box-sizing:border-box;display:flex;align-items:center;white-space:nowrap}
+.d-e.gift .ssn p{width:96mm;max-width:none;height:15.2mm;margin-top:5mm;line-height:7.6mm}
+.d-e.gift .ssn blockquote{height:7mm;display:flex;align-items:center;white-space:nowrap}
+.d-e.gift .vis{justify-content:flex-start}
+.d-e.gift .vis p{height:19.6mm;font-size:6.6mm;line-height:9.8mm}
+.d-e.gift .vis .vq{position:absolute;left:5.5mm;right:5.5mm;bottom:6mm}
+.d-e.gift .vis{position:absolute}
+.d-e.gift .vis .vt b{display:block;white-space:nowrap;overflow:hidden;text-wrap:nowrap}
 
 </style>
 </head>
@@ -2910,18 +2920,18 @@ function defMonth(i){const n=i+1,p=pad(n);return{sponsor:"الراعي "+p,spons
    مسودة أولى من روزنامة الخليج المعروفة (المربعانية، الشبط، العقارب، الثريا، سهيل، الوسم) ومواسم النخل في القطيف؛
    تُراجَع قبل الطباعة ويمكن تعديل كل شهر من المحرِّر. */
 const SSN=[
- ["الشبط","من منتصف يناير · نحو 26 يوماً","يأتي بعد المربعانية، وفيه أشد أيام البرد وأطول لياليه.","الشتاء ربيع المؤمن","في أبرد الأيام، دفء بيتٍ يصل بمسحةٍ منك."],
- ["العقارب","من منتصف فبراير · نحو 39 يوماً","آخر الشتاء؛ يتقلّب فيه الجو بين لسعة برد ودفء يبشّر بالربيع.","","قبل أن يرحل الشتاء… هل دفّأت بيتاً؟"],
- ["موسم التنبيت","تلقيح النخل","يُلقَّح فيه النخل بطلع الفحّال، فتبدأ حكاية رطب الصيف من الآن.","","كما يُلقَّح النخل اليوم ليُثمر في الصيف، تُثمر صدقتك الصغيرة طويلاً."],
- ["نسائم الربيع","اعتدال الجو","تطيب فيه الجلسات في المزارع وعلى العيون قبل أن يدخل الحر.","","الجو جميل… والأجمل أن تشارك غيرك فيه."],
- ["الخَلال","ثمر النخل يكبر","يكبر الثمر أخضرَ على مهل، ويشتد الحر شيئاً فشيئاً استعداداً للقيظ.","","الثمر يكبر على مهل، وكذلك الخير الدائم."],
- ["طلوع الثريا","أوائل يونيو","تطلع الثريا فجراً فيدخل القيظ، ويبدأ البسر بالتلوّن على النخل.","","مع دخول القيظ، شربة ماء باردة صدقة لا تُنسى."],
- ["جمرة القيظ","أشد أيام الصيف","أشد أيام السنة حراً ورطوبة، وفيها موسم الرطب وجني أول الثمار.","","في جمرة القيظ… كن ظلاً لأسرة تحتاجك."],
- ["طلوع سهيل","أواخر أغسطس","يطلع نجم سهيل فيبشّر بانكسار الحر وبرودة الليل شيئاً فشيئاً.","إذا طلع سهيل برد الليل","طلع سهيل وقرب الفرج… فكن سبباً في فرج غيرك."],
- ["الصِّرام","جني التمر","موسم صرام النخل؛ تُجمع فيه ثمار العام وتُخزَّن لأيام السنة.","","موسم الصرام: ما تزرعه اليوم تجده غداً."],
- ["الوسم","من منتصف أكتوبر · نحو 52 يوماً","فيه بشائر أول المطر، ويطيب الجو بعد طول الصيف.","","مع أول المطر… كن غيثاً لمحتاج."],
- ["خير الوسم","أمطار الخريف","تتوالى فيه الأمطار الأولى وتخضرّ الأرض، وهو أطيب أوقات السنة للبرّ.","","طاب الجو… فطِب نفساً بالعطاء."],
- ["المربعانية","من 7 ديسمبر · 40 يوماً","أول الشتاء الحقيقي وأبرد أيام السنة، تطول فيها الليالي ويشتد البرد.","","أربعون يوماً من البرد… وبمسحة واحدة تدفئ أسرة."]];
+ ["الشبط", "من منتصف يناير · نحو 26 يوماً", "يأتي بعد المربعانية، وفيه أشد أيام البرد وأطول لياليه.", "الشتاء ربيع المؤمن", "في أبرد الأيام|دفّئ بيتاً بمسحة"],
+ ["العقارب", "من منتصف فبراير · نحو 39 يوماً", "آخر الشتاء؛ يتقلّب فيه الجو بين لسعة برد ودفء يبشّر بالربيع.", "", "قبل رحيل الشتاء|هل دفّأت بيتاً؟"],
+ ["موسم التنبيت", "تلقيح النخل", "يُلقَّح فيه النخل بطلع الفحّال، فتبدأ حكاية رطب الصيف من الآن.", "", "ازرع اليوم خيراً|يُثمر طوال العام"],
+ ["نسائم الربيع", "اعتدال الجو", "تطيب فيه الجلسات في المزارع وعلى العيون قبل أن يدخل الحر.", "", "الجو جميل|والعطاء أجمل"],
+ ["الخَلال", "ثمر النخل يكبر", "يكبر الثمر أخضرَ على مهل، ويشتد الحر شيئاً فشيئاً استعداداً للقيظ.", "", "الثمر يكبر على مهل|وكذلك الخير"],
+ ["طلوع الثريا", "أوائل يونيو", "تطلع الثريا فجراً فيدخل القيظ، ويبدأ البسر بالتلوّن على النخل.", "", "مع دخول القيظ|اسقِ عطشاً بمسحة"],
+ ["جمرة القيظ", "أشد أيام الصيف", "أشد أيام السنة حراً ورطوبة، وفيها موسم الرطب وجني أول الثمار.", "", "في جمرة القيظ|كن ظلاً لأسرة"],
+ ["طلوع سهيل", "أواخر أغسطس", "يطلع نجم سهيل فيبشّر بانكسار الحر وبرودة الليل شيئاً فشيئاً.", "إذا طلع سهيل برد الليل", "طلع سهيل|فكن فرجاً لغيرك"],
+ ["الصِّرام", "جني التمر", "موسم صرام النخل؛ تُجمع فيه ثمار العام وتُخزَّن لأيام السنة.", "", "ما تزرعه اليوم|تجده غداً"],
+ ["الوسم", "من منتصف أكتوبر · نحو 52 يوماً", "فيه بشائر أول المطر، ويطيب الجو بعد طول الصيف.", "", "مع أول المطر|كن غيثاً لمحتاج"],
+ ["خير الوسم", "أمطار الخريف", "تتوالى فيه الأمطار الأولى وتخضرّ الأرض، وهو أطيب أوقات السنة للبرّ.", "", "طاب الجو|فطِب نفساً بالعطاء"],
+ ["المربعانية", "من 7 ديسمبر · 40 يوماً", "أول الشتاء الحقيقي وأبرد أيام السنة، تطول فيها الليالي ويشتد البرد.", "", "في أربعين البرد|دفّئ أسرة بمسحة"]];
 function defGift(i){return{h1:GIFT[i][0],h2:GIFT[i][1],camp:CAMP[i][0],url:"https://example.com/awamia/2027/gift-"+pad(i+1),qrImg:"",titleImg:"",sTitle:SSN[i][0],sWhen:SSN[i][1],sLine:SSN[i][2],proverb:SSN[i][3],vLine:SSN[i][4]}}
 const defSettings=()=>({licNo:"",licStart:"",licEnd:"",handle:"AwamiaCharity",design:"a",font:"1",logo:"",colG:"#517670",colB:"#b8926d",lblSponsor:"برعاية",lblSponsors:"رعاة التقويم",lblGo:"ابدأ خَيْرَكَ الآن",lblArtist:"الفنان",lblLicNo:"رقم ترخيص التبرعات",lblLicStart:"تاريخ البدء",lblLicEnd:"تاريخ الانتهاء",fTitle:"اريد جعل هذه المساهمة هدية",fName:"إسم المرسل",fTo:"إسم المهدي إليه",fPhone:"جوال المهدي إليه",fModel:"نموذج الإهداء",fOpts:"بدون، الوالدين، الإخوة، الأصدقاء"});
 function defaults(id){if(id==="settings")return defSettings();const n=+id.slice(1)-1;return id[0]==="m"?defMonth(n):defGift(n)}
@@ -3127,17 +3137,39 @@ const pat=k=>`<div class="pat ${k}">${mkSvg("a")}${mkSvg("b")}${mkSvg("c")}${mkS
   if(lines.length<2){el.textContent=text;return}
   el.innerHTML=lines.map(l=>`<span class="kl" style="display:block;white-space:nowrap;width:max-content">${l.w.join(" ")}</span>`).join("");
   const ls=[...el.querySelectorAll(".kl")],target=Math.max(...ls.map(x=>x.getBoundingClientRect().width));ls.forEach(l=>stretch(l,target))};
+ // سطران دائماً: يُختار موضع الكسر الذي يجعل السطرين أقرب طولاً، ثم يُشدّ الأقصر بالكشيدة — فيبقى شكل العبارة وموضعها ثابتين في كل الصفحات
+ window.kashidaTwo=function(el){const text=el.textContent.replace(/ـ/g,"").replace(/\s*\|\s*/g," | ").replace(/\s+/g," ").trim(),words=text.split(" ");
+  if(words.length<2){el.textContent=text;return 0}
+  const st='display:block;white-space:nowrap;width:max-content';el.innerHTML=`<span class="kl" style="${st}"></span><span class="kl" style="${st}"></span>`;
+  const a=el.children[0],b=el.children[1];let best=null;
+  // «|» في النص يحدد موضع الكسر يدوياً (حتى لا ينقسم المعنى)، وإلا يُختار الموضع الأكثر توازناً
+  const bar=words.indexOf("|");if(bar>0&&bar<words.length-1){words.splice(bar,1);a.textContent=words.slice(0,bar).join(" ");b.textContent=words.slice(bar).join(" ");
+   const wa=a.getBoundingClientRect().width,wb=b.getBoundingClientRect().width;stretch(wa<wb?a:b,Math.max(wa,wb));return Math.max(wa,wb)}
+  for(let k=1;k<words.length;k++){a.textContent=words.slice(0,k).join(" ");b.textContent=words.slice(k).join(" ");
+   const wa=a.getBoundingClientRect().width,wb=b.getBoundingClientRect().width,d=Math.abs(wa-wb);if(!best||d<best.d)best={k,d,wa,wb}}
+  a.textContent=words.slice(0,best.k).join(" ");b.textContent=words.slice(best.k).join(" ");
+  const target=Math.max(best.wa,best.wb);stretch(best.wa<best.wb?a:b,target);return target};
  // سطران منفصلان (كعبارة الصورة: سطر عريض وسطر تحته) يُشدّ الأقصر منهما ليساوي الأطول
  window.kashidaPair=function(a,b){[a,b].forEach(e=>{e.textContent=e.textContent.replace(/ـ/g,"");e.style.width="max-content";e.style.whiteSpace="nowrap"});
   const wa=a.getBoundingClientRect().width,wb=b.getBoundingClientRect().width;stretch(wa<wb?a:b,Math.max(wa,wb))};
 })();
-/* ضبط نصوص ظهر التقويم بعد رسمه: رسالة الزائر تصغُر تلقائياً إن طالت حتى لا تتجاوز مساحتها فوق الرمز،
-   ثم تُشدّ أسطر رسالة الزائر وجملة الموسم بالكشيدة لتتوازى أطوالها */
-function fitE(root){if(!window.kashidaJustify||!root)return;
- root.querySelectorAll(".d-e.gift .vis").forEach(v=>{const p=v.querySelector("p"),q=v.querySelector(".vq");if(!p||!q)return;p.style.fontSize="";p.textContent=p.textContent.replace(/ـ/g,"");
-  const H=v.getBoundingClientRect().height,mm=H/74,room=H-q.getBoundingClientRect().height-16*mm;let fs=5.6,n=0;
-  while(p.getBoundingClientRect().height>room&&fs>4&&n++<12){fs-=.2;p.style.fontSize=fs.toFixed(1)+"mm"}});
- root.querySelectorAll(".d-e.gift .vis p,.d-e.gift .ssn p").forEach(e=>{try{kashidaJustify(e)}catch(_){}})}
+/* ضبط نصوص ظهر التقويم «صفحة الموسم» بعد رسمه — كل عنصر في موضع ومقاس ثابتين في الصفحات الاثنتي عشرة:
+   • اسم الموسم: سطر واحد؛ يصغر خطه فقط إن تجاوز عرضه، وارتفاع سطره ثابت فلا يتحرك ما تحته
+   • جملة الموسم ورسالة الزائر: سطران دائماً، متساويا الطول بالكشيدة؛ يصغر الخط فقط إن تجاوزا العرض المتاح
+   • عنوان الحملة بجانب الرمز: سطر واحد يصغر عند الحاجة */
+function fitE(root){if(!window.kashidaTwo||!root)return;
+ // القياس يتم على المقاس الطبيعي للصفحة: المعاينة مصغّرة (وقد تكون بمقياس صفر وهي مخفية) فيُلغى التصغير لحظة القياس
+ const rig=root.closest&&root.closest("#rig"),rigT=rig?rig.style.transform:null;if(rig)rig.style.transform="none";
+ try{fitE2(root)}finally{if(rig)rig.style.transform=rigT}}
+function fitE2(root){
+ const fitW=(el,max,min)=>{el.style.fontSize="";let fs=parseFloat(getComputedStyle(el).fontSize),n=0;const lim=el.parentElement.getBoundingClientRect().width+.5;
+  while(el.scrollWidth>el.clientWidth+.5&&fs>min&&n++<40){fs*=.97;el.style.fontSize=fs+"px"}};
+ root.querySelectorAll(".d-e.gift").forEach(pg=>{
+  const h=pg.querySelector(".ssn h2");if(h){h.style.fontSize="";let fs=parseFloat(getComputedStyle(h).fontSize),n=0;while(h.scrollWidth>h.clientWidth+.5&&n++<40){fs*=.97;h.style.fontSize=fs+"px"}}
+  pg.querySelectorAll(".vis p,.ssn p").forEach(p=>{p.style.fontSize="";let fs=parseFloat(getComputedStyle(p).fontSize),n=0;const W=p.getBoundingClientRect().width;
+   try{while(kashidaTwo(p)>W+.5&&n++<20){fs*=.96;p.style.fontSize=fs+"px"}}catch(_){}});
+  const b=pg.querySelector(".vis .vt b");if(b){b.style.fontSize="";let fs=parseFloat(getComputedStyle(b).fontSize),n=0;while(b.scrollWidth>b.clientWidth+.5&&n++<30){fs*=.96;b.style.fontSize=fs+"px"}}
+ })}
 
 function eMonth(mo,m){const g=gridData(mo),mt=monthMeta(mo);
  const body=trs(g,c=>c.v?`<td class="${c.fri?"fri":""}"></td>`:`<td class="${c.fri?"fri":""}">${c.ev?`<i class="ev" style="background:${c.ev[1]}">${c.d}</i>`:`<i>${c.d}</i>`}<s>${c.hj}</s></td>`);
@@ -3321,7 +3353,7 @@ function step(dir){let s=(cur.mo-1)*2+(cur.kind==="m"?1:0)+dir;s=Math.min(23,Mat
 
 /* ---------- editor ---------- */
 const MF=[["sponsor","اسم الراعي","t"],["sponsorImg","شعار الراعي","i"],["photo","صورة الشهر","i"],["artist","اسم الفنان","t"],["s1","الشعار أسفل الشهر — السطر الأول","t"],["s2","الشعار أسفل الشهر — السطر الثاني","t"]];
-const GF=[["sTitle","الموسم — اسمه (يُكتب كبيراً)","t"],["sWhen","الموسم — موعده أو وصف قصير","t"],["sLine","الموسم — جملة واحدة عنه","t"],["proverb","مثل شعبي أو قول مأثور (اختياري — لا يُطبع إن كان فارغاً)","t"],["vLine","رسالة للجالس أمام التقويم (تُقرأ من بعيد، جملة قصيرة)","t"],["camp","اسم الحملة تحت الرمز","t"],["url","رابط QR","u"],["qrImg","أو ارفع صورة QR جاهزة (تحلّ محل المولَّد)","i"]];
+const GF=[["sTitle","الموسم — اسمه (يُكتب كبيراً)","t"],["sWhen","الموسم — موعده أو وصف قصير","t"],["sLine","الموسم — جملة واحدة عنه (تُكتب على سطرين متساويين؛ ضع | لتحديد الكسر إن أردت)","t"],["proverb","مثل شعبي أو قول مأثور (اختياري — لا يُطبع إن كان فارغاً)","t"],["vLine","رسالة للجالس أمام التقويم — سطران قصيران، ضع | بينهما لتحديد موضع الكسر","t"],["camp","اسم الحملة تحت الرمز","t"],["url","رابط QR","u"],["qrImg","أو ارفع صورة QR جاهزة (تحلّ محل المولَّد)","i"]];
 const status=(t,bad)=>{const s=$("#status");if(s){s.textContent=t;s.className=bad?"bad":""}};
 function fieldHtml(id,[k,label,type]){const v=draft[id][k]||"";
  if(type==="i")return `<div class="field"><label>${label}</label><div class="img"><div class="thumb" style="${v?`background-image:url(${blob(v)})`:""}"></div>${ASSETS?`<button class="btn" data-up="${k}" data-id="${id}">رفع صورة</button>${v?`<button class="btn ghost" data-rm="${k}" data-id="${id}">إزالة</button>`:""}<input type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml" hidden data-file="${k}" data-id="${id}">`:`<span class="hint">الرفع متاح للمحرّر فقط</span>`}</div></div>`;

@@ -300,7 +300,7 @@ post('function defGift(i){return{h1:GIFT[i][0],h2:GIFT[i][1],camp:CAMP[i][0],url
      _ssn + 'function defGift(i){return{h1:GIFT[i][0],h2:GIFT[i][1],camp:CAMP[i][0],url:"https://example.com/awamia/2027/gift-"+pad(i+1),qrImg:"",titleImg:"",sTitle:SSN[i][0],sWhen:SSN[i][1],sLine:SSN[i][2],proverb:SSN[i][3],vLine:SSN[i][4]}}')
 _m = _re.search(r'const GF=\[.*?\]\];', out)
 assert _m and out.count(_m.group(0)) == 1
-out = out.replace(_m.group(0), 'const GF=[["sTitle","الموسم — اسمه (يُكتب كبيراً)","t"],["sWhen","الموسم — موعده أو وصف قصير","t"],["sLine","الموسم — جملة واحدة عنه","t"],["proverb","مثل شعبي أو قول مأثور (اختياري — لا يُطبع إن كان فارغاً)","t"],["vLine","رسالة للجالس أمام التقويم (تُقرأ من بعيد، جملة قصيرة)","t"],["camp","اسم الحملة تحت الرمز","t"],["url","رابط QR","u"],["qrImg","أو ارفع صورة QR جاهزة (تحلّ محل المولَّد)","i"]];')
+out = out.replace(_m.group(0), 'const GF=[["sTitle","الموسم — اسمه (يُكتب كبيراً)","t"],["sWhen","الموسم — موعده أو وصف قصير","t"],["sLine","الموسم — جملة واحدة عنه (تُكتب على سطرين متساويين؛ ضع | لتحديد الكسر إن أردت)","t"],["proverb","مثل شعبي أو قول مأثور (اختياري — لا يُطبع إن كان فارغاً)","t"],["vLine","رسالة للجالس أمام التقويم — سطران قصيران، ضع | بينهما لتحديد موضع الكسر","t"],["camp","اسم الحملة تحت الرمز","t"],["url","رابط QR","u"],["qrImg","أو ارفع صورة QR جاهزة (تحلّ محل المولَّد)","i"]];')
 _a = out.index('function eGift(g){return `<section class="page d-e gift">')
 _b = out.index('</section>`}', _a) + len('</section>`}')
 out = out[:_a] + rd("season-page.js").strip() + out[_b:]
