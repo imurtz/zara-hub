@@ -2260,7 +2260,7 @@
 #designsRoot input[type=text]:focus,#designsRoot input[type=search]:focus,#designsRoot select:focus{border-color:#4b7071;box-shadow:0 0 0 3px rgba(75,112,113,.15)}
 #designsRoot .dsn-form .dsn-row{flex-direction:column;align-items:stretch;gap:6px;margin:6px 0 8px}
 #designsRoot .dsn-form .dsn-row>label:first-child{min-width:0;font-size:12.5px;color:#4a5856}
-#designsRoot .dsn-html{border-radius:16px;overflow:hidden;background:#123A40}
+#designsRoot .dsn-html{border-radius:16px;overflow:hidden;background:transparent}
 #designsRoot .dsn-html iframe{display:block;width:100%;height:1400px;border:0}
 #designsRoot .dsn-cols{width:100%;border-collapse:collapse;margin:8px 0 10px;font-size:12.5px}
 #designsRoot .dsn-cols th,#designsRoot .dsn-cols td{border-bottom:1px solid rgba(20,28,27,.08);padding:6px 8px;text-align:right}
@@ -11015,7 +11015,7 @@
     return html + dsnPanelHTML(t, manage);
   }
   var _dsnLoadedOnce = false;
-  var DSN_HTML_V = "1";
+  var DSN_HTML_V = "3";
   // الإطار يأخذ ارتفاع محتواه (نفس النطاق) فلا يظهر شريط تمرير داخلي
   function dsnFitFrame(){
     var f = document.getElementById("dsnFrame"); if(!f) return;

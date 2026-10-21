@@ -464,4 +464,70 @@ $("dlAll").onclick=async()=>{
 })();
 </script>
 
+
+<!-- ===== داخل بوابة زارة: ألوان اللوحة وخطها كالموقع، وواجهة مبسّطة (الأساسي ظاهر والخيارات مطوية) — الدعوة نفسها لا تتغيّر ===== -->
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap">
+<style>
+:root{--shell:transparent;--shell-2:#FFFFFF;--line:#E4E9E8;--gold:#4B7071;--gold-soft:#324C4B;--ink:#141C1B;--muted:#6B7775;--field:#F1F3F2;--f-ui:"IBM Plex Sans Arabic","Tajawal",system-ui,sans-serif;color-scheme:light}
+body{background:transparent;padding-block:6px 24px}
+header.top{display:none}
+.panel{border-radius:20px;box-shadow:0 10px 30px -22px rgba(20,28,27,.35);padding:18px 18px 20px;gap:12px}
+.panel .hint{display:none}
+.panel .hint.keep{display:block}
+input,select,textarea{border-radius:12px;border-color:#E4E9E8}
+input:focus,select:focus,textarea:focus{border-color:#4B7071;box-shadow:0 0 0 3px rgba(75,112,113,.15);outline:none}
+button,.filebtn{background:#4B7071;border-color:#4B7071;color:#fff}
+button.ghost,.filebtn{background:#fff;color:#4B7071;border-color:#C9D6D4}
+.swatch span{box-shadow:inset 0 0 0 3px #fff}
+.swatch input:checked+span{border-color:#4B7071}
+.swatch input:checked~em{color:#324C4B}
+.chip span{background:#fff}
+.chip input:checked+span{border-color:#4B7071;color:#324C4B;background:#E6EEED}
+.check input{accent-color:#4B7071}
+.list th{color:#4B7071}
+.status{color:#4B7071}
+.stage canvas,.stage img{box-shadow:0 24px 50px -24px rgba(20,28,27,.35)}
+.stage small{color:#6B7775}
+details.zg{border:1px solid #E4E9E8;border-radius:14px;background:#FAFBFA}
+details.zg>summary{list-style:none;cursor:pointer;padding:12px 14px;font-weight:600;font-size:.92rem;color:#324C4B;display:flex;align-items:center;justify-content:space-between}
+details.zg>summary::-webkit-details-marker{display:none}
+details.zg>summary::after{content:"＋";color:#4B7071;font-weight:700}
+details.zg[open]>summary::after{content:"－"}
+details.zg>.zg-body{display:flex;flex-direction:column;gap:12px;padding:0 14px 14px}
+.zg-main{display:flex;flex-direction:column;gap:12px}
+.zg-main>h2,.zg-sec-title{font-size:.95rem;color:#324C4B;margin:4px 0 0}
+.zg-main>h2::after{display:none}
+.btns #dl{width:100%;justify-content:center;padding:13px 20px;font-size:1rem}
+.zg-xl{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.zg-xl>*{justify-content:center}
+.zg-xl #tpl{grid-column:1/-1;background:transparent;border:0;color:#6B7775;font-weight:500;font-size:.85rem;padding:4px;text-decoration:underline}
+.zg-sub{font-size:.85rem;font-weight:700;color:#4B7071;margin-top:6px;padding-top:10px;border-top:1px dashed #E4E9E8}
+.zg-sub:first-child{border-top:0;padding-top:0;margin-top:0}
+</style>
+<script>
+/* واجهة مبسّطة: في المقدمة بيانات المدعو، وتنزيل الدعوة، وExcel (رفع ← تنزيل الكل). كل ما سواها مطوي في «خيارات إضافية» */
+(function(){
+  const form=document.getElementById("form");if(!form)return;
+  const nodes=[...form.children];let groups=[],cur=null;
+  nodes.forEach(n=>{if(n.tagName==="H2"){cur={title:n.textContent.trim(),h:n,items:[]};groups.push(cur);}else if(cur)cur.items.push(n);});
+  const $=id=>document.getElementById(id);
+  const dlRow=$("dl").closest(".btns"),xl=$("xl").closest(".filebtn"),tpl=$("tpl"),dlAll=$("dlAll"),dlAllRow=dlAll.closest(".btns"),list=$("list"),status=$("status");
+  const main=document.createElement("div");main.className="zg-main";
+  const h=document.createElement("div");h.className="zg-sec-title";h.textContent="بيانات المدعو";main.appendChild(h);
+  const g0=groups.find(g=>g.title==="المدعو");g0.items.forEach(x=>{if(!(x.classList&&x.classList.contains("hint")))main.appendChild(x);});g0.h.remove();
+  main.appendChild(dlRow);
+  const xh=document.createElement("div");xh.className="zg-sec-title";xh.textContent="عدة دعوات دفعة واحدة";main.appendChild(xh);
+  const xr=document.createElement("div");xr.className="btns zg-xl";xl.firstChild.textContent="رفع ملف Excel";tpl.textContent="نموذج Excel فارغ";dlAll.textContent="تنزيل الكل (ZIP)";
+  xr.append(xl,dlAll,tpl);main.appendChild(xr);
+  const xn=document.createElement("p");xn.className="hint keep";xn.textContent="أعمدة الملف: اللقب، الصفة، اسم المدعو — كل صف دعوة.";main.appendChild(xn);
+  main.appendChild(list);main.appendChild(status);
+  const extra=document.createElement("details");extra.className="zg";
+  const sm=document.createElement("summary");sm.textContent="خيارات إضافية (التاريخ، المكان، الألوان، الزخرفة…)";extra.appendChild(sm);
+  const body=document.createElement("div");body.className="zg-body";
+  ["تفاصيل الورشة","رمز الموقع والختم","لون الخلفية","زخرفة التصميم","صيغة الدعوة"].forEach(t=>{const g=groups.find(x=>x.title===t);if(!g)return;
+    const ht=document.createElement("div");ht.className="zg-sub";ht.textContent=t;body.appendChild(ht);g.items.forEach(x=>{if(x!==dlRow&&x!==dlAllRow)body.appendChild(x);});g.h.remove();});
+  extra.appendChild(body);
+  form.innerHTML="";form.appendChild(main);form.appendChild(extra);
+})();
+</script>
 </body></html>
