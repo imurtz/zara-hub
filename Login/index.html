@@ -2182,6 +2182,38 @@
   .cal-approved-years .ws-pill.on{background:var(--ink); color:#fff; border-color:var(--ink);}
 
 </style>
+<style>
+/* ===== نماذج التصاميم ===== */
+#designsRoot .dsn-head{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+#designsRoot .dsn-new{cursor:pointer}
+#designsRoot .dsn-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px;margin:14px 0}
+#designsRoot .dsn-card{display:flex;flex-direction:column;gap:6px;padding:10px;border:1px solid rgba(20,28,27,.1);border-radius:16px;background:#fff;cursor:pointer;text-align:right;font:inherit}
+#designsRoot .dsn-card.active{border-color:var(--teal-dark,#4b7071);box-shadow:0 0 0 2px rgba(75,112,113,.18)}
+#designsRoot .dsn-thumb{display:block;aspect-ratio:4/3;border-radius:10px;overflow:hidden;background:#f2f3f2}
+#designsRoot .dsn-thumb img{width:100%;height:100%;object-fit:contain;display:block}
+#designsRoot .dsn-card b{font-size:13.5px}
+#designsRoot .dsn-card i{font-style:normal;font-size:12px;color:var(--ink-soft,#6b7775)}
+#designsRoot .dsn-manage{border:1px dashed rgba(20,28,27,.18);border-radius:14px;padding:10px 14px;margin-bottom:14px}
+#designsRoot .dsn-manage summary{cursor:pointer;font-weight:700;font-size:13.5px}
+#designsRoot .dsn-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:8px 0}
+#designsRoot .dsn-row>label:first-child{min-width:120px;font-size:13px;font-weight:600}
+#designsRoot .dsn-row input[type=text]{flex:1;min-width:180px}
+#designsRoot .dsn-var{display:grid;grid-template-columns:1.2fr 90px 1.6fr auto auto;gap:8px;align-items:center;margin:6px 0}
+#designsRoot .dsn-flag{font-size:11.5px;color:#a0611f;white-space:nowrap}
+#designsRoot .dsn-flag.ok{color:#2f6f5e}
+#designsRoot .dsn-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+#designsRoot .dsn-actions label{cursor:pointer}
+#designsRoot .dsn-modes{margin:4px 0 14px}
+#designsRoot .dsn-manual{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.2fr);gap:18px;align-items:start}
+#designsRoot .dsn-preview{background:#f2f3f2;border-radius:14px;padding:10px;display:flex;justify-content:center}
+#designsRoot .dsn-preview canvas{max-width:100%;height:auto;border-radius:8px;box-shadow:0 2px 10px rgba(20,28,27,.12)}
+#designsRoot .dsn-step{margin:12px 0 18px}
+#designsRoot .dsn-step>b{display:block;margin-bottom:6px;font-size:14px}
+#designsRoot .dsn-step label{cursor:pointer}
+#designsRoot .dsn-cols{width:100%;border-collapse:collapse;margin:8px 0 10px;font-size:12.5px}
+#designsRoot .dsn-cols th,#designsRoot .dsn-cols td{border-bottom:1px solid rgba(20,28,27,.08);padding:6px 8px;text-align:right}
+@media (max-width:760px){#designsRoot .dsn-manual{grid-template-columns:1fr}#designsRoot .dsn-var{grid-template-columns:1fr 80px}#designsRoot .dsn-var input[data-k=hint]{grid-column:1/-1}}
+</style>
 </head>
 <body>
 <!-- ============ شاشة افتتاحية: موشن شعار بوابة زارة ============
@@ -2311,6 +2343,10 @@
       <span class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="5" width="16" height="15" rx="2.5"/><path d="M8 3v4M16 3v4M4 10h16"/><path d="M8.5 14h2M13.5 14h2M8.5 17h2"/></svg></span>
       التقاويم الميلادية
     </div>
+    <div class="nav-tab" data-section="designs">
+      <span class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="4.5" width="17" height="15" rx="2.5"/><path d="M3.5 15.5l4.5-4.5 4 4 2.5-2.5 6 6"/><circle cx="15.5" cy="9" r="1.6"/></svg></span>
+      نماذج التصاميم
+    </div>
     <div class="nav-tab admin-tab" data-section="admin" id="adminTabBtn" style="display:none;">
       <span class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3.2"/><path d="M12 2.5v3M12 18.5v3M21.5 12h-3M5.5 12h-3M18.5 5.5l-2 2M7.5 16.5l-2 2M18.5 18.5l-2-2M7.5 7.5l-2-2"/></svg></span>
       لوحة التحكم
@@ -2337,6 +2373,10 @@
     <!-- ===== التقاويم الميلادية: صفحة مستقلة (Login/calendar/) مضمَّنة، تتصل باللوحة عبر window.__zaraCal ===== -->
     <div class="section-view" id="view-calendars">
       <div id="calendarsRoot"></div>
+    </div>
+    <!-- ===== نماذج التصاميم: قوالب بمتغيرات تُعبّأ يدوياً أو من Excel ثم تُنزَّل نسخة أو مجموعة نسخ ===== -->
+    <div class="section-view" id="view-designs">
+      <div id="designsRoot"></div>
     </div>
     <!-- ===== Admin section ===== -->
     <div class="section-view" id="view-admin">
@@ -2557,7 +2597,8 @@
     { key: "annual", label: "التقرير السنوي" },
     { key: "executive", label: "التقرير التنفيذي" },
     { key: "events", label: "المناسبات الاجتماعية" },
-    { key: "calendars", label: "التقاويم الميلادية" }
+    { key: "calendars", label: "التقاويم الميلادية" },
+    { key: "designs", label: "نماذج التصاميم" }
   ];
 
   var currentUser = null;
@@ -2716,6 +2757,7 @@
     var activeNow = document.querySelector(".nav-tab.active");
     var activeSectionNow = activeNow ? activeNow.dataset.section : null;
     if(activeSectionNow === "calendars") calRender();
+    if(activeSectionNow === "designs") dsnRender();
     if(activeSectionNow === "events"){
       var evTab = parts[1];
       if(evTab && EVENTS_TAB_KEYS.indexOf(evTab) > -1) eventsUI.tab = evTab;
@@ -2768,15 +2810,19 @@
       { k: "calendars.edit", l: "تصميم التقويم وتعديل محتواه" },
       { k: "calendars.approve", l: "اعتماد التقويم" }
     ] },
+    { key: "designs", label: "نماذج التصاميم", perms: [
+      { k: "designs.view", l: "فتح القسم وتعبئة النماذج وتنزيل النسخ" },
+      { k: "designs.manage", l: "إضافة النماذج وتعديل متغيراتها ومواضعها وحذفها" }
+    ] },
     { key: "chat", label: "دردشة الموظفين", perms: [
       { k: "chat.use", l: "استخدام الدردشة" }
     ] }
   ];
   var PERM_ALL = PERM_GROUPS.reduce(function(a, g){ return a.concat(g.perms.map(function(p){ return p.k; })); }, []);
   var KIND_PRESETS = {
-    employee: ["docs.view", "docs.add", "tasks.view", "tasks.edit", "tasks.projects", "events.view", "events.add", "events.edit", "events.publish", "events.design", "events.reports", "events.gallery", "calendars.view", "chat.use"],
-    chair: ["docs.view", "tasks.view", "events.view", "events.reports", "events.gallery", "annual.view", "executive.view", "calendars.view", "chat.use"],
-    board: ["docs.view", "tasks.view", "events.view", "events.reports", "events.gallery", "annual.view", "executive.view", "calendars.view", "chat.use"],
+    employee: ["docs.view", "docs.add", "tasks.view", "tasks.edit", "tasks.projects", "events.view", "events.add", "events.edit", "events.publish", "events.design", "events.reports", "events.gallery", "calendars.view", "chat.use", "designs.view"],
+    chair: ["docs.view", "tasks.view", "events.view", "events.reports", "events.gallery", "annual.view", "executive.view", "calendars.view", "designs.view", "chat.use"],
+    board: ["docs.view", "tasks.view", "events.view", "events.reports", "events.gallery", "annual.view", "executive.view", "calendars.view", "designs.view", "chat.use"],
     volunteer: ["tasks.view", "tasks.edit", "chat.use"]
   };
   // الحسابات السابقة (قبل الصلاحيات الدقيقة) كانت تملك كل ما في أقسامها عدا القبول/الرفض وإدارة كل المهام — نحافظ على ذلك
@@ -3137,6 +3183,7 @@
       if(tab.dataset.section === "docs"){ docStart(); docRender(); }
       if(tab.dataset.section === "calendars") calRender();
       if(tab.dataset.section === "events" && _evHubDirty) renderEventsHub();
+      if(tab.dataset.section === "designs") dsnRender();
     });
   });
 
@@ -8251,6 +8298,7 @@
     var editingId = (tmplGenerateState && tmplGenerateState.templateId) || (tmplEditorState && tmplEditorState.templateId) || null;
     var liveTmpl = editingId ? findDesignTemplate(editingId) : null;
     _designTemplatesCache = snap.docs.map(function(d){ var v = d.data(); return (liveTmpl && v.id === liveTmpl.id) ? liveTmpl : v; });
+    _dsnLoadedOnce = true; dsnSyncPlaceable(); setTimeout(dsnRefresh, 0);
     if(editingId){ _tmplHubStale = true; return; }
     eventsFirestoreRefresh();
     setTimeout(evMigrateTemplateImages, 4000);
@@ -10481,6 +10529,7 @@
     tmplEditorState = null;
     if(_tmplHubStale){ _tmplHubStale = false; eventsFirestoreRefresh(); }
     refreshTmplManager();
+    dsnRefresh();
   }
   // يبدّل بين "تعديل القالب فارغاً" و"معاينة بسجل حقيقي" ضمن نفس الشاشة، دون المرور بقائمة القوالب
   function tmplSwitchWorkspace(templateId, recordId){
@@ -10493,6 +10542,7 @@
     else openTemplateEditor(templateId);
   }
   function tmplPreviewSwitcherHTML(tmpl, currentRecordId){
+    if(tmpl && tmpl.kind === "form") return '<div class="tp-ctl tp-ctl-grow"><span>نموذج تصميم</span><b style="font-size:13px;">' + escapeHTML(tmpl.name || "") + '</b></div>';
     var records = loadEventsData().filter(function(r){ return r.category === tmpl.category; });
     return '<label class="tp-ctl tp-ctl-grow"><span>السجل المعروض</span>' +
       '<select id="tmplPreviewRecordSelect">' +
@@ -10814,6 +10864,281 @@
     end.setUint32(12, cdSize, true); end.setUint32(16, offset, true);
     return new Blob(parts.concat(central, [end.buffer]), { type: "application/zip" });
   }
+  // =====================================================================================================
+  // نماذج التصاميم — قوالب عامة (خارج المناسبات) بمتغيرات يحددها صاحب النموذج: يعبّئها الموظف أو عضو المجلس
+  // يدوياً أو من ملف Excel جاهز، ثم ينزّل نسخة واحدة أو كل النسخ في ملف مضغوط.
+  // تُحفظ في نفس مجموعة designTemplates (kind: "form") وتستخدم نفس محرّر المواضع ونفس الرسم، وتصنيف كل نموذج
+  // خاص به ("form-<id>") فلا تظهر في قوالب المناسبات ولا تختلط بها.
+  // =====================================================================================================
+  var DSN_BULK_MAX = 300;
+  var dsnUI = { sel: null, mode: "manual", vals: {}, rows: null, fileName: "", busy: false, pendingRender: false };
+  function dsnForms(){
+    return _designTemplatesCache.filter(function(t){ return t && t.kind === "form"; })
+      .sort(function(a, b){ return String(a.name || "").localeCompare(String(b.name || ""), "ar"); });
+  }
+  function dsnVars(t){ return (t && Array.isArray(t.vars)) ? t.vars : []; }
+  // محرّر المواضع يقرأ المتغيرات المتاحة من TMPL_PLACEABLE_FIELDS حسب تصنيف القالب — يُسجَّل لكل نموذج متغيراته
+  function dsnSyncPlaceable(){
+    _designTemplatesCache.forEach(function(t){
+      if(!t || t.kind !== "form") return;
+      TMPL_PLACEABLE_FIELDS[t.category] = dsnVars(t).map(function(v){ return v.type === "image" ? { key: v.key, label: v.label, type: "image" } : { key: v.key, label: v.label }; });
+    });
+  }
+  function dsnActive(){ var v = document.getElementById("view-designs"); return !!(v && v.classList.contains("active")); }
+  // تحديث من القاعدة أثناء الكتابة في حقل داخل القسم يُؤجَّل حتى يغادر المستخدم الحقل، حتى لا يضيع ما يكتبه
+  function dsnRefresh(){
+    if(!dsnActive()) return;
+    var ae = document.activeElement, root = document.getElementById("designsRoot");
+    if(root && ae && root.contains(ae) && /INPUT|TEXTAREA|SELECT/.test(ae.tagName)){ dsnUI.pendingRender = true; return; }
+    dsnRender();
+  }
+  function dsnCurrent(){ return dsnUI.sel ? findDesignTemplate(dsnUI.sel) : null; }
+  function dsnPlaced(t){ var k = {}; (t.fields || []).forEach(function(f){ k[f.key] = 1; }); return k; }
+  function dsnRender(){
+    var root = document.getElementById("designsRoot");
+    if(!root || !currentUser || !can("designs.view")) return;
+    evEnsureDesignData();
+    dsnSyncPlaceable();
+    dsnUI.pendingRender = false;
+    var forms = dsnForms(), manage = can("designs.manage");
+    if(dsnUI.sel && !findDesignTemplate(dsnUI.sel)) dsnUI.sel = null;
+    if(!dsnUI.sel && forms.length) dsnUI.sel = forms[0].id;
+    var html = '<div class="report-section-card dsn-head"><div><h3 style="margin:0 0 4px;">نماذج التصاميم</h3>' +
+      '<p class="hint" style="margin:0;">اختر نموذجاً، عبّئ متغيراته يدوياً أو من ملف Excel، ثم نزّل نسخة واحدة أو كل النسخ دفعة واحدة.</p></div>' +
+      (manage ? '<label class="btn-primary dsn-new">+ نموذج جديد<input type="file" id="dsnNewInput" accept="image/png,image/jpeg,image/webp" hidden></label>' : '') + '</div>';
+    if(!_evDesignStarted || (!forms.length && !_dsnLoadedOnce)){
+      html += '<p class="report-empty" style="padding:30px 0;">جارٍ تحميل النماذج…</p>';
+      setHTML(root, html); return;
+    }
+    if(!forms.length){
+      html += '<p class="report-empty" style="padding:30px 0;">' + (manage ? 'لا توجد نماذج بعد — ابدأ بـ«نموذج جديد» وارفع صورة التصميم.' : 'لا توجد نماذج متاحة بعد.') + '</p>';
+      setHTML(root, html); return;
+    }
+    html += '<div class="dsn-cards">' + forms.map(function(t){
+      return '<button type="button" class="dsn-card' + (t.id === dsnUI.sel ? ' active' : '') + '" data-dsn-pick="' + t.id + '">' +
+        '<span class="dsn-thumb"><img src="' + escapeHTML(t.previewImage || t.image || "") + '" alt="" loading="lazy"/></span>' +
+        '<b>' + escapeHTML(t.name || "نموذج") + '</b><i>' + dsnVars(t).length + ' متغير</i></button>';
+    }).join("") + '</div>';
+    var t = dsnCurrent();
+    if(t) html += dsnPanelHTML(t, manage);
+    setHTML(root, html);
+    if(t && dsnUI.mode === "manual") dsnPreviewSoon();
+  }
+  var _dsnLoadedOnce = false;
+  function dsnPanelHTML(t, manage){
+    var vars = dsnVars(t), placed = dsnPlaced(t);
+    var html = '<div class="report-section-card dsn-panel">';
+    if(manage){
+      html += '<details class="dsn-manage"' + (dsnUI.openManage ? ' open' : '') + '><summary>إعداد النموذج (للمسؤول)</summary>' +
+        '<div class="dsn-row"><label>اسم النموذج</label><input type="text" data-dsn-name value="' + escapeHTML(t.name || "") + '"/></div>' +
+        '<p class="hint" style="margin:10px 0 6px;">المتغيرات: ما يكتبه المستخدم أو يرفعه لكل نسخة. الوصف يظهر له شرحاً ومثالاً، ويُكتب في ملف Excel.</p>' +
+        '<div class="dsn-vars">' + vars.map(function(v, i){
+          return '<div class="dsn-var"><input type="text" data-dsn-var="' + i + '" data-k="label" value="' + escapeHTML(v.label || "") + '" placeholder="اسم المتغير (مثل: اسم المكرَّم)"/>' +
+            '<select data-dsn-var="' + i + '" data-k="type"><option value="text"' + (v.type !== "image" ? " selected" : "") + '>نص</option><option value="image"' + (v.type === "image" ? " selected" : "") + '>صورة</option></select>' +
+            '<input type="text" data-dsn-var="' + i + '" data-k="hint" value="' + escapeHTML(v.hint || "") + '" placeholder="وصف أو مثال (اختياري)"/>' +
+            '<span class="dsn-flag' + (placed[v.key] ? ' ok">على التصميم' : '">لم يُحدَّد موضعه') + '</span>' +
+            '<button type="button" class="btn-secondary" data-dsn-delvar="' + i + '" title="حذف المتغير">✕</button></div>';
+        }).join("") + '</div>' +
+        '<div class="dsn-actions"><button type="button" class="btn-secondary" data-dsn-addvar>+ متغير</button>' +
+        '<button type="button" class="btn-primary" data-dsn-place>تحديد مواضع المتغيرات على التصميم</button>' +
+        '<label class="btn-secondary">استبدال صورة التصميم<input type="file" data-dsn-replace accept="image/png,image/jpeg,image/webp" hidden></label>' +
+        '<button type="button" class="btn-secondary danger" data-dsn-delete>حذف النموذج</button></div></details>';
+    }
+    var usable = vars.filter(function(v){ return placed[v.key]; });
+    if(!usable.length){
+      html += '<p class="report-empty" style="padding:20px 0;">' + (manage ? 'حدّد مواضع المتغيرات على التصميم أولاً من «إعداد النموذج».' : 'هذا النموذج غير جاهز للاستخدام بعد.') + '</p></div>';
+      return html;
+    }
+    html += '<div class="cat-tabs dsn-modes"><button type="button" class="publish-type-chip' + (dsnUI.mode === "manual" ? " active" : "") + '" data-dsn-mode="manual">إدخال يدوي</button>' +
+      '<button type="button" class="publish-type-chip' + (dsnUI.mode === "excel" ? " active" : "") + '" data-dsn-mode="excel">من ملف Excel (نسخ متعددة)</button></div>';
+    if(dsnUI.mode === "manual"){
+      html += '<div class="dsn-manual"><div class="dsn-form">' + usable.map(function(v){
+        var val = dsnUI.vals[v.key] || "";
+        if(v.type === "image") return '<div class="dsn-row"><label>' + escapeHTML(v.label) + '</label>' +
+          '<label class="btn-secondary">' + (val ? 'تغيير الصورة' : 'رفع صورة') + '<input type="file" accept="image/*" data-dsn-img="' + v.key + '" hidden></label>' +
+          (val ? ' <button type="button" class="btn-secondary" data-dsn-clearimg="' + v.key + '">إزالة</button>' : '') +
+          (v.hint ? '<span class="hint">' + escapeHTML(v.hint) + '</span>' : '') + '</div>';
+        return '<div class="dsn-row"><label>' + escapeHTML(v.label) + '</label><input type="text" data-dsn-val="' + v.key + '" value="' + escapeHTML(val) + '" placeholder="' + escapeHTML(v.hint || "") + '"/></div>';
+      }).join("") + '<button type="button" class="btn-primary" data-dsn-dl1>تنزيل الصورة</button></div>' +
+        '<div class="dsn-preview"><canvas id="dsnCanvas"></canvas></div></div>';
+    } else {
+      html += '<div class="dsn-excel">' +
+        '<div class="dsn-step"><b>١. نزّل ملف Excel الجاهز لهذا النموذج</b><p class="hint">كل عمود متغير، وكل صف نسخة. في الملف ورقة «تعليمات» تشرح كل عمود.</p>' +
+        '<table class="dsn-cols"><thead><tr><th>العمود</th><th>النوع</th><th>ما يُكتب فيه</th></tr></thead><tbody>' + usable.map(function(v){
+          return '<tr><td>' + escapeHTML(v.label) + '</td><td>' + (v.type === "image" ? "صورة" : "نص") + '</td><td>' + escapeHTML(v.hint || (v.type === "image" ? "رابط الصورة (يبدأ بـ https) أو اتركه فارغاً" : "النص كما سيظهر في التصميم")) + '</td></tr>';
+        }).join("") + '</tbody></table>' +
+        '<button type="button" class="btn-secondary" data-dsn-xltpl>تنزيل ملف Excel</button></div>' +
+        '<div class="dsn-step"><b>٢. ارفع الملف بعد تعبئته</b>' +
+        '<label class="btn-secondary">' + (dsnUI.rows ? 'رفع ملف آخر' : 'رفع ملف Excel') + '<input type="file" accept=".xlsx,.xls,.csv" data-dsn-xlup hidden></label>' +
+        (dsnUI.fileName ? ' <span class="hint">' + escapeHTML(dsnUI.fileName) + '</span>' : '') + '</div>';
+      if(dsnUI.rows){
+        var rows = dsnUI.rows, first = usable.filter(function(v){ return v.type !== "image"; })[0];
+        html += '<div class="dsn-step"><b>٣. نزّل النسخ</b> <span class="events-count-badge">' + rows.length + ' نسخة</span>' +
+          '<div class="dsn-actions"><button type="button" class="btn-primary" data-dsn-dlall' + (dsnUI.busy ? ' disabled' : '') + '>' + (dsnUI.busy ? dsnUI.busy : 'تنزيل كل النسخ (ملف مضغوط)') + '</button></div>' +
+          '<div class="events-table-wrap"><table><thead><tr><th>#</th>' + usable.map(function(v){ return '<th>' + escapeHTML(v.label) + '</th>'; }).join("") + '<th></th></tr></thead><tbody>' +
+          rows.slice(0, 100).map(function(r, i){
+            return '<tr><td>' + (i + 1) + '</td>' + usable.map(function(v){ var x = r[v.key] || ""; return '<td>' + (v.type === "image" ? (x ? "🖼️" : "—") : escapeHTML(x)) + '</td>'; }).join("") +
+              '<td><button type="button" class="btn-secondary" data-dsn-dlrow="' + i + '">تنزيل</button></td></tr>';
+          }).join("") + '</tbody></table></div>' + (rows.length > 100 ? '<p class="hint">يُعرض أول 100 صف، و«تنزيل كل النسخ» يشمل الصفوف كلها.</p>' : '') + '</div>';
+        if(first) dsnUI.nameKey = first.key;
+      }
+      html += '</div>';
+    }
+    html += '</div>';
+    return html;
+  }
+  var _dsnPrevTimer = null;
+  function dsnPreviewSoon(){
+    clearTimeout(_dsnPrevTimer);
+    _dsnPrevTimer = setTimeout(function(){
+      var t = dsnCurrent(), c = document.getElementById("dsnCanvas");
+      if(t && c) renderTemplateToCanvas(c, t, dsnUI.vals).catch(function(e){ console.error("dsn preview", e); });
+    }, 160);
+  }
+  function dsnSafeName(s){ return String(s || "").replace(/[\\/:*?"<>|]+/g, " ").replace(/\s+/g, " ").trim().slice(0, 80); }
+  function dsnRenderBlob(t, record){
+    var c = document.createElement("canvas");
+    return renderTemplateToCanvas(c, t, record).then(function(res){
+      if(res && res.ok === false) throw new Error("render_failed");
+      return new Promise(function(ok, no){ c.toBlob(function(b){ b ? ok(b) : no(new Error("blob")); }, "image/png"); });
+    });
+  }
+  function dsnSave(t, blob, name){
+    var a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = name;
+    document.body.appendChild(a); a.click(); a.remove(); setTimeout(function(){ URL.revokeObjectURL(a.href); }, 8000);
+  }
+  function dsnRowName(t, r, i){
+    var k = dsnUI.nameKey, base = dsnSafeName((k && r[k]) || "");
+    return (String(i + 1).padStart(3, "0")) + (base ? " - " + base : "") + ".png";
+  }
+  function dsnDownloadAll(){
+    var t = dsnCurrent(); if(!t || !dsnUI.rows || dsnUI.busy) return;
+    var rows = dsnUI.rows.slice(0, DSN_BULK_MAX), files = [], i = 0;
+    var step = function(){
+      if(i >= rows.length){
+        dsnUI.busy = false; dsnRender();
+        if(!files.length){ showToast("تعذّر توليد النسخ"); return; }
+        dsnSave(t, tmplZipStore(files), dsnSafeName(t.name || "نموذج") + " (" + files.length + ").zip");
+        showToast("✔ تم تجهيز " + files.length + " نسخة");
+        return;
+      }
+      dsnUI.busy = "جارٍ التجهيز… " + (i + 1) + " من " + rows.length;
+      var b = document.querySelector("#designsRoot [data-dsn-dlall]"); if(b) b.textContent = dsnUI.busy;
+      var r = rows[i], idx = i; i++;
+      dsnRenderBlob(t, r).then(function(blob){ return blob.arrayBuffer(); }).then(function(buf){
+        files.push({ name: dsnRowName(t, r, idx), data: new Uint8Array(buf) });
+      }).catch(function(e){ console.warn("dsn row failed", idx, e); }).then(function(){ setTimeout(step, 0); });
+    };
+    dsnUI.busy = "جارٍ التجهيز…"; dsnRender(); step();
+    if(dsnUI.rows.length > DSN_BULK_MAX) showToast("يُجهَّز أول " + DSN_BULK_MAX + " صفاً في كل مرة");
+  }
+  function dsnExcelTemplate(){
+    var t = dsnCurrent(); if(!t) return;
+    if(typeof window.XLSX === "undefined"){ showToast("مكتبة Excel لم تكتمل بعد — أعد المحاولة بعد لحظات"); return; }
+    var placed = dsnPlaced(t), usable = dsnVars(t).filter(function(v){ return placed[v.key]; });
+    var wb = window.XLSX.utils.book_new();
+    var data = window.XLSX.utils.aoa_to_sheet([usable.map(function(v){ return v.label; })]);
+    data["!cols"] = usable.map(function(){ return { wch: 28 }; });
+    window.XLSX.utils.book_append_sheet(wb, data, "البيانات");
+    var help = [["العمود", "النوع", "ما يُكتب فيه"]].concat(usable.map(function(v){
+      return [v.label, v.type === "image" ? "صورة" : "نص", v.hint || (v.type === "image" ? "رابط الصورة (يبدأ بـ https) أو اتركه فارغاً" : "النص كما سيظهر في التصميم")];
+    })).concat([[], ["كل صف في ورقة «البيانات» = نسخة واحدة من التصميم. لا تغيّر أسماء الأعمدة في الصف الأول."]]);
+    var hs = window.XLSX.utils.aoa_to_sheet(help); hs["!cols"] = [{ wch: 26 }, { wch: 10 }, { wch: 60 }];
+    window.XLSX.utils.book_append_sheet(wb, hs, "تعليمات");
+    wb.Workbook = { Views: [{ RTL: true }] };
+    window.XLSX.writeFile(wb, "بيانات — " + dsnSafeName(t.name || "نموذج") + ".xlsx");
+  }
+  function dsnExcelRead(file){
+    var t = dsnCurrent(); if(!t || !file) return;
+    if(typeof window.XLSX === "undefined"){ showToast("مكتبة Excel لم تكتمل بعد — أعد المحاولة بعد لحظات"); return; }
+    var placed = dsnPlaced(t), usable = dsnVars(t).filter(function(v){ return placed[v.key]; });
+    file.arrayBuffer().then(function(buf){
+      var wb = window.XLSX.read(buf, { type: "array" });
+      var sh = wb.Sheets[wb.SheetNames[0]];
+      var aoa = window.XLSX.utils.sheet_to_json(sh, { header: 1, defval: "", raw: false });
+      if(!aoa.length){ showToast("الملف فارغ"); return; }
+      var head = aoa[0].map(function(h){ return String(h || "").trim(); });
+      var colOf = {}; usable.forEach(function(v){ var i = head.indexOf(String(v.label).trim()); if(i > -1) colOf[v.key] = i; });
+      var missing = usable.filter(function(v){ return colOf[v.key] == null && v.type !== "image"; });
+      if(missing.length === usable.filter(function(v){ return v.type !== "image"; }).length){ showToast("أسماء الأعمدة لا تطابق هذا النموذج — استخدم الملف الجاهز من الخطوة الأولى"); return; }
+      var rows = aoa.slice(1).map(function(row){
+        var r = {}; usable.forEach(function(v){ if(colOf[v.key] != null) r[v.key] = String(row[colOf[v.key]] == null ? "" : row[colOf[v.key]]).trim(); });
+        usable.forEach(function(v){ if(v.type === "image" && r[v.key] && !/^https?:\/\//i.test(r[v.key])) r[v.key] = ""; });
+        return r;
+      }).filter(function(r){ return Object.keys(r).some(function(k){ return r[k]; }); });
+      dsnUI.rows = rows; dsnUI.fileName = file.name; dsnRender();
+      showToast(rows.length ? "✔ قُرئ " + rows.length + " صفاً" + (missing.length ? " — أعمدة غير موجودة: " + missing.map(function(v){ return v.label; }).join("، ") : "") : "لا توجد صفوف معبّأة في الملف");
+    }).catch(function(e){ console.error("dsn excel", e); showToast("تعذّرت قراءة الملف"); });
+  }
+  var _dsnSaveT = null;
+  function dsnSaveSoon(t){ clearTimeout(_dsnSaveT); _dsnSaveT = setTimeout(function(){ saveDesignTemplate(t); }, 700); }
+  function dsnNewKey(t){ var n = 1, keys = {}; dsnVars(t).forEach(function(v){ keys[v.key] = 1; }); while(keys["v" + n]) n++; return "v" + n; }
+  (function(){
+    var root = document.getElementById("designsRoot");
+    if(!root) return;
+    root.addEventListener("click", function(e){
+      var b = e.target.closest("button,[data-dsn-pick]"); if(!b) return;
+      var t = dsnCurrent();
+      if(b.dataset.dsnPick){ if(dsnUI.sel !== b.dataset.dsnPick){ dsnUI.sel = b.dataset.dsnPick; dsnUI.vals = {}; dsnUI.rows = null; dsnUI.fileName = ""; } dsnRender(); return; }
+      if(b.dataset.dsnMode){ dsnUI.mode = b.dataset.dsnMode; dsnRender(); return; }
+      if(!t) return;
+      if(b.hasAttribute("data-dsn-addvar") && can("designs.manage")){ t.vars = dsnVars(t).concat([{ key: dsnNewKey(t), label: "متغير جديد", type: "text", hint: "" }]); dsnUI.openManage = true; saveDesignTemplate(t); dsnRender(); return; }
+      if(b.dataset.dsnDelvar != null && can("designs.manage")){
+        var v = dsnVars(t)[+b.dataset.dsnDelvar]; if(!v) return;
+        if(!confirm("حذف المتغير «" + v.label + "»؟ يُزال موضعه من التصميم أيضاً.")) return;
+        t.vars = dsnVars(t).filter(function(x){ return x.key !== v.key; }); t.fields = (t.fields || []).filter(function(f){ return f.key !== v.key; });
+        saveDesignTemplate(t); dsnRender(); return;
+      }
+      if(b.hasAttribute("data-dsn-place") && can("designs.manage")){ dsnSyncPlaceable(); openTemplateEditor(t.id); return; }
+      if(b.hasAttribute("data-dsn-delete") && can("designs.manage")){ if(!confirm("حذف النموذج «" + (t.name || "") + "» نهائياً؟")) return; deleteDesignTemplate(t.id); dsnUI.sel = null; showToast("تم حذف النموذج"); return; }
+      if(b.dataset.dsnClearimg){ delete dsnUI.vals[b.dataset.dsnClearimg]; dsnRender(); return; }
+      if(b.hasAttribute("data-dsn-dl1")){
+        var first = dsnVars(t).filter(function(x){ return x.type !== "image"; })[0];
+        dsnRenderBlob(t, dsnUI.vals).then(function(blob){ dsnSave(t, blob, dsnSafeName((t.name || "نموذج") + ((first && dsnUI.vals[first.key]) ? " - " + dsnUI.vals[first.key] : "")) + ".png"); })
+          .catch(function(){ showToast("تعذّر تجهيز الصورة"); });
+        return;
+      }
+      if(b.hasAttribute("data-dsn-xltpl")){ dsnExcelTemplate(); return; }
+      if(b.dataset.dsnDlrow != null && dsnUI.rows){ var i = +b.dataset.dsnDlrow, r = dsnUI.rows[i]; dsnRenderBlob(t, r).then(function(blob){ dsnSave(t, blob, dsnRowName(t, r, i)); }).catch(function(){ showToast("تعذّر تجهيز النسخة"); }); return; }
+      if(b.hasAttribute("data-dsn-dlall")){ dsnDownloadAll(); return; }
+    });
+    root.addEventListener("input", function(e){
+      var el = e.target, t = dsnCurrent(); if(!t) return;
+      if(el.dataset.dsnVal){ dsnUI.vals[el.dataset.dsnVal] = el.value; dsnPreviewSoon(); return; }
+      if(!can("designs.manage")) return;
+      if(el.hasAttribute("data-dsn-name")){ t.name = el.value; dsnSaveSoon(t); return; }
+      if(el.dataset.dsnVar != null && el.tagName === "INPUT"){ var v = dsnVars(t)[+el.dataset.dsnVar]; if(v){ v[el.dataset.k] = el.value; dsnSyncPlaceable(); dsnSaveSoon(t); } }
+    });
+    root.addEventListener("change", function(e){
+      var el = e.target, t = dsnCurrent();
+      if(el.id === "dsnNewInput" && el.files && el.files[0] && can("designs.manage")){
+        var f = el.files[0]; el.value = ""; showToast("جارٍ رفع التصميم…");
+        compressTemplateImageFile(f, function(dataUrl, w, h, previewUrl){
+          if(!dataUrl){ showToast("تعذّرت قراءة الصورة"); return; }
+          uploadDataUrlToR2(dataUrl, "templates", function(finalUrl){
+            var id = genTemplateId();
+            var nt = { id: id, kind: "form", category: "form-" + id, name: "نموذج جديد", image: finalUrl, previewImage: previewUrl || null, width: w, height: h, fields: [],
+              vars: [{ key: "v1", label: "الاسم", type: "text", hint: "مثال: محمد علي" }], createdAt: Date.now(), createdBy: currentUser ? currentUser.name : "" };
+            dsnUI.sel = id; dsnUI.vals = {}; dsnUI.rows = null; dsnUI.openManage = true;
+            _designTemplatesCache.push(nt); saveDesignTemplate(nt); dsnRender();
+            showToast("تم إنشاء النموذج — سمِّه وحدّد متغيراته ثم مواضعها");
+          });
+        });
+        return;
+      }
+      if(!t) return;
+      if(el.dataset.dsnReplace != null && el.files && el.files[0] && can("designs.manage")){ var rf = el.files[0]; el.value = ""; tmplReplaceTemplateImage(t, rf, function(){ dsnRender(); }); return; }
+      if(el.dataset.dsnVar != null && el.tagName === "SELECT" && can("designs.manage")){ var v = dsnVars(t)[+el.dataset.dsnVar]; if(v){ v.type = el.value; t.fields = (t.fields || []).filter(function(f){ return f.key !== v.key; }); saveDesignTemplate(t); dsnRender(); } return; }
+      if(el.dataset.dsnImg && el.files && el.files[0]){
+        var key = el.dataset.dsnImg, fr = new FileReader();
+        fr.onload = function(){ dsnUI.vals[key] = fr.result; dsnRender(); };
+        fr.readAsDataURL(el.files[0]); el.value = ""; return;
+      }
+      if(el.hasAttribute("data-dsn-xlup") && el.files && el.files[0]){ var xf = el.files[0]; el.value = ""; dsnExcelRead(xf); return; }
+    });
+    root.addEventListener("focusout", function(){ setTimeout(function(){ if(dsnUI.pendingRender) dsnRefresh(); }, 50); });
+    root.addEventListener("toggle", function(e){ if(e.target.classList && e.target.classList.contains("dsn-manage")) dsnUI.openManage = e.target.open; }, true);
+  })();
   var TMPL_BULK_MAX = 80;
   var tmplBulkState = null;
   function tmplRecName(r){ return String(r.fullName || r.husbandName || r.deceasedName || "").trim(); }
