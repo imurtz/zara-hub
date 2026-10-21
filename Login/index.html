@@ -2210,6 +2210,8 @@
 #designsRoot .dsn-step{margin:12px 0 18px}
 #designsRoot .dsn-step>b{display:block;margin-bottom:6px;font-size:14px}
 #designsRoot .dsn-step label{cursor:pointer}
+#designsRoot .dsn-html{border-radius:16px;overflow:hidden;background:#123A40}
+#designsRoot .dsn-html iframe{display:block;width:100%;height:1400px;border:0}
 #designsRoot .dsn-cols{width:100%;border-collapse:collapse;margin:8px 0 10px;font-size:12.5px}
 #designsRoot .dsn-cols th,#designsRoot .dsn-cols td{border-bottom:1px solid rgba(20,28,27,.08);padding:6px 8px;text-align:right}
 @media (max-width:760px){#designsRoot .dsn-manual{grid-template-columns:1fr}#designsRoot .dsn-var{grid-template-columns:1fr 80px}#designsRoot .dsn-var input[data-k=hint]{grid-column:1/-1}}
@@ -10871,6 +10873,11 @@
   // خاص به ("form-<id>") فلا تظهر في قوالب المناسبات ولا تختلط بها.
   // =====================================================================================================
   var DSN_BULK_MAX = 300;
+  // نماذج تفاعلية جاهزة: صفحات تصميم مستقلة (بخياراتها الخاصة وتصديرها) في مجلد Login/designs/، تُعرض داخل القسم كما هي
+  var DSN_HTML = [
+    { id: "mafatih2-invite", name: "دعوة ورشة مفاتيح التوظيف 2", src: "designs/mafatih2-invite.html", thumb: "designs/mafatih2-invite.jpg" }
+  ];
+  function dsnHtmlItem(id){ return DSN_HTML.find(function(x){ return "html:" + x.id === id; }); }
   var dsnUI = { sel: null, mode: "manual", vals: {}, rows: null, fileName: "", busy: false, pendingRender: false };
   function dsnForms(){
     return _designTemplatesCache.filter(function(t){ return t && t.kind === "form"; })
@@ -10901,20 +10908,35 @@
     dsnSyncPlaceable();
     dsnUI.pendingRender = false;
     var forms = dsnForms(), manage = can("designs.manage");
-    if(dsnUI.sel && !findDesignTemplate(dsnUI.sel)) dsnUI.sel = null;
-    if(!dsnUI.sel && forms.length) dsnUI.sel = forms[0].id;
+    if(dsnUI.sel && !findDesignTemplate(dsnUI.sel) && !dsnHtmlItem(dsnUI.sel)) dsnUI.sel = null;
+    if(!dsnUI.sel) dsnUI.sel = DSN_HTML.length ? "html:" + DSN_HTML[0].id : (forms.length ? forms[0].id : null);
     var html = '<div class="report-section-card dsn-head"><div><h3 style="margin:0 0 4px;">نماذج التصاميم</h3>' +
       '<p class="hint" style="margin:0;">اختر نموذجاً، عبّئ متغيراته يدوياً أو من ملف Excel، ثم نزّل نسخة واحدة أو كل النسخ دفعة واحدة.</p></div>' +
       (manage ? '<label class="btn-primary dsn-new">+ نموذج جديد<input type="file" id="dsnNewInput" accept="image/png,image/jpeg,image/webp" hidden></label>' : '') + '</div>';
+    var htmlCards = DSN_HTML.map(function(x){
+      return '<button type="button" class="dsn-card' + ("html:" + x.id === dsnUI.sel ? ' active' : '') + '" data-dsn-pick="html:' + x.id + '">' +
+        '<span class="dsn-thumb"><img src="' + x.thumb + '" alt="" loading="lazy"/></span><b>' + escapeHTML(x.name) + '</b><i>نموذج تفاعلي</i></button>';
+    }).join("");
+    var hi = dsnHtmlItem(dsnUI.sel);
+    if(hi){
+      html += '<div class="dsn-cards">' + htmlCards + forms.map(function(t){
+        return '<button type="button" class="dsn-card" data-dsn-pick="' + t.id + '"><span class="dsn-thumb"><img src="' + escapeHTML(t.previewImage || t.image || "") + '" alt="" loading="lazy"/></span><b>' + escapeHTML(t.name || "نموذج") + '</b><i>' + dsnVars(t).length + ' متغير</i></button>';
+      }).join("") + '</div>';
+      html += '<div class="dsn-html"><iframe id="dsnFrame" src="' + hi.src + '?v=' + DSN_HTML_V + '" title="' + escapeHTML(hi.name) + '"></iframe></div>';
+      setHTML(root, html);
+      dsnFitFrame();
+      return;
+    }
     if(!_evDesignStarted || (!forms.length && !_dsnLoadedOnce)){
-      html += '<p class="report-empty" style="padding:30px 0;">جارٍ تحميل النماذج…</p>';
+      html += '<div class="dsn-cards">' + htmlCards + '</div><p class="report-empty" style="padding:30px 0;">جارٍ تحميل النماذج…</p>';
       setHTML(root, html); return;
     }
     if(!forms.length){
+      if(htmlCards) html += '<div class="dsn-cards">' + htmlCards + '</div>';
       html += '<p class="report-empty" style="padding:30px 0;">' + (manage ? 'لا توجد نماذج بعد — ابدأ بـ«نموذج جديد» وارفع صورة التصميم.' : 'لا توجد نماذج متاحة بعد.') + '</p>';
       setHTML(root, html); return;
     }
-    html += '<div class="dsn-cards">' + forms.map(function(t){
+    html += '<div class="dsn-cards">' + htmlCards + forms.map(function(t){
       return '<button type="button" class="dsn-card' + (t.id === dsnUI.sel ? ' active' : '') + '" data-dsn-pick="' + t.id + '">' +
         '<span class="dsn-thumb"><img src="' + escapeHTML(t.previewImage || t.image || "") + '" alt="" loading="lazy"/></span>' +
         '<b>' + escapeHTML(t.name || "نموذج") + '</b><i>' + dsnVars(t).length + ' متغير</i></button>';
@@ -10925,6 +10947,16 @@
     if(t && dsnUI.mode === "manual") dsnPreviewSoon();
   }
   var _dsnLoadedOnce = false;
+  var DSN_HTML_V = "1";
+  // الإطار يأخذ ارتفاع محتواه (نفس النطاق) فلا يظهر شريط تمرير داخلي
+  function dsnFitFrame(){
+    var f = document.getElementById("dsnFrame"); if(!f) return;
+    var fit = function(){ try{ var d = f.contentDocument; if(d && d.body){ f.style.height = Math.max(700, d.documentElement.scrollHeight) + "px"; } }catch(e){} };
+    f.addEventListener("load", function(){
+      fit();
+      try{ new ResizeObserver(fit).observe(f.contentDocument.body); }catch(e){ setInterval(fit, 1500); }
+    });
+  }
   function dsnPanelHTML(t, manage){
     var vars = dsnVars(t), placed = dsnPlaced(t);
     var html = '<div class="report-section-card dsn-panel">';
