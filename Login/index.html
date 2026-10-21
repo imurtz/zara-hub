@@ -2212,7 +2212,8 @@
 #designsRoot .dsn-step label{cursor:pointer}
 /* ---- عرض نماذج التصاميم: معرض ثم مساحة عمل ---- */
 #designsRoot .dsn-hero{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap;padding:22px 24px;border-radius:22px;background:linear-gradient(135deg,rgba(75,112,113,.10),rgba(184,141,102,.10));border:1px solid rgba(20,28,27,.06);margin-bottom:16px}
-#designsRoot .dsn-hero h2{margin:0 0 6px;font-size:22px}
+#designsRoot .dsn-kicker{display:inline-block;font-size:11.5px;font-weight:700;letter-spacing:.3px;color:#8a6440;background:rgba(184,141,102,.14);padding:3px 10px;border-radius:999px;margin-bottom:6px}
+#designsRoot .dsn-hero h2{margin:0 0 6px;font-size:30px;letter-spacing:.5px}
 #designsRoot .dsn-hero p{margin:0;color:var(--ink-soft,#6b7775);font-size:13.5px;line-height:1.7;max-width:560px}
 #designsRoot .dsn-search{margin:0 0 14px}
 #designsRoot .dsn-search input{width:100%;max-width:360px;border-radius:999px;padding:10px 16px}
@@ -2392,7 +2393,7 @@
     </div>
     <div class="nav-tab" data-section="designs">
       <span class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="4.5" width="17" height="15" rx="2.5"/><path d="M3.5 15.5l4.5-4.5 4 4 2.5-2.5 6 6"/><circle cx="15.5" cy="9" r="1.6"/></svg></span>
-      نماذج التصاميم
+      نَقْش
     </div>
     <div class="nav-tab admin-tab" data-section="admin" id="adminTabBtn" style="display:none;">
       <span class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3.2"/><path d="M12 2.5v3M12 18.5v3M21.5 12h-3M5.5 12h-3M18.5 5.5l-2 2M7.5 16.5l-2 2M18.5 18.5l-2-2M7.5 7.5l-2-2"/></svg></span>
@@ -2645,7 +2646,7 @@
     { key: "executive", label: "التقرير التنفيذي" },
     { key: "events", label: "المناسبات الاجتماعية" },
     { key: "calendars", label: "التقاويم الميلادية" },
-    { key: "designs", label: "نماذج التصاميم" }
+    { key: "designs", label: "نَقْش — استوديو التصاميم" }
   ];
 
   var currentUser = null;
@@ -2857,7 +2858,7 @@
       { k: "calendars.edit", l: "تصميم التقويم وتعديل محتواه" },
       { k: "calendars.approve", l: "اعتماد التقويم" }
     ] },
-    { key: "designs", label: "نماذج التصاميم", perms: [
+    { key: "designs", label: "نَقْش — استوديو التصاميم", perms: [
       { k: "designs.view", l: "فتح القسم وتعبئة النماذج وتنزيل النسخ" },
       { k: "designs.manage", l: "إضافة النماذج وتعديل متغيراتها ومواضعها وحذفها" }
     ] },
@@ -10968,7 +10969,7 @@
     if(dsnUI.sel && !findDesignTemplate(dsnUI.sel) && !dsnHtmlItem(dsnUI.sel)){ dsnUI.sel = null; dsnUI.view = "gallery"; }
     if(dsnUI.view === "work" && dsnUI.sel){ setHTML(root, dsnWorkHTML(manage)); var hi0 = dsnHtmlItem(dsnUI.sel); if(hi0) dsnFitFrame(); else if(dsnUI.mode === "manual") dsnPreviewSoon(); return; }
     var items = dsnItems(manage), loading = !_evDesignStarted || !_dsnLoadedOnce;
-    var html = '<div class="dsn-hero"><div><h2>نماذج التصاميم</h2><p>اختر نموذجاً، عبّئ بياناته، ونزّل التصميم جاهزاً — نسخة واحدة أو عدة نسخ دفعة واحدة.</p></div>' +
+    var html = '<div class="dsn-hero"><div><span class="dsn-kicker">استوديو التصاميم</span><h2>نَقْش</h2><p>تصاميم الجمعية جاهزة بين يديك: اختر النموذج، اكتب بياناتك، وتخرج النسخة بهويتنا كاملة — واحدة أو مئة دفعة واحدة.</p></div>' +
       (manage ? '<label class="btn-primary dsn-new">+ نموذج جديد<input type="file" id="dsnNewInput" accept="image/png,image/jpeg,image/webp" hidden></label>' : '') + '</div>';
     if(DSN_HTML.length + dsnForms().length > 6) html += '<div class="dsn-search"><input type="search" data-dsn-search placeholder="ابحث عن نموذج…" value="' + escapeHTML(dsnUI.q || "") + '"/></div>';
     html += '<div class="dsn-grid">' + items.map(function(x){
