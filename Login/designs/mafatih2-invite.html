@@ -123,7 +123,7 @@ button:disabled{opacity:.5;cursor:wait}
       <label class="filebtn">رفع ملف Excel<input type="file" id="xl" accept=".xlsx,.xls,.csv"></label>
       <button type="button" class="ghost" id="tpl">تنزيل نموذج فارغ</button>
     </div>
-    <div class="list" id="list" hidden><table><thead><tr><th>#</th><th>اللقب</th><th>الصفة</th><th>اسم المدعو</th></tr></thead><tbody id="rows"></tbody></table></div>
+    <div class="list" id="list" hidden><table><thead><tr><th>#</th><th>اسم المدعو</th><th>الصفة</th></tr></thead><tbody id="rows"></tbody></table></div>
     <div class="btns"><button type="button" id="dlAll" disabled>تنزيل جميع الدعوات ZIP</button></div>
     <div class="status" id="status" role="status"></div>
   </form>
@@ -429,20 +429,23 @@ $("xl").addEventListener("change",async e=>{
     const rows=XLSX.utils.sheet_to_json(ws,{header:1,defval:"",raw:false}).filter(r=>r.some(c=>String(c).trim()));
     if(!rows.length)throw new Error("empty");
     let c=pickCols(rows[0]),body=rows.slice(1);
-    if(c.n<0){c={h:0,r:1,n:2};body=rows;}
+    if(c.n<0){c={h:-1,r:1,n:0};body=rows;}
     people=body.map(r=>({honor:c.h>=0?String(r[c.h]).trim():"",role:c.r>=0?String(r[c.r]).trim():"",guest:String(r[c.n]).trim()})).filter(p=>p.guest);
     const tb=$("rows");tb.innerHTML="";
     people.forEach((p,i)=>{const tr=document.createElement("tr");tr.style.cursor="pointer";
-      [i+1,p.honor,p.role,p.guest].forEach(v=>{const td=document.createElement("td");td.textContent=v;tr.appendChild(td);});
+      [i+1,p.honor?p.honor+" "+p.guest:p.guest,p.role].forEach(v=>{const td=document.createElement("td");td.textContent=v;tr.appendChild(td);});
       tr.onclick=()=>{$("honor").value=p.honor;$("role").value=p.role;$("guest").value=p.guest;resetPreview();render();};tb.appendChild(tr);});
     $("list").hidden=!people.length;$("dlAll").disabled=!people.length;
-    status(people.length?`تمت قراءة ${people.length} مدعو من «${f.name}».`:"لم أجد أسماء في الملف. تأكد أن فيه عمود «اسم المدعو».");
-  }catch(err){people=[];$("list").hidden=true;$("dlAll").disabled=true;status("تعذّرت قراءة الملف. ارفع ملف .xlsx أو .csv بعناوين: اللقب، الصفة، اسم المدعو.");}
+    status(people.length?`تمت قراءة ${people.length} مدعو من «${f.name}» — اضغط «تنزيل الكل».`:"لم أجد أسماء في الملف. تأكد أن فيه عمود «اسم المدعو».");
+  }catch(err){people=[];$("list").hidden=true;$("dlAll").disabled=true;status("تعذّرت قراءة الملف. ارفع ملف .xlsx أو .csv بعمودين: اسم المدعو، الصفة.");}
   e.target.value="";
 });
 $("tpl").onclick=async()=>{
-  const ws=XLSX.utils.aoa_to_sheet([["اللقب","الصفة","اسم المدعو"],["الأستاذ","رئيس جمعية ...","اكتب الاسم هنا"],["المهندس","رئيس نادي ...","اكتب الاسم هنا"]]);
-  ws["!cols"]=[{wch:14},{wch:34},{wch:34}];const wb=XLSX.utils.book_new();wb.Workbook={Views:[{RTL:true}]};XLSX.utils.book_append_sheet(wb,ws,"المدعوون");
+  // عمودان فقط: اسم المدعو (يُكتب معه اللقب إن لزم) والصفة — والشرح في ورقة مستقلة حتى لا يُقرأ مثالٌ على أنه مدعو
+  const ws=XLSX.utils.aoa_to_sheet([["اسم المدعو","الصفة"]]);
+  ws["!cols"]=[{wch:38},{wch:38}];const wb=XLSX.utils.book_new();wb.Workbook={Views:[{RTL:true}]};XLSX.utils.book_append_sheet(wb,ws,"المدعوون");
+  const help=XLSX.utils.aoa_to_sheet([["العمود","ما يُكتب فيه","مثال"],["اسم المدعو","الاسم كما سيظهر في الدعوة، ومعه اللقب إن أردت","الأستاذ عبدالله بن محمد الخليفة"],["الصفة","المنصب أو الصفة تحت الاسم (اختياري)","رئيس لجنة التنمية الاجتماعية"],[],["كل صف في ورقة «المدعوون» = دعوة واحدة. لا تغيّر عنوانَي العمودين."]]);
+  help["!cols"]=[{wch:16},{wch:44},{wch:36}];XLSX.utils.book_append_sheet(wb,help,"تعليمات");
   const out=XLSX.write(wb,{bookType:"xlsx",type:"array"});
   await saveFile("قائمة المدعوين - مفاتيح التوظيف 2.xlsx",new Blob([out]),null);
 };
@@ -501,6 +504,8 @@ details.zg>.zg-body{display:flex;flex-direction:column;gap:12px;padding:0 14px 1
 .zg-xl{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .zg-xl>*{justify-content:center}
 .zg-xl #tpl{grid-column:1/-1;background:transparent;border:0;color:#6B7775;font-weight:500;font-size:.85rem;padding:4px;text-decoration:underline}
+.zg-note{background:#E6EEED;border-radius:12px;padding:10px 12px;font-size:.84rem;line-height:1.75;color:#324C4B}
+.zg-note b{color:#324C4B}
 .zg-sub{font-size:.85rem;font-weight:700;color:#4B7071;margin-top:6px;padding-top:10px;border-top:1px dashed #E4E9E8}
 .zg-sub:first-child{border-top:0;padding-top:0;margin-top:0}
 </style>
@@ -519,7 +524,9 @@ details.zg>.zg-body{display:flex;flex-direction:column;gap:12px;padding:0 14px 1
   const xh=document.createElement("div");xh.className="zg-sec-title";xh.textContent="عدة دعوات دفعة واحدة";main.appendChild(xh);
   const xr=document.createElement("div");xr.className="btns zg-xl";xl.firstChild.textContent="رفع ملف Excel";tpl.textContent="نموذج Excel فارغ";dlAll.textContent="تنزيل الكل (ZIP)";
   xr.append(xl,dlAll,tpl);main.appendChild(xr);
-  const xn=document.createElement("p");xn.className="hint keep";xn.textContent="أعمدة الملف: اللقب، الصفة، اسم المدعو — كل صف دعوة.";main.appendChild(xn);
+  const xn=document.createElement("div");xn.className="zg-note";
+  xn.innerHTML='<b>ملف Excel بعمودين فقط:</b> «اسم المدعو» و«الصفة» — وكل صف دعوة.<br>نزّل النموذج الفارغ، اكتب الأسماء (ومعها اللقب إن أردت، مثل: الأستاذ علي حسن)، ثم ارفعه واضغط «تنزيل الكل».';
+  main.insertBefore(xn,xr);
   main.appendChild(list);main.appendChild(status);
   const extra=document.createElement("details");extra.className="zg";
   const sm=document.createElement("summary");sm.textContent="خيارات إضافية (التاريخ، المكان، الألوان، الزخرفة…)";extra.appendChild(sm);
