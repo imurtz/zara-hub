@@ -2215,6 +2215,10 @@
 #designsRoot .dsn-kicker{display:inline-block;font-size:11.5px;font-weight:700;letter-spacing:.3px;color:#8a6440;background:rgba(184,141,102,.14);padding:3px 10px;border-radius:999px;margin-bottom:6px}
 #designsRoot .dsn-hero h2{margin:0 0 6px;font-size:30px;letter-spacing:.5px}
 #designsRoot .dsn-hero p{margin:0;color:var(--ink-soft,#6b7775);font-size:13.5px;line-height:1.7;max-width:560px}
+#designsRoot .dsn-hero-btns{display:flex;gap:8px;flex-wrap:wrap}
+#designsRoot .dsn-name-form{display:grid;grid-template-columns:1fr 1fr;gap:10px 14px;width:100%}
+#designsRoot .dsn-name-form label{display:flex;flex-direction:column;gap:6px;font-size:12.5px;font-weight:600;color:#4a5856}
+#designsRoot .dsn-name-form label:nth-child(3),#designsRoot .dsn-name-form .dsn-actions{grid-column:1/-1}
 #designsRoot .dsn-search{margin:0 0 14px}
 #designsRoot .dsn-search input{width:100%;max-width:360px;border-radius:999px;padding:10px 16px}
 #designsRoot .dsn-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:16px}
@@ -2391,9 +2395,9 @@
       <span class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="5" width="16" height="15" rx="2.5"/><path d="M8 3v4M16 3v4M4 10h16"/><path d="M8.5 14h2M13.5 14h2M8.5 17h2"/></svg></span>
       التقاويم الميلادية
     </div>
-    <div class="nav-tab" data-section="designs">
+    <div class="nav-tab" data-section="designs" id="dsnNavTab">
       <span class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="4.5" width="17" height="15" rx="2.5"/><path d="M3.5 15.5l4.5-4.5 4 4 2.5-2.5 6 6"/><circle cx="15.5" cy="9" r="1.6"/></svg></span>
-      نَقْش
+      <span class="dsn-nav-lbl">نَقْش</span>
     </div>
     <div class="nav-tab admin-tab" data-section="admin" id="adminTabBtn" style="display:none;">
       <span class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3.2"/><path d="M12 2.5v3M12 18.5v3M21.5 12h-3M5.5 12h-3M18.5 5.5l-2 2M7.5 16.5l-2 2M18.5 18.5l-2-2M7.5 7.5l-2-2"/></svg></span>
@@ -10919,6 +10923,17 @@
   // خاص به ("form-<id>") فلا تظهر في قوالب المناسبات ولا تختلط بها.
   // =====================================================================================================
   var DSN_BULK_MAX = 300;
+  var DSN_META_DEF = { name: "نَقْش", kicker: "استوديو التصاميم", tagline: "تصاميم الجمعية جاهزة بين يديك: اختر النموذج، اكتب بياناتك، وتخرج النسخة بهويتنا كاملة — واحدة أو مئة دفعة واحدة." };
+  var dsnMeta = Object.assign({}, DSN_META_DEF);
+  function dsnApplyName(){
+    var l = document.querySelector("#dsnNavTab .dsn-nav-lbl"); if(l) l.textContent = dsnMeta.name || DSN_META_DEF.name;
+    SECTION_DEFS.forEach(function(d){ if(d.key === "designs") d.label = dsnMeta.name || DSN_META_DEF.name; });
+  }
+  db.collection("hubMeta").doc("designs").onSnapshot(function(doc){
+    var d = doc.exists ? doc.data() : {};
+    dsnMeta = { name: d.name || DSN_META_DEF.name, kicker: d.kicker != null ? d.kicker : DSN_META_DEF.kicker, tagline: d.tagline != null ? d.tagline : DSN_META_DEF.tagline };
+    dsnApplyName(); if(!dsnUI.editName) dsnRefresh();
+  }, function(err){ console.error("hubMeta/designs", err); });
   // نماذج تفاعلية جاهزة: صفحات تصميم مستقلة (بخياراتها الخاصة وتصديرها) في مجلد Login/designs/، تُعرض داخل القسم كما هي
   var DSN_HTML = [
     { id: "mafatih2-invite", name: "دعوة ورشة مفاتيح التوظيف 2", src: "designs/mafatih2-invite.html", thumb: "designs/mafatih2-invite.jpg" }
@@ -10969,8 +10984,16 @@
     if(dsnUI.sel && !findDesignTemplate(dsnUI.sel) && !dsnHtmlItem(dsnUI.sel)){ dsnUI.sel = null; dsnUI.view = "gallery"; }
     if(dsnUI.view === "work" && dsnUI.sel){ setHTML(root, dsnWorkHTML(manage)); var hi0 = dsnHtmlItem(dsnUI.sel); if(hi0) dsnFitFrame(); else if(dsnUI.mode === "manual") dsnPreviewSoon(); return; }
     var items = dsnItems(manage), loading = !_evDesignStarted || !_dsnLoadedOnce;
-    var html = '<div class="dsn-hero"><div><span class="dsn-kicker">استوديو التصاميم</span><h2>نَقْش</h2><p>تصاميم الجمعية جاهزة بين يديك: اختر النموذج، اكتب بياناتك، وتخرج النسخة بهويتنا كاملة — واحدة أو مئة دفعة واحدة.</p></div>' +
-      (manage ? '<label class="btn-primary dsn-new">+ نموذج جديد<input type="file" id="dsnNewInput" accept="image/png,image/jpeg,image/webp" hidden></label>' : '') + '</div>';
+    var canName = manage || (currentUser && currentUser.role === "admin");
+    var html = dsnUI.editName && canName ?
+      '<div class="dsn-hero dsn-hero-edit"><div class="dsn-name-form">' +
+        '<label>اسم القسم<input type="text" id="dsnNameIn" value="' + escapeHTML(dsnMeta.name) + '" maxlength="40"/></label>' +
+        '<label>العبارة الصغيرة فوق الاسم<input type="text" id="dsnKickIn" value="' + escapeHTML(dsnMeta.kicker) + '" maxlength="40"/></label>' +
+        '<label>الوصف<input type="text" id="dsnTagIn" value="' + escapeHTML(dsnMeta.tagline) + '" maxlength="180"/></label>' +
+        '<div class="dsn-actions"><button type="button" class="btn-primary" data-dsn-name-save>حفظ</button><button type="button" class="btn-secondary" data-dsn-name-cancel>إلغاء</button></div></div></div>' :
+      '<div class="dsn-hero"><div>' + (dsnMeta.kicker ? '<span class="dsn-kicker">' + escapeHTML(dsnMeta.kicker) + '</span>' : '') + '<h2>' + escapeHTML(dsnMeta.name) + '</h2><p>' + escapeHTML(dsnMeta.tagline) + '</p></div>' +
+      '<div class="dsn-hero-btns">' + (canName ? '<button type="button" class="btn-secondary" data-dsn-name-edit>✎ تعديل الاسم</button>' : '') +
+      (manage ? '<label class="btn-primary dsn-new">+ نموذج جديد<input type="file" id="dsnNewInput" accept="image/png,image/jpeg,image/webp" hidden></label>' : '') + '</div></div>';
     if(DSN_HTML.length + dsnForms().length > 6) html += '<div class="dsn-search"><input type="search" data-dsn-search placeholder="ابحث عن نموذج…" value="' + escapeHTML(dsnUI.q || "") + '"/></div>';
     html += '<div class="dsn-grid">' + items.map(function(x){
       return '<button type="button" class="dsn-tile' + (x.ready ? '' : ' is-draft') + '" data-dsn-pick="' + x.id + '">' +
@@ -11158,6 +11181,16 @@
       var t = dsnCurrent();
       if(b.dataset.dsnPick){ if(dsnUI.sel !== b.dataset.dsnPick){ dsnUI.sel = b.dataset.dsnPick; dsnUI.vals = {}; dsnUI.rows = null; dsnUI.fileName = ""; dsnUI.openManage = false; } dsnUI.view = "work"; dsnRender(); window.scrollTo({ top: 0, behavior: "smooth" }); return; }
       if(b.hasAttribute("data-dsn-back")){ dsnUI.view = "gallery"; dsnRender(); return; }
+      if(b.hasAttribute("data-dsn-name-edit")){ dsnUI.editName = true; dsnRender(); var ni = document.getElementById("dsnNameIn"); if(ni) ni.focus(); return; }
+      if(b.hasAttribute("data-dsn-name-cancel")){ dsnUI.editName = false; dsnRender(); return; }
+      if(b.hasAttribute("data-dsn-name-save")){
+        var nm = (document.getElementById("dsnNameIn").value || "").trim();
+        if(!nm){ showToast("اكتب اسماً للقسم"); return; }
+        var rec = { name: nm, kicker: (document.getElementById("dsnKickIn").value || "").trim(), tagline: (document.getElementById("dsnTagIn").value || "").trim(), updatedBy: currentUser ? currentUser.name : "", updatedAt: Date.now() };
+        dsnMeta = { name: rec.name, kicker: rec.kicker, tagline: rec.tagline }; dsnUI.editName = false; dsnApplyName(); dsnRender();
+        db.collection("hubMeta").doc("designs").set(rec).then(function(){ showToast("✔ تم حفظ اسم القسم"); }).catch(function(){ showToast("تعذّر حفظ الاسم — أعد المحاولة"); });
+        return;
+      }
       if(b.hasAttribute("data-dsn-gear")){ dsnUI.openManage = !dsnUI.openManage; dsnRender(); return; }
       if(b.dataset.dsnMode){ dsnUI.mode = b.dataset.dsnMode; dsnRender(); return; }
       if(!t) return;
