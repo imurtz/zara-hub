@@ -3071,7 +3071,10 @@
     });
     var activeTab = document.querySelector(".nav-tab.active");
     if(!activeTab || activeTab.style.display === "none"){
-      var fallback = firstAllowedTab || document.getElementById("adminTabBtn");
+      // رابط مباشر لقسم (مثل gzara.org/Login/#/designs): يُفتح القسم المطلوب إن كان مسموحاً، لا أول قسم متاح
+      var hashSec = (location.hash || "").replace(/^#\/?/, "").split("/")[0];
+      var hashTab = hashSec && allowed.indexOf(hashSec) > -1 ? document.querySelector('.nav-tab[data-section="' + hashSec + '"]') : null;
+      var fallback = hashTab || firstAllowedTab || document.getElementById("adminTabBtn");
       if(fallback) fallback.click();
     }
   }
