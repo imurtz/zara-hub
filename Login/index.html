@@ -2210,6 +2210,51 @@
 #designsRoot .dsn-step{margin:12px 0 18px}
 #designsRoot .dsn-step>b{display:block;margin-bottom:6px;font-size:14px}
 #designsRoot .dsn-step label{cursor:pointer}
+/* ---- عرض نماذج التصاميم: معرض ثم مساحة عمل ---- */
+#designsRoot .dsn-hero{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap;padding:22px 24px;border-radius:22px;background:linear-gradient(135deg,rgba(75,112,113,.10),rgba(184,141,102,.10));border:1px solid rgba(20,28,27,.06);margin-bottom:16px}
+#designsRoot .dsn-hero h2{margin:0 0 6px;font-size:22px}
+#designsRoot .dsn-hero p{margin:0;color:var(--ink-soft,#6b7775);font-size:13.5px;line-height:1.7;max-width:560px}
+#designsRoot .dsn-search{margin:0 0 14px}
+#designsRoot .dsn-search input{width:100%;max-width:360px;border-radius:999px;padding:10px 16px}
+#designsRoot .dsn-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:16px}
+#designsRoot .dsn-tile{display:flex;flex-direction:column;text-align:right;padding:0;border:1px solid rgba(20,28,27,.08);border-radius:20px;background:#fff;overflow:hidden;cursor:pointer;font:inherit;transition:transform .18s ease,box-shadow .18s ease}
+#designsRoot .dsn-tile:hover{transform:translateY(-3px);box-shadow:0 14px 30px -16px rgba(20,28,27,.35)}
+#designsRoot .dsn-tile-img{display:block;aspect-ratio:4/5;background:#eef0ef;overflow:hidden}
+#designsRoot .dsn-tile-img img{width:100%;height:100%;object-fit:cover;display:block;transition:transform .3s ease}
+#designsRoot .dsn-tile:hover .dsn-tile-img img{transform:scale(1.03)}
+#designsRoot .dsn-tile-body{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:12px 14px 4px}
+#designsRoot .dsn-tile-body b{font-size:14px;line-height:1.5}
+#designsRoot .dsn-chip{flex:none;font-size:11px;font-weight:700;padding:3px 9px;border-radius:999px;background:rgba(75,112,113,.10);color:#4b7071}
+#designsRoot .dsn-chip.alt{background:rgba(184,141,102,.14);color:#8a6440}
+#designsRoot .dsn-chip.warn{background:#fbeee0;color:#a0611f}
+#designsRoot .dsn-tile-go{padding:0 14px 14px;font-size:12.5px;font-weight:700;color:#4b7071}
+#designsRoot .dsn-tile.is-draft .dsn-tile-img{opacity:.6}
+#designsRoot .dsn-note{color:var(--ink-soft,#6b7775);text-align:center;padding:24px 0}
+#designsRoot .dsn-bar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:16px}
+#designsRoot .dsn-bar h2{margin:0;font-size:19px;flex:1}
+#designsRoot .dsn-back{border:0;background:rgba(75,112,113,.08);color:#4b7071;font:inherit;font-weight:700;padding:9px 16px;border-radius:999px;cursor:pointer}
+#designsRoot .dsn-bar .btn-secondary.on{background:rgba(75,112,113,.12)}
+#designsRoot .dsn-panel{background:#fff;border:1px solid rgba(20,28,27,.07);border-radius:22px;padding:20px}
+#designsRoot .dsn-manage{border:1px dashed rgba(184,141,102,.55);background:#fffaf4;border-radius:16px;padding:14px 16px;margin-bottom:18px}
+#designsRoot .dsn-manage-head{display:flex;align-items:baseline;gap:10px;margin-bottom:4px}
+#designsRoot .dsn-manage-head span{font-size:11.5px;color:#a0611f}
+#designsRoot .dsn-seg{display:grid;grid-template-columns:1fr 1fr;gap:6px;padding:5px;border-radius:16px;background:#f1f3f2;margin-bottom:18px;max-width:520px}
+#designsRoot .dsn-seg button{border:0;background:transparent;border-radius:12px;padding:10px 12px;cursor:pointer;font:inherit;display:flex;flex-direction:column;gap:2px;text-align:right;color:#4a5856}
+#designsRoot .dsn-seg button b{font-size:14px}
+#designsRoot .dsn-seg button span{font-size:11.5px;opacity:.75}
+#designsRoot .dsn-seg button.on{background:#fff;box-shadow:0 4px 14px -8px rgba(20,28,27,.35);color:#2f4d4c}
+#designsRoot .dsn-form{display:flex;flex-direction:column;gap:2px}
+#designsRoot .dsn-form-title,#designsRoot .dsn-step>b{display:flex;align-items:center;gap:8px;font-weight:700;font-size:14px;margin:6px 0 4px}
+#designsRoot .dsn-form-title i,#designsRoot .dsn-step>b i{font-style:normal;width:24px;height:24px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;background:#4b7071;color:#fff;font-size:12px}
+#designsRoot .dsn-step.done>b i{background:#2f6f5e}
+#designsRoot .dsn-big{align-self:flex-start;padding:12px 26px;font-size:15px;margin-top:4px}
+#designsRoot .dsn-preview{position:sticky;top:90px;flex-direction:column;align-items:center;gap:8px}
+#designsRoot .dsn-live{align-self:flex-start;font-size:11.5px;font-weight:700;color:#4b7071;background:#fff;border-radius:999px;padding:3px 10px}
+#designsRoot .dsn-step{background:#f7f8f7;border-radius:16px;padding:14px 16px}
+#designsRoot input[type=text],#designsRoot input[type=search],#designsRoot select{font:inherit;font-size:14px;border:1px solid rgba(20,28,27,.14);border-radius:12px;padding:10px 12px;background:#fff;color:inherit;outline:none;transition:border-color .15s,box-shadow .15s}
+#designsRoot input[type=text]:focus,#designsRoot input[type=search]:focus,#designsRoot select:focus{border-color:#4b7071;box-shadow:0 0 0 3px rgba(75,112,113,.15)}
+#designsRoot .dsn-form .dsn-row{flex-direction:column;align-items:stretch;gap:6px;margin:6px 0 8px}
+#designsRoot .dsn-form .dsn-row>label:first-child{min-width:0;font-size:12.5px;color:#4a5856}
 #designsRoot .dsn-html{border-radius:16px;overflow:hidden;background:#123A40}
 #designsRoot .dsn-html iframe{display:block;width:100%;height:1400px;border:0}
 #designsRoot .dsn-cols{width:100%;border-collapse:collapse;margin:8px 0 10px;font-size:12.5px}
@@ -10901,50 +10946,49 @@
   }
   function dsnCurrent(){ return dsnUI.sel ? findDesignTemplate(dsnUI.sel) : null; }
   function dsnPlaced(t){ var k = {}; (t.fields || []).forEach(function(f){ k[f.key] = 1; }); return k; }
+  // العرض: «معرض» بطاقات النماذج، ثم «مساحة عمل» للنموذج المختار. المستخدم العادي يرى خطوتين فقط (عبّئ ← نزّل)،
+  // وأدوات إعداد النموذج تظهر للمسؤول وحده خلف زر «إعداد النموذج».
+  function dsnReady(t){ var p = dsnPlaced(t); return dsnVars(t).some(function(v){ return p[v.key]; }); }
+  function dsnItems(manage){
+    var q = String(dsnUI.q || "").trim();
+    var list = DSN_HTML.map(function(x){ return { id: "html:" + x.id, name: x.name, thumb: x.thumb, kind: "html", meta: "نموذج تفاعلي", ready: true }; })
+      .concat(dsnForms().filter(function(t){ return manage || dsnReady(t); }).map(function(t){
+        var n = dsnVars(t).filter(function(v){ return dsnPlaced(t)[v.key]; }).length;
+        return { id: t.id, name: t.name || "نموذج", thumb: t.previewImage || t.image || "", kind: "form", meta: n ? (n + (n === 1 ? " حقل" : " حقول")) : "غير جاهز", ready: dsnReady(t) };
+      }));
+    return q ? list.filter(function(x){ return x.name.indexOf(q) > -1; }) : list;
+  }
   function dsnRender(){
     var root = document.getElementById("designsRoot");
     if(!root || !currentUser || !can("designs.view")) return;
     evEnsureDesignData();
     dsnSyncPlaceable();
     dsnUI.pendingRender = false;
-    var forms = dsnForms(), manage = can("designs.manage");
-    if(dsnUI.sel && !findDesignTemplate(dsnUI.sel) && !dsnHtmlItem(dsnUI.sel)) dsnUI.sel = null;
-    if(!dsnUI.sel) dsnUI.sel = DSN_HTML.length ? "html:" + DSN_HTML[0].id : (forms.length ? forms[0].id : null);
-    var html = '<div class="report-section-card dsn-head"><div><h3 style="margin:0 0 4px;">نماذج التصاميم</h3>' +
-      '<p class="hint" style="margin:0;">اختر نموذجاً، عبّئ متغيراته يدوياً أو من ملف Excel، ثم نزّل نسخة واحدة أو كل النسخ دفعة واحدة.</p></div>' +
+    var manage = can("designs.manage");
+    if(dsnUI.sel && !findDesignTemplate(dsnUI.sel) && !dsnHtmlItem(dsnUI.sel)){ dsnUI.sel = null; dsnUI.view = "gallery"; }
+    if(dsnUI.view === "work" && dsnUI.sel){ setHTML(root, dsnWorkHTML(manage)); var hi0 = dsnHtmlItem(dsnUI.sel); if(hi0) dsnFitFrame(); else if(dsnUI.mode === "manual") dsnPreviewSoon(); return; }
+    var items = dsnItems(manage), loading = !_evDesignStarted || !_dsnLoadedOnce;
+    var html = '<div class="dsn-hero"><div><h2>نماذج التصاميم</h2><p>اختر نموذجاً، عبّئ بياناته، ونزّل التصميم جاهزاً — نسخة واحدة أو عدة نسخ دفعة واحدة.</p></div>' +
       (manage ? '<label class="btn-primary dsn-new">+ نموذج جديد<input type="file" id="dsnNewInput" accept="image/png,image/jpeg,image/webp" hidden></label>' : '') + '</div>';
-    var htmlCards = DSN_HTML.map(function(x){
-      return '<button type="button" class="dsn-card' + ("html:" + x.id === dsnUI.sel ? ' active' : '') + '" data-dsn-pick="html:' + x.id + '">' +
-        '<span class="dsn-thumb"><img src="' + x.thumb + '" alt="" loading="lazy"/></span><b>' + escapeHTML(x.name) + '</b><i>نموذج تفاعلي</i></button>';
-    }).join("");
-    var hi = dsnHtmlItem(dsnUI.sel);
-    if(hi){
-      html += '<div class="dsn-cards">' + htmlCards + forms.map(function(t){
-        return '<button type="button" class="dsn-card" data-dsn-pick="' + t.id + '"><span class="dsn-thumb"><img src="' + escapeHTML(t.previewImage || t.image || "") + '" alt="" loading="lazy"/></span><b>' + escapeHTML(t.name || "نموذج") + '</b><i>' + dsnVars(t).length + ' متغير</i></button>';
-      }).join("") + '</div>';
-      html += '<div class="dsn-html"><iframe id="dsnFrame" src="' + hi.src + '?v=' + DSN_HTML_V + '" title="' + escapeHTML(hi.name) + '"></iframe></div>';
-      setHTML(root, html);
-      dsnFitFrame();
-      return;
-    }
-    if(!_evDesignStarted || (!forms.length && !_dsnLoadedOnce)){
-      html += '<div class="dsn-cards">' + htmlCards + '</div><p class="report-empty" style="padding:30px 0;">جارٍ تحميل النماذج…</p>';
-      setHTML(root, html); return;
-    }
-    if(!forms.length){
-      if(htmlCards) html += '<div class="dsn-cards">' + htmlCards + '</div>';
-      html += '<p class="report-empty" style="padding:30px 0;">' + (manage ? 'لا توجد نماذج بعد — ابدأ بـ«نموذج جديد» وارفع صورة التصميم.' : 'لا توجد نماذج متاحة بعد.') + '</p>';
-      setHTML(root, html); return;
-    }
-    html += '<div class="dsn-cards">' + htmlCards + forms.map(function(t){
-      return '<button type="button" class="dsn-card' + (t.id === dsnUI.sel ? ' active' : '') + '" data-dsn-pick="' + t.id + '">' +
-        '<span class="dsn-thumb"><img src="' + escapeHTML(t.previewImage || t.image || "") + '" alt="" loading="lazy"/></span>' +
-        '<b>' + escapeHTML(t.name || "نموذج") + '</b><i>' + dsnVars(t).length + ' متغير</i></button>';
+    if(DSN_HTML.length + dsnForms().length > 6) html += '<div class="dsn-search"><input type="search" data-dsn-search placeholder="ابحث عن نموذج…" value="' + escapeHTML(dsnUI.q || "") + '"/></div>';
+    html += '<div class="dsn-grid">' + items.map(function(x){
+      return '<button type="button" class="dsn-tile' + (x.ready ? '' : ' is-draft') + '" data-dsn-pick="' + x.id + '">' +
+        '<span class="dsn-tile-img"><img src="' + escapeHTML(x.thumb) + '" alt="" loading="lazy"/></span>' +
+        '<span class="dsn-tile-body"><b>' + escapeHTML(x.name) + '</b><span class="dsn-chip' + (x.kind === "html" ? ' alt' : '') + (x.ready ? '' : ' warn') + '">' + x.meta + '</span></span>' +
+        '<span class="dsn-tile-go">' + (x.ready ? 'استخدم النموذج ←' : 'أكمل الإعداد ←') + '</span></button>';
     }).join("") + '</div>';
-    var t = dsnCurrent();
-    if(t) html += dsnPanelHTML(t, manage);
+    if(loading) html += '<p class="dsn-note">جارٍ تحميل بقية النماذج…</p>';
+    else if(!items.length) html += '<p class="dsn-note">' + (dsnUI.q ? 'لا توجد نماذج مطابقة للبحث.' : manage ? 'لا توجد نماذج بعد — ابدأ بـ«نموذج جديد» وارفع صورة التصميم.' : 'لا توجد نماذج متاحة بعد.') + '</p>';
     setHTML(root, html);
-    if(t && dsnUI.mode === "manual") dsnPreviewSoon();
+  }
+  function dsnWorkHTML(manage){
+    var hi = dsnHtmlItem(dsnUI.sel), t = hi ? null : dsnCurrent();
+    var name = hi ? hi.name : (t && t.name) || "نموذج";
+    var html = '<div class="dsn-bar"><button type="button" class="dsn-back" data-dsn-back>→ كل النماذج</button><h2>' + escapeHTML(name) + '</h2>' +
+      (t && manage ? '<button type="button" class="btn-secondary' + (dsnUI.openManage ? ' on' : '') + '" data-dsn-gear>⚙ إعداد النموذج</button>' : '') + '</div>';
+    if(hi) return html + '<div class="dsn-html"><iframe id="dsnFrame" src="' + hi.src + '?v=' + DSN_HTML_V + '" title="' + escapeHTML(hi.name) + '"></iframe></div>';
+    if(!t) return html;
+    return html + dsnPanelHTML(t, manage);
   }
   var _dsnLoadedOnce = false;
   var DSN_HTML_V = "1";
@@ -10959,9 +11003,9 @@
   }
   function dsnPanelHTML(t, manage){
     var vars = dsnVars(t), placed = dsnPlaced(t);
-    var html = '<div class="report-section-card dsn-panel">';
-    if(manage){
-      html += '<details class="dsn-manage"' + (dsnUI.openManage ? ' open' : '') + '><summary>إعداد النموذج (للمسؤول)</summary>' +
+    var html = '<div class="dsn-panel">';
+    if(manage && (dsnUI.openManage || !dsnReady(t))){
+      html += '<div class="dsn-manage"><div class="dsn-manage-head"><b>إعداد النموذج</b><span>يظهر للمسؤول فقط</span></div>' +
         '<div class="dsn-row"><label>اسم النموذج</label><input type="text" data-dsn-name value="' + escapeHTML(t.name || "") + '"/></div>' +
         '<p class="hint" style="margin:10px 0 6px;">المتغيرات: ما يكتبه المستخدم أو يرفعه لكل نسخة. الوصف يظهر له شرحاً ومثالاً، ويُكتب في ملف Excel.</p>' +
         '<div class="dsn-vars">' + vars.map(function(v, i){
@@ -10974,38 +11018,38 @@
         '<div class="dsn-actions"><button type="button" class="btn-secondary" data-dsn-addvar>+ متغير</button>' +
         '<button type="button" class="btn-primary" data-dsn-place>تحديد مواضع المتغيرات على التصميم</button>' +
         '<label class="btn-secondary">استبدال صورة التصميم<input type="file" data-dsn-replace accept="image/png,image/jpeg,image/webp" hidden></label>' +
-        '<button type="button" class="btn-secondary danger" data-dsn-delete>حذف النموذج</button></div></details>';
+        '<button type="button" class="btn-secondary danger" data-dsn-delete>حذف النموذج</button></div></div>';
     }
     var usable = vars.filter(function(v){ return placed[v.key]; });
     if(!usable.length){
       html += '<p class="report-empty" style="padding:20px 0;">' + (manage ? 'حدّد مواضع المتغيرات على التصميم أولاً من «إعداد النموذج».' : 'هذا النموذج غير جاهز للاستخدام بعد.') + '</p></div>';
       return html;
     }
-    html += '<div class="cat-tabs dsn-modes"><button type="button" class="publish-type-chip' + (dsnUI.mode === "manual" ? " active" : "") + '" data-dsn-mode="manual">إدخال يدوي</button>' +
-      '<button type="button" class="publish-type-chip' + (dsnUI.mode === "excel" ? " active" : "") + '" data-dsn-mode="excel">من ملف Excel (نسخ متعددة)</button></div>';
+    html += '<div class="dsn-seg" role="tablist"><button type="button" class="' + (dsnUI.mode === "manual" ? "on" : "") + '" data-dsn-mode="manual"><b>نسخة واحدة</b><span>اكتب البيانات بنفسك</span></button>' +
+      '<button type="button" class="' + (dsnUI.mode === "excel" ? "on" : "") + '" data-dsn-mode="excel"><b>عدة نسخ</b><span>من ملف Excel</span></button></div>';
     if(dsnUI.mode === "manual"){
-      html += '<div class="dsn-manual"><div class="dsn-form">' + usable.map(function(v){
+      html += '<div class="dsn-manual"><div class="dsn-form"><div class="dsn-form-title"><i>١</i> عبّئ البيانات</div>' + usable.map(function(v){
         var val = dsnUI.vals[v.key] || "";
         if(v.type === "image") return '<div class="dsn-row"><label>' + escapeHTML(v.label) + '</label>' +
           '<label class="btn-secondary">' + (val ? 'تغيير الصورة' : 'رفع صورة') + '<input type="file" accept="image/*" data-dsn-img="' + v.key + '" hidden></label>' +
           (val ? ' <button type="button" class="btn-secondary" data-dsn-clearimg="' + v.key + '">إزالة</button>' : '') +
           (v.hint ? '<span class="hint">' + escapeHTML(v.hint) + '</span>' : '') + '</div>';
         return '<div class="dsn-row"><label>' + escapeHTML(v.label) + '</label><input type="text" data-dsn-val="' + v.key + '" value="' + escapeHTML(val) + '" placeholder="' + escapeHTML(v.hint || "") + '"/></div>';
-      }).join("") + '<button type="button" class="btn-primary" data-dsn-dl1>تنزيل الصورة</button></div>' +
-        '<div class="dsn-preview"><canvas id="dsnCanvas"></canvas></div></div>';
+      }).join("") + '<div class="dsn-form-title"><i>٢</i> نزّل التصميم</div><button type="button" class="btn-primary dsn-big" data-dsn-dl1>تنزيل الصورة</button></div>' +
+        '<div class="dsn-preview"><span class="dsn-live">معاينة مباشرة</span><canvas id="dsnCanvas"></canvas></div></div>';
     } else {
       html += '<div class="dsn-excel">' +
-        '<div class="dsn-step"><b>١. نزّل ملف Excel الجاهز لهذا النموذج</b><p class="hint">كل عمود متغير، وكل صف نسخة. في الملف ورقة «تعليمات» تشرح كل عمود.</p>' +
+        '<div class="dsn-step"><b><i>١</i> نزّل ملف Excel الجاهز</b><p class="hint">كل عمود متغير، وكل صف نسخة. في الملف ورقة «تعليمات» تشرح كل عمود.</p>' +
         '<table class="dsn-cols"><thead><tr><th>العمود</th><th>النوع</th><th>ما يُكتب فيه</th></tr></thead><tbody>' + usable.map(function(v){
           return '<tr><td>' + escapeHTML(v.label) + '</td><td>' + (v.type === "image" ? "صورة" : "نص") + '</td><td>' + escapeHTML(v.hint || (v.type === "image" ? "رابط الصورة (يبدأ بـ https) أو اتركه فارغاً" : "النص كما سيظهر في التصميم")) + '</td></tr>';
         }).join("") + '</tbody></table>' +
         '<button type="button" class="btn-secondary" data-dsn-xltpl>تنزيل ملف Excel</button></div>' +
-        '<div class="dsn-step"><b>٢. ارفع الملف بعد تعبئته</b>' +
+        '<div class="dsn-step' + (dsnUI.rows ? ' done' : '') + '"><b><i>٢</i> ارفع الملف بعد تعبئته</b>' +
         '<label class="btn-secondary">' + (dsnUI.rows ? 'رفع ملف آخر' : 'رفع ملف Excel') + '<input type="file" accept=".xlsx,.xls,.csv" data-dsn-xlup hidden></label>' +
         (dsnUI.fileName ? ' <span class="hint">' + escapeHTML(dsnUI.fileName) + '</span>' : '') + '</div>';
       if(dsnUI.rows){
         var rows = dsnUI.rows, first = usable.filter(function(v){ return v.type !== "image"; })[0];
-        html += '<div class="dsn-step"><b>٣. نزّل النسخ</b> <span class="events-count-badge">' + rows.length + ' نسخة</span>' +
+        html += '<div class="dsn-step"><b><i>٣</i> نزّل النسخ</b> <span class="events-count-badge">' + rows.length + ' نسخة</span>' +
           '<div class="dsn-actions"><button type="button" class="btn-primary" data-dsn-dlall' + (dsnUI.busy ? ' disabled' : '') + '>' + (dsnUI.busy ? dsnUI.busy : 'تنزيل كل النسخ (ملف مضغوط)') + '</button></div>' +
           '<div class="events-table-wrap"><table><thead><tr><th>#</th>' + usable.map(function(v){ return '<th>' + escapeHTML(v.label) + '</th>'; }).join("") + '<th></th></tr></thead><tbody>' +
           rows.slice(0, 100).map(function(r, i){
@@ -11111,7 +11155,9 @@
     root.addEventListener("click", function(e){
       var b = e.target.closest("button,[data-dsn-pick]"); if(!b) return;
       var t = dsnCurrent();
-      if(b.dataset.dsnPick){ if(dsnUI.sel !== b.dataset.dsnPick){ dsnUI.sel = b.dataset.dsnPick; dsnUI.vals = {}; dsnUI.rows = null; dsnUI.fileName = ""; } dsnRender(); return; }
+      if(b.dataset.dsnPick){ if(dsnUI.sel !== b.dataset.dsnPick){ dsnUI.sel = b.dataset.dsnPick; dsnUI.vals = {}; dsnUI.rows = null; dsnUI.fileName = ""; dsnUI.openManage = false; } dsnUI.view = "work"; dsnRender(); window.scrollTo({ top: 0, behavior: "smooth" }); return; }
+      if(b.hasAttribute("data-dsn-back")){ dsnUI.view = "gallery"; dsnRender(); return; }
+      if(b.hasAttribute("data-dsn-gear")){ dsnUI.openManage = !dsnUI.openManage; dsnRender(); return; }
       if(b.dataset.dsnMode){ dsnUI.mode = b.dataset.dsnMode; dsnRender(); return; }
       if(!t) return;
       if(b.hasAttribute("data-dsn-addvar") && can("designs.manage")){ t.vars = dsnVars(t).concat([{ key: dsnNewKey(t), label: "متغير جديد", type: "text", hint: "" }]); dsnUI.openManage = true; saveDesignTemplate(t); dsnRender(); return; }
@@ -11136,6 +11182,7 @@
     });
     root.addEventListener("input", function(e){
       var el = e.target, t = dsnCurrent(); if(!t) return;
+      if(el.hasAttribute && el.hasAttribute("data-dsn-search")){ dsnUI.q = el.value; var pos = el.selectionStart; dsnRender(); var n = document.querySelector("#designsRoot [data-dsn-search]"); if(n){ n.focus(); try{ n.setSelectionRange(pos, pos); }catch(_){} } return; }
       if(el.dataset.dsnVal){ dsnUI.vals[el.dataset.dsnVal] = el.value; dsnPreviewSoon(); return; }
       if(!can("designs.manage")) return;
       if(el.hasAttribute("data-dsn-name")){ t.name = el.value; dsnSaveSoon(t); return; }
@@ -11151,7 +11198,7 @@
             var id = genTemplateId();
             var nt = { id: id, kind: "form", category: "form-" + id, name: "نموذج جديد", image: finalUrl, previewImage: previewUrl || null, width: w, height: h, fields: [],
               vars: [{ key: "v1", label: "الاسم", type: "text", hint: "مثال: محمد علي" }], createdAt: Date.now(), createdBy: currentUser ? currentUser.name : "" };
-            dsnUI.sel = id; dsnUI.vals = {}; dsnUI.rows = null; dsnUI.openManage = true;
+            dsnUI.sel = id; dsnUI.vals = {}; dsnUI.rows = null; dsnUI.openManage = true; dsnUI.view = "work";
             _designTemplatesCache.push(nt); saveDesignTemplate(nt); dsnRender();
             showToast("تم إنشاء النموذج — سمِّه وحدّد متغيراته ثم مواضعها");
           });
