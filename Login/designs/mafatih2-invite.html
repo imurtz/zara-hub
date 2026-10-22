@@ -462,7 +462,7 @@ $("dlAll").onclick=async()=>{
   L={mf,mfl,hrd,hrdw,aw,awl,ft,ftw};
   try{await Promise.all(["700 30px 'Reem Kufi'","800 30px 'Playfair Display'","500 20px Tajawal","600 20px Tajawal","700 20px Tajawal"].map(f=>document.fonts.load(f,"عربي 2")));}catch(e){}
   let saved=null;try{saved=localStorage.getItem("inv-bg");}catch(e){}
-  setBg(saved||"#F3ECE0");
+  setBg("#FFFFFF");
   try{dl=window.claude?.use?await window.claude.use("downloads"):null;}catch(e){dl=null;}
 })();
 </script>
@@ -529,9 +529,10 @@ details.zg>.zg-body{display:flex;flex-direction:column;gap:12px;padding:0 14px 1
   main.insertBefore(xn,xr);
   main.appendChild(list);main.appendChild(status);
   const extra=document.createElement("details");extra.className="zg";
-  const sm=document.createElement("summary");sm.textContent="خيارات إضافية (التاريخ، المكان، الألوان، الزخرفة…)";extra.appendChild(sm);
+  const sm=document.createElement("summary");sm.textContent="خيارات إضافية (التاريخ، الوقت، المكان، رمز الموقع…)";extra.appendChild(sm);
   const body=document.createElement("div");body.className="zg-body";
-  ["تفاصيل الورشة","رمز الموقع والختم","لون الخلفية","زخرفة التصميم","صيغة الدعوة"].forEach(t=>{const g=groups.find(x=>x.title===t);if(!g)return;
+  groups.filter(g=>g.title==="لون الخلفية"||g.title==="زخرفة التصميم").forEach(g=>{g.items.forEach(x=>x.remove());g.h.remove();});
+  ["تفاصيل الورشة","رمز الموقع والختم","صيغة الدعوة"].forEach(t=>{const g=groups.find(x=>x.title===t);if(!g)return;
     const ht=document.createElement("div");ht.className="zg-sub";ht.textContent=t;body.appendChild(ht);g.items.forEach(x=>{if(x!==dlRow&&x!==dlAllRow)body.appendChild(x);});g.h.remove();});
   extra.appendChild(body);
   form.innerHTML="";form.appendChild(main);form.appendChild(extra);
