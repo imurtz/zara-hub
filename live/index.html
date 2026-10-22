@@ -316,25 +316,52 @@ body.screen .bar span{background:var(--tan)}
   }
   function setLive(st,txt){$("live").className="live"+(st==="ok"?"":" "+st);$("liveTxt").textContent=txt;}
   let tt=0;function toast(m){const t=$("toast");t.textContent=m;t.classList.add("on");clearTimeout(tt);tt=setTimeout(()=>t.classList.remove("on"),3200);}
+  // التحديث: كل نموذج يُرسم لحظة وصول بياناته (لا ينتظر أبطأ الثلاثة)، واللوحة التي لم تتغيّر أرقامها لا يُعاد رسمها.
+  // آخر أرقام محفوظة على الجهاز تظهر فوراً عند فتح الصفحة، ثم تُستبدل بالحية خلال ثوانٍ.
+  const CK="zaraLive:"+(P.get("e")||"mafatih2")+(P.get("demo")?":demo":"");
+  const sig={};let busy=false,cur=EV.trackers.map(()=>null),fresh=false;
+  function applyOne(i,d,announceIt){
+    const t=EV.trackers[i],prev=cur[i],key=JSON.stringify([d.total,d.today,d.lastAt,d.series,d.breakdowns,!!d.unlinked,!!d.error]);
+    if(sig[t.key]!==key){sig[t.key]=key;paint(t,d);}
+    else{const box=document.getElementById("trk-"+t.key);if(box&&d.lastAt)box.querySelector('[data-r="last"]').innerHTML=ago(d.lastAt);}
+    if(announceIt&&prev&&!d.error&&!d.unlinked&&!prev.error&&!prev.unlinked&&d.total>prev.total){
+      announce(t,d.total-prev.total);
+      if(Math.floor(d.total/50)>Math.floor(prev.total/50))setTimeout(()=>toast("🎉 "+t.label+": "+fmt(Math.floor(d.total/50)*50)),3400);
+    }
+    // تعذّر جلب نموذج مؤقتاً: تبقى آخر أرقامه ظاهرة وتُعلَّم «قديمة» بدل أن تختفي من الإجمالي
+    cur[i]=(d.error&&prev&&!prev.error)?Object.assign({},prev,{stale:true}):d;
+    if(!quiet)summary();
+  }
+  let quiet=false;
+  function summary(){
+    let grand=0,linked=0,ok=0;
+    cur.forEach(d=>{if(!d)return;if(!d.unlinked){linked++;if(!d.error&&!d.stale)ok++;}if(!d.error&&!d.unlinked)grand+=d.total||0;});
+    last=cur;animate($("grand"),"_grand",grand);
+    document.title=fmt(grand)+" مسجّل — "+EV.title;document.body.classList.toggle("closed",!!EV.closed);
+    if(!fresh)setLive("off","جارٍ التحديث…");else if(!linked)setLive("err","غير مربوط بعد");else if(ok<linked)setLive("err","تعذّر تحديث بعض النماذج");else setLive(EV.closed?"off":"ok",EV.closed?"مغلق":"مباشر");
+  }
+  function withTimeout(p,ms){return Promise.race([p,new Promise((_,no)=>setTimeout(()=>no(new Error("timeout")),ms))]);}
   function tick(){
-    Promise.all(EV.trackers.map(t=>fetchOne(t).catch(e=>({error:true})))).then(res=>{
-      let grand=0,linked=0,ok=0;
-      res.forEach((d,i)=>{const t=EV.trackers[i];grand+=paint(t,d)||0;if(!d.unlinked){linked++;if(!d.error)ok++;}
-        const prev=last&&last[i];
-        if(prev&&!d.error&&!d.unlinked&&!prev.error&&!prev.unlinked&&d.total>prev.total){
-          setTimeout(()=>announce(t,d.total-prev.total),i*1400);
-          if(Math.floor(d.total/50)>Math.floor(prev.total/50))setTimeout(()=>toast("🎉 "+t.label+": "+fmt(Math.floor(d.total/50)*50)),i*1400+3400);
-        }});
-      last=res;animate($("grand"),"_grand",grand);
-      document.title=fmt(grand)+" مسجّل — "+EV.title;document.body.classList.toggle("closed",!!EV.closed);
-      if(!linked)setLive("err","غير مربوط بعد");else if(ok<linked)setLive("err","تعذّر تحديث بعض النماذج");else setLive(EV.closed?"off":"ok",EV.closed?"مغلق":"مباشر");
+    if(busy)return;busy=true;
+    const first=!fresh;
+    Promise.all(EV.trackers.map((t,i)=>withTimeout(fetchOne(t),20000).catch(()=>({error:true})).then(d=>applyOne(i,d,!first)))).then(()=>{
+      busy=false;fresh=true;summary();
       $("updated").textContent="آخر تحديث "+new Date().toLocaleTimeString("ar-SA-u-nu-latn",{hour:"2-digit",minute:"2-digit",second:"2-digit"});
+      try{localStorage.setItem(CK,JSON.stringify({at:Date.now(),cur}));}catch(e){}
     });
+  }
+  function fromCache(){
+    try{const c=JSON.parse(localStorage.getItem(CK)||"null");if(!c||!c.cur||Date.now()-c.at>6*3600e3)return;
+      // الأرقام المحفوظة تُكتب مباشرة بلا عدّ متحرك
+      let g=0;c.cur.forEach((d,i)=>{if(d&&i<EV.trackers.length&&!d.error&&!d.unlinked){shown[EV.trackers[i].key]=d.total;g+=d.total||0;}});shown._grand=g;
+      quiet=true;c.cur.forEach((d,i)=>{if(d&&i<EV.trackers.length)applyOne(i,d,false);});quiet=false;
+      $("grand").textContent=fmt(g);summary();
+      $("updated").textContent="آخر أرقام محفوظة — جارٍ التحديث…";}catch(e){}
   }
   build();
   // وضع التجربة يُعلَن بوضوح حتى لا تُقرأ أرقامه الوهمية على أنها حقيقية
   if(P.get("demo")){const b=document.createElement("div");b.className="demo-bar";b.innerHTML='⚠️ هذه <b>بيانات توضيحية</b> وليست الأعداد الحقيقية — <a href="'+location.pathname+'">اعرض الأعداد الحقيقية</a>';document.querySelector(".wrap").prepend(b);}
-  tick();
+  fromCache();tick();
   // مع تفعيل الصوت تستمر المتابعة والتنبيه حتى لو كانت الصفحة في تبويب بالخلفية
   setInterval(()=>{if(!document.hidden||snd)tick();},EVERY*1000);
   document.addEventListener("visibilitychange",()=>{if(!document.hidden)tick();});
