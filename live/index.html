@@ -142,6 +142,28 @@ body.screen .bar{height:calc(var(--sh,100vh)*.022);margin:calc(var(--sh,100vh)*.
 body.screen .bar span{background:var(--tan)}
 body.screen .goalmeta{font-size:calc(var(--sh,100vh)*.026)}
 body.screen .scr-foot{display:block}
+.trk-head .ls{display:none}
+body.screen .trk-head .lf{display:none}
+body.screen .trk-head .ls{display:inline}
+/* ترتيب أريح لبطاقات شاشة العرض: الأيقونة والاسم في سطر، وشارة «اليوم» في سطر تحته، ومسافات متدرجة بلا تزاحم */
+body.screen .trk{justify-content:space-evenly;padding:calc(var(--sh,100vh)*.03) calc(var(--sw,100vw)*.02)}
+body.screen .trk-head{flex-wrap:wrap;justify-content:center;row-gap:calc(var(--sh,100vh)*.014);margin-bottom:calc(var(--sh,100vh)*.01);min-width:0}
+body.screen .trk-head::after{content:"";flex-basis:100%;order:2}
+body.screen .trk-head .ico{width:calc(var(--sh,100vh)*.055);height:calc(var(--sh,100vh)*.055)}
+body.screen .trk-head h2{font-size:calc(var(--sh,100vh)*.036);min-width:0;max-width:78%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+body.screen .badge{order:3;font-size:calc(var(--sh,100vh)*.022)}
+body.screen .big{gap:calc(var(--sh,100vh)*.006)}
+body.screen .big .n{font-size:min(calc(var(--sh,100vh)*.19),calc(var(--sw,100vw)*.1))}
+body.screen .big .l{font-size:calc(var(--sh,100vh)*.024)}
+body.screen .big .pct{display:flex;align-items:baseline;gap:.4em;margin-top:calc(var(--sh,100vh)*.006)}
+body.screen .big .pct b{font-size:calc(var(--sh,100vh)*.042)}
+body.screen .big .pct span{font-size:calc(var(--sh,100vh)*.022)}
+body.screen .bar{width:86%;margin:calc(var(--sh,100vh)*.02) auto calc(var(--sh,100vh)*.01)}
+body.screen .goalmeta{width:86%;margin:0 auto;font-size:calc(var(--sh,100vh)*.022)}
+body.screen .event h1{font-size:calc(var(--sh,100vh)*.052)}
+body.screen .event .sub{font-size:calc(var(--sh,100vh)*.026)}
+body.screen .event .grand .v{font-size:calc(var(--sh,100vh)*.075)}
+body.screen .event .grand .k{font-size:calc(var(--sh,100vh)*.022)}
 .scr-foot{display:none;text-align:center;font-size:calc(var(--sh,100vh)*.024);color:rgba(255,255,255,.6)}
 .boards{display:flex;flex-direction:column;gap:14px}
 
@@ -203,8 +225,8 @@ body.screen .scr-foot{display:block}
       subtitle:"الثلاثاء والأربعاء · 10 – 11 نوفمبر 2026 · قاعة الملك عبدالله",
       closed:false,
       trackers:[
-        {key:"participants",label:"المشاركون في الورشة",target:400,url:"https://script.google.com/macros/s/AKfycbyLZZZnt-RmwHn0JYkrV9j5m-4Mcb3rIFNx6XKvzq8elGC8UfDmk1rATsQya2g0WPm23Q/exec"},
-        {key:"volunteers",label:"المتطوعون المشاركون",target:100,url:"https://script.google.com/macros/s/AKfycbz1g5hzz5uuhtMFPJIyE3PQ_z1FblLhbB9ZgtXVj1AZwlm-ynPcyc_MAAht1hj5FvQc/exec"},
+        {key:"participants",label:"المشاركون في الورشة",short:"المشاركون",target:400,url:"https://script.google.com/macros/s/AKfycbyLZZZnt-RmwHn0JYkrV9j5m-4Mcb3rIFNx6XKvzq8elGC8UfDmk1rATsQya2g0WPm23Q/exec"},
+        {key:"volunteers",label:"المتطوعون المشاركون",short:"المتطوعون",target:100,url:"https://script.google.com/macros/s/AKfycbz1g5hzz5uuhtMFPJIyE3PQ_z1FblLhbB9ZgtXVj1AZwlm-ynPcyc_MAAht1hj5FvQc/exec"},
         {key:"trainers",label:"المدربون",target:35,url:"https://script.google.com/macros/s/AKfycbwNf1Ng0ibm1xbcrgrM2PotkLyL4lEexeECH3m1AXWgB0H5as05wcFsx7jyBJCCz52f/exec"}
       ]
     }
@@ -275,7 +297,7 @@ body.screen .scr-foot{display:block}
     $("title").textContent=EV.title;$("sub").textContent=EV.subtitle||"";
     $("jump").innerHTML=EV.trackers.map(t=>`<a href="#trk-${t.key}" style="--c:${COLOR[t.key]}"><b data-j="${t.key}">0</b><span>${t.label}</span></a>`).join("");
     $("boards").innerHTML=EV.trackers.map(t=>`<section class="card trk" id="trk-${t.key}" style="--c:${COLOR[t.key]}">
-      <div class="trk-head"><span class="ico">${ICON[t.key]}</span><h2>${t.label}</h2><span class="badge" data-r="badge"></span></div>
+      <div class="trk-head"><span class="ico">${ICON[t.key]}</span><h2><span class="lf">${t.label}</span><span class="ls">${t.short||t.label}</span></h2><span class="badge" data-r="badge"></span></div>
       <div class="trk-body">
         <div class="trk-main">
           <div class="big"><div><div class="n" data-r="n">0</div><div class="l">مسجّل حتى الآن</div></div>
