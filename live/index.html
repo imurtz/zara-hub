@@ -178,7 +178,7 @@ body.screen .bar span{background:var(--tan)}
       closed:false,
       trackers:[
         {key:"participants",label:"المشاركون في الورشة",target:400,url:"https://script.google.com/macros/s/AKfycbyLZZZnt-RmwHn0JYkrV9j5m-4Mcb3rIFNx6XKvzq8elGC8UfDmk1rATsQya2g0WPm23Q/exec"},
-        {key:"volunteers",label:"المتطوعون المشاركون",target:100,url:""},
+        {key:"volunteers",label:"المتطوعون المشاركون",target:100,url:"https://script.google.com/macros/s/AKfycbz1g5hzz5uuhtMFPJIyE3PQ_z1FblLhbB9ZgtXVj1AZwlm-ynPcyc_MAAht1hj5FvQc/exec"},
         {key:"trainers",label:"المدربون",target:35,url:""}
       ]
     }
@@ -232,10 +232,17 @@ body.screen .bar span{background:var(--tan)}
       if(i%2===(n-1)%2){const d=new Date(s.d+"T00:00:00");g+=`<text class="lbl" x="${(x+w/2).toFixed(1)}" y="${H-4}" text-anchor="middle">${isT?"اليوم":d.getDate()+"/"+(d.getMonth()+1)}</text>`;}});
     return `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="التسجيل اليومي"><line x1="${pad}" y1="${H-pad}" x2="${W-pad}" y2="${H-pad}" stroke="#E4E9E8"/>${g}</svg>`;
   }
-  function bkHTML(list){
+  // سؤال متعدد الاختيار (مثل أيام التطوع) يصل كتركيبات «أ, ب, ج» — يُفكّ إلى خيار مستقل لكل قيمة،
+  // ونسبة كل خيار من إجمالي المسجلين (لأن الشخص قد يختار أكثر من خيار)
+  function explode(g,total){
+    const multi=g.items.filter(it=>/,\s/.test(it.k)).length;if(multi<2)return null;
+    const m={};g.items.forEach(it=>String(it.k).split(/,\s+/).forEach(k=>{k=k.trim();if(k)m[k]=(m[k]||0)+it.n;}));
+    return {label:g.label,note:"يمكن اختيار أكثر من خيار",den:total||1,items:Object.keys(m).map(k=>({k,n:m[k]}))};
+  }
+  function bkHTML(list,total){
     if(!list||!list.length)return '<p class="empty">لا توجد توزيعات لهذا النموذج</p>';
-    return '<div class="bk">'+list.map(g=>{const sum=g.items.reduce((a,b)=>a+b.n,0)||1;
-      return `<div class="bk-group"><b>${g.label}</b>`+g.items.slice().sort((a,b)=>b.n-a.n).slice(0,12).map(it=>{const p=Math.round(it.n*100/sum);
+    return '<div class="bk">'+list.map(g0=>{const g=explode(g0,total)||g0,sum=g.den||g.items.reduce((a,b)=>a+b.n,0)||1;
+      return `<div class="bk-group"><b>${g.label}${g.note?` <span style="font-weight:500;color:var(--soft);font-size:11.5px">— ${g.note}</span>`:""}</b>`+g.items.slice().sort((a,b)=>b.n-a.n).slice(0,12).map(it=>{const p=Math.round(it.n*100/sum);
         return `<div class="row"><span class="t">${String(it.k).replace(/</g,"&lt;")}</span><span class="b"><span style="width:${p}%"></span></span><span class="c">${fmt(it.n)} <em>${p}%</em></span></div>`;}).join("")+`</div>`;}).join("")+'</div>';
   }
   function build(){
@@ -275,7 +282,7 @@ body.screen .bar span{background:var(--tan)}
     const days=(d.series||[]).filter(s=>s.n>0).length||1;q("avg").textContent=fmt(Math.round(d.total/days));
     const shownDays=trimSeries(d.series||[]).length;q("days").textContent=shownDays?("آخر "+shownDays+" أيام"):"";
     q("chart").innerHTML=d.series&&d.series.length?chartSVG(d.series,c):'<p class="empty">لا توجد بيانات بعد</p>';
-    q("bk").innerHTML=bkHTML(d.breakdowns);
+    q("bk").innerHTML=bkHTML(d.breakdowns,d.total);
     return d.total;
   }
   function setLive(st,txt){$("live").className="live"+(st==="ok"?"":" "+st);$("liveTxt").textContent=txt;}
