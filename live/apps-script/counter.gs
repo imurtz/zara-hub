@@ -5,7 +5,7 @@
  *
  * عدّل السطر التالي فقط: أسماء أعمدة الجدول التي تريد توزيعاتها، مكتوبة كما في الصف الأول تماماً.
  */
-const BREAKDOWNS = ["الجنس", "المؤهل"];
+const BREAKDOWNS = ["الجنس:", "الفئة العمرية:", "منطقة السكن:"];
 
 const DAYS = 14;              // عدد الأيام في رسم التسجيل اليومي
 const TZ = "Asia/Riyadh";
@@ -46,7 +46,7 @@ function doGet() {
       const v = String(r[col] === null || r[col] === undefined ? "" : r[col]).trim() || "غير محدد";
       m[v] = (m[v] || 0) + 1;
     });
-    return { label: label, items: Object.keys(m).map(function (k) { return { k: k, n: m[k] }; }) };
+    return { label: String(label).replace(/[:：]\s*$/, "").trim(), items: Object.keys(m).map(function (k) { return { k: k, n: m[k] }; }) };
   }).filter(Boolean);
 
   const out = JSON.stringify({
