@@ -175,7 +175,7 @@ body.screen .bar span{background:var(--tan)}
       subtitle:"الثلاثاء والأربعاء · 10 – 11 نوفمبر 2026 · قاعة الملك عبدالله",
       closed:false,
       trackers:[
-        {key:"participants",label:"المشاركون في الورشة",target:400,url:""},
+        {key:"participants",label:"المشاركون في الورشة",target:400,url:"https://script.google.com/macros/s/AKfycbyLZZZnt-RmwHn0JYkrV9j5m-4Mcb3rIFNx6XKvzq8elGC8UfDmk1rATsQya2g0WPm23Q/exec"},
         {key:"volunteers",label:"المتطوعون المشاركون",target:100,url:""},
         {key:"trainers",label:"المدربون",target:35,url:""}
       ]
@@ -220,7 +220,9 @@ body.screen .bar span{background:var(--tan)}
     const step=t=>{const k=Math.min(1,(t-t0)/dur),e=1-Math.pow(1-k,3);el.textContent=fmt(Math.round(from+(to-from)*e));if(k<1)requestAnimationFrame(step);};
     requestAnimationFrame(step);shown[key]=to;
   }
+  function trimSeries(s){if(!s)return s;let i=s.findIndex(x=>x.n>0);if(i<0)return s.slice(-7);return s.slice(Math.max(0,Math.min(i,s.length-7)));}
   function chartSVG(series,color){
+    series=trimSeries(series);
     const W=560,H=170,pad=18,n=series.length,max=Math.max(1,...series.map(s=>s.n)),bw=(W-pad*2)/n;let g="";
     series.forEach((s,i)=>{const h=Math.round((H-pad*2-14)*s.n/max),x=pad+i*bw+bw*.18,y=H-pad-h,w=bw*.64,isT=i===n-1;
       g+=`<rect x="${x.toFixed(1)}" y="${y}" width="${w.toFixed(1)}" height="${Math.max(2,h)}" rx="${Math.min(6,w/2).toFixed(1)}" fill="${color}" opacity="${isT?1:.5}"/>`;
@@ -269,7 +271,7 @@ body.screen .bar span{background:var(--tan)}
     else{q("pctBox").style.display="none";q("barBox").style.display="none";q("goal").innerHTML="";}
     q("today").textContent=fmt(d.today);q("last").innerHTML=ago(d.lastAt);
     const days=(d.series||[]).filter(s=>s.n>0).length||1;q("avg").textContent=fmt(Math.round(d.total/days));
-    q("days").textContent=d.series&&d.series.length?("آخر "+d.series.length+" يوماً"):"";
+    const shownDays=trimSeries(d.series||[]).length;q("days").textContent=shownDays?("آخر "+shownDays+" أيام"):"";
     q("chart").innerHTML=d.series&&d.series.length?chartSVG(d.series,c):'<p class="empty">لا توجد بيانات بعد</p>';
     q("bk").innerHTML=bkHTML(d.breakdowns);
     return d.total;
