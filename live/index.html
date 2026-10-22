@@ -95,6 +95,8 @@ body.closed .closed-badge{display:inline-block}
 .row .c{font-family:var(--num);font-weight:600;color:var(--teal-d);text-align:left;font-size:12.5px}
 .row .c em{font-style:normal;color:var(--soft);font-weight:500}
 .empty{color:var(--soft);font-size:13px;text-align:center;padding:18px 0;background:#F7F8F7;border-radius:14px}
+.demo-bar{background:#FBEEE0;color:#8A4F1A;border:1px solid #F0D3B4;border-radius:14px;padding:10px 14px;font-size:13.5px;text-align:center}
+.demo-bar a{color:#4B7071;font-weight:700}
 footer{text-align:center;color:var(--soft);font-size:12px;padding-top:4px}
 .toast{position:fixed;inset-inline:0;bottom:22px;margin:auto;width:max-content;max-width:calc(100% - 32px);background:var(--teal-d);color:#fff;border-radius:999px;padding:10px 18px;font-size:14px;font-weight:600;opacity:0;transform:translateY(10px);transition:.3s;pointer-events:none;z-index:9}
 .toast.on{opacity:1;transform:none}
@@ -289,7 +291,10 @@ body.screen .bar span{background:var(--tan)}
       $("updated").textContent="آخر تحديث "+new Date().toLocaleTimeString("ar-SA-u-nu-latn",{hour:"2-digit",minute:"2-digit",second:"2-digit"});
     });
   }
-  build();tick();
+  build();
+  // وضع التجربة يُعلَن بوضوح حتى لا تُقرأ أرقامه الوهمية على أنها حقيقية
+  if(P.get("demo")){const b=document.createElement("div");b.className="demo-bar";b.innerHTML='⚠️ هذه <b>بيانات توضيحية</b> وليست الأعداد الحقيقية — <a href="'+location.pathname+'">اعرض الأعداد الحقيقية</a>';document.querySelector(".wrap").prepend(b);}
+  tick();
   setInterval(()=>{if(!document.hidden)tick();},EVERY*1000);
   document.addEventListener("visibilitychange",()=>{if(!document.hidden)tick();});
   const tp=P.get("t");if(tp)setTimeout(()=>{const el=$("trk-"+tp);if(el)el.scrollIntoView({behavior:"smooth"});},600);
