@@ -34,6 +34,11 @@ header img{height:38px;width:auto;display:block}
 .live.err i{background:#B3453F;animation:none}
 @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(47,158,110,.55)}70%{box-shadow:0 0 0 9px rgba(47,158,110,0)}100%{box-shadow:0 0 0 0 rgba(47,158,110,0)}}
 .tools button{font:inherit;font-size:13px;font-weight:600;border:1px solid var(--line);background:var(--card);color:var(--teal-d);border-radius:999px;padding:7px 14px;cursor:pointer}
+.tools .snd{border-color:#B88D66;color:#8A6440;background:#F6EEE5;animation:sndHint 2.4s ease-in-out infinite}
+.tools .snd.on{animation:none;background:#E4F1EC;border-color:#2F6F5E;color:#2F6F5E}
+@keyframes sndHint{0%,100%{box-shadow:0 0 0 0 rgba(184,141,102,0)}50%{box-shadow:0 0 0 6px rgba(184,141,102,.22)}}
+.trk.flash{animation:flash 1.6s ease}
+@keyframes flash{0%{box-shadow:0 0 0 0 color-mix(in srgb,var(--c) 60%,transparent)}30%{box-shadow:0 0 0 10px color-mix(in srgb,var(--c) 25%,transparent)}100%{box-shadow:0 18px 40px -30px rgba(20,28,27,.45)}}
 .card{background:rgba(255,255,255,.9);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border:1px solid rgba(20,28,27,.06);border-radius:24px;box-shadow:0 18px 40px -30px rgba(20,28,27,.45)}
 
 /* رأس الفعالية + الإجمالي */
@@ -139,6 +144,7 @@ body.screen .bar span{background:var(--tan)}
     <img src="/assets/logo.png" alt="خيرية العوامية">
     <div class="tools">
       <span class="live" id="live"><i></i><span id="liveTxt">مباشر</span></span>
+      <button type="button" id="soundBtn" class="snd">🔔 تفعيل الصوت</button>
       <button type="button" id="shareBtn">مشاركة</button>
       <button type="button" id="screenBtn">شاشة العرض</button>
     </div>
@@ -285,13 +291,40 @@ body.screen .bar span{background:var(--tan)}
     q("bk").innerHTML=bkHTML(d.breakdowns,d.total);
     return d.total;
   }
+  let snd=false,actx=null;
+  try{snd=localStorage.getItem("zaraLiveSound")==="1";}catch(e){}
+  function ac(){if(!actx){const A=window.AudioContext||window.webkitAudioContext;if(A)actx=new A();}if(actx&&actx.state==="suspended")actx.resume();return actx;}
+  function chime(kind){
+    const a=ac();if(!a)return;const t0=a.currentTime+.02;
+    // ثلاث نغمات صاعدة بجرس واضح؛ لكل عدّاد طبقة مختلفة قليلاً ليُعرف مصدر التسجيل بالسمع
+    const base={participants:784,volunteers:659,trainers:880}[kind]||784,notes=[1,1.25,1.5,2];
+    const master=a.createGain();master.gain.value=.55;master.connect(a.destination);
+    notes.forEach((m,i)=>{const t=t0+i*.12,o=a.createOscillator(),o2=a.createOscillator(),g=a.createGain();
+      o.type="triangle";o2.type="sine";o.frequency.value=base*m;o2.frequency.value=base*m*2;
+      g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(i===notes.length-1?.9:.7,t+.012);g.gain.exponentialRampToValueAtTime(.0008,t+(i===notes.length-1?1.1:.45));
+      o.connect(g);o2.connect(g);g.connect(master);o.start(t);o2.start(t);o.stop(t+1.2);o2.stop(t+1.2);});
+  }
+  function paintSound(){const b=$("soundBtn");b.classList.toggle("on",snd);b.textContent=snd?"🔔 الصوت مفعّل":"🔔 تفعيل الصوت";}
+  $("soundBtn").onclick=()=>{snd=!snd;try{localStorage.setItem("zaraLiveSound",snd?"1":"0");}catch(e){}paintSound();if(snd)chime("participants");};
+  paintSound();
+  // بعض المتصفحات تُبقي الصوت موقوفاً حتى أول لمسة في الصفحة رغم التفعيل السابق — أول نقرة تُشغّله
+  document.addEventListener("pointerdown",()=>{if(snd)ac();},{once:true});
+  function announce(t,add){
+    const box=document.getElementById("trk-"+t.key);if(box){box.classList.remove("flash");void box.offsetWidth;box.classList.add("flash");}
+    toast("🔔 تسجيل جديد في «"+t.label+"»"+(add>1?" (+"+add+")":""));
+    if(snd)chime(t.key);
+  }
   function setLive(st,txt){$("live").className="live"+(st==="ok"?"":" "+st);$("liveTxt").textContent=txt;}
   let tt=0;function toast(m){const t=$("toast");t.textContent=m;t.classList.add("on");clearTimeout(tt);tt=setTimeout(()=>t.classList.remove("on"),3200);}
   function tick(){
     Promise.all(EV.trackers.map(t=>fetchOne(t).catch(e=>({error:true})))).then(res=>{
       let grand=0,linked=0,ok=0;
       res.forEach((d,i)=>{const t=EV.trackers[i];grand+=paint(t,d)||0;if(!d.unlinked){linked++;if(!d.error)ok++;}
-        if(last&&last[i]&&!d.error&&!d.unlinked&&!last[i].error&&!last[i].unlinked&&Math.floor(d.total/50)>Math.floor(last[i].total/50))toast("🎉 "+t.label+": "+fmt(Math.floor(d.total/50)*50));});
+        const prev=last&&last[i];
+        if(prev&&!d.error&&!d.unlinked&&!prev.error&&!prev.unlinked&&d.total>prev.total){
+          setTimeout(()=>announce(t,d.total-prev.total),i*1400);
+          if(Math.floor(d.total/50)>Math.floor(prev.total/50))setTimeout(()=>toast("🎉 "+t.label+": "+fmt(Math.floor(d.total/50)*50)),i*1400+3400);
+        }});
       last=res;animate($("grand"),"_grand",grand);
       document.title=fmt(grand)+" مسجّل — "+EV.title;document.body.classList.toggle("closed",!!EV.closed);
       if(!linked)setLive("err","غير مربوط بعد");else if(ok<linked)setLive("err","تعذّر تحديث بعض النماذج");else setLive(EV.closed?"off":"ok",EV.closed?"مغلق":"مباشر");
@@ -302,7 +335,8 @@ body.screen .bar span{background:var(--tan)}
   // وضع التجربة يُعلَن بوضوح حتى لا تُقرأ أرقامه الوهمية على أنها حقيقية
   if(P.get("demo")){const b=document.createElement("div");b.className="demo-bar";b.innerHTML='⚠️ هذه <b>بيانات توضيحية</b> وليست الأعداد الحقيقية — <a href="'+location.pathname+'">اعرض الأعداد الحقيقية</a>';document.querySelector(".wrap").prepend(b);}
   tick();
-  setInterval(()=>{if(!document.hidden)tick();},EVERY*1000);
+  // مع تفعيل الصوت تستمر المتابعة والتنبيه حتى لو كانت الصفحة في تبويب بالخلفية
+  setInterval(()=>{if(!document.hidden||snd)tick();},EVERY*1000);
   document.addEventListener("visibilitychange",()=>{if(!document.hidden)tick();});
   const tp=P.get("t");if(tp)setTimeout(()=>{const el=$("trk-"+tp);if(el)el.scrollIntoView({behavior:"smooth"});},600);
 
