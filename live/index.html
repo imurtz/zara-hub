@@ -235,7 +235,7 @@ body.screen .bar span{background:var(--tan)}
   function bkHTML(list){
     if(!list||!list.length)return '<p class="empty">لا توجد توزيعات لهذا النموذج</p>';
     return '<div class="bk">'+list.map(g=>{const sum=g.items.reduce((a,b)=>a+b.n,0)||1;
-      return `<div class="bk-group"><b>${g.label}</b>`+g.items.slice().sort((a,b)=>b.n-a.n).slice(0,8).map(it=>{const p=Math.round(it.n*100/sum);
+      return `<div class="bk-group"><b>${g.label}</b>`+g.items.slice().sort((a,b)=>b.n-a.n).slice(0,12).map(it=>{const p=Math.round(it.n*100/sum);
         return `<div class="row"><span class="t">${String(it.k).replace(/</g,"&lt;")}</span><span class="b"><span style="width:${p}%"></span></span><span class="c">${fmt(it.n)} <em>${p}%</em></span></div>`;}).join("")+`</div>`;}).join("")+'</div>';
   }
   function build(){
