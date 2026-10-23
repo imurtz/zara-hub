@@ -382,7 +382,7 @@ function resetPreview(){if(!$("fallback").hidden){$("fallback").hidden=true;$("c
 
 function setBg(h,from){
   if(!/^#?[0-9a-fA-F]{6}$|^#?[0-9a-fA-F]{3}$/.test(h.trim())){status("اكتب كود اللون بصيغة ‎#RRGGBB‎ مثل ‎#F3ECE0‎");return;}
-  h=rgbHex(hexRgb(h.trim()));bgHex=h;$("pick").value=h;if(from!=="hex")$("hex").value=h.toUpperCase();
+  h=rgbHex(hexRgb(h.trim()));bgHex=h;if($("pick"))$("pick").value=h;if(from!=="hex"&&$("hex"))$("hex").value=h.toUpperCase();
   document.querySelectorAll('input[name=theme]').forEach(r=>r.checked=THEMES[r.value].hex.toLowerCase()===h.toLowerCase());
   try{localStorage.setItem("inv-bg",h);}catch(e){}status("");resetPreview();render();
 }
