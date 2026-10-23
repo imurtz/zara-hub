@@ -7326,6 +7326,7 @@
   // هذا يسمح لصاحب التسجيل بضبط موضع صورته بنفسه من صفحة التسجيل العامة دون التأثير على بقية السجلات التي تستخدم نفس القالب
   function tmplRecordPanAdjust(f, record){
     if(!record || f.type !== "image") return { dx: 0, dy: 0, zoomMul: 1 };
+    if(tmplGenFold && tmplGenFold.recId === record.id && tmplGenFold.fields.indexOf(f) !== -1) return { dx: 0, dy: 0, zoomMul: 1 };
     var dx = record[f.key + "PanX"], dy = record[f.key + "PanY"], zm = record[f.key + "ZoomAdj"];
     return {
       dx: typeof dx === "number" ? dx : 0,
@@ -8394,7 +8395,63 @@
   function saveDesignTemplate(tmpl){
     if(_tmplSaveTimers[tmpl.id]){ clearTimeout(_tmplSaveTimers[tmpl.id]); delete _tmplSaveTimers[tmpl.id]; }
     tmplHistPush(tmpl);
+    if(tmplGenFold && tmplGenFold.tmplId === tmpl.id){ tmplGenFoldSave(tmpl); return; }
     db.collection("designTemplates").doc(tmpl.id).set(tmpl);
+  }
+  // شاشة توليد التصميم لسجل بعينه: تقريب الصورة وتحريكها داخل إطارها يُحفظ في السجل نفسه (PanX/PanY/ZoomAdj)
+  // لا في القالب — فكل تصميم يبقى بوضع صاحبه الثابت، ولا يتحرك شخص في تصميم سابق إذا ضُبط شخص آخر على نفس القالب.
+  // أثناء فتح الشاشة تُعرض القيم الفعلية (القالب × تعديل السجل) في أدوات الضبط، وعند الحفظ تُفصل: الفرق للسجل، والأصل للقالب.
+  var tmplGenFold = null;
+  function tmplGenFoldStart(){
+    tmplGenFoldEnd();
+    if(!tmplGenerateState || !tmplGenerateState.recordId) return;
+    var tmpl = findDesignTemplate(tmplGenerateState.templateId), rec = findEventRecord(tmplGenerateState.recordId);
+    if(!tmpl || !rec || !Array.isArray(tmpl.fields)) return;
+    var fold = { tmplId: tmpl.id, recId: rec.id, fields: [], base: {} };
+    tmpl.fields.forEach(function(f){
+      if(f.type !== "image") return;
+      var g = tmplGeomTarget(f), adj = tmplRecordPanAdjust(f, rec);
+      var b = { g: g, zoom: (typeof g.zoom === "number" && g.zoom > 0) ? g.zoom : 1, ox: typeof g.offsetX === "number" ? g.offsetX : 0, oy: typeof g.offsetY === "number" ? g.offsetY : 0 };
+      fold.base[f.key] = b; fold.fields.push(f);
+      g.zoom = Math.round(b.zoom * adj.zoomMul * 10000) / 10000;
+      g.offsetX = Math.max(-1, Math.min(1, b.ox + adj.dx));
+      g.offsetY = Math.max(-1, Math.min(1, b.oy + adj.dy));
+    });
+    tmplGenFold = fold;
+  }
+  function tmplGenFoldEnd(){
+    var fold = tmplGenFold; if(!fold) return;
+    tmplGenFold = null;
+    Object.keys(fold.base).forEach(function(k){ var b = fold.base[k]; b.g.zoom = b.zoom; b.g.offsetX = b.ox; b.g.offsetY = b.oy; });
+  }
+  function tmplGenFoldSave(tmpl){
+    var fold = tmplGenFold, cur = {}, patch = {};
+    Object.keys(fold.base).forEach(function(k){
+      var b = fold.base[k], g = b.g;
+      cur[k] = { zoom: g.zoom, ox: g.offsetX, oy: g.offsetY };
+      var z = (typeof g.zoom === "number" && g.zoom > 0) ? g.zoom : b.zoom;
+      patch[k + "ZoomAdj"] = Math.round(z / b.zoom * 10000) / 10000;
+      patch[k + "PanX"] = Math.round(((typeof g.offsetX === "number" ? g.offsetX : 0) - b.ox) * 10000) / 10000;
+      patch[k + "PanY"] = Math.round(((typeof g.offsetY === "number" ? g.offsetY : 0) - b.oy) * 10000) / 10000;
+      g.zoom = b.zoom; g.offsetX = b.ox; g.offsetY = b.oy;
+    });
+    try { db.collection("designTemplates").doc(tmpl.id).set(JSON.parse(JSON.stringify(tmpl))); }
+    finally {
+      Object.keys(cur).forEach(function(k){ var g = fold.base[k].g; g.zoom = cur[k].zoom; g.offsetX = cur[k].ox; g.offsetY = cur[k].oy; });
+    }
+    var all = loadEventsData(), idx = all.findIndex(function(r){ return r.id === fold.recId; });
+    if(idx === -1) return;
+    var rec = all[idx], changed = false;
+    Object.keys(patch).forEach(function(k){
+      var def = /ZoomAdj$/.test(k) ? 1 : 0, old = typeof rec[k] === "number" ? rec[k] : def;
+      if(Math.abs(old - patch[k]) > 0.00005) changed = true;
+    });
+    if(!changed) return;
+    var upd = shallowCopy(rec);
+    Object.keys(patch).forEach(function(k){ upd[k] = patch[k]; });
+    upd.updatedAt = Date.now();
+    all[idx] = upd;
+    saveEventsData(all);
   }
   function deleteDesignTemplate(id){ db.collection("designTemplates").doc(id).delete(); }
   function genTemplateId(){ return "tmpl-" + Date.now().toString(36) + Math.random().toString(36).slice(2, 8); }
@@ -10589,6 +10646,7 @@
   // يبدّل بين "تعديل القالب فارغاً" و"معاينة بسجل حقيقي" ضمن نفس الشاشة، دون المرور بقائمة القوالب
   function tmplSwitchWorkspace(templateId, recordId){
     tmplFlushSaves();
+    tmplGenFoldEnd();
     document.getElementById("tmplEditorOverlay").classList.remove("active");
     document.getElementById("tmplGenerateOverlay").classList.remove("active");
     tmplEditorState = null;
@@ -10827,11 +10885,13 @@
     tmplGenerateState = { recordId: recordId, catKey: cat.key, templateId: tid, pendingKey: "" };
     document.getElementById("tmplGenerateBody").innerHTML = "";
     tmplHistReset(findDesignTemplate(tid));
+    tmplGenFoldStart();
     renderDesignGenerateModal();
     document.getElementById("tmplGenerateOverlay").classList.add("active");
   }
   function closeDesignGenerateModal(){
     tmplFlushSaves();
+    tmplGenFoldEnd();
     document.getElementById("tmplGenerateOverlay").classList.remove("active");
     tmplGenerateState = null;
     if(_tmplHubStale){ _tmplHubStale = false; eventsFirestoreRefresh(); }
@@ -11430,6 +11490,11 @@
     if(ni < 0 || ni >= _tmplHist.stack.length) return;
     _tmplHist.idx = ni;
     tmpl.fields = JSON.parse(_tmplHist.stack[ni]);
+    if(tmplGenFold && tmplGenFold.tmplId === tmpl.id){
+      // الحقول صارت كائنات جديدة — نربط الطيّ بها (قيم السجل الفعلية محفوظة في السجل التاريخي كما عُرضت)
+      tmplGenFold.fields = [];
+      tmpl.fields.forEach(function(f){ var b = tmplGenFold.base[f.key]; if(b && f.type === "image"){ b.g = tmplGeomTarget(f); tmplGenFold.fields.push(f); } });
+    }
     _tmplHist.muted = true;
     saveDesignTemplate(tmpl);
     _tmplHist.muted = false;
@@ -13383,9 +13448,11 @@
   });
   tmplGenerateOverlayEl.addEventListener("change", function(e){
     if(e.target.id === "tmplGenSelect" && tmplGenerateState){
+      tmplFlushSaves();
       tmplGenerateState.templateId = e.target.value;
       tmplGenerateState.pendingKey = "";
       tmplHistReset(findDesignTemplate(e.target.value));
+      tmplGenFoldStart();
       renderDesignGenerateModal();
       return;
     }
