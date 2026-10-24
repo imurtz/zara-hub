@@ -246,6 +246,52 @@ body.screen .race{display:none}
 body.screen .mood{font-size:calc(var(--sh,100vh)*.024);background:rgba(255,255,255,.12);color:#F6E3CF;margin-top:calc(var(--sh,100vh)*.01)}
 body.screen .bl{width:calc(var(--sh,100vh)*.08)}
 @media (prefers-reduced-motion:reduce){.lane .rn .av,.lane .rn .crown,.bl svg{animation:none}}
+
+/* ===== القاعة تمتلئ + بوابة المفاتيح ===== */
+.hallc{padding:18px;background:#0F1517;color:#E8EDEC;border:1px solid #1E2A2D;display:grid;grid-template-columns:minmax(0,1.55fr) minmax(0,1fr);gap:18px}
+.hallc h3{margin:0;font-size:16px;color:#fff}
+.hallc .hk{font-size:12px;color:#F0B44C;font-weight:700}
+.hallc .hs{font-size:12px;color:#8FA09D;margin:2px 0 10px}
+.hall svg,.gate svg{width:100%;height:auto;display:block}
+.gate svg{max-width:340px;margin:0 auto;direction:ltr}
+.gate .ln{font-size:12.5px}
+.hall .wl{fill:none;stroke:#E8EDEC;stroke-width:2.2}
+.hall .wl2{fill:none;stroke:#3A474B;stroke-width:1.4}
+.hall .lb{font-family:"IBM Plex Sans Arabic",sans-serif;font-weight:700;font-size:15px}
+.hall .lbs{font-family:"IBM Plex Sans Arabic",sans-serif;font-size:12px;fill:#8FA09D}
+.hall .s{fill:#1E2A2D;transition:fill .8s}
+.hall .s.f.on{fill:#E8A317}.hall .s.m.on{fill:#1FB5AD}
+.hall .tb{fill:#232D2F;transition:fill .8s}.hall .tb.on{fill:#D9C3A5}
+.hall .v{fill:#232D2F;transition:fill .8s}.hall .v.on{fill:#A99CD9}
+.hall .nw{animation:seatPop 1.8s ease;transform-box:fill-box;transform-origin:center}
+@keyframes seatPop{0%{transform:scale(2.6);filter:brightness(1.8)}60%{transform:scale(1.2)}100%{transform:none}}
+.hleg{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;margin-top:10px}
+.hleg div{background:#162023;border-radius:12px;padding:7px 9px;font-size:11.5px;color:#A9B7B4}
+.hleg b{display:block;font-family:var(--num);font-size:17px;color:var(--hc)}
+.hleg b small{font-size:11px;color:#6F807D;font-weight:500}
+.hall .over{font-family:var(--num);font-size:13px;font-weight:700;fill:#F0B44C}
+.gate{display:flex;flex-direction:column;justify-content:center;border-right:1px solid #1E2A2D;padding-right:16px}
+.gate .frame{fill:none;stroke:#F0B44C;stroke-width:3}
+.gate .door{fill:#1A2427;stroke:#3A474B;stroke-width:1.5;transition:transform 2.2s cubic-bezier(.6,0,.2,1)}
+.gate .dl{transform-origin:62px 0}.gate .dr{transform-origin:298px 0}
+.gate.open .dl{transform:scaleX(.08)}.gate.open .dr{transform:scaleX(.08)}
+.gate .behind{opacity:0;transition:opacity 1.2s 1.2s}
+.gate.open .behind{opacity:1}
+.gate .lockg{transition:opacity .8s}
+.gate.open .lockg{opacity:0}
+.gate .shk{fill:none;stroke-width:6;stroke-linecap:round;transition:transform .9s cubic-bezier(.3,1.6,.5,1)}
+.gate .lk.op .shk{transform:translate(-10px,-12px) rotate(-28deg);transform-box:fill-box;transform-origin:left bottom}
+.gate .lbody{transition:fill .6s}
+.gate .lt{font-family:var(--num);font-size:13px;font-weight:700;fill:#fff}
+.gate .ln{font-family:"IBM Plex Sans Arabic",sans-serif;font-size:11px;fill:#A9B7B4}
+.gate .bt{font-family:"IBM Plex Sans Arabic",sans-serif;font-weight:700;fill:#fff}
+.keys{display:flex;align-items:center;justify-content:center;gap:8px;margin-top:8px;font-size:13px;color:#A9B7B4}
+.keys b{font-family:var(--num);font-size:22px;color:#F0B44C}
+.keys .ky{display:inline-block;font-size:22px}
+.keys .ky.bump{animation:keyIn 1s ease}
+@keyframes keyIn{0%{transform:translateY(-30px) rotate(-90deg);opacity:0}60%{transform:translateY(4px) rotate(10deg);opacity:1}100%{transform:none}}
+body.screen .hallc{display:none}
+@media (max-width:860px){.hallc{grid-template-columns:1fr;padding:14px}.gate{border-right:0;border-top:1px solid #1E2A2D;padding:14px 0 0}.hleg{grid-template-columns:repeat(2,minmax(0,1fr))}}
 </style>
 </head>
 <body>
@@ -273,6 +319,12 @@ body.screen .bl{width:calc(var(--sh,100vh)*.08)}
 
   <nav class="jump" id="jump"></nav>
   <section class="card race" id="race"><div class="race-h">🏁 سباق العدادات <span>من يصل لهدفه أولاً؟</span></div><div id="lanes"></div></section>
+  <section class="card hallc" id="hallc">
+    <div class="hall"><span class="hk">قاعة الملك عبدالله</span><h3>القاعة تمتلئ 🪑</h3><p class="hs">كل تسجيل يُضيء مقعده — المشاركات يساراً، المشاركون يميناً، المدربون على الطاولات، والمتطوعون في مواقعهم</p>
+      <div id="hallSvg"></div><div class="hleg" id="hleg"></div></div>
+    <div class="gate" id="gate"><span class="hk">مفاتيح التوظيف</span><h3>افتح البوابة 🔑</h3><p class="hs">ثلاثة أقفال — يُفتح كل قفل حين يكتمل هدف عدّاده، وتُفتح البوابة باكتمالها</p>
+      <div id="gateSvg"></div><div class="keys"><span class="ky" id="kyI">🔑</span><b id="kyN">0</b><span>مفتاحاً في الحلقة — مفتاح لكل مسجّل</span></div></div>
+  </section>
   <div class="feed" id="feed"><b>آخر النشاط</b><span id="feedTxt">بانتظار تسجيلات جديدة…</span></div>
   <div class="boards" id="boards"></div>
 
@@ -757,7 +809,8 @@ body.screen .bl{width:calc(var(--sh,100vh)*.08)}
   let lastGrand=0;
   function funPaint(grand){
     if(grand!=null)lastGrand=grand;
-    if(!mdOn||!cur)return;
+    if(!cur)return;try{hallPaint();}catch(e){console.warn(e);}
+    if(!mdOn)return;
     const ps=EV.trackers.map((t,i)=>{const d=cur[i];return t.target&&d&&!d.error&&!d.unlinked?Math.min(1,(d.total||0)/t.target):null;});
     const best=Math.max(...ps.filter(p=>p!=null),0);
     EV.trackers.forEach((t,i)=>{const ln=document.querySelector(`[data-ln="${t.key}"]`);if(!ln)return;const p=ps[i]||0;
@@ -782,6 +835,108 @@ body.screen .bl{width:calc(var(--sh,100vh)*.08)}
       L.appendChild(b);setTimeout(()=>b.remove(),10500);},k*380);
   }
   if(P.get("cele"))setTimeout(()=>balloons(EV.trackers[1],4),2600);
+
+  /* ===== القاعة تمتلئ: مخطط قاعة الملك عبدالله (حسب كروكي الخطة الإعلامية) — كل مسجّل يُضيء مقعده =====
+     200 مقعد للإناث يساراً و200 للذكور يميناً (تُملأ من الصف الأمامي)، 30 طاولة مدرب على الجانبين + 5 على المنصة،
+     و100 موقع للمتطوعين موزعة على التسجيل والبوابة والأبواب والبوثات ومنطقة التصوير */
+  const HALL={f:[],m:[],t:[],v:[]};
+  (function buildHall(){
+    let g="";
+    const pat='<defs><pattern id="hch" width="12" height="12" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="12" stroke="#2A3538" stroke-width="2"/></pattern></defs>';
+    g+='<rect class="wl" x="10" y="10" width="800" height="940" rx="4"/>';
+    g+='<rect x="680" y="10" width="130" height="250" fill="url(#hch)"/><line class="wl" x1="680" y1="260" x2="810" y2="260"/>';
+    g+='<rect class="wl" x="80" y="10" width="600" height="560" rx="3"/>';
+    g+='<rect x="270" y="28" width="220" height="44" rx="11" fill="#F0B44C"/><text class="lb" x="380" y="56" text-anchor="middle" fill="#101619">المنصة والعرض</text>';
+    // مقاعد المنصة (5 مدربين)
+    for(let i=0;i<5;i++)HALL.t.push({x:320+i*30,y:92,c:1});
+    for(let i=0;i<15;i++){HALL.t.push({x:95,y:106+i*29});HALL.t.push({x:603,y:106+i*29});}
+    // ترتيب امتلاء المدربين: الطاولات من الأمام يساراً ويميناً بالتناوب، ثم المنصة
+    HALL.t=HALL.t.slice(5).concat(HALL.t.slice(0,5));
+    for(let r=0;r<20;r++)for(let c=0;c<10;c++){HALL.f.push({x:177+c*18,y:118+r*21.4});HALL.m.push({x:421+c*18,y:118+r*21.4});}
+    // الإناث يساراً يمتلئن من جهة الممر (الأقرب للوسط) — والذكور كذلك
+    HALL.f.forEach((p,i)=>{const r=Math.floor(i/10),c=i%10;p.x=339-c*18;});
+    g+='<text class="lbs" x="258" y="556" text-anchor="middle">المشاركات · إناث</text><text class="lbs" x="502" y="556" text-anchor="middle">المشاركون · ذكور</text>';
+    g+='<text class="over" id="ovF" x="258" y="104" text-anchor="middle"></text><text class="over" id="ovM" x="502" y="104" text-anchor="middle"></text>';
+    // البوابة الداخلية
+    g+='<rect x="350" y="566" width="60" height="8" fill="#0F1517"/><path d="M350 570 q0 26 30 26 M410 570 q0 26 -30 26" fill="none" stroke="#F0B44C" stroke-width="2.4"/><path d="M380 690 V604" stroke="#F0B44C" stroke-width="1.6" stroke-dasharray="6 5"/><path d="M40 790 H380 V690" fill="none" stroke="#F0B44C" stroke-width="1.6" stroke-dasharray="6 5"/>';
+    g+='<text class="lbs" x="380" y="612" text-anchor="middle" dy="0" style="display:none">البوابة</text>';
+    // الأبواب الخارجية
+    g+='<rect x="6" y="745" width="10" height="90" fill="#0F1517"/><path d="M10 745 q34 0 34 32 M10 835 q34 0 34 -32" fill="none" stroke="#F0B44C" stroke-width="2.4"/>';
+    g+='<text class="lbs" x="560" y="760" text-anchor="middle" style="font-size:22px;fill:#5E6E6B;font-weight:700">اللوبي</text>';
+    g+='<rect x="100" y="602" width="190" height="34" rx="8" fill="#E8EDEC"/><text class="lb" x="195" y="625" text-anchor="middle" fill="#101619">تسجيل الذكور</text>';
+    g+='<rect x="100" y="896" width="190" height="34" rx="8" fill="#E8EDEC"/><text class="lb" x="195" y="919" text-anchor="middle" fill="#101619">تسجيل الإناث</text>';
+    for(let i=0;i<5;i++)g+=`<rect x="${352+i*86}" y="896" width="72" height="40" rx="5" fill="rgba(240,180,76,.08)" stroke="#F0B44C" stroke-width="1.4" stroke-dasharray="5 4"/>`;
+    g+='<text class="lbs" x="567" y="887" text-anchor="middle" style="display:none">بوثات الرعاة</text>';
+    g+='<rect x="712" y="470" width="64" height="54" rx="12" fill="#14706C"/><g transform="translate(728,481)" fill="none" stroke="#fff" stroke-width="2.2"><rect x="0" y="6" width="32" height="22" rx="4"/><circle cx="16" cy="17" r="6"/><path d="M10 6l3-5h6l3 5"/></g><text class="lbs" x="744" y="545" text-anchor="middle">التصوير</text>';
+    // مواقع المتطوعين
+    const Z=[[],[],[],[],[],[]];
+    for(let r=0;r<2;r++)for(let c=0;c<10;c++)Z[0].push({x:112+c*18,y:654+r*18});        // عند تسجيل الذكور
+    for(let r=0;r<2;r++)for(let c=0;c<10;c++)Z[1].push({x:112+c*18,y:860+r*18});        // عند تسجيل الإناث
+    for(let r=0;r<3;r++)for(let c=0;c<5;c++)Z[2].push({x:430+c*18,y:598+r*18});         // البوابة الداخلية
+    for(let r=0;r<5;r++)for(let c=0;c<3;c++)Z[3].push({x:30+c*18,y:650+r*18});          // الأبواب الخارجية
+    for(let b=0;b<5;b++)for(let c=0;c<4;c++)Z[4].push({x:364+b*86+c*16,y:878});          // البوثات
+    for(let r=0;r<5;r++)for(let c=0;c<2;c++)Z[5].push({x:728+c*32,y:300+r*30});          // منطقة التصوير
+    const mx=Math.max(...Z.map(z=>z.length));for(let i=0;i<mx;i++)Z.forEach(z=>{if(z[i])HALL.v.push(z[i]);});
+    HALL.f.forEach((p,i)=>g+=`<circle class="s f" data-h="f${i}" cx="${p.x}" cy="${p.y.toFixed(1)}" r="6"/>`);
+    HALL.m.forEach((p,i)=>g+=`<circle class="s m" data-h="m${i}" cx="${p.x}" cy="${p.y.toFixed(1)}" r="6"/>`);
+    HALL.t.forEach((p,i)=>g+=p.c?`<circle class="tb" data-h="t${i}" cx="${p.x}" cy="${p.y}" r="8"/>`:`<rect class="tb" data-h="t${i}" x="${p.x}" y="${p.y}" width="62" height="17" rx="3"/>`);
+    HALL.v.forEach((p,i)=>g+=`<circle class="v" data-h="v${i}" cx="${p.x}" cy="${p.y}" r="5.5"/>`);
+    $("hallSvg").innerHTML=`<svg viewBox="0 0 820 960" role="img" aria-label="مخطط القاعة">${pat}${g}</svg>`;
+    ["f","m","t","v"].forEach(k=>HALL[k].forEach((p,i)=>p.el=document.querySelector(`[data-h="${k}${i}"]`)));
+  })();
+  const hallShown={f:-1,m:-1,t:-1,v:-1};
+  function hallLight(k,n){
+    const arr=HALL[k],lit=Math.min(n,arr.length),was=hallShown[k];
+    arr.forEach((p,i)=>{const on=i<lit;if(on!==p.el.classList.contains("on"))p.el.classList.toggle("on",on);
+      if(on&&was>=0&&i>=was){p.el.classList.remove("nw");void p.el.getBBox;p.el.classList.add("nw");setTimeout(()=>p.el.classList.remove("nw"),1900);}});
+    hallShown[k]=lit;
+  }
+  function genderSplit(d){
+    const tot=(d&&d.total)||0;let f=0,m=0;
+    const g=d&&(d.breakdowns||[]).find(x=>/الجنس|النوع/.test(x.label||""));
+    if(g)g.items.forEach(it=>{const k=String(it.k);if(/أنث|انث|إناث|اناث/.test(k))f+=it.n;else if(/ذكر|ذكور/.test(k))m+=it.n;});
+    let rest=Math.max(0,tot-f-m);f+=Math.ceil(rest/2);m+=Math.floor(rest/2);
+    return{f,m};
+  }
+  /* ===== بوابة مفاتيح التوظيف: ثلاثة أقفال — قفل لكل عدّاد، يُفتح بتحقق هدفه ===== */
+  (function buildGate(){
+    const Y=[128,198,268];
+    let g='<defs><radialGradient id="gglow" cx="50%" cy="55%" r="60%"><stop offset="0" stop-color="#F0B44C" stop-opacity=".55"/><stop offset="1" stop-color="#F0B44C" stop-opacity="0"/></radialGradient></defs>';
+    g+='<g class="behind"><rect x="62" y="80" width="236" height="240" fill="#14231F"/><rect x="62" y="80" width="236" height="240" fill="url(#gglow)"/><text class="bt" x="180" y="185" text-anchor="middle" style="font-size:30px">جاهزين 🎉</text><text class="bt" x="180" y="222" text-anchor="middle" style="font-size:16px;fill:#F0B44C">نلقاكم 10 نوفمبر</text></g>';
+    g+='<rect class="door dl" x="62" y="80" width="118" height="240"/><rect class="door dr" x="180" y="80" width="118" height="240"/>';
+    g+='<path class="frame" d="M40 322 V92 Q180 -8 320 92 V322"/><line x1="30" y1="322" x2="330" y2="322" stroke="#F0B44C" stroke-width="3"/>';
+    g+='<g class="lockg">';
+    EV.trackers.forEach((t,i)=>{const y=Y[i]||128+i*70,c=COLOR[t.key];
+      g+=`<g class="lk" data-lk="${t.key}" transform="translate(180,${y})"><path class="shk" d="M-10 0 V-9 a10 10 0 0 1 20 0 V0" stroke="#C9D2D0"/><rect class="lbody" x="-17" y="-1" width="34" height="27" rx="6" fill="${c}"/><circle cx="0" cy="10" r="3.4" fill="#0F1517"/><rect x="-1.4" y="11" width="2.8" height="8" fill="#0F1517"/>
+        <text class="lt" x="-28" y="17" text-anchor="end" data-lp="${t.key}">0%</text><text class="ln" x="28" y="17" text-anchor="start">${t.short||t.label}</text></g>`;});
+    g+='</g>';
+    $("gateSvg").innerHTML=`<svg viewBox="0 0 360 334" role="img" aria-label="بوابة المفاتيح">${g}</svg>`;
+  })();
+  const lockWas={};let gateWas=null;
+  function hallPaint(){
+    const ix=k=>EV.trackers.findIndex(t=>t.key===k),dP=cur[ix("participants")],dT=cur[ix("trainers")],dV=cur[ix("volunteers")];
+    const ok=d=>d&&!d.error&&!d.unlinked;
+    const gs=ok(dP)?genderSplit(dP):{f:0,m:0},nt=ok(dT)?dT.total||0:0,nv=ok(dV)?dV.total||0:0;
+    hallLight("f",gs.f);hallLight("m",gs.m);hallLight("t",nt);hallLight("v",nv);
+    $("ovF").textContent=gs.f>200?"+"+fmt(gs.f-200)+" فوق السعة":"";$("ovM").textContent=gs.m>200?"+"+fmt(gs.m-200)+" فوق السعة":"";
+    $("hleg").innerHTML=[["المشاركات",gs.f,200,"#E8A317"],["المشاركون",gs.m,200,"#1FB5AD"],["المدربون",nt,35,"#D9C3A5"],["المتطوعون",nv,100,"#A99CD9"]]
+      .map(([l,n,c,col])=>`<div style="--hc:${col}"><b>${fmt(n)} <small>/ ${c}</small></b>${l}</div>`).join("");
+    // الأقفال
+    let allOpen=true,grand=0;
+    EV.trackers.forEach((t,i)=>{const d=cur[i],lk=document.querySelector(`[data-lk="${t.key}"]`);if(!lk)return;
+      const n=ok(d)?d.total||0:0;grand+=n;const p=t.target?Math.min(100,Math.round(n*100/t.target)):0,open=!!P.get("unlock")||(t.target&&n>=t.target);
+      if(!open)allOpen=false;
+      lk.querySelector(`[data-lp="${t.key}"]`).textContent=open?"✔":p+"%";
+      lk.classList.toggle("op",open);lk.querySelector(".lbody").setAttribute("fill",open?"#2F9E6E":COLOR[t.key]);
+      if(lockWas[t.key]===false&&open&&snd)chime(t.key);
+      lockWas[t.key]=!!open;});
+    $("gate").classList.toggle("open",allOpen);
+    if(gateWas===false&&allOpen){confetti(["#F0B44C","#1FB5AD","#E8A317","#A99CD9","#fff"]);if(snd){chime("trainers");setTimeout(()=>chime("participants"),500);}}
+    gateWas=allOpen;
+    const kn=$("kyN"),prev=+kn.dataset.v||0;kn.textContent=fmt(grand);kn.dataset.v=grand;
+    if(grand>prev&&prev>0){const k=$("kyI");k.classList.remove("bump");void k.offsetWidth;k.classList.add("bump");}
+  }
+
   funPaint(window.__zlG);
 
 })();
