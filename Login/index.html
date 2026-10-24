@@ -20,6 +20,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&family=Cairo:wght@300;400;500;600;700;800;900&family=Tajawal:wght@400;500;700&family=Almarai:wght@400;700&family=Amiri:wght@400;700&family=Reem+Kufi:wght@400;700&display=swap" rel="stylesheet" />
 <script async src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js" onload="window.__xlsxLoaded&&window.__xlsxLoaded()"></script>
+<script src="/assets/zsave.js?v=1"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
@@ -3149,7 +3150,7 @@
   // قسمان: «التقاويم المعتمدة» (قراءة فقط) و«تصميم التقويم الميلادي للعام» (تحرير بحفظ تلقائي ثم اعتماد).
   // المحرّر صفحة مستقلة مضمَّنة كي لا تتداخل تصاميم صفحات التقويم مع تنسيقات اللوحة؛ بياناتها في
   // calendars/<السنة>/pages/* والمعتمد في calendarsApproved/<السنة>
-  var CAL_BUILD = "47";
+  var CAL_BUILD = "48";
   var calUI = { sec: "approved", year: 2027, approved: null, frameKey: "" };
   function calYears(){ var y = new Date().getFullYear(), out = [2027]; for(var i = Math.max(2028, y); i <= Math.max(2029, y + 2); i++) out.push(i); return out; }
   window.__zaraCal = {
@@ -10977,7 +10978,8 @@
     var end = new DataView(new ArrayBuffer(22));
     end.setUint32(0, 0x06054b50, true); end.setUint16(8, files.length, true); end.setUint16(10, files.length, true);
     end.setUint32(12, cdSize, true); end.setUint32(16, offset, true);
-    return new Blob(parts.concat(central, [end.buffer]), { type: "application/zip" });
+    var zb = new Blob(parts.concat(central, [end.buffer]), { type: "application/zip" });
+    return window.zsaveRegisterZip ? window.zsaveRegisterZip(zb, files) : zb;
   }
   // =====================================================================================================
   // نماذج التصاميم — قوالب عامة (خارج المناسبات) بمتغيرات يحددها صاحب النموذج: يعبّئها الموظف أو عضو المجلس
@@ -11078,7 +11080,7 @@
     return html + dsnPanelHTML(t, manage);
   }
   var _dsnLoadedOnce = false;
-  var DSN_HTML_V = "8";
+  var DSN_HTML_V = "9";
   // الإطار يأخذ ارتفاع محتواه (نفس النطاق) فلا يظهر شريط تمرير داخلي
   function dsnFitFrame(){
     var f = document.getElementById("dsnFrame"); if(!f) return;
@@ -11166,44 +11168,8 @@
       return new Promise(function(ok, no){ c.toBlob(function(b){ b ? ok(b) : no(new Error("blob")); }, "image/png"); });
     });
   }
-  // آيفون/آيباد: الصور تُرسل لنافذة المشاركة فيُختار «حفظ الصورة» فتذهب للصور مباشرة بدل تطبيق الملفات.
-  // إن انتهت صلاحية لمسة المستخدم أثناء تجهيز الصورة (سفاري يشترطها) يظهر زر واحد للحفظ بلمسة جديدة.
-  var Z_IOS = /iPhone|iPad|iPod/i.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
-  function zShareImages(files){
-    if(!Z_IOS || !navigator.share || !navigator.canShare) return Promise.resolve(false);
-    try { if(!navigator.canShare({ files: files })) return Promise.resolve(false); } catch(e){ return Promise.resolve(false); }
-    return navigator.share({ files: files }).then(function(){ return true; }, function(e){
-      if(e && e.name === "AbortError") return true;
-      if(e && e.name === "NotAllowedError") return zTapToShare(files);
-      return false;
-    });
-  }
-  function zTapToShare(files){
-    return new Promise(function(res){
-      var o = document.createElement("div");
-      o.style.cssText = "position:fixed;inset:0;z-index:99999;background:rgba(15,21,23,.45);display:flex;align-items:flex-end;justify-content:center;padding:18px;font-family:inherit";
-      o.innerHTML = '<div style="background:#fff;border-radius:22px;padding:18px;width:100%;max-width:420px;text-align:center;box-shadow:0 20px 60px -20px rgba(0,0,0,.5)">' +
-        '<div style="font-size:15px;font-weight:700;color:#324C4B;margin-bottom:4px">' + (files.length > 1 ? files.length + " صور جاهزة" : "الصورة جاهزة") + '</div>' +
-        '<div style="font-size:12.5px;color:#6B7775;margin-bottom:14px">اضغط ثم اختر «حفظ ' + (files.length > 1 ? "الصور" : "الصورة") + '» لتُحفظ في تطبيق الصور</div>' +
-        '<button type="button" data-z="go" style="width:100%;border:0;border-radius:14px;background:#4B7071;color:#fff;font:inherit;font-size:15px;font-weight:700;padding:13px">📥 حفظ في الصور</button>' +
-        '<button type="button" data-z="x" style="margin-top:8px;border:0;background:none;color:#6B7775;font:inherit;font-size:13px;padding:6px">إلغاء</button></div>';
-      document.body.appendChild(o);
-      o.addEventListener("click", function(e){
-        var b = e.target.closest("[data-z]"); if(!b) return;
-        o.remove();
-        if(b.dataset.z === "x"){ res(true); return; }
-        navigator.share({ files: files }).then(function(){ res(true); }, function(err){ res(!!(err && err.name === "AbortError")); });
-      });
-    });
-  }
+  // على آيفون تُحوَّل تنزيلات الصور تلقائياً لنافذة «حفظ في الصور» (/assets/zsave.js)
   function dsnSave(t, blob, name){
-    if(Z_IOS && /\.png$/i.test(name)){
-      zShareImages([new File([blob], name, { type: "image/png" })]).then(function(ok){ if(!ok) dsnSaveFile(blob, name); });
-      return;
-    }
-    dsnSaveFile(blob, name);
-  }
-  function dsnSaveFile(blob, name){
     var a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = name;
     document.body.appendChild(a); a.click(); a.remove(); setTimeout(function(){ URL.revokeObjectURL(a.href); }, 8000);
   }
@@ -11218,10 +11184,7 @@
       if(i >= rows.length){
         dsnUI.busy = false; dsnRender();
         if(!files.length){ showToast("تعذّر توليد النسخ"); return; }
-        if(Z_IOS && files.length <= 50){
-          var imgs = files.map(function(f){ return new File([f.data], f.name, { type: "image/png" }); });
-          zShareImages(imgs).then(function(ok){ if(!ok) dsnSaveFile(tmplZipStore(files), dsnSafeName(t.name || "نموذج") + " (" + files.length + ").zip"); });
-        } else dsnSave(t, tmplZipStore(files), dsnSafeName(t.name || "نموذج") + " (" + files.length + ").zip");
+        dsnSave(t, tmplZipStore(files), dsnSafeName(t.name || "نموذج") + " (" + files.length + ").zip");
         showToast("✔ تم تجهيز " + files.length + " نسخة");
         return;
       }
