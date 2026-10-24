@@ -181,6 +181,10 @@ body.screen .event .grand .k{font-size:calc(var(--sh,100vh)*.022)}
 /* ===== لمسات بصرية: عدّ تنازلي، حلقة نسبة الهدف، شريط آخر النشاط، احتفال المحطات ===== */
 .cd{display:inline-flex;align-items:center;gap:8px;margin-top:10px;background:#EEF3F3;color:var(--teal-d);border-radius:999px;padding:5px 6px 5px 14px;font-size:13px;font-weight:600}
 .cd[hidden]{display:none}
+.cds{display:flex;flex-wrap:wrap;gap:0 8px}
+.cd.reg{background:var(--tan-t);color:var(--tan-d)}
+.cd.reg b{background:var(--tan-d)}
+.cd.reg.done b{background:#8A9593}
 .cd b{font-family:var(--num);background:var(--teal);color:#fff;border-radius:999px;padding:2px 11px;font-size:13.5px}
 .cd.today b{background:var(--tan)}
 .big .pct{display:flex;align-items:center;gap:10px}
@@ -231,7 +235,7 @@ body.screen.rot .cele .box{transform:rotate(90deg) scale(1.3)}
       <span class="kicker">عدّاد التسجيل المباشر</span>
       <h1 id="title">—</h1>
       <p class="sub" id="sub"></p>
-      <div><span class="cd" id="cd" hidden></span></div>
+      <div class="cds"><span class="cd reg" id="cdReg" hidden></span><span class="cd" id="cd" hidden></span></div>
       <span class="closed-badge">✔ اكتمل التسجيل — هذه هي الأعداد النهائية</span>
     </div>
     <div class="grand"><div class="v" id="grand">0</div><div class="k">إجمالي المسجلين في النماذج الثلاثة</div></div>
@@ -266,7 +270,7 @@ body.screen.rot .cele .box{transform:rotate(90deg) scale(1.3)}
     "mafatih2":{
       title:"ورشة مفاتيح التوظيف 2",
       subtitle:"الثلاثاء والأربعاء · 10 – 11 نوفمبر 2026 · قاعة الملك عبدالله",
-      start:"2026-11-10",end:"2026-11-11",
+      regEnd:"2026-11-03",start:"2026-11-10",end:"2026-11-11",
       closed:false,
       trackers:[
         {key:"participants",label:"المشاركون في الورشة",short:"المشاركون",target:400,url:"https://script.google.com/macros/s/AKfycbyLZZZnt-RmwHn0JYkrV9j5m-4Mcb3rIFNx6XKvzq8elGC8UfDmk1rATsQya2g0WPm23Q/exec"},
@@ -503,10 +507,16 @@ body.screen.rot .cele .box{transform:rotate(90deg) scale(1.3)}
 
 
   /* ===== عدّ تنازلي للفعالية ===== */
+  function dmy(iso){const d=new Date(iso+"T00:00:00");return d.getDate()+" "+["يناير","فبراير","مارس","أبريل","مايو","يونيو","يوليو","أغسطس","سبتمبر","أكتوبر","نوفمبر","ديسمبر"][d.getMonth()];}
   function dayWord(n){return n===1?"يوم واحد":n===2?"يومان":(n>=3&&n<=10)?n+" أيام":n+" يوماً";}
   function paintCd(){
-    const el=$("cd");if(!EV.start||EV.closed){el.hidden=true;return;}
+    const el=$("cd"),rg=$("cdReg");
     const today=new Date();today.setHours(0,0,0,0);
+    if(EV.regEnd&&!EV.closed){const r=Math.round((new Date(EV.regEnd+"T00:00:00")-today)/864e5),evGone=EV.start&&today>new Date((EV.end||EV.start)+"T00:00:00");
+      rg.hidden=!!evGone;rg.classList.toggle("done",r<0);
+      rg.innerHTML=r>0?`<span>آخر يوم للتسجيل ${dmy(EV.regEnd)} · باقي</span><b>${dayWord(r)}</b>`:r===0?`<span>التسجيل</span><b>آخر يوم اليوم</b>`:`<span>التسجيل</span><b>أُغلق ${dmy(EV.regEnd)}</b>`;}
+    else rg.hidden=true;
+    if(!EV.start||EV.closed){el.hidden=true;return;}
     const st=new Date(EV.start+"T00:00:00"),en=new Date((EV.end||EV.start)+"T00:00:00");
     const n=Math.round((st-today)/864e5);
     if(today>en){el.hidden=true;return;}
@@ -622,6 +632,7 @@ body.screen.rot .cele .box{transform:rotate(90deg) scale(1.3)}
       return{t,d,ok,total:ok?d.total:0,pct:ok&&t.target?Math.min(100,Math.round(d.total*100/t.target)):0,left:ok&&t.target?Math.max(0,t.target-d.total):0,avg:ok?Math.round(d.total/days):0};});
     const grand=rows.reduce((a,r)=>a+r.total,0),gTarget=EV.trackers.reduce((a,t)=>a+(t.target||0),0);
     const today=new Date();today.setHours(0,0,0,0);const daysLeft=EV.start?Math.round((new Date(EV.start+"T00:00:00")-today)/864e5):0;
+    const regLeft=EV.regEnd?Math.round((new Date(EV.regEnd+"T00:00:00")-today)/864e5)+1:daysLeft;
     const isDemo=!!P.get("demo"),N=1+rows.length;
     const head=`<div class="band"></div><div class="hd"><img src="/assets/logo.png"><div class="meta">رقم التقرير: <b>${ref}</b><br>تاريخ الإصدار: ${dt}<br>وقت الإصدار: <b>${tm}</b></div></div>`;
     const foot=n=>`<div class="ft"><span>صادر آلياً من بوابة زارة — جمعية العوامية الخيرية · الأرقام مجمّعة من نماذج التسجيل لحظة الإصدار</span><span>صفحة ${n} من ${N}</span></div>`+(isDemo?'<div class="wm">بيانات توضيحية — ليست حقيقية</div>':"");
@@ -629,8 +640,10 @@ body.screen.rot .cele .box{transform:rotate(90deg) scale(1.3)}
     const best=rows.filter(r=>r.ok&&r.t.target).sort((a,b)=>b.pct-a.pct)[0];
     if(best)ins.push(`أعلى نسبة إنجاز: <b>${esc(best.t.label)}</b> بنسبة ${best.pct}% من الهدف.`);
     rows.forEach(r=>{if(!r.ok)ins.push(`${esc(r.t.label)}: تعذّر جلب الأرقام لحظة الإصدار.`);else if(r.t.target&&r.left===0)ins.push(`${esc(r.t.label)}: تحقّق الهدف (${fmt(r.t.target)}).`);
-      else if(r.t.target&&daysLeft>0)ins.push(`${esc(r.t.label)}: متبقٍ ${fmt(r.left)} لبلوغ الهدف — بمعدل ${fmt(Math.ceil(r.left/daysLeft))} تسجيل يومياً حتى موعد الفعالية.`);});
-    if(daysLeft>0)ins.push(`المتبقي على موعد الفعالية: ${dayWord(daysLeft)}.`);
+      else if(r.t.target&&regLeft>0)ins.push(`${esc(r.t.label)}: متبقٍ ${fmt(r.left)} لبلوغ الهدف — بمعدل ${fmt(Math.ceil(r.left/regLeft))} تسجيل يومياً حتى إغلاق التسجيل.`);
+      else if(r.t.target)ins.push(`${esc(r.t.label)}: أُغلق التسجيل والمتبقي عن الهدف ${fmt(r.left)}.`);});
+    if(EV.regEnd)ins.push(regLeft>0?`آخر يوم للتسجيل: ${dmy(EV.regEnd)}`+(regLeft>1?` — باقي ${dayWord(regLeft-1)}.`:" — اليوم آخر يوم."):`أُغلق التسجيل في ${dmy(EV.regEnd)}.`);
+    if(daysLeft>0)ins.push(`المتبقي على موعد الفعالية (${dmy(EV.start)}): ${dayWord(daysLeft)}.`);
     const p1=`<div class="pg">${head}
       <span class="kick">تقرير عدّاد التسجيل</span><h1>${esc(EV.title)}</h1><p class="sub">${esc(EV.subtitle||"")}</p>
       <div class="grand"><div><div class="v">${fmt(grand)}</div><div class="k">إجمالي المسجلين في النماذج</div></div><div class="r">${gTarget?`الهدف الإجمالي: ${fmt(gTarget)}<br>نسبة الإنجاز: ${Math.min(100,Math.round(grand*100/gTarget))}%`:""}</div></div>
