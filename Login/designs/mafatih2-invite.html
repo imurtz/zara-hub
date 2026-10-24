@@ -405,7 +405,38 @@ $("seal").addEventListener("change",()=>{resetPreview();render();});
 $("form").addEventListener("submit",e=>e.preventDefault());
 
 let dl=null;
+  // آيفون/آيباد: الصور تُرسل لنافذة المشاركة فيُختار «حفظ الصورة» فتذهب للصور مباشرة بدل تطبيق الملفات.
+  // إن انتهت صلاحية لمسة المستخدم أثناء تجهيز الصورة (سفاري يشترطها) يظهر زر واحد للحفظ بلمسة جديدة.
+  var Z_IOS = /iPhone|iPad|iPod/i.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+  function zShareImages(files){
+    if(!Z_IOS || !navigator.share || !navigator.canShare) return Promise.resolve(false);
+    try { if(!navigator.canShare({ files: files })) return Promise.resolve(false); } catch(e){ return Promise.resolve(false); }
+    return navigator.share({ files: files }).then(function(){ return true; }, function(e){
+      if(e && e.name === "AbortError") return true;
+      if(e && e.name === "NotAllowedError") return zTapToShare(files);
+      return false;
+    });
+  }
+  function zTapToShare(files){
+    return new Promise(function(res){
+      var o = document.createElement("div");
+      o.style.cssText = "position:fixed;inset:0;z-index:99999;background:rgba(15,21,23,.45);display:flex;align-items:flex-end;justify-content:center;padding:18px;font-family:inherit";
+      o.innerHTML = '<div style="background:#fff;border-radius:22px;padding:18px;width:100%;max-width:420px;text-align:center;box-shadow:0 20px 60px -20px rgba(0,0,0,.5)">' +
+        '<div style="font-size:15px;font-weight:700;color:#324C4B;margin-bottom:4px">' + (files.length > 1 ? files.length + " صور جاهزة" : "الصورة جاهزة") + '</div>' +
+        '<div style="font-size:12.5px;color:#6B7775;margin-bottom:14px">اضغط ثم اختر «حفظ ' + (files.length > 1 ? "الصور" : "الصورة") + '» لتُحفظ في تطبيق الصور</div>' +
+        '<button type="button" data-z="go" style="width:100%;border:0;border-radius:14px;background:#4B7071;color:#fff;font:inherit;font-size:15px;font-weight:700;padding:13px">📥 حفظ في الصور</button>' +
+        '<button type="button" data-z="x" style="margin-top:8px;border:0;background:none;color:#6B7775;font:inherit;font-size:13px;padding:6px">إلغاء</button></div>';
+      document.body.appendChild(o);
+      o.addEventListener("click", function(e){
+        var b = e.target.closest("[data-z]"); if(!b) return;
+        o.remove();
+        if(b.dataset.z === "x"){ res(true); return; }
+        navigator.share({ files: files }).then(function(){ res(true); }, function(err){ res(!!(err && err.name === "AbortError")); });
+      });
+    });
+  }
 async function saveFile(name,blob,canvas){
+  if(canvas&&Z_IOS){const ok=await zShareImages([new File([blob],name,{type:"image/png"})]);if(ok){status("اختر «حفظ الصورة» لتُحفظ في الصور.");return true;}}
   if(dl){try{await dl.save({filename:name,data:blob});status("تم التنزيل: "+name);return true;}
     catch(e){if(e&&e.code==="declined"){status("أُلغي التنزيل.");return false;}}}
   // داخل بوابة زارة: تنزيل مباشر من المتصفح
@@ -453,6 +484,8 @@ $("dlAll").onclick=async()=>{
   if(!people.length)return;const b=$("dlAll");b.disabled=true;const zip=new JSZip(),base=data();
   for(let i=0;i<people.length;i++){status(`جارٍ تجهيز ${i+1} من ${people.length}…`);
     const c=exportCanvas({...base,...people[i]});zip.file(`${String(i+1).padStart(2,"0")} - ${safe(people[i].guest)}.png`,await toBlob(c));}
+  if(Z_IOS&&people.length<=50){const fs=[];for(const [n,f] of Object.entries(zip.files))fs.push(new File([await f.async("blob")],n.replace(/^.*\//,""),{type:"image/png"}));
+    if(await zShareImages(fs)){status("اختر «حفظ "+fs.length+" صور» لتُحفظ في الصور.");b.disabled=false;return;}}
   status("جارٍ ضغط الملف…");const z=await zip.generateAsync({type:"blob"});
   await saveFile("دعوات مفاتيح التوظيف 2.zip",z,null);b.disabled=false;
 };
