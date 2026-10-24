@@ -253,7 +253,8 @@ body.screen.rot .cele .box{transform:rotate(90deg) scale(1.3)}
 <div class="cele" id="cele"><div class="box"><div class="em">🎉</div><div class="t" id="celeT"></div><div class="v" id="celeV"></div><div class="s" id="celeS"></div></div></div>
 <div class="shmenu" id="shmenu">
   <button type="button" data-sh="pdf">📄<span>تقرير رسمي PDF<small>صفحات مرتبة بالأرقام والتوزيعات — جاهز للإرسال</small></span></button>
-  <button type="button" data-sh="txt">💬<span>رسالة نصية<small>ملخص سريع للواتساب</small></span></button>
+  <button type="button" data-sh="wa">💬<span>إرسال الملخص بالواتساب<small>يفتح واتساب برسالة جاهزة — اختر المحادثة وأرسل</small></span></button>
+  <button type="button" data-sh="copy">📋<span>نسخ الملخص<small>لصقه في أي تطبيق</small></span></button>
 </div>
 
 <script>
@@ -495,15 +496,20 @@ body.screen.rot .cele .box{transform:rotate(90deg) scale(1.3)}
   document.addEventListener("fullscreenchange",()=>{if(!document.fullscreenElement&&document.body.classList.contains("screen")&&!document.body.classList.contains("rot"))exitScreen();});
   // إبقاء الشاشة مضاءة يسقط عند إخفاء الصفحة — يُستعاد عند العودة
   document.addEventListener("visibilitychange",()=>{if(!document.hidden&&document.body.classList.contains("screen")&&navigator.wakeLock&&!wake)navigator.wakeLock.request("screen").then(w=>wake=w).catch(()=>{});});
-  function shareText(){if(!last)return;
+  function shareText(mode){if(!last)return;
     const lines=EV.trackers.map((t,i)=>{const d=last[i]||{};if(d.unlinked||d.error)return `• ${t.label}: —`;return `• ${t.label}: ${fmt(d.total)}`+(t.target?` من ${fmt(t.target)}`:"")+(d.today?` (+${fmt(d.today)} اليوم)`:"");});
-    const txt=`📊 ${EV.title}\n${lines.join("\n")}\n\nالعدّاد المباشر: ${location.href}`;
-    if(navigator.share)navigator.share({text:txt}).catch(()=>{});else if(navigator.clipboard)navigator.clipboard.writeText(txt).then(()=>toast("تم نسخ الرسالة — الصقها في واتساب"));}
+    const link=location.origin+location.pathname+(P.get("e")?"?e="+encodeURIComponent(P.get("e")):"");
+    const txt=`📊 ${EV.title}\n${lines.join("\n")}\n\nالعدّاد المباشر: ${link}`;
+    // واتساب مباشرة (تطبيق الجوال أو واتساب ويب/سطح المكتب) — نافذة المشاركة في ماك لا تتضمن واتساب
+    if(mode==="wa"){window.open("https://wa.me/?text="+encodeURIComponent(txt),"_blank","noopener");return;}
+    const done=()=>toast("✔ تم نسخ الملخص");
+    if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(txt).then(done).catch(()=>fallbackCopy(txt,done));else fallbackCopy(txt,done);}
+  function fallbackCopy(txt,done){const ta=document.createElement("textarea");ta.value=txt;ta.style.cssText="position:fixed;opacity:0";document.body.appendChild(ta);ta.select();try{document.execCommand("copy");done();}catch(e){toast("تعذّر النسخ");}ta.remove();}
   const shm=$("shmenu");
   $("shareBtn").onclick=e=>{e.stopPropagation();const r=$("shareBtn").getBoundingClientRect();
     shm.style.top=(r.bottom+window.scrollY+6)+"px";shm.style.left=Math.max(10,Math.min(r.left+window.scrollX,window.innerWidth-240))+"px";shm.classList.toggle("on");};
   document.addEventListener("click",e=>{if(!shm.contains(e.target))shm.classList.remove("on");});
-  shm.onclick=e=>{const b=e.target.closest("[data-sh]");if(!b)return;shm.classList.remove("on");if(b.dataset.sh==="txt")shareText();else makePdf();};
+  shm.onclick=e=>{const b=e.target.closest("[data-sh]");if(!b)return;shm.classList.remove("on");if(b.dataset.sh==="pdf")makePdf();else shareText(b.dataset.sh);};
 
 
   /* ===== عدّ تنازلي للفعالية ===== */
