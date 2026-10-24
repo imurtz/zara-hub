@@ -216,6 +216,36 @@ body.screen .feed,body.screen .cd{display:none}
 body.screen .ring{display:none}
 body.screen.rot .cele .box{transform:rotate(90deg) scale(1.3)}
 @media (max-width:860px){.ring{width:52px;height:52px}.feed{font-size:12px}}
+
+/* ===== لمسات مرحة: سباق العدادات، بالونات التسجيل، عبارة الحماس ===== */
+.mood{margin-top:6px;font-size:13px;font-weight:700;color:var(--tan-d);background:var(--tan-t);border-radius:999px;padding:4px 12px;display:inline-block;animation:feedIn .6s ease}
+.race{padding:14px 18px 10px}
+.race-h{display:flex;justify-content:space-between;align-items:center;font-size:13px;font-weight:700;color:var(--teal-d);margin-bottom:6px}
+.race-h span{font-weight:500;color:var(--soft);font-size:11.5px}
+.lane{position:relative;height:46px;margin:2px 0}
+.lane .trackl{position:absolute;top:30px;right:22px;left:30px;height:6px;border-radius:9px;background:repeating-linear-gradient(90deg,#E9EDEC 0 10px,#F4F6F5 10px 20px)}
+.lane .trackl i{position:absolute;top:0;right:0;height:100%;border-radius:9px;background:color-mix(in srgb,var(--c) 45%,#fff);transition:width 1.6s cubic-bezier(.2,.8,.2,1)}
+.lane .fin{position:absolute;left:0;top:18px;font-size:20px}
+.lane .rn{position:absolute;top:4px;right:calc(22px + (100% - 52px) * var(--p,0));transform:translateX(50%);transition:right 1.6s cubic-bezier(.2,.8,.2,1);display:flex;flex-direction:column;align-items:center;z-index:1}
+.lane .rn .av{width:32px;height:32px;border-radius:50%;background:var(--c);color:#fff;display:grid;place-items:center;box-shadow:0 6px 14px -6px var(--c);animation:hop 1.1s ease-in-out infinite}
+.lane .rn .av svg{width:17px;height:17px}
+.lane .rn .crown{position:absolute;top:-14px;font-size:15px;display:none;animation:hop 1.1s ease-in-out infinite}
+.lane.lead .rn .crown{display:block}
+.lane .rn em{position:absolute;top:8px;right:40px;font-style:normal;font-family:var(--num);font-size:12px;font-weight:700;color:var(--c);white-space:nowrap;background:rgba(255,255,255,.9);border-radius:999px;padding:1px 7px}
+.lane .rn.flip em{right:auto;left:40px}
+.lane .nm{position:absolute;right:0;top:0;font-size:11px;color:var(--soft);display:none}
+@keyframes hop{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
+.balloons{position:fixed;inset:0;pointer-events:none;overflow:hidden;z-index:15}
+.bl{position:absolute;bottom:-120px;width:46px;animation:rise var(--d,7s) cubic-bezier(.35,.1,.6,1) forwards}
+.bl svg{display:block;width:100%;height:auto;animation:sway 2.2s ease-in-out infinite alternate}
+@keyframes rise{to{transform:translateY(calc(-100vh - 220px))}}
+body.screen .bl{animation-name:riseS}
+@keyframes riseS{to{transform:translateY(calc(-1 * var(--sh,100vh) - 220px))}}
+@keyframes sway{from{transform:translateX(-14px) rotate(-6deg)}to{transform:translateX(14px) rotate(6deg)}}
+body.screen .race{display:none}
+body.screen .mood{font-size:calc(var(--sh,100vh)*.024);background:rgba(255,255,255,.12);color:#F6E3CF;margin-top:calc(var(--sh,100vh)*.01)}
+body.screen .bl{width:calc(var(--sh,100vh)*.08)}
+@media (prefers-reduced-motion:reduce){.lane .rn .av,.lane .rn .crown,.bl svg{animation:none}}
 </style>
 </head>
 <body>
@@ -238,15 +268,17 @@ body.screen.rot .cele .box{transform:rotate(90deg) scale(1.3)}
       <div class="cds"><span class="cd reg" id="cdReg" hidden></span><span class="cd" id="cd" hidden></span></div>
       <span class="closed-badge">✔ اكتمل التسجيل — هذه هي الأعداد النهائية</span>
     </div>
-    <div class="grand"><div class="v" id="grand">0</div><div class="k">إجمالي المسجلين في النماذج الثلاثة</div></div>
+    <div class="grand"><div class="v" id="grand">0</div><div class="k">إجمالي المسجلين في النماذج الثلاثة</div><div class="mood" id="mood" hidden></div></div>
   </section>
 
   <nav class="jump" id="jump"></nav>
+  <section class="card race" id="race"><div class="race-h">🏁 سباق العدادات <span>من يصل لهدفه أولاً؟</span></div><div id="lanes"></div></section>
   <div class="feed" id="feed"><b>آخر النشاط</b><span id="feedTxt">بانتظار تسجيلات جديدة…</span></div>
   <div class="boards" id="boards"></div>
 
   <footer><span id="updated">—</span> · يتحدّث تلقائياً كل 10 ثوانٍ · بوابة زارة</footer>
   <div class="scr-foot" id="scrFoot">مباشر · يتحدّث تلقائياً</div>
+  <div class="balloons" id="balloons"></div>
 </div>
 <div class="toast" id="toast"></div>
 <canvas id="confetti"></canvas>
@@ -403,7 +435,7 @@ body.screen.rot .cele .box{transform:rotate(90deg) scale(1.3)}
   function announce(t,add){
     const box=document.getElementById("trk-"+t.key);if(box){box.classList.remove("flash");void box.offsetWidth;box.classList.add("flash");}
     toast("🔔 تسجيل جديد في «"+t.label+"»"+(add>1?" (+"+add+")":""));
-    feedAdd(t,add);
+    feedAdd(t,add);balloons(t,add);
     if(snd)chime(t.key);
   }
   function setLive(st,txt){$("live").className="live"+(st==="ok"?"":" "+st);$("liveTxt").textContent=txt;}
@@ -431,7 +463,7 @@ body.screen.rot .cele .box{transform:rotate(90deg) scale(1.3)}
     let grand=0,linked=0,ok=0;
     cur.forEach(d=>{if(!d)return;if(!d.unlinked){linked++;if(!d.error&&!d.stale)ok++;}if(!d.error&&!d.unlinked)grand+=d.total||0;});
     last=cur;animate($("grand"),"_grand",grand);
-    document.title=fmt(grand)+" مسجّل — "+EV.title;document.body.classList.toggle("closed",!!EV.closed);
+    document.title=fmt(grand)+" مسجّل — "+EV.title;try{funPaint(grand);}catch(e){window.__zlG=grand;}document.body.classList.toggle("closed",!!EV.closed);
     if(!fresh)setLive("off","جارٍ التحديث…");else if(!linked)setLive("err","غير مربوط بعد");else if(ok<linked)setLive("err","تعذّر تحديث بعض النماذج");else setLive(EV.closed?"off":"ok",EV.closed?"مغلق":"مباشر");
   }
   // مراقب التحديث: شاشة العرض تُترك بلا لمس، فإن تأخر التحديث لأي سبب يُعاد الطلب تلقائياً،
@@ -709,6 +741,49 @@ body.screen.rot .cele .box{transform:rotate(90deg) scale(1.3)}
     finally{if(root)root.remove();making=false;}
   }
   window.__zlReport=reportPages;
+  /* ===== سباق العدادات: كل عدّاد عدّاء يتقدّم نحو 🏁 بنسبة ما حقّقه من هدفه، والمتصدّر يلبس التاج ===== */
+  const mdOn=!P.get("nofun");
+  if(!mdOn){$("race").style.display="none";}
+  $("lanes").innerHTML=EV.trackers.filter(t=>t.target).map(t=>`<div class="lane" data-ln="${t.key}" style="--c:${COLOR[t.key]}"><div class="trackl"><i></i></div><span class="fin">🏁</span><div class="rn"><span class="crown">👑</span><span class="av">${ICON[t.key]}</span><em></em></div></div>`).join("");
+  const MOODS=[
+    [0,["بداية حلوة 👌 أول الغيث قطرة","الانطلاقة بدأت 🚀"]],
+    [15,["ماشيين صح 👣 كمّلوا النشر","الأرقام تتحرك 📈 لا توقفون"]],
+    [35,["قرّبنا من النص 💪","الحماس يرتفع 🔥"]],
+    [50,["نص الطريق… والباقي أحلى 💪","تجاوزنا النص 🎯 شدّوا الهمة"]],
+    [75,["قربنا مرة! 🔥 باقي شوي","العد التنازلي للهدف بدأ ⏳"]],
+    [90,["على وشك! 🤩 كم تسجيل ونوصل","اللمسة الأخيرة ✨"]],
+    [100,["الهدف تحقّق 🎉 ما شاء الله","فوق الهدف 🏆 أبطال"]]];
+  let moodI=0;setInterval(()=>{moodI++;if(last)funPaint();},12000);
+  let lastGrand=0;
+  function funPaint(grand){
+    if(grand!=null)lastGrand=grand;
+    if(!mdOn||!cur)return;
+    const ps=EV.trackers.map((t,i)=>{const d=cur[i];return t.target&&d&&!d.error&&!d.unlinked?Math.min(1,(d.total||0)/t.target):null;});
+    const best=Math.max(...ps.filter(p=>p!=null),0);
+    EV.trackers.forEach((t,i)=>{const ln=document.querySelector(`[data-ln="${t.key}"]`);if(!ln)return;const p=ps[i]||0;
+      ln.style.setProperty("--p",p.toFixed(4));ln.querySelector(".trackl i").style.width=(p*100).toFixed(1)+"%";
+      ln.querySelector("em").textContent=(t.short||t.label)+" "+Math.round(p*100)+"%";
+      ln.querySelector(".rn").classList.toggle("flip",p>.62);
+      ln.classList.toggle("lead",best>0&&ps[i]===best);});
+    const gT=EV.trackers.reduce((a,t)=>a+(t.target||0),0),m=$("mood");
+    if(!gT||!fresh&&!lastGrand){m.hidden=true;return;}
+    const pc=lastGrand*100/gT;let st=MOODS[0][1];MOODS.forEach(([th,arr])=>{if(pc>=th)st=arr;});
+    let txt=st[moodI%st.length];
+    const left=gT-lastGrand;if(pc>=75&&pc<100&&left>0&&moodI%3===2)txt="باقي "+fmt(left)+" بس على الهدف 🔥";
+    if(m.textContent!==txt){m.textContent=txt;m.hidden=false;m.style.animation="none";void m.offsetWidth;m.style.animation="";}
+  }
+  /* ===== بالونة لكل تسجيل جديد بلون عدّاده ===== */
+  function balloons(t,n){
+    if(!mdOn)return;const L=$("balloons");if(!L)return;
+    for(let k=0;k<Math.min(5,n||1);k++)setTimeout(()=>{
+      const b=document.createElement("div");b.className="bl";const c=COLOR[t.key];
+      b.style.right=(6+Math.random()*82)+"%";b.style.setProperty("--d",(6+Math.random()*3).toFixed(1)+"s");
+      b.innerHTML=`<svg viewBox="0 0 46 92"><path d="M23 2C11 2 3 11.5 3 23.5 3 37 14 49 21 52l-2.5 5h9L25 52c7-3 18-15 18-28.5C43 11.5 35 2 23 2z" fill="${c}"/><ellipse cx="15" cy="16" rx="4.5" ry="7" fill="#fff" opacity=".35" transform="rotate(-20 15 16)"/><path d="M23 57c-3 8 4 13 0 20s3 10 0 14" stroke="${c}" stroke-width="1.4" fill="none" opacity=".7"/></svg>`;
+      L.appendChild(b);setTimeout(()=>b.remove(),10500);},k*380);
+  }
+  if(P.get("cele"))setTimeout(()=>balloons(EV.trackers[1],4),2600);
+  funPaint(window.__zlG);
+
 })();
 </script>
 </body>
