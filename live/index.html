@@ -177,6 +177,41 @@ body.screen .event .grand .k{font-size:calc(var(--sh,100vh)*.022)}
   .jump a b{font-size:17px}
   .row{grid-template-columns:minmax(60px,100px) minmax(0,1fr) 60px}
 }
+
+/* ===== لمسات بصرية: عدّ تنازلي، حلقة نسبة الهدف، شريط آخر النشاط، احتفال المحطات ===== */
+.cd{display:inline-flex;align-items:center;gap:8px;margin-top:10px;background:#EEF3F3;color:var(--teal-d);border-radius:999px;padding:5px 6px 5px 14px;font-size:13px;font-weight:600}
+.cd[hidden]{display:none}
+.cd b{font-family:var(--num);background:var(--teal);color:#fff;border-radius:999px;padding:2px 11px;font-size:13.5px}
+.cd.today b{background:var(--tan)}
+.big .pct{display:flex;align-items:center;gap:10px}
+.ring{width:62px;height:62px;flex:none;transform:rotate(-90deg)}
+.ring circle{fill:none;stroke-width:6}
+.ring .rb{stroke:color-mix(in srgb,var(--c) 14%,#fff)}
+.ring .rv{stroke:var(--c);stroke-linecap:round;transition:stroke-dashoffset 1.4s cubic-bezier(.2,.8,.2,1)}
+.feed{display:flex;gap:8px;overflow:hidden;align-items:center;min-height:34px;padding:7px 12px;border-radius:16px;background:rgba(255,255,255,.9);border:1px solid rgba(20,28,27,.06);font-size:12.5px;color:var(--soft)}
+.feed>b{color:var(--teal-d);white-space:nowrap;font-size:12.5px}
+.feed .it{display:inline-flex;align-items:center;gap:6px;white-space:nowrap;background:#F4F6F5;border-radius:999px;padding:3px 10px;animation:feedIn .6s ease}
+.feed .it i{width:8px;height:8px;border-radius:50%;background:var(--c);flex:none}
+.feed .it em{font-style:normal;font-family:var(--num);color:var(--ink);font-weight:700}
+@keyframes feedIn{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:none}}
+.cele{position:fixed;inset:0;z-index:20;display:grid;place-items:center;pointer-events:none;opacity:0;transition:opacity .4s}
+.cele.on{opacity:1}
+.cele .box{background:#fff;border-radius:28px;padding:26px 36px;text-align:center;box-shadow:0 30px 80px -30px rgba(20,28,27,.55);border-top:6px solid var(--c);transform:scale(.85);transition:transform .5s cubic-bezier(.2,1.4,.4,1)}
+.cele.on .box{transform:none}
+.cele .em{font-size:44px;line-height:1}
+.cele .t{font-size:15px;color:var(--soft);margin-top:8px}
+.cele .v{font-family:var(--num);font-weight:700;font-size:54px;color:var(--c);line-height:1.15}
+.cele .s{font-size:16px;font-weight:700;color:var(--ink)}
+#confetti{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:19}
+.shmenu{position:absolute;z-index:12;background:#fff;border-radius:16px;box-shadow:0 20px 50px -20px rgba(20,28,27,.45);border:1px solid var(--line);padding:6px;display:none;min-width:220px}
+.shmenu.on{display:block}
+.shmenu button{display:flex;width:100%;align-items:center;gap:10px;border:0;background:none;padding:10px 12px;border-radius:11px;font:inherit;font-size:14px;color:var(--ink);cursor:pointer;text-align:right}
+.shmenu button:hover{background:#F2F5F4}
+.shmenu button small{display:block;color:var(--soft);font-size:11.5px}
+body.screen .feed,body.screen .cd{display:none}
+body.screen .ring{display:none}
+body.screen.rot .cele .box{transform:rotate(90deg) scale(1.3)}
+@media (max-width:860px){.ring{width:52px;height:52px}.feed{font-size:12px}}
 </style>
 </head>
 <body>
@@ -196,18 +231,26 @@ body.screen .event .grand .k{font-size:calc(var(--sh,100vh)*.022)}
       <span class="kicker">عدّاد التسجيل المباشر</span>
       <h1 id="title">—</h1>
       <p class="sub" id="sub"></p>
+      <div><span class="cd" id="cd" hidden></span></div>
       <span class="closed-badge">✔ اكتمل التسجيل — هذه هي الأعداد النهائية</span>
     </div>
     <div class="grand"><div class="v" id="grand">0</div><div class="k">إجمالي المسجلين في النماذج الثلاثة</div></div>
   </section>
 
   <nav class="jump" id="jump"></nav>
+  <div class="feed" id="feed"><b>آخر النشاط</b><span id="feedTxt">بانتظار تسجيلات جديدة…</span></div>
   <div class="boards" id="boards"></div>
 
   <footer><span id="updated">—</span> · يتحدّث تلقائياً كل 10 ثوانٍ · بوابة زارة</footer>
   <div class="scr-foot" id="scrFoot">مباشر · يتحدّث تلقائياً</div>
 </div>
 <div class="toast" id="toast"></div>
+<canvas id="confetti"></canvas>
+<div class="cele" id="cele"><div class="box"><div class="em">🎉</div><div class="t" id="celeT"></div><div class="v" id="celeV"></div><div class="s" id="celeS"></div></div></div>
+<div class="shmenu" id="shmenu">
+  <button type="button" data-sh="pdf">📄<span>تقرير رسمي PDF<small>صفحات مرتبة بالأرقام والتوزيعات — جاهز للإرسال</small></span></button>
+  <button type="button" data-sh="txt">💬<span>رسالة نصية<small>ملخص سريع للواتساب</small></span></button>
+</div>
 
 <script>
 (function(){
@@ -223,6 +266,7 @@ body.screen .event .grand .k{font-size:calc(var(--sh,100vh)*.022)}
     "mafatih2":{
       title:"ورشة مفاتيح التوظيف 2",
       subtitle:"الثلاثاء والأربعاء · 10 – 11 نوفمبر 2026 · قاعة الملك عبدالله",
+      start:"2026-11-10",end:"2026-11-11",
       closed:false,
       trackers:[
         {key:"participants",label:"المشاركون في الورشة",short:"المشاركون",target:400,url:"https://script.google.com/macros/s/AKfycbyLZZZnt-RmwHn0JYkrV9j5m-4Mcb3rIFNx6XKvzq8elGC8UfDmk1rATsQya2g0WPm23Q/exec"},
@@ -301,7 +345,7 @@ body.screen .event .grand .k{font-size:calc(var(--sh,100vh)*.022)}
       <div class="trk-body">
         <div class="trk-main">
           <div class="big"><div><div class="n" data-r="n">0</div><div class="l">مسجّل حتى الآن</div></div>
-            <div class="pct" data-r="pctBox"><b data-r="pct">0%</b><span>من الهدف</span></div></div>
+            <div class="pct" data-r="pctBox"><svg class="ring" viewBox="0 0 64 64"><circle class="rb" cx="32" cy="32" r="27"/><circle class="rv" data-r="ring" cx="32" cy="32" r="27" stroke-dasharray="169.6" stroke-dashoffset="169.6"/></svg><div><b data-r="pct">0%</b><span>من الهدف</span></div></div></div>
           <div class="bar" data-r="barBox"><span data-r="bar"></span></div>
           <div class="goalmeta" data-r="goal"></div>
           <div class="minis"><div class="mini"><div class="v" data-r="today">0</div><div class="k">سجّلوا اليوم</div></div>
@@ -323,7 +367,7 @@ body.screen .event .grand .k{font-size:calc(var(--sh,100vh)*.022)}
     animate(q("n"),t.key,d.total);
     const j=document.querySelector(`[data-j="${t.key}"]`);if(j)j.textContent=fmt(d.total);
     if(t.target){const pct=Math.min(100,Math.round(d.total*100/t.target)),left=Math.max(0,t.target-d.total);
-      q("pctBox").style.display="";q("barBox").style.display="";q("pct").textContent=pct+"%";q("bar").style.width=pct+"%";
+      q("pctBox").style.display="";q("barBox").style.display="";q("pct").textContent=pct+"%";q("bar").style.width=pct+"%";q("ring").style.strokeDashoffset=(169.6*(1-pct/100)).toFixed(1);
       q("goal").innerHTML=`<span>الهدف <b>${fmt(t.target)}</b></span><span>${left?`متبقٍ <b>${fmt(left)}</b>`:"<b>✔ تحقّق الهدف</b>"}</span>`;}
     else{q("pctBox").style.display="none";q("barBox").style.display="none";q("goal").innerHTML="";}
     q("today").textContent=fmt(d.today);q("last").innerHTML=ago(d.lastAt);
@@ -354,6 +398,7 @@ body.screen .event .grand .k{font-size:calc(var(--sh,100vh)*.022)}
   function announce(t,add){
     const box=document.getElementById("trk-"+t.key);if(box){box.classList.remove("flash");void box.offsetWidth;box.classList.add("flash");}
     toast("🔔 تسجيل جديد في «"+t.label+"»"+(add>1?" (+"+add+")":""));
+    feedAdd(t,add);
     if(snd)chime(t.key);
   }
   function setLive(st,txt){$("live").className="live"+(st==="ok"?"":" "+st);$("liveTxt").textContent=txt;}
@@ -368,7 +413,9 @@ body.screen .event .grand .k{font-size:calc(var(--sh,100vh)*.022)}
     else{const box=document.getElementById("trk-"+t.key);if(box&&d.lastAt)box.querySelector('[data-r="last"]').innerHTML=ago(d.lastAt);}
     if(announceIt&&prev&&!d.error&&!d.unlinked&&!prev.error&&!prev.unlinked&&d.total>prev.total){
       announce(t,d.total-prev.total);
-      if(Math.floor(d.total/50)>Math.floor(prev.total/50))setTimeout(()=>toast("🎉 "+t.label+": "+fmt(Math.floor(d.total/50)*50)),3400);
+      const ms=t.target?[25,50,75,100].filter(m=>prev.total<t.target*m/100&&d.total>=t.target*m/100).pop():0;
+      if(ms)setTimeout(()=>celebrate(t,ms,d.total),1200);
+      else if(Math.floor(d.total/50)>Math.floor(prev.total/50))setTimeout(()=>toast("🎉 "+t.label+": "+fmt(Math.floor(d.total/50)*50)),3400);
     }
     // تعذّر جلب نموذج مؤقتاً: تبقى آخر أرقامه ظاهرة وتُعلَّم «قديمة» بدل أن تختفي من الإجمالي
     cur[i]=(d.error&&prev&&!prev.error)?Object.assign({},prev,{stale:true}):d;
@@ -444,10 +491,205 @@ body.screen .event .grand .k{font-size:calc(var(--sh,100vh)*.022)}
   document.addEventListener("fullscreenchange",()=>{if(!document.fullscreenElement&&document.body.classList.contains("screen")&&!document.body.classList.contains("rot"))exitScreen();});
   // إبقاء الشاشة مضاءة يسقط عند إخفاء الصفحة — يُستعاد عند العودة
   document.addEventListener("visibilitychange",()=>{if(!document.hidden&&document.body.classList.contains("screen")&&navigator.wakeLock&&!wake)navigator.wakeLock.request("screen").then(w=>wake=w).catch(()=>{});});
-  $("shareBtn").onclick=()=>{if(!last)return;
+  function shareText(){if(!last)return;
     const lines=EV.trackers.map((t,i)=>{const d=last[i]||{};if(d.unlinked||d.error)return `• ${t.label}: —`;return `• ${t.label}: ${fmt(d.total)}`+(t.target?` من ${fmt(t.target)}`:"")+(d.today?` (+${fmt(d.today)} اليوم)`:"");});
     const txt=`📊 ${EV.title}\n${lines.join("\n")}\n\nالعدّاد المباشر: ${location.href}`;
-    if(navigator.share)navigator.share({text:txt}).catch(()=>{});else if(navigator.clipboard)navigator.clipboard.writeText(txt).then(()=>toast("تم نسخ الرسالة — الصقها في واتساب"));};
+    if(navigator.share)navigator.share({text:txt}).catch(()=>{});else if(navigator.clipboard)navigator.clipboard.writeText(txt).then(()=>toast("تم نسخ الرسالة — الصقها في واتساب"));}
+  const shm=$("shmenu");
+  $("shareBtn").onclick=e=>{e.stopPropagation();const r=$("shareBtn").getBoundingClientRect();
+    shm.style.top=(r.bottom+window.scrollY+6)+"px";shm.style.left=Math.max(10,Math.min(r.left+window.scrollX,window.innerWidth-240))+"px";shm.classList.toggle("on");};
+  document.addEventListener("click",e=>{if(!shm.contains(e.target))shm.classList.remove("on");});
+  shm.onclick=e=>{const b=e.target.closest("[data-sh]");if(!b)return;shm.classList.remove("on");if(b.dataset.sh==="txt")shareText();else makePdf();};
+
+
+  /* ===== عدّ تنازلي للفعالية ===== */
+  function dayWord(n){return n===1?"يوم واحد":n===2?"يومان":(n>=3&&n<=10)?n+" أيام":n+" يوماً";}
+  function paintCd(){
+    const el=$("cd");if(!EV.start||EV.closed){el.hidden=true;return;}
+    const today=new Date();today.setHours(0,0,0,0);
+    const st=new Date(EV.start+"T00:00:00"),en=new Date((EV.end||EV.start)+"T00:00:00");
+    const n=Math.round((st-today)/864e5);
+    if(today>en){el.hidden=true;return;}
+    el.hidden=false;el.classList.toggle("today",n<=0);
+    el.innerHTML=n>0?`<span>باقي على الفعالية</span><b>${dayWord(n)}</b>`:`<span>الفعالية</span><b>جارية اليوم</b>`;
+  }
+  paintCd();setInterval(paintCd,60000);
+
+  /* ===== شريط آخر النشاط (تسجيلات وصلت أثناء فتح الصفحة) ===== */
+  const feed=[];
+  function feedAgo(ms){const m=Math.round((Date.now()-ms)/60000);return m<1?"الآن":m<60?"قبل "+m+" د":"قبل "+Math.round(m/60)+" س";}
+  function feedPaint(){
+    if(!feed.length)return;
+    $("feedTxt").outerHTML='<span id="feedTxt" style="display:contents">'+feed.map(f=>`<span class="it" style="--c:${COLOR[f.k]}"><i></i>${f.l} <em>+${fmt(f.n)}</em> · ${feedAgo(f.at)}</span>`).join("")+'</span>';
+  }
+  function feedAdd(t,n){feed.unshift({k:t.key,l:t.short||t.label,n,at:Date.now()});feed.length=Math.min(feed.length,6);feedPaint();}
+  setInterval(feedPaint,30000);
+
+  /* ===== احتفال المحطات: ربع الهدف، نصفه، ثلاثة أرباعه، واكتماله ===== */
+  function confetti(colors){
+    const cv=$("confetti"),cx=cv.getContext("2d"),W=cv.width=innerWidth,H=cv.height=innerHeight;
+    const ps=Array.from({length:170},()=>({x:W/2+(Math.random()-.5)*W*.3,y:H*.35,vx:(Math.random()-.5)*14,vy:-Math.random()*13-4,r:Math.random()*6+4,a:Math.random()*6.28,va:(Math.random()-.5)*.3,c:colors[Math.floor(Math.random()*colors.length)]}));
+    const t0=performance.now();
+    (function fr(t){const k=(t-t0)/1000;cx.clearRect(0,0,W,H);
+      ps.forEach(p=>{p.vy+=.32;p.vx*=.99;p.x+=p.vx;p.y+=p.vy;p.a+=p.va;cx.save();cx.globalAlpha=Math.max(0,1-k/3.6);cx.translate(p.x,p.y);cx.rotate(p.a);cx.fillStyle=p.c;cx.fillRect(-p.r/2,-p.r/4,p.r,p.r/2);cx.restore();});
+      if(k<3.6)requestAnimationFrame(fr);else cx.clearRect(0,0,W,H);})(t0);
+  }
+  let celeT=0;
+  function celebrate(t,m,total){
+    const c=$("cele");c.style.setProperty("--c",COLOR[t.key]);
+    $("celeT").textContent=t.label;$("celeV").textContent=fmt(total);
+    $("celeS").textContent=m>=100?"🏆 تحقّق الهدف كاملاً ("+fmt(t.target)+")":"وصلنا "+m+"% من الهدف";
+    c.classList.add("on");confetti([COLOR[t.key],"#B88D66","#4B7071","#F2C14E","#E8E3DD"]);
+    if(snd){chime(t.key);setTimeout(()=>chime(t.key),450);}
+    clearTimeout(celeT);celeT=setTimeout(()=>c.classList.remove("on"),5200);
+  }
+  if(P.get("cele"))setTimeout(()=>celebrate(EV.trackers[0],50,Math.round(EV.trackers[0].target/2)),1500);
+
+  /* ===== التقرير الرسمي PDF — يُبنى على الجهاز من الأرقام المعروضة لحظة الإصدار (بلا أي بيانات شخصية) ===== */
+  function loadJs(src){return new Promise((ok,no)=>{const s=document.createElement("script");s.src=src;s.onload=ok;s.onerror=()=>no(new Error("load"));document.head.appendChild(s);});}
+  let libs=null;
+  function needLibs(){return libs||(libs=Promise.all([
+    window.html2canvas?1:loadJs("https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"),
+    window.jspdf?1:loadJs("https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js")]).catch(e=>{libs=null;throw e;}));}
+  const RCSS=`
+  #rep{position:fixed;left:-14000px;top:0;direction:rtl;font-family:"IBM Plex Sans Arabic",sans-serif;color:#141C1B}
+  #rep .pg{width:794px;height:1123px;background:#fff;position:relative;overflow:hidden;box-sizing:border-box;padding:46px 52px 70px}
+  #rep .band{position:absolute;top:0;left:0;right:0;height:8px;background:linear-gradient(90deg,#B88D66,#4B7071)}
+  #rep .hd{display:flex;align-items:center;justify-content:space-between;padding-bottom:16px;border-bottom:1px solid #E4E9E8}
+  #rep .hd img{height:52px}
+  #rep .hd .meta{text-align:left;font-size:11px;color:#6B7775;line-height:1.75}
+  #rep .hd .meta b{color:#324C4B;font-family:"Readex Pro",sans-serif;font-weight:600}
+  #rep .kick{display:inline-block;margin-top:26px;font-size:12px;font-weight:700;color:#8A6440;background:#F6EEE5;border-radius:999px;padding:4px 14px}
+  #rep h1{font-size:30px;margin:10px 0 4px;color:#324C4B}
+  #rep .sub{font-size:13px;color:#6B7775;margin:0}
+  #rep .grand{margin-top:24px;display:flex;align-items:center;justify-content:space-between;background:#324C4B;color:#fff;border-radius:20px;padding:20px 26px}
+  #rep .grand .v{font-family:"Readex Pro",sans-serif;font-weight:700;font-size:46px;line-height:1}
+  #rep .grand .k{font-size:14px;opacity:.85}
+  #rep .grand .r{text-align:left;font-size:12.5px;opacity:.85;line-height:1.8}
+  #rep .cards{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:16px}
+  #rep .cd3{border:1px solid #E4E9E8;border-top:5px solid var(--c);border-radius:16px;padding:14px 16px}
+  #rep .cd3 h3{margin:0;font-size:13.5px;color:#324C4B}
+  #rep .cd3 .v{font-family:"Readex Pro",sans-serif;font-weight:700;font-size:36px;color:var(--c);line-height:1.2;margin-top:4px}
+  #rep .cd3 .g{font-size:11.5px;color:#6B7775}
+  #rep .pb{height:8px;border-radius:9px;background:#EEF1F0;overflow:hidden;margin:9px 0 5px}
+  #rep .pb span{display:block;height:100%;background:var(--c);border-radius:9px}
+  #rep .st{font-size:15px;font-weight:700;color:#324C4B;margin:28px 0 10px;display:flex;align-items:center;gap:8px}
+  #rep .st:before{content:"";width:5px;height:18px;border-radius:3px;background:#B88D66}
+  #rep table{width:100%;border-collapse:collapse;font-size:12.5px}
+  #rep th{background:#F2F5F4;color:#324C4B;font-weight:700;padding:9px 8px;text-align:center;font-size:11.5px}
+  #rep th:first-child,#rep td:first-child{text-align:right}
+  #rep td{padding:10px 8px;border-bottom:1px solid #EEF1F0;text-align:center;font-family:"Readex Pro","IBM Plex Sans Arabic",sans-serif}
+  #rep td:first-child{font-family:"IBM Plex Sans Arabic",sans-serif;font-weight:600}
+  #rep tr.tot td{font-weight:700;background:#FAFBFA;color:#324C4B}
+  #rep .dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-left:7px;vertical-align:middle}
+  #rep ul.ins{margin:0;padding:0;list-style:none;font-size:13px;line-height:2;color:#2a3634}
+  #rep ul.ins li i{display:inline-block;width:7px;height:7px;border-radius:50%;background:#B88D66;margin-left:9px;vertical-align:middle}
+  #rep .ft{position:absolute;bottom:26px;left:52px;right:52px;display:flex;justify-content:space-between;font-size:10.5px;color:#8A9593;border-top:1px solid #E4E9E8;padding-top:10px}
+  #rep .wm{position:absolute;top:44%;left:-60px;right:-60px;text-align:center;transform:rotate(-24deg);font-size:64px;font-weight:700;color:rgba(200,60,40,.10);white-space:nowrap}
+  #rep .th{display:flex;align-items:center;gap:12px;margin-top:22px}
+  #rep .th .ic{width:46px;height:46px;border-radius:14px;display:grid;place-items:center;background:var(--ct);color:var(--c)}
+  #rep .th .ic svg{width:24px;height:24px}
+  #rep .th h2{margin:0;font-size:24px;color:#324C4B}
+  #rep .kp{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:18px}
+  #rep .kp div{background:#F7F8F7;border-radius:14px;padding:12px 14px}
+  #rep .kp b{display:block;font-family:"Readex Pro",sans-serif;font-size:24px;color:#324C4B;line-height:1.3}
+  #rep .kp b.c{color:var(--c)}
+  #rep .kp span{font-size:11.5px;color:#6B7775}
+  #rep .ch{display:flex;align-items:flex-end;gap:6px;height:170px;border-bottom:1px solid #E4E9E8;padding:0 4px}
+  #rep .ch .cl{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;min-width:0}
+  #rep .ch .cl i{display:block;width:70%;background:var(--c);border-radius:6px 6px 2px 2px;opacity:.55}
+  #rep .ch .cl.t i{opacity:1}
+  #rep .ch .cl em{font-style:normal;font-family:"Readex Pro",sans-serif;font-size:10.5px;font-weight:600;color:var(--c);margin-bottom:3px}
+  #rep .chl{display:flex;gap:6px;padding:5px 4px 0}
+  #rep .chl span{flex:1;text-align:center;font-size:9.5px;color:#6B7775;font-family:"Readex Pro",sans-serif;min-width:0}
+  #rep .bks{display:grid;grid-template-columns:1fr 1fr;gap:14px 26px}
+  #rep .bkg b{display:block;font-size:13px;color:#324C4B;margin-bottom:6px}
+  #rep .bkg .rw{display:grid;grid-template-columns:110px 1fr 64px;gap:8px;align-items:center;font-size:11.5px;margin:5px 0}
+  #rep .bkg .rw .t{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  #rep .bkg .rw .b{height:8px;background:#EEF1F0;border-radius:9px;overflow:hidden}
+  #rep .bkg .rw .b span{display:block;height:100%;background:var(--c);border-radius:9px}
+  #rep .bkg .rw .c{text-align:left;font-family:"Readex Pro",sans-serif;font-weight:600;color:#324C4B}
+  #rep .bkg .rw .c em{font-style:normal;color:#8A9593;font-weight:500}
+  #rep .na{color:#6B7775;font-size:13px;background:#F7F8F7;border-radius:14px;padding:18px;text-align:center}`;
+  const esc=v=>String(v==null?"":v).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+  function agoTxt(ms){if(!ms)return"—";const m=Math.max(0,Math.round((Date.now()-ms)/60000));if(m<1)return"الآن";if(m<60)return"قبل "+m+" دقيقة";const h=Math.round(m/60);if(h<24)return"قبل "+h+" ساعة";return"قبل "+Math.round(h/24)+" يوم";}
+  function reportPages(){
+    const now=new Date(),pad=n=>String(n).padStart(2,"0");
+    const ref="ZL-"+now.getFullYear()+pad(now.getMonth()+1)+pad(now.getDate())+"-"+pad(now.getHours())+pad(now.getMinutes());
+    const dt=now.toLocaleDateString("ar-SA-u-ca-gregory-nu-latn",{weekday:"long",day:"numeric",month:"long",year:"numeric"});
+    const tm=now.toLocaleTimeString("ar-SA-u-nu-latn",{hour:"2-digit",minute:"2-digit"});
+    const rows=EV.trackers.map((t,i)=>{const d=(last&&last[i])||{},ok=!d.unlinked&&!d.error&&d.total!=null,days=((d.series||[]).filter(s=>s.n>0).length)||1;
+      return{t,d,ok,total:ok?d.total:0,pct:ok&&t.target?Math.min(100,Math.round(d.total*100/t.target)):0,left:ok&&t.target?Math.max(0,t.target-d.total):0,avg:ok?Math.round(d.total/days):0};});
+    const grand=rows.reduce((a,r)=>a+r.total,0),gTarget=EV.trackers.reduce((a,t)=>a+(t.target||0),0);
+    const today=new Date();today.setHours(0,0,0,0);const daysLeft=EV.start?Math.round((new Date(EV.start+"T00:00:00")-today)/864e5):0;
+    const isDemo=!!P.get("demo"),N=1+rows.length;
+    const head=`<div class="band"></div><div class="hd"><img src="/assets/logo.png"><div class="meta">رقم التقرير: <b>${ref}</b><br>تاريخ الإصدار: ${dt}<br>وقت الإصدار: <b>${tm}</b></div></div>`;
+    const foot=n=>`<div class="ft"><span>صادر آلياً من بوابة زارة — جمعية العوامية الخيرية · الأرقام مجمّعة من نماذج التسجيل لحظة الإصدار</span><span>صفحة ${n} من ${N}</span></div>`+(isDemo?'<div class="wm">بيانات توضيحية — ليست حقيقية</div>':"");
+    const ins=[];
+    const best=rows.filter(r=>r.ok&&r.t.target).sort((a,b)=>b.pct-a.pct)[0];
+    if(best)ins.push(`أعلى نسبة إنجاز: <b>${esc(best.t.label)}</b> بنسبة ${best.pct}% من الهدف.`);
+    rows.forEach(r=>{if(!r.ok)ins.push(`${esc(r.t.label)}: تعذّر جلب الأرقام لحظة الإصدار.`);else if(r.t.target&&r.left===0)ins.push(`${esc(r.t.label)}: تحقّق الهدف (${fmt(r.t.target)}).`);
+      else if(r.t.target&&daysLeft>0)ins.push(`${esc(r.t.label)}: متبقٍ ${fmt(r.left)} لبلوغ الهدف — بمعدل ${fmt(Math.ceil(r.left/daysLeft))} تسجيل يومياً حتى موعد الفعالية.`);});
+    if(daysLeft>0)ins.push(`المتبقي على موعد الفعالية: ${dayWord(daysLeft)}.`);
+    const p1=`<div class="pg">${head}
+      <span class="kick">تقرير عدّاد التسجيل</span><h1>${esc(EV.title)}</h1><p class="sub">${esc(EV.subtitle||"")}</p>
+      <div class="grand"><div><div class="v">${fmt(grand)}</div><div class="k">إجمالي المسجلين في النماذج</div></div><div class="r">${gTarget?`الهدف الإجمالي: ${fmt(gTarget)}<br>نسبة الإنجاز: ${Math.min(100,Math.round(grand*100/gTarget))}%`:""}</div></div>
+      <div class="cards">${rows.map(r=>`<div class="cd3" style="--c:${COLOR[r.t.key]}"><h3>${esc(r.t.label)}</h3><div class="v">${r.ok?fmt(r.total):"—"}</div>${r.t.target?`<div class="pb"><span style="width:${r.pct}%"></span></div><div class="g">${r.pct}% من الهدف ${fmt(r.t.target)}</div>`:""}</div>`).join("")}</div>
+      <div class="st">الملخص التفصيلي</div>
+      <table><tr><th>البند</th><th>المسجلون</th><th>الهدف</th><th>الإنجاز</th><th>المتبقي</th><th>اليوم</th><th>المتوسط اليومي</th><th>آخر تسجيل</th></tr>
+      ${rows.map(r=>`<tr><td><span class="dot" style="background:${COLOR[r.t.key]}"></span>${esc(r.t.label)}</td><td>${r.ok?fmt(r.total):"—"}</td><td>${r.t.target?fmt(r.t.target):"—"}</td><td>${r.t.target&&r.ok?r.pct+"%":"—"}</td><td>${r.t.target&&r.ok?fmt(r.left):"—"}</td><td>${r.ok?fmt(r.d.today||0):"—"}</td><td>${r.ok?fmt(r.avg):"—"}</td><td style="font-family:'IBM Plex Sans Arabic'">${r.ok?agoTxt(r.d.lastAt):"—"}</td></tr>`).join("")}
+      <tr class="tot"><td>الإجمالي</td><td>${fmt(grand)}</td><td>${gTarget?fmt(gTarget):"—"}</td><td>${gTarget?Math.min(100,Math.round(grand*100/gTarget))+"%":"—"}</td><td>${gTarget?fmt(Math.max(0,gTarget-grand)):"—"}</td><td>${fmt(rows.reduce((a,r)=>a+(r.ok?r.d.today||0:0),0))}</td><td>—</td><td>—</td></tr></table>
+      <div class="st">قراءة سريعة</div><ul class="ins">${ins.map(x=>"<li><i></i>"+x+"</li>").join("")}</ul>
+      ${foot(1)}</div>`;
+    const pages=[p1];
+    rows.forEach((r,i)=>{
+      const c=COLOR[r.t.key],ser=trimSeries(r.d.series||[]).slice(-14),mx=Math.max(1,...ser.map(s=>s.n));
+      const chart=ser.length?`<div class="ch">${ser.map((s,j)=>`<div class="cl${j===ser.length-1?" t":""}">${s.n?`<em>${s.n}</em>`:""}<i style="height:${Math.max(2,Math.round(140*s.n/mx))}px"></i></div>`).join("")}</div><div class="chl">${ser.map((s,j)=>{const d=new Date(s.d+"T00:00:00");return`<span>${j===ser.length-1?"اليوم":d.getDate()+"/"+(d.getMonth()+1)}</span>`;}).join("")}</div>`:'<div class="na">لا توجد بيانات يومية بعد</div>';
+      const bks=(r.d.breakdowns||[]).map(g0=>{const g=explode(g0,r.total)||g0,sum=g.den||g.items.reduce((a,b)=>a+b.n,0)||1;
+        return`<div class="bkg"><b>${esc(g.label)}${g.note?` <span style="font-weight:500;color:#8A9593;font-size:11px">— ${g.note}</span>`:""}</b>${g.items.slice().sort((a,b)=>b.n-a.n).slice(0,10).map(it=>{const p=Math.round(it.n*100/sum);return`<div class="rw"><span class="t">${esc(it.k)}</span><span class="b"><span style="width:${p}%"></span></span><span class="c">${fmt(it.n)} <em>${p}%</em></span></div>`;}).join("")}</div>`;}).join("");
+      pages.push(`<div class="pg" style="--c:${c};--ct:${c}22">${head}
+        <div class="th"><span class="ic">${ICON[r.t.key]}</span><h2>${esc(r.t.label)}</h2></div>
+        ${r.ok?`<div class="kp"><div><b class="c">${fmt(r.total)}</b><span>مسجّل حتى الإصدار</span></div><div><b>${r.t.target?r.pct+"%":"—"}</b><span>${r.t.target?"من الهدف "+fmt(r.t.target):"بلا هدف محدد"}</span></div><div><b>${fmt(r.d.today||0)}</b><span>سجّلوا اليوم</span></div><div><b>${fmt(r.avg)}</b><span>متوسط يومي</span></div></div>
+        ${r.t.target?`<div class="pb" style="height:12px;margin-top:16px"><span style="width:${r.pct}%"></span></div><div style="display:flex;justify-content:space-between;font-size:12px;color:#6B7775"><span>الهدف ${fmt(r.t.target)}</span><span>${r.left?"متبقٍ "+fmt(r.left):"✔ تحقّق الهدف"}</span></div>`:""}
+        <div class="st">التسجيل يوماً بيوم</div>${chart}
+        <div class="st">التوزيع</div>${bks?`<div class="bks">${bks}</div>`:'<div class="na">لا توجد توزيعات لهذا النموذج</div>'}`
+        :'<div class="na" style="margin-top:30px">تعذّر جلب أرقام هذا النموذج لحظة الإصدار</div>'}
+        ${foot(i+2)}</div>`);
+    });
+    return{pages,ref};
+  }
+  let making=false;
+  async function makePdf(){
+    if(making)return;if(!last||!fresh){toast("انتظر حتى تكتمل الأرقام ثم أعد المحاولة");return;}
+    making=true;toast("📄 جارٍ إعداد التقرير…");
+    let root=null;
+    try{
+      await needLibs();
+      if(!document.getElementById("repCss")){const st=document.createElement("style");st.id="repCss";st.textContent=RCSS;document.head.appendChild(st);}
+      const {pages,ref}=reportPages();
+      root=document.createElement("div");root.id="rep";root.innerHTML=pages.join("");document.body.appendChild(root);
+      await document.fonts.ready;
+      await Promise.all([...root.querySelectorAll("img")].map(im=>im.complete?1:new Promise(r=>{im.onload=im.onerror=r;})));
+      const pdf=new window.jspdf.jsPDF({unit:"mm",format:"a4",orientation:"portrait",compress:true});
+      const els=[...root.querySelectorAll(".pg")];
+      for(let i=0;i<els.length;i++){
+        const cv=await window.html2canvas(els[i],{scale:2.4,backgroundColor:"#ffffff",useCORS:true,logging:false});
+        if(i)pdf.addPage();
+        pdf.addImage(cv.toDataURL("image/jpeg",.93),"JPEG",0,0,210,297,undefined,"FAST");
+      }
+      pdf.setProperties({title:"تقرير "+EV.title,author:"بوابة زارة — جمعية العوامية الخيرية",subject:ref});
+      const name="تقرير-"+EV.title.replace(/\s+/g,"-")+"-"+new Date().toISOString().slice(0,10)+".pdf";
+      const blob=pdf.output("blob"),file=new File([blob],name,{type:"application/pdf"});
+      if(navigator.canShare&&navigator.canShare({files:[file]})&&/Android|iPhone|iPad|Mobile/i.test(navigator.userAgent)){
+        await navigator.share({files:[file],title:"تقرير "+EV.title}).catch(()=>{});
+      }else{
+        const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),4000);
+        toast("✔ تم تنزيل التقرير");
+      }
+    }catch(e){console.error(e);toast("تعذّر إعداد التقرير — تحقق من الاتصال وحاول مجدداً");}
+    finally{if(root)root.remove();making=false;}
+  }
+  window.__zlReport=reportPages;
 })();
 </script>
 </body>
