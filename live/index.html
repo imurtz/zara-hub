@@ -275,6 +275,19 @@ body.screen .bl{width:calc(var(--sh,100vh)*.08)}
 .hall .over{font-family:var(--num);font-size:13px;font-weight:700;fill:#F0B44C}
 body.screen .hallc{display:none}
 @media (max-width:860px){.hallc{padding:14px}.hall{grid-template-columns:1fr;gap:12px}.hall-m{max-width:360px;width:100%;margin:0 auto}}
+
+/* كشف التسجيل المكرر */
+.dup{margin:0 0 14px;border-radius:14px;padding:11px 14px;background:#FFF5EC;border:1px solid #F3D9BF;font-size:12px;color:#8A6440;display:flex;flex-direction:column;gap:5px}
+.dup[hidden]{display:none}
+.dup>b{font-size:13px;color:#8A4F1A}
+.dup.ok{background:#EEF6F2;border-color:#D3E8DE;color:#4E6F63;flex-direction:row;justify-content:space-between;align-items:center;flex-wrap:wrap}
+.dup.ok>b{color:var(--ok)}
+.dup .dg{display:flex;gap:8px;flex-wrap:wrap}
+.dup .dg div{background:#fff;border-radius:10px;padding:6px 10px;display:flex;align-items:baseline;gap:6px}
+.dup .dg i{font-style:normal;font-family:var(--num);font-weight:700;font-size:18px;color:#B4572A}
+.dup .dg i.m{color:#B88D66}.dup .dg i.n{color:var(--teal-d)}
+.dup em{font-style:normal;font-family:var(--num);font-weight:700;color:#8A4F1A}
+body.screen .dup{display:none}
 </style>
 </head>
 <body>
@@ -366,7 +379,8 @@ body.screen .hallc{display:none}
     if(!demo[t.key]){const c=DEMO[t.key],series=mkSeries(c.base),total=c.base.reduce((a,b)=>a+b,0);
       demo[t.key]={series,total,lastAt:Date.now()-(5+Math.random()*90)*60000,breakdowns:c.bk.map(([label,ks,ws])=>({label,items:split(total,ks,ws)}))};}
     const d=demo[t.key];if(Math.random()<DEMO[t.key].p){d.total++;d.series[d.series.length-1].n++;d.lastAt=Date.now();d.breakdowns.forEach(g=>g.items[Math.floor(Math.random()*g.items.length)].n++);}
-    return Promise.resolve(JSON.parse(JSON.stringify(Object.assign({},d,{today:d.series[d.series.length-1].n}))));
+    const dm={participants:{extra:4,groups:3,maybe:2,maybeGroups:2,by:{phone:3,email:1,name:2},checked:["phone","email","name"]},volunteers:{extra:0,groups:0,maybe:0,by:{},checked:["phone","name"]},trainers:{extra:1,groups:1,maybe:0,by:{phone:1},checked:["phone","email","name"]}}[t.key];
+    return Promise.resolve(JSON.parse(JSON.stringify(Object.assign({},d,{today:d.series[d.series.length-1].n,dups:dm}))));
   }
   function fetchOne(t){
     if(P.get("demo"))return demoOne(t);
@@ -406,6 +420,18 @@ body.screen .hallc{display:none}
       return `<div class="bk-group"><b>${g.label}${g.note?` <span style="font-weight:500;color:var(--soft);font-size:11.5px">— ${g.note}</span>`:""}</b>`+g.items.slice().sort((a,b)=>b.n-a.n).slice(0,12).map(it=>{const p=Math.round(it.n*100/sum);
         return `<div class="row"><span class="t">${String(it.k).replace(/</g,"&lt;")}</span><span class="b"><span style="width:${p}%"></span></span><span class="c">${fmt(it.n)} <em>${p}%</em></span></div>`;}).join("")+`</div>`;}).join("")+'</div>';
   }
+  // كشف التكرار (من سكربت النموذج): أعداد فقط — تطابق الجوال/الهوية/البريد = اشتباه قوي، وتطابق الاسم الكامل وحده = محتمل
+  const DUPBY={phone:"الجوال",id:"الهوية",email:"البريد",name:"الاسم"};
+  function dupHTML(d){
+    const x=d.dups;if(!x)return '<div class="dup" data-r="dup" hidden></div>';
+    const chk=(x.checked||[]).map(k=>DUPBY[k]).filter(Boolean).join("، ")||"—";
+    if(!x.extra&&!x.maybe)return `<div class="dup ok" data-r="dup"><b>✔ لا توجد حالات تسجيل مكرر</b><span>فُحص: ${chk}</span></div>`;
+    const by=Object.keys(DUPBY).filter(k=>x.by&&x.by[k]).map(k=>`${DUPBY[k]} <em>${fmt(x.by[k])}</em>`).join(" · ");
+    return `<div class="dup" data-r="dup"><b>⚠️ اشتباه تسجيل مكرر</b>
+      <div class="dg">${x.extra?`<div><i>${fmt(x.extra)}</i><span>تسجيل مكرر مؤكد تقريباً${x.groups?` (${fmt(x.groups)} شخص)`:""}</span></div>`:""}${x.maybe?`<div><i class="m">${fmt(x.maybe)}</i><span>محتمل — نفس الاسم الكامل</span></div>`:""}
+      <div><i class="n">${fmt(Math.max(0,d.total-(x.extra||0)))}</i><span>العدد بعد استبعاد المؤكد</span></div></div>
+      ${by?`<span>التطابق حسب: ${by}</span>`:""}<span>للمراجعة في جدول الردود — الصفحة لا تعرض أي بيانات شخصية</span></div>`;
+  }
   function build(){
     $("title").textContent=EV.title;$("sub").textContent=EV.subtitle||"";
     $("jump").innerHTML=EV.trackers.map(t=>`<a href="#trk-${t.key}" style="--c:${COLOR[t.key]}"><b data-j="${t.key}">0</b><span>${t.label}</span></a>`).join("");
@@ -420,6 +446,7 @@ body.screen .hallc{display:none}
           <div class="minis"><div class="mini"><div class="v" data-r="today">0</div><div class="k">سجّلوا اليوم</div></div>
             <div class="mini"><div class="v" data-r="last">—</div><div class="k">آخر تسجيل</div></div>
             <div class="mini"><div class="v" data-r="avg">0</div><div class="k">متوسط يومي</div></div></div>
+          <div class="dup" data-r="dup" hidden></div>
           <div class="sec-t">التسجيل يوماً بيوم <span data-r="days"></span></div>
           <div class="chart" data-r="chart"></div>
         </div>
@@ -444,6 +471,7 @@ body.screen .hallc{display:none}
     const shownDays=trimSeries(d.series||[]).length;q("days").textContent=shownDays?("آخر "+shownDays+" أيام"):"";
     q("chart").innerHTML=d.series&&d.series.length?chartSVG(d.series,c):'<p class="empty">لا توجد بيانات بعد</p>';
     q("bk").innerHTML=bkHTML(d.breakdowns,d.total);
+    q("dup").outerHTML=dupHTML(d);
     return d.total;
   }
   let snd=false,actx=null;
@@ -477,7 +505,7 @@ body.screen .hallc{display:none}
   const CK="zaraLive:"+(P.get("e")||"mafatih2")+(P.get("demo")?":demo":"");
   const sig={};let busy=false,cur=EV.trackers.map(()=>null),fresh=false;
   function applyOne(i,d,announceIt){
-    const t=EV.trackers[i],prev=cur[i],key=JSON.stringify([d.total,d.today,d.lastAt,d.series,d.breakdowns,!!d.unlinked,!!d.error]);
+    const t=EV.trackers[i],prev=cur[i],key=JSON.stringify([d.total,d.today,d.lastAt,d.series,d.breakdowns,d.dups,!!d.unlinked,!!d.error]);
     if(sig[t.key]!==key){sig[t.key]=key;paint(t,d);}
     else{const box=document.getElementById("trk-"+t.key);if(box&&d.lastAt)box.querySelector('[data-r="last"]').innerHTML=ago(d.lastAt);}
     if(announceIt&&prev&&!d.error&&!d.unlinked&&!prev.error&&!prev.unlinked&&d.total>prev.total){
@@ -712,6 +740,7 @@ body.screen .hallc{display:none}
     rows.forEach(r=>{if(!r.ok)ins.push(`${esc(r.t.label)}: تعذّر جلب الأرقام لحظة الإصدار.`);else if(r.t.target&&r.left===0)ins.push(`${esc(r.t.label)}: تحقّق الهدف (${fmt(r.t.target)}).`);
       else if(r.t.target&&regLeft>0)ins.push(`${esc(r.t.label)}: متبقٍ ${fmt(r.left)} لبلوغ الهدف — بمعدل ${fmt(Math.ceil(r.left/regLeft))} تسجيل يومياً حتى إغلاق التسجيل.`);
       else if(r.t.target)ins.push(`${esc(r.t.label)}: أُغلق التسجيل والمتبقي عن الهدف ${fmt(r.left)}.`);});
+    rows.forEach(r=>{const x=r.ok&&r.d.dups;if(!x)return;if(x.extra||x.maybe)ins.push(`${esc(r.t.label)}: اشتباه تكرار — ${x.extra?fmt(x.extra)+" مؤكد تقريباً":""}${x.extra&&x.maybe?" و":""}${x.maybe?fmt(x.maybe)+" محتمل بالاسم":""}؛ العدد بعد استبعاد المؤكد ${fmt(Math.max(0,r.total-(x.extra||0)))}.`);});
     if(EV.regEnd)ins.push(regLeft>0?`آخر يوم للتسجيل: ${dmy(EV.regEnd)}`+(regLeft>1?` — باقي ${dayWord(regLeft-1)}.`:" — اليوم آخر يوم."):`أُغلق التسجيل في ${dmy(EV.regEnd)}.`);
     if(daysLeft>0)ins.push(`المتبقي على موعد الفعالية (${dmy(EV.start)}): ${dayWord(daysLeft)}.`);
     const p1=`<div class="pg">${head}

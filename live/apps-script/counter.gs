@@ -81,6 +81,7 @@ function doGet() {
     lastAt: lastAt,
     series: series,
     breakdowns: breakdowns,
+    dups: findDups_(head, rows),
     updatedAt: Date.now()
   });
   cache.put("zara-counter", out, 10);
@@ -89,4 +90,62 @@ function doGet() {
 
 function json_(s) {
   return ContentService.createTextOutput(s).setMimeType(ContentService.MimeType.JSON);
+}
+
+/**
+ * كشف التسجيل المكرر — يعيد أعداداً فقط (لا اسم ولا رقم):
+ * تطابق قوي: نفس رقم الجوال أو الهوية أو البريد (بعد توحيد الصيغة: 05… = 9665… = ٠٥…).
+ * تطابق محتمل: نفس الاسم الكامل (ثلاثي فأكثر) دون تطابق قوي.
+ */
+function findDups_(head, rows) {
+  const cell = function (r, c) { return String(r[c] === null || r[c] === undefined ? "" : r[c]).trim(); };
+  const ar2en = function (s) { return String(s).replace(/[٠-٩]/g, function (d) { return "٠١٢٣٤٥٦٧٨٩".indexOf(d); }).replace(/[۰-۹]/g, function (d) { return "۰۱۲۳۴۵۶۷۸۹".indexOf(d); }); };
+  const digits = function (s) { return ar2en(s).replace(/\D/g, ""); };
+  const nName = function (s) {
+    return String(s).replace(/[ً-ْـ]/g, "").replace(/[أإآ]/g, "ا").replace(/ة/g, "ه").replace(/ى/g, "ي")
+      .replace(/\s+(بن|بنت)\s+/g, " ").replace(/\s+/g, " ").trim();
+  };
+  const kinds = [
+    { key: "phone", re: /جوال|هاتف|موبايل|واتس|تواصل|phone|mobile/i, f: function (v) { const d = digits(v); return d.length >= 9 ? d.slice(-9) : ""; } },
+    { key: "id", re: /هوي|سجل مدني|السجل المدني|إقامة|اقامة|national/i, f: function (v) { const d = digits(v); return d.length >= 8 ? d : ""; } },
+    { key: "email", re: /بريد|ايميل|إيميل|email|e-mail/i, f: function (v) { v = String(v).trim().toLowerCase(); return /@/.test(v) ? v : ""; } }
+  ];
+  const nameCols = [];
+  head.forEach(function (h, c) { if (c && /اسم|الاسم|name/i.test(h) && !/مستخدم|جهة|منشأة|مدرسة|جامعة/.test(h)) nameCols.push(c); });
+  const cols = [];
+  head.forEach(function (h, c) { if (!c) return; kinds.forEach(function (k) { if (k.re.test(h)) cols.push({ c: c, k: k }); }); });
+
+  const parent = rows.map(function (_, i) { return i; });
+  const find = function (i) { while (parent[i] !== i) { parent[i] = parent[parent[i]]; i = parent[i]; } return i; };
+  const union = function (a, b) { a = find(a); b = find(b); if (a !== b) parent[b] = a; };
+  const by = { phone: 0, id: 0, email: 0, name: 0 };
+
+  cols.forEach(function (col) {
+    const seen = {};
+    rows.forEach(function (r, i) {
+      const v = col.k.f(cell(r, col.c)); if (!v) return;
+      if (seen[v] !== undefined) { if (find(seen[v]) !== find(i)) by[col.k.key]++; union(seen[v], i); } else seen[v] = i;
+    });
+  });
+  const strong = {};
+  rows.forEach(function (_, i) { const p = find(i); strong[p] = (strong[p] || 0) + 1; });
+  let extra = 0, groups = 0;
+  Object.keys(strong).forEach(function (p) { if (strong[p] > 1) { groups++; extra += strong[p] - 1; } });
+
+  // الاسم: يُعدّ احتمالاً فقط إن لم يكن الصفّان مرتبطين أصلاً بتطابق قوي
+  let maybe = 0, maybeGroups = 0;
+  if (nameCols.length) {
+    const seenN = {};
+    rows.forEach(function (r, i) {
+      const n = nName(nameCols.map(function (c) { return cell(r, c); }).join(" "));
+      if (n.split(" ").length < 3) return;
+      (seenN[n] = seenN[n] || []).push(i);
+    });
+    Object.keys(seenN).forEach(function (n) {
+      const ids = seenN[n]; if (ids.length < 2) return;
+      const roots = {}; ids.forEach(function (i) { roots[find(i)] = 1; });
+      const k = Object.keys(roots).length; if (k > 1) { maybe += k - 1; maybeGroups++; by.name += k - 1; }
+    });
+  }
+  return { extra: extra, groups: groups, maybe: maybe, maybeGroups: maybeGroups, by: by, checked: cols.map(function (x) { return x.k.key; }).concat(nameCols.length ? ["name"] : []) };
 }
