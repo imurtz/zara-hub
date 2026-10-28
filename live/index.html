@@ -351,7 +351,7 @@ body.screen .dup{display:none}
       regEnd:"2026-11-03",start:"2026-11-10",end:"2026-11-11",
       closed:false,
       trackers:[
-        {key:"participants",label:"المشاركون في الورشة",short:"المشاركون",target:400,url:"https://script.google.com/macros/s/AKfycbyLZZZnt-RmwHn0JYkrV9j5m-4Mcb3rIFNx6XKvzq8elGC8UfDmk1rATsQya2g0WPm23Q/exec"},
+        {key:"participants",label:"المشاركون في الورشة",short:"المشاركون",target:300,url:"https://script.google.com/macros/s/AKfycbyLZZZnt-RmwHn0JYkrV9j5m-4Mcb3rIFNx6XKvzq8elGC8UfDmk1rATsQya2g0WPm23Q/exec"},
         {key:"volunteers",label:"المتطوعون المشاركون",short:"المتطوعون",target:100,url:"https://script.google.com/macros/s/AKfycbz1g5hzz5uuhtMFPJIyE3PQ_z1FblLhbB9ZgtXVj1AZwlm-ynPcyc_MAAht1hj5FvQc/exec"},
         {key:"trainers",label:"المدربون",target:35,url:"https://script.google.com/macros/s/AKfycbwNf1Ng0ibm1xbcrgrM2PotkLyL4lEexeECH3m1AXWgB0H5as05wcFsx7jyBJCCz52f/exec"}
       ]
@@ -429,7 +429,7 @@ body.screen .dup{display:none}
     const by=Object.keys(DUPBY).filter(k=>x.by&&x.by[k]).map(k=>`${DUPBY[k]} <em>${fmt(x.by[k])}</em>`).join(" · ");
     return `<div class="dup" data-r="dup"><b>⚠️ اشتباه تسجيل مكرر</b>
       <div class="dg">${x.extra?`<div><i>${fmt(x.extra)}</i><span>تسجيل مكرر مؤكد تقريباً${x.groups?` (${fmt(x.groups)} شخص)`:""}</span></div>`:""}${x.maybe?`<div><i class="m">${fmt(x.maybe)}</i><span>محتمل — نفس الاسم الكامل</span></div>`:""}
-      <div><i class="n">${fmt(Math.max(0,d.total-(x.extra||0)))}</i><span>العدد بعد استبعاد المؤكد</span></div></div>
+      <div><i class="n">${fmt(Math.max(0,d.total-(x.extra||0)))}</i><span>العدد بعد استبعاد المكرر</span></div></div>
       ${by?`<span>التطابق حسب: ${by}</span>`:""}<span>للمراجعة في جدول الردود — الصفحة لا تعرض أي بيانات شخصية</span></div>`;
   }
   function build(){
@@ -740,7 +740,7 @@ body.screen .dup{display:none}
     rows.forEach(r=>{if(!r.ok)ins.push(`${esc(r.t.label)}: تعذّر جلب الأرقام لحظة الإصدار.`);else if(r.t.target&&r.left===0)ins.push(`${esc(r.t.label)}: تحقّق الهدف (${fmt(r.t.target)}).`);
       else if(r.t.target&&regLeft>0)ins.push(`${esc(r.t.label)}: متبقٍ ${fmt(r.left)} لبلوغ الهدف — بمعدل ${fmt(Math.ceil(r.left/regLeft))} تسجيل يومياً حتى إغلاق التسجيل.`);
       else if(r.t.target)ins.push(`${esc(r.t.label)}: أُغلق التسجيل والمتبقي عن الهدف ${fmt(r.left)}.`);});
-    rows.forEach(r=>{const x=r.ok&&r.d.dups;if(!x)return;if(x.extra||x.maybe)ins.push(`${esc(r.t.label)}: اشتباه تكرار — ${x.extra?fmt(x.extra)+" مؤكد تقريباً":""}${x.extra&&x.maybe?" و":""}${x.maybe?fmt(x.maybe)+" محتمل بالاسم":""}؛ العدد بعد استبعاد المؤكد ${fmt(Math.max(0,r.total-(x.extra||0)))}.`);});
+    rows.forEach(r=>{const x=r.ok&&r.d.dups;if(!x)return;if(x.extra||x.maybe)ins.push(`${esc(r.t.label)}: اشتباه تكرار — ${x.extra?fmt(x.extra)+" مؤكد تقريباً":""}${x.extra&&x.maybe?" و":""}${x.maybe?fmt(x.maybe)+" محتمل بالاسم":""}؛ العدد بعد استبعاد المكرر ${fmt(Math.max(0,r.total-(x.extra||0)))}.`);});
     if(EV.regEnd)ins.push(regLeft>0?`آخر يوم للتسجيل: ${dmy(EV.regEnd)}`+(regLeft>1?` — باقي ${dayWord(regLeft-1)}.`:" — اليوم آخر يوم."):`أُغلق التسجيل في ${dmy(EV.regEnd)}.`);
     if(daysLeft>0)ins.push(`المتبقي على موعد الفعالية (${dmy(EV.start)}): ${dayWord(daysLeft)}.`);
     const p1=`<div class="pg">${head}
