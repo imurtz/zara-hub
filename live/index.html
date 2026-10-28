@@ -856,7 +856,7 @@ body.screen .nodup{color:#F6E3CF}
   if(P.get("cele"))setTimeout(()=>balloons(EV.trackers[1],4),2600);
 
   /* ===== القاعة تمتلئ: مخطط قاعة الملك عبدالله (حسب كروكي الخطة الإعلامية) — كل مسجّل يُضيء مقعده =====
-     200 مقعد للإناث يساراً و200 للذكور يميناً (تُملأ من الصف الأمامي)، 30 طاولة مدرب على الجانبين + 5 على المنصة،
+     150 مقعداً للإناث يساراً و150 للذكور يميناً (تُملأ من الصف الأمامي)، 30 طاولة مدرب على الجانبين + 5 على المنصة،
      و100 موقع للمتطوعين مجمّعة في اللوبي */
   const HALL={f:[],m:[],t:[],v:[]};
   (function buildHall(){
@@ -871,10 +871,10 @@ body.screen .nodup{color:#F6E3CF}
     for(let i=0;i<15;i++){HALL.t.push({x:95,y:106+i*29});HALL.t.push({x:603,y:106+i*29});}
     // ترتيب امتلاء المدربين: الطاولات من الأمام يساراً ويميناً بالتناوب، ثم المنصة
     HALL.t=HALL.t.slice(5).concat(HALL.t.slice(0,5));
-    for(let r=0;r<20;r++)for(let c=0;c<10;c++){HALL.f.push({x:177+c*18,y:118+r*21.4});HALL.m.push({x:421+c*18,y:118+r*21.4});}
+    for(let r=0;r<15;r++)for(let c=0;c<10;c++){HALL.f.push({x:177+c*18,y:114.5+r*29});HALL.m.push({x:421+c*18,y:114.5+r*29});}
     // الإناث يساراً يمتلئن من جهة الممر (الأقرب للوسط) — والذكور كذلك
     HALL.f.forEach((p,i)=>{const r=Math.floor(i/10),c=i%10;p.x=339-c*18;});
-    g+='<text class="lbs" x="258" y="556" text-anchor="middle">المشاركات · إناث</text><text class="lbs" x="502" y="556" text-anchor="middle">المشاركون · ذكور</text>';
+    g+='<text class="lbs" x="258" y="556" text-anchor="middle">المشاركات · إناث · 150</text><text class="lbs" x="502" y="556" text-anchor="middle">المشاركون · ذكور · 150</text>';
     g+='<text class="over" id="ovF" x="258" y="104" text-anchor="middle"></text><text class="over" id="ovM" x="502" y="104" text-anchor="middle"></text>';
     // البوابة الداخلية
     g+='<rect x="350" y="566" width="60" height="8" fill="#0F1517"/><path d="M350 570 q0 26 30 26 M410 570 q0 26 -30 26" fill="none" stroke="#F0B44C" stroke-width="2.4"/><path d="M380 700 V604" stroke="#F0B44C" stroke-width="1.6" stroke-dasharray="6 5"/><path d="M44 700 H380" fill="none" stroke="#F0B44C" stroke-width="1.6" stroke-dasharray="6 5"/>';
@@ -913,8 +913,8 @@ body.screen .nodup{color:#F6E3CF}
     const ok=d=>d&&!d.error&&!d.unlinked;
     const gs=ok(dP)?genderSplit(dP):{f:0,m:0},nt=ok(dT)?dT.total||0:0,nv=ok(dV)?dV.total||0:0;
     hallLight("f",gs.f);hallLight("m",gs.m);hallLight("t",nt);hallLight("v",nv);
-    $("ovF").textContent=gs.f>200?"+"+fmt(gs.f-200)+" فوق السعة":"";$("ovM").textContent=gs.m>200?"+"+fmt(gs.m-200)+" فوق السعة":"";
-    $("hleg").innerHTML=[["المشاركات",gs.f,200,"#E8A317"],["المشاركون",gs.m,200,"#1FB5AD"],["المدربون",nt,35,"#D9C3A5"],["المتطوعون",nv,100,"#A99CD9"]]
+    $("ovF").textContent=gs.f>150?"+"+fmt(gs.f-150)+" فوق المطلوب":"";$("ovM").textContent=gs.m>150?"+"+fmt(gs.m-150)+" فوق المطلوب":"";
+    $("hleg").innerHTML=[["المشاركات",gs.f,150,"#E8A317"],["المشاركون",gs.m,150,"#1FB5AD"],["المدربون",nt,35,"#D9C3A5"],["المتطوعون",nv,100,"#A99CD9"]]
       .map(([l,n,c,col])=>`<div style="--hc:${col}"><b>${fmt(n)} <small>/ ${c}</small></b>${l}</div>`).join("");
     $("vLbl").textContent="المتطوعون في اللوبي · "+fmt(nv)+" من 100";
   }
