@@ -21,7 +21,11 @@ function doGet() {
   const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheets()[0];
   const values = sheet.getDataRange().getValues();
   const head = (values.shift() || []).map(function (h) { return String(h).trim(); });
-  const rows = values.filter(function (r) { return r[0] !== "" && r[0] !== null; });
+  const rowsAll = values.filter(function (r) { return r[0] !== "" && r[0] !== null; });
+  // كل الأرقام والتوزيعات تُحسب بعد استبعاد التسجيل المكرر (نفس الجوال/الهوية/البريد): يُعتمد أول تسجيل للشخص فقط
+  const dupInfo = findDups_(head, rowsAll);
+  const rows = rowsAll.filter(function (_, i) { return dupInfo.keep[i]; });
+  delete dupInfo.keep;
   const cell = function (r, c) { return String(r[c] === null || r[c] === undefined ? "" : r[c]).trim(); };
 
   const dayKey = function (d) { return Utilities.formatDate(new Date(d), TZ, "yyyy-MM-dd"); };
@@ -81,7 +85,8 @@ function doGet() {
     lastAt: lastAt,
     series: series,
     breakdowns: breakdowns,
-    dups: findDups_(head, rows),
+    rawTotal: rowsAll.length,
+    dups: dupInfo,
     updatedAt: Date.now()
   });
   cache.put("zara-counter", out, 10);
@@ -127,8 +132,8 @@ function findDups_(head, rows) {
       if (seen[v] !== undefined) { if (find(seen[v]) !== find(i)) by[col.k.key]++; union(seen[v], i); } else seen[v] = i;
     });
   });
-  const strong = {};
-  rows.forEach(function (_, i) { const p = find(i); strong[p] = (strong[p] || 0) + 1; });
+  const strong = {}, firstOf = {}, keep = [];
+  rows.forEach(function (_, i) { const p = find(i); strong[p] = (strong[p] || 0) + 1; if (firstOf[p] === undefined) { firstOf[p] = i; keep[i] = true; } else keep[i] = false; });
   let extra = 0, groups = 0;
   Object.keys(strong).forEach(function (p) { if (strong[p] > 1) { groups++; extra += strong[p] - 1; } });
 
@@ -147,5 +152,5 @@ function findDups_(head, rows) {
       const k = Object.keys(roots).length; if (k > 1) { maybe += k - 1; maybeGroups++; by.name += k - 1; }
     });
   }
-  return { extra: extra, groups: groups, maybe: maybe, maybeGroups: maybeGroups, by: by, checked: cols.map(function (x) { return x.k.key; }).concat(nameCols.length ? ["name"] : []) };
+  return { keep: keep, extra: extra, groups: groups, maybe: maybe, maybeGroups: maybeGroups, by: by, checked: cols.map(function (x) { return x.k.key; }).concat(nameCols.length ? ["name"] : []) };
 }

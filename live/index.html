@@ -288,6 +288,10 @@ body.screen .hallc{display:none}
 .dup .dg i.m{color:#B88D66}.dup .dg i.n{color:var(--teal-d)}
 .dup em{font-style:normal;font-family:var(--num);font-weight:700;color:#8A4F1A}
 body.screen .dup{display:none}
+.dupnote{background:#EEF3F3;border:1px solid #DCE6E5;color:var(--teal-d);border-radius:14px;padding:9px 14px;font-size:12.5px;text-align:center;line-height:1.7}
+.nodup{font-size:11px;color:var(--tan-d);font-weight:600}
+body.screen .dupnote{display:none}
+body.screen .nodup{color:#F6E3CF}
 </style>
 </head>
 <body>
@@ -310,9 +314,10 @@ body.screen .dup{display:none}
       <div class="cds"><span class="cd reg" id="cdReg" hidden></span><span class="cd" id="cd" hidden></span></div>
       <span class="closed-badge">✔ اكتمل التسجيل — هذه هي الأعداد النهائية</span>
     </div>
-    <div class="grand"><div class="v" id="grand">0</div><div class="k">إجمالي المسجلين في النماذج الثلاثة</div><div class="mood" id="mood" hidden></div></div>
+    <div class="grand"><div class="v" id="grand">0</div><div class="k">إجمالي المسجلين في النماذج الثلاثة<br><small class="nodup">بعد استبعاد المكرر</small></div><div class="mood" id="mood" hidden></div></div>
   </section>
 
+  <div class="dupnote">ℹ️ جميع الأعداد والنسب في هذه الصفحة <b>معتمدة بعد استبعاد التسجيلات المكررة</b> — يُحتسب الشخص مرة واحدة إذا تكرر رقم جواله أو هويته أو بريده.</div>
   <nav class="jump" id="jump"></nav>
   <section class="card hallc" id="hallc">
     <div class="hall"><div class="hall-i"><span class="hk">قاعة الملك عبدالله</span><h3>القاعة تمتلئ 🪑</h3><p class="hs">كل تسجيل يُضيء مقعده — المشاركات يساراً، المشاركون يميناً، المدربون على الطاولات، والمتطوعون في اللوبي</p><div class="hleg" id="hleg"></div></div>
@@ -429,7 +434,7 @@ body.screen .dup{display:none}
     const by=Object.keys(DUPBY).filter(k=>x.by&&x.by[k]).map(k=>`${DUPBY[k]} <em>${fmt(x.by[k])}</em>`).join(" · ");
     return `<div class="dup" data-r="dup"><b>⚠️ اشتباه تسجيل مكرر</b>
       <div class="dg">${x.extra?`<div><i>${fmt(x.extra)}</i><span>تسجيل مكرر مؤكد تقريباً${x.groups?` (${fmt(x.groups)} شخص)`:""}</span></div>`:""}${x.maybe?`<div><i class="m">${fmt(x.maybe)}</i><span>محتمل — نفس الاسم الكامل</span></div>`:""}
-      <div><i class="n">${fmt(Math.max(0,d.total-(x.extra||0)))}</i><span>العدد بعد استبعاد المكرر</span></div></div>
+      <div><i class="n">${fmt(d.total)}</i><span>العدد بعد استبعاد المكرر — المعتمد</span></div>${d.rawTotal!=null?`<div><i class="m">${fmt(d.rawTotal)}</i><span>إجمالي التسجيلات قبل الاستبعاد</span></div>`:""}</div>
       ${by?`<span>التطابق حسب: ${by}</span>`:""}<span>للمراجعة في جدول الردود — الصفحة لا تعرض أي بيانات شخصية</span></div>`;
   }
   function build(){
@@ -504,7 +509,14 @@ body.screen .dup{display:none}
   // آخر أرقام محفوظة على الجهاز تظهر فوراً عند فتح الصفحة، ثم تُستبدل بالحية خلال ثوانٍ.
   const CK="zaraLive:"+(P.get("e")||"mafatih2")+(P.get("demo")?":demo":"");
   const sig={};let busy=false,cur=EV.trackers.map(()=>null),fresh=false;
+  // الأرقام المعتمدة = بعد استبعاد التسجيل المكرر. السكربت المحدَّث يرسلها جاهزة (rawTotal موجود)،
+  // وإن كان سكربت النموذج أقدم يُطرح المكرر المؤكد هنا من الإجمالي
+  function net(d){
+    if(!d||d.error||d.unlinked||!d.dups||d.rawTotal!=null)return d;
+    return Object.assign({},d,{rawTotal:d.total,total:Math.max(0,(d.total||0)-(d.dups.extra||0))});
+  }
   function applyOne(i,d,announceIt){
+    d=net(d);
     const t=EV.trackers[i],prev=cur[i],key=JSON.stringify([d.total,d.today,d.lastAt,d.series,d.breakdowns,d.dups,!!d.unlinked,!!d.error]);
     if(sig[t.key]!==key){sig[t.key]=key;paint(t,d);}
     else{const box=document.getElementById("trk-"+t.key);if(box&&d.lastAt)box.querySelector('[data-r="last"]').innerHTML=ago(d.lastAt);}
@@ -733,14 +745,14 @@ body.screen .dup{display:none}
     const regLeft=EV.regEnd?Math.round((new Date(EV.regEnd+"T00:00:00")-today)/864e5)+1:daysLeft;
     const isDemo=!!P.get("demo"),N=1+rows.length;
     const head=`<div class="band"></div><div class="hd"><img src="/assets/logo.png"><div class="meta">رقم التقرير: <b>${ref}</b><br>تاريخ الإصدار: ${dt}<br>وقت الإصدار: <b>${tm}</b></div></div>`;
-    const foot=n=>`<div class="ft"><span>صادر آلياً من بوابة زارة — جمعية العوامية الخيرية · الأرقام مجمّعة من نماذج التسجيل لحظة الإصدار</span><span>صفحة ${n} من ${N}</span></div>`+(isDemo?'<div class="wm">بيانات توضيحية — ليست حقيقية</div>':"");
+    const foot=n=>`<div class="ft"><span>صادر آلياً من بوابة زارة — جمعية العوامية الخيرية · الأعداد والنسب معتمدة بعد استبعاد التسجيلات المكررة</span><span>صفحة ${n} من ${N}</span></div>`+(isDemo?'<div class="wm">بيانات توضيحية — ليست حقيقية</div>':"");
     const ins=[];
     const best=rows.filter(r=>r.ok&&r.t.target).sort((a,b)=>b.pct-a.pct)[0];
     if(best)ins.push(`أعلى نسبة إنجاز: <b>${esc(best.t.label)}</b> بنسبة ${best.pct}% من الهدف.`);
     rows.forEach(r=>{if(!r.ok)ins.push(`${esc(r.t.label)}: تعذّر جلب الأرقام لحظة الإصدار.`);else if(r.t.target&&r.left===0)ins.push(`${esc(r.t.label)}: تحقّق الهدف (${fmt(r.t.target)}).`);
       else if(r.t.target&&regLeft>0)ins.push(`${esc(r.t.label)}: متبقٍ ${fmt(r.left)} لبلوغ الهدف — بمعدل ${fmt(Math.ceil(r.left/regLeft))} تسجيل يومياً حتى إغلاق التسجيل.`);
       else if(r.t.target)ins.push(`${esc(r.t.label)}: أُغلق التسجيل والمتبقي عن الهدف ${fmt(r.left)}.`);});
-    rows.forEach(r=>{const x=r.ok&&r.d.dups;if(!x)return;if(x.extra||x.maybe)ins.push(`${esc(r.t.label)}: اشتباه تكرار — ${x.extra?fmt(x.extra)+" مؤكد تقريباً":""}${x.extra&&x.maybe?" و":""}${x.maybe?fmt(x.maybe)+" محتمل بالاسم":""}؛ العدد بعد استبعاد المكرر ${fmt(Math.max(0,r.total-(x.extra||0)))}.`);});
+    rows.forEach(r=>{const x=r.ok&&r.d.dups;if(!x)return;if(x.extra||x.maybe)ins.push(`${esc(r.t.label)}: اشتباه تكرار — ${x.extra?fmt(x.extra)+" مؤكد تقريباً":""}${x.extra&&x.maybe?" و":""}${x.maybe?fmt(x.maybe)+" محتمل بالاسم":""}؛ العدد المعتمد بعد استبعاد المكرر ${fmt(r.total)}${r.d.rawTotal!=null?` من أصل ${fmt(r.d.rawTotal)} تسجيلاً`:""}.`);});
     if(EV.regEnd)ins.push(regLeft>0?`آخر يوم للتسجيل: ${dmy(EV.regEnd)}`+(regLeft>1?` — باقي ${dayWord(regLeft-1)}.`:" — اليوم آخر يوم."):`أُغلق التسجيل في ${dmy(EV.regEnd)}.`);
     if(daysLeft>0)ins.push(`المتبقي على موعد الفعالية (${dmy(EV.start)}): ${dayWord(daysLeft)}.`);
     const p1=`<div class="pg">${head}
