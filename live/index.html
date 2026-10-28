@@ -429,7 +429,7 @@ body.screen .nodup{color:#F6E3CF}
   const DUPBY={phone:"الجوال",id:"الهوية",email:"البريد",name:"الاسم"};
   function dupHTML(d){
     const x=d.dups;if(!x)return '<div class="dup" data-r="dup" hidden></div>';
-    const chk=(x.checked||[]).map(k=>DUPBY[k]).filter(Boolean).join("، ")||"—";
+    const chk=[...new Set((x.checked||[]).map(k=>DUPBY[k]).filter(Boolean))].join("، ")||"—";
     if(!x.extra&&!x.maybe)return `<div class="dup ok" data-r="dup"><b>✔ لا توجد حالات تسجيل مكرر</b><span>فُحص: ${chk}</span></div>`;
     const by=Object.keys(DUPBY).filter(k=>x.by&&x.by[k]).map(k=>`${DUPBY[k]} <em>${fmt(x.by[k])}</em>`).join(" · ");
     return `<div class="dup" data-r="dup"><b>⚠️ اشتباه تسجيل مكرر</b>
