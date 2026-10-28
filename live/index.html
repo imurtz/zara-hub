@@ -271,6 +271,9 @@ body.screen .bl{width:calc(var(--sh,100vh)*.08)}
 .hleg{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;margin-top:10px}
 .hleg div{background:#162023;border-radius:12px;padding:7px 9px;font-size:11.5px;color:#A9B7B4}
 .hleg b{display:block;font-family:var(--num);font-size:17px;color:var(--hc)}
+.hleg .hp{font-style:normal;float:left;font-size:13px;color:var(--hc);font-weight:700}
+.hleg .hbar{display:block;height:5px;border-radius:9px;background:#22302F;margin-top:5px;overflow:hidden}
+.hleg .hbar i{display:block;height:100%;background:var(--hc);border-radius:9px;transition:width 1s}
 .hleg b small{font-size:11px;color:#6F807D;font-weight:500}
 .hall .over{font-family:var(--num);font-size:13px;font-weight:700;fill:#F0B44C}
 body.screen .hallc{display:none}
@@ -874,7 +877,7 @@ body.screen .nodup{color:#F6E3CF}
     for(let r=0;r<15;r++)for(let c=0;c<10;c++){HALL.f.push({x:177+c*18,y:114.5+r*29});HALL.m.push({x:421+c*18,y:114.5+r*29});}
     // الإناث يساراً يمتلئن من جهة الممر (الأقرب للوسط) — والذكور كذلك
     HALL.f.forEach((p,i)=>{const r=Math.floor(i/10),c=i%10;p.x=339-c*18;});
-    g+='<text class="lbs" x="258" y="556" text-anchor="middle">المشاركات · إناث · 150</text><text class="lbs" x="502" y="556" text-anchor="middle">المشاركون · ذكور · 150</text>';
+    g+='<text class="lbs" id="lbF" x="258" y="556" text-anchor="middle">المشاركات · إناث</text><text class="lbs" id="lbM" x="502" y="556" text-anchor="middle">المشاركون · ذكور</text>';
     g+='<text class="over" id="ovF" x="258" y="104" text-anchor="middle"></text><text class="over" id="ovM" x="502" y="104" text-anchor="middle"></text>';
     // البوابة الداخلية
     g+='<rect x="350" y="566" width="60" height="8" fill="#0F1517"/><path d="M350 570 q0 26 30 26 M410 570 q0 26 -30 26" fill="none" stroke="#F0B44C" stroke-width="2.4"/><path d="M380 700 V604" stroke="#F0B44C" stroke-width="1.6" stroke-dasharray="6 5"/><path d="M44 700 H380" fill="none" stroke="#F0B44C" stroke-width="1.6" stroke-dasharray="6 5"/>';
@@ -915,7 +918,9 @@ body.screen .nodup{color:#F6E3CF}
     hallLight("f",gs.f);hallLight("m",gs.m);hallLight("t",nt);hallLight("v",nv);
     $("ovF").textContent=gs.f>150?"+"+fmt(gs.f-150)+" فوق المطلوب":"";$("ovM").textContent=gs.m>150?"+"+fmt(gs.m-150)+" فوق المطلوب":"";
     $("hleg").innerHTML=[["المشاركات",gs.f,150,"#E8A317"],["المشاركون",gs.m,150,"#1FB5AD"],["المدربون",nt,35,"#D9C3A5"],["المتطوعون",nv,100,"#A99CD9"]]
-      .map(([l,n,c,col])=>`<div style="--hc:${col}"><b>${fmt(n)} <small>/ ${c}</small></b>${l}</div>`).join("");
+      .map(([l,n,c,col])=>{const p=Math.round(n*100/c);return `<div style="--hc:${col}"><b>${fmt(n)} <small>/ ${c}</small><em class="hp">${p}%</em></b>${l}<span class="hbar"><i style="width:${Math.min(100,p)}%"></i></span></div>`;}).join("");
+    const pc=n=>Math.round(n*100/150)+"%";
+    $("lbF").textContent="المشاركات · إناث · "+fmt(gs.f)+"/150 · "+pc(gs.f);$("lbM").textContent="المشاركون · ذكور · "+fmt(gs.m)+"/150 · "+pc(gs.m);
     $("vLbl").textContent="المتطوعون في اللوبي · "+fmt(nv)+" من 100";
   }
 
