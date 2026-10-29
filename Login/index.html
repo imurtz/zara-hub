@@ -7631,6 +7631,7 @@
   // عند فتح الصفحة تصل تحديثات نحو عشرة مستمعين متتابعةً، وكلٌّ منها كان يعيد بناء قسم المناسبات كاملاً — تُجمَع هنا في إعادة بناء واحدة
   var _evRefreshTimer = null;
   function eventsFirestoreRefresh(){
+    uniCountrySyncSoon();
     if(_evRefreshTimer) return;
     _evRefreshTimer = setTimeout(function(){
       _evRefreshTimer = null;
@@ -7994,6 +7995,7 @@
       graduateSurnames: [],
       countries: ["السعودية", "البحرين", "الكويت", "الإمارات", "عُمان", "قطر", "العراق", "الأردن", "مصر"],
       universities: [],
+      universityCountries: [],
       specializationTypes: [],
       degrees: ["البكالوريوس", "الماجستير", "الدكتوراه", "الدبلوم", "الدبلوم العالي", "الزمالة السعودية", "البورد السعودي"],
       honors: ["بدون مرتبة", "جيد", "جيد جداً", "ممتاز", "امتياز مع مرتبة الشرف"],
@@ -8142,6 +8144,59 @@
   function allUniversityNames(){
     var extra = loadEventsOptions().universities || [];
     return SAUDI_UNIVERSITIES.concat(extra.filter(function(n){ return SAUDI_UNIVERSITIES.indexOf(n) === -1; }));
+  }
+  // ===== فرز الجامعات حسب الدولة (نموذج الخريجين) =====
+  // دولة كل جامعة: القائمة السعودية الثابتة + ما تعلّمناه من سجلات الخريجين (الأكثر تكراراً) + ما حُفظ سابقاً في
+  // eventsMeta/options → universityCountries (تقرأه صفحة التسجيل العامة أيضاً). أسماء الدول تُوحَّد (أمريكا = الولايات المتحدة…)
+  var UNI_CTRY_ALIAS = { "امريكا": "us", "الولايات المتحده": "us", "الولايات المتحده الامريكيه": "us", "بريطانيا": "uk", "المملكه المتحده": "uk", "انجلترا": "uk",
+    "السعوديه": "sa", "المملكه العربيه السعوديه": "sa", "عمان": "om", "سلطنه عمان": "om", "الامارات": "ae", "الامارات العربيه المتحده": "ae" };
+  function ctryKey(c){
+    var n = String(c || "").replace(/[ً-ْ]/g, "").replace(/[أإآ]/g, "ا").replace(/ة/g, "ه").replace(/ى/g, "ي").replace(/\s+/g, " ").trim();
+    return UNI_CTRY_ALIAS[n] || n.replace(/^ال/, "");
+  }
+  function uniCountryMap(){
+    var m = {};
+    (loadEventsOptions().universityCountries || []).forEach(function(p){ if(p && p.u && p.c) m[p.u] = p.c; });
+    var learned = uniCountryLearned();
+    for(var u in learned) m[u] = learned[u];
+    SAUDI_UNIVERSITIES.forEach(function(u){ m[u] = "السعودية"; });
+    return m;
+  }
+  function uniCountryLearned(){
+    var cnt = {};
+    (_eventsRecordsCache || []).forEach(function(r){
+      if(r.category !== "graduates" || !r.university || !r.country) return;
+      var u = String(r.university).trim(), c = String(r.country).trim();
+      (cnt[u] = cnt[u] || {})[c] = (cnt[u][c] || 0) + 1;
+    });
+    var out = {};
+    Object.keys(cnt).forEach(function(u){
+      var best = null, bn = 0;
+      Object.keys(cnt[u]).forEach(function(c){ var n = cnt[u][c]; if(n > bn || (n === bn && ctryKey(c) !== "sa")){ best = c; bn = n; } });
+      if(best) out[u] = best;
+    });
+    return out;
+  }
+  // الجامعات المدرجة في القائمة التابعة للدولة المختارة (بلا دولة مختارة = القائمة كاملة)
+  function uniOptionsForCountry(all, country){
+    if(!country) return all;
+    var k = ctryKey(country), m = uniCountryMap();
+    return all.filter(function(u){ return m[u] && ctryKey(m[u]) === k; });
+  }
+  var _uniSyncT = null;
+  function uniCountrySyncSoon(){
+    clearTimeout(_uniSyncT);
+    _uniSyncT = setTimeout(function(){
+      if(window.__SANDBOX_NO_WRITES || !currentUser || !can("events.edit") || !_eventsOptionsCache) return;
+      var stored = {}, list = (loadEventsOptions().universityCountries || []);
+      list.forEach(function(p){ if(p && p.u) stored[p.u] = p.c; });
+      var learned = uniCountryLearned(), changed = false;
+      for(var u in learned){ if(stored[u] !== learned[u]){ stored[u] = learned[u]; changed = true; } }
+      if(!changed) return;
+      var opts = loadEventsOptions();
+      opts.universityCountries = Object.keys(stored).sort().map(function(u){ return { u: u, c: stored[u] }; });
+      saveEventsOptions(opts);
+    }, 4000);
   }
   function addCustomUniversities(newNames){
     var opts = loadEventsOptions();
@@ -8794,10 +8849,11 @@
       '</select></div>';
     }
     if(f.type === "selectOther"){
-      var soOpts = (f.key === "specialization") ? loadEventsOptions().specializations : (f.key === "university" ? allUniversityNames() : f.options);
+      var soOpts = (f.key === "specialization") ? loadEventsOptions().specializations : (f.key === "university" ? uniOptionsForCountry(allUniversityNames(), ((eventModalState && eventModalState.draft) || {}).country) : f.options);
       var isCustom = !!value && soOpts.indexOf(value) === -1;
       var selVal = isCustom ? "__other__" : (value || "");
-      return '<div class="select-wrap"><select data-action="select-other-toggle" data-key="' + f.key + '"><option value="">اختر...</option>' +
+      var noUni = f.key === "university" && !soOpts.length;
+      return '<div class="select-wrap"><select data-action="select-other-toggle" data-key="' + f.key + '"><option value="">' + (noUni ? "لا توجد جامعات مدرجة لهذه الدولة — اختر «غير ذلك»" : "اختر...") + '</option>' +
           soOpts.map(function(o){ return '<option value="' + escapeHTML(o) + '"' + (selVal === o ? " selected" : "") + '>' + escapeHTML(o) + '</option>'; }).join("") +
           '<option value="__other__"' + (selVal === "__other__" ? " selected" : "") + '>غير ذلك</option>' +
         '</select></div>' +
@@ -12708,6 +12764,17 @@
   });
   eventModalOverlayEl.addEventListener("change", function(e){
     if(e.target.matches("[data-field-input]")) eventModalState.draft[e.target.dataset.key] = e.target.value;
+    // تغيير الدولة: قائمة الجامعات تُعاد بجامعات تلك الدولة، وتُفرَّغ الجامعة إن كانت من قائمة دولة أخرى
+    if(e.target.matches('[data-field-input][data-key="country"]') && eventModalState.catKey === "graduates"){
+      var curUni = eventModalState.draft.university || "";
+      if(curUni && allUniversityNames().indexOf(curUni) > -1 && uniOptionsForCountry(allUniversityNames(), e.target.value).indexOf(curUni) === -1){
+        eventModalState.draft.university = "";
+        var libAllC = loadUniversityLogos(), curLogoC = eventModalState.draft.universityLogo;
+        if(curLogoC && Object.keys(libAllC).some(function(k){ return libAllC[k] === curLogoC; })){ eventModalState.draft.universityLogo = ""; eventModalState.draft.universityLogoOrig = ""; }
+      }
+      renderEventModal();
+      return;
+    }
     if(e.target.matches('[data-field-input][data-key="gender"]') && eventModalState.catKey === "graduates"){
       eventModalState.femalePhotoChoice = "";
       renderEventModal();

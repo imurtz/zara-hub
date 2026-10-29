@@ -1712,6 +1712,12 @@
         refreshFieldImage(key);
       });
     });
+    var ctrySel = document.querySelector('select[data-key="country"]');
+    if(ctrySel && document.querySelector('select[data-key="university"]') && !ctrySel.dataset.uniBound){
+      ctrySel.dataset.uniBound = "1";
+      ctrySel.addEventListener("change", function(){ refreshUniversityOptions(ctrySel.value); });
+      if(ctrySel.value) refreshUniversityOptions(ctrySel.value);
+    }
     var uniOtherInput = document.querySelector('[data-other-input="university"]');
     if(uniOtherInput && !uniOtherInput.dataset.logoBound){
       uniOtherInput.dataset.logoBound = "1";
@@ -2814,7 +2820,31 @@
     motherPhrases: ["وحرمه", "وحرمه كريمة الحاج"],
     wifeGuardianPhrases: ["كريمة", "كريمة الحاج", "حرمة"]
   };
+  // فرز الجامعات حسب الدولة: دولة كل جامعة من eventsMeta/options → universityCountries (تبنيها بوابة الموظفين من سجلات الخريجين)
+  var UNI_CTRY = {}, ALL_UNIS = SAUDI_UNIVERSITIES.slice();
+  var UNI_CTRY_ALIAS = { "امريكا": "us", "الولايات المتحده": "us", "الولايات المتحده الامريكيه": "us", "بريطانيا": "uk", "المملكه المتحده": "uk", "انجلترا": "uk",
+    "السعوديه": "sa", "المملكه العربيه السعوديه": "sa", "عمان": "om", "سلطنه عمان": "om", "الامارات": "ae", "الامارات العربيه المتحده": "ae" };
+  function ctryKey(c){
+    var n = String(c || "").replace(/[ً-ْ]/g, "").replace(/[أإآ]/g, "ا").replace(/ة/g, "ه").replace(/ى/g, "ي").replace(/\s+/g, " ").trim();
+    return UNI_CTRY_ALIAS[n] || n.replace(/^ال/, "");
+  }
+  function uniOptionsForCountry(country){
+    if(!country) return ALL_UNIS;
+    var k = ctryKey(country);
+    return ALL_UNIS.filter(function(u){ var c = SAUDI_UNIVERSITIES.indexOf(u) > -1 ? "السعودية" : UNI_CTRY[u]; return c && ctryKey(c) === k; });
+  }
+  function refreshUniversityOptions(country){
+    var sel = document.querySelector('select[data-action="select-other-toggle"][data-key="university"]');
+    if(!sel) return;
+    var list = uniOptionsForCountry(country), cur = sel.value;
+    sel.innerHTML = '<option value="">' + (list.length ? "اختر..." : "لا توجد جامعات مدرجة لهذه الدولة — اختر «غير ذلك»") + '</option>' +
+      list.map(function(o){ return '<option value="' + escapeHTML(o) + '">' + escapeHTML(o) + '</option>'; }).join("") + '<option value="__other__">غير ذلك</option>';
+    if(cur === "__other__" || list.indexOf(cur) > -1) sel.value = cur;
+    else if(cur){ sel.value = ""; syncUniversityLogoToName(""); }
+  }
   function applyEventsOptions(data){
+    UNI_CTRY = {};
+    (data && Array.isArray(data.universityCountries) ? data.universityCountries : []).forEach(function(p){ if(p && p.u && p.c) UNI_CTRY[p.u] = p.c; });
     var merged = {};
     for(var k in EVENTS_OPTIONS_DEFAULTS) merged[k] = (data && Array.isArray(data[k])) ? data[k] : EVENTS_OPTIONS_DEFAULTS[k];
     var mergedSpecializations = SPECIALIZATIONS_LIST.concat((data && Array.isArray(data.specializations) ? data.specializations : []).filter(function(s){ return SPECIALIZATIONS_LIST.indexOf(s) === -1; }));
@@ -2822,7 +2852,7 @@
       c.fields.forEach(function(f){
         if(f.optionsKey && merged[f.optionsKey]) f.options = merged[f.optionsKey];
         if(f.key === "specialization") f.options = mergedSpecializations;
-        if(f.key === "university") f.options = SAUDI_UNIVERSITIES.concat((data && Array.isArray(data.universities) ? data.universities : []).filter(function(u){ return SAUDI_UNIVERSITIES.indexOf(u) === -1; }));
+        if(f.key === "university"){ f.options = SAUDI_UNIVERSITIES.concat((data && Array.isArray(data.universities) ? data.universities : []).filter(function(u){ return SAUDI_UNIVERSITIES.indexOf(u) === -1; })); ALL_UNIS = f.options; }
       });
     });
   }
