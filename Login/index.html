@@ -1064,100 +1064,116 @@
     .report-section-card{break-inside:avoid; box-shadow:none; border:1px solid var(--line);}
     .stat-card{box-shadow:none;}
   }
-/* ===== أوامر صرف المبنى الإداري ===== */
-#bdoRoot .bdo-hero{display:flex;align-items:flex-end;justify-content:space-between;gap:14px;flex-wrap:wrap;padding:20px 24px;border-radius:22px;background:linear-gradient(135deg,rgba(75,112,113,.10),rgba(184,141,102,.10));margin-bottom:14px}
-#bdoRoot .bdo-hero h2{margin:4px 0;font-size:24px}
-#bdoRoot .bdo-hero p{margin:0;color:var(--ink-soft,#6b7775);font-size:13px}
-#bdoRoot .bdo-kick{font-size:11.5px;font-weight:700;color:#8a6440;background:rgba(184,141,102,.14);padding:3px 10px;border-radius:999px}
+/* ===== أوامر الصرف ===== */
+#bdoRoot .bdo-head{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:12px}
+#bdoRoot .bdo-head h2{margin:0;font-size:22px}
 #bdoRoot .bdo-seg{display:flex;gap:6px}
-#bdoRoot .bdo-seg button{border:1px solid rgba(20,28,27,.12);background:#fff;border-radius:999px;padding:8px 16px;font:inherit;font-size:13px;font-weight:600;cursor:pointer}
+#bdoRoot .bdo-seg button{border:1px solid rgba(20,28,27,.12);background:#fff;border-radius:999px;padding:8px 15px;font:inherit;font-size:13px;font-weight:600;cursor:pointer}
 #bdoRoot .bdo-seg button.on{background:#324c4b;border-color:#324c4b;color:#fff}
-#bdoRoot .bdo-work{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,460px);gap:18px;align-items:start}
-#bdoRoot .bdo-card{background:#fff;border:1px solid rgba(20,28,27,.08);border-radius:18px;padding:16px 18px;margin-bottom:12px}
-#bdoRoot .bdo-card>h4{margin:0 0 12px;font-size:14.5px;color:#324c4b;display:flex;align-items:center;gap:8px}
-#bdoRoot .bdo-card>h4 i{font-style:normal;width:22px;height:22px;border-radius:50%;background:#324c4b;color:#fff;display:grid;place-items:center;font-size:12px}
+#bdoRoot .bdo-subs{display:flex;gap:18px;border-bottom:1px solid rgba(20,28,27,.1);margin-bottom:14px}
+#bdoRoot .bdo-subs button{border:0;background:none;font:inherit;font-size:14px;font-weight:700;color:#324c4b;padding:8px 2px;border-bottom:2.5px solid #b88d66;margin-bottom:-1px;cursor:default}
+#bdoRoot .bdo-work{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:18px;align-items:start}
+#bdoRoot .bdo-card{background:#fff;border:1px solid rgba(20,28,27,.08);border-radius:16px;padding:16px 18px;margin-bottom:10px}
+#bdoRoot details.bdo-card{padding:0}
+#bdoRoot details.bdo-card>summary{cursor:pointer;padding:13px 18px;font-size:14px;font-weight:700;color:#324c4b;list-style-position:inside}
+#bdoRoot details.bdo-card>.bdo-grid{padding:2px 18px 16px}
 #bdoRoot .bdo-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px 12px}
 #bdoRoot .bdo-f{display:flex;flex-direction:column;gap:4px;min-width:0}
 #bdoRoot .bdo-f.w{grid-column:1/-1}
 #bdoRoot .bdo-f>span{font-size:12.5px;font-weight:600;color:#324c4b}
 #bdoRoot .bdo-f input,#bdoRoot .bdo-f select,#bdoRoot .bdo-f textarea{width:100%;box-sizing:border-box;border:1px solid rgba(20,28,27,.16);border-radius:11px;padding:9px 11px;font:inherit;font-size:14px;background:#fff}
-#bdoRoot .bdo-f textarea{min-height:86px;line-height:1.75;resize:vertical}
+#bdoRoot .bdo-f textarea{min-height:82px;line-height:1.75;resize:vertical}
 #bdoRoot .bdo-f input:focus,#bdoRoot .bdo-f select:focus,#bdoRoot .bdo-f textarea:focus{outline:0;border-color:#4b7071;box-shadow:0 0 0 3px rgba(75,112,113,.14)}
-#bdoRoot .bdo-f small{font-size:11.5px;color:var(--ink-soft,#6b7775);line-height:1.5}
-#bdoRoot .bdo-f small.bad{color:#b4572a;font-weight:600}
-#bdoRoot .bdo-f small.good{color:#2f6f5e;font-weight:600}
-#bdoRoot .bdo-amt{font-family:"Readex Pro","IBM Plex Sans Arabic",sans-serif;font-size:20px!important;font-weight:700;direction:ltr;text-align:right}
+#bdoRoot .bdo-f small{font-size:11.5px;color:var(--ink-soft,#6b7775);line-height:1.5;min-height:0}
+#bdoRoot .bdo-f small:empty{display:none}
+#bdoRoot .bdo-f small .bad{color:#b4572a;font-weight:600}
+#bdoRoot .bdo-f small .good{color:#2f6f5e;font-weight:600}
+#bdoRoot .bdo-amt{font-family:"Readex Pro","IBM Plex Sans Arabic",sans-serif;font-size:19px!important;font-weight:700;direction:ltr;text-align:right}
 #bdoRoot .bdo-ltr{direction:ltr;text-align:right}
-#bdoRoot .bdo-chips{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 6px}
+#bdoRoot .bdo-chips{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 4px}
 #bdoRoot .bdo-chips button{border:1px solid rgba(184,141,102,.45);background:#fbf6ef;color:#8a6440;border-radius:999px;padding:4px 11px;font:inherit;font-size:12px;font-weight:600;cursor:pointer}
 #bdoRoot .bdo-chips button.on{background:#b88d66;border-color:#b88d66;color:#fff}
 #bdoRoot .bdo-checks{display:flex;flex-direction:column;gap:6px;font-size:13.5px}
 #bdoRoot .bdo-checks label{display:flex;gap:8px;align-items:center}
+#bdoRoot .bdo-img{grid-column:1/-1;display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+#bdoRoot .bdo-img img{width:210px;height:59px;object-fit:cover;border-radius:9px;background:#eef1f0}
+#bdoRoot .bdo-img label{cursor:pointer}
+#bdoRoot .bdo-img small{font-size:11.5px;color:var(--ink-soft,#6b7775);flex:1;min-width:170px;line-height:1.6}
 #bdoRoot .bdo-side{position:sticky;top:12px}
-#bdoRoot .bdo-pv{background:#eef1f0;border-radius:18px;padding:12px;overflow:hidden;min-width:0}
+#bdoRoot .bdo-pv{display:block;width:100%;border:0;background:#e9edec;border-radius:16px;padding:10px;cursor:zoom-in;font:inherit}
+#bdoRoot .bdo-pvbox{overflow:hidden;border-radius:4px;box-shadow:0 8px 24px -12px rgba(20,28,27,.4);pointer-events:none}
 #bdoRoot .bdo-pvin{transform-origin:top right;width:794px;height:1123px}
-#bdoRoot .bdo-acts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:10px}
-#bdoRoot .bdo-acts button{cursor:pointer}
-#bdoRoot .bdo-acts .w{grid-column:1/-1}
-#bdoRoot .bdo-state{font-size:12px;color:var(--ink-soft,#6b7775);text-align:center;margin-top:6px}
-#bdoRoot .bdo-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-bottom:12px}
-#bdoRoot .bdo-stats div{background:#fff;border:1px solid rgba(20,28,27,.08);border-radius:14px;padding:12px 14px;font-size:12px;color:var(--ink-soft,#6b7775)}
-#bdoRoot .bdo-stats b{display:block;font-family:"Readex Pro",sans-serif;font-size:21px;color:#324c4b}
-#bdoRoot .bdo-tools{display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap}
-#bdoRoot .bdo-tools input{flex:1;min-width:180px;border:1px solid rgba(20,28,27,.16);border-radius:11px;padding:9px 11px;font:inherit;font-size:14px}
-#bdoRoot .bdo-tbl{width:100%;border-collapse:collapse;background:#fff;border-radius:14px;overflow:hidden;font-size:13.5px}
-#bdoRoot .bdo-tbl th{background:#f2f5f4;color:#324c4b;padding:10px;text-align:right;font-size:12.5px}
-#bdoRoot .bdo-tbl td{padding:10px;border-top:1px solid #eef1f0;vertical-align:middle}
-#bdoRoot .bdo-tbl tr[data-bdo-open]{cursor:pointer}
-#bdoRoot .bdo-tbl tr[data-bdo-open]:hover td{background:#fafbfa}
-#bdoRoot .bdo-tag{font-size:11.5px;font-weight:700;border-radius:999px;padding:2px 9px;background:#f6eee5;color:#8a6440;white-space:nowrap}
+#bdoRoot .bdo-pvhint{display:block;font-size:12px;font-weight:600;color:#4b7071;margin-top:8px}
+#bdoRoot .bdo-bar{position:sticky;bottom:8px;z-index:6;display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.94);border:1px solid rgba(20,28,27,.1);border-radius:16px;padding:8px 10px;margin-top:6px;box-shadow:0 10px 26px -14px rgba(20,28,27,.45);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
+#bdoRoot .bdo-bar button{cursor:pointer;padding:10px 16px}
+#bdoRoot .bdo-state{flex:1;font-size:12.5px;color:var(--ink-soft,#6b7775);min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#bdoRoot .bdo-tools{display:flex;gap:10px;align-items:center;margin-bottom:10px;flex-wrap:wrap}
+#bdoRoot .bdo-tools input{flex:1;min-width:180px;border:1px solid rgba(20,28,27,.16);border-radius:11px;padding:9px 11px;font:inherit;font-size:14px;background:#fff}
+#bdoRoot .bdo-tools span{font-size:12.5px;color:var(--ink-soft,#6b7775)}
+#bdoRoot .bdo-tools b{font-family:"Readex Pro",sans-serif;color:#324c4b}
+#bdoRoot .bdo-rows{display:flex;flex-direction:column;gap:8px}
+#bdoRoot .bdo-row{display:grid;grid-template-columns:62px minmax(0,1fr) auto auto;gap:12px;align-items:center;background:#fff;border:1px solid rgba(20,28,27,.08);border-radius:14px;padding:10px 14px;cursor:pointer}
+#bdoRoot .bdo-row:hover{border-color:#4b7071}
+#bdoRoot .bdo-row .no{font-family:"Readex Pro",sans-serif;font-weight:700;font-size:18px;color:#324c4b;text-align:center;background:#f1f4f3;border-radius:10px;padding:6px 2px}
+#bdoRoot .bdo-row .tx{min-width:0}
+#bdoRoot .bdo-row .tx b{display:block;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#bdoRoot .bdo-row .tx i{display:block;font-style:normal;font-size:12px;color:var(--ink-soft,#6b7775);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#bdoRoot .bdo-row .am{text-align:left;font-family:"Readex Pro",sans-serif;font-weight:600;font-size:14px;white-space:nowrap}
+#bdoRoot .bdo-tag{display:inline-block;font-family:"IBM Plex Sans Arabic",sans-serif;font-size:11px;font-weight:700;border-radius:999px;padding:1px 8px;background:#f6eee5;color:#8a6440}
 #bdoRoot .bdo-tag.ok{background:#e4f1ec;color:#2f6f5e}
 #bdoRoot .bdo-mini{border:0;background:none;color:#4b7071;font:inherit;font-size:12.5px;font-weight:600;cursor:pointer;padding:2px 5px}
 #bdoRoot .bdo-mini.del{color:#b4572a}
 #bdoRoot .bdo-empty{text-align:center;color:var(--ink-soft,#6b7775);padding:30px;background:#fff;border-radius:14px}
-@media (max-width:980px){#bdoRoot .bdo-work{grid-template-columns:minmax(0,1fr)}#bdoRoot .bdo-side{position:static}}
-@media (max-width:560px){#bdoRoot .bdo-grid{grid-template-columns:1fr}#bdoRoot .bdo-stats{grid-template-columns:1fr}#bdoRoot .bdo-tbl .bdo-hm{display:none}}
+@media (max-width:980px){#bdoRoot .bdo-work{grid-template-columns:minmax(0,1fr)}#bdoRoot .bdo-side{display:none}#bdoRoot .bdo-bar{margin-left:58px}}
+@media (max-width:560px){#bdoRoot .bdo-grid{grid-template-columns:minmax(0,1fr)}#bdoRoot .bdo-state{display:none}#bdoRoot .bdo-bar button{flex:1;padding:10px 6px;font-size:13px}#bdoRoot .bdo-row{grid-template-columns:52px minmax(0,1fr) auto}#bdoRoot .bdo-row .ac{display:none}}
+/* نافذة المعاينة الكبيرة */
+#bdoModal{position:fixed;inset:0;z-index:9000;background:rgba(20,28,27,.82);display:flex;flex-direction:column;direction:rtl;font-family:"IBM Plex Sans Arabic",sans-serif}
+#bdoModal .mb{display:flex;align-items:center;gap:6px;padding:9px 12px;background:#fff;flex-wrap:wrap}
+#bdoModal .mb button{border:1px solid rgba(20,28,27,.14);background:#fff;border-radius:10px;padding:7px 12px;font:inherit;font-size:13px;font-weight:600;cursor:pointer}
+#bdoModal .mb button.p{background:#324c4b;border-color:#324c4b;color:#fff}
+#bdoModal .mb b{min-width:46px;text-align:center;font-size:13px;font-family:"Readex Pro",sans-serif}
+#bdoModal .mb .sp{flex:1}
+#bdoModal .ms{flex:1;overflow:auto;padding:14px;direction:ltr;-webkit-overflow-scrolling:touch}
+#bdoModal .mp{margin:0 auto;background:#fff;box-shadow:0 16px 50px rgba(0,0,0,.4);overflow:hidden}
+#bdoModal .mi{width:794px;height:1123px;transform-origin:top left}
 /* الورقة الرسمية A4 */
-.bdo-sheet{width:794px;height:1123px;box-sizing:border-box;background:#fff;color:#14302f;direction:rtl;font-family:"IBM Plex Sans Arabic",sans-serif;padding:26px 30px 22px;display:flex;flex-direction:column;justify-content:space-between;gap:var(--bg,10px);font-size:var(--fs,14.5px);line-height:1.72;overflow:hidden}
+.bdo-sheet{width:794px;height:1123px;box-sizing:border-box;background:#fff;color:#1b2a29;direction:rtl;font-family:"IBM Plex Sans Arabic",sans-serif;padding:36px 42px 26px;display:flex;flex-direction:column;justify-content:space-between;gap:var(--bg,12px);font-size:var(--fs,14px);line-height:1.75;overflow:hidden}
 .bdo-sheet *{box-sizing:border-box}
-.bdo-sheet .top{display:flex;gap:18px;align-items:stretch}
-.bdo-sheet .top .id{width:238px;flex:none;display:flex;flex-direction:column;align-items:center;justify-content:space-between}
-.bdo-sheet .top .id img{height:96px;width:auto}
-.bdo-sheet .top .id b{font-size:22px;line-height:1.35;text-align:center;color:#14302f;border-bottom:2px solid #c8a76b;padding-bottom:6px;width:100%}
-.bdo-sheet .top .pic{flex:1;min-width:0;height:196px;border-radius:0 0 26px 26px;overflow:hidden}
-.bdo-sheet .top .pic img{display:block;width:100%;height:100%}
-.bdo-sheet .ttl{align-self:center;display:flex;align-items:center;gap:22px;background:#24504f;color:#fff;border-radius:14px;padding:7px 8px 7px 28px;margin-right:0}
-.bdo-sheet .ttl span{order:2;font-size:30px;font-weight:700;line-height:1.3;padding-left:0}
-.bdo-sheet .ttl i{order:3;font-style:normal;background:#c8a76b;color:#14302f;border-radius:10px;padding:3px 18px;font-size:26px;font-weight:700;line-height:1.35}
-.bdo-sheet .ttl span{padding-right:22px}
-.bdo-sheet .meta{display:grid;grid-template-columns:repeat(3,1fr);border:1.5px solid #24504f;border-radius:6px}
-.bdo-sheet .meta div{padding:6px 12px;text-align:center;font-weight:700}
-.bdo-sheet .meta div+div{border-right:1.5px solid #24504f}
-.bdo-sheet .red{color:#c62f22}
-.bdo-sheet .rw{display:flex;gap:6px;align-items:stretch}
-.bdo-sheet .lb{width:150px;flex:none;background:#24504f;color:#fff;border-radius:6px;display:flex;align-items:center;justify-content:center;gap:9px;font-weight:600;font-size:.95em;padding:6px 8px;line-height:1.35;text-align:center}
-.bdo-sheet .lb svg{width:27px;height:27px;flex:none}
-.bdo-sheet .bx{flex:1;min-width:0;border:1.5px solid #b9c8c6;border-radius:6px;background:#f6f6f4;padding:7px 13px;display:flex;align-items:center;white-space:pre-wrap;word-break:break-word}
-.bdo-sheet .bx.w{background:#fff;border-color:#c8a76b}
-.bdo-sheet .amt{flex:1;min-width:0;display:flex;gap:9px;border:2.5px solid #c8a76b;border-radius:9px;padding:4px;background:#fff}
-.bdo-sheet .amt .n{background:#e4cf9e;border-radius:5px;padding:2px 16px;display:flex;align-items:baseline;gap:7px;font-family:"Readex Pro",sans-serif;font-weight:700;font-size:37px;line-height:1.3;color:#14302f;direction:ltr}
-.bdo-sheet .amt .n small{font-family:"IBM Plex Sans Arabic",sans-serif;font-size:16px;font-weight:600}
-.bdo-sheet .amt .t{flex:1;min-width:0;display:flex;align-items:center;justify-content:center;background:#f7f2e7;border-radius:5px;padding:4px 10px;font-weight:700;font-size:1.13em;text-align:center;line-height:1.5}
-.bdo-sheet .tr{flex:1;min-width:0;display:grid;grid-template-columns:1fr 1fr;border:1.5px solid #c8a76b;border-radius:6px;overflow:hidden}
-.bdo-sheet .tr>div{text-align:center;padding:4px 8px;min-width:0}
-.bdo-sheet .tr>div:nth-child(odd){border-left:1.5px solid #c8a76b}
-.bdo-sheet .tr .h{background:#e4cf9e;font-weight:700;border-bottom:1.5px solid #c8a76b}
-.bdo-sheet .tr span{display:block;font-size:.85em;font-weight:600;color:#3d5553}
-.bdo-sheet .tr b{display:block;font-family:"Readex Pro",sans-serif;font-size:1.13em;direction:ltr;line-height:1.4}
-.bdo-sheet .ap{flex:1;min-width:0;display:grid;grid-template-columns:1.05fr 1fr 1.1fr;border:1.5px solid #24504f;border-radius:6px}
-.bdo-sheet .ap>div{padding:6px 9px;text-align:center;min-height:82px;display:flex;flex-direction:column;align-items:center;justify-content:center}
-.bdo-sheet .ap>div+div{border-right:1.5px solid #24504f}
-.bdo-sheet .ap span{font-size:.85em;font-weight:600;color:#3d5553}
-.bdo-sheet .ap img{max-height:58px;max-width:150px;display:block}
-.bdo-sheet .dp{flex:1;min-width:0;border:1.5px solid #c8a76b;border-radius:6px;background:#f7f2e7;padding:8px 12px;text-align:center;font-weight:700;font-size:1.13em}
-.bdo-sheet .cp{flex:1;min-width:0;border-top:2px solid #c8a76b;border-bottom:2px solid #c8a76b;display:flex;align-items:center;justify-content:space-around;gap:10px;padding:6px 6px;font-size:.95em;flex-wrap:wrap}
-.bdo-sheet .cp span{display:flex;align-items:center;gap:8px}
-.bdo-sheet .cp span:before{content:"";width:9px;height:9px;border-radius:50%;background:#c8a76b}
+.bdo-sheet .hd{display:flex;align-items:center;justify-content:space-between;gap:20px}
+.bdo-sheet .hd .k{display:block;font-size:13px;font-weight:600;color:#8a6440;line-height:1.5}
+.bdo-sheet .hd h1{margin:0;font-size:38px;font-weight:700;line-height:1.25;color:#24403f}
+.bdo-sheet .hd img{height:74px;width:auto;display:block}
+.bdo-sheet .hero{position:relative;height:200px;border-radius:18px;overflow:hidden;background:#e9edec}
+.bdo-sheet .hero>img{display:block;width:100%;height:100%}
+.bdo-sheet .hero .no{position:absolute;top:0;right:26px;background:#24403f;color:#fff;border-radius:0 0 14px 14px;padding:8px 18px 10px;text-align:center;line-height:1.2}
+.bdo-sheet .hero .no span{display:block;font-size:11px;font-weight:600;opacity:.85}
+.bdo-sheet .hero .no b{display:block;font-family:"Readex Pro",sans-serif;font-size:27px;font-weight:700;line-height:1.25}
+.bdo-sheet .mt{display:grid;grid-template-columns:repeat(3,1fr);gap:0}
+.bdo-sheet .mt div{padding:0 14px;border-right:2px solid #d9c3a5;line-height:1.45}
+.bdo-sheet .mt span,.bdo-sheet .bk span,.bdo-sheet .ap span{display:block;font-size:11.5px;font-weight:600;color:#7a8785}
+.bdo-sheet .mt b{font-size:15px;font-weight:700}
+.bdo-sheet .am{display:flex;align-items:center;gap:22px;background:#24403f;color:#fff;border-radius:16px;padding:12px 24px}
+.bdo-sheet .am .v{flex:none;line-height:1.3}
+.bdo-sheet .am .v span{display:block;font-size:12px;font-weight:600;color:#d9c3a5}
+.bdo-sheet .am .n{font-family:"Readex Pro",sans-serif;font-size:38px;font-weight:700;direction:ltr;text-align:right;line-height:1.2;white-space:nowrap}
+.bdo-sheet .am .n small{font-family:"IBM Plex Sans Arabic",sans-serif;font-size:14px;font-weight:600;color:#d9c3a5}
+.bdo-sheet .am .w{flex:1;min-width:0;border-right:1px solid rgba(255,255,255,.28);padding-right:20px;font-size:1.08em;font-weight:600;line-height:1.6}
+.bdo-sheet .sc h5{margin:0 0 1px;font-size:12.500px;font-weight:700;color:#8a6440}
+.bdo-sheet .sc p{margin:0;white-space:pre-wrap;word-break:break-word}
+.bdo-sheet .red{color:#b4472a;font-weight:600}
+.bdo-sheet .bk{display:grid;grid-template-columns:1.25fr 1fr;background:#f4f6f5;border-radius:14px;padding:4px 18px}
+.bdo-sheet .bk div{padding:7px 0;min-width:0}
+.bdo-sheet .bk div:nth-child(-n+2){border-bottom:1px solid #e0e5e3}
+.bdo-sheet .bk b{display:block;font-weight:700;line-height:1.45}
+.bdo-sheet .bk b.l{font-family:"Readex Pro",sans-serif;font-weight:600;direction:ltr;text-align:right;font-size:1.02em}
+.bdo-sheet .dp{background:#f7f0e6;color:#5f4326;border-radius:12px;padding:8px 18px;font-weight:700;text-align:center}
+.bdo-sheet .ap{display:grid;grid-template-columns:1.2fr 1fr;gap:20px;border-top:1px solid #e0e5e3;padding-top:10px}
+.bdo-sheet .ap b{display:block;font-weight:700;line-height:1.5}
+.bdo-sheet .ap i{display:block;font-style:normal;font-size:.93em;color:#51605e}
+.bdo-sheet .ap .sg{min-height:66px;border-bottom:1.5px dashed #b9c4c2}
+.bdo-sheet .ap .sg img{max-height:54px;max-width:190px;display:block;margin-top:2px}
+.bdo-sheet .cp{display:flex;align-items:center;gap:8px 16px;flex-wrap:wrap;font-size:11.5px;color:#7a8785;border-top:1px solid #e0e5e3;padding-top:7px;line-height:1.5}
+.bdo-sheet .cp b{color:#51605e;font-weight:700}
 </style>
 <style id="redesign">
   /* ===== طبقة التصميم الجديدة لقسم الموظفين — نفس لغة الرئيسية وصفحة البيانات =====
@@ -2496,7 +2512,7 @@
     </div>
     <div class="nav-tab" data-section="bldg">
       <span class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 21V5.500a1.500 1.500 0 0 1 1.500-1.500h7A1.500 1.500 0 0 1 15 5.500V21M15 10h3.500A1.500 1.500 0 0 1 20 11.500V21M3 21h18M8.500 8h3M8.500 12h3M8.500 16h3"/></svg></span>
-      أوامر صرف وداخلة المبنى الإداري
+      أوامر صرف
     </div>
     <div class="nav-tab admin-tab" data-section="admin" id="adminTabBtn" style="display:none;">
       <span class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3.2"/><path d="M12 2.5v3M12 18.5v3M21.5 12h-3M5.5 12h-3M18.5 5.5l-2 2M7.5 16.5l-2 2M18.5 18.5l-2-2M7.5 7.5l-2-2"/></svg></span>
@@ -2529,7 +2545,7 @@
     <div class="section-view" id="view-designs">
       <div id="designsRoot"></div>
     </div>
-    <!-- ===== أوامر صرف المبنى الإداري ===== -->
+    <!-- ===== أوامر صرف ← المبنى الإداري ===== -->
     <div class="section-view" id="view-bldg">
       <div id="bdoRoot"></div>
     </div>
@@ -2754,7 +2770,7 @@
     { key: "events", label: "المناسبات الاجتماعية" },
     { key: "calendars", label: "التقاويم الميلادية" },
     { key: "designs", label: "إصدار — منصة التصاميم الجاهزة" },
-    { key: "bldg", label: "أوامر صرف وداخلة المبنى الإداري" }
+    { key: "bldg", label: "أوامر صرف" }
   ];
 
   var currentUser = null;
@@ -2971,7 +2987,7 @@
       { k: "designs.view", l: "فتح القسم وتعبئة النماذج وتنزيل النسخ" },
       { k: "designs.manage", l: "إضافة النماذج وتعديل متغيراتها ومواضعها وحذفها" }
     ] },
-    { key: "bldg", label: "أوامر صرف وداخلة المبنى الإداري", perms: [
+    { key: "bldg", label: "أوامر صرف", perms: [
       { k: "bldg.view", l: "فتح القسم والاطلاع على أوامر الصرف وطباعتها" },
       { k: "bldg.edit", l: "إنشاء أوامر الصرف وتعديلها واعتمادها" },
       { k: "bldg.delete", l: "حذف أوامر الصرف" }
@@ -11257,7 +11273,7 @@
   var BDO_BANKS = { "10": "البنك الأهلي السعودي", "80": "مصرف الراجحي", "20": "بنك الرياض", "05": "مصرف الإنماء", "15": "بنك البلاد", "30": "البنك العربي الوطني", "45": "البنك السعودي الأول", "55": "البنك السعودي الفرنسي", "60": "بنك الجزيرة", "65": "البنك السعودي للاستثمار" };
   var BDO_COPIES = ["صورة للمحاسبة والمدير المالي", "صورة لمجلس الإدارة", "صورة للمدير التنفيذي"];
   var BDO_PROJECT = "مشروع المبنى الإداري لخيرية العوامية";
-  var BDO_MATRIX = "وبناءً على الصلاحيات الممنوحة لمدير المشروع حسب مصفوفة مصروفات مشروع إعادة بناء المبنى الإداري لخيرية العوامية الموافق عليها من مجلس الإدارة والتي تبدأ من عام ٢٠٢٦ إلى بداية ٢٠٣٠م.";
+  var BDO_MATRIX = "وبناءً على الصلاحيات الممنوحة لمدير المشروع حسب مصفوفة مصروفات مشروع إعادة بناء المبنى الإداري لخيرية العوامية الموافق عليها من مجلس الإدارة والتي تبدأ من عام 2026 إلى بداية 2030م.";
   var BDO_TPL = {
     purpose: [
       { k: "pay", l: "دفعة من أعمال", f: function(o){ return "دفع قيمة الدفعة " + (o.payment || "…") + " من أعمال " + bdoWork(o) + " ل" + BDO_PROJECT + "."; } },
@@ -11275,8 +11291,8 @@
       { k: "none", l: "بدون ملاحظة", f: function(){ return ""; } }
     ]
   };
-  var bdoUI = { view: "form", order: null, auto: null, tpl: null, list: [], started: false, sig: "", q: "", dirty: false, busy: false };
-  function bdoAr(v){ return String(v == null ? "" : v).replace(/[0-9]/g, function(d){ return "٠١٢٣٤٥٦٧٨٩"[d]; }); }
+  var bdoUI = { view: "form", order: null, auto: null, tpl: null, list: [], started: false, sig: "", q: "", dirty: false, busy: false, image: "", zoom: 1, openD: {} };
+  function bdoAr(v){ return String(v == null ? "" : v); }
   function bdoNumVal(v){ var n = parseFloat(String(v == null ? "" : v).replace(/[٠-٩]/g, function(d){ return "٠١٢٣٤٥٦٧٨٩".indexOf(d); }).replace(/[,٬\s]/g, "")); return isNaN(n) ? 0 : Math.round(n * 100) / 100; }
   function bdoFmt(v){ return bdoNumVal(v).toLocaleString("en-US", { maximumFractionDigits: 2 }); }
   function bdoNum(v){ return bdoNumVal(v) ? bdoAr(bdoFmt(v)) : "…"; }
@@ -11284,7 +11300,7 @@
   function bdoWork(o){ return o.work || "…"; }
   function bdoPayAs(o){ return o.payment ? ({ "المقدمة": "كدفعة مقدمة", "النهائية": "كدفعة نهائية" }[o.payment] || "كدفعة " + o.payment.replace(/^ال/, "")) : ""; }
   function bdoDay(iso){ return iso ? ["الأحد", "الإثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت"][new Date(iso + "T12:00:00").getDay()] : ""; }
-  function bdoDate(iso){ if(!iso) return "… / … / …م"; var p = iso.split("-"); return bdoAr(+p[2]) + " / " + bdoAr(+p[1]) + " / " + bdoAr(p[0]) + "م"; }
+  function bdoDate(iso){ if(!iso) return "…/…/…م"; var p = iso.split("-"); return p[2] + "/" + p[1] + "/" + p[0] + "م"; }
   function bdoIso(d){ return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0"); }
   // التفقيط: مبلغ بالأرقام ← نص عربي رسمي
   function bdoGroup(n){
@@ -11333,12 +11349,12 @@
     var last = bdoUI.list.slice().sort(function(a, b){ return (b.updatedAt || 0) - (a.updatedAt || 0); })[0] || {};
     var d = new Date(), t = new Date(Date.now() + 864e5);
     return { id: "", no: bdoNextNo(), date: bdoIso(d), status: "draft", beneficiary: "", work: "", payment: "الأولى", refNo: "", claimDate: bdoIso(d), amount: "", purpose: "", basis: "", note: "", deposit: "", depositDate: bdoIso(t),
-      bank: "", account: "", iban: "", approverRole: last.approverRole || "اعتماد مدير المشروع", approverTitle: last.approverTitle || "نائب رئيس مجلس الإدارة", approverName: last.approverName || "أ. ناجي بن وهب الفرج",
+      bank: "", account: "", iban: "", brief: "", approverRole: last.approverRole || "اعتماد مدير المشروع", approverTitle: last.approverTitle || "نائب رئيس مجلس الإدارة", approverName: last.approverName || "أ. ناجي بن وهب الفرج",
       boardDate: "", contractDate: "", contractAmount: "", copies: last.copies || BDO_COPIES.slice() };
   }
   function bdoOpen(o, isNew){
     bdoUI.order = o; bdoUI.sig = ""; bdoUI.dirty = false; bdoUI.view = "form";
-    bdoUI.auto = { purpose: isNew, basis: isNew, note: isNew, deposit: isNew };
+    bdoUI.auto = { purpose: isNew, basis: isNew, note: isNew, deposit: isNew, brief: isNew || !o.brief };
     bdoUI.tpl = o.tpl || { purpose: "pay", basis: "claim", note: "award" };
     bdoRegen(); bdoRender();
   }
@@ -11349,101 +11365,131 @@
       var t = BDO_TPL[k].find(function(x){ return x.k === bdoUI.tpl[k]; }) || BDO_TPL[k][0];
       o[k] = t.f(o);
     });
+    if(a.brief) o.brief = [o.payment ? "الدفعة " + o.payment : "", o.work, o.beneficiary].filter(Boolean).join(" — ");
     if(a.deposit) o.deposit = "مطلوب إيداع المبلغ يوم " + bdoDay(o.depositDate) + " الموافق " + bdoDate(o.depositDate) + ".";
   }
-  function bdoRed(s){ return escapeHTML(s).replace(/[٠-٩]+\s*\/\s*[٠-٩]+\s*\/\s*[٠-٩]+\s*م?|\([^)]*ريال[^)]*\)/g, function(m){ return '<span class="red">' + m + '</span>'; }); }
-  var BDO_ICO = {
-    doc: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="3" width="14" height="18" rx="1.5"/><path d="M8.5 8h7M8.5 12h7M8.5 16h7"/></svg>',
-    file: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h8l4 4v14H6z"/><path d="M14 3v4h4M9 12h6M9 16h6"/></svg>',
-    coin: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><ellipse cx="12" cy="6" rx="8" ry="3"/><path d="M4 6v12c0 1.7 3.6 3 8 3s8-1.3 8-3V6M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3"/></svg>',
-    bank: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-5 9 5zM5 9v8M10 9v8M14 9v8M19 9v8M3 20h18"/></svg>',
-    user: '<svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="8" r="4"/><path d="M4 21c.6-4.5 4-7 8-7s7.400 2.500 8 7z"/></svg>',
-    note: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 3h14v12l-6 6H5z"/><path d="M13 21v-6h6M8.500 8h7M8.500 12h4"/></svg>',
-    cal: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><rect x="3.500" y="5" width="17" height="16" rx="2"/><path d="M8 3v4M16 3v4M3.500 10h17M8 14h2M14 14h2M8 17h2M14 17h2"/></svg>'
-  };
-  function bdoSheetHTML(o){
+  function bdoRed(s){ return escapeHTML(s).replace(/\d{1,2}\/\d{1,2}\/\d{4}م?|\([^)]*ريال[^)]*\)/g, function(m){ return '<span class="red">' + m + '</span>'; }); }
+  function bdoHero(){ return bdoUI.image || "designs/bldg-building.jpg"; }
+  function bdoSheetHTML(o, hero){
     var n = bdoNumVal(o.amount), copies = (o.copies || []).filter(Boolean);
-    var lb = function(ic, t){ return '<div class="lb">' + BDO_ICO[ic] + '<span>' + t + '</span></div>'; };
+    var sec = function(t, html){ return html ? '<div class="sc"><h5>' + t + '</h5><p>' + html + '</p></div>' : ""; };
     return '<div class="bdo-sheet">' +
-      '<div class="top"><div class="id"><img src="/assets/logo.png" alt=""><b>مشروع المبنى الإداري<br>لخيرية العوامية</b></div><div class="pic"><img src="designs/bldg-building.jpg" alt=""></div></div>' +
-      '<div class="ttl"><span>أمر صرف</span><i>( ' + bdoAr(o.no) + ' )</i></div>' +
-      '<div class="meta"><div>الرقم: ( ' + bdoAr(o.no) + ' )</div><div>اليوم: <span class="red">' + bdoDay(o.date) + '</span></div><div>التاريخ: <span class="red">' + bdoDate(o.date) + '</span></div></div>' +
-      '<div class="rw">' + lb("doc", "الغرض من الصرف") + '<div class="bx"><div>' + escapeHTML(o.purpose) + '</div></div></div>' +
-      '<div class="rw">' + lb("file", "استناد الصرف") + '<div class="bx"><div>' + escapeHTML(o.basis) + '</div></div></div>' +
-      '<div class="rw">' + lb("coin", "مبلغ الصرف") + '<div class="amt"><div class="n">' + (n ? bdoFmt(n) : "—") + ' <small>ريال</small></div><div class="t">' + escapeHTML(bdoWords(n)) + '</div></div></div>' +
-      '<div class="rw">' + lb("bank", "التحويل إلى") + '<div class="tr"><div class="h">أ- ' + escapeHTML(o.beneficiary) + '</div><div class="h">ب- ' + escapeHTML(o.bank) + '</div><div><span>ج- رقم الحساب:</span><b>' + escapeHTML(o.account) + '</b></div><div><span>د- رقم الآيبان:</span><b>' + escapeHTML(String(o.iban || "").replace(/\s/g, "").toUpperCase()) + '</b></div></div></div>' +
-      '<div class="rw">' + lb("user", escapeHTML(o.approverRole)) + '<div class="ap"><div>' + escapeHTML(o.approverTitle) + '<br>' + escapeHTML(o.approverName) + '</div><div><span>التوقيع:</span>' + (bdoUI.sig ? '<img src="' + bdoUI.sig + '" alt="">' : "") + '</div><div><span>اليوم والتاريخ:</span><div>' + bdoDay(o.date) + ' الموافق <span class="red">' + bdoDate(o.date) + '</span></div></div></div></div>' +
-      (o.note ? '<div class="rw">' + lb("note", "ملاحظة") + '<div class="bx w"><div>' + bdoRed(o.note) + '</div></div></div>' : "") +
-      '<div class="rw">' + lb("cal", "موعد الإيداع") + '<div class="dp">' + bdoRed(o.deposit) + '</div></div>' +
-      (copies.length ? '<div class="rw">' + lb("file", "نسخ التوزيع") + '<div class="cp">' + copies.map(function(c){ return "<span>" + escapeHTML(c) + "</span>"; }).join("") + '</div></div>' : "") +
+      '<div class="hd"><div><span class="k">' + BDO_PROJECT.replace("مشروع ", "مشروع ") + '</span><h1>أمر صرف</h1></div><img src="/assets/logo.png" alt=""></div>' +
+      '<div class="hero"><img src="' + escapeHTML(hero || bdoHero()) + '" alt=""><div class="no"><span>رقم الأمر</span><b>' + escapeHTML(o.no) + '</b></div></div>' +
+      '<div class="mt"><div><span>اليوم</span><b>' + bdoDay(o.date) + '</b></div><div><span>التاريخ</span><b>' + bdoDate(o.date) + '</b></div><div><span>موعد الإيداع</span><b>' + bdoDate(o.depositDate) + '</b></div></div>' +
+      '<div class="am"><div class="v"><span>مبلغ الصرف</span><div class="n">' + (n ? bdoFmt(n) : "—") + ' <small>ريال</small></div></div><div class="w">' + escapeHTML(bdoWords(n)) + '</div></div>' +
+      sec("الغرض من الصرف", escapeHTML(o.purpose)) + sec("استناد الصرف", escapeHTML(o.basis)) +
+      '<div class="bk"><div><span>المستفيد</span><b>' + escapeHTML(o.beneficiary) + '</b></div><div><span>البنك</span><b>' + escapeHTML(o.bank) + '</b></div><div><span>رقم الآيبان</span><b class="l">' + escapeHTML(String(o.iban || "").replace(/\s/g, "").toUpperCase()) + '</b></div><div><span>رقم الحساب</span><b class="l">' + escapeHTML(o.account) + '</b></div></div>' +
+      sec("ملاحظة", bdoRed(o.note)) +
+      (o.deposit ? '<div class="dp">' + bdoRed(o.deposit) + '</div>' : "") +
+      '<div class="ap"><div><span>' + escapeHTML(o.approverRole) + '</span><b>' + escapeHTML(o.approverName) + '</b><i>' + escapeHTML(o.approverTitle) + '</i></div><div class="sg"><span>التوقيع</span>' + (bdoUI.sig ? '<img src="' + bdoUI.sig + '" alt="">' : "") + '</div></div>' +
+      (copies.length ? '<div class="cp"><b>نسخ التوزيع:</b>' + copies.map(function(c){ return "<span>" + escapeHTML(c.replace(/^صورة /, "")) + "</span>"; }).join("<span>·</span>") + '</div>' : "") +
     '</div>';
   }
   // النص الطويل يصغُر تلقائياً ليبقى الأمر في صفحة واحدة
   function bdoFit(sheet){
-    var fs = 14.5, gap = 10;
+    var fs = 14, gap = 12;
     sheet.style.setProperty("--fs", fs + "px"); sheet.style.setProperty("--bg", gap + "px");
-    for(var i = 0; i < 14 && sheet.scrollHeight > sheet.clientHeight + 1; i++){
+    for(var i = 0; i < 16 && sheet.scrollHeight > sheet.clientHeight + 1; i++){
       if(gap > 5) gap -= 1; else fs -= .25;
       sheet.style.setProperty("--fs", fs + "px"); sheet.style.setProperty("--bg", gap + "px");
     }
   }
   function bdoPaint(){
-    var w = document.getElementById("bdoSheetWrap"), o = bdoUI.order;
-    if(!w || !o) return;
-    w.innerHTML = bdoSheetHTML(o);
-    var pv = w.parentElement, s = Math.min(1, (pv.clientWidth - 24) / 794);
-    if(s <= 0) s = .5;
-    w.style.transform = "scale(" + s + ")"; w.style.marginBottom = -(1123 * (1 - s)) + "px"; w.style.marginLeft = -(794 * (1 - s)) + "px";
-    bdoFit(w.firstChild);
+    var o = bdoUI.order, w = document.getElementById("bdoSheetWrap");
+    if(o && w && w.offsetParent !== null){
+      var s = Math.min(1, Math.max(.3, (window.innerHeight - 170) / 1123)), box = w.parentElement;
+      s = Math.min(s, 460 / 794);
+      w.innerHTML = bdoSheetHTML(o);
+      w.style.transform = "scale(" + s + ")";
+      box.style.width = Math.round(794 * s) + "px"; box.style.height = Math.round(1123 * s) + "px";
+      bdoFit(w.firstChild);
+    }
+    bdoModalPaint();
+  }
+  // نافذة المعاينة الكبيرة: تكبير/تصغير، وملاءمة الصفحة كاملة، وEsc للإغلاق، والتنزيل والطباعة من داخلها
+  function bdoModalPaint(){
+    var m = document.getElementById("bdoModal"), o = bdoUI.order;
+    if(!m || !o) return;
+    var inn = m.querySelector(".mi"), pg = m.querySelector(".mp"), z = bdoUI.zoom;
+    inn.innerHTML = bdoSheetHTML(o);
+    inn.style.transform = "scale(" + z + ")";
+    pg.style.width = Math.round(794 * z) + "px"; pg.style.height = Math.round(1123 * z) + "px";
+    bdoFit(inn.firstChild);
+    m.querySelector(".mb b").textContent = Math.round(z * 100) + "%";
+  }
+  function bdoFitZoom(whole){
+    var m = document.getElementById("bdoModal"), sc = m.querySelector(".ms"), W = sc.clientWidth - 28, H = sc.clientHeight - 28;
+    return whole ? Math.min(W / 794, H / 1123) : Math.min(W / 794, 1.35);
+  }
+  function bdoModalClose(){ var m = document.getElementById("bdoModal"); if(m) m.remove(); document.body.style.overflow = ""; document.removeEventListener("keydown", bdoModalKey); }
+  function bdoModalKey(e){
+    if(e.key === "Escape") bdoModalClose();
+    if(e.key === "+" || e.key === "="){ bdoUI.zoom = Math.min(2.5, bdoUI.zoom + .15); bdoModalPaint(); }
+    if(e.key === "-"){ bdoUI.zoom = Math.max(.3, bdoUI.zoom - .15); bdoModalPaint(); }
+  }
+  function bdoModalOpen(){
+    if(!bdoUI.order || document.getElementById("bdoModal")) return;
+    var m = document.createElement("div");
+    m.id = "bdoModal";
+    m.innerHTML = '<div class="mb"><button type="button" data-m="close">✕ إغلاق</button><span class="sp"></span><button type="button" data-m="out">−</button><b>100%</b><button type="button" data-m="in">+</button><button type="button" data-m="fit">الصفحة كاملة</button><button type="button" data-m="print">طباعة</button><button type="button" class="p" data-m="pdf">تنزيل PDF</button></div><div class="ms"><div class="mp"><div class="mi"></div></div></div>';
+    document.body.appendChild(m);
+    document.body.style.overflow = "hidden";
+    bdoUI.zoom = bdoFitZoom(false);
+    bdoModalPaint();
+    document.addEventListener("keydown", bdoModalKey);
+    m.addEventListener("click", function(e){
+      if(e.target.classList.contains("ms")){ bdoModalClose(); return; }
+      var b = e.target.closest("[data-m]"); if(!b) return;
+      var a = b.dataset.m;
+      if(a === "close") bdoModalClose();
+      else if(a === "in"){ bdoUI.zoom = Math.min(2.5, bdoUI.zoom + .15); bdoModalPaint(); }
+      else if(a === "out"){ bdoUI.zoom = Math.max(.3, bdoUI.zoom - .15); bdoModalPaint(); }
+      else if(a === "fit"){ bdoUI.zoom = bdoFitZoom(true); bdoModalPaint(); }
+      else bdoPdf(a === "pdf" ? "dl" : "print");
+    });
   }
   function bdoFld(k, label, val, extra){
     extra = extra || {};
     var attrs = ' data-bdo="' + k + '"' + (extra.list ? ' list="' + extra.list + '"' : "") + (extra.ph ? ' placeholder="' + escapeHTML(extra.ph) + '"' : "") + (extra.cls ? ' class="' + extra.cls + '"' : "") + (extra.inputmode ? ' inputmode="' + extra.inputmode + '"' : "");
-    return '<label class="bdo-f' + (extra.w ? " w" : "") + '"><span>' + label + '</span><input type="' + (extra.type || "text") + '"' + attrs + ' value="' + escapeHTML(val == null ? "" : val) + '"/>' + (extra.hint ? '<small data-bdo-hint="' + k + '">' + extra.hint + '</small>' : "") + '</label>';
+    return '<label class="bdo-f' + (extra.w ? " w" : "") + '"><span>' + label + '</span><input type="' + (extra.type || "text") + '"' + attrs + ' value="' + escapeHTML(val == null ? "" : val) + '"/><small data-bdo-hint="' + k + '">' + (extra.hint || "") + '</small></label>';
   }
   function bdoText(k, label, val){
     var chips = (BDO_TPL[k] || []).map(function(t){ return '<button type="button" data-bdo-tpl="' + k + ':' + t.k + '" class="' + (bdoUI.auto[k] && bdoUI.tpl[k] === t.k ? "on" : "") + '">' + t.l + '</button>'; }).join("");
-    return '<div class="bdo-f w"><span>' + label + '</span>' + (chips ? '<div class="bdo-chips">' + chips + '</div>' : "") + '<textarea data-bdo="' + k + '">' + escapeHTML(val || "") + '</textarea><small>' + (chips ? "تتولّد الصياغة من بياناتك — اضغط صيغة أخرى، أو عدّل النص مباشرة." : "") + '</small></div>';
+    return '<div class="bdo-f w"><span>' + label + '</span>' + (chips ? '<div class="bdo-chips">' + chips + '</div>' : "") + '<textarea data-bdo="' + k + '">' + escapeHTML(val || "") + '</textarea></div>';
   }
+  function bdoDet(id, title, body){ return '<details class="bdo-card" data-bdo-det="' + id + '"' + (bdoUI.openD[id] ? " open" : "") + '><summary>' + title + '</summary><div class="bdo-grid">' + body + '</div></details>'; }
   function bdoFormHTML(o){
     var ro = !can("bldg.edit"), ib = bdoIbanCheck(o.iban), bens = {};
     bdoUI.list.forEach(function(x){ if(x.beneficiary) bens[x.beneficiary] = 1; });
     var h = '<fieldset style="border:0;padding:0;margin:0;min-width:0" ' + (ro ? "disabled" : "") + '>';
-    h += '<div class="bdo-card"><h4><i>١</i> بيانات الأمر</h4><div class="bdo-grid">' + bdoFld("no", "رقم الأمر", o.no, { inputmode: "numeric", hint: "يُقترح الرقم التالي تلقائياً" }) + bdoFld("date", "التاريخ", o.date, { type: "date", hint: "اليوم: <b>" + bdoDay(o.date) + "</b>" }) + '</div></div>';
-    h += '<div class="bdo-card"><h4><i>٢</i> الجهة والمبلغ</h4><div class="bdo-grid">' +
-      bdoFld("beneficiary", "الجهة المستفيدة", o.beneficiary, { w: 1, list: "bdoBens", ph: "مثال: شركة الوكيل المحدودة (مصنع ألمنيوم الوكيل)", hint: "الجهات السابقة تظهر هنا، واختيار جهة يعبّئ بياناتها البنكية" }) +
-      bdoFld("amount", "مبلغ الصرف (ريال)", o.amount ? bdoFmt(o.amount) : "", { w: 1, cls: "bdo-amt", inputmode: "decimal", ph: "0", hint: bdoWords(o.amount) || "يُكتب المبلغ بالحروف تلقائياً" }) +
-      bdoFld("work", "بند الأعمال", o.work, { list: "bdoWorks", ph: "مثال: نوافذ الألمنيوم" }) +
+    h += '<div class="bdo-card"><div class="bdo-grid">' +
+      bdoFld("no", "رقم الأمر", o.no, { inputmode: "numeric" }) + bdoFld("date", "التاريخ", o.date, { type: "date", hint: bdoDay(o.date) }) +
+      bdoFld("beneficiary", "الجهة المستفيدة", o.beneficiary, { w: 1, list: "bdoBens" }) +
+      bdoFld("amount", "المبلغ (ريال)", o.amount ? bdoFmt(o.amount) : "", { w: 1, cls: "bdo-amt", inputmode: "decimal", ph: "0", hint: bdoWords(o.amount) }) +
+      bdoFld("work", "بند الأعمال", o.work, { list: "bdoWorks" }) +
       '<label class="bdo-f"><span>الدفعة</span><select data-bdo="payment"><option value="">—</option>' + BDO_PAYS.map(function(p){ return '<option' + (o.payment === p ? " selected" : "") + '>' + p + '</option>'; }).join("") + '</select></label>' +
-      bdoFld("claimDate", "تاريخ المطالبة / الفاتورة", o.claimDate, { type: "date" }) + bdoFld("refNo", "رقم الفاتورة / المستخلص", o.refNo, { ph: "اختياري" }) +
-      '</div></div>';
-    h += '<div class="bdo-card"><h4><i>٣</i> الصياغات</h4><div class="bdo-grid">' + bdoText("purpose", "الغرض من الصرف", o.purpose) + bdoText("basis", "استناد الصرف", o.basis) + '</div></div>';
-    h += '<div class="bdo-card"><h4><i>٤</i> التحويل البنكي</h4><div class="bdo-grid">' +
-      bdoFld("iban", "رقم الآيبان", o.iban, { w: 1, cls: "bdo-ltr", ph: "SA00 0000 0000 0000 0000 0000", hint: ib.st ? '<span class="' + ib.st + '">' + ib.m + '</span>' : "يتحقق تلقائياً ويتعرّف على البنك" }) +
-      bdoFld("bank", "البنك", o.bank, { list: "bdoBanks" }) + bdoFld("account", "رقم الحساب", o.account, { cls: "bdo-ltr", inputmode: "numeric" }) + '</div></div>';
-    h += '<div class="bdo-card"><h4><i>٥</i> الاعتماد والملاحظة</h4><div class="bdo-grid">' +
-      bdoFld("approverRole", "صفة الاعتماد", o.approverRole) + bdoFld("approverTitle", "المنصب", o.approverTitle) + bdoFld("approverName", "المعتمِد", o.approverName, { w: 1 }) +
-      '<label class="bdo-f w"><span>صورة التوقيع (اختياري)</span><input type="file" accept="image/png,image/jpeg" data-bdo-sig/><small>تُرفق لهذا الإصدار فقط ولا تُحفظ في النظام. أو اتركها فارغة للتوقيع بالقلم بعد الطباعة.</small></label>' +
-      bdoFld("boardDate", "تاريخ قرار مجلس الإدارة", o.boardDate, { type: "date" }) + bdoFld("contractDate", "تاريخ الاتفاقية", o.contractDate, { type: "date" }) +
-      bdoFld("contractAmount", "قيمة الاتفاقية (ريال)", o.contractAmount ? bdoFmt(o.contractAmount) : "", { w: 1, inputmode: "decimal", hint: bdoWords(o.contractAmount, true) }) +
-      bdoText("note", "الملاحظة", o.note) + '</div></div>';
-    h += '<div class="bdo-card"><h4><i>٦</i> الإيداع والتوزيع</h4><div class="bdo-grid">' + bdoFld("depositDate", "موعد الإيداع", o.depositDate, { type: "date", hint: "اليوم: <b>" + bdoDay(o.depositDate) + "</b>" }) +
-      '<div class="bdo-f"><span>نسخ التوزيع</span><div class="bdo-checks">' + BDO_COPIES.map(function(c){ return '<label><input type="checkbox" data-bdo-copy="' + escapeHTML(c) + '"' + ((o.copies || []).indexOf(c) > -1 ? " checked" : "") + '/> ' + c + '</label>'; }).join("") + '</div></div>' +
-      bdoText("deposit", "نص الإيداع", o.deposit) + '</div></div>';
+      bdoFld("iban", "الآيبان", o.iban, { w: 1, cls: "bdo-ltr", ph: "SA", hint: ib.st ? '<span class="' + ib.st + '">' + ib.m + '</span>' : "" }) +
+      bdoFld("bank", "البنك", o.bank, { list: "bdoBanks" }) + bdoFld("account", "رقم الحساب", o.account, { cls: "bdo-ltr", inputmode: "numeric" }) +
+      bdoFld("brief", "نبذة مختصرة للسجل", o.brief, { w: 1 }) + '</div></div>';
+    h += bdoDet("texts", "الغرض والاستناد", bdoText("purpose", "الغرض من الصرف", o.purpose) + bdoText("basis", "استناد الصرف", o.basis) + bdoFld("claimDate", "تاريخ المطالبة / الفاتورة", o.claimDate, { type: "date" }) + bdoFld("refNo", "رقم الفاتورة / المستخلص", o.refNo));
+    h += bdoDet("note", "الملاحظة والاتفاقية", bdoFld("boardDate", "تاريخ قرار المجلس", o.boardDate, { type: "date" }) + bdoFld("contractDate", "تاريخ الاتفاقية", o.contractDate, { type: "date" }) + bdoFld("contractAmount", "قيمة الاتفاقية (ريال)", o.contractAmount ? bdoFmt(o.contractAmount) : "", { w: 1, inputmode: "decimal", hint: bdoWords(o.contractAmount, true) }) + bdoText("note", "الملاحظة", o.note));
+    h += bdoDet("appr", "الاعتماد والتوقيع", bdoFld("approverRole", "صفة الاعتماد", o.approverRole) + bdoFld("approverTitle", "المنصب", o.approverTitle) + bdoFld("approverName", "المعتمِد", o.approverName, { w: 1 }) + '<label class="bdo-f w"><span>صورة التوقيع (اختياري)</span><input type="file" accept="image/png,image/jpeg" data-bdo-sig/><small>تُرفق لهذا الإصدار فقط ولا تُحفظ في النظام.</small></label>');
+    h += bdoDet("dep", "الإيداع والتوزيع", bdoFld("depositDate", "موعد الإيداع", o.depositDate, { type: "date", hint: bdoDay(o.depositDate) }) + '<div class="bdo-f"><span>نسخ التوزيع</span><div class="bdo-checks">' + BDO_COPIES.map(function(c){ return '<label><input type="checkbox" data-bdo-copy="' + escapeHTML(c) + '"' + ((o.copies || []).indexOf(c) > -1 ? " checked" : "") + '/> ' + c.replace(/^صورة /, "") + '</label>'; }).join("") + '</div></div>' + bdoText("deposit", "نص الإيداع", o.deposit));
+    h += bdoDet("img", "صورة المبنى", '<div class="bdo-img"><img src="' + escapeHTML(bdoHero()) + '" alt="" id="bdoImgThumb"/><label class="btn-secondary">رفع صورة<input type="file" accept="image/png,image/jpeg" data-bdo-img hidden/></label><small id="bdoImgNote">المقاس الأفضل 2400 × 670 بكسل (JPG أو PNG). الصورة تُستخدم في كل الأوامر.</small></div>');
     h += '</fieldset>';
     h += '<datalist id="bdoBens">' + Object.keys(bens).map(function(b){ return '<option value="' + escapeHTML(b) + '">'; }).join("") + '</datalist><datalist id="bdoWorks">' + BDO_WORKS.map(function(b){ return '<option value="' + b + '">'; }).join("") + '</datalist><datalist id="bdoBanks">' + Object.keys(BDO_BANKS).map(function(k){ return '<option value="' + BDO_BANKS[k] + '">'; }).join("") + '</datalist>';
     return h;
   }
   function bdoListHTML(){
-    var q = (bdoUI.q || "").trim(), rows = bdoUI.list.slice().sort(function(a, b){ return (+b.no || 0) - (+a.no || 0); }).filter(function(o){ return !q || (String(o.no) + " " + (o.beneficiary || "") + " " + (o.work || "") + " " + (o.purpose || "")).indexOf(q) > -1; });
-    var issued = bdoUI.list.filter(function(o){ return o.status === "issued"; }), sum = issued.reduce(function(s, o){ return s + bdoNumVal(o.amount); }, 0);
-    var h = '<div class="bdo-stats"><div><b>' + bdoUI.list.length + '</b>أمر صرف في السجل</div><div><b>' + issued.length + '</b>معتمد</div><div><b>' + sum.toLocaleString("en-US") + '</b>إجمالي المعتمد (ريال)</div></div>';
-    h += '<div class="bdo-tools"><input type="search" data-bdo-q placeholder="ابحث برقم الأمر أو الجهة أو البند…" value="' + escapeHTML(bdoUI.q) + '"/></div>';
+    var q = (bdoUI.q || "").trim(), rows = bdoUI.list.slice().sort(function(a, b){ return (+b.no || 0) - (+a.no || 0); }).filter(function(o){ return !q || (String(o.no) + " " + (o.brief || "") + " " + (o.beneficiary || "") + " " + (o.work || "") + " " + (o.purpose || "")).indexOf(q) > -1; });
+    var sum = bdoUI.list.filter(function(o){ return o.status === "issued"; }).reduce(function(s, o){ return s + bdoNumVal(o.amount); }, 0);
+    var h = '<div class="bdo-tools"><input type="search" data-bdo-q placeholder="ابحث برقم الأمر أو النبذة أو الجهة" value="' + escapeHTML(bdoUI.q) + '"/><span>إجمالي المعتمد <b>' + sum.toLocaleString("en-US") + '</b> ريال</span></div>';
     if(!rows.length) return h + '<div class="bdo-empty">' + (bdoUI.list.length ? "لا توجد نتائج" : "لم يُحفظ أي أمر صرف بعد") + '</div>';
-    h += '<table class="bdo-tbl"><tr><th>الرقم</th><th class="bdo-hm">التاريخ</th><th>الجهة</th><th>المبلغ</th><th>الحالة</th><th></th></tr>' + rows.map(function(o){
-      return '<tr data-bdo-open="' + o.id + '"><td><b>' + escapeHTML(o.no) + '</b></td><td class="bdo-hm">' + escapeHTML(o.date || "") + '</td><td>' + escapeHTML(o.beneficiary || "—") + '</td><td>' + bdoFmt(o.amount) + '</td><td><span class="bdo-tag' + (o.status === "issued" ? " ok" : "") + '">' + (o.status === "issued" ? "معتمد" : "مسودة") + '</span></td><td style="white-space:nowrap">' +
-        (can("bldg.edit") ? '<button type="button" class="bdo-mini" data-bdo-dup="' + o.id + '">نسخ</button>' : "") + (can("bldg.delete") ? '<button type="button" class="bdo-mini del" data-bdo-del="' + o.id + '">حذف</button>' : "") + '</td></tr>';
-    }).join("") + '</table>';
+    h += '<div class="bdo-rows">' + rows.map(function(o){
+      return '<div class="bdo-row" data-bdo-open="' + o.id + '"><div class="no">' + escapeHTML(o.no) + '</div><div class="tx"><b>' + escapeHTML(o.brief || o.purpose || "—") + '</b><i>' + escapeHTML(o.beneficiary || "") + ' · ' + escapeHTML(o.date || "") + '</i></div><div class="am">' + bdoFmt(o.amount) + '<br><span class="bdo-tag' + (o.status === "issued" ? " ok" : "") + '">' + (o.status === "issued" ? "معتمد" : "مسودة") + '</span></div><div class="ac">' +
+        (can("bldg.edit") ? '<button type="button" class="bdo-mini" data-bdo-dup="' + o.id + '">نسخ</button>' : "") + (can("bldg.delete") ? '<button type="button" class="bdo-mini del" data-bdo-del="' + o.id + '">حذف</button>' : "") + '</div></div>';
+    }).join("") + '</div>';
     return h;
   }
   function bdoRender(){
@@ -11453,13 +11499,13 @@
     if(!bdoUI.order && bdoUI.view !== "list" && can("bldg.edit")){ bdoOpen(bdoBlank(), true); return; }
     if(!bdoUI.order) bdoUI.view = "list";
     var o = bdoUI.order, edit = can("bldg.edit");
-    var h = '<div class="bdo-hero"><div><span class="bdo-kick">مشروع المبنى الإداري لخيرية العوامية</span><h2>أوامر صرف وداخلة المبنى الإداري</h2><p>عبّئ البيانات، والأمر يتكوّن أمامك جاهزاً للاعتماد والطباعة.</p></div>' +
-      '<div class="bdo-seg">' + (edit ? '<button type="button" data-bdo-view="new">＋ أمر جديد</button>' : "") + (o ? '<button type="button" data-bdo-view="form" class="' + (bdoUI.view === "form" ? "on" : "") + '">النموذج</button>' : "") + '<button type="button" data-bdo-view="list" class="' + (bdoUI.view === "list" ? "on" : "") + '">السجل (' + bdoUI.list.length + ')</button></div></div>';
+    var h = '<div class="bdo-head"><h2>أوامر صرف</h2><div class="bdo-seg">' + (edit ? '<button type="button" data-bdo-view="new">＋ أمر جديد</button>' : "") + '<button type="button" data-bdo-view="' + (bdoUI.view === "list" && o ? "form" : "list") + '" class="' + (bdoUI.view === "list" ? "on" : "") + '">السجل (' + bdoUI.list.length + ')</button></div></div>' +
+      '<div class="bdo-subs"><button type="button">المبنى الإداري</button></div>';
     if(bdoUI.view === "list") h += bdoListHTML();
     else {
-      h += '<div class="bdo-work"><div>' + bdoFormHTML(o) + '</div><div class="bdo-side"><div class="bdo-pv"><div class="bdo-pvin" id="bdoSheetWrap"></div></div><div class="bdo-acts">' +
-        (edit ? '<button type="button" class="btn-secondary" data-bdo-save="draft">حفظ مسودة</button><button type="button" class="btn-primary" data-bdo-save="issued">اعتماد وحفظ</button>' : "") +
-        '<button type="button" class="btn-secondary" data-bdo-pdf="dl">تنزيل PDF</button><button type="button" class="btn-secondary" data-bdo-pdf="print">طباعة</button></div><div class="bdo-state" id="bdoState">' + (o.id ? (o.status === "issued" ? "أمر معتمد" : "مسودة محفوظة") : "لم يُحفظ بعد") + '</div></div></div>';
+      h += '<div class="bdo-work"><div>' + bdoFormHTML(o) + '</div><div class="bdo-side"><button type="button" class="bdo-pv" data-bdo-prev><div class="bdo-pvbox"><div class="bdo-pvin" id="bdoSheetWrap"></div></div><span class="bdo-pvhint">اضغط لمعاينة أكبر</span></button></div></div>' +
+        '<div class="bdo-bar"><span class="bdo-state" id="bdoState">' + (o.id ? (o.status === "issued" ? "أمر معتمد" : "مسودة محفوظة") : "لم يُحفظ بعد") + '</span><button type="button" class="btn-secondary" data-bdo-prev>معاينة</button>' +
+        (edit ? '<button type="button" class="btn-secondary" data-bdo-save="draft">حفظ مسودة</button><button type="button" class="btn-primary" data-bdo-save="issued">اعتماد وحفظ</button>' : "") + '</div>';
     }
     root.innerHTML = h;
     if(bdoUI.view !== "list") bdoPaint();
@@ -11467,6 +11513,11 @@
   function bdoStart(){
     if(bdoUI.started) return;
     bdoUI.started = true;
+    db.collection("hubMeta").doc("bldgOrders").onSnapshot(function(doc){
+      bdoUI.image = (doc.exists && doc.data().image) || "";
+      var th = document.getElementById("bdoImgThumb"); if(th) th.src = bdoHero();
+      bdoPaint();
+    });
     db.collection("bldgOrders").onSnapshot(function(snap){
       bdoUI.list = snap.docs.map(function(d){ return d.data(); });
       var o = bdoUI.order;
@@ -11509,15 +11560,20 @@
     showToast("جارٍ تجهيز الملف…");
     var box = document.createElement("div");
     box.style.cssText = "position:fixed;left:-14000px;top:0";
-    box.innerHTML = bdoSheetHTML(o);
     document.body.appendChild(box);
-    bdoFit(box.firstChild);
-    var imgs = Array.prototype.slice.call(box.querySelectorAll("img"));
-    Promise.all([
-      window.html2canvas || bdoLoadJs("https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"),
-      window.jspdf || bdoLoadJs("https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"),
+    var heroReady = /^https?:/.test(bdoHero()) ? galFetchBlob(bdoHero()).then(function(blob){
+      return new Promise(function(ok){ var r = new FileReader(); r.onload = function(){ ok(r.result); }; r.readAsDataURL(blob); });
+    }).catch(function(){ return "designs/bldg-building.jpg"; }) : Promise.resolve(bdoHero());
+    heroReady.then(function(hero){
+      box.innerHTML = bdoSheetHTML(o, hero);
+      bdoFit(box.firstChild);
+      var imgs = Array.prototype.slice.call(box.querySelectorAll("img"));
+      return Promise.all([
+        window.html2canvas || bdoLoadJs("https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"),
+        window.jspdf || bdoLoadJs("https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"),
       document.fonts && document.fonts.ready
-    ].concat(imgs.map(function(im){ return im.complete ? 1 : new Promise(function(ok){ im.onload = im.onerror = ok; }); }))).then(function(){
+      ].concat(imgs.map(function(im){ return im.complete ? 1 : new Promise(function(ok){ im.onload = im.onerror = ok; }); })));
+    }).then(function(){
       return window.html2canvas(box.firstChild, { scale: 2.5, backgroundColor: "#ffffff", useCORS: true, logging: false });
     }).then(function(cv){
       var pdf = new window.jspdf.jsPDF({ unit: "mm", format: "a4", orientation: "portrait", compress: true });
@@ -11528,6 +11584,28 @@
       else { var a = document.createElement("a"); a.href = url; a.download = "أمر صرف " + o.no + ".pdf"; document.body.appendChild(a); a.click(); a.remove(); showToast("✔ تم تنزيل أمر الصرف"); }
       setTimeout(function(){ URL.revokeObjectURL(url); }, 60000);
     }).catch(function(e){ console.error(e); if(win) win.close(); showToast("تعذّر تجهيز الملف — أعد المحاولة"); }).then(function(){ box.remove(); });
+  }
+  // صورة المبنى: تُقص على نسبة مساحتها في الورقة وتُحفظ بأعلى دقة (حتى 2800 بكسل) — مشتركة بين كل الأوامر
+  function bdoUploadImage(file){
+    if(!file || !can("bldg.edit")) return;
+    var note = document.getElementById("bdoImgNote"), url = URL.createObjectURL(file), im = new Image();
+    if(note) note.textContent = "جارٍ رفع الصورة…";
+    im.onerror = function(){ URL.revokeObjectURL(url); showToast("تعذّرت قراءة الصورة"); };
+    im.onload = function(){
+      var A = 710 / 200, sw = im.naturalWidth, sh = im.naturalHeight, cw = Math.min(sw, sh * A), ch = cw / A;
+      var W = Math.min(2800, Math.round(cw)), c = document.createElement("canvas");
+      c.width = W; c.height = Math.round(W / A);
+      var x = c.getContext("2d"); x.imageSmoothingQuality = "high";
+      x.drawImage(im, (sw - cw) / 2, (sh - ch) / 2, cw, ch, 0, 0, c.width, c.height);
+      URL.revokeObjectURL(url);
+      uploadDataUrlToR2(c.toDataURL("image/jpeg", .93), "templates", function(final){
+        if(!/^https:/.test(String(final || ""))){ if(note) note.textContent = "تعذّر الرفع — أعد المحاولة"; showToast("تعذّر رفع الصورة"); return; }
+        db.collection("hubMeta").doc("bldgOrders").set({ image: final, updatedAt: Date.now() }, { merge: true }).then(function(){
+          if(note) note.textContent = W < 1600 ? "حُفظت، لكن الصورة صغيرة (" + W + " بكسل) — الأفضل 2400 بكسل عرضاً." : "✔ حُفظت الصورة بدقة " + W + " بكسل.";
+        }).catch(function(){ showToast("تعذّر حفظ الصورة"); });
+      });
+    };
+    im.src = url;
   }
   function bdoFillBen(name){
     var hit = bdoUI.list.filter(function(x){ return x.beneficiary === name && x.iban; }).sort(function(a, b){ return (b.updatedAt || 0) - (a.updatedAt || 0); })[0], o = bdoUI.order;
@@ -11543,26 +11621,27 @@
     var root = document.getElementById("bdoRoot");
     if(!root) return;
     function syncTexts(){
-      ["purpose", "basis", "note", "deposit"].forEach(function(k){ var el = root.querySelector('textarea[data-bdo="' + k + '"]'); if(el && bdoUI.auto[k]) el.value = bdoUI.order[k] || ""; });
+      ["purpose", "basis", "note", "deposit", "brief"].forEach(function(k){ var el = root.querySelector('[data-bdo="' + k + '"]'); if(el && bdoUI.auto[k]) el.value = bdoUI.order[k] || ""; });
     }
     function hint(k, html){ var h = root.querySelector('[data-bdo-hint="' + k + '"]'); if(h) h.innerHTML = html; }
+    root.addEventListener("toggle", function(e){ var d = e.target.dataset && e.target.dataset.bdoDet; if(d) bdoUI.openD[d] = e.target.open; }, true);
     root.addEventListener("input", function(e){
       var t = e.target;
       if(t.hasAttribute("data-bdo-q")){ bdoUI.q = t.value; var pos = t.selectionStart; bdoRender(); var n = root.querySelector("[data-bdo-q]"); if(n){ n.focus(); n.setSelectionRange(pos, pos); } return; }
       var k = t.dataset.bdo; if(!k || !bdoUI.order) return;
       var o = bdoUI.order;
       o[k] = t.value; bdoUI.dirty = true;
-      if(BDO_TPL[k] || k === "deposit"){
+      if(BDO_TPL[k] || k === "deposit" || k === "brief"){
         bdoUI.auto[k] = false;
         Array.prototype.forEach.call(root.querySelectorAll('[data-bdo-tpl^="' + k + ':"]'), function(c){ c.classList.remove("on"); });
       } else bdoRegen();
-      if(k === "amount") hint("amount", bdoWords(o.amount) || "يُكتب المبلغ بالحروف تلقائياً");
+      if(k === "amount") hint("amount", bdoWords(o.amount));
       if(k === "contractAmount") hint("contractAmount", bdoWords(o.contractAmount, true));
-      if(k === "date") hint("date", "اليوم: <b>" + bdoDay(o.date) + "</b>");
-      if(k === "depositDate") hint("depositDate", "اليوم: <b>" + bdoDay(o.depositDate) + "</b>");
+      if(k === "date") hint("date", bdoDay(o.date));
+      if(k === "depositDate") hint("depositDate", bdoDay(o.depositDate));
       if(k === "iban"){
         var ib = bdoIbanCheck(o.iban);
-        hint("iban", ib.st ? '<span class="' + ib.st + '">' + ib.m + '</span>' : "يتحقق تلقائياً ويتعرّف على البنك");
+        hint("iban", ib.st ? '<span class="' + ib.st + '">' + ib.m + '</span>' : "");
         if(ib.bank){ o.bank = ib.bank; var bk = root.querySelector('[data-bdo="bank"]'); if(bk) bk.value = ib.bank; }
       }
       syncTexts(); bdoPaint();
@@ -11577,6 +11656,7 @@
         if(t.checked) o.copies = BDO_COPIES.filter(function(x){ return x === c || o.copies.indexOf(x) > -1; });
         bdoUI.dirty = true; bdoPaint(); return;
       }
+      if(t.hasAttribute("data-bdo-img")){ bdoUploadImage(t.files && t.files[0]); t.value = ""; return; }
       if(t.hasAttribute("data-bdo-sig")){
         var f = t.files && t.files[0]; if(!f) return;
         var r = new FileReader();
@@ -11585,7 +11665,8 @@
       }
     });
     root.addEventListener("click", function(e){
-      var b = e.target.closest("button, tr[data-bdo-open]"); if(!b) return;
+      var b = e.target.closest("button, [data-bdo-open]"); if(!b) return;
+      if(b.hasAttribute("data-bdo-prev")){ bdoModalOpen(); return; }
       if(b.dataset.bdoView){
         var v = b.dataset.bdoView;
         if(v === "new"){ if(bdoUI.dirty && !confirm("لديك تعديلات لم تُحفظ — بدء أمر جديد يُلغيها. متابعة؟")) return; bdoOpen(bdoBlank(), true); return; }
