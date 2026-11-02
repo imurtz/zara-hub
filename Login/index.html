@@ -2668,6 +2668,7 @@
             <option value="employee">موظف</option>
             <option value="admin">أدمن</option>
             <option value="chair">رئيس مجلس الإدارة</option>
+            <option value="vice">نائب رئيس مجلس الإدارة</option>
             <option value="board">عضو مجلس الإدارة</option>
             <option value="volunteer">متطوع</option>
           </select>
@@ -2948,6 +2949,7 @@
   // role: تصنيف الحساب — "admin" وحده يملك كل شيء ولوحة التحكم؛ الباقي تُحدَّد صلاحياته بالتفصيل في perms
   var EMP_KINDS = [
     { k: "employee", l: "موظف" }, { k: "admin", l: "أدمن" }, { k: "chair", l: "رئيس مجلس الإدارة" },
+    { k: "vice", l: "نائب رئيس مجلس الإدارة" },
     { k: "board", l: "عضو مجلس الإدارة" }, { k: "volunteer", l: "متطوع" }
   ];
   var PERM_GROUPS = [
@@ -3000,6 +3002,7 @@
   var KIND_PRESETS = {
     employee: ["docs.view", "docs.add", "tasks.view", "tasks.edit", "tasks.projects", "events.view", "events.add", "events.edit", "events.publish", "events.design", "events.reports", "events.gallery", "calendars.view", "chat.use", "designs.view"],
     chair: ["docs.view", "tasks.view", "events.view", "events.reports", "events.gallery", "annual.view", "executive.view", "calendars.view", "designs.view", "chat.use"],
+    vice: ["docs.view", "tasks.view", "events.view", "events.reports", "events.gallery", "annual.view", "executive.view", "calendars.view", "designs.view", "chat.use"],
     board: ["docs.view", "tasks.view", "events.view", "events.reports", "events.gallery", "annual.view", "executive.view", "calendars.view", "designs.view", "chat.use"],
     volunteer: ["tasks.view", "tasks.edit", "chat.use"]
   };
