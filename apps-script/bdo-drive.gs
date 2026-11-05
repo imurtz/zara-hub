@@ -2,7 +2,7 @@
  * بوابة زارة — رفع نسخ أوامر الصرف (PDF) إلى Google Drive
  * يُنشأ كسكربت مستقل في حساب قوقل الذي يملك المجلد، ويُنشر: نشر ← تطبيق ويب ← التنفيذ: أنا ← الوصول: أي شخص.
  * الترتيب في درايف:  أوامر الصرف / المبنى الإداري / 2026 / أمر صرف 122 — ….pdf
- * إعادة تصدير نفس الأمر تستبدل نسخته السابقة (القديمة تذهب لسلة المهملات وتبقى قابلة للاسترجاع 30 يوماً).
+ * كل تصدير يُحفظ ملفاً مستقلاً بتاريخه ووقته — لا يُحذف ولا يُستبدل أي ملف سابق أبداً.
  * لا يقبل إلا ملفات PDF حقيقية بحجم معقول، ولا يقرأ ولا يعيد أي ملف آخر من درايف.
  */
 const ROOT_FOLDER_ID = "";            // اختياري: معرّف مجلد موجود — إن تُرك فارغاً يُنشأ مجلد «أوامر الصرف» في جذر درايف
@@ -29,12 +29,6 @@ function doPost(e) {
       const group = String(d.group || "المبنى الإداري").replace(/[\\/]/g, " ").slice(0, 60);
       const year = /^\d{4}$/.test(String(d.year)) ? String(d.year) : String(new Date().getFullYear());
       const folder = sub_(sub_(root_(), group), year);
-      const prefix = "أمر صرف " + no;
-      const files = folder.getFiles();
-      while (files.hasNext()) {
-        const f = files.next(), n = f.getName();
-        if (n === prefix + ".pdf" || n.indexOf(prefix + " ") === 0) f.setTrashed(true);
-      }
       const file = folder.createFile(Utilities.newBlob(bytes, "application/pdf", name));
       return out_({ ok: true, url: file.getUrl(), id: file.getId(), folder: folder.getUrl() });
     } finally { lock.releaseLock(); }

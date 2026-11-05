@@ -3187,6 +3187,7 @@
   }
 
   function applySectionPermissions(emp){
+    if(empCan(emp, "bldg.edit")) setTimeout(function(){ if(currentUser) bdoStart(); }, 8000);
     var allowed = empSections(emp);
     var firstAllowedTab = null;
     tabs.forEach(function(tab){
@@ -11373,7 +11374,8 @@
   }
   function bdoRed(s){ return escapeHTML(s).replace(/\d{1,2}\/\d{1,2}\/\d{4}م?|\([^)]*ريال[^)]*\)/g, function(m){ return '<span class="red">' + m + '</span>'; }); }
   function bdoHero(){ return bdoUI.image || "designs/bldg-building.jpg"; }
-  function bdoSheetHTML(o, hero){
+  function bdoSheetHTML(o, hero, sig){
+    if(sig === undefined) sig = o === bdoUI.order ? bdoUI.sig : "";
     var n = bdoNumVal(o.amount), copies = (o.copies || []).filter(Boolean);
     var sec = function(t, html){ return html ? '<div class="sc"><h5>' + t + '</h5><p>' + html + '</p></div>' : ""; };
     return '<div class="bdo-sheet">' +
@@ -11385,7 +11387,7 @@
       '<div class="bk"><div><span>المستفيد</span><b>' + escapeHTML(o.beneficiary) + '</b></div><div><span>البنك</span><b>' + escapeHTML(o.bank) + '</b></div><div><span>رقم الآيبان</span><b class="l">' + escapeHTML(String(o.iban || "").replace(/\s/g, "").toUpperCase()) + '</b></div><div><span>رقم الحساب</span><b class="l">' + escapeHTML(o.account) + '</b></div></div>' +
       sec("ملاحظة", bdoRed(o.note)) +
       (o.deposit ? '<div class="dp">' + bdoRed(o.deposit) + '</div>' : "") +
-      '<div class="ap"><div><span>' + escapeHTML(o.approverRole) + '</span><b>' + escapeHTML(o.approverName) + '</b><i>' + escapeHTML(o.approverTitle) + '</i></div><div class="sg"><span>التوقيع</span>' + (bdoUI.sig ? '<img src="' + bdoUI.sig + '" alt="">' : "") + '</div></div>' +
+      '<div class="ap"><div><span>' + escapeHTML(o.approverRole) + '</span><b>' + escapeHTML(o.approverName) + '</b><i>' + escapeHTML(o.approverTitle) + '</i></div><div class="sg"><span>التوقيع</span>' + (sig ? '<img src="' + sig + '" alt="">' : "") + '</div></div>' +
       (copies.length ? '<div class="cp"><b>نسخ التوزيع:</b>' + copies.map(function(c){ return "<span>" + escapeHTML(c.replace(/^صورة /, "")) + "</span>"; }).join("<span>·</span>") + '</div>' : "") +
     '</div>';
   }
@@ -11480,7 +11482,7 @@
     h += bdoDet("appr", "الاعتماد والتوقيع", bdoFld("approverRole", "صفة الاعتماد", o.approverRole) + bdoFld("approverTitle", "المنصب", o.approverTitle) + bdoFld("approverName", "المعتمِد", o.approverName, { w: 1 }) + '<label class="bdo-f w"><span>صورة التوقيع (اختياري)</span><input type="file" accept="image/png,image/jpeg" data-bdo-sig/><small>تُرفق لهذا الإصدار فقط ولا تُحفظ في النظام.</small></label>');
     h += bdoDet("dep", "الإيداع والتوزيع", bdoFld("depositDate", "موعد الإيداع", o.depositDate, { type: "date", hint: bdoDay(o.depositDate) }) + '<div class="bdo-f"><span>نسخ التوزيع</span><div class="bdo-checks">' + BDO_COPIES.map(function(c){ return '<label><input type="checkbox" data-bdo-copy="' + escapeHTML(c) + '"' + ((o.copies || []).indexOf(c) > -1 ? " checked" : "") + '/> ' + c.replace(/^صورة /, "") + '</label>'; }).join("") + '</div></div>' + bdoText("deposit", "نص الإيداع", o.deposit));
     h += bdoDet("img", "صورة المبنى", '<div class="bdo-img"><img src="' + escapeHTML(bdoHero()) + '" alt="" id="bdoImgThumb"/><label class="btn-secondary">رفع صورة<input type="file" accept="image/png,image/jpeg" data-bdo-img hidden/></label><small id="bdoImgNote">المقاس الأفضل 2400 × 670 بكسل (JPG أو PNG). الصورة تُستخدم في كل الأوامر.</small></div>');
-    if(currentUser && currentUser.role === "admin") h += bdoDet("drive", "ربط Google Drive" + (bdoUI.drive ? " ✔" : ""), '<label class="bdo-f w"><span>رابط سكربت الرفع (Apps Script)</span><input type="url" class="bdo-ltr" data-bdo-drive value="' + escapeHTML(bdoUI.drive) + '" placeholder="https://script.google.com/macros/s/…/exec"/><small id="bdoDriveNote">' + (bdoUI.drive ? "مربوط — كل PDF يُصدَّر تُرفع نسخته تلقائياً." : "غير مربوط بعد.") + '</small></label><div class="bdo-f w" style="flex-direction:row;gap:8px"><button type="button" class="btn-secondary" data-bdo-drv="save">حفظ الرابط</button><button type="button" class="btn-secondary" data-bdo-drv="test">اختبار الاتصال</button></div>');
+    if(currentUser && currentUser.role === "admin") h += bdoDet("drive", "ربط Google Drive" + (bdoUI.drive ? " ✔" : ""), '<label class="bdo-f w"><span>رابط سكربت الرفع (Apps Script)</span><input type="url" class="bdo-ltr" data-bdo-drive value="' + escapeHTML(bdoUI.drive) + '" placeholder="https://script.google.com/macros/s/…/exec"/><small id="bdoDriveNote">' + (bdoUI.drive ? "مربوط — كل PDF يُصدَّر من أي حساب يُحفظ ملفاً مستقلاً في درايف، والأوامر السابقة تُرفع تلقائياً." : "غير مربوط بعد.") + '</small></label><div class="bdo-f w" style="flex-direction:row;gap:8px"><button type="button" class="btn-secondary" data-bdo-drv="save">حفظ الرابط</button><button type="button" class="btn-secondary" data-bdo-drv="test">اختبار الاتصال</button></div>');
     h += '</fieldset>';
     h += '<datalist id="bdoBens">' + Object.keys(bens).map(function(b){ return '<option value="' + escapeHTML(b) + '">'; }).join("") + '</datalist><datalist id="bdoWorks">' + BDO_WORKS.map(function(b){ return '<option value="' + b + '">'; }).join("") + '</datalist><datalist id="bdoBanks">' + Object.keys(BDO_BANKS).map(function(k){ return '<option value="' + BDO_BANKS[k] + '">'; }).join("") + '</datalist>';
     return h;
@@ -11520,11 +11522,13 @@
     db.collection("hubMeta").doc("bldgOrders").onSnapshot(function(doc){
       bdoUI.image = (doc.exists && doc.data().image) || "";
       bdoUI.drive = (doc.exists && doc.data().drive) || "";
+      bdoBackfillSoon();
       var th = document.getElementById("bdoImgThumb"); if(th) th.src = bdoHero();
       bdoPaint();
     });
     db.collection("bldgOrders").onSnapshot(function(snap){
       bdoUI.list = snap.docs.map(function(d){ return d.data(); });
+      bdoBackfillSoon();
       var o = bdoUI.order;
       if(o && !o.id && !bdoUI.dirty) o.no = bdoNextNo();
       var active = document.querySelector(".nav-tab.active");
@@ -11559,24 +11563,29 @@
     }).catch(function(e){ bdoUI.busy = false; console.error(e); showToast("⚠️ تعذّر الحفظ — تحقق من اتصالك وأعد المحاولة"); });
   }
   function bdoLoadJs(src){ return new Promise(function(ok, no){ var s = document.createElement("script"); s.src = src; s.onload = ok; s.onerror = no; document.head.appendChild(s); }); }
-  function bdoPdf(mode){
-    var o = bdoUI.order; if(!o) return;
-    var win = mode === "print" ? window.open("", "_blank") : null;
-    showToast("جارٍ تجهيز الملف…");
+  var _bdoHeroData = null;
+  function bdoHeroData(){
+    if(!/^https?:/.test(bdoHero())) return Promise.resolve(bdoHero());
+    if(_bdoHeroData && _bdoHeroData.src === bdoHero()) return _bdoHeroData.p;
+    var p = galFetchBlob(bdoHero()).then(function(blob){
+      return new Promise(function(ok){ var r = new FileReader(); r.onload = function(){ ok(r.result); }; r.readAsDataURL(blob); });
+    }).catch(function(){ _bdoHeroData = null; return "designs/bldg-building.jpg"; });
+    _bdoHeroData = { src: bdoHero(), p: p };
+    return p;
+  }
+  // يبني ملف PDF لأمر صرف (صفحة A4 واحدة) خارج الشاشة — للتنزيل والطباعة ولرفع النسخ القديمة على درايف
+  function bdoMakePdf(o, sig){
     var box = document.createElement("div");
     box.style.cssText = "position:fixed;left:-14000px;top:0";
     document.body.appendChild(box);
-    var heroReady = /^https?:/.test(bdoHero()) ? galFetchBlob(bdoHero()).then(function(blob){
-      return new Promise(function(ok){ var r = new FileReader(); r.onload = function(){ ok(r.result); }; r.readAsDataURL(blob); });
-    }).catch(function(){ return "designs/bldg-building.jpg"; }) : Promise.resolve(bdoHero());
-    heroReady.then(function(hero){
-      box.innerHTML = bdoSheetHTML(o, hero);
+    return bdoHeroData().then(function(hero){
+      box.innerHTML = bdoSheetHTML(o, hero, sig);
       bdoFit(box.firstChild);
       var imgs = Array.prototype.slice.call(box.querySelectorAll("img"));
       return Promise.all([
         window.html2canvas || bdoLoadJs("https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"),
         window.jspdf || bdoLoadJs("https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"),
-      document.fonts && document.fonts.ready
+        document.fonts && document.fonts.ready
       ].concat(imgs.map(function(im){ return im.complete ? 1 : new Promise(function(ok){ im.onload = im.onerror = ok; }); })));
     }).then(function(){
       return window.html2canvas(box.firstChild, { scale: 2.5, backgroundColor: "#ffffff", useCORS: true, logging: false });
@@ -11584,12 +11593,21 @@
       var pdf = new window.jspdf.jsPDF({ unit: "mm", format: "a4", orientation: "portrait", compress: true });
       pdf.addImage(cv.toDataURL("image/jpeg", .94), "JPEG", 0, 0, 210, 297, undefined, "FAST");
       pdf.setProperties({ title: "أمر صرف " + o.no, author: "خيرية العوامية", subject: BDO_PROJECT });
-      var blob = pdf.output("blob"), url = URL.createObjectURL(blob);
+      box.remove();
+      return pdf.output("blob");
+    }, function(e){ box.remove(); throw e; });
+  }
+  function bdoPdf(mode){
+    var o = bdoUI.order; if(!o) return;
+    var win = mode === "print" ? window.open("", "_blank") : null;
+    showToast("جارٍ تجهيز الملف…");
+    bdoMakePdf(o).then(function(blob){
+      var url = URL.createObjectURL(blob);
       bdoDriveUpload(o, blob);
       if(win){ win.location.href = url; }
       else { var a = document.createElement("a"); a.href = url; a.download = "أمر صرف " + o.no + ".pdf"; document.body.appendChild(a); a.click(); a.remove(); showToast("✔ تم تنزيل أمر الصرف"); }
       setTimeout(function(){ URL.revokeObjectURL(url); }, 60000);
-    }).catch(function(e){ console.error(e); if(win) win.close(); showToast("تعذّر تجهيز الملف — أعد المحاولة"); }).then(function(){ box.remove(); });
+    }).catch(function(e){ console.error(e); if(win) win.close(); showToast("تعذّر تجهيز الملف — أعد المحاولة"); });
   }
   // صورة المبنى: تُقص على نسبة مساحتها في الورقة وتُحفظ بأعلى دقة (حتى 2800 بكسل) — مشتركة بين كل الأوامر
   function bdoUploadImage(file){
@@ -11614,22 +11632,55 @@
     im.src = url;
   }
   // نسخة على Google Drive: كل PDF يُصدَّر (تنزيل أو طباعة) يُرسل لسكربت الرفع في الخلفية، ويُحفظ رابطه في الأمر
-  function bdoDriveName(o){ return ("أمر صرف " + o.no + (o.brief ? " — " + o.brief : "") + (o.status === "issued" ? "" : " (مسودة)")).replace(/[\\/:*?"<>|]/g, " ").replace(/\s+/g, " ").slice(0, 150) + ".pdf"; }
-  function bdoDriveUpload(o, blob){
-    if(!bdoUI.drive || !o) return;
-    var r = new FileReader();
-    r.onload = function(){
-      fetch(bdoUI.drive, { method: "POST", body: JSON.stringify({ kind: "zara-bdo", no: o.no, name: bdoDriveName(o), group: "المبنى الإداري", year: String(o.date || "").slice(0, 4), data: String(r.result).split(",")[1] }) })
-        .then(function(res){ return res.json(); })
-        .then(function(d){
-          if(!d || !d.ok) throw new Error(d && d.error || "upload");
-          showToast("☁️ رُفعت نسخة الأمر " + o.no + " على Google Drive");
-          if(o.id){ o.driveUrl = d.url; db.collection("bldgOrders").doc(o.id).set({ driveUrl: d.url, driveAt: Date.now() }, { merge: true }).catch(function(){}); }
-          var st = document.getElementById("bdoState"); if(st) st.innerHTML = st.textContent + ' · <a href="' + escapeHTML(d.url) + '" target="_blank" rel="noopener">📁 Drive</a>';
-        })
-        .catch(function(e){ console.warn("drive upload failed", e); showToast("⚠️ لم تُرفع نسخة Drive — " + (e && e.message && e.message !== "upload" ? e.message : "تحقق من الاتصال")); });
+  // كل تصدير ملف مستقل باسمه وتاريخه ووقته — لا يُستبدل ولا يُحذف أي ملف سابق في درايف
+  function bdoDriveName(o){
+    var d = new Date(), p2 = function(n){ return String(n).padStart(2, "0"); };
+    var stamp = d.getFullYear() + "-" + p2(d.getMonth() + 1) + "-" + p2(d.getDate()) + " " + p2(d.getHours()) + "." + p2(d.getMinutes()) + "." + p2(d.getSeconds());
+    return ("أمر صرف " + o.no + (o.brief ? " — " + o.brief : "") + (o.status === "issued" ? "" : " (مسودة)")).replace(/[\\/:*?"<>|]/g, " ").replace(/\s+/g, " ").slice(0, 130) + " — " + stamp + ".pdf";
+  }
+  function bdoDriveUpload(o, blob, quiet){
+    if(!bdoUI.drive || !o) return Promise.resolve(false);
+    return new Promise(function(ok){
+      var r = new FileReader();
+      r.onload = function(){ ok(String(r.result).split(",")[1]); };
+      r.readAsDataURL(blob);
+    }).then(function(b64){
+      return fetch(bdoUI.drive, { method: "POST", body: JSON.stringify({ kind: "zara-bdo", no: o.no, name: bdoDriveName(o), group: "المبنى الإداري", year: String(o.date || "").slice(0, 4), data: b64 }) });
+    }).then(function(res){ return res.json(); }).then(function(d){
+      if(!d || !d.ok) throw new Error(d && d.error || "upload");
+      if(!quiet) showToast("☁️ رُفعت نسخة الأمر " + o.no + " على Google Drive");
+      if(o.id){
+        o.driveUrl = d.url;
+        db.collection("bldgOrders").doc(o.id).set({ driveUrl: d.url, driveAt: Date.now(), driveCount: firebase.firestore.FieldValue.increment(1) }, { merge: true }).catch(function(){});
+      }
+      var st = document.getElementById("bdoState");
+      if(!quiet && st) st.innerHTML = escapeHTML(st.textContent.split(" · ")[0]) + ' · <a href="' + escapeHTML(d.url) + '" target="_blank" rel="noopener">📁 Drive</a>';
+      return true;
+    }).catch(function(e){
+      console.warn("drive upload failed", e);
+      if(!quiet) showToast("⚠️ لم تُرفع نسخة Drive — " + (e && e.message && e.message !== "upload" ? e.message : "تحقق من الاتصال"));
+      return false;
+    });
+  }
+  // الأوامر المحفوظة التي لم تُرفع لها نسخة بعد (ومنها ما أُنشئ قبل الربط) تُرفع تلقائياً في الخلفية، واحداً تلو الآخر،
+  // من جلسة أي حساب له صلاحية التعديل. قفل مؤقت على الأمر يمنع جهازين من رفع نفس الأمر في الوقت نفسه.
+  var _bdoBackfill = false, _bdoBackfillT = null;
+  function bdoBackfillSoon(){ clearTimeout(_bdoBackfillT); _bdoBackfillT = setTimeout(bdoBackfill, 6000); }
+  function bdoBackfill(){
+    if(_bdoBackfill || !bdoUI.drive || !currentUser || !can("bldg.edit") || window.__SANDBOX_NO_WRITES) return;
+    var now = Date.now(), queue = bdoUI.list.filter(function(o){ return o.id && !o.driveUrl && !(o.driveLock && now - o.driveLock < 10 * 60000); })
+      .sort(function(a, b){ return (+a.no || 0) - (+b.no || 0); });
+    if(!queue.length) return;
+    _bdoBackfill = true;
+    var done = 0, i = 0;
+    var next = function(){
+      if(i >= queue.length){ _bdoBackfill = false; if(done) showToast("☁️ رُفعت نسخ " + done + " من أوامر الصرف السابقة على Google Drive"); return; }
+      var o = shallowCopy(queue[i++]);
+      db.collection("bldgOrders").doc(o.id).set({ driveLock: Date.now() }, { merge: true }).then(function(){
+        return bdoMakePdf(o, "");
+      }).then(function(blob){ return bdoDriveUpload(o, blob, true); }).then(function(ok){ if(ok) done++; }).catch(function(e){ console.warn("backfill", o.no, e); }).then(function(){ setTimeout(next, 800); });
     };
-    r.readAsDataURL(blob);
+    next();
   }
   function bdoDriveCfg(act){
     var inp = document.querySelector("#bdoRoot [data-bdo-drive]"), note = document.getElementById("bdoDriveNote"), url = inp ? inp.value.trim() : "";
