@@ -11495,6 +11495,7 @@
     if(!rows.length) return h + '<div class="bdo-empty">' + (bdoUI.list.length ? "لا توجد نتائج" : "لم يُحفظ أي أمر صرف بعد") + '</div>';
     h += '<div class="bdo-rows">' + rows.map(function(o){
       return '<div class="bdo-row" data-bdo-open="' + o.id + '"><div class="no">' + escapeHTML(o.no) + '</div><div class="tx"><b>' + escapeHTML(o.brief || o.purpose || "—") + '</b><i>' + escapeHTML(o.beneficiary || "") + ' · ' + escapeHTML(o.date || "") + (o.driveUrl ? ' · <a href="' + escapeHTML(o.driveUrl) + '" target="_blank" rel="noopener" data-bdo-link>📁 Drive</a>' : "") + '</i></div><div class="am">' + bdoFmt(o.amount) + '<br><span class="bdo-tag' + (o.status === "issued" ? " ok" : "") + '">' + (o.status === "issued" ? "معتمد" : "مسودة") + '</span>' + (o.kind === "upload" ? ' <span class="bdo-tag">مرفوع</span>' : "") + '</div><div class="ac">' +
+        '<button type="button" class="bdo-mini" data-bdo-chk="' + o.id + '" title="التأكد من رفع الأمر على Google Drive">' + (o.driveUrl ? "☁️ ✔" : "☁️ رفع") + '</button>' +
         (can("bldg.edit") && o.kind !== "upload" ? '<button type="button" class="bdo-mini" data-bdo-dup="' + o.id + '">نسخ</button>' : "") + (can("bldg.delete") ? '<button type="button" class="bdo-mini del" data-bdo-del="' + o.id + '">حذف</button>' : "") + '</div></div>';
     }).join("") + '</div>';
     return h;
@@ -11708,6 +11709,22 @@
         if(force || d.added.length || d.removed.length) showToast("☁️ حُدّثت مشاركة ملفات أوامر الصرف");
       }).catch(function(e){ if(note) note.textContent = "⚠️ تعذّرت المشاركة — " + (e && e.message !== "share" ? e.message : "تحقق من الاتصال"); });
   }
+  // زر التأكد في السجل: المرفوع يُبلَّغ بأنه رُفع (مع فتح ملفه)، وغير المرفوع يُجهَّز ملفه ويُرفع فوراً
+  function bdoCheckDrive(btn){
+    var o = bdoUI.list.find(function(x){ return x.id === btn.dataset.bdoChk; });
+    if(!o) return;
+    if(o.driveUrl){ showToast("✔ تم الرفع — الأمر " + o.no + " محفوظ على Google Drive"); return; }
+    if(!bdoUI.drive){ showToast("Google Drive غير مربوط بعد"); return; }
+    if(o.kind === "upload"){ showToast("هذا الأمر المرفوع بلا ملف — افتحه واستبدل الملف لرفعه"); return; }
+    if(btn.disabled) return;
+    btn.disabled = true; btn.textContent = "جارٍ الرفع…";
+    var rec = shallowCopy(o);
+    bdoMakePdf(rec, "").then(function(blob){ return bdoDriveUpload(rec, blob, true); }).then(function(url){
+      if(!url) throw new Error("drive");
+      showToast("✔ رُفع الأمر " + o.no + " على Google Drive");
+      btn.textContent = "☁️ ✔";
+    }).catch(function(){ btn.textContent = "☁️ رفع"; showToast("⚠️ تعذّر رفع الأمر " + o.no + " — أعد المحاولة"); }).then(function(){ btn.disabled = false; });
+  }
   function bdoDriveCfg(act){
     if(act === "key"){
       var ki = document.querySelector("#bdoRoot [data-bdo-sharekey]"), k = ki ? ki.value.trim() : "";
@@ -11890,6 +11907,7 @@
       }
       if(b.dataset.bdoSave){ bdoSave(b.dataset.bdoSave); return; }
       if(b.dataset.bdoPdf){ bdoPdf(b.dataset.bdoPdf); return; }
+      if(b.dataset.bdoChk){ e.stopPropagation(); bdoCheckDrive(b); return; }
       if(b.dataset.bdoDup){
         e.stopPropagation();
         var src = bdoUI.list.find(function(x){ return x.id === b.dataset.bdoDup; }); if(!src) return;
