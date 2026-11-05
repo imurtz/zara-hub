@@ -4,6 +4,8 @@
  * الترتيب في درايف:  أوامر الصرف / المبنى الإداري / 2026 / أمر صرف 122 — ….pdf
  * كل تصدير يُحفظ ملفاً مستقلاً بتاريخه ووقته — لا يُحذف ولا يُستبدل أي ملف سابق أبداً.
  * لا يقبل إلا ملفات PDF حقيقية بحجم معقول، ولا يقرأ ولا يعيد أي ملف آخر من درايف.
+ * المشاركة: مجلد «أوامر الصرف» يُشارك (عرض فقط) مع إيميلات الموظفين أصحاب الصلاحية — يرسلها موقع الموظفين من جلسة الأدمن،
+ * والطلب محمي بمفتاح سري (شغّل الدالة showShareKey مرة من المحرر وانسخ المفتاح من السجل إلى الموقع).
  */
 const ROOT_FOLDER_ID = "";            // اختياري: معرّف مجلد موجود — إن تُرك فارغاً يُنشأ مجلد «أوامر الصرف» في جذر درايف
 const ROOT_NAME = "أوامر الصرف";
@@ -14,6 +16,7 @@ function doGet() { return out_({ ok: true, ping: "zara-bdo" }); }
 function doPost(e) {
   try {
     const d = JSON.parse(e.postData.contents);
+    if (d.kind === "zara-bdo-share") return out_(share_(d));
     if (d.kind !== "zara-bdo") throw new Error("طلب غير معروف");
     const no = String(d.no || "").replace(/[^\d]/g, "");
     if (!no) throw new Error("رقم الأمر مفقود");
@@ -47,3 +50,35 @@ function sub_(parent, name) {
   return it.hasNext() ? it.next() : parent.createFolder(name);
 }
 function out_(o) { return ContentService.createTextOutput(JSON.stringify(o)).setMimeType(ContentService.MimeType.JSON); }
+
+// يُشغَّل مرة من المحرر (اختر الدالة ← تشغيل) ثم افتح «سجل التنفيذ» وانسخ المفتاح
+function showShareKey() {
+  const props = PropertiesService.getScriptProperties();
+  let key = props.getProperty("SHARE_KEY");
+  if (!key) { key = Utilities.getUuid().replace(/-/g, ""); props.setProperty("SHARE_KEY", key); }
+  Logger.log("مفتاح المشاركة: " + key);
+}
+
+// مزامنة المشاركة: يُضاف كل إيميل مسموح كقارئ للمجلد (فتُفتح له كل الملفات بداخله)، ويُزال من فقد الصلاحية
+function share_(d) {
+  const key = PropertiesService.getScriptProperties().getProperty("SHARE_KEY");
+  if (!key || String(d.key || "") !== key) return { ok: false, error: "مفتاح المشاركة غير صحيح" };
+  const want = {};
+  (Array.isArray(d.emails) ? d.emails : []).forEach(function (e) {
+    e = String(e || "").trim().toLowerCase();
+    if (/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(e)) want[e] = 1;
+  });
+  const folder = root_(), me = Session.getEffectiveUser().getEmail().toLowerCase();
+  const editors = {}; folder.getEditors().forEach(function (u) { editors[u.getEmail().toLowerCase()] = 1; });
+  const have = {}; folder.getViewers().forEach(function (u) { have[u.getEmail().toLowerCase()] = 1; });
+  const added = [], removed = [], failed = [];
+  Object.keys(want).forEach(function (e) {
+    if (have[e] || editors[e] || e === me) return;
+    try { folder.addViewer(e); added.push(e); } catch (err) { failed.push(e); }
+  });
+  Object.keys(have).forEach(function (e) {
+    if (want[e] || editors[e] || e === me) return;
+    try { folder.removeViewer(e); removed.push(e); } catch (err) {}
+  });
+  return { ok: true, added: added, removed: removed, failed: failed, folder: folder.getUrl() };
+}
