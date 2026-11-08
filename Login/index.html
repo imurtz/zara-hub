@@ -2617,6 +2617,13 @@
 #rosterRoot .rs-dk-recent small{color:var(--rs-soft);font-size:12px}
 #rosterRoot .rs-code,#rsModal .rs-code{display:inline-block;font-style:normal;font-family:"IBM Plex Mono",ui-monospace,monospace;font-weight:700;font-size:12.5px;border-radius:8px;padding:2px 8px;background:#324c4b;color:#fff;letter-spacing:.5px;white-space:nowrap;box-shadow:inset 0 0 0 1px rgba(20,28,27,.18)}
 #rosterRoot .rs-code--big{font-size:64px;line-height:1;border-radius:22px;padding:14px 30px;margin:8px auto 6px;display:inline-block;box-shadow:0 12px 30px rgba(20,28,27,.18)}
+#rosterRoot .rs-mtcard{display:inline-flex;align-items:center;gap:16px;border-radius:20px;padding:14px 22px;margin:8px auto 8px;box-shadow:0 12px 30px rgba(20,28,27,.2),inset 0 0 0 1px rgba(20,28,27,.15)}
+#rosterRoot .rs-mtcard .rs-gl{width:58px;height:58px;border-radius:14px;background:#fff;display:grid;place-items:center;font:700 36px/1 "IBM Plex Sans",system-ui,sans-serif}
+#rosterRoot .rs-gl--m{color:#2f55d4}
+#rosterRoot .rs-gl--f{color:#e0458f}
+#rosterRoot .rs-mtcode{display:flex;flex-direction:column;align-items:flex-end;font:700 58px/1 "IBM Plex Mono",ui-monospace,monospace;letter-spacing:1px}
+#rosterRoot .rs-mtcode small{font:600 12px/1.6 'Cairo',sans-serif;opacity:.85;letter-spacing:0}
+@media (max-width:640px){#rosterRoot .rs-mtcode{font-size:44px}#rosterRoot .rs-mtcard .rs-gl{width:46px;height:46px;font-size:28px}}
 #rosterRoot .rs-dk-color{display:block;font-size:15px;font-weight:700;color:var(--ink);margin-top:4px}
 #rosterRoot .rs-dk-recent>div .rs-code{min-width:62px;text-align:center}
 #rosterRoot .rs-dk-groups{max-width:720px;margin:14px auto 0;background:#fff;border:1px solid var(--rs-line);border-radius:18px;padding:12px 16px}
@@ -17937,10 +17944,12 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
   // الرقم التسلسلي يُحجز داخل معاملة على مستند الجلسة: لا يتكرر حتى لو كانت عدة أجهزة تحضّر في نفس اللحظة.
   // غير الموجود في السجل: تنبيه ونموذج تسجيل سريع (متدرب/متطوع/مدرب) يسجّله ويؤكد حضوره بخطوة واحدة.
   // ترقيم الحضور بالألوان: لكل جنس تسلسل مستقل، وكل «حجم مجموعة» (15 افتراضياً) يأخذ لوناً، والرقم يبدأ من 01 مع كل لون: MT-01 … MT-15
+  // ألوان بطاقات «مفاتيح التوظيف» المطبوعة (MT-cards 001–450) بنفس ترتيب الطباعة: لكل لون 15 بطاقة M للذكور و15 بطاقة F للإناث
   var RS_COLORS = [
-    { n: "الأحمر", c: "#d23c3c" }, { n: "الأزرق", c: "#2f6fd6" }, { n: "الأخضر", c: "#1f9254" }, { n: "الأصفر", c: "#e3b10c", ink: "#3a2e00" },
-    { n: "البرتقالي", c: "#ea7a1a" }, { n: "البنفسجي", c: "#7d4cc9" }, { n: "الوردي", c: "#e0559a" }, { n: "السماوي", c: "#1aa6c4" },
-    { n: "البني", c: "#8a5a35" }, { n: "الرمادي", c: "#6f7b79" }, { n: "الكحلي", c: "#24345e" }, { n: "الزيتي", c: "#6f7d2c" }
+    { n: "برتقالي محروق", c: "#bb6437" }, { n: "زيتي", c: "#6e7645" }, { n: "خردلي", c: "#daa24d" }, { n: "خوخي", c: "#d8946f" },
+    { n: "بني فاتح", c: "#a7886c" }, { n: "أزرق فاتح", c: "#98bcd2" }, { n: "بني غامق", c: "#452913" }, { n: "عنابي", c: "#652526" },
+    { n: "طوبي", c: "#8e4228" }, { n: "جملي", c: "#b79973" }, { n: "بيج", c: "#e6cda5" }, { n: "كحلي", c: "#263548" },
+    { n: "وردي غامق", c: "#ba7570" }, { n: "برقوقي", c: "#612b45" }, { n: "أخضر مريمي", c: "#92a06d" }
   ];
   // ألوان الفعالية: قائمة الجمعية الفعلية (اسم + لون) بترتيب توزيعها، تُحفظ مع الفعالية؛ وإن لم تُحدد فالقائمة الافتراضية
   function rsBadgeCfg(g){
@@ -17955,8 +17964,9 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
   function rsCodeOf(cfg, k){ var i = k - 1, num = i % cfg.size + 1, gi = Math.floor(i / cfg.size), L = cfg.colors.length, col = cfg.colors[gi % L]; return { code: cfg.prefix + "-" + pad2(num), c: gi % L, cn: col.n, ch: col.c, round: Math.floor(gi / L) }; }
   function rsChip(m, big){
     if(!m || m.code == null) return m && m.n ? '<i class="rs-code">' + m.n + '</i>' : '';
-    var col = rsMarkCol(m);
-    return '<i class="rs-code' + (big ? " rs-code--big" : "") + '" style="background:' + col.c + ';color:' + rsInk(col.c) + '" dir="ltr">' + escapeHTML(m.code) + '</i>';
+    var col = rsMarkCol(m), gl = m.g === "f" ? "F" : m.g === "m" ? "M" : "";
+    if(big) return '<div class="rs-mtcard" style="background:' + col.c + ';color:' + rsInk(col.c) + '" dir="ltr">' + (gl ? '<span class="rs-gl rs-gl--' + m.g + '">' + gl + '</span>' : '') + '<span class="rs-mtcode"><small>الرقم التسلسلي</small>' + escapeHTML(m.code) + '</span></div>';
+    return '<i class="rs-code" style="background:' + col.c + ';color:' + rsInk(col.c) + '" dir="ltr">' + (gl ? gl + " · " : "") + escapeHTML(m.code) + '</i>';
   }
   function rsColorName(m){ return rsMarkCol(m).n + (m.round ? " (الدورة " + (m.round + 1) + ")" : ""); }
   var rsDesk = { res: null, busy: false, auto: false, form: null };
@@ -18127,7 +18137,8 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
     } else if(r && r.kind === "done" && p){
       var dm = r.m || {}, dcol = dm.code ? rsMarkCol(dm) : null;
       h += '<div class="rs-dk-card rs-dk-card--ok' + (r.again ? " rs-dk-card--again" : "") + '"' + (dcol && dm.code ? ' style="border-color:color-mix(in srgb,' + dcol.c + ' 75%,#141c1b)"' : '') + '><div class="rs-dk-serial"><small>' + (r.again ? "حضوره مؤكد مسبقاً — رقمه" : "تم تأكيد الحضور — رقمه") + '</small>' +
-        (dm.code ? rsChip(dm, true) + '<span class="rs-dk-color">اللون ' + rsColorName(dm) + ' · ' + (dm.g === "f" ? "إناث" : dm.g === "m" ? "ذكور" : "") + '</span>' : '<b>' + (dm.n || "") + '</b>') + '</div>' + rsPersonInfoHTML(p) +
+        (dm.code ? rsChip(dm, true) + '<span class="rs-dk-color">البطاقة ' + rsColorName(dm) + ' · ' + (dm.g === "f" ? "إناث (F)" : dm.g === "m" ? "ذكور (M)" : "") + '</span>' +
+          (dm.round ? '<p class="rs-dk-alert">تجاوز العدد بطاقات الألوان المطبوعة (' + (rsBadgeCfg(rsDeskProg()).colors.length * rsBadgeCfg(rsDeskProg()).size) + ' لكل جنس) — عاد الترقيم لأول لون</p>' : '') : '<b>' + (dm.n || "") + '</b>') + '</div>' + rsPersonInfoHTML(p) +
         '<p class="rs-dk-tip">أدخل رقم الشخص التالي مباشرة</p></div>';
     } else {
       h += '<div class="rs-dk-idle"><b>أدخل رقم الهوية أو الجوال ثم Enter</b><span>يقبل أيضاً رقم التسجيل أو مسح بطاقة QR بقارئ الباركود' + (rsDesk.auto ? " — التأكيد الفوري مفعّل" : " — ثم Enter مرة ثانية لتأكيد الحضور") + '</span></div>';
@@ -18153,7 +18164,7 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
     ["m", "f", "a"].forEach(function(gk){ var n = 0; Object.keys(marks).forEach(function(k){ var m = marks[k]; if(m.g === gk) n = Math.max(n, +m.k || 0); }); var cd = rsCodeOf(cfg, n + 1); cur[gk] = cd.round + "|" + cd.cn + "|" + cd.ch; });
     return '<div class="rs-dk-groups"><div class="rs-row rs-row--sb"><b>ترتيب الألوان (' + cfg.size + ' لكل لون' + (cfg.split ? '، لكل جنس' : '') + ')</b><div class="rs-row" style="margin:0">' +
       (can("roster.programs") ? '<button type="button" class="rs-mini" data-rs="desk-colors">تعديل الألوان والترقيم</button>' : '') + (can("roster.export") ? '<button type="button" class="rs-mini" data-rs="desk-export">تصدير قائمة الحضور Excel</button>' : '') + '</div></div>' +
-      (cfg.custom ? '' : '<p class="rs-note rs-note--warn">هذه ألوان افتراضية — عدّلها لتطابق ألوان الأساور/البطاقات المستخدمة فعلياً قبل البدء.</p>') + '<div class="rs-dk-grid">' +
+      '<div class="rs-dk-grid">' +
       order.map(function(key, i){ var o = grp[key];
         var now = cfg.split ? [cur.m === key ? "الذكور الآن" : "", cur.f === key ? "الإناث الآن" : ""].filter(Boolean).join(" · ") : (cur.a === key ? "الجاري الآن" : "");
         return '<div class="rs-dk-grp' + (now ? " is-now" : "") + '" style="--gc:' + o.c + '"><i style="background:' + o.c + '"></i><b>' + (o.round ? "" : (i + 1) + ". ") + escapeHTML(o.n) + (o.round ? " — الدورة " + (o.round + 1) : "") + '</b>' +
