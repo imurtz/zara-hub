@@ -317,6 +317,22 @@ body.screen .dupnote{display:none}
 .cfm .cnt .pc{display:block;margin-top:4px;font-size:12.5px;color:rgba(255,255,255,.8)}
 .cfm .pb{height:6px;border-radius:9px;background:rgba(255,255,255,.2);overflow:hidden;margin-top:5px;width:180px}
 .cfm .pb span{display:block;height:100%;background:#F2C14E;border-radius:9px;transition:width 1s}
+.cfm{grid-template-columns:minmax(0,1fr) auto auto}
+.cfm .cdup{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.22);border-radius:18px;padding:12px 14px;min-width:210px;max-width:250px;font-size:12px;color:rgba(255,255,255,.85)}
+.cfm .cdup[hidden]{display:none}
+.cfm .cdup h4{margin:0 0 8px;font-size:13.5px;color:#fff}
+.cfm .cdup .dr{display:grid;grid-template-columns:repeat(3,1fr);gap:5px;text-align:center}
+.cfm .cdup .dr div{background:rgba(255,255,255,.1);border-radius:10px;padding:5px 3px}
+.cfm .cdup .dr b{display:block;font-family:var(--num);font-size:19px;color:#fff;line-height:1.2}
+.cfm .cdup .dr b.x{color:#F7C3A4}
+.cfm .cdup .dr small{font-size:10px}
+.cfm .cdup p{margin:8px 0 0;font-size:12px;color:rgba(255,255,255,.85)}
+.cfm .cdup ul{margin:6px 0 0;padding:0;list-style:none;display:flex;flex-wrap:wrap;gap:5px}
+.cfm .cdup li{background:rgba(255,255,255,.14);border-radius:999px;padding:2px 9px;font-size:11.5px}
+.cfm .cdup li em{font-style:normal;font-family:var(--num);font-weight:700;color:#F2C14E}
+.cfm .cdup .mb{color:#F6E3CF}
+.cfm .cdup.ok p{margin:0;color:#CFEBDD;font-weight:600}
+@media (max-width:900px){.cfm{grid-template-columns:minmax(0,1fr) auto}.cfm .cdup{grid-column:1/-1;max-width:none}}
 .cfm.done{background:linear-gradient(125deg,#5E6B69,#7D8987)}
 .cfm.done::after,.cfm.done .tag i{animation:none}
 @media (max-width:640px){.cfm{grid-template-columns:1fr;padding:18px 16px}.cfm .tm{justify-content:center}.cfm h2,.cfm p,.cfm .hd{text-align:center}.cfm .side{min-width:0}.cfm .pb{width:100%}}
@@ -353,6 +369,7 @@ body.screen .nodup{color:#F6E3CF}
       <p id="cfmP">عدد من أكّدوا حضورهم من المسجلين — يُغلق التأكيد عصر الثلاثاء 10 نوفمبر.</p>
       <div class="tm" id="cfmTm"></div></div>
     <div class="side"><div class="cnt" id="cfmCnt"></div></div>
+    <div class="cdup" id="cfmDup" hidden></div>
   </section>
   <div class="dupnote">ℹ️ جميع الأعداد والنسب في هذه الصفحة <b>معتمدة بعد استبعاد التسجيلات المكررة</b> — يُحتسب الشخص مرة واحدة إذا تكرر رقم جواله أو هويته أو بريده.</div>
   <nav class="jump" id="jump"></nav>
@@ -963,7 +980,7 @@ body.screen .nodup{color:#F6E3CF}
   funPaint(window.__zlG);
 
   /* ===== تأكيد الحضور: زر النموذج + عدّ تنازلي حتى الإغلاق + عدد المؤكِّدين (بعد استبعاد المكرر) ===== */
-  const CF=EV.confirm;let cfN=null,cfRaw=null;
+  const CF=EV.confirm;let cfN=null,cfRaw=null,cfDup=null;
   function cfmPaint(){
     if(!CF||EV.closed){$("cfm").hidden=true;return;}
     const box=$("cfm"),left=new Date(CF.until)-Date.now(),done=left<=0;
@@ -974,13 +991,24 @@ body.screen .nodup{color:#F6E3CF}
     const c=$("cfmCnt");
     if(cfN==null){c.innerHTML=`<b>—</b>${CF.url?"جارٍ التحميل…":"بانتظار ربط النموذج"}`;return;}
     const ix=EV.trackers.findIndex(t=>t.key==="participants"),dP=typeof cur!=="undefined"?cur[ix]:null,base=dP&&!dP.error&&!dP.unlinked?dP.total:0,p=base?Math.min(100,Math.round(cfN*100/base)):0;
-    c.innerHTML=`<b>${fmt(cfN)}</b>أكّدوا حضورهم`+(base?`<span class="pc"><span dir="ltr">${p}%</span> من ${fmt(base)} مشارك مسجّل</span><div class="pb"><span style="width:${p}%"></span></div>`:"")+(cfRaw>cfN?`<span class="pc">${fmt(cfRaw)} ردّ في النموذج · استُبعد ${fmt(cfRaw-cfN)} مكرر</span>`:"");
+    c.innerHTML=`<b>${fmt(cfN)}</b>أكّدوا حضورهم`+(base?`<span class="pc"><span dir="ltr">${p}%</span> من ${fmt(base)} مشارك مسجّل</span><div class="pb"><span style="width:${p}%"></span></div>`:"");
+    cfmDupPaint();
+  }
+  function cfmDupPaint(){
+    const el=$("cfmDup");if(cfN==null){el.hidden=true;return;}
+    const d=cfDup||{},by=d.by||{},raw=cfRaw!=null?cfRaw:cfN,ex=d.extra!=null?d.extra:Math.max(0,raw-cfN);
+    const why=[["phone","نفس رقم الجوال"],["id","نفس الهوية"],["email","نفس البريد"]].filter(([k])=>by[k]).map(([k,l])=>`<li>${l} <em>${fmt(by[k])}</em></li>`).join("");
+    el.hidden=false;el.classList.toggle("ok",!ex&&!d.maybe);
+    el.innerHTML=`<h4>🔁 تكرار التأكيد</h4>`+(!ex&&!d.maybe?`<p>لا يوجد تأكيد مكرر ✔</p>`:
+      `<div class="dr"><div><b>${fmt(raw)}</b><small>ردّ في النموذج</small></div><div><b class="x">−${fmt(ex)}</b><small>مكرر مستبعد</small></div><div><b>${fmt(cfN)}</b><small>العدد المعتمد</small></div></div>`+
+      (ex?`<p>${fmt(d.groups||ex)} ${(d.groups||ex)===1?"شخص أكّد":"أشخاص أكّدوا"} أكثر من مرة</p>`:"")+(why?`<ul>${why}</ul>`:"")+
+      (d.maybe?`<p class="mb">⚠️ ${fmt(d.maybe)} اشتباه بالاسم فقط — لم يُستبعد</p>`:""));
   }
   function cfmFetch(){
     if(!CF)return;
     if(P.get("demo")){cfN=(cfN||118)+(Math.random()<.4?1:0);cfmPaint();return;}
     if(!CF.url)return;
-    fetch(CF.url,{cache:"no-store"}).then(r=>r.json()).then(d=>{if(d&&d.total!=null){cfN=d.total;cfRaw=d.rawTotal;cfmPaint();}}).catch(()=>{});
+    fetch(CF.url,{cache:"no-store"}).then(r=>r.json()).then(d=>{if(d&&d.total!=null){cfN=d.total;cfRaw=d.rawTotal;cfDup=d.dups||null;cfmPaint();}}).catch(()=>{});
   }
   cfmPaint();setInterval(cfmPaint,1000);cfmFetch();setInterval(cfmFetch,30000);
 
