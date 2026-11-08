@@ -2455,6 +2455,8 @@
 #rosterRoot .rs-paste textarea{width:100%;margin:8px 0;font-family:ui-monospace,monospace;font-size:12.5px;direction:ltr}
 #rosterRoot .rs-how{margin:0;padding-inline-start:18px;font-size:13px;line-height:1.9;color:var(--ink-2,#47534f)}
 #rosterRoot .rs-how code{background:var(--rs-bg);border-radius:6px;padding:1px 6px;font-size:12px}
+#rosterRoot .rs-impcat{display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:#f6eee5;border-radius:14px;padding:10px 14px;margin:10px 0 4px}
+#rosterRoot .rs-impcat b{font-size:13.5px;color:#8a6440}
 #rosterRoot .rs-map{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px;margin-top:10px}
 #rosterRoot .rs-map label{display:flex;flex-direction:column;gap:4px;font-size:12.5px;color:#4a5856}
 #rosterRoot .rs-map em{color:#b3453f;font-style:normal}
@@ -17435,7 +17437,9 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
     };
     var h = rsImpSteps(2) + '<div class="rs-card"><div class="rs-row rs-row--sb"><h3>' + escapeHTML(imp.file) + ' — ' + imp.rows.length + ' صف</h3>' +
       (imp.wb && imp.wb.SheetNames.length > 1 ? '<label class="rs-inl">الورقة <select data-rs-ch="imp-sheet">' + imp.wb.SheetNames.map(function(s){ return '<option' + (s === imp.sheet ? " selected" : "") + '>' + escapeHTML(s) + '</option>'; }).join("") + '</select></label>' : '') + '</div>' +
-      '<p class="rs-note">تأكد من ربط كل حقل بالعمود الصحيح — الاسم إلزامي، والهوية والجوال أساس المطابقة.</p><div class="rs-map">' +
+      '<p class="rs-note">تأكد من ربط كل حقل بالعمود الصحيح — الاسم إلزامي، والهوية والجوال أساس المطابقة.</p>' +
+      '<div class="rs-impcat"><b>تصنيف الأشخاص في هذا الملف</b><div class="rs-chips">' + RS_TYPES.map(function(t){ return '<button type="button" data-rs="imp-cat" data-v="' + t.k + '" class="' + (imp.type === t.k ? "on" : "") + '">' + t.l + '</button>'; }).join("") +
+      '<button type="button" data-rs="imp-cat" data-v="col" class="' + (imp.type === "col" ? "on" : "") + '">حسب عمود «الفئة»</button></div></div><div class="rs-map">' +
       RS_FIELDS.filter(function(f){ return f.k !== "type" || imp.type === "col"; }).map(function(f){ return '<label><span>' + f.l + (f.k === "name" ? ' <em>*</em>' : '') + '</span><select data-rs-ch="imp-map" data-v="' + f.k + '">' + opts(f.k) + '</select></label>'; }).join("") + '</div>' +
       (imp.type === "col" ? '<label class="rs-inl">إن كانت الفئة فارغة اعتبره <select data-rs-ch="imp-fallback">' + RS_TYPES.map(function(t){ return '<option value="' + t.k + '"' + (imp.fallback === t.k ? " selected" : "") + '>' + t.l + '</option>'; }).join("") + '</select></label>' : '') + '</div>';
     var prev = imp.rows.slice(0, 4);
@@ -18463,6 +18467,7 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
       case "export-reg": if(can("roster.export")) rsXlsx("سجل-المشاركين", rsFiltered().map(rsPersonRow), "السجل"); break;
       case "cards-reg": if(can("roster.export")) rsCards(rsFiltered().map(function(p){ return p.id; }), "بطاقات التسجيل"); break;
       case "imp-type": rsUI.impType = v; rsRender(); break;
+      case "imp-cat": if(imp){ imp.type = v; if(v !== "col") rsUI.impType = v; rsRender(); } break;
       case "imp-tpl":
         if(typeof window.XLSX === "undefined"){ showToast("مكتبة Excel غير متوفرة الآن"); break; }
         (function(){ var ws = window.XLSX.utils.aoa_to_sheet([RS_FIELDS.map(function(f){ return f.l.replace(/ \(.*\)$/, ""); }), ["محمد علي حسن آل فلان", "1012345678", "0551234567", "ذكر", "", "", "", "متدرب", ""]]); var wb = window.XLSX.utils.book_new(); wb.Workbook = { Views: [{ RTL: true }] }; window.XLSX.utils.book_append_sheet(wb, ws, "المشاركون"); window.XLSX.writeFile(wb, "نموذج-رفع-المشاركين.xlsx"); })();
