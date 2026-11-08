@@ -2615,6 +2615,17 @@
 #rosterRoot .rs-dk-recent i{font-style:normal;font-weight:700;color:#22764a;min-width:34px;font-variant-numeric:tabular-nums}
 #rosterRoot .rs-dk-recent span{flex:1}
 #rosterRoot .rs-dk-recent small{color:var(--rs-soft);font-size:12px}
+#rosterRoot .rs-code,#rsModal .rs-code{display:inline-block;font-style:normal;font-family:"IBM Plex Mono",ui-monospace,monospace;font-weight:700;font-size:12.5px;border-radius:8px;padding:2px 8px;background:#324c4b;color:#fff;letter-spacing:.5px;white-space:nowrap}
+#rosterRoot .rs-code--big{font-size:64px;line-height:1;border-radius:22px;padding:14px 30px;margin:8px auto 6px;display:inline-block;box-shadow:0 12px 30px rgba(20,28,27,.18)}
+#rosterRoot .rs-dk-color{display:block;font-size:15px;font-weight:700;color:var(--ink);margin-top:4px}
+#rosterRoot .rs-dk-recent>div .rs-code{min-width:62px;text-align:center}
+#rosterRoot .rs-dk-groups{max-width:720px;margin:14px auto 0;background:#fff;border:1px solid var(--rs-line);border-radius:18px;padding:12px 16px}
+#rosterRoot .rs-dk-groups b{font-size:13px}
+#rosterRoot .rs-dk-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px;margin-top:10px}
+#rosterRoot .rs-dk-grp{display:flex;flex-direction:column;gap:2px;border:1.5px solid var(--gc);border-radius:14px;padding:8px 12px;font-size:12.5px}
+#rosterRoot .rs-dk-grp i{width:22px;height:8px;border-radius:4px;margin-bottom:2px}
+#rosterRoot .rs-dk-grp em{font-style:normal;font-weight:700;font-variant-numeric:tabular-nums}
+@media (max-width:640px){#rosterRoot .rs-code--big{font-size:52px;padding:12px 22px}}
 body.rs-kiosk .topbar,body.rs-kiosk .nav-tabs,body.rs-kiosk #chatFabBtn,body.rs-kiosk #rosterRoot .rs-head,body.rs-kiosk #rosterRoot .rs-nav{display:none !important}
 body.rs-kiosk #rosterRoot{padding-top:12px}
 @media (max-width:640px){
@@ -17569,7 +17580,7 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
       (canA ? '<button type="button" class="rs-mini" data-rs="mark-all">تحضير الجميع حاضرين</button><button type="button" class="rs-mini" data-rs="mark-rest">غير المحضَّرين ← غائب</button>' : '') + '</div>';
     h += '<div class="rs-att">' + list.map(function(p){
       var m = marks[p.id];
-      return '<div class="rs-att-row' + (m ? " is-" + m.s : "") + '"><div class="rs-att-who"><span class="rs-reg" dir="ltr">' + escapeHTML(p.regNo) + '</span><b>' + escapeHTML(p.name) + '</b>' + rsTypeBadge(p.type) + (m ? '<small>' + rsTime(m.t) + '</small>' : '') + '</div>' +
+      return '<div class="rs-att-row' + (m ? " is-" + m.s : "") + '"><div class="rs-att-who"><span class="rs-reg" dir="ltr">' + escapeHTML(p.regNo) + '</span><b>' + escapeHTML(p.name) + '</b>' + rsTypeBadge(p.type) + (m && m.code ? rsChip(m) : '') + (m ? '<small>' + rsTime(m.t) + '</small>' : '') + '</div>' +
         '<div class="rs-att-btns">' + RS_MARKS.map(function(k){ return '<button type="button"' + (canA ? ' data-rs="mark" data-v="' + p.id + '|' + k.k + '"' : ' disabled') + ' class="m-' + k.k + (m && m.s === k.k ? " on" : "") + '" title="' + k.l + '">' + k.l + '</button>'; }).join("") + '</div></div>';
     }).join("") + '</div>';
     return h;
@@ -17853,6 +17864,7 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
   function rsProgOpen(id){
     var g = id ? rsCurProg() : null;
     var d = g ? JSON.parse(JSON.stringify(g)) : { title: "", kind: RS_KINDS[0], place: "", start: rsToday(), end: rsToday(), threshold: 75, sessions: [] };
+    var bc = rsBadgeCfg(d); d.badgePrefix = bc.prefix; d.badgeSize = bc.size; d.badgeSplit = bc.split ? "1" : "0";
     d.sessions = rsSessions(d);
     rsUI.m = { kind: "program", id: g ? g.id : "", d: d };
     rsModalRender();
@@ -17862,7 +17874,9 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
     var f = function(k, l, v, t, ex){ return '<label class="rs-f"><span>' + l + '</span><input type="' + (t || "text") + '" data-rs-in="gf" data-v="' + k + '" value="' + escapeHTML(v == null ? "" : v) + '"' + (ex || "") + '/></label>'; };
     return '<h3 class="rs-dlg-t">' + (m.id ? "تعديل البرنامج" : "برنامج جديد") + '</h3><div class="rs-form">' + f("title", "اسم البرنامج *", d.title) +
       '<label class="rs-f"><span>النوع</span><select data-rs-in="gf" data-v="kind">' + RS_KINDS.map(function(k){ return '<option' + (d.kind === k ? " selected" : "") + '>' + k + '</option>'; }).join("") + '</select></label>' +
-      f("place", "المكان", d.place) + f("threshold", "نسبة الحضور للشهادة %", d.threshold, "number", ' min="0" max="100"') + f("start", "من", d.start, "date") + f("end", "إلى", d.end, "date") + '</div>' +
+      f("place", "المكان", d.place) + f("threshold", "نسبة الحضور للشهادة %", d.threshold, "number", ' min="0" max="100"') + f("start", "من", d.start, "date") + f("end", "إلى", d.end, "date") +
+      f("badgePrefix", "اختصار رقم الحضور (مثل MT)", rsBadgeCfg(d).prefix, "text", ' dir="ltr" maxlength="6"') + f("badgeSize", "عدد كل لون", rsBadgeCfg(d).size, "number", ' min="1" max="99"') +
+      '<label class="rs-f rs-f--w"><span>تسلسل الأرقام</span><select data-rs-in="gf" data-v="badgeSplit"><option value="1"' + (rsBadgeCfg(d).split ? " selected" : "") + '>منفصل للذكور والإناث (كل جنس يبدأ من ' + rsBadgeCfg(d).prefix + '-01)</option><option value="0"' + (rsBadgeCfg(d).split ? "" : " selected") + '>تسلسل واحد للجميع</option></select></label></div>' +
       '<div class="rs-sesed"><div class="rs-row rs-row--sb"><b>الجلسات (' + d.sessions.length + ')</b><div class="rs-row"><button type="button" class="rs-mini" data-rs="m-sess-gen">جلسة لكل يوم من «من» إلى «إلى»</button><button type="button" class="rs-mini" data-rs="m-sess-add">＋ جلسة</button></div></div>' +
       (d.sessions.length ? d.sessions.map(function(s, i){ return '<div class="rs-sesrow"><i>' + (i + 1) + '</i><input type="date" data-rs-in="sf" data-v="' + i + '|date" value="' + escapeHTML(s.date || "") + '"/><input type="text" data-rs-in="sf" data-v="' + i + '|title" placeholder="عنوان الجلسة (اختياري)" value="' + escapeHTML(s.title || "") + '"/><button type="button" class="rs-mini rs-mini--del" data-rs="m-sess-rm" data-v="' + i + '">✕</button></div>'; }).join("") : '<p class="rs-note">لا جلسات — أضف جلسة أو ولّدها من التواريخ.</p>') + '</div>' +
       '<div class="rs-actions">' + (m.id && can("roster.programs") ? '<button type="button" class="rs-mini rs-mini--del" data-rs="m-del-prog">حذف البرنامج</button>' : '') + '<button type="button" class="btn-secondary" data-rs="m-close">إلغاء</button><button type="button" class="btn-primary" data-rs="m-save-prog">حفظ</button></div>';
@@ -17874,7 +17888,8 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
     if(!title){ showToast("اسم البرنامج مطلوب"); return; }
     var now = Date.now(), id = m.id || rsId("rg");
     var rec = { id: id, title: title, kind: d.kind || RS_KINDS[0], place: String(d.place || "").trim(), start: d.start || "", end: d.end || d.start || "", threshold: Math.max(0, Math.min(100, +d.threshold || 75)),
-      sessions: rsSessions(d).map(function(s){ return { id: s.id || rsId("s"), date: s.date || "", title: String(s.title || "").trim() }; }), updatedAt: now, updatedBy: rsBy() };
+      sessions: rsSessions(d).map(function(s){ return { id: s.id || rsId("s"), date: s.date || "", title: String(s.title || "").trim() }; }), updatedAt: now, updatedBy: rsBy(),
+      badge: { prefix: String(d.badgePrefix || "MT").toUpperCase().replace(/[^A-Z0-9]/g, "") || "MT", size: Math.max(1, Math.min(99, +d.badgeSize || 15)), split: d.badgeSplit !== "0" } };
     if(!m.id){ rec.members = []; rec.createdAt = now; rec.createdBy = rsBy(); }
     rsUI.busy = true;
     rsGRef(id).set(rec, { merge: true }).then(function(){ rsUI.busy = false; showToast("✔ حُفظ البرنامج"); rsModalClose(); rsUI.tab = "programs"; rsUI.prog = id; rsUI.sess = ""; rsRender(); })
@@ -17900,6 +17915,21 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
   // خانة واحدة: الهوية أو الجوال أو رقم التسجيل ← Enter تعرض بيانات الشخص ← Enter ثانية تؤكد الحضور ويُمنح رقماً تسلسلياً.
   // الرقم التسلسلي يُحجز داخل معاملة على مستند الجلسة: لا يتكرر حتى لو كانت عدة أجهزة تحضّر في نفس اللحظة.
   // غير الموجود في السجل: تنبيه ونموذج تسجيل سريع (متدرب/متطوع/مدرب) يسجّله ويؤكد حضوره بخطوة واحدة.
+  // ترقيم الحضور بالألوان: لكل جنس تسلسل مستقل، وكل «حجم مجموعة» (15 افتراضياً) يأخذ لوناً، والرقم يبدأ من 01 مع كل لون: MT-01 … MT-15
+  var RS_COLORS = [
+    { n: "الأحمر", c: "#d23c3c" }, { n: "الأزرق", c: "#2f6fd6" }, { n: "الأخضر", c: "#1f9254" }, { n: "الأصفر", c: "#e3b10c", ink: "#3a2e00" },
+    { n: "البرتقالي", c: "#ea7a1a" }, { n: "البنفسجي", c: "#7d4cc9" }, { n: "الوردي", c: "#e0559a" }, { n: "السماوي", c: "#1aa6c4" },
+    { n: "البني", c: "#8a5a35" }, { n: "الرمادي", c: "#6f7b79" }, { n: "الكحلي", c: "#24345e" }, { n: "الزيتي", c: "#6f7d2c" }
+  ];
+  function rsBadgeCfg(g){ var b = (g && g.badge) || {}; return { prefix: String(b.prefix || "MT").toUpperCase(), size: Math.max(1, +b.size || 15), split: b.split !== false }; }
+  function rsGk(gender){ return gender === "أنثى" ? "f" : gender === "ذكر" ? "m" : ""; }
+  function rsCodeOf(cfg, k){ var i = k - 1, num = i % cfg.size + 1, gi = Math.floor(i / cfg.size); return { code: cfg.prefix + "-" + pad2(num), c: gi % RS_COLORS.length, round: Math.floor(gi / RS_COLORS.length) }; }
+  function rsChip(m, big){
+    if(!m || m.code == null) return m && m.n ? '<i class="rs-code">' + m.n + '</i>' : '';
+    var col = RS_COLORS[m.c] || RS_COLORS[0];
+    return '<i class="rs-code' + (big ? " rs-code--big" : "") + '" style="background:' + col.c + ';color:' + (col.ink || "#fff") + '" dir="ltr">' + escapeHTML(m.code) + '</i>';
+  }
+  function rsColorName(m){ var col = RS_COLORS[m.c] || RS_COLORS[0]; return col.n + (m.round ? " (الدورة " + (m.round + 1) + ")" : ""); }
   var rsDesk = { res: null, busy: false, auto: false, form: null };
   try{ rsDesk.auto = localStorage.getItem("rsDeskAuto") === "1"; }catch(e){}
   function rsDeskProgId(){ var id = ""; try{ id = localStorage.getItem("rsDeskProg") || ""; }catch(e){} return rs.programs.some(function(g){ return g.id === id; }) ? id : ""; }
@@ -17941,7 +17971,12 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
   function rsDeskConfirm(){
     var g = rsDeskProg(), sid = g ? rsDeskSess(g) : "", r = rsDesk.res;
     if(!g || !sid || !r || r.kind !== "found" || rsDesk.busy || !can("roster.attend")) return;
-    var pid = r.pid, ref = db.collection("rosterAttendance").doc(g.id + "__" + sid);
+    var pid = r.pid, ref = db.collection("rosterAttendance").doc(g.id + "__" + sid), cfg = rsBadgeCfg(g), pp = rs.byId[pid];
+    var gk = cfg.split ? rsGk(pp && pp.gender) : "a";
+    if(!gk){
+      var oldM = (rs.att[sid] || {})[pid];
+      if(!(oldM && oldM.code)){ showToast("حدد الجنس أولاً — الترقيم منفصل للذكور والإناث"); rsBeep(false); return; }
+    }
     rsDesk.busy = true; rsRender();
     if((g.members || []).indexOf(pid) === -1){
       g.members = (g.members || []).concat(pid);
@@ -17950,17 +17985,19 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
     db.runTransaction(function(tx){
       return tx.get(ref).then(function(d){
         var x = d.exists ? d.data() : {}, marks = x.marks || {}, old = marks[pid];
-        if(old && (old.s === "p" || old.s === "l") && old.n) return { again: true, m: old };
-        var mx = Object.keys(marks).reduce(function(a, k){ return Math.max(a, +marks[k].n || 0); }, +x.seq || 0);
-        var m = { s: "p", t: Date.now(), by: rsBy(), n: mx + 1 }, o = { programId: g.id, sessionId: sid, seq: m.n, marks: {} };
-        o.marks[pid] = m;
+        if(old && (old.s === "p" || old.s === "l") && (old.n || old.code)) return { again: true, m: old };
+        // آخر رقم لهذا الجنس في هذه الجلسة (من العدّاد ومن العلامات نفسها احتياطاً)
+        var seqKey = "seq_" + gk, mx = Object.keys(marks).reduce(function(a, k){ return marks[k].g === gk ? Math.max(a, +marks[k].k || 0) : a; }, +x[seqKey] || 0);
+        var cd = rsCodeOf(cfg, mx + 1);
+        var m = { s: "p", t: Date.now(), by: rsBy(), g: gk, k: mx + 1, n: mx + 1, code: cd.code, c: cd.c, round: cd.round }, o = { programId: g.id, sessionId: sid, marks: {} };
+        o[seqKey] = mx + 1; o.marks[pid] = m;
         tx.set(ref, o, { merge: true });
         return { again: false, m: m };
       });
     }).then(function(res){
       rsDesk.busy = false;
       rs.att[sid] = rs.att[sid] || {}; rs.att[sid][pid] = res.m;
-      rsDesk.res = { kind: "done", pid: pid, n: res.m.n, t: res.m.t, again: res.again };
+      rsDesk.res = { kind: "done", pid: pid, m: res.m, again: res.again };
       rsBeep(!res.again);
       rsRender(); rsDeskFocus();
     }).catch(function(e){
@@ -17980,6 +18017,7 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
     if(!f || rsDesk.busy) return;
     var name = String(f.name || "").replace(/\s+/g, " ").trim();
     if(!name){ showToast("اكتب الاسم"); return; }
+    if(rsBadgeCfg(g).split && !f.gender){ showToast("حدد الجنس — الترقيم منفصل للذكور والإناث"); return; }
     var rec = { name: name, nameKey: rsNorm(name), nid: rsNid(f.nid), phone: rsPhone(f.phone), gender: f.gender || "", email: "", birth: "", org: "", notes: "", type: f.type || "trainee", roles: [f.type || "trainee"], status: "active" };
     var clash = rs.people.find(function(p){ return (rec.nid && p.nid === rec.nid) || (rec.phone && p.phone === rec.phone && rsNameSim(p.nameKey, rec.nameKey) >= 0.5); });
     if(clash){ rsDesk.form = null; showToast("هذا الشخص مسجل مسبقاً — " + clash.regNo); rsDeskShow(clash); return; }
@@ -18004,8 +18042,8 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
   function rsDeskQuickProg(){
     var inp = document.querySelector('#rosterRoot [data-rs-deskname]'), title = inp ? inp.value.trim() : "";
     if(!title){ showToast("اكتب اسم الفعالية"); if(inp) inp.focus(); return; }
-    var now = Date.now(), id = rsId("rg"), d = rsToday();
-    var rec = { id: id, title: title, kind: "فعالية", place: "", start: d, end: d, threshold: 75, sessions: [{ id: rsId("s"), date: d, title: "" }], members: [], createdAt: now, createdBy: rsBy(), updatedAt: now, updatedBy: rsBy() };
+    var now = Date.now(), id = rsId("rg"), d = rsToday(), pre = document.querySelector('#rosterRoot [data-rs-deskpre]');
+    var rec = { id: id, title: title, kind: "فعالية", place: "", start: d, end: d, threshold: 75, badge: { prefix: String(pre && pre.value.trim() || "MT").toUpperCase().replace(/[^A-Z0-9]/g, "") || "MT", size: 15, split: true }, sessions: [{ id: rsId("s"), date: d, title: "" }], members: [], createdAt: now, createdBy: rsBy(), updatedAt: now, updatedBy: rsBy() };
     rsGRef(id).set(rec).then(function(){ rsDeskSetProg(id); rsRender(); rsDeskFocus(); }).catch(function(e){ console.error(e); showToast("⚠️ تعذّر الإنشاء"); });
   }
   function rsPersonInfoHTML(p, big){
@@ -18019,7 +18057,7 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
     if(!g){
       return '<div class="rs-dk-setup"><h3>جهّز شاشة تسجيل الحضور</h3><p>اختر الفعالية أو البرنامج الذي تسجّل حضوره الآن. يُحفظ اختيارك على هذا الجهاز، وكل الأجهزة تحضّر على نفس البيانات مباشرة.</p>' +
         (rs.programs.length ? '<select data-rs-ch="desk-prog" class="rs-wide"><option value="">— اختر —</option>' + rs.programs.map(function(x){ return '<option value="' + x.id + '">' + escapeHTML(x.title) + (x.start ? " — " + rsDate(x.start) : "") + '</option>'; }).join("") + '</select>' : '') +
-        (can("roster.programs") ? '<div class="rs-dk-or">أو أنشئ فعالية اليوم بخطوة واحدة</div><div class="rs-scan-in"><input type="text" data-rs-deskname placeholder="اسم الفعالية (مثال: الحفل الختامي لبرنامج مفاتيح التوظيف)"/><button type="button" class="btn-primary" data-rs="desk-quick">إنشاء والبدء</button></div>' : '') + '</div>';
+        (can("roster.programs") ? '<div class="rs-dk-or">أو أنشئ فعالية اليوم بخطوة واحدة</div><div class="rs-scan-in"><input type="text" data-rs-deskname placeholder="اسم الفعالية (مثال: الحفل الختامي لبرنامج مفاتيح التوظيف)"/><input type="text" data-rs-deskpre value="MT" maxlength="6" dir="ltr" style="flex:0 0 90px;text-align:center" title="اختصار الرقم: MT-01"/><button type="button" class="btn-primary" data-rs="desk-quick">إنشاء والبدء</button></div><p class="rs-note" style="margin-top:6px">الأرقام: MT-01 إلى MT-15 لكل لون، بتسلسل منفصل للذكور والإناث — يمكن تعديلها من «تعديل البرنامج».</p>' : '') + '</div>';
     }
     var sid = rsDeskSess(g), ss = rsSessions(g), marks = rs.att[sid] || {};
     var done = Object.keys(marks).filter(function(k){ return marks[k].s === "p" || marks[k].s === "l"; });
@@ -18042,7 +18080,7 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
         '<div class="rs-dk-full"><span>الصفة</span><div class="rs-chips rs-chips--lg">' + ["trainee", "volunteer", "trainer"].map(function(k){ return '<button type="button" data-rs="df-type" data-v="' + k + '" class="' + (f.type === k ? "on" : "") + '">' + rsT(k).l + '</button>'; }).join("") + '</div></div>' +
         '<label><span>رقم الهوية</span><input type="text" inputmode="numeric" dir="ltr" data-rs-in="df" data-v="nid" value="' + escapeHTML(f.nid) + '"/></label>' +
         '<label><span>الجوال</span><input type="tel" dir="ltr" data-rs-in="df" data-v="phone" value="' + escapeHTML(f.phone) + '"/></label>' +
-        '<div class="rs-dk-full"><span>الجنس</span><div class="rs-chips">' + ["ذكر", "أنثى"].map(function(x){ return '<button type="button" data-rs="df-gender" data-v="' + x + '" class="' + (f.gender === x ? "on" : "") + '">' + x + '</button>'; }).join("") + '</div></div></div>' +
+        '<div class="rs-dk-full"><span>الجنس *</span><div class="rs-chips rs-chips--lg">' + ["ذكر", "أنثى"].map(function(x){ return '<button type="button" data-rs="df-gender" data-v="' + x + '" class="' + (f.gender === x ? "on" : "") + '">' + x + '</button>'; }).join("") + '</div></div></div>' +
         '<div class="rs-dk-acts"><button type="button" class="btn-secondary" data-rs="desk-reset">إلغاء</button><button type="button" class="btn-primary rs-dk-big" data-rs="df-save"' + (rsDesk.busy ? " disabled" : "") + '>' + (rsDesk.busy ? "جارٍ التسجيل…" : "تسجيل وتأكيد الحضور") + '</button></div></div>';
     } else if(r && r.kind === "none"){
       h += '<div class="rs-dk-card rs-dk-card--bad"><div class="rs-dk-ic">✕</div><b class="rs-dk-title">الرقم غير موجود في السجل</b><span class="rs-dk-q" dir="ltr">' + escapeHTML(r.q) + '</span>' + (r.hint ? '<p class="rs-dk-hint">' + r.hint + '</p>' : '') +
@@ -18052,20 +18090,46 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
     } else if(r && r.kind === "found" && p){
       var old = marks[p.id], already = old && (old.s === "p" || old.s === "l");
       h += '<div class="rs-dk-card' + (already ? " rs-dk-card--again" : "") + '">' + rsPersonInfoHTML(p) +
-        (already ? '<div class="rs-dk-alert rs-dk-alert--info">سبق تأكيد حضوره الساعة ' + rsTime(old.t) + (old.n ? ' — رقمه التسلسلي <b>' + old.n + '</b>' : '') + '</div>' : '') +
+        (already ? '<div class="rs-dk-alert rs-dk-alert--info">سبق تأكيد حضوره الساعة ' + rsTime(old.t) + (old.code ? ' — رقمه ' + rsChip(old) + ' ' + rsColorName(old) : old.n ? ' — رقمه <b>' + old.n + '</b>' : '') + '</div>' : '') +
+        (!already && rsBadgeCfg(g).split && !rsGk(p.gender) ? '<div class="rs-dk-alert">الجنس غير مسجل — حدده ليُمنح الرقم من تسلسله:<div class="rs-chips rs-chips--lg" style="margin-top:8px">' + ["ذكر", "أنثى"].map(function(x){ return '<button type="button" data-rs="desk-gender" data-v="' + x + '">' + x + '</button>'; }).join("") + '</div></div>' : '') +
         '<div class="rs-dk-acts"><button type="button" class="btn-secondary" data-rs="desk-reset">إلغاء</button>' +
         (already ? '' : '<button type="button" class="btn-primary rs-dk-big" data-rs="desk-confirm"' + (rsDesk.busy ? " disabled" : "") + '>' + (rsDesk.busy ? "جارٍ التأكيد…" : "✓ تأكيد الحضور") + '</button>') + '</div>' +
         (already ? '' : '<p class="rs-dk-tip">اضغط Enter للتأكيد</p>') + '</div>';
     } else if(r && r.kind === "done" && p){
-      h += '<div class="rs-dk-card rs-dk-card--ok' + (r.again ? " rs-dk-card--again" : "") + '"><div class="rs-dk-serial"><small>' + (r.again ? "حضوره مؤكد مسبقاً — رقمه التسلسلي" : "تم تأكيد الحضور — الرقم التسلسلي") + '</small><b>' + r.n + '</b></div>' + rsPersonInfoHTML(p) +
+      var dm = r.m || {}, dcol = RS_COLORS[dm.c] || null;
+      h += '<div class="rs-dk-card rs-dk-card--ok' + (r.again ? " rs-dk-card--again" : "") + '"' + (dcol && dm.code ? ' style="border-color:' + dcol.c + '"' : '') + '><div class="rs-dk-serial"><small>' + (r.again ? "حضوره مؤكد مسبقاً — رقمه" : "تم تأكيد الحضور — رقمه") + '</small>' +
+        (dm.code ? rsChip(dm, true) + '<span class="rs-dk-color">اللون ' + rsColorName(dm) + ' · ' + (dm.g === "f" ? "إناث" : dm.g === "m" ? "ذكور" : "") + '</span>' : '<b>' + (dm.n || "") + '</b>') + '</div>' + rsPersonInfoHTML(p) +
         '<p class="rs-dk-tip">أدخل رقم الشخص التالي مباشرة</p></div>';
     } else {
       h += '<div class="rs-dk-idle"><b>أدخل رقم الهوية أو الجوال ثم Enter</b><span>يقبل أيضاً رقم التسجيل أو مسح بطاقة QR بقارئ الباركود' + (rsDesk.auto ? " — التأكيد الفوري مفعّل" : " — ثم Enter مرة ثانية لتأكيد الحضور") + '</span></div>';
     }
     h += '</div>';
     var recent = Object.keys(marks).filter(function(k){ return (marks[k].s === "p" || marks[k].s === "l") && rs.byId[k]; }).sort(function(a, b){ return (marks[b].t || 0) - (marks[a].t || 0); }).slice(0, 8);
-    if(recent.length) h += '<div class="rs-dk-recent"><b>آخر من تم تأكيد حضورهم (كل الأجهزة)</b>' + recent.map(function(k){ var x = rs.byId[k], m = marks[k]; return '<div><i>' + (m.n || "—") + '</i><span>' + escapeHTML(x.name) + '</span>' + rsTypeBadge(x.type) + '<small>' + rsTime(m.t) + '</small></div>'; }).join("") + '</div>';
+    if(recent.length) h += '<div class="rs-dk-recent"><b>آخر من تم تأكيد حضورهم (كل الأجهزة)</b>' + recent.map(function(k){ var x = rs.byId[k], m = marks[k]; return '<div>' + (m.code ? rsChip(m) : '<i>' + (m.n || "—") + '</i>') + '<span>' + escapeHTML(x.name) + '</span>' + rsTypeBadge(x.type) + '<small>' + rsTime(m.t) + '</small></div>'; }).join("") + '</div>';
+    h += rsDeskGroupsHTML(g, marks);
     return h;
+  }
+  // ملخص المجموعات اللونية: كم امتلأ من كل لون للذكور والإناث
+  function rsDeskGroupsHTML(g, marks){
+    var cfg = rsBadgeCfg(g), grp = {};
+    Object.keys(marks).forEach(function(k){ var m = marks[k]; if(!m.code || !(m.s === "p" || m.s === "l")) return; var key = (m.round || 0) * 100 + m.c; var o = grp[key] = grp[key] || { c: m.c, round: m.round || 0, m: 0, f: 0, a: 0 }; o[m.g === "f" ? "f" : m.g === "m" ? "m" : "a"]++; });
+    var keys = Object.keys(grp).map(Number).sort(function(a, b){ return a - b; });
+    if(!keys.length) return "";
+    return '<div class="rs-dk-groups"><div class="rs-row rs-row--sb"><b>المجموعات اللونية (' + cfg.size + ' لكل لون' + (cfg.split ? '، لكل جنس' : '') + ')</b>' + (can("roster.export") ? '<button type="button" class="rs-mini" data-rs="desk-export">تصدير قائمة الحضور Excel</button>' : '') + '</div><div class="rs-dk-grid">' +
+      keys.map(function(k){ var o = grp[k], col = RS_COLORS[o.c] || RS_COLORS[0];
+        return '<div class="rs-dk-grp" style="--gc:' + col.c + '"><i style="background:' + col.c + '"></i><b>' + col.n + (o.round ? " " + (o.round + 1) : "") + '</b>' +
+          (cfg.split ? '<span>ذكور <em>' + o.m + '/' + cfg.size + '</em></span><span>إناث <em>' + o.f + '/' + cfg.size + '</em></span>' : '<span><em>' + o.a + '/' + cfg.size + '</em></span>') + '</div>';
+      }).join("") + '</div></div>';
+  }
+  function rsDeskExport(){
+    var g = rsDeskProg(), sid = g ? rsDeskSess(g) : "", marks = rs.att[sid] || {};
+    if(!g) return;
+    var rows = Object.keys(marks).filter(function(k){ return rs.byId[k] && (marks[k].s === "p" || marks[k].s === "l"); }).sort(function(a, b){
+      var x = marks[a], y = marks[b]; return String(x.g || "").localeCompare(String(y.g || "")) || (x.k || x.n || 0) - (y.k || y.n || 0);
+    }).map(function(k){ var p = rs.byId[k], m = marks[k];
+      return { "الرقم": m.code || m.n || "", "اللون": m.code ? rsColorName(m) : "", "الجنس": m.g === "f" ? "أنثى" : m.g === "m" ? "ذكر" : (p.gender || ""), "الاسم": p.name, "الصفة": rsT(p.type).l, "رقم التسجيل": p.regNo, "الهوية": p.nid || "", "الجوال": p.phone || "", "وقت الحضور": rsTime(m.t), "سجّله": m.by || "" };
+    });
+    rsXlsx("حضور-" + g.title.slice(0, 40), rows, "الحضور");
   }
   function rsDeskAct(a, v){
     var g = rsDeskProg();
@@ -18084,6 +18148,11 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
       case "df-type": if(rsDesk.form){ rsDesk.form.type = v; rsRender(); } return true;
       case "df-gender": if(rsDesk.form){ rsDesk.form.gender = v; rsRender(); } return true;
       case "df-save": rsDeskRegister(); return true;
+      case "desk-export": rsDeskExport(); return true;
+      case "desk-gender":
+        var r0 = rsDesk.res, p0 = r0 && rs.byId[r0.pid];
+        if(p0){ p0.gender = v; rsPRef(p0.id).update({ gender: v, updatedAt: Date.now(), updatedBy: rsBy() }).catch(function(e){ console.error(e); }); rsDeskConfirm(); }
+        return true;
     }
     return false;
   }
