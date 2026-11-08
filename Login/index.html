@@ -2398,7 +2398,7 @@
 #rosterRoot .rs-kpis--sm .rs-kpi{padding:9px 10px}
 #rosterRoot .rs-kpis--sm .rs-kpi b{font-size:19px}
 #rosterRoot .rs-tools{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:10px}
-#rosterRoot input[type=search],#rosterRoot input[type=text],#rosterRoot select,#rosterRoot textarea{font:inherit;font-size:14px;border:1px solid rgba(20,28,27,.14);border-radius:12px;padding:9px 12px;background:#fff;color:var(--ink);outline:none}
+#rosterRoot input[type=search],#rosterRoot input[type=text],#rosterRoot input[type=tel],#rosterRoot select,#rosterRoot textarea{font:inherit;font-size:14px;border:1px solid rgba(20,28,27,.14);border-radius:12px;padding:9px 12px;background:#fff;color:var(--ink);outline:none}
 #rosterRoot input:focus,#rosterRoot select:focus,#rosterRoot textarea:focus{border-color:#4b7071;box-shadow:0 0 0 3px rgba(75,112,113,.14)}
 #rosterRoot .rs-tools input[type=search]{flex:1;min-width:220px}
 #rosterRoot .rs-wide{width:100%}
@@ -2551,6 +2551,82 @@
 #rosterRoot .rs-dup-list label{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:12px;border:1px solid var(--rs-line);cursor:pointer;flex-wrap:wrap}
 #rosterRoot .rs-dup-list label.on{border-color:#324c4b;background:#f3f7f6}
 #rosterRoot .rs-dup-list small{color:var(--rs-soft);font-size:12px;margin-inline-start:auto}
+/* شاشة تسجيل الحضور السريع */
+#rosterRoot .rs-dk-setup{max-width:620px;margin:10px auto;background:#fff;border:1px solid var(--rs-line);border-radius:22px;padding:24px;text-align:center}
+#rosterRoot .rs-dk-setup h3{font-size:19px;margin-bottom:6px}
+#rosterRoot .rs-dk-setup p{color:var(--rs-soft);font-size:13.5px;line-height:1.8;margin-bottom:14px}
+#rosterRoot .rs-dk-or{font-size:12.5px;color:var(--rs-soft);margin:16px 0 8px}
+#rosterRoot .rs-dk-bar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:#fff;border:1px solid var(--rs-line);border-radius:18px;padding:10px 14px;margin-bottom:14px}
+#rosterRoot .rs-dk-ev{flex:1;min-width:160px;display:flex;flex-direction:column;line-height:1.35}
+#rosterRoot .rs-dk-ev small{font-size:11.5px;color:var(--rs-soft)}
+#rosterRoot .rs-dk-ev b{font-size:15px}
+#rosterRoot .rs-dk-count{display:flex;align-items:baseline;gap:6px;background:#e5f3ea;color:#1b5e3b;border-radius:14px;padding:6px 14px}
+#rosterRoot .rs-dk-count b{font-size:22px;font-variant-numeric:tabular-nums}
+#rosterRoot .rs-dk-count span{font-size:12px}
+#rosterRoot .rs-dk-auto{display:flex;align-items:center;gap:6px;font-size:12.5px;font-weight:600;cursor:pointer}
+#rosterRoot .rs-dk-main{max-width:720px;margin:0 auto}
+#rosterRoot .rs-dk-input{display:flex;gap:8px}
+#rosterRoot .rs-dk-input input{flex:1;font-size:26px !important;font-weight:600;letter-spacing:1px;text-align:center;padding:18px 16px !important;border-radius:20px !important;border:2px solid rgba(50,76,75,.25) !important;font-family:"IBM Plex Mono",ui-monospace,monospace,'Cairo' !important}
+#rosterRoot .rs-dk-input input::placeholder{font-family:'Cairo',sans-serif;font-size:18px;letter-spacing:0;font-weight:500}
+#rosterRoot .rs-dk-input input:focus{border-color:#324c4b !important;box-shadow:0 0 0 5px rgba(50,76,75,.12) !important}
+#rosterRoot .rs-dk-input .btn-primary{padding:0 26px;font-size:16px}
+#rosterRoot .rs-dk-idle{text-align:center;padding:40px 16px;color:var(--rs-soft);display:flex;flex-direction:column;gap:6px}
+#rosterRoot .rs-dk-idle b{font-size:17px;color:var(--ink)}
+#rosterRoot .rs-dk-idle span{font-size:13px}
+#rosterRoot .rs-dk-card{margin-top:14px;background:#fff;border:2px solid var(--rs-line);border-radius:24px;padding:20px;animation:fadeInScale .22s cubic-bezier(.22,.61,.36,1)}
+#rosterRoot .rs-dk-card--ok{border-color:rgba(34,118,74,.5);background:linear-gradient(160deg,#eef8f2,#fff 55%)}
+#rosterRoot .rs-dk-card--again{border-color:rgba(44,95,153,.45);background:linear-gradient(160deg,#eef4fb,#fff 55%)}
+#rosterRoot .rs-dk-card--bad{border-color:rgba(179,69,63,.45);background:linear-gradient(160deg,#fcf0ef,#fff 55%);text-align:center}
+#rosterRoot .rs-dk-card--new{border-color:rgba(184,141,102,.55)}
+#rosterRoot .rs-dk-ic{width:52px;height:52px;border-radius:50%;background:#b3453f;color:#fff;display:grid;place-items:center;font-size:22px;margin:0 auto 8px}
+#rosterRoot .rs-dk-title{display:block;font-size:18px}
+#rosterRoot .rs-dk-q{display:inline-block;font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:20px;font-weight:700;margin-top:4px}
+#rosterRoot .rs-dk-hint{font-size:13px;color:#a8672f;margin-top:6px}
+#rosterRoot .rs-dk-person{display:flex;gap:16px;align-items:flex-start}
+#rosterRoot .rs-dk-avatar{flex:none;width:64px;height:64px;border-radius:20px;background:#324c4b;color:#fff;display:grid;place-items:center;font-size:28px;font-weight:700}
+#rosterRoot .rs-dk-pin{flex:1;min-width:0}
+#rosterRoot .rs-dk-name{display:block;font-size:24px;line-height:1.3}
+#rosterRoot .rs-dk-tags{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:6px 0 10px}
+#rosterRoot .rs-dk-person dl{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px;margin:0}
+#rosterRoot .rs-dk-person dl div{background:var(--rs-bg);border-radius:12px;padding:7px 10px}
+#rosterRoot .rs-dk-person dt{font-size:11px;color:var(--rs-soft)}
+#rosterRoot .rs-dk-person dd{margin:0;font-size:15px;font-weight:600}
+#rosterRoot .rs-dk-alert{border-radius:14px;padding:10px 14px;margin:12px 0 0;font-size:14px;background:#fbeee0;color:#8a5426}
+#rosterRoot .rs-dk-alert--info{background:#e6f0fb;color:#2c5f99}
+#rosterRoot .rs-dk-acts{display:flex;gap:10px;justify-content:center;margin-top:16px;flex-wrap:wrap}
+#rosterRoot .rs-dk-big{font-size:18px !important;padding:15px 40px !important;min-width:240px}
+#rosterRoot .rs-dk-tip{text-align:center;font-size:12px;color:var(--rs-soft);margin-top:8px}
+#rosterRoot .rs-dk-serial{text-align:center;margin-bottom:14px}
+#rosterRoot .rs-dk-serial small{display:block;font-size:14px;font-weight:600;color:#1b5e3b}
+#rosterRoot .rs-dk-card--again .rs-dk-serial small{color:#2c5f99}
+#rosterRoot .rs-dk-serial b{display:block;font-size:84px;line-height:1.05;font-weight:700;color:#22764a;font-variant-numeric:tabular-nums}
+#rosterRoot .rs-dk-card--again .rs-dk-serial b{color:#2c5f99}
+#rosterRoot .rs-dk-multi{display:flex;flex-direction:column;gap:8px;margin-top:10px}
+#rosterRoot .rs-dk-multi button{display:flex;align-items:center;gap:10px;font:inherit;text-align:start;border:1px solid var(--rs-line);background:#fff;border-radius:14px;padding:12px 14px;cursor:pointer}
+#rosterRoot .rs-dk-multi button b{flex:1;font-size:15px}
+#rosterRoot .rs-dk-multi button:hover{border-color:#324c4b}
+#rosterRoot .rs-dk-form{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px}
+#rosterRoot .rs-dk-form label,#rosterRoot .rs-dk-form .rs-dk-full{display:flex;flex-direction:column;gap:5px;font-size:12.5px;color:#4a5856}
+#rosterRoot .rs-dk-form .rs-dk-full{grid-column:1/-1}
+#rosterRoot .rs-dk-form input{font-size:16px !important}
+#rosterRoot .rs-dk-recent{max-width:720px;margin:18px auto 0;background:#fff;border:1px solid var(--rs-line);border-radius:18px;padding:12px 16px}
+#rosterRoot .rs-dk-recent>b{font-size:13px;display:block;margin-bottom:6px}
+#rosterRoot .rs-dk-recent>div{display:flex;align-items:center;gap:10px;padding:6px 0;border-top:1px solid rgba(20,28,27,.06);font-size:14px}
+#rosterRoot .rs-dk-recent i{font-style:normal;font-weight:700;color:#22764a;min-width:34px;font-variant-numeric:tabular-nums}
+#rosterRoot .rs-dk-recent span{flex:1}
+#rosterRoot .rs-dk-recent small{color:var(--rs-soft);font-size:12px}
+body.rs-kiosk .topbar,body.rs-kiosk .nav-tabs,body.rs-kiosk #chatFabBtn,body.rs-kiosk #rosterRoot .rs-head,body.rs-kiosk #rosterRoot .rs-nav{display:none !important}
+body.rs-kiosk #rosterRoot{padding-top:12px}
+@media (max-width:640px){
+  #rosterRoot .rs-dk-input input{font-size:21px !important;padding:15px 12px !important}
+  #rosterRoot .rs-dk-input .btn-primary{padding:0 16px}
+  #rosterRoot .rs-dk-person{flex-direction:column;align-items:center;text-align:center}
+  #rosterRoot .rs-dk-tags{justify-content:center}
+  #rosterRoot .rs-dk-person dl{width:100%;grid-template-columns:1fr 1fr}
+  #rosterRoot .rs-dk-big{width:100%;min-width:0}
+  #rosterRoot .rs-dk-form{grid-template-columns:1fr}
+  #rosterRoot .rs-dk-serial b{font-size:68px}
+}
 /* النوافذ */
 #rsModal{position:fixed;inset:0;z-index:150;display:flex;align-items:center;justify-content:center;padding:16px;direction:rtl}
 #rsModal .rs-ov{position:absolute;inset:0;background:rgba(20,28,27,.45);backdrop-filter:blur(3px);animation:overlayFadeIn .18s ease}
@@ -3235,7 +3311,7 @@
       { k: "roster.view", l: "فتح القسم والاطلاع على السجل والبرامج" },
       { k: "roster.import", l: "رفع الملفات ومطابقتها وإصدار أرقام التسجيل" },
       { k: "roster.edit", l: "إضافة الأشخاص وتعديلهم ودمج المكرر" },
-      { k: "roster.attend", l: "تحضير الحضور" },
+      { k: "roster.attend", l: "تسجيل الحضور ومنح الرقم التسلسلي وتسجيل غير الموجودين من شاشة الحضور" },
       { k: "roster.programs", l: "إنشاء البرامج وجلساتها وإدارة مشاركيها" },
       { k: "roster.export", l: "تصدير Excel وطباعة البطاقات" },
       { k: "roster.delete", l: "حذف الأشخاص والتراجع عن عمليات الرفع" }
@@ -16796,7 +16872,7 @@
   var RS_JSQR_JS = "https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js";
 
   var rs = { started: false, ready: false, err: "", people: [], byId: {}, ix: null, programs: [], meta: {}, att: {}, attFor: "", attUnsub: null, allAtt: null, allAttAt: 0 };
-  var rsUI = { tab: "registry", q: "", type: "", flt: "", limit: 150, prog: "", ptab: "attend", sess: "", mode: "p", mq: "", addq: "", last: null, imp: null, impType: "trainee", logs: null, dupKeep: {}, m: null, busy: false };
+  var rsUI = { tab: "desk", q: "", type: "", flt: "", limit: 150, prog: "", ptab: "attend", sess: "", mode: "p", mq: "", addq: "", last: null, imp: null, impType: "trainee", logs: null, dupKeep: {}, m: null, busy: false };
 
   // ----- أدوات عامة -----
   function rsT(k){ for(var i = 0; i < RS_TYPES.length; i++) if(RS_TYPES[i].k === k) return RS_TYPES[i]; return RS_TYPES[1]; }
@@ -17017,13 +17093,14 @@
     if(soft && inRoot && !keep && /^(INPUT|TEXTAREA|SELECT)$/.test(ae.tagName)) return;
     var selS = 0, selE = 0;
     if(keep){ try{ selS = ae.selectionStart; selE = ae.selectionEnd; }catch(e){} }
-    var tabs = [["registry", "السجل", "roster.view"], ["import", "رفع ومطابقة", "roster.import"], ["programs", "البرامج والتحضير", "roster.view"], ["dupes", "فحص التكرار", "roster.edit"]].filter(function(t){ return can(t[2]); });
-    if(!tabs.some(function(t){ return t[0] === rsUI.tab; })) rsUI.tab = "registry";
+    var tabs = [["desk", "تسجيل الحضور", "roster.attend"], ["registry", "السجل", "roster.view"], ["import", "رفع ومطابقة", "roster.import"], ["programs", "البرامج والتحضير", "roster.view"], ["dupes", "فحص التكرار", "roster.edit"]].filter(function(t){ return can(t[2]); });
+    if(!tabs.some(function(t){ return t[0] === rsUI.tab; })) rsUI.tab = tabs[0][0];
     var dupN = can("roster.edit") ? rsDupClusters().length : 0;
     var h = '<div class="rs-head"><div><h2>مطابقة البيانات</h2><p>سجل موحّد للمدربين والمتدربين والمتطوعين — رقم تسجيل لكل شخص، وتحضير بالرقم أو ببطاقة QR</p></div>' +
       (can("roster.edit") ? '<button type="button" class="btn-primary" data-rs="new-person">＋ إضافة شخص</button>' : '') + '</div>' +
       '<div class="events-subnav rs-nav">' + tabs.map(function(t){ return '<button type="button" data-rs="tab" data-v="' + t[0] + '" class="' + (rsUI.tab === t[0] ? "active" : "") + '">' + t[1] + (t[0] === "dupes" && dupN ? ' <i class="rs-badge">' + dupN + '</i>' : '') + '</button>'; }).join("") + '</div>';
-    if(rsUI.tab === "registry") h += rsRegistryHTML();
+    if(rsUI.tab === "desk") h += rsDeskHTML();
+    else if(rsUI.tab === "registry") h += rsRegistryHTML();
     else if(rsUI.tab === "import") h += rsImportHTML();
     else if(rsUI.tab === "programs") h += rsProgramsHTML();
     else if(rsUI.tab === "dupes") h += rsDupesHTML();
@@ -17031,6 +17108,8 @@
     root.innerHTML = h;
     if(soft) window.scrollTo(0, y);
     if(keep){ var el = root.querySelector('[data-rs-keep="' + keep + '"]'); if(el){ el.focus(); try{ el.setSelectionRange(selS, selE); }catch(e){} } }
+    // شاشة التحضير: المؤشر دائماً في خانة الرقم (لقارئ الباركود والإدخال المتتابع) ما لم يكن المستخدم في حقل آخر
+    else if(rsUI.tab === "desk" && !rsDesk.form && !rsUI.m){ var a2 = document.activeElement; if(!a2 || a2 === document.body || !document.body.contains(a2)){ var dq = document.getElementById("rsDeskQ"); if(dq) dq.focus(); } }
   }
   function rsKpi(n, l, tone){ return '<div class="rs-kpi' + (tone ? " rs-kpi--" + tone : "") + '"><b>' + n + '</b><span>' + l + '</span></div>'; }
 
@@ -17817,8 +17896,201 @@
       '<div class="rs-actions"><button type="button" class="btn-primary" data-rs="m-close">إنهاء المسح</button></div>';
   }
 
+  // ===== شاشة تسجيل الحضور السريع =====
+  // خانة واحدة: الهوية أو الجوال أو رقم التسجيل ← Enter تعرض بيانات الشخص ← Enter ثانية تؤكد الحضور ويُمنح رقماً تسلسلياً.
+  // الرقم التسلسلي يُحجز داخل معاملة على مستند الجلسة: لا يتكرر حتى لو كانت عدة أجهزة تحضّر في نفس اللحظة.
+  // غير الموجود في السجل: تنبيه ونموذج تسجيل سريع (متدرب/متطوع/مدرب) يسجّله ويؤكد حضوره بخطوة واحدة.
+  var rsDesk = { res: null, busy: false, auto: false, form: null };
+  try{ rsDesk.auto = localStorage.getItem("rsDeskAuto") === "1"; }catch(e){}
+  function rsDeskProgId(){ var id = ""; try{ id = localStorage.getItem("rsDeskProg") || ""; }catch(e){} return rs.programs.some(function(g){ return g.id === id; }) ? id : ""; }
+  function rsDeskSetProg(id){ try{ localStorage.setItem("rsDeskProg", id || ""); }catch(e){} rsDesk.res = null; rsDesk.sess = ""; }
+  function rsDeskProg(){ var id = rsDeskProgId(); return id ? rs.programs.find(function(g){ return g.id === id; }) : null; }
+  function rsDeskSess(g){
+    var ss = rsSessions(g);
+    if(rsDesk.sess && ss.some(function(s){ return s.id === rsDesk.sess; })) return rsDesk.sess;
+    var t = ss.find(function(s){ return s.date === rsToday(); });
+    return t ? t.id : "";
+  }
+  function rsDeskFocus(){ setTimeout(function(){ var q = document.getElementById("rsDeskQ"); if(q && !rsDesk.form) q.focus(); }, 30); }
+  function rsDeskHint(q){
+    var d = rsDigits(q).replace(/\D/g, "");
+    if(/^[12]\d{9}$/.test(d) && !rsNidOk(d)) return "تنبيه: رقم الهوية لا يجتاز التحقق — قد يكون فيه خطأ في الكتابة.";
+    if(/^0?5/.test(d) && d.length !== 10 && d.length !== 9 && d.length < 12) return "تنبيه: رقم الجوال ناقص أو زائد.";
+    return "";
+  }
+  function rsDeskLookup(q){
+    q = String(q || "").trim();
+    if(!q) return;
+    var hits = rsFind(q);
+    if(!hits.length){
+      var d = rsDigits(q).replace(/\D/g, "");
+      rsDesk.res = { kind: "none", q: q, hint: rsDeskHint(q) };
+      rsDesk.form = null;
+      rsBeep(false);
+      rsRender();
+      return;
+    }
+    if(hits.length > 1){ rsDesk.res = { kind: "multi", q: q, ids: hits.slice(0, 8).map(function(p){ return p.id; }) }; rsRender(); return; }
+    rsDeskShow(hits[0]);
+  }
+  function rsDeskShow(p){
+    rsDesk.res = { kind: "found", pid: p.id };
+    rsRender(); rsDeskFocus();
+    if(rsDesk.auto) rsDeskConfirm();
+  }
+  function rsDeskConfirm(){
+    var g = rsDeskProg(), sid = g ? rsDeskSess(g) : "", r = rsDesk.res;
+    if(!g || !sid || !r || r.kind !== "found" || rsDesk.busy || !can("roster.attend")) return;
+    var pid = r.pid, ref = db.collection("rosterAttendance").doc(g.id + "__" + sid);
+    rsDesk.busy = true; rsRender();
+    if((g.members || []).indexOf(pid) === -1){
+      g.members = (g.members || []).concat(pid);
+      rsGRef(g.id).update({ members: firebase.firestore.FieldValue.arrayUnion(pid) }).catch(function(e){ console.error(e); });
+    }
+    db.runTransaction(function(tx){
+      return tx.get(ref).then(function(d){
+        var x = d.exists ? d.data() : {}, marks = x.marks || {}, old = marks[pid];
+        if(old && (old.s === "p" || old.s === "l") && old.n) return { again: true, m: old };
+        var mx = Object.keys(marks).reduce(function(a, k){ return Math.max(a, +marks[k].n || 0); }, +x.seq || 0);
+        var m = { s: "p", t: Date.now(), by: rsBy(), n: mx + 1 }, o = { programId: g.id, sessionId: sid, seq: m.n, marks: {} };
+        o.marks[pid] = m;
+        tx.set(ref, o, { merge: true });
+        return { again: false, m: m };
+      });
+    }).then(function(res){
+      rsDesk.busy = false;
+      rs.att[sid] = rs.att[sid] || {}; rs.att[sid][pid] = res.m;
+      rsDesk.res = { kind: "done", pid: pid, n: res.m.n, t: res.m.t, again: res.again };
+      rsBeep(!res.again);
+      rsRender(); rsDeskFocus();
+    }).catch(function(e){
+      rsDesk.busy = false; console.error(e);
+      showToast(e && e.code === "permission-denied" ? "⚠️ قواعد قاعدة البيانات لا تسمح بالحفظ في هذا القسم بعد" : "⚠️ لم يُؤكَّد الحضور — تحقق من الاتصال وأعد المحاولة");
+      rsRender(); rsDeskFocus();
+    });
+  }
+  function rsDeskFormOpen(){
+    var q = rsDesk.res && rsDesk.res.q || "", d = rsDigits(q).replace(/\D/g, ""), f = { name: "", type: rsDesk.lastType || "trainee", nid: "", phone: "", gender: "" };
+    if(/^[12]\d{9}$/.test(d)) f.nid = d; else if(d) f.phone = rsPhone(d); else f.name = q;
+    rsDesk.form = f; rsRender();
+    setTimeout(function(){ var n = document.querySelector('#rosterRoot [data-rs-in="df"][data-v="name"]'); if(n) n.focus(); }, 30);
+  }
+  function rsDeskRegister(){
+    var f = rsDesk.form, g = rsDeskProg();
+    if(!f || rsDesk.busy) return;
+    var name = String(f.name || "").replace(/\s+/g, " ").trim();
+    if(!name){ showToast("اكتب الاسم"); return; }
+    var rec = { name: name, nameKey: rsNorm(name), nid: rsNid(f.nid), phone: rsPhone(f.phone), gender: f.gender || "", email: "", birth: "", org: "", notes: "", type: f.type || "trainee", roles: [f.type || "trainee"], status: "active" };
+    var clash = rs.people.find(function(p){ return (rec.nid && p.nid === rec.nid) || (rec.phone && p.phone === rec.phone && rsNameSim(p.nameKey, rec.nameKey) >= 0.5); });
+    if(clash){ rsDesk.form = null; showToast("هذا الشخص مسجل مسبقاً — " + clash.regNo); rsDeskShow(clash); return; }
+    var need = {}; need[rec.type] = 1;
+    rsDesk.busy = true; rsDesk.lastType = rec.type; rsRender();
+    rsAllocate(need).then(function(start){
+      var id = rsId("rp"), now = Date.now();
+      rec.id = id; rec.regNo = rsRegNo(rec.type, start[rec.type]); rec.batch = "desk"; rec.source = "تسجيل عند الحضور" + (g ? " — " + g.title : "");
+      rec.createdAt = now; rec.createdBy = rsBy(); rec.updatedAt = now; rec.updatedBy = rsBy();
+      return rsPRef(id).set(rec).then(function(){ return rec; });
+    }).then(function(p){
+      rsDesk.busy = false; rsDesk.form = null;
+      if(!rs.byId[p.id]){ rs.byId[p.id] = p; rs.people.push(p); rs.ix = rsIndex(); }
+      rsDesk.res = { kind: "found", pid: p.id, fresh: true };
+      if(g && rsDeskSess(g)) rsDeskConfirm(); else rsRender();
+    }).catch(function(e){
+      rsDesk.busy = false; console.error(e);
+      showToast(e && e.code === "permission-denied" ? "⚠️ قواعد قاعدة البيانات لا تسمح بالحفظ في هذا القسم بعد" : "⚠️ تعذّر التسجيل — تحقق من الاتصال");
+      rsRender();
+    });
+  }
+  function rsDeskQuickProg(){
+    var inp = document.querySelector('#rosterRoot [data-rs-deskname]'), title = inp ? inp.value.trim() : "";
+    if(!title){ showToast("اكتب اسم الفعالية"); if(inp) inp.focus(); return; }
+    var now = Date.now(), id = rsId("rg"), d = rsToday();
+    var rec = { id: id, title: title, kind: "فعالية", place: "", start: d, end: d, threshold: 75, sessions: [{ id: rsId("s"), date: d, title: "" }], members: [], createdAt: now, createdBy: rsBy(), updatedAt: now, updatedBy: rsBy() };
+    rsGRef(id).set(rec).then(function(){ rsDeskSetProg(id); rsRender(); rsDeskFocus(); }).catch(function(e){ console.error(e); showToast("⚠️ تعذّر الإنشاء"); });
+  }
+  function rsPersonInfoHTML(p, big){
+    return '<div class="rs-dk-person"><div class="rs-dk-avatar">' + escapeHTML(String(p.name || "?").trim().charAt(0)) + '</div><div class="rs-dk-pin"><b class="rs-dk-name">' + escapeHTML(p.name) + '</b>' +
+      '<div class="rs-dk-tags">' + rsRoles(p).map(rsTypeBadge).join(" ") + '<span class="rs-reg" dir="ltr">' + escapeHTML(p.regNo) + '</span></div>' +
+      '<dl><div><dt>الهوية</dt><dd dir="ltr">' + escapeHTML(p.nid || "—") + '</dd></div><div><dt>الجوال</dt><dd dir="ltr">' + escapeHTML(p.phone || "—") + '</dd></div><div><dt>الجنس</dt><dd>' + escapeHTML(p.gender || "—") + '</dd></div>' + (p.org ? '<div><dt>الجهة</dt><dd>' + escapeHTML(p.org) + '</dd></div>' : '') + '</dl></div></div>';
+  }
+  function rsDeskHTML(){
+    var g = rsDeskProg(), canA = can("roster.attend");
+    rsWatchAtt(g ? g.id : "");
+    if(!g){
+      return '<div class="rs-dk-setup"><h3>جهّز شاشة تسجيل الحضور</h3><p>اختر الفعالية أو البرنامج الذي تسجّل حضوره الآن. يُحفظ اختيارك على هذا الجهاز، وكل الأجهزة تحضّر على نفس البيانات مباشرة.</p>' +
+        (rs.programs.length ? '<select data-rs-ch="desk-prog" class="rs-wide"><option value="">— اختر —</option>' + rs.programs.map(function(x){ return '<option value="' + x.id + '">' + escapeHTML(x.title) + (x.start ? " — " + rsDate(x.start) : "") + '</option>'; }).join("") + '</select>' : '') +
+        (can("roster.programs") ? '<div class="rs-dk-or">أو أنشئ فعالية اليوم بخطوة واحدة</div><div class="rs-scan-in"><input type="text" data-rs-deskname placeholder="اسم الفعالية (مثال: الحفل الختامي لبرنامج مفاتيح التوظيف)"/><button type="button" class="btn-primary" data-rs="desk-quick">إنشاء والبدء</button></div>' : '') + '</div>';
+    }
+    var sid = rsDeskSess(g), ss = rsSessions(g), marks = rs.att[sid] || {};
+    var done = Object.keys(marks).filter(function(k){ return marks[k].s === "p" || marks[k].s === "l"; });
+    var h = '<div class="rs-dk-bar"><div class="rs-dk-ev"><small>تسجيل حضور</small><b>' + escapeHTML(g.title) + '</b></div>' +
+      (ss.length > 1 ? '<select data-rs-ch="desk-sess"><option value="">— الجلسة —</option>' + ss.map(function(s, i){ return '<option value="' + s.id + '"' + (s.id === sid ? " selected" : "") + '>' + escapeHTML(s.title || ("الجلسة " + (i + 1))) + ' — ' + rsDate(s.date) + '</option>'; }).join("") + '</select>' : '') +
+      '<div class="rs-dk-count"><b>' + done.length + '</b><span>حضور مؤكد' + ((g.members || []).length ? ' من ' + (g.members || []).length : '') + '</span></div>' +
+      '<label class="rs-dk-auto" title="يؤكد الحضور فور إدخال الرقم دون خطوة ثانية — للطوابير الطويلة"><input type="checkbox" data-rs-ch="desk-auto"' + (rsDesk.auto ? " checked" : "") + '/> تأكيد فوري</label>' +
+      '<button type="button" class="rs-mini" data-rs="desk-kiosk">' + (document.body.classList.contains("rs-kiosk") ? "إنهاء ملء الشاشة" : "ملء الشاشة") + '</button><button type="button" class="rs-mini" data-rs="desk-change">تغيير الفعالية</button></div>';
+    if(!sid){
+      return h + '<div class="rs-empty"><b>لا توجد جلسة بتاريخ اليوم في هذه الفعالية</b><p>' + (ss.length ? "اختر الجلسة من القائمة أعلاه، أو أضف جلسة اليوم." : "أضف جلسة اليوم لتبدأ التسجيل.") + '</p>' + (can("roster.programs") ? '<button type="button" class="btn-primary" data-rs="desk-today">إضافة جلسة اليوم</button>' : '') + '</div>';
+    }
+    if(!canA) return h + '<div class="rs-empty"><p>ليست لديك صلاحية تحضير الحضور.</p></div>';
+    var r = rsDesk.res, p = r && r.pid ? rs.byId[r.pid] : null;
+    h += '<div class="rs-dk-main"><div class="rs-dk-input"><input type="text" id="rsDeskQ" data-rs-in="deskq" data-rs-keep="deskq" value="' + escapeHTML(rsDesk.q || "") + '" inputmode="numeric" autocomplete="off" enterkeyhint="go" placeholder="رقم الهوية أو الجوال"' + (rsDesk.form ? ' disabled' : '') + '/>' +
+      '<button type="button" class="btn-primary" data-rs="desk-go"' + (rsDesk.form ? ' disabled' : '') + '>بحث</button></div>';
+    if(rsDesk.form){
+      var f = rsDesk.form;
+      h += '<div class="rs-dk-card rs-dk-card--new"><div class="rs-dk-alert">⚠ الرقم <b dir="ltr">' + escapeHTML(r ? r.q : "") + '</b> غير موجود في السجل — سجّله الآن</div>' +
+        '<div class="rs-dk-form"><label class="rs-dk-full"><span>الاسم الكامل *</span><input type="text" data-rs-in="df" data-v="name" value="' + escapeHTML(f.name) + '" autocomplete="off"/></label>' +
+        '<div class="rs-dk-full"><span>الصفة</span><div class="rs-chips rs-chips--lg">' + ["trainee", "volunteer", "trainer"].map(function(k){ return '<button type="button" data-rs="df-type" data-v="' + k + '" class="' + (f.type === k ? "on" : "") + '">' + rsT(k).l + '</button>'; }).join("") + '</div></div>' +
+        '<label><span>رقم الهوية</span><input type="text" inputmode="numeric" dir="ltr" data-rs-in="df" data-v="nid" value="' + escapeHTML(f.nid) + '"/></label>' +
+        '<label><span>الجوال</span><input type="tel" dir="ltr" data-rs-in="df" data-v="phone" value="' + escapeHTML(f.phone) + '"/></label>' +
+        '<div class="rs-dk-full"><span>الجنس</span><div class="rs-chips">' + ["ذكر", "أنثى"].map(function(x){ return '<button type="button" data-rs="df-gender" data-v="' + x + '" class="' + (f.gender === x ? "on" : "") + '">' + x + '</button>'; }).join("") + '</div></div></div>' +
+        '<div class="rs-dk-acts"><button type="button" class="btn-secondary" data-rs="desk-reset">إلغاء</button><button type="button" class="btn-primary rs-dk-big" data-rs="df-save"' + (rsDesk.busy ? " disabled" : "") + '>' + (rsDesk.busy ? "جارٍ التسجيل…" : "تسجيل وتأكيد الحضور") + '</button></div></div>';
+    } else if(r && r.kind === "none"){
+      h += '<div class="rs-dk-card rs-dk-card--bad"><div class="rs-dk-ic">✕</div><b class="rs-dk-title">الرقم غير موجود في السجل</b><span class="rs-dk-q" dir="ltr">' + escapeHTML(r.q) + '</span>' + (r.hint ? '<p class="rs-dk-hint">' + r.hint + '</p>' : '') +
+        '<div class="rs-dk-acts">' + (canA ? '<button type="button" class="btn-primary rs-dk-big" data-rs="desk-new">تسجيل شخص جديد</button>' : '') + '<button type="button" class="btn-secondary" data-rs="desk-reset">إعادة الإدخال</button></div></div>';
+    } else if(r && r.kind === "multi"){
+      h += '<div class="rs-dk-card"><b class="rs-dk-title">أكثر من شخص بهذا الرقم — اختر:</b><div class="rs-dk-multi">' + r.ids.map(function(id){ var x = rs.byId[id]; return x ? '<button type="button" data-rs="desk-pick" data-v="' + id + '"><b>' + escapeHTML(x.name) + '</b><span dir="ltr">' + escapeHTML(x.regNo) + '</span>' + rsTypeBadge(x.type) + '</button>' : ''; }).join("") + '</div></div>';
+    } else if(r && r.kind === "found" && p){
+      var old = marks[p.id], already = old && (old.s === "p" || old.s === "l");
+      h += '<div class="rs-dk-card' + (already ? " rs-dk-card--again" : "") + '">' + rsPersonInfoHTML(p) +
+        (already ? '<div class="rs-dk-alert rs-dk-alert--info">سبق تأكيد حضوره الساعة ' + rsTime(old.t) + (old.n ? ' — رقمه التسلسلي <b>' + old.n + '</b>' : '') + '</div>' : '') +
+        '<div class="rs-dk-acts"><button type="button" class="btn-secondary" data-rs="desk-reset">إلغاء</button>' +
+        (already ? '' : '<button type="button" class="btn-primary rs-dk-big" data-rs="desk-confirm"' + (rsDesk.busy ? " disabled" : "") + '>' + (rsDesk.busy ? "جارٍ التأكيد…" : "✓ تأكيد الحضور") + '</button>') + '</div>' +
+        (already ? '' : '<p class="rs-dk-tip">اضغط Enter للتأكيد</p>') + '</div>';
+    } else if(r && r.kind === "done" && p){
+      h += '<div class="rs-dk-card rs-dk-card--ok' + (r.again ? " rs-dk-card--again" : "") + '"><div class="rs-dk-serial"><small>' + (r.again ? "حضوره مؤكد مسبقاً — رقمه التسلسلي" : "تم تأكيد الحضور — الرقم التسلسلي") + '</small><b>' + r.n + '</b></div>' + rsPersonInfoHTML(p) +
+        '<p class="rs-dk-tip">أدخل رقم الشخص التالي مباشرة</p></div>';
+    } else {
+      h += '<div class="rs-dk-idle"><b>أدخل رقم الهوية أو الجوال ثم Enter</b><span>يقبل أيضاً رقم التسجيل أو مسح بطاقة QR بقارئ الباركود' + (rsDesk.auto ? " — التأكيد الفوري مفعّل" : " — ثم Enter مرة ثانية لتأكيد الحضور") + '</span></div>';
+    }
+    h += '</div>';
+    var recent = Object.keys(marks).filter(function(k){ return (marks[k].s === "p" || marks[k].s === "l") && rs.byId[k]; }).sort(function(a, b){ return (marks[b].t || 0) - (marks[a].t || 0); }).slice(0, 8);
+    if(recent.length) h += '<div class="rs-dk-recent"><b>آخر من تم تأكيد حضورهم (كل الأجهزة)</b>' + recent.map(function(k){ var x = rs.byId[k], m = marks[k]; return '<div><i>' + (m.n || "—") + '</i><span>' + escapeHTML(x.name) + '</span>' + rsTypeBadge(x.type) + '<small>' + rsTime(m.t) + '</small></div>'; }).join("") + '</div>';
+    return h;
+  }
+  function rsDeskAct(a, v){
+    var g = rsDeskProg();
+    switch(a){
+      case "desk-go": var q = document.getElementById("rsDeskQ"); if(q){ var val = q.value; q.value = ""; rsDesk.q = ""; rsDeskLookup(val); } rsDeskFocus(); return true;
+      case "desk-confirm": rsDeskConfirm(); return true;
+      case "desk-reset": rsDesk.res = null; rsDesk.form = null; rsRender(); rsDeskFocus(); return true;
+      case "desk-new": rsDeskFormOpen(); return true;
+      case "desk-pick": var p = rs.byId[v]; if(p) rsDeskShow(p); return true;
+      case "desk-change": rsDeskSetProg(""); rsRender(); return true;
+      case "desk-quick": rsDeskQuickProg(); return true;
+      case "desk-today":
+        if(g && can("roster.programs")){ var ns = { id: rsId("s"), date: rsToday(), title: "" }; rsGRef(g.id).update({ sessions: firebase.firestore.FieldValue.arrayUnion(ns) }).then(function(){ rsDesk.sess = ns.id; rsDeskFocus(); }).catch(function(e){ console.error(e); showToast("⚠️ تعذّر الحفظ"); }); }
+        return true;
+      case "desk-kiosk": document.body.classList.toggle("rs-kiosk"); rsRender(); rsDeskFocus(); return true;
+      case "df-type": if(rsDesk.form){ rsDesk.form.type = v; rsRender(); } return true;
+      case "df-gender": if(rsDesk.form){ rsDesk.form.gender = v; rsRender(); } return true;
+      case "df-save": rsDeskRegister(); return true;
+    }
+    return false;
+  }
+
   // ----- الأحداث -----
   function rsAct(a, v, t){
+    if(rsDeskAct(a, v)) return;
     var imp = rsUI.imp, g = rsCurProg();
     switch(a){
       case "tab": rsUI.tab = v; if(v !== "programs"){ rsUI.prog = ""; } if(v === "import") rsUI.logs = null; rsRender(); window.scrollTo(0, 0); break;
@@ -17923,7 +18195,9 @@
     var t = e.target, k = t.getAttribute && t.getAttribute("data-rs-in");
     if(!k || !currentUser) return;
     var v = t.getAttribute("data-v");
-    if(k === "q"){ rsUI.q = t.value; rsUI.limit = 150; rsRender(); }
+    if(k === "deskq") rsDesk.q = t.value;
+    else if(k === "df" && rsDesk.form) rsDesk.form[v] = t.value;
+    else if(k === "q"){ rsUI.q = t.value; rsUI.limit = 150; rsRender(); }
     else if(k === "mq"){ rsUI.mq = t.value; rsRender(); }
     else if(k === "addq"){ rsUI.addq = t.value; rsRender(); }
     else if(k === "pf" && rsUI.m && rsUI.m.d){ rsUI.m.d[v] = t.value; if(v === "type"){ rsUI.m.d.roles = rsUniq([t.value].concat(rsUI.m.d.roles.filter(function(r){ return RS_TYPES.some(function(x){ return x.k === r; }); }))); rsModalRender(); } }
@@ -17934,7 +18208,10 @@
     var t = e.target, k = t.getAttribute && t.getAttribute("data-rs-ch");
     if(!k || !currentUser) return;
     var imp = rsUI.imp, v = t.getAttribute("data-v");
-    if(k === "flt"){ rsUI.flt = t.value; rsUI.limit = 150; rsRender(); }
+    if(k === "desk-prog"){ rsDeskSetProg(t.value); rsRender(); rsDeskFocus(); }
+    else if(k === "desk-sess"){ rsDesk.sess = t.value; rsDesk.res = null; rsRender(); rsDeskFocus(); }
+    else if(k === "desk-auto"){ rsDesk.auto = t.checked; try{ localStorage.setItem("rsDeskAuto", t.checked ? "1" : "0"); }catch(e2){} rsRender(); rsDeskFocus(); }
+    else if(k === "flt"){ rsUI.flt = t.value; rsUI.limit = 150; rsRender(); }
     else if(imp && k === "imp-map"){ imp.map[v] = t.value; rsRender(); }
     else if(imp && k === "imp-fallback"){ imp.fallback = t.value; rsRender(); }
     else if(imp && k === "imp-sheet"){ imp.sheet = t.value; var keepType = imp.type; imp.type = rsUI.impType; if(rsImpLoad(imp, window.XLSX.utils.sheet_to_json(imp.wb.Sheets[imp.sheet], { header: 1, raw: false, defval: "" }))){ if(keepType === "col") imp.type = "col"; } rsRender(); }
@@ -17946,6 +18223,18 @@
   });
   document.addEventListener("keydown", function(e){
     if(e.key === "Escape" && rsUI.m){ rsModalClose(); return; }
+    var dt = e.target;
+    if(dt && dt.id === "rsDeskQ"){
+      if(e.key === "Escape"){ dt.value = ""; rsDesk.q = ""; rsDesk.res = null; rsRender(); rsDeskFocus(); return; }
+      if(e.key !== "Enter") return;
+      e.preventDefault();
+      var dv = dt.value.trim(); dt.value = ""; rsDesk.q = "";
+      // إدخال فارغ + Enter على بطاقة معروضة = تأكيد الحضور
+      if(!dv){ if(rsDesk.res && rsDesk.res.kind === "found") rsDeskConfirm(); return; }
+      rsDeskLookup(dv);
+      return;
+    }
+    if(dt && dt.getAttribute && dt.getAttribute("data-rs-in") === "df" && e.key === "Enter"){ e.preventDefault(); rsDeskRegister(); return; }
     if(e.key !== "Enter" || !e.target || e.target.id !== "rsAq") return;
     e.preventDefault();
     var val = e.target.value; e.target.value = "";
