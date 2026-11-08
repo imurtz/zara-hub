@@ -331,6 +331,10 @@ body.screen .dupnote{display:none}
 .cfm .cdup li{background:rgba(255,255,255,.14);border-radius:999px;padding:2px 9px;font-size:11.5px}
 .cfm .cdup li em{font-style:normal;font-family:var(--num);font-weight:700;color:#F2C14E}
 .cfm .cdup .mb{color:#F6E3CF}
+.cfm .cg{display:flex;gap:6px;justify-content:center;margin:8px 0 2px}
+.cfm .cg span{background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.22);border-radius:999px;padding:3px 11px;font-size:12px}
+.cfm .cg b{display:inline;font-family:var(--num);font-size:16px;color:#fff}
+.cfm .cg .m b{color:#9FE3DE}.cfm .cg .f b{color:#F7D18A}
 .cfm .cdup.ok p{margin:0;color:#CFEBDD;font-weight:600}
 @media (max-width:900px){.cfm{grid-template-columns:minmax(0,1fr) auto}.cfm .cdup{grid-column:1/-1;max-width:none}}
 .cfm.done{background:linear-gradient(125deg,#5E6B69,#7D8987)}
@@ -980,7 +984,15 @@ body.screen .nodup{color:#F6E3CF}
   funPaint(window.__zlG);
 
   /* ===== تأكيد الحضور: زر النموذج + عدّ تنازلي حتى الإغلاق + عدد المؤكِّدين (بعد استبعاد المكرر) ===== */
-  const CF=EV.confirm;let cfN=null,cfRaw=null,cfDup=null;
+  const CF=EV.confirm;let cfN=null,cfRaw=null,cfDup=null,cfYes=null,cfNo=0,cfG=null;
+  // من الردود: «نعم أؤكد» تُعدّ مؤكَّدة، و«أعتذر» تُعرض منفصلة. والجنس يأتي من السكربت (مطابقة الجوال/الهوية مع جدول المشاركين)
+  function cfmParse(d){
+    cfN=d.total;cfRaw=d.rawTotal;cfDup=d.dups||null;cfG=d.confirm&&d.confirm.gender||null;
+    if(d.confirm&&d.confirm.yes!=null){cfYes=d.confirm.yes;cfNo=d.confirm.no||0;return;}
+    const b=(d.breakdowns||[]).find(x=>/تأكيد|الحضور/.test(x.label||""));
+    if(!b){cfYes=d.total;cfNo=0;return;}
+    cfYes=0;cfNo=0;b.items.forEach(it=>{if(/أعتذر|اعتذر|لن|^لا/.test(it.k))cfNo+=it.n;else cfYes+=it.n;});
+  }
   function cfmPaint(){
     if(!CF||EV.closed){$("cfm").hidden=true;return;}
     const box=$("cfm"),left=new Date(CF.until)-Date.now(),done=left<=0;
@@ -990,8 +1002,9 @@ body.screen .nodup{color:#F6E3CF}
       $("cfmTm").innerHTML=u.map(([n,l])=>`<div><b>${String(n).padStart(2,"0")}</b><small>${l}</small></div>`).join("");}
     const c=$("cfmCnt");
     if(cfN==null){c.innerHTML=`<b>—</b>${CF.url?"جارٍ التحميل…":"بانتظار ربط النموذج"}`;return;}
-    const ix=EV.trackers.findIndex(t=>t.key==="participants"),dP=typeof cur!=="undefined"?cur[ix]:null,base=dP&&!dP.error&&!dP.unlinked?dP.total:0,p=base?Math.min(100,Math.round(cfN*100/base)):0;
-    c.innerHTML=`<b>${fmt(cfN)}</b>أكّدوا حضورهم`+(base?`<span class="pc"><span dir="ltr">${p}%</span> من ${fmt(base)} مشارك مسجّل</span><div class="pb"><span style="width:${p}%"></span></div>`:"");
+    const ix=EV.trackers.findIndex(t=>t.key==="participants"),dP=typeof cur!=="undefined"?cur[ix]:null,base=dP&&!dP.error&&!dP.unlinked?dP.total:0,y=cfYes!=null?cfYes:cfN,p=base?Math.min(100,Math.round(y*100/base)):0;
+    const g=cfG?`<div class="cg"><span class="m">👨 <b>${fmt(cfG.m||0)}</b> ذكور</span><span class="f">👩 <b>${fmt(cfG.f||0)}</b> إناث</span></div>`+(cfG.u?`<span class="pc">${fmt(cfG.u)} غير محدد</span>`:""):"";
+    c.innerHTML=`<b>${fmt(y)}</b>أكّدوا حضورهم`+g+(base?`<span class="pc"><span dir="ltr">${p}%</span> من ${fmt(base)} مشارك مسجّل</span><div class="pb"><span style="width:${p}%"></span></div>`:"")+(cfNo?`<span class="pc">🙏 ${fmt(cfNo)} اعتذروا عن الحضور</span>`:"");
     cfmDupPaint();
   }
   function cfmDupPaint(){
@@ -1000,15 +1013,15 @@ body.screen .nodup{color:#F6E3CF}
     const why=[["phone","نفس رقم الجوال"],["id","نفس الهوية"],["email","نفس البريد"]].filter(([k])=>by[k]).map(([k,l])=>`<li>${l} <em>${fmt(by[k])}</em></li>`).join("");
     el.hidden=false;el.classList.toggle("ok",!ex&&!d.maybe);
     el.innerHTML=`<h4>🔁 تكرار التأكيد</h4>`+(!ex&&!d.maybe?`<p>لا يوجد تأكيد مكرر ✔</p>`:
-      `<div class="dr"><div><b>${fmt(raw)}</b><small>ردّ في النموذج</small></div><div><b class="x">−${fmt(ex)}</b><small>مكرر مستبعد</small></div><div><b>${fmt(cfN)}</b><small>العدد المعتمد</small></div></div>`+
+      `<div class="dr"><div><b>${fmt(raw)}</b><small>ردّ في النموذج</small></div><div><b class="x">−${fmt(ex)}</b><small>مكرر مستبعد</small></div><div><b>${fmt(cfN)}</b><small>ردّ معتمد</small></div></div>`+
       (ex?`<p>${fmt(d.groups||ex)} ${(d.groups||ex)===1?"شخص أكّد":"أشخاص أكّدوا"} أكثر من مرة</p>`:"")+(why?`<ul>${why}</ul>`:"")+
       (d.maybe?`<p class="mb">⚠️ ${fmt(d.maybe)} اشتباه بالاسم فقط — لم يُستبعد</p>`:""));
   }
   function cfmFetch(){
     if(!CF)return;
-    if(P.get("demo")){cfN=(cfN||118)+(Math.random()<.4?1:0);cfmPaint();return;}
+    if(P.get("demo")){cfN=(cfN||118)+(Math.random()<.4?1:0);cfYes=cfN-2;cfNo=2;cfG={m:Math.round(cfYes*.45),f:cfYes-Math.round(cfYes*.45)-3,u:3};cfmPaint();return;}
     if(!CF.url)return;
-    fetch(CF.url,{cache:"no-store"}).then(r=>r.json()).then(d=>{if(d&&d.total!=null){cfN=d.total;cfRaw=d.rawTotal;cfDup=d.dups||null;cfmPaint();}}).catch(()=>{});
+    fetch(CF.url,{cache:"no-store"}).then(r=>r.json()).then(d=>{if(d&&d.total!=null){cfmParse(d);cfmPaint();}}).catch(()=>{});
   }
   cfmPaint();setInterval(cfmPaint,1000);cfmFetch();setInterval(cfmFetch,30000);
 
