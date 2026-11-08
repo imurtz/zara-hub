@@ -963,7 +963,7 @@ body.screen .nodup{color:#F6E3CF}
   funPaint(window.__zlG);
 
   /* ===== تأكيد الحضور: زر النموذج + عدّ تنازلي حتى الإغلاق + عدد المؤكِّدين (بعد استبعاد المكرر) ===== */
-  const CF=EV.confirm;let cfN=null;
+  const CF=EV.confirm;let cfN=null,cfRaw=null;
   function cfmPaint(){
     if(!CF||EV.closed){$("cfm").hidden=true;return;}
     const box=$("cfm"),left=new Date(CF.until)-Date.now(),done=left<=0;
@@ -974,13 +974,13 @@ body.screen .nodup{color:#F6E3CF}
     const c=$("cfmCnt");
     if(cfN==null){c.innerHTML=`<b>—</b>${CF.url?"جارٍ التحميل…":"بانتظار ربط النموذج"}`;return;}
     const ix=EV.trackers.findIndex(t=>t.key==="participants"),dP=typeof cur!=="undefined"?cur[ix]:null,base=dP&&!dP.error&&!dP.unlinked?dP.total:0,p=base?Math.min(100,Math.round(cfN*100/base)):0;
-    c.innerHTML=`<b>${fmt(cfN)}</b>أكّدوا حضورهم`+(base?`<span class="pc"><span dir="ltr">${p}%</span> من ${fmt(base)} مشارك مسجّل</span><div class="pb"><span style="width:${p}%"></span></div>`:"");
+    c.innerHTML=`<b>${fmt(cfN)}</b>أكّدوا حضورهم`+(base?`<span class="pc"><span dir="ltr">${p}%</span> من ${fmt(base)} مشارك مسجّل</span><div class="pb"><span style="width:${p}%"></span></div>`:"")+(cfRaw>cfN?`<span class="pc">${fmt(cfRaw)} ردّ في النموذج · استُبعد ${fmt(cfRaw-cfN)} مكرر</span>`:"");
   }
   function cfmFetch(){
     if(!CF)return;
     if(P.get("demo")){cfN=(cfN||118)+(Math.random()<.4?1:0);cfmPaint();return;}
     if(!CF.url)return;
-    fetch(CF.url,{cache:"no-store"}).then(r=>r.json()).then(d=>{if(d&&d.total!=null){cfN=d.total;cfmPaint();}}).catch(()=>{});
+    fetch(CF.url,{cache:"no-store"}).then(r=>r.json()).then(d=>{if(d&&d.total!=null){cfN=d.total;cfRaw=d.rawTotal;cfmPaint();}}).catch(()=>{});
   }
   cfmPaint();setInterval(cfmPaint,1000);cfmFetch();setInterval(cfmFetch,30000);
 
