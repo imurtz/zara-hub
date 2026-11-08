@@ -6,7 +6,8 @@
  * وتستبعد دائماً: الأسماء، الهوية، الجوال، البريد، والإجابات النصية الحرة.
  * تعيد أرقاماً مجمّعة فقط — لا اسم ولا رقم ولا إجابة فردية.
  */
-const PARTICIPANTS_SHEET_ID = "";   // ← الصق هنا معرّف جدول ردود المشاركين (الجزء بين /d/ و /edit في رابطه)
+const PARTICIPANTS_SHEET_ID = "1cjGNBGXKCcg45P8yyhllCd-OFtebkyTlP0hhJoZKKT8";   // جدول ردود المشاركين
+const PARTICIPANTS_TAB_GID = 1870030208;   // ورقة الردود داخله (gid في الرابط)
 const MAX_CHOICES = 12;   // السؤال الذي له أكثر من هذا العدد من الإجابات المختلفة يُعدّ نصاً حراً ولا يُعرض
 const DAYS = 14;
 const TZ = "Asia/Riyadh";
@@ -166,7 +167,7 @@ function confirmInfo_(head, rows) {
   let map = {};
   if (PARTICIPANTS_SHEET_ID) {
     try {
-      const v = SpreadsheetApp.openById(PARTICIPANTS_SHEET_ID).getSheets()[0].getDataRange().getValues();
+      const v = (function () { const all = SpreadsheetApp.openById(PARTICIPANTS_SHEET_ID).getSheets(); return all.filter(function (x) { return x.getSheetId() === PARTICIPANTS_TAB_GID; })[0] || all[0]; })().getDataRange().getValues();
       const ph = (v.shift() || []).map(function (h) { return String(h).trim(); });
       const pg = ph.findIndex(function (h, c) { return c && /الجنس|النوع/.test(h); });
       const pk = keyCols_(ph);
