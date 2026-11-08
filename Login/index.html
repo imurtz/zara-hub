@@ -2615,15 +2615,22 @@
 #rosterRoot .rs-dk-recent i{font-style:normal;font-weight:700;color:#22764a;min-width:34px;font-variant-numeric:tabular-nums}
 #rosterRoot .rs-dk-recent span{flex:1}
 #rosterRoot .rs-dk-recent small{color:var(--rs-soft);font-size:12px}
-#rosterRoot .rs-code,#rsModal .rs-code{display:inline-block;font-style:normal;font-family:"IBM Plex Mono",ui-monospace,monospace;font-weight:700;font-size:12.5px;border-radius:8px;padding:2px 8px;background:#324c4b;color:#fff;letter-spacing:.5px;white-space:nowrap}
+#rosterRoot .rs-code,#rsModal .rs-code{display:inline-block;font-style:normal;font-family:"IBM Plex Mono",ui-monospace,monospace;font-weight:700;font-size:12.5px;border-radius:8px;padding:2px 8px;background:#324c4b;color:#fff;letter-spacing:.5px;white-space:nowrap;box-shadow:inset 0 0 0 1px rgba(20,28,27,.18)}
 #rosterRoot .rs-code--big{font-size:64px;line-height:1;border-radius:22px;padding:14px 30px;margin:8px auto 6px;display:inline-block;box-shadow:0 12px 30px rgba(20,28,27,.18)}
 #rosterRoot .rs-dk-color{display:block;font-size:15px;font-weight:700;color:var(--ink);margin-top:4px}
 #rosterRoot .rs-dk-recent>div .rs-code{min-width:62px;text-align:center}
 #rosterRoot .rs-dk-groups{max-width:720px;margin:14px auto 0;background:#fff;border:1px solid var(--rs-line);border-radius:18px;padding:12px 16px}
 #rosterRoot .rs-dk-groups b{font-size:13px}
 #rosterRoot .rs-dk-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px;margin-top:10px}
-#rosterRoot .rs-dk-grp{display:flex;flex-direction:column;gap:2px;border:1.5px solid var(--gc);border-radius:14px;padding:8px 12px;font-size:12.5px}
+#rosterRoot .rs-dk-grp{display:flex;flex-direction:column;gap:2px;border:1.5px solid color-mix(in srgb,var(--gc) 78%,#141c1b);border-radius:14px;padding:8px 12px;font-size:12.5px}
 #rosterRoot .rs-dk-grp i{width:22px;height:8px;border-radius:4px;margin-bottom:2px}
+#rosterRoot .rs-dk-grp.is-now{box-shadow:0 0 0 3px color-mix(in srgb,var(--gc) 25%,transparent)}
+#rosterRoot .rs-dk-grp small{font-size:11.5px;font-weight:700;color:color-mix(in srgb,var(--gc) 55%,#141c1b)}
+#rosterRoot .rs-dk-grp i{box-shadow:inset 0 0 0 1px rgba(20,28,27,.2)}
+#rsModal .rs-colrow{display:grid;grid-template-columns:22px 46px 1fr auto auto auto;gap:6px;align-items:center;margin-top:6px}
+#rsModal .rs-colrow i{font-style:normal;font-size:12px;color:#6b7775;text-align:center}
+#rsModal .rs-colrow input[type=color]{padding:2px;height:38px;cursor:pointer}
+#rsModal .rs-colrange{font-size:11.5px;color:#6b7775;font-family:ui-monospace,monospace;white-space:nowrap}
 #rosterRoot .rs-dk-grp em{font-style:normal;font-weight:700;font-variant-numeric:tabular-nums}
 @media (max-width:640px){#rosterRoot .rs-code--big{font-size:52px;padding:12px 22px}}
 body.rs-kiosk .topbar,body.rs-kiosk .nav-tabs,body.rs-kiosk #chatFabBtn,body.rs-kiosk #rosterRoot .rs-head,body.rs-kiosk #rosterRoot .rs-nav{display:none !important}
@@ -17862,12 +17869,23 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
     rsCommitOps(ops).then(function(){ showToast("✔ حُذف"); rsModalClose(); }).catch(function(e){ console.error(e); showToast("⚠️ تعذّر الحذف"); });
   }
   function rsProgOpen(id){
-    var g = id ? rsCurProg() : null;
+    var g = id ? rs.programs.find(function(x){ return x.id === id; }) || null : null;
     var d = g ? JSON.parse(JSON.stringify(g)) : { title: "", kind: RS_KINDS[0], place: "", start: rsToday(), end: rsToday(), threshold: 75, sessions: [] };
     var bc = rsBadgeCfg(d); d.badgePrefix = bc.prefix; d.badgeSize = bc.size; d.badgeSplit = bc.split ? "1" : "0";
+    d.colors = bc.colors.map(function(c){ return { n: c.n, c: c.c }; });
     d.sessions = rsSessions(d);
     rsUI.m = { kind: "program", id: g ? g.id : "", d: d };
     rsModalRender();
+  }
+  function rsColorsEdHTML(d){
+    var size = Math.max(1, +d.badgeSize || 15), pre = String(d.badgePrefix || "MT").toUpperCase();
+    return '<div class="rs-sesed rs-coled"><div class="rs-row rs-row--sb"><b>ألوان الأرقام بالترتيب (' + d.colors.length + ')</b><div class="rs-row"><button type="button" class="rs-mini" data-rs="m-col-add">＋ لون</button><button type="button" class="rs-mini" data-rs="m-col-reset">الألوان الافتراضية</button></div></div>' +
+      '<p class="rs-note">اكتب ألوانكم الفعلية (الأساور/البطاقات) بنفس ترتيب توزيعها. كل لون يأخذ ' + size + ' شخصاً' + (d.badgeSplit !== "0" ? ' من كل جنس' : '') + ' بالأرقام ' + pre + '-01 إلى ' + pre + '-' + pad2(size) + '. ما مُنح سابقاً يحتفظ بلونه.</p>' +
+      d.colors.map(function(c, i){
+        return '<div class="rs-colrow"><i>' + (i + 1) + '</i><input type="color" data-rs-in="cf" data-v="' + i + '|c" value="' + escapeHTML(c.c) + '"/><input type="text" data-rs-in="cf" data-v="' + i + '|n" value="' + escapeHTML(c.n) + '" placeholder="اسم اللون"/>' +
+          '<span class="rs-colrange" dir="ltr">' + (i * size + 1) + '–' + ((i + 1) * size) + '</span>' +
+          '<button type="button" class="rs-mini" data-rs="m-col-up" data-v="' + i + '"' + (i ? '' : ' disabled') + ' title="تقديم">▲</button><button type="button" class="rs-mini rs-mini--del" data-rs="m-col-rm" data-v="' + i + '" title="حذف">✕</button></div>';
+      }).join("") + '</div>';
   }
   function rsProgModalHTML(m){
     var d = m.d;
@@ -17877,6 +17895,7 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
       f("place", "المكان", d.place) + f("threshold", "نسبة الحضور للشهادة %", d.threshold, "number", ' min="0" max="100"') + f("start", "من", d.start, "date") + f("end", "إلى", d.end, "date") +
       f("badgePrefix", "اختصار رقم الحضور (مثل MT)", rsBadgeCfg(d).prefix, "text", ' dir="ltr" maxlength="6"') + f("badgeSize", "عدد كل لون", rsBadgeCfg(d).size, "number", ' min="1" max="99"') +
       '<label class="rs-f rs-f--w"><span>تسلسل الأرقام</span><select data-rs-in="gf" data-v="badgeSplit"><option value="1"' + (rsBadgeCfg(d).split ? " selected" : "") + '>منفصل للذكور والإناث (كل جنس يبدأ من ' + rsBadgeCfg(d).prefix + '-01)</option><option value="0"' + (rsBadgeCfg(d).split ? "" : " selected") + '>تسلسل واحد للجميع</option></select></label></div>' +
+      rsColorsEdHTML(d) +
       '<div class="rs-sesed"><div class="rs-row rs-row--sb"><b>الجلسات (' + d.sessions.length + ')</b><div class="rs-row"><button type="button" class="rs-mini" data-rs="m-sess-gen">جلسة لكل يوم من «من» إلى «إلى»</button><button type="button" class="rs-mini" data-rs="m-sess-add">＋ جلسة</button></div></div>' +
       (d.sessions.length ? d.sessions.map(function(s, i){ return '<div class="rs-sesrow"><i>' + (i + 1) + '</i><input type="date" data-rs-in="sf" data-v="' + i + '|date" value="' + escapeHTML(s.date || "") + '"/><input type="text" data-rs-in="sf" data-v="' + i + '|title" placeholder="عنوان الجلسة (اختياري)" value="' + escapeHTML(s.title || "") + '"/><button type="button" class="rs-mini rs-mini--del" data-rs="m-sess-rm" data-v="' + i + '">✕</button></div>'; }).join("") : '<p class="rs-note">لا جلسات — أضف جلسة أو ولّدها من التواريخ.</p>') + '</div>' +
       '<div class="rs-actions">' + (m.id && can("roster.programs") ? '<button type="button" class="rs-mini rs-mini--del" data-rs="m-del-prog">حذف البرنامج</button>' : '') + '<button type="button" class="btn-secondary" data-rs="m-close">إلغاء</button><button type="button" class="btn-primary" data-rs="m-save-prog">حفظ</button></div>';
@@ -17889,10 +17908,12 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
     var now = Date.now(), id = m.id || rsId("rg");
     var rec = { id: id, title: title, kind: d.kind || RS_KINDS[0], place: String(d.place || "").trim(), start: d.start || "", end: d.end || d.start || "", threshold: Math.max(0, Math.min(100, +d.threshold || 75)),
       sessions: rsSessions(d).map(function(s){ return { id: s.id || rsId("s"), date: s.date || "", title: String(s.title || "").trim() }; }), updatedAt: now, updatedBy: rsBy(),
-      badge: { prefix: String(d.badgePrefix || "MT").toUpperCase().replace(/[^A-Z0-9]/g, "") || "MT", size: Math.max(1, Math.min(99, +d.badgeSize || 15)), split: d.badgeSplit !== "0" } };
+      badge: { prefix: String(d.badgePrefix || "MT").toUpperCase().replace(/[^A-Z0-9]/g, "") || "MT", size: Math.max(1, Math.min(99, +d.badgeSize || 15)), split: d.badgeSplit !== "0",
+        colors: (d.colors || []).map(function(c){ return { n: String(c.n || "").trim(), c: String(c.c || "").toLowerCase() }; }).filter(function(c){ return c.n && /^#[0-9a-f]{6}$/.test(c.c); }) } };
+    if(!rec.badge.colors.length){ showToast("أضف لوناً واحداً على الأقل باسمه"); return; }
     if(!m.id){ rec.members = []; rec.createdAt = now; rec.createdBy = rsBy(); }
     rsUI.busy = true;
-    rsGRef(id).set(rec, { merge: true }).then(function(){ rsUI.busy = false; showToast("✔ حُفظ البرنامج"); rsModalClose(); rsUI.tab = "programs"; rsUI.prog = id; rsUI.sess = ""; rsRender(); })
+    rsGRef(id).set(rec, { merge: true }).then(function(){ rsUI.busy = false; showToast("✔ حُفظ البرنامج"); rsModalClose(); if(!m.id){ rsUI.tab = "programs"; rsUI.prog = id; rsUI.sess = ""; } rsRender(); })
       .catch(function(e){ rsUI.busy = false; console.error(e); showToast(e && e.code === "permission-denied" ? "⚠️ قواعد قاعدة البيانات لا تسمح بالحفظ في هذا القسم بعد" : "⚠️ تعذّر الحفظ"); });
   }
   function rsProgDelete(){
@@ -17921,15 +17942,23 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
     { n: "البرتقالي", c: "#ea7a1a" }, { n: "البنفسجي", c: "#7d4cc9" }, { n: "الوردي", c: "#e0559a" }, { n: "السماوي", c: "#1aa6c4" },
     { n: "البني", c: "#8a5a35" }, { n: "الرمادي", c: "#6f7b79" }, { n: "الكحلي", c: "#24345e" }, { n: "الزيتي", c: "#6f7d2c" }
   ];
-  function rsBadgeCfg(g){ var b = (g && g.badge) || {}; return { prefix: String(b.prefix || "MT").toUpperCase(), size: Math.max(1, +b.size || 15), split: b.split !== false }; }
+  // ألوان الفعالية: قائمة الجمعية الفعلية (اسم + لون) بترتيب توزيعها، تُحفظ مع الفعالية؛ وإن لم تُحدد فالقائمة الافتراضية
+  function rsBadgeCfg(g){
+    var b = (g && g.badge) || {};
+    var cols = Array.isArray(b.colors) ? b.colors.filter(function(x){ return x && x.n && /^#[0-9a-f]{6}$/i.test(x.c || ""); }) : [];
+    return { prefix: String(b.prefix || "MT").toUpperCase(), size: Math.max(1, +b.size || 15), split: b.split !== false, colors: cols.length ? cols : RS_COLORS, custom: !!cols.length };
+  }
+  function rsInk(hex){ var h = String(hex || "").replace("#", ""); if(h.length !== 6) return "#fff"; var r = parseInt(h.slice(0, 2), 16), g = parseInt(h.slice(2, 4), 16), b = parseInt(h.slice(4, 6), 16); return (0.299 * r + 0.587 * g + 0.114 * b) > 170 ? "#1b1b1b" : "#fff"; }
+  // لون العلامة المحفوظ معها (الاسم والدرجة لحظة المنح) — تعديل قائمة الألوان لاحقاً لا يغيّر ما مُنح
+  function rsMarkCol(m){ var d = RS_COLORS[m.c] || RS_COLORS[0]; return { n: m.cn || d.n, c: m.ch || d.c }; }
   function rsGk(gender){ return gender === "أنثى" ? "f" : gender === "ذكر" ? "m" : ""; }
-  function rsCodeOf(cfg, k){ var i = k - 1, num = i % cfg.size + 1, gi = Math.floor(i / cfg.size); return { code: cfg.prefix + "-" + pad2(num), c: gi % RS_COLORS.length, round: Math.floor(gi / RS_COLORS.length) }; }
+  function rsCodeOf(cfg, k){ var i = k - 1, num = i % cfg.size + 1, gi = Math.floor(i / cfg.size), L = cfg.colors.length, col = cfg.colors[gi % L]; return { code: cfg.prefix + "-" + pad2(num), c: gi % L, cn: col.n, ch: col.c, round: Math.floor(gi / L) }; }
   function rsChip(m, big){
     if(!m || m.code == null) return m && m.n ? '<i class="rs-code">' + m.n + '</i>' : '';
-    var col = RS_COLORS[m.c] || RS_COLORS[0];
-    return '<i class="rs-code' + (big ? " rs-code--big" : "") + '" style="background:' + col.c + ';color:' + (col.ink || "#fff") + '" dir="ltr">' + escapeHTML(m.code) + '</i>';
+    var col = rsMarkCol(m);
+    return '<i class="rs-code' + (big ? " rs-code--big" : "") + '" style="background:' + col.c + ';color:' + rsInk(col.c) + '" dir="ltr">' + escapeHTML(m.code) + '</i>';
   }
-  function rsColorName(m){ var col = RS_COLORS[m.c] || RS_COLORS[0]; return col.n + (m.round ? " (الدورة " + (m.round + 1) + ")" : ""); }
+  function rsColorName(m){ return rsMarkCol(m).n + (m.round ? " (الدورة " + (m.round + 1) + ")" : ""); }
   var rsDesk = { res: null, busy: false, auto: false, form: null };
   try{ rsDesk.auto = localStorage.getItem("rsDeskAuto") === "1"; }catch(e){}
   function rsDeskProgId(){ var id = ""; try{ id = localStorage.getItem("rsDeskProg") || ""; }catch(e){} return rs.programs.some(function(g){ return g.id === id; }) ? id : ""; }
@@ -17989,7 +18018,7 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
         // آخر رقم لهذا الجنس في هذه الجلسة (من العدّاد ومن العلامات نفسها احتياطاً)
         var seqKey = "seq_" + gk, mx = Object.keys(marks).reduce(function(a, k){ return marks[k].g === gk ? Math.max(a, +marks[k].k || 0) : a; }, +x[seqKey] || 0);
         var cd = rsCodeOf(cfg, mx + 1);
-        var m = { s: "p", t: Date.now(), by: rsBy(), g: gk, k: mx + 1, n: mx + 1, code: cd.code, c: cd.c, round: cd.round }, o = { programId: g.id, sessionId: sid, marks: {} };
+        var m = { s: "p", t: Date.now(), by: rsBy(), g: gk, k: mx + 1, n: mx + 1, code: cd.code, c: cd.c, cn: cd.cn, ch: cd.ch, round: cd.round }, o = { programId: g.id, sessionId: sid, marks: {} };
         o[seqKey] = mx + 1; o.marks[pid] = m;
         tx.set(ref, o, { merge: true });
         return { again: false, m: m };
@@ -18096,8 +18125,8 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
         (already ? '' : '<button type="button" class="btn-primary rs-dk-big" data-rs="desk-confirm"' + (rsDesk.busy ? " disabled" : "") + '>' + (rsDesk.busy ? "جارٍ التأكيد…" : "✓ تأكيد الحضور") + '</button>') + '</div>' +
         (already ? '' : '<p class="rs-dk-tip">اضغط Enter للتأكيد</p>') + '</div>';
     } else if(r && r.kind === "done" && p){
-      var dm = r.m || {}, dcol = RS_COLORS[dm.c] || null;
-      h += '<div class="rs-dk-card rs-dk-card--ok' + (r.again ? " rs-dk-card--again" : "") + '"' + (dcol && dm.code ? ' style="border-color:' + dcol.c + '"' : '') + '><div class="rs-dk-serial"><small>' + (r.again ? "حضوره مؤكد مسبقاً — رقمه" : "تم تأكيد الحضور — رقمه") + '</small>' +
+      var dm = r.m || {}, dcol = dm.code ? rsMarkCol(dm) : null;
+      h += '<div class="rs-dk-card rs-dk-card--ok' + (r.again ? " rs-dk-card--again" : "") + '"' + (dcol && dm.code ? ' style="border-color:color-mix(in srgb,' + dcol.c + ' 75%,#141c1b)"' : '') + '><div class="rs-dk-serial"><small>' + (r.again ? "حضوره مؤكد مسبقاً — رقمه" : "تم تأكيد الحضور — رقمه") + '</small>' +
         (dm.code ? rsChip(dm, true) + '<span class="rs-dk-color">اللون ' + rsColorName(dm) + ' · ' + (dm.g === "f" ? "إناث" : dm.g === "m" ? "ذكور" : "") + '</span>' : '<b>' + (dm.n || "") + '</b>') + '</div>' + rsPersonInfoHTML(p) +
         '<p class="rs-dk-tip">أدخل رقم الشخص التالي مباشرة</p></div>';
     } else {
@@ -18111,14 +18140,24 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
   }
   // ملخص المجموعات اللونية: كم امتلأ من كل لون للذكور والإناث
   function rsDeskGroupsHTML(g, marks){
-    var cfg = rsBadgeCfg(g), grp = {};
-    Object.keys(marks).forEach(function(k){ var m = marks[k]; if(!m.code || !(m.s === "p" || m.s === "l")) return; var key = (m.round || 0) * 100 + m.c; var o = grp[key] = grp[key] || { c: m.c, round: m.round || 0, m: 0, f: 0, a: 0 }; o[m.g === "f" ? "f" : m.g === "m" ? "m" : "a"]++; });
-    var keys = Object.keys(grp).map(Number).sort(function(a, b){ return a - b; });
-    if(!keys.length) return "";
-    return '<div class="rs-dk-groups"><div class="rs-row rs-row--sb"><b>المجموعات اللونية (' + cfg.size + ' لكل لون' + (cfg.split ? '، لكل جنس' : '') + ')</b>' + (can("roster.export") ? '<button type="button" class="rs-mini" data-rs="desk-export">تصدير قائمة الحضور Excel</button>' : '') + '</div><div class="rs-dk-grid">' +
-      keys.map(function(k){ var o = grp[k], col = RS_COLORS[o.c] || RS_COLORS[0];
-        return '<div class="rs-dk-grp" style="--gc:' + col.c + '"><i style="background:' + col.c + '"></i><b>' + col.n + (o.round ? " " + (o.round + 1) : "") + '</b>' +
-          (cfg.split ? '<span>ذكور <em>' + o.m + '/' + cfg.size + '</em></span><span>إناث <em>' + o.f + '/' + cfg.size + '</em></span>' : '<span><em>' + o.a + '/' + cfg.size + '</em></span>') + '</div>';
+    var cfg = rsBadgeCfg(g), grp = {}, order = [];
+    var slot = function(key, col, round){ if(!grp[key]){ grp[key] = { n: col.n, c: col.c, round: round, m: 0, f: 0, a: 0 }; order.push(key); } return grp[key]; };
+    cfg.colors.forEach(function(col){ slot("0|" + col.n + "|" + col.c, col, 0); });
+    Object.keys(marks).forEach(function(k){
+      var m = marks[k]; if(!m.code || !(m.s === "p" || m.s === "l")) return;
+      var col = rsMarkCol(m), o = slot((m.round || 0) + "|" + col.n + "|" + col.c, col, m.round || 0);
+      o[m.g === "f" ? "f" : m.g === "m" ? "m" : "a"]++;
+    });
+    // اللون الجاري لكل جنس: الذي سيأخذه القادم التالي
+    var cur = {};
+    ["m", "f", "a"].forEach(function(gk){ var n = 0; Object.keys(marks).forEach(function(k){ var m = marks[k]; if(m.g === gk) n = Math.max(n, +m.k || 0); }); var cd = rsCodeOf(cfg, n + 1); cur[gk] = cd.round + "|" + cd.cn + "|" + cd.ch; });
+    return '<div class="rs-dk-groups"><div class="rs-row rs-row--sb"><b>ترتيب الألوان (' + cfg.size + ' لكل لون' + (cfg.split ? '، لكل جنس' : '') + ')</b><div class="rs-row" style="margin:0">' +
+      (can("roster.programs") ? '<button type="button" class="rs-mini" data-rs="desk-colors">تعديل الألوان والترقيم</button>' : '') + (can("roster.export") ? '<button type="button" class="rs-mini" data-rs="desk-export">تصدير قائمة الحضور Excel</button>' : '') + '</div></div>' +
+      (cfg.custom ? '' : '<p class="rs-note rs-note--warn">هذه ألوان افتراضية — عدّلها لتطابق ألوان الأساور/البطاقات المستخدمة فعلياً قبل البدء.</p>') + '<div class="rs-dk-grid">' +
+      order.map(function(key, i){ var o = grp[key];
+        var now = cfg.split ? [cur.m === key ? "الذكور الآن" : "", cur.f === key ? "الإناث الآن" : ""].filter(Boolean).join(" · ") : (cur.a === key ? "الجاري الآن" : "");
+        return '<div class="rs-dk-grp' + (now ? " is-now" : "") + '" style="--gc:' + o.c + '"><i style="background:' + o.c + '"></i><b>' + (o.round ? "" : (i + 1) + ". ") + escapeHTML(o.n) + (o.round ? " — الدورة " + (o.round + 1) : "") + '</b>' +
+          (cfg.split ? '<span>ذكور <em>' + o.m + '/' + cfg.size + '</em></span><span>إناث <em>' + o.f + '/' + cfg.size + '</em></span>' : '<span><em>' + o.a + '/' + cfg.size + '</em></span>') + (now ? '<small>◀ ' + now + '</small>' : '') + '</div>';
       }).join("") + '</div></div>';
   }
   function rsDeskExport(){
@@ -18149,6 +18188,7 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
       case "df-gender": if(rsDesk.form){ rsDesk.form.gender = v; rsRender(); } return true;
       case "df-save": rsDeskRegister(); return true;
       case "desk-export": rsDeskExport(); return true;
+      case "desk-colors": var gd = rsDeskProg(); if(gd) rsProgOpen(gd.id); return true;
       case "desk-gender":
         var r0 = rsDesk.res, p0 = r0 && rs.byId[r0.pid];
         if(p0){ p0.gender = v; rsPRef(p0.id).update({ gender: v, updatedAt: Date.now(), updatedBy: rsBy() }).catch(function(e){ console.error(e); }); rsDeskConfirm(); }
@@ -18250,6 +18290,10 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
         }
         break;
       case "m-save-prog": rsProgSave(); break;
+      case "m-col-add": if(rsUI.m && rsUI.m.d){ rsUI.m.d.colors.push({ n: "", c: "#888888" }); rsModalRender(); var ins = document.querySelectorAll('#rsModal [data-rs-in="cf"][data-v$="|n"]'); if(ins.length) ins[ins.length - 1].focus(); } break;
+      case "m-col-reset": if(rsUI.m && rsUI.m.d && confirm("استبدال القائمة بالألوان الافتراضية؟")){ rsUI.m.d.colors = RS_COLORS.map(function(c){ return { n: c.n, c: c.c }; }); rsModalRender(); } break;
+      case "m-col-rm": if(rsUI.m && rsUI.m.d && rsUI.m.d.colors.length > 1){ rsUI.m.d.colors.splice(+v, 1); rsModalRender(); } break;
+      case "m-col-up": if(rsUI.m && rsUI.m.d && +v > 0){ var cl = rsUI.m.d.colors, x0 = cl[+v]; cl[+v] = cl[+v - 1]; cl[+v - 1] = x0; rsModalRender(); } break;
       case "m-del-prog": rsProgDelete(); break;
     }
   }
@@ -18270,7 +18314,8 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
     else if(k === "mq"){ rsUI.mq = t.value; rsRender(); }
     else if(k === "addq"){ rsUI.addq = t.value; rsRender(); }
     else if(k === "pf" && rsUI.m && rsUI.m.d){ rsUI.m.d[v] = t.value; if(v === "type"){ rsUI.m.d.roles = rsUniq([t.value].concat(rsUI.m.d.roles.filter(function(r){ return RS_TYPES.some(function(x){ return x.k === r; }); }))); rsModalRender(); } }
-    else if(k === "gf" && rsUI.m && rsUI.m.d) rsUI.m.d[v] = t.value;
+    else if(k === "gf" && rsUI.m && rsUI.m.d){ rsUI.m.d[v] = t.value; if(v === "badgeSize" || v === "badgePrefix" || v === "badgeSplit"){ var ce = document.querySelector("#rsModal .rs-coled"); if(ce) ce.outerHTML = rsColorsEdHTML(rsUI.m.d); } }
+    else if(k === "cf" && rsUI.m && rsUI.m.d){ var cp = v.split("|"), co = rsUI.m.d.colors[+cp[0]]; if(co) co[cp[1]] = t.value; }
     else if(k === "sf" && rsUI.m && rsUI.m.d){ var pv = v.split("|"), s = rsUI.m.d.sessions[+pv[0]]; if(s) s[pv[1]] = t.value; }
   });
   document.addEventListener("change", function(e){
