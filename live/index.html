@@ -312,13 +312,9 @@ body.screen .dupnote{display:none}
 .cfm .tm b{display:block;font-family:var(--num);font-size:22px;line-height:1.1}
 .cfm .tm small{font-size:10.5px;color:rgba(255,255,255,.75)}
 .cfm .side{display:flex;flex-direction:column;align-items:center;gap:10px;min-width:200px}
-.cfm .go{display:inline-flex;align-items:center;justify-content:center;gap:8px;text-decoration:none;font-weight:700;font-size:16px;color:#324C4B;background:#fff;border-radius:16px;padding:14px 26px;width:100%;
-  box-shadow:0 10px 24px -10px rgba(0,0,0,.45);animation:cfmGo 2.2s ease-in-out infinite;transition:transform .15s}
-.cfm .go:hover{transform:translateY(-2px)}
-.cfm .go.off{background:rgba(255,255,255,.2);color:#fff;animation:none;cursor:default;font-size:14px}
-@keyframes cfmGo{0%,100%{box-shadow:0 10px 24px -10px rgba(0,0,0,.45),0 0 0 0 rgba(255,255,255,.5)}50%{box-shadow:0 10px 24px -10px rgba(0,0,0,.45),0 0 0 9px rgba(255,255,255,0)}}
 .cfm .cnt{font-size:12.5px;color:rgba(255,255,255,.85);text-align:center}
-.cfm .cnt b{font-family:var(--num);font-size:24px;color:#fff;display:block;line-height:1.15}
+.cfm .cnt{font-size:13.5px}.cfm .cnt b{font-family:var(--num);font-size:clamp(44px,7vw,60px);color:#fff;display:block;line-height:1.05}
+.cfm .cnt .pc{display:block;margin-top:4px;font-size:12.5px;color:rgba(255,255,255,.8)}
 .cfm .pb{height:6px;border-radius:9px;background:rgba(255,255,255,.2);overflow:hidden;margin-top:5px;width:180px}
 .cfm .pb span{display:block;height:100%;background:#F2C14E;border-radius:9px;transition:width 1s}
 .cfm.done{background:linear-gradient(125deg,#5E6B69,#7D8987)}
@@ -352,11 +348,11 @@ body.screen .nodup{color:#F6E3CF}
   </section>
 
   <section class="cfm" id="cfm" hidden>
-    <div><div class="hd"><span class="tag"><i></i><span id="cfmTag">مطلوب من المسجلين</span></span></div>
-      <h2 id="cfmH">أكّد حضورك للورشة ✋</h2>
-      <p id="cfmP">سجّلت في الورشة؟ أكّد حضورك ليُجهَّز لك مقعدك. ينتهي تأكيد الحضور عصر الثلاثاء 10 نوفمبر.</p>
+    <div><div class="hd"><span class="tag"><i></i><span id="cfmTag">مباشر</span></span></div>
+      <h2 id="cfmH">تأكيد الحضور ✋</h2>
+      <p id="cfmP">عدد من أكّدوا حضورهم من المسجلين — يُغلق التأكيد عصر الثلاثاء 10 نوفمبر.</p>
       <div class="tm" id="cfmTm"></div></div>
-    <div class="side"><a class="go" id="cfmGo" target="_blank" rel="noopener">✔ تأكيد الحضور</a><div class="cnt" id="cfmCnt" hidden></div></div>
+    <div class="side"><div class="cnt" id="cfmCnt"></div></div>
   </section>
   <div class="dupnote">ℹ️ جميع الأعداد والنسب في هذه الصفحة <b>معتمدة بعد استبعاد التسجيلات المكررة</b> — يُحتسب الشخص مرة واحدة إذا تكرر رقم جواله أو هويته أو بريده.</div>
   <nav class="jump" id="jump"></nav>
@@ -396,8 +392,8 @@ body.screen .nodup{color:#F6E3CF}
       subtitle:"الثلاثاء والأربعاء · 10 – 11 نوفمبر 2026 · قاعة الملك عبدالله",
       regEnd:"2026-11-08",start:"2026-11-10",end:"2026-11-11",
       closed:false,
-      // تأكيد الحضور: form = رابط نموذج قوقل للمسجلين، url = رابط سكربت جدول ردوده (counter-auto.gs) لعدّ المؤكِّدين، until = وقت الإغلاق
-      confirm:{form:"",url:"",until:"2026-11-10T15:30:00+03:00"},
+      // تأكيد الحضور (عرض الأرقام فقط): url = رابط سكربت جدول ردوده (counter-auto.gs) لعدّ المؤكِّدين، until = وقت الإغلاق
+      confirm:{url:"",until:"2026-11-10T15:30:00+03:00"},
       trackers:[
         {key:"participants",label:"المشاركون في الورشة",short:"المشاركون",target:300,url:"https://script.google.com/macros/s/AKfycbyLZZZnt-RmwHn0JYkrV9j5m-4Mcb3rIFNx6XKvzq8elGC8UfDmk1rATsQya2g0WPm23Q/exec"},
         {key:"volunteers",label:"المتطوعون المشاركون",short:"المتطوعون",target:100,url:"https://script.google.com/macros/s/AKfycbz1g5hzz5uuhtMFPJIyE3PQ_z1FblLhbB9ZgtXVj1AZwlm-ynPcyc_MAAht1hj5FvQc/exec"},
@@ -970,17 +966,15 @@ body.screen .nodup{color:#F6E3CF}
   const CF=EV.confirm;let cfN=null;
   function cfmPaint(){
     if(!CF||EV.closed){$("cfm").hidden=true;return;}
-    const box=$("cfm"),go=$("cfmGo"),left=new Date(CF.until)-Date.now(),done=left<=0;
+    const box=$("cfm"),left=new Date(CF.until)-Date.now(),done=left<=0;
     box.hidden=false;box.classList.toggle("done",done);
-    if(done){$("cfmTag").textContent="أُغلق";$("cfmH").textContent="انتهى تأكيد الحضور";$("cfmP").textContent="أُغلق تأكيد الحضور عصر الثلاثاء 10 نوفمبر — شكراً لكل من أكّد.";$("cfmTm").innerHTML="";
-      go.className="go off";go.removeAttribute("href");go.textContent="أُغلق التأكيد";}
+    if(done){$("cfmTag").textContent="أُغلق";$("cfmH").textContent="تأكيد الحضور — العدد النهائي";$("cfmP").textContent="أُغلق تأكيد الحضور عصر الثلاثاء 10 نوفمبر.";$("cfmTm").innerHTML="";}
     else{const s=Math.floor(left/1000),u=[[Math.floor(s/86400),"يوم"],[Math.floor(s%86400/3600),"ساعة"],[Math.floor(s%3600/60),"دقيقة"],[s%60,"ثانية"]];
-      $("cfmTm").innerHTML=u.map(([n,l])=>`<div><b>${String(n).padStart(2,"0")}</b><small>${l}</small></div>`).join("");
-      if(CF.form){go.className="go";go.href=CF.form;go.textContent="✔ أكّد حضورك الآن";}else{go.className="go off";go.removeAttribute("href");go.textContent="رابط التأكيد قريباً";}}
+      $("cfmTm").innerHTML=u.map(([n,l])=>`<div><b>${String(n).padStart(2,"0")}</b><small>${l}</small></div>`).join("");}
     const c=$("cfmCnt");
-    if(cfN==null){c.hidden=true;return;}
+    if(cfN==null){c.innerHTML=`<b>—</b>${CF.url?"جارٍ التحميل…":"بانتظار ربط النموذج"}`;return;}
     const ix=EV.trackers.findIndex(t=>t.key==="participants"),dP=typeof cur!=="undefined"?cur[ix]:null,base=dP&&!dP.error&&!dP.unlinked?dP.total:0,p=base?Math.min(100,Math.round(cfN*100/base)):0;
-    c.hidden=false;c.innerHTML=`<b>${fmt(cfN)}</b>أكّدوا حضورهم`+(base?` · <span dir="ltr">${p}%</span> من ${fmt(base)} مشارك<div class="pb"><span style="width:${p}%"></span></div>`:"");
+    c.innerHTML=`<b>${fmt(cfN)}</b>أكّدوا حضورهم`+(base?`<span class="pc"><span dir="ltr">${p}%</span> من ${fmt(base)} مشارك مسجّل</span><div class="pb"><span style="width:${p}%"></span></div>`:"");
   }
   function cfmFetch(){
     if(!CF)return;
