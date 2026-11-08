@@ -18011,13 +18011,14 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
     return { prefix: String(b.prefix || "MT").toUpperCase(), size: Math.max(1, +b.size || 15), split: b.split !== false, colors: cols.length ? cols : RS_COLORS, custom: !!cols.length };
   }
   // تسلسل البطاقات لكل فئة: المتدربون بالألوان ومنفصل للذكور والإناث، المتطوعون تسلسل واحد حتى 100 بلون واحد،
-  // مشرفو المتطوعين تسلسل مستقل (10)، الإداريون تسلسل موحد، الموارد البشرية والمدربون حضور فقط بلا رقم
+  // مشرفو المتطوعين تسلسل مستقل (10)، الإداريون والمدربون تسلسل موحد لكل منهم، الموارد البشرية حضور فقط بلا رقم
   var RS_SCHEMES = {
     volunteer: { gk: "v", label: "المتطوعون", prefix: "VL", max: 100, color: { n: "متطوع", c: "#4b7071" } },
     supervisor: { gk: "s", label: "مشرفو المتطوعين", prefix: "VS", max: 10, color: { n: "مشرف", c: "#263548" } },
-    admin: { gk: "d", label: "الإداريون", prefix: "AD", max: 50, color: { n: "إداري", c: "#8e4228" } }
+    admin: { gk: "d", label: "الإداريون", prefix: "AD", max: 50, color: { n: "إداري", c: "#8e4228" } },
+    trainer: { gk: "t", label: "المدربون", prefix: "TR", max: 50, color: { n: "مدرب", c: "#8a6440" } }
   };
-  var RS_NOCARD = { hr: 1, trainer: 1 };
+  var RS_NOCARD = { hr: 1 };
   function rsSchemeCfg(sc){ return { prefix: sc.prefix, size: 999, max: sc.max, split: false, colors: [sc.color], single: true, label: sc.label }; }
   function rsCfgByGk(g, gk){
     for(var t in RS_SCHEMES) if(RS_SCHEMES[t].gk === gk) return rsSchemeCfg(RS_SCHEMES[t]);
@@ -18403,7 +18404,7 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
       }).join("") + '</div>' +
       '<div class="rs-dk-seqs">' + Object.keys(RS_SCHEMES).map(function(t){ var sc = RS_SCHEMES[t], scf = rsSchemeCfg(sc), n = Object.keys(cards).filter(function(k){ return cards[k].g === sc.gk; }).length, nx = rsMakeCard(scf, sc.gk, rsNextK(cx, sc.gk));
         return '<div style="--gc:' + sc.color.c + '"><i style="background:' + sc.color.c + '"></i><b>' + sc.label + '</b><span><em>' + n + '/' + sc.max + '</em></span><span>التالي ' + rsChip(nx) + '</span>' + (canP ? '<button type="button" class="rs-mini" data-rs="pick-ptr" data-v="' + sc.gk + '">تعديل</button>' : '') + '</div>'; }).join("") +
-      '<div style="--gc:#8a9593"><i style="background:#8a9593"></i><b>الموارد البشرية والمدربون</b><span>حضور فقط بلا رقم</span></div></div>' +
+      '<div style="--gc:#8a9593"><i style="background:#8a9593"></i><b>الموارد البشرية</b><span>حضور فقط بلا رقم</span></div></div>' +
       (pk && !(pk.g === "m" || pk.g === "f" || pk.g === "a") ? rsPickerHTML(g, pk.g, pk) : '') + '</div>';
   }
   function rsDeskExport(){
