@@ -18460,6 +18460,11 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
       '<div class="rs-dk-tags">' + rsShowRoles(p) + (rsCardOf(p.id) ? " " + rsChip(rsCardOf(p.id)) : "") + '</div>' +
       '<dl><div><dt>الهوية</dt><dd dir="ltr">' + escapeHTML(p.nid || "—") + '</dd></div><div><dt>الجوال</dt><dd dir="ltr">' + escapeHTML(p.phone || "—") + '</dd></div><div><dt>الجنس</dt><dd>' + escapeHTML(p.gender || "—") + '</dd></div>' + (p.org ? '<div><dt>الجهة</dt><dd>' + escapeHTML(p.org) + '</dd></div>' : '') + '</dl></div></div>';
   }
+  // المتوقع حضورهم في الجلسة: كل النشطين في السجل (عدا الضيوف)، ويوم المتطوعين فقط لمن له صفة تنظيمية
+  function rsDeskExpected(g, sid){
+    var se = rsSessions(g).find(function(x){ return x.id === sid; }), vol = se && se.vol;
+    return rs.people.filter(function(p){ if(p.status === "inactive" || rsEffType(p) === "guest") return false; if(!vol) return true; var r = rsRoles(p).concat(p.type ? [p.type] : []); return ["volunteer", "supervisor", "admin"].some(function(x){ return r.indexOf(x) > -1; }); }).length;
+  }
   function rsDeskHTML(){
     var g = rsDeskProg(), canA = can("roster.attend");
     rsWatchAtt(g ? g.id : "");
@@ -18472,7 +18477,7 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
     var done = Object.keys(marks).filter(function(k){ return marks[k].s === "p" || marks[k].s === "l"; });
     var h = '<div class="rs-dk-bar"><div class="rs-dk-ev"><small>تسجيل حضور</small><b>' + escapeHTML(g.title) + '</b></div>' +
       (ss.length > 1 ? '<select data-rs-ch="desk-sess"><option value="">— الجلسة —</option>' + ss.map(function(s, i){ return '<option value="' + s.id + '"' + (s.id === sid ? " selected" : "") + '>' + escapeHTML(s.title || ("الجلسة " + (i + 1))) + ' — ' + rsDate(s.date) + (s.vol ? " (للمتطوعين)" : "") + '</option>'; }).join("") + '</select>' : '') +
-      '<button type="button" class="rs-dk-count" data-rs="att-list" title="عرض قائمة الحاضرين كاملة"><b>' + done.length + '</b><span>حضور مؤكد' + ((g.members || []).length ? ' من ' + (g.members || []).length : '') + '</span></button>' +
+      '<button type="button" class="rs-dk-count" data-rs="att-list" title="عرض قائمة الحاضرين كاملة"><b>' + done.length + '</b><span>حضور مؤكد من ' + rsDeskExpected(g, sid) + '</span></button>' +
       '<button type="button" class="rs-mini rs-mini--list' + (rsDesk.list ? " on" : "") + '" data-rs="att-list">' + (rsDesk.list ? "← رجوع للتسجيل" : "☰ قائمة الحاضرين") + '</button>' +
       '<span class="rs-net' + (navigator.onLine === false ? " off" : "") + '">' + (navigator.onLine === false ? "● لا يوجد اتصال — لن يُحفظ التسجيل" : "● متصل ومتزامن مع كل الأجهزة") + '</span>' +
             '<button type="button" class="rs-mini" data-rs="desk-kiosk">' + (document.body.classList.contains("rs-kiosk") ? "إنهاء ملء الشاشة" : "ملء الشاشة") + '</button><button type="button" class="rs-mini" data-rs="desk-change">تغيير الفعالية</button></div>';
@@ -18715,9 +18720,22 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
     rsGen.unsub = rsGenRef(d).onSnapshot(function(x){ rsGen.data = x.exists ? x.data() : {}; rsDirty(); }, function(e){ console.error(e); });
   }
   function rsGenRoles(){ return rsUniq(RS_GEN_BASE.concat((rs.meta && rs.meta.genRoles) || [])); }
+  // الكشف العام يضم حضور شاشة التسجيل لنفس اليوم (للعرض والتصدير) + من أُضيف من الكشف نفسه
+  function rsGenAll(d){
+    var out = {}, own = (rsGen.data && rsGen.data.entries) || {}, g = rsDeskProg();
+    if(g){
+      rsWatchAtt(g.id);
+      rsSessions(g).filter(function(x){ return x.date === d; }).forEach(function(se){
+        var mk = rs.att[se.id] || {};
+        Object.keys(mk).forEach(function(k){ var m = mk[k], p = rs.byId[k]; if(!p || !(m.s === "p" || m.s === "l") || out["d_" + k]) return; out["d_" + k] = { name: p.name, phone: p.phone || "", role: rsT(rsEffType(p)).l, t: m.t, by: m.by, desk: 1 }; });
+      });
+    }
+    Object.keys(own).forEach(function(k){ out[k] = own[k]; });
+    return out;
+  }
   function rsGenHTML(){
     var d = rsGen.date || rsToday(); rsGenWatch(d);
-    var f = rsGen.f, ents = (rsGen.data && rsGen.data.entries) || {}, ids = Object.keys(ents).sort(function(a, b){ return (ents[b].t || 0) - (ents[a].t || 0); });
+    var f = rsGen.f, ents = rsGenAll(d), ids = Object.keys(ents).sort(function(a, b){ return (ents[b].t || 0) - (ents[a].t || 0); });
     var cnt = {}; ids.forEach(function(k){ var r = ents[k].role || "—"; cnt[r] = (cnt[r] || 0) + 1; });
     var h = '<div class="rs-card rs-gen"><div class="rs-row rs-row--sb"><h3 style="margin:0">كشف حضور عام</h3><label class="rs-inl" style="margin:0">اليوم <input type="date" data-rs-ch="gen-date" value="' + d + '"/></label></div>' +
       '<div class="rs-gen-form"><input type="text" data-rs-in="gen" data-v="name" data-rs-keep="genname" id="rsGenName" placeholder="الاسم" value="' + escapeHTML(f.name) + '" autocomplete="off"/>' +
@@ -18728,14 +18746,14 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
       '<p class="rs-note">اكتب الاسم والجوال واختر الصفة ثم Enter — يُسجَّل حضوره لهذا اليوم مباشرة. «غير ذلك» يضيف صفة جديدة للقائمة.</p></div>';
     h += '<div class="rs-card"><div class="rs-row rs-row--sb"><b>' + ids.length + ' حاضر · ' + rsDate(d) + '</b>' + (ids.length && can("roster.export") ? '<button type="button" class="rs-mini" data-rs="gen-export">تصدير Excel</button>' : '') + '</div>' +
       (ids.length ? '<div class="rs-gen-cnt">' + Object.keys(cnt).map(function(r){ return '<span>' + escapeHTML(r) + ' <b>' + cnt[r] + '</b></span>'; }).join("") + '</div>' : '') +
-      (ids.length ? '<div class="rs-dk-recent rs-gen-list">' + ids.map(function(k){ var e = ents[k]; return '<div><span>' + escapeHTML(e.name) + '</span><i class="rs-tb">' + escapeHTML(e.role || "") + '</i><small dir="ltr">' + escapeHTML(e.phone || "") + '</small><small>' + rsTime(e.t) + '</small><button type="button" class="rs-mini rs-mini--del" data-rs="gen-del" data-v="' + k + '">حذف</button></div>'; }).join("") + '</div>' : '<p class="rs-note">لا يوجد حضور مسجّل في هذا اليوم بعد.</p>') + '</div>';
+      (ids.length ? '<div class="rs-dk-recent rs-gen-list">' + ids.map(function(k){ var e = ents[k]; return '<div><span>' + escapeHTML(e.name) + '</span><i class="rs-tb">' + escapeHTML(e.role || "") + '</i><small dir="ltr">' + escapeHTML(e.phone || "") + '</small><small>' + rsTime(e.t) + '</small>' + (e.desk ? '<small>من شاشة التسجيل</small>' : '<button type="button" class="rs-mini rs-mini--del" data-rs="gen-del" data-v="' + k + '">حذف</button>') + '</div>'; }).join("") + '</div>' : '<p class="rs-note">لا يوجد حضور مسجّل في هذا اليوم بعد.</p>') + '</div>';
     return h;
   }
   function rsGenAdd(){
     var f = rsGen.f, name = String(f.name || "").replace(/\s+/g, " ").trim(), phone = rsPhone(f.phone), role = f.role === "__other" ? String(f.other || "").trim() : f.role;
     if(!name){ showToast("اكتب الاسم"); var n0 = document.getElementById("rsGenName"); if(n0) n0.focus(); return; }
     if(!role){ showToast("اكتب الصفة"); return; }
-    var d = rsGen.date || rsToday(), ents = (rsGen.data && rsGen.data.entries) || {};
+    var d = rsGen.date || rsToday(), ents = rsGenAll(d);
     var dup = Object.keys(ents).find(function(k){ return phone && ents[k].phone === phone; });
     if(dup && !confirm(ents[dup].name + " مسجّل اليوم بنفس الجوال. إضافته مرة أخرى؟")) return;
     var id = rsId("g"), o = { programId: "__general", sessionId: d, entries: {} };
@@ -18755,7 +18773,7 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
     rsGenRef(d).update(new firebase.firestore.FieldPath("entries", id), firebase.firestore.FieldValue.delete()).catch(function(err){ console.error(err); showToast("⚠️ تعذّر الحذف"); });
   }
   function rsGenExport(){
-    var d = rsGen.date || rsToday(), ents = (rsGen.data && rsGen.data.entries) || {};
+    var d = rsGen.date || rsToday(), ents = rsGenAll(d);
     rsXlsx("كشف-حضور-عام-" + d, Object.keys(ents).sort(function(a, b){ return (ents[a].t || 0) - (ents[b].t || 0); }).map(function(k, i){ var e = ents[k]; return { "م": i + 1, "الاسم": e.name, "الجوال": e.phone || "", "الصفة": e.role || "", "الوقت": rsTime(e.t), "سجّله": e.by || "" }; }), "كشف الحضور");
   }
 
