@@ -17863,7 +17863,7 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
       var progs = rs.programs.filter(function(g){ return (g.members || []).indexOf(p.id) > -1; });
       var pcd = rsCardOf(p.id), dg = rsDeskProg();
       h += '<div class="rs-pcard"><div class="rs-pcard-qr">' + (rsQrSvg(p.regNo, 112) || '<span class="rs-note">QR…</span>') + '</div><div class="rs-pcard-in"><small>الرقم التسلسلي' + (dg ? ' — ' + escapeHTML(dg.title) : '') + '</small>' +
-        (pcd ? '<div class="rs-pserial">' + (rsCardImg(pcd) ? '<img class="rs-thumbcard" src="' + rsCardImg(pcd) + '" alt=""/>' : '') + rsChip(pcd) + ' <span>' + escapeHTML((pcd.g === "m" || pcd.g === "f" || pcd.g === "a") ? rsColorName(pcd) : rsGkLabel(pcd.g)) + '</span></div>' : '<b class="rs-pnone">' + (RS_NOCARD[rsEffType(p)] ? "حضور فقط بلا رقم" : "يُمنح عند تأكيد الحضور") + '</b>') +
+        (pcd ? '<div class="rs-pserial">' + (rsCardImg(pcd) ? '<img class="rs-thumbcard" loading="lazy" decoding="async" src="' + rsCardImg(pcd) + '" alt=""/>' : '') + rsChip(pcd) + ' <span>' + escapeHTML((pcd.g === "m" || pcd.g === "f" || pcd.g === "a") ? rsColorName(pcd) : rsGkLabel(pcd.g)) + '</span></div>' : '<b class="rs-pnone">' + (RS_NOCARD[rsEffType(p)] ? "حضور فقط بلا رقم" : "يُمنح عند تأكيد الحضور") + '</b>') +
         '<div class="rs-pcard-nm">' + escapeHTML(p.name) + '</div><div>' + rsShowRoles(p) + (p.status === "inactive" ? ' <i class="rs-tb">غير نشط</i>' : '') + '</div>' +
         ((p.oldRegNos || []).length ? '<small>أرقام سابقة مدموجة: <span dir="ltr">' + p.oldRegNos.map(escapeHTML).join("، ") + '</span></small>' : '') +
         '<div class="rs-row">' + (pcd && can("roster.attend") ? '<button type="button" class="rs-mini" data-rs="m-card-change" data-v="' + p.id + '">تغيير البطاقة</button>' : '') + (pcd ? '<button type="button" class="rs-mini" data-rs="m-copy">نسخ الرقم</button>' : '') + (rsPhoneOk(p.phone) ? '<a class="rs-mini rs-mini--wa" target="_blank" rel="noopener" href="' + rsWaLink(p) + '">إرسال الرقم واتساب</a>' : '') +
@@ -18048,7 +18048,7 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
     if(!m || m.code == null) return m && m.n ? '<i class="rs-code">' + m.n + '</i>' : '';
     var col = rsMarkCol(m), gl = m.g === "f" ? "F" : m.g === "m" ? "M" : "";
     var im = rsCardImg(m);
-    if(big && im) return '<div class="rs-realcard"><img src="' + im + '" alt="البطاقة ' + escapeHTML(m.code) + '"/><div><small>الرقم التسلسلي</small><b dir="ltr">' + escapeHTML(m.code) + '</b><span>سلّمه هذه البطاقة</span></div></div>';
+    if(big && im) return '<div class="rs-realcard"><img decoding="async" src="' + im + '" alt="البطاقة ' + escapeHTML(m.code) + '"/><div><small>الرقم التسلسلي</small><b dir="ltr">' + escapeHTML(m.code) + '</b><span>سلّمه هذه البطاقة</span></div></div>';
     if(big) return '<div class="rs-mtcard" style="background:' + col.c + ';color:' + rsInk(col.c) + '" dir="ltr">' + (gl ? '<span class="rs-gl rs-gl--' + m.g + '">' + gl + '</span>' : '') + '<span class="rs-mtcode"><small>الرقم التسلسلي</small>' + escapeHTML(m.code) + '</span></div>';
     return '<i class="rs-code" style="background:' + col.c + ';color:' + rsInk(col.c) + '" dir="ltr">' + (gl ? gl + " · " : "") + escapeHTML(m.code) + '</i>';
   }
@@ -18396,7 +18396,7 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
     var nk = rsNextK(rsCardsOf(), gk), nc = rsMakeCard(cfg, gk, nk);
     if(cfg.single && nk > cfg.max) warn += '<div class="rs-dk-alert">تجاوز العدد ' + cfg.max + ' في تسلسل ' + escapeHTML(cfg.label) + '</div>';
     var nim = rsCardImg(nc);
-    return warn + '<div class="rs-dk-cardline">' + (nim ? '<img class="rs-thumbcard" src="' + nim + '" alt=""/>' : '') + 'البطاقة التي ستُسلَّم: ' + rsChip(nc) + ' <b>' + escapeHTML(cfg.single ? cfg.label : rsColorName(nc)) + '</b> <button type="button" class="rs-mini" data-rs="pick-start">اختيار بطاقة أخرى</button></div>';
+    return warn + '<div class="rs-dk-cardline">' + (nim ? '<img class="rs-thumbcard" loading="lazy" decoding="async" src="' + nim + '" alt=""/>' : '') + 'البطاقة التي ستُسلَّم: ' + rsChip(nc) + ' <b>' + escapeHTML(cfg.single ? cfg.label : rsColorName(nc)) + '</b> <button type="button" class="rs-mini" data-rs="pick-start">اختيار بطاقة أخرى</button></div>';
   }
   // لوحة الألوان: البطاقات الممنوحة (أشخاص فريدون طوال الفعالية) والبطاقة التالية لكل جنس
   function rsDeskGroupsHTML(g, marks){
