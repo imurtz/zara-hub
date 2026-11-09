@@ -2621,6 +2621,12 @@
 #rosterRoot .rs-dk-recent small{color:var(--rs-soft);font-size:12px}
 #rosterRoot .rs-dk-recent>div .rs-mini{padding:4px 10px;font-size:12px}
 #rsModal .rs-volchk{display:inline-flex;align-items:center;gap:4px;font-size:12.5px;white-space:nowrap}
+#rosterRoot .rs-gen-form{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+#rosterRoot .rs-gen-form input,#rosterRoot .rs-gen-form select{flex:1 1 160px;min-width:0;font-size:16px;padding:12px 14px}
+#rosterRoot .rs-gen-form .btn-primary{flex:0 0 auto;padding:12px 22px}
+#rosterRoot .rs-gen-cnt{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}
+#rosterRoot .rs-gen-cnt span{background:#eef3f2;border-radius:99px;padding:4px 12px;font-size:13px}
+#rosterRoot .rs-gen-list{max-width:none;margin:0}
 #rosterRoot .rs-net{font-size:12px;font-weight:600;color:#2f6f5e;background:#e7f3ee;border-radius:99px;padding:5px 11px}
 #rosterRoot .rs-net.off{color:#fff;background:#b3453f}
 #rosterRoot .rs-dk-sidesel button{padding:6px 12px;font-size:12.5px}
@@ -17171,10 +17177,10 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
     if(soft && inRoot && !keep && /^(INPUT|TEXTAREA|SELECT)$/.test(ae.tagName)) return;
     var selS = 0, selE = 0;
     if(keep){ try{ selS = ae.selectionStart; selE = ae.selectionEnd; }catch(e){} }
-    var tabs = [["desk", "تسجيل الحضور", "roster.attend"], ["registry", "السجل", "roster.view"], ["import", "رفع ومطابقة", "roster.import"], ["programs", "البرامج والتحضير", "roster.view"], ["dupes", "فحص التكرار", "roster.edit"]].filter(function(t){ return can(t[2]); });
+    var tabs = [["desk", "تسجيل الحضور", "roster.attend"], ["general", "كشف حضور عام", "roster.attend"], ["registry", "السجل", "roster.view"], ["import", "رفع ومطابقة", "roster.import"], ["programs", "البرامج والتحضير", "roster.view"], ["dupes", "فحص التكرار", "roster.edit"]].filter(function(t){ return can(t[2]); });
     if(!tabs.some(function(t){ return t[0] === rsUI.tab; })) rsUI.tab = tabs[0][0];
     var dupN = can("roster.edit") ? rsDupClusters().length : 0;
-    var h = '<div class="rs-head"><div><h2>مطابقة البيانات</h2><p>سجل موحّد للمدربين والمتدربين والمتطوعين — رقم تسجيل لكل شخص، وتحضير بالرقم أو ببطاقة QR</p></div>' +
+    var h = '<div class="rs-head"><div><h2>مطابقة البيانات</h2><p>المتدربون والمتطوعون والمشرفون والإداريون والموارد البشرية — اكتب الجوال أو الهوية وEnter، فيتأكد الحضور وتظهر البطاقة</p></div>' +
       (can("roster.edit") ? '<button type="button" class="btn-primary" data-rs="new-person">＋ إضافة شخص</button>' : '') + '</div>' +
       '<div class="events-subnav rs-nav">' + tabs.map(function(t){ return '<button type="button" data-rs="tab" data-v="' + t[0] + '" class="' + (rsUI.tab === t[0] ? "active" : "") + '">' + t[1] + (t[0] === "dupes" && dupN ? ' <i class="rs-badge">' + dupN + '</i>' : '') + '</button>'; }).join("") + '</div>';
     if(rsUI.tab === "desk") h += rsDeskHTML();
@@ -17182,6 +17188,7 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
     else if(rsUI.tab === "import") h += rsImportHTML();
     else if(rsUI.tab === "programs") h += rsProgramsHTML();
     else if(rsUI.tab === "dupes") h += rsDupesHTML();
+    else if(rsUI.tab === "general") h += rsGenHTML();
     var y = window.scrollY;
     root.innerHTML = h;
     if(soft) window.scrollTo(0, y);
@@ -18580,6 +18587,9 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
         var pa = rs.byId[v];
         if(pa){ pa.roles = rsUniq(rsRoles(pa).concat(["trainee"])); rsPRef(v).update({ roles: firebase.firestore.FieldValue.arrayUnion("trainee"), updatedAt: Date.now(), updatedBy: rsBy() }).catch(function(e){ console.error(e); showToast("⚠️ تعذّر الحفظ"); }); showToast("✔ سُجّل متدرباً أيضاً — " + (rsDesk.res && rsDesk.res.kind === "done" ? "أدخل رقمه مرة أخرى لمنحه بطاقة المتدرب" : "أكّد حضوره لمنحه البطاقتين")); rsRender(); rsDeskFocus(); }
         return true;
+      case "gen-add": rsGenAdd(); return true;
+      case "gen-del": rsGenDel(v); return true;
+      case "gen-export": rsGenExport(); return true;
       case "recent-all": rsDesk.allRecent = !rsDesk.allRecent; rsRender(); return true;
       case "recent-edit": rsPersonOpen(v); return true;
       case "recent-del": rsDeskUndo(v); return true;
@@ -18590,6 +18600,63 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
       case "pick-apply": rsDeskApplyPick(); return true;
     }
     return false;
+  }
+
+  // ===== كشف حضور عام: تسجيل سريع جداً (اسم، جوال، صفة) لأي حضور خارج السجل — مستند لكل يوم =====
+  // rosterAttendance/general__YYYY-MM-DD: { programId: "__general", sessionId: التاريخ, entries: { id: {name, phone, role, t, by} } }
+  // الصفات المضافة عبر «غير ذلك» تُحفظ في hubMeta/roster.genRoles وتظهر للجميع
+  var RS_GEN_BASE = ["متدرب", "متطوع", "مشرف متطوعين", "إداري", "موارد بشرية", "ضيف"];
+  var rsGen = { date: "", data: null, unsub: null, f: { name: "", phone: "", role: "متدرب", other: "" }, busy: false };
+  function rsGenRef(d){ return db.collection("rosterAttendance").doc("general__" + d); }
+  function rsGenWatch(d){
+    if(rsGen.date === d && rsGen.unsub) return;
+    if(rsGen.unsub){ rsGen.unsub(); rsGen.unsub = null; }
+    rsGen.date = d; rsGen.data = null;
+    rsGen.unsub = rsGenRef(d).onSnapshot(function(x){ rsGen.data = x.exists ? x.data() : {}; rsDirty(); }, function(e){ console.error(e); });
+  }
+  function rsGenRoles(){ return rsUniq(RS_GEN_BASE.concat((rs.meta && rs.meta.genRoles) || [])); }
+  function rsGenHTML(){
+    var d = rsGen.date || rsToday(); rsGenWatch(d);
+    var f = rsGen.f, ents = (rsGen.data && rsGen.data.entries) || {}, ids = Object.keys(ents).sort(function(a, b){ return (ents[b].t || 0) - (ents[a].t || 0); });
+    var cnt = {}; ids.forEach(function(k){ var r = ents[k].role || "—"; cnt[r] = (cnt[r] || 0) + 1; });
+    var h = '<div class="rs-card rs-gen"><div class="rs-row rs-row--sb"><h3 style="margin:0">كشف حضور عام</h3><label class="rs-inl" style="margin:0">اليوم <input type="date" data-rs-ch="gen-date" value="' + d + '"/></label></div>' +
+      '<div class="rs-gen-form"><input type="text" data-rs-in="gen" data-v="name" data-rs-keep="genname" id="rsGenName" placeholder="الاسم" value="' + escapeHTML(f.name) + '" autocomplete="off"/>' +
+      '<input type="tel" dir="ltr" data-rs-in="gen" data-v="phone" data-rs-keep="genphone" placeholder="الجوال" value="' + escapeHTML(f.phone) + '" autocomplete="off"/>' +
+      '<select data-rs-ch="gen-role">' + rsGenRoles().map(function(r){ return '<option' + (f.role === r ? " selected" : "") + '>' + escapeHTML(r) + '</option>'; }).join("") + '<option value="__other"' + (f.role === "__other" ? " selected" : "") + '>غير ذلك…</option></select>' +
+      (f.role === "__other" ? '<input type="text" data-rs-in="gen" data-v="other" data-rs-keep="genother" placeholder="اكتب الصفة الجديدة" value="' + escapeHTML(f.other) + '"/>' : '') +
+      '<button type="button" class="btn-primary" data-rs="gen-add"' + (rsGen.busy ? " disabled" : "") + '>＋ إضافة</button></div>' +
+      '<p class="rs-note">اكتب الاسم والجوال واختر الصفة ثم Enter — يُسجَّل حضوره لهذا اليوم مباشرة. «غير ذلك» يضيف صفة جديدة للقائمة.</p></div>';
+    h += '<div class="rs-card"><div class="rs-row rs-row--sb"><b>' + ids.length + ' حاضر · ' + rsDate(d) + '</b>' + (ids.length && can("roster.export") ? '<button type="button" class="rs-mini" data-rs="gen-export">تصدير Excel</button>' : '') + '</div>' +
+      (ids.length ? '<div class="rs-gen-cnt">' + Object.keys(cnt).map(function(r){ return '<span>' + escapeHTML(r) + ' <b>' + cnt[r] + '</b></span>'; }).join("") + '</div>' : '') +
+      (ids.length ? '<div class="rs-dk-recent rs-gen-list">' + ids.map(function(k){ var e = ents[k]; return '<div><span>' + escapeHTML(e.name) + '</span><i class="rs-tb">' + escapeHTML(e.role || "") + '</i><small dir="ltr">' + escapeHTML(e.phone || "") + '</small><small>' + rsTime(e.t) + '</small><button type="button" class="rs-mini rs-mini--del" data-rs="gen-del" data-v="' + k + '">حذف</button></div>'; }).join("") + '</div>' : '<p class="rs-note">لا يوجد حضور مسجّل في هذا اليوم بعد.</p>') + '</div>';
+    return h;
+  }
+  function rsGenAdd(){
+    var f = rsGen.f, name = String(f.name || "").replace(/\s+/g, " ").trim(), phone = rsPhone(f.phone), role = f.role === "__other" ? String(f.other || "").trim() : f.role;
+    if(!name){ showToast("اكتب الاسم"); var n0 = document.getElementById("rsGenName"); if(n0) n0.focus(); return; }
+    if(!role){ showToast("اكتب الصفة"); return; }
+    var d = rsGen.date || rsToday(), ents = (rsGen.data && rsGen.data.entries) || {};
+    var dup = Object.keys(ents).find(function(k){ return phone && ents[k].phone === phone; });
+    if(dup && !confirm(ents[dup].name + " مسجّل اليوم بنفس الجوال. إضافته مرة أخرى؟")) return;
+    var id = rsId("g"), o = { programId: "__general", sessionId: d, entries: {} };
+    o.entries[id] = { name: name, phone: phone, role: role, t: Date.now(), by: rsBy() };
+    rsGen.busy = true;
+    rsRetry(function(){ return rsGenRef(d).set(o, { merge: true }); }).then(function(){
+      rsGen.busy = false;
+      if(f.role === "__other" && rsGenRoles().indexOf(role) === -1) db.collection("hubMeta").doc("roster").set({ genRoles: firebase.firestore.FieldValue.arrayUnion(role) }, { merge: true }).catch(function(e){ console.error(e); });
+      rsGen.f = { name: "", phone: "", role: f.role === "__other" ? role : f.role, other: "" };
+      showToast("✔ " + name + " — " + role); rsBeep(true); rsRender();
+      setTimeout(function(){ var n = document.getElementById("rsGenName"); if(n) n.focus(); }, 30);
+    }).catch(function(e){ rsGen.busy = false; console.error(e); showToast("⚠️ لم يُحفظ — تحقق من الاتصال"); rsRender(); });
+  }
+  function rsGenDel(id){
+    var d = rsGen.date || rsToday(), e = ((rsGen.data && rsGen.data.entries) || {})[id];
+    if(!e || !confirm("حذف " + e.name + " من كشف اليوم؟")) return;
+    rsGenRef(d).update(new firebase.firestore.FieldPath("entries", id), firebase.firestore.FieldValue.delete()).catch(function(err){ console.error(err); showToast("⚠️ تعذّر الحذف"); });
+  }
+  function rsGenExport(){
+    var d = rsGen.date || rsToday(), ents = (rsGen.data && rsGen.data.entries) || {};
+    rsXlsx("كشف-حضور-عام-" + d, Object.keys(ents).sort(function(a, b){ return (ents[a].t || 0) - (ents[b].t || 0); }).map(function(k, i){ var e = ents[k]; return { "م": i + 1, "الاسم": e.name, "الجوال": e.phone || "", "الصفة": e.role || "", "الوقت": rsTime(e.t), "سجّله": e.by || "" }; }), "كشف الحضور");
   }
 
   // ----- الأحداث -----
@@ -18706,6 +18773,7 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
     if(!k || !currentUser) return;
     var v = t.getAttribute("data-v");
     if(k === "deskq") rsDesk.q = t.value;
+    else if(k === "gen") rsGen.f[v] = t.value;
     else if(k === "df" && rsDesk.form) rsDesk.form[v] = t.value;
     else if(k === "q"){ rsUI.q = t.value; rsUI.limit = 150; rsRender(); }
     else if(k === "mq"){ rsUI.mq = t.value; rsRender(); }
@@ -18719,6 +18787,8 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
     var t = e.target, k = t.getAttribute && t.getAttribute("data-rs-ch");
     if(!k || !currentUser) return;
     var imp = rsUI.imp, v = t.getAttribute("data-v");
+    if(k === "gen-date"){ rsGen.date = t.value || rsToday(); rsRender(); return; }
+    if(k === "gen-role"){ rsGen.f.role = t.value; rsRender(); if(t.value === "__other") setTimeout(function(){ var o = document.querySelector('#rosterRoot [data-v="other"]'); if(o) o.focus(); }, 30); return; }
     if(k === "desk-prog"){ rsDeskSetProg(t.value); rsRender(); rsDeskFocus(); }
     else if(k === "desk-sess"){ rsDesk.sess = t.value; rsDesk.res = null; rsRender(); rsDeskFocus(); }
     else if(k === "desk-manual"){ rsDesk.manual = t.checked; rsDesk.pick = null; try{ localStorage.setItem("rsDeskManual", t.checked ? "1" : "0"); }catch(e3){} rsRender(); rsDeskFocus(); }
@@ -18749,6 +18819,7 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
       return;
     }
     if(dt && dt.getAttribute && dt.getAttribute("data-rs-in") === "df" && e.key === "Enter"){ e.preventDefault(); rsDeskRegister(); return; }
+    if(dt && dt.getAttribute && dt.getAttribute("data-rs-in") === "gen" && e.key === "Enter"){ e.preventDefault(); rsGenAdd(); return; }
     if(e.key !== "Enter" || !e.target || e.target.id !== "rsAq") return;
     e.preventDefault();
     var val = e.target.value; e.target.value = "";
