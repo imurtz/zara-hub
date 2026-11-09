@@ -18017,14 +18017,15 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
     return { prefix: String(b.prefix || "MT").toUpperCase(), size: Math.max(1, +b.size || 15), split: b.split !== false, colors: cols.length ? cols : RS_COLORS, custom: !!cols.length };
   }
   // تسلسل البطاقات لكل فئة: المتدربون بالألوان ومنفصل للذكور والإناث، المتطوعون تسلسل واحد حتى 100 بلون واحد،
-  // مشرفو المتطوعين تسلسل مستقل (10)، الإداريون والمدربون تسلسل موحد لكل منهم، الموارد البشرية حضور فقط بلا رقم
+  // مشرفو المتطوعين تسلسل مستقل (10)، الإداريون تسلسل موحد (30)، الموارد البشرية والمدربون بلا رقم
   var RS_SCHEMES = {
     volunteer: { gk: "v", label: "المتطوعون", prefix: "VL", max: 100, color: { n: "تنظيم", c: "#b88956" }, img: "vl" },
     supervisor: { gk: "s", label: "مشرفو المتطوعين", prefix: "VS", max: 10, color: { n: "إشراف", c: "#1b2226" }, img: "vs" },
-    admin: { gk: "d", label: "الإداريون", prefix: "AD", max: 30, color: { n: "إدارة", c: "#276b78" }, img: "ad" },
-    trainer: { gk: "t", label: "المدربون", prefix: "TR", max: 50, color: { n: "مدرب", c: "#5b6e8c" } }
+    admin: { gk: "d", label: "الإداريون", prefix: "AD", max: 30, color: { n: "إدارة", c: "#276b78" }, img: "ad" }
   };
-  var RS_NOCARD = { hr: 1 };
+  // بلا رقم تسلسلي: الموارد البشرية حضور فقط، والمدربون لكل منهم بطاقة شخصية مطبوعة باسمه وصورته
+  var RS_NOCARD = { hr: 1, trainer: 1 };
+  var RS_NOCARD_NOTE = { hr: "حضور فقط بلا رقم تسلسلي", trainer: "بطاقته الشخصية المطبوعة باسمه — لا رقم تسلسلي" };
   // صورة البطاقة المطبوعة نفسها (Login/cards/vl-57.jpg …) لمن لهم بطاقات مطبوعة مرقّمة
   function rsCardImg(m){
     if(!m || !m.k) return "";
@@ -18370,7 +18371,7 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
       var cur0 = rsCardOf(p.id); if(cur0) dm = cur0;
       h += '<div class="rs-dk-card rs-dk-card--ok' + (r.again ? " rs-dk-card--again" : "") + '"' + (dcol && dm.code ? ' style="border-color:color-mix(in srgb,' + dcol.c + ' 75%,#141c1b)"' : '') + '><div class="rs-dk-serial"><small>' + (r.again ? "حضوره مؤكد مسبقاً اليوم" + (dm.code ? " — بطاقته" : "") : !dm.code ? "تم تأكيد الحضور" : r.fresh ? "تم تأكيد الحضور — سلّمه البطاقة" : "تم تأكيد الحضور — بطاقته من يوم سابق (لا تُسلَّم بطاقة جديدة)") + '</small>' +
         (dm.code ? rsChip(dm, true) + '<span class="rs-dk-color">' + (dm.g === "f" || dm.g === "m" || dm.g === "a" ? 'البطاقة ' + rsColorName(dm) + ' · ' : '') + rsGkLabel(dm.g) + '</span>' +
-          (dm.round && (dm.g === "f" || dm.g === "m" || dm.g === "a") ? '<p class="rs-dk-alert">تجاوز العدد بطاقات الألوان المطبوعة (' + (rsBadgeCfg(rsDeskProg()).colors.length * rsBadgeCfg(rsDeskProg()).size) + ' لكل جنس) — عاد الترقيم لأول لون</p>' : '') : '<b>' + (RS_NOCARD[rsEffType(p)] ? "✓ حضور مؤكد — " + escapeHTML(rsT(p.type).l) : (dm.n || "")) + '</b>') + '</div>' + rsPersonInfoHTML(p) +
+          (dm.round && (dm.g === "f" || dm.g === "m" || dm.g === "a") ? '<p class="rs-dk-alert">تجاوز العدد بطاقات الألوان المطبوعة (' + (rsBadgeCfg(rsDeskProg()).colors.length * rsBadgeCfg(rsDeskProg()).size) + ' لكل جنس) — عاد الترقيم لأول لون</p>' : '') : '<b>' + (RS_NOCARD[rsEffType(p)] ? "✓ حضور مؤكد — " + escapeHTML(rsT(rsEffType(p)).l) + (rsEffType(p) === "trainer" ? "<br><small>سلّمه بطاقته الشخصية المطبوعة باسمه</small>" : "") : (dm.n || "")) + '</b>') + '</div>' + rsPersonInfoHTML(p) +
         (rsDesk.pick && rsDesk.pick.purpose === "change" && rsDesk.pick.pid === p.id ? rsPickerHTML(g, dm.g || rsPersonGk(g, p), rsDesk.pick) : (dm.code && can("roster.attend") ? '<div class="rs-dk-acts"><button type="button" class="rs-mini" data-rs="pick-change" data-v="' + p.id + '">تغيير البطاقة (أُعطي بطاقة أخرى / ضاعت)</button></div>' : '')) +
         '<p class="rs-dk-tip">أدخل رقم الشخص التالي مباشرة</p></div>';
     } else {
@@ -18387,7 +18388,7 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
   // ملخص المجموعات اللونية: كم امتلأ من كل لون للذكور والإناث
   function rsFoundCardHTML(g, p, already){
     var card = rsCardOf(p.id), gk = rsPersonGk(g, p), cfg = rsCfgByGk(g, gk);
-    if(gk === "none") return already ? '' : '<div class="rs-dk-cardline">' + escapeHTML(rsT(rsEffType(p)).l) + ' — <b>حضور فقط بلا رقم تسلسلي</b></div>';
+    if(gk === "none") return already ? '' : '<div class="rs-dk-cardline">' + escapeHTML(rsT(rsEffType(p)).l) + ' — <b>' + RS_NOCARD_NOTE[rsEffType(p)] + '</b></div>';
     var side = rsDeskSide(), other = side && (gk === "m" || gk === "f") && gk !== side;
     var warn = other && !card ? '<div class="rs-dk-alert rs-dk-side">⚠️ ' + (gk === "f" ? "مشاركة (أنثى)" : "مشارك (ذكر)") + ' على جهاز ' + (side === "f" ? "الإناث" : "الذكور") + ' — سلّمها بطاقة من كومة <b>' + (gk === "f" ? "الإناث F" : "الذكور M") + '</b></div>' : '';
     if(card) return already ? '' : '<div class="rs-dk-cardline">بطاقته من يوم سابق: ' + rsChip(card) + ' <b>' + escapeHTML(rsColorName(card)) + '</b> <span>— لا تُسلَّم بطاقة جديدة</span></div>';
@@ -18419,7 +18420,7 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
       }).join("") + '</div>' +
       '<div class="rs-dk-seqs">' + Object.keys(RS_SCHEMES).map(function(t){ var sc = RS_SCHEMES[t], scf = rsSchemeCfg(sc), n = Object.keys(cards).filter(function(k){ return cards[k].g === sc.gk; }).length, nx = rsMakeCard(scf, sc.gk, rsNextK(cx, sc.gk));
         return '<div style="--gc:' + sc.color.c + '"><i style="background:' + sc.color.c + '"></i><b>' + sc.label + '</b><span><em>' + n + '/' + sc.max + '</em></span><span>التالي ' + rsChip(nx) + '</span>' + (canP ? '<button type="button" class="rs-mini" data-rs="pick-ptr" data-v="' + sc.gk + '">تعديل</button>' : '') + '</div>'; }).join("") +
-      '<div style="--gc:#8a9593"><i style="background:#8a9593"></i><b>الموارد البشرية</b><span>حضور فقط بلا رقم</span></div></div>' +
+      '<div style="--gc:#8a9593"><i style="background:#8a9593"></i><b>الموارد البشرية</b><span>حضور فقط بلا رقم</span></div><div style="--gc:#8a9593"><i style="background:#8a9593"></i><b>المدربون</b><span>بطاقة شخصية باسمه</span></div></div>' +
       (pk && !(pk.g === "m" || pk.g === "f" || pk.g === "a") ? rsPickerHTML(g, pk.g, pk) : '') + '</div>';
   }
   function rsDeskExport(){
