@@ -2422,6 +2422,7 @@
 #rosterRoot .rs-tb,#rsModal .rs-tb{display:inline-block;font-style:normal;font-size:11px;font-weight:700;border-radius:99px;padding:2px 9px;background:#eef3f2;color:#324c4b;white-space:nowrap}
 #rosterRoot .rs-tb--trainer,#rsModal .rs-tb--trainer{background:#f8f1ea;color:#8a6343}
 #rosterRoot .rs-tb--volunteer,#rsModal .rs-tb--volunteer{background:#e8f1ee;color:#3d6b5f}
+#rosterRoot .rs-warntxt{font-size:11.5px;font-weight:600;color:#a8672f;background:#fbeee0;border-radius:99px;padding:2px 9px;white-space:nowrap}
 #rosterRoot .rs-warn{display:inline-grid;place-items:center;width:20px;height:20px;border-radius:50%;background:#fbeee0;color:#a8672f;font-style:normal;font-weight:700;font-size:12px}
 #rosterRoot .rs-more{text-align:center;margin:8px 0 16px}
 #rosterRoot .rs-card{background:#fff;border:1px solid var(--rs-line);border-radius:18px;padding:16px 18px;margin-bottom:12px}
@@ -17207,6 +17208,28 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
       return (order[A.pre] || 0) - (order[B.pre] || 0) || A.n - B.n;
     });
   }
+  // تخمين الجنس من الاسم الأول لمن لا جنس له: أسماء نسائية معروفة، أو الاسم المنتهي بتاء مربوطة (عدا أسماء رجال معروفة)؛
+  // وإلا ذكر. تُعرض القائمة على المستخدم قبل الحفظ
+  var RS_FEM = "فاطمه زينب مريم زهراء نور روان ابتهال ماوي مأوى رقيه سكينه معصومه بتول امنه هدي ليلي ساره نوره حوراء كوثر جمانه مني هند دعاء اسراء الاء ايمان امل خديجه عايشه رباب سلمي سميه شيماء غدير فرح لينا ريم رهف رغد شهد لمي جود ولاء وفاء هاجر هبه يسرا ياسمين نرجس بشري صفيه زكيه حنان حليمه خلود عبير عفاف غاده فايزه لطيفه مها ملاك ناديه نجلاء نسرين نهي هاله هيا وجدان رانيا رشا زينه سهي سوسن عهود اسيل اثير الهام انوار بدور تسنيم جنان حلا دانه ديما رنا رحاب ريحانه سجي سلوي شذي صبا ضحي عذراء فدك فجر كريمه لجين لميس مروه ميساء نداء نسيبه هديل وعد ايات زهره ام بنت منيره سعاد نجاه حياه ايناس انعام".split(" ").map(rsNorm);
+  var RS_MASC_H = "حمزه طلحه اسامه عبيده حذيفه معاويه عطيه عقبه جبله".split(" ").map(rsNorm);
+  function rsGuessGender(name){
+    var t = rsTok(rsNorm(name)), f = t[0] || "";
+    if(!f) return "";
+    if(/^عبد/.test(f) || /اله$/.test(f)) return "ذكر";
+    if(RS_FEM.indexOf(f) > -1) return "أنثى";
+    if(/ه$/.test(f) && RS_MASC_H.indexOf(f) < 0 && f.length > 2) return "أنثى";
+    return "ذكر";
+  }
+  function rsGenderGuesses(){ return rs.people.filter(function(p){ return !p.gender && p.name; }).map(function(p){ return { p: p, g: rsGuessGender(p.name) }; }).filter(function(x){ return x.g; }); }
+  function rsGenderApply(){
+    var L = rsGenderGuesses();
+    if(!L.length || !can("roster.edit")) return;
+    var fem = L.filter(function(x){ return x.g === "أنثى"; }), mal = L.length - fem.length;
+    if(!confirm("تحديد الجنس من الاسم لـ " + L.length + " شخص بلا جنس:\n\nإناث (" + fem.length + "): " + fem.map(function(x){ return x.p.name; }).join("، ") + "\n\nذكور: " + mal + "\n\nراجع الإناث أعلاه — أي خطأ تصححه لاحقاً من «تعديل». حفظ؟")) return;
+    var now = Date.now(), by = rsBy();
+    rsCommitOps(L.map(function(x){ return { ref: rsPRef(x.p.id), kind: "update", data: { gender: x.g, updatedAt: now, updatedBy: by } }; }))
+      .then(function(){ showToast("✔ حُدد الجنس لـ " + L.length + " شخص"); }).catch(function(e){ console.error(e); showToast("⚠️ تعذّر الحفظ"); });
+  }
   function rsRegistryHTML(){
     var ps = rs.people, cnt = {};
     RS_TYPES.forEach(function(t){ cnt[t.k] = 0; });
@@ -17221,16 +17244,17 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
     h += '<div class="rs-tools"><input type="search" data-rs-in="q" data-rs-keep="q" placeholder="ابحث بالاسم أو رقم التسجيل أو الجوال أو الهوية" value="' + escapeHTML(rsUI.q) + '"/>' +
       '<div class="rs-chips"><button type="button" data-rs="type" data-v="" class="' + (!rsUI.type ? "on" : "") + '">الكل</button>' + rsTypesUI().map(function(t){ return '<button type="button" data-rs="type" data-v="' + t.k + '" class="' + (rsUI.type === t.k ? "on" : "") + '">' + t.pl + '</button>'; }).join("") + '</div>' +
       '<select data-rs-ch="flt"><option value="">كل الحالات</option>' + [["incomplete", "بيانات ناقصة"], ["badphone", "جوال غير صحيح"], ["badnid", "هوية غير صحيحة"], ["inactive", "غير نشط"]].map(function(o){ return '<option value="' + o[0] + '"' + (rsUI.flt === o[0] ? " selected" : "") + '>' + o[1] + '</option>'; }).join("") + '</select></div>';
-    h += '<div class="rs-bar"><span>' + rows.length + ' نتيجة</span>' + (can("roster.export") ? '<button type="button" class="btn-secondary" data-rs="export-reg">تصدير Excel</button><button type="button" class="btn-secondary" data-rs="cards-reg">طباعة بطاقات QR</button>' : '') + '</div>';
+    var ng = can("roster.edit") ? rsGenderGuesses().length : 0;
+    h += '<div class="rs-bar"><span>' + rows.length + ' نتيجة</span>' + (ng ? '<button type="button" class="btn-secondary" data-rs="gender-guess">تحديد الجنس من الاسم (' + ng + ')</button>' : '') + (can("roster.export") ? '<button type="button" class="btn-secondary" data-rs="export-reg">تصدير Excel</button><button type="button" class="btn-secondary" data-rs="cards-reg">طباعة بطاقات QR</button>' : '') + '</div>';
     if(!rows.length) return h + '<p class="report-empty">لا نتائج مطابقة</p>';
     h += '<div class="rs-tablewrap"><table class="rs-table"><thead><tr><th>الرقم التسلسلي</th><th>الاسم</th><th>الفئة</th><th>الجوال</th><th>الهوية</th><th>الجنس</th><th></th></tr></thead><tbody>' +
       rows.slice(0, rsUI.limit).map(function(p){
         var warn = [];
         if(!p.phone) warn.push("بلا جوال"); else if(!rsPhoneOk(p.phone)) warn.push("جوال غير صحيح");
-        if(!p.nid) warn.push("بلا هوية"); else if(!rsNidOk(p.nid)) warn.push("هوية غير صحيحة");
+        if(!p.nid){ if(!RS_NOCARD[rsEffType(p)]) warn.push("بلا هوية"); } else if(!rsNidOk(p.nid)) warn.push("هوية غير صحيحة");
         return '<tr data-rs="open" data-v="' + p.id + '" class="' + (p.status === "inactive" ? "rs-off" : "") + '"><td>' + (rsCardOf(p.id) ? rsChip(rsCardOf(p.id)) : '<span class="rs-note">—</span>') + '</td><td><b>' + escapeHTML(p.name) + '</b>' + (p.org ? '<small>' + escapeHTML(p.org) + '</small>' : '') + '</td>' +
           '<td>' + rsShowRoles(p) + '</td><td dir="ltr">' + escapeHTML(p.phone || "—") + '</td><td dir="ltr">' + (p.nid ? rsMaskNid(p.nid) : "—") + '</td><td>' + escapeHTML(p.gender || "—") + '</td>' +
-          '<td>' + (warn.length ? '<i class="rs-warn" title="' + escapeHTML(warn.join("، ")) + '">!</i>' : '') + '</td></tr>';
+          '<td>' + (warn.length ? '<span class="rs-warntxt">' + escapeHTML(warn.join("، ")) + '</span>' : '') + '</td></tr>';
       }).join("") + '</tbody></table></div>';
     if(rows.length > rsUI.limit) h += '<div class="rs-more"><button type="button" class="btn-secondary" data-rs="more">عرض المزيد (' + (rows.length - rsUI.limit) + ')</button></div>';
     return h;
@@ -18539,6 +18563,7 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
       case "export-reg": if(can("roster.export")) rsXlsx("سجل-المشاركين", rsFiltered().map(rsPersonRow), "السجل"); break;
       case "cards-reg": if(can("roster.export")) rsCards(rsFiltered().map(function(p){ return p.id; }), "بطاقات التسجيل"); break;
       case "imp-type": rsUI.impType = v; rsRender(); break;
+      case "gender-guess": rsGenderApply(); break;
       case "imp-cat": if(imp){ imp.type = v; if(v !== "col") rsUI.impType = v; rsRender(); } break;
       case "imp-tpl":
         if(typeof window.XLSX === "undefined"){ showToast("مكتبة Excel غير متوفرة الآن"); break; }
