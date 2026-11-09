@@ -17696,7 +17696,10 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
   function rsRecordHTML(g, ms){
     var ss = rsSessions(g), held = rsHeld(g), th = g.threshold || 75;
     if(!ms.length) return '<p class="report-empty">لا يوجد مشاركون بعد</p>';
-    var trainees = ms.filter(function(p){ return p.type !== "trainer"; });
+    // الموارد البشرية (المدربون) ليسوا ضمن المتدربين: لا نسبة شهادة لهم، ويُعرضون آخر الجدول
+    var staff = function(p){ return !!RS_NOCARD[rsEffType(p)]; };
+    ms = ms.filter(function(p){ return !staff(p); }).concat(ms.filter(staff));
+    var trainees = ms.filter(function(p){ return !staff(p); });
     var elig = trainees.filter(function(p){ var r = rsRate(g, p.id, held); return r && r.pct >= th; });
     var avg = trainees.length && held.length ? Math.round(trainees.reduce(function(s, p){ var r = rsRate(g, p.id, held); return s + (r ? r.pct : 0); }, 0) / trainees.length) : 0;
     var h = '<div class="rs-kpis">' + rsKpi(held.length + " / " + ss.length, "جلسات منعقدة") + rsKpi(avg + "%", "متوسط نسبة الحضور") + rsKpi(elig.length, "مؤهل للشهادة (≥ " + th + "%)") + rsKpi(trainees.length - elig.length, "دون النسبة", "tan") + '</div>';
@@ -17704,9 +17707,9 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
     h += '<div class="rs-tablewrap"><table class="rs-table rs-matrix"><thead><tr><th>الرقم</th><th>الاسم</th>' + ss.map(function(s, i){ return '<th title="' + escapeHTML(s.title || "") + '">' + (i + 1) + '<small>' + rsDate(s.date) + '</small></th>'; }).join("") + '<th>النسبة</th><th>الشهادة</th></tr></thead><tbody>' +
       ms.map(function(p){
         var r = rsRate(g, p.id, held), ok = r && r.pct >= th;
-        return '<tr><td class="rs-reg" dir="ltr">' + escapeHTML(p.regNo) + '</td><td><b>' + escapeHTML(p.name) + '</b> ' + (p.type !== "trainee" ? rsTypeBadge(p.type) : '') + '</td>' +
+        return '<tr><td>' + (rsCardOf(p.id) ? rsChip(rsCardOf(p.id)) : '<span class="rs-note">—</span>') + '</td><td><b>' + escapeHTML(p.name) + '</b> ' + (rsEffType(p) !== "trainee" ? rsTypeBadge(rsEffType(p)) : '') + '</td>' +
           ss.map(function(s){ var m = (rs.att[s.id] || {})[p.id], k = m && rsMk(m.s); return '<td class="c m-' + (m ? m.s : "") + '">' + (k ? k.s : "·") + '</td>'; }).join("") +
-          '<td class="c"><b>' + (r ? r.pct + "%" : "—") + '</b></td><td class="c">' + (p.type === "trainer" ? "—" : r ? (ok ? '<i class="rs-st rs-st--new">مؤهل</i>' : '<i class="rs-st rs-st--dup">دون النسبة</i>') : "—") + '</td></tr>';
+          '<td class="c"><b>' + (r ? r.pct + "%" : "—") + '</b></td><td class="c">' + (staff(p) ? "—" : r ? (ok ? '<i class="rs-st rs-st--new">مؤهل</i>' : '<i class="rs-st rs-st--dup">دون النسبة</i>') : "—") + '</td></tr>';
       }).join("") + '</tbody></table></div>';
     h += '<p class="rs-note">لتوليد الشهادات: صدّر قائمة المؤهلين ثم ارفعها في قسم «إصدار» على نموذج الشهادة.</p>';
     return h;
@@ -18612,12 +18615,12 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
         if(g){ var held = rsHeld(g), ss = rsSessions(g); rsXlsx("حضور-" + g.title.slice(0, 40), rsMembers(g).map(function(p){
           var row = { "رقم التسجيل": p.regNo, "الاسم": p.name, "الفئة": rsT(p.type).l, "الجوال": p.phone || "" };
           ss.forEach(function(s, i){ var m2 = (rs.att[s.id] || {})[p.id], k = m2 && rsMk(m2.s); row[(i + 1) + " — " + (s.date || "")] = k ? k.l : ""; });
-          var r = rsRate(g, p.id, held); row["نسبة الحضور"] = r ? r.pct + "%" : ""; row["مؤهل للشهادة"] = p.type === "trainer" ? "" : r && r.pct >= (g.threshold || 75) ? "نعم" : "لا";
+          var r = rsRate(g, p.id, held); row["نسبة الحضور"] = r ? r.pct + "%" : ""; row["مؤهل للشهادة"] = RS_NOCARD[rsEffType(p)] ? "" : r && r.pct >= (g.threshold || 75) ? "نعم" : "لا";
           return row;
         }), "سجل الحضور"); }
         break;
       case "rec-cert":
-        if(g){ var held2 = rsHeld(g); rsXlsx("المؤهلون-" + g.title.slice(0, 40), rsMembers(g).filter(function(p){ var r = rsRate(g, p.id, held2); return p.type !== "trainer" && r && r.pct >= (g.threshold || 75); }).map(function(p){
+        if(g){ var held2 = rsHeld(g); rsXlsx("المؤهلون-" + g.title.slice(0, 40), rsMembers(g).filter(function(p){ var r = rsRate(g, p.id, held2); return !RS_NOCARD[rsEffType(p)] && r && r.pct >= (g.threshold || 75); }).map(function(p){
           var r = rsRate(g, p.id, held2); return { "الاسم": p.name, "رقم التسجيل": p.regNo, "البرنامج": g.title, "من": g.start || "", "إلى": g.end || "", "نسبة الحضور": r.pct + "%", "الجنس": p.gender || "" };
         }), "المؤهلون"); }
         break;
