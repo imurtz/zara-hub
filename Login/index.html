@@ -2422,6 +2422,7 @@
 #rosterRoot .rs-tb,#rsModal .rs-tb{display:inline-block;font-style:normal;font-size:11px;font-weight:700;border-radius:99px;padding:2px 9px;background:#eef3f2;color:#324c4b;white-space:nowrap}
 #rosterRoot .rs-tb--trainer,#rsModal .rs-tb--trainer{background:#f8f1ea;color:#8a6343}
 #rosterRoot .rs-tb--volunteer,#rsModal .rs-tb--volunteer{background:#e8f1ee;color:#3d6b5f}
+#rosterRoot .rs-warntxt{font-size:11.5px;font-weight:600;color:#a8672f;background:#fbeee0;border-radius:99px;padding:2px 9px;white-space:nowrap}
 #rosterRoot .rs-warn{display:inline-grid;place-items:center;width:20px;height:20px;border-radius:50%;background:#fbeee0;color:#a8672f;font-style:normal;font-weight:700;font-size:12px}
 #rosterRoot .rs-more{text-align:center;margin:8px 0 16px}
 #rosterRoot .rs-card{background:#fff;border:1px solid var(--rs-line);border-radius:18px;padding:16px 18px;margin-bottom:12px}
@@ -2455,6 +2456,8 @@
 #rosterRoot .rs-paste textarea{width:100%;margin:8px 0;font-family:ui-monospace,monospace;font-size:12.5px;direction:ltr}
 #rosterRoot .rs-how{margin:0;padding-inline-start:18px;font-size:13px;line-height:1.9;color:var(--ink-2,#47534f)}
 #rosterRoot .rs-how code{background:var(--rs-bg);border-radius:6px;padding:1px 6px;font-size:12px}
+#rosterRoot .rs-impcat{display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:#f6eee5;border-radius:14px;padding:10px 14px;margin:10px 0 4px}
+#rosterRoot .rs-impcat b{font-size:13.5px;color:#8a6440}
 #rosterRoot .rs-map{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px;margin-top:10px}
 #rosterRoot .rs-map label{display:flex;flex-direction:column;gap:4px;font-size:12.5px;color:#4a5856}
 #rosterRoot .rs-map em{color:#b3453f;font-style:normal}
@@ -2601,6 +2604,7 @@
 #rosterRoot .rs-dk-card--again .rs-dk-serial small{color:#2c5f99}
 #rosterRoot .rs-dk-serial b{display:block;font-size:84px;line-height:1.05;font-weight:700;color:#22764a;font-variant-numeric:tabular-nums}
 #rosterRoot .rs-dk-card--again .rs-dk-serial b{color:#2c5f99}
+#rosterRoot .rs-dk-serial b.rs-dk-nc{font-size:26px;line-height:1.5}
 #rosterRoot .rs-dk-multi{display:flex;flex-direction:column;gap:8px;margin-top:10px}
 #rosterRoot .rs-dk-multi button{display:flex;align-items:center;gap:10px;font:inherit;text-align:start;border:1px solid var(--rs-line);background:#fff;border-radius:14px;padding:12px 14px;cursor:pointer}
 #rosterRoot .rs-dk-multi button b{flex:1;font-size:15px}
@@ -2609,23 +2613,40 @@
 #rosterRoot .rs-dk-form label,#rosterRoot .rs-dk-form .rs-dk-full{display:flex;flex-direction:column;gap:5px;font-size:12.5px;color:#4a5856}
 #rosterRoot .rs-dk-form .rs-dk-full{grid-column:1/-1}
 #rosterRoot .rs-dk-form input{font-size:16px !important}
-#rosterRoot .rs-dk-form{grid-template-columns:1fr 1fr}
-#rosterRoot .rs-dk-ferr{margin-top:10px;background:#fbeceb;color:#a3392f;border-radius:12px;padding:9px 12px;font-size:13.5px;font-weight:600}
-#rosterRoot .rs-dk-acts--g .rs-dk-big{min-width:220px;display:inline-flex;align-items:center;justify-content:center;gap:10px}
-#rosterRoot .rs-dk-acts--g b{width:30px;height:30px;border-radius:8px;background:#fff;display:inline-grid;place-items:center;font-size:18px}
-#rosterRoot .rs-dk-gm b{color:#2f55d4}
-#rosterRoot .rs-dk-gf b{color:#e0458f}
-#rosterRoot .rs-dk-gf{background:linear-gradient(140deg,#b0577f,#8a3a60) !important;box-shadow:0 8px 20px rgba(138,58,96,.25) !important}
-#rosterRoot .rs-flash-g{animation:rsFlashG .6s ease 2}
-@keyframes rsFlashG{50%{transform:scale(1.04)}}
 #rosterRoot .rs-dk-recent{max-width:720px;margin:18px auto 0;background:#fff;border:1px solid var(--rs-line);border-radius:18px;padding:12px 16px}
 #rosterRoot .rs-dk-recent>b{font-size:13px;display:block;margin-bottom:6px}
 #rosterRoot .rs-dk-recent>div{display:flex;align-items:center;gap:10px;padding:6px 0;border-top:1px solid rgba(20,28,27,.06);font-size:14px}
 #rosterRoot .rs-dk-recent i{font-style:normal;font-weight:700;color:#22764a;min-width:34px;font-variant-numeric:tabular-nums}
 #rosterRoot .rs-dk-recent span{flex:1}
 #rosterRoot .rs-dk-recent small{color:var(--rs-soft);font-size:12px}
+#rosterRoot .rs-dk-recent>div .rs-mini{padding:4px 10px;font-size:12px}
+#rsModal .rs-volchk{display:inline-flex;align-items:center;gap:4px;font-size:12.5px;white-space:nowrap}
+#rosterRoot .rs-gen-form{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+#rosterRoot .rs-gen-form input,#rosterRoot .rs-gen-form select{flex:1 1 160px;min-width:0;font-size:16px;padding:12px 14px}
+#rosterRoot .rs-gen-form .btn-primary{flex:0 0 auto;padding:12px 22px}
+#rosterRoot .rs-gen-cnt{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}
+#rosterRoot .rs-gen-cnt span{background:#eef3f2;border-radius:99px;padding:4px 12px;font-size:13px}
+#rosterRoot .rs-gen-list{max-width:none;margin:0}
+#rosterRoot .rs-net{font-size:12px;font-weight:600;color:#2f6f5e;background:#e7f3ee;border-radius:99px;padding:5px 11px}
+#rosterRoot .rs-net.off{color:#fff;background:#b3453f}
+#rosterRoot .rs-dk-sidesel button{padding:6px 12px;font-size:12.5px}
+#rosterRoot .rs-dk-side{background:#fdecdc;border-color:#e8b88a;color:#8a4f1a;font-size:15px}
+#rosterRoot .rs-dk-seqs{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:10px;margin-top:12px}
+#rosterRoot .rs-dk-seqs>div{display:flex;align-items:center;flex-wrap:wrap;gap:6px 8px;border:1.5px solid color-mix(in srgb,var(--gc) 70%,#fff);border-radius:14px;padding:8px 12px;font-size:12.5px}
+#rosterRoot .rs-dk-seqs>div>i{width:12px;height:12px;border-radius:50%}
+#rosterRoot .rs-dk-seqs em{font-style:normal;font-weight:700}
+#rsModal .rs-pserial{display:flex;align-items:center;gap:8px;margin:4px 0 2px;font-size:13px}
+#rsModal .rs-pserial .rs-code{font-size:17px;padding:4px 12px}
+#rsModal .rs-pnone{display:block;font-size:14px;color:#6b7775;margin:4px 0}
 #rosterRoot .rs-code,#rsModal .rs-code{display:inline-block;font-style:normal;font-family:"IBM Plex Mono",ui-monospace,monospace;font-weight:700;font-size:12.5px;border-radius:8px;padding:2px 8px;background:#324c4b;color:#fff;letter-spacing:.5px;white-space:nowrap;box-shadow:inset 0 0 0 1px rgba(20,28,27,.18)}
 #rosterRoot .rs-code--big{font-size:64px;line-height:1;border-radius:22px;padding:14px 30px;margin:8px auto 6px;display:inline-block;box-shadow:0 12px 30px rgba(20,28,27,.18)}
+#rosterRoot .rs-realcard{display:inline-flex;align-items:center;gap:22px;margin:8px auto;text-align:start}
+#rosterRoot .rs-realcard img{width:150px;height:auto;border-radius:12px;box-shadow:0 14px 30px rgba(20,28,27,.25)}
+#rosterRoot .rs-realcard small{display:block;font-size:12px;color:#6b7775}
+#rosterRoot .rs-realcard b{display:block;font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:44px;line-height:1.1;color:#141c1b}
+#rosterRoot .rs-realcard span{display:block;font-size:14px;font-weight:600;color:#2f6f5e;margin-top:4px}
+#rosterRoot .rs-thumbcard--lg{width:52px}
+#rosterRoot .rs-thumbcard,#rsModal .rs-thumbcard{width:34px;height:auto;border-radius:4px;vertical-align:middle;margin-inline-end:8px;box-shadow:0 2px 6px rgba(20,28,27,.2)}
 #rosterRoot .rs-mtcard{display:inline-flex;align-items:center;gap:16px;border-radius:20px;padding:14px 22px;margin:8px auto 8px;box-shadow:0 12px 30px rgba(20,28,27,.2),inset 0 0 0 1px rgba(20,28,27,.15)}
 #rosterRoot .rs-mtcard .rs-gl{width:58px;height:58px;border-radius:14px;background:#fff;display:grid;place-items:center;font:700 36px/1 "IBM Plex Sans",system-ui,sans-serif}
 #rosterRoot .rs-gl--m{color:#2f55d4}
@@ -16894,9 +16915,13 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
   // rosterImports (سجل عمليات الرفع)، وعدّاد الأرقام وقائمة «ليسوا مكررين» في hubMeta/roster
   // =====================================================================================
   var RS_TYPES = [
-    { k: "trainer", l: "مدرب", pl: "المدربون", acc: "المدربين", pre: "TR" },
+    // «مدرب» أُلغيت كفئة مستقلة: المدربون هم الموارد البشرية — تبقى للقيود القديمة وتُعرض «موارد بشرية»
+    { k: "trainer", l: "موارد بشرية", pl: "الموارد البشرية", acc: "الموارد البشرية", pre: "TR" },
     { k: "trainee", l: "متدرب", pl: "المتدربون", acc: "المتدربين", pre: "ST" },
-    { k: "volunteer", l: "متطوع", pl: "المتطوعون", acc: "المتطوعين", pre: "VL" }
+    { k: "volunteer", l: "متطوع", pl: "المتطوعون", acc: "المتطوعين", pre: "VL" },
+    { k: "supervisor", l: "مشرف متطوعين", pl: "مشرفو المتطوعين", acc: "مشرفي المتطوعين", pre: "VS" },
+    { k: "admin", l: "إداري", pl: "الإداريون", acc: "الإداريين", pre: "AD" },
+    { k: "hr", l: "موارد بشرية", pl: "الموارد البشرية", acc: "الموارد البشرية", pre: "HR" }
   ];
   var RS_MARKS = [
     { k: "p", l: "حاضر", s: "✓" },
@@ -16924,6 +16949,7 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
   var rsUI = { tab: "desk", q: "", type: "", flt: "", limit: 150, prog: "", ptab: "attend", sess: "", mode: "p", mq: "", addq: "", last: null, imp: null, impType: "trainee", logs: null, dupKeep: {}, m: null, busy: false };
 
   // ----- أدوات عامة -----
+  function rsTypesUI(){ return RS_TYPES.filter(function(t){ return t.k !== "trainer"; }); }
   function rsT(k){ for(var i = 0; i < RS_TYPES.length; i++) if(RS_TYPES[i].k === k) return RS_TYPES[i]; return RS_TYPES[1]; }
   function rsMk(k){ for(var i = 0; i < RS_MARKS.length; i++) if(RS_MARKS[i].k === k) return RS_MARKS[i]; return null; }
   function rsId(pre){ return pre + "-" + Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
@@ -16933,6 +16959,10 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
   function rsSeqOf(reg){ var m = /^([A-Z]+)-(\d+)$/.exec(String(reg || "")); return m ? { pre: m[1], n: +m[2] } : null; }
   function rsMaxSeq(type){ var pre = rsT(type).pre; return rs.people.reduce(function(m, p){ var s = rsSeqOf(p.regNo); return s && s.pre === pre ? Math.max(m, s.n) : m; }, 0); }
   function rsRoles(p){ return p.roles && p.roles.length ? p.roles : [p.type || "trainee"]; }
+  // الصفة الفعلية في الفعاليات: من له دور تنظيمي (موارد بشرية/إداري/مشرف/متطوع/مدرب) لا يُعامل متدرباً ولو كان قيده الأول متدرب
+  var RS_PRIO = ["hr", "admin", "supervisor", "volunteer", "trainer", "trainee"];
+  function rsEffType(p){ var r = rsRoles(p).concat(p.type ? [p.type] : []); for(var i = 0; i < RS_PRIO.length; i++) if(r.indexOf(RS_PRIO[i]) > -1) return RS_PRIO[i]; return p.type || "trainee"; }
+  function rsShowRoles(p){ var r = rsUniq(rsRoles(p)); if(r.indexOf("hr") > -1 || r.indexOf("trainer") > -1) r = r.filter(function(x){ return x !== "trainee" && x !== "trainer"; }).concat(r.indexOf("hr") > -1 ? [] : ["hr"]); return rsUniq(r).map(rsTypeBadge).join(" "); }
   function rsClean(o){ var r = {}; for(var k in o){ if(Object.prototype.hasOwnProperty.call(o, k) && o[k] !== undefined) r[k] = o[k]; } return r; }
   function rsUniq(a){ var s = {}, out = []; (a || []).forEach(function(x){ if(x && !s[x]){ s[x] = 1; out.push(x); } }); return out; }
   function rsDigits(s){
@@ -16970,8 +17000,11 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
   function rsTypeOf(s){
     var n = rsNorm(s);
     if(!n) return "";
+    if(n.indexOf("مشرف") > -1) return "supervisor";
+    if(n.indexOf("موارد") > -1 || /\bhr\b/.test(n)) return "hr";
+    if(n.indexOf("اداري") > -1 || /admin/.test(n)) return "admin";
     if(n.indexOf("متدرب") > -1 || n.indexOf("طالب") > -1 || n.indexOf("مستفيد") > -1 || /trainee|student/.test(n)) return "trainee";
-    if(n.indexOf("مدرب") > -1 || n.indexOf("محاضر") > -1 || n.indexOf("مقدم") > -1 || /trainer|coach|instructor/.test(n)) return "trainer";
+    if(n.indexOf("مدرب") > -1 || n.indexOf("محاضر") > -1 || n.indexOf("مقدم") > -1 || /trainer|coach|instructor/.test(n)) return "hr";
     if(n.indexOf("تطوع") > -1 || /volunt/.test(n)) return "volunteer";
     return "";
   }
@@ -16999,7 +17032,9 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
   function rsTypeBadge(k){ var t = rsT(k); return '<i class="rs-tb rs-tb--' + t.k + '">' + t.l + '</i>'; }
   function rsWaLink(p){
     var ph = rsPhoneOk(p.phone) ? "966" + p.phone.slice(1) : "";
-    var msg = "السلام عليكم " + p.name + "\nتم تسجيلك في جمعية العوامية الخيرية بصفة " + rsT(p.type).l + ".\nرقم تسجيلك: " + p.regNo + "\nاحتفظ به — يُطلب عند تسجيل حضورك.";
+    var cd = rsCardOf(p.id), g = rsDeskProg();
+    var msg = cd ? "السلام عليكم " + p.name + "\nتم تأكيد حضورك" + (g ? " في " + g.title : "") + ".\nرقمك التسلسلي: " + cd.code + ((cd.g === "m" || cd.g === "f") ? " (" + rsColorName(cd) + ")" : "") + "\nاحتفظ ببطاقتك طوال أيام الفعالية."
+      : "السلام عليكم " + p.name + "\nتم تسجيلك في جمعية العوامية الخيرية بصفة " + rsT(p.type).l + ".";
     return "https://wa.me/" + ph + "?text=" + encodeURIComponent(msg);
   }
   function rsBeep(ok){
@@ -17069,7 +17104,6 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
       rsDirty();
     }, fail);
     db.collection("hubMeta").doc("roster").onSnapshot(function(d){ rs.meta = d.exists ? d.data() : {}; rsDirty(); }, function(){});
-    rsLoadQr().catch(function(){});
   }
   function rsWatchAtt(pid){
     if(rs.attFor === pid) return;
@@ -17143,17 +17177,18 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
     if(soft && inRoot && !keep && /^(INPUT|TEXTAREA|SELECT)$/.test(ae.tagName)) return;
     var selS = 0, selE = 0;
     if(keep){ try{ selS = ae.selectionStart; selE = ae.selectionEnd; }catch(e){} }
-    var tabs = [["desk", "تسجيل الحضور", "roster.attend"], ["registry", "السجل", "roster.view"], ["import", "رفع ومطابقة", "roster.import"], ["programs", "البرامج والتحضير", "roster.view"], ["dupes", "فحص التكرار", "roster.edit"]].filter(function(t){ return can(t[2]); });
+    var tabs = [["desk", "تسجيل الحضور", "roster.attend"], ["general", "كشف حضور عام", "roster.attend"], ["registry", "السجل", "roster.view"], ["import", "رفع ومطابقة", "roster.import"], ["programs", "البرامج والتحضير", "roster.view"], ["dupes", "فحص التكرار", "roster.edit"]].filter(function(t){ return can(t[2]); });
     if(!tabs.some(function(t){ return t[0] === rsUI.tab; })) rsUI.tab = tabs[0][0];
     var dupN = can("roster.edit") ? rsDupClusters().length : 0;
-    var h = '<div class="rs-head"><div><h2>مطابقة البيانات</h2><p>سجل موحّد للمدربين والمتدربين والمتطوعين — رقم تسجيل لكل شخص، وتحضير بالرقم أو ببطاقة QR</p></div>' +
+    var h = '<div class="rs-head"><div><h2>مطابقة البيانات</h2><p>المتدربون والمتطوعون والمشرفون والإداريون والموارد البشرية — اكتب الجوال أو الهوية وEnter، فيتأكد الحضور وتظهر البطاقة</p></div>' +
       (can("roster.edit") ? '<button type="button" class="btn-primary" data-rs="new-person">＋ إضافة شخص</button>' : '') + '</div>' +
       '<div class="events-subnav rs-nav">' + tabs.map(function(t){ return '<button type="button" data-rs="tab" data-v="' + t[0] + '" class="' + (rsUI.tab === t[0] ? "active" : "") + '">' + t[1] + (t[0] === "dupes" && dupN ? ' <i class="rs-badge">' + dupN + '</i>' : '') + '</button>'; }).join("") + '</div>';
     if(rsUI.tab === "desk") h += rsDeskHTML();
-    else if(rsUI.tab === "registry") h += rsRegistryHTML();
+    else if(rsUI.tab === "registry"){ if(rsDeskProgId()) rsWatchAtt(rsDeskProgId()); h += rsRegistryHTML(); }
     else if(rsUI.tab === "import") h += rsImportHTML();
     else if(rsUI.tab === "programs") h += rsProgramsHTML();
     else if(rsUI.tab === "dupes") h += rsDupesHTML();
+    else if(rsUI.tab === "general") h += rsGenHTML();
     var y = window.scrollY;
     root.innerHTML = h;
     if(soft) window.scrollTo(0, y);
@@ -17182,30 +17217,53 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
       return (order[A.pre] || 0) - (order[B.pre] || 0) || A.n - B.n;
     });
   }
+  // تخمين الجنس من الاسم الأول لمن لا جنس له: أسماء نسائية معروفة، أو الاسم المنتهي بتاء مربوطة (عدا أسماء رجال معروفة)؛
+  // وإلا ذكر. تُعرض القائمة على المستخدم قبل الحفظ
+  var RS_FEM = "فاطمه زينب مريم زهراء نور روان ابتهال ماوي مأوى رقيه سكينه معصومه بتول امنه هدي ليلي ساره نوره حوراء كوثر جمانه مني هند دعاء اسراء الاء ايمان امل خديجه عايشه رباب سلمي سميه شيماء غدير فرح لينا ريم رهف رغد شهد لمي جود ولاء وفاء هاجر هبه يسرا ياسمين نرجس بشري صفيه زكيه حنان حليمه خلود عبير عفاف غاده فايزه لطيفه مها ملاك ناديه نجلاء نسرين نهي هاله هيا وجدان رانيا رشا زينه سهي سوسن عهود اسيل اثير الهام انوار بدور تسنيم جنان حلا دانه ديما رنا رحاب ريحانه سجي سلوي شذي صبا ضحي عذراء فدك فجر كريمه لجين لميس مروه ميساء نداء نسيبه هديل وعد ايات زهره ام بنت منيره سعاد نجاه حياه ايناس انعام".split(" ").map(rsNorm);
+  var RS_MASC_H = "حمزه طلحه اسامه عبيده حذيفه معاويه عطيه عقبه جبله".split(" ").map(rsNorm);
+  function rsGuessGender(name){
+    var t = rsTok(rsNorm(name)), f = t[0] || "";
+    if(!f) return "";
+    if(/^عبد/.test(f) || /اله$/.test(f)) return "ذكر";
+    if(RS_FEM.indexOf(f) > -1) return "أنثى";
+    if(/ه$/.test(f) && RS_MASC_H.indexOf(f) < 0 && f.length > 2) return "أنثى";
+    return "ذكر";
+  }
+  function rsGenderGuesses(){ return rs.people.filter(function(p){ return !p.gender && p.name; }).map(function(p){ return { p: p, g: rsGuessGender(p.name) }; }).filter(function(x){ return x.g; }); }
+  function rsGenderApply(){
+    var L = rsGenderGuesses();
+    if(!L.length || !can("roster.edit")) return;
+    var fem = L.filter(function(x){ return x.g === "أنثى"; }), mal = L.length - fem.length;
+    if(!confirm("تحديد الجنس من الاسم لـ " + L.length + " شخص بلا جنس:\n\nإناث (" + fem.length + "): " + fem.map(function(x){ return x.p.name; }).join("، ") + "\n\nذكور: " + mal + "\n\nراجع الإناث أعلاه — أي خطأ تصححه لاحقاً من «تعديل». حفظ؟")) return;
+    var now = Date.now(), by = rsBy();
+    rsCommitOps(L.map(function(x){ return { ref: rsPRef(x.p.id), kind: "update", data: { gender: x.g, updatedAt: now, updatedBy: by } }; }))
+      .then(function(){ showToast("✔ حُدد الجنس لـ " + L.length + " شخص"); }).catch(function(e){ console.error(e); showToast("⚠️ تعذّر الحفظ"); });
+  }
   function rsRegistryHTML(){
     var ps = rs.people, cnt = {};
     RS_TYPES.forEach(function(t){ cnt[t.k] = 0; });
     ps.forEach(function(p){ rsRoles(p).forEach(function(r){ if(cnt[r] != null) cnt[r]++; }); });
     var inc = ps.filter(function(p){ return !p.phone || !p.nid; }).length;
-    var h = '<div class="rs-kpis">' + rsKpi(ps.length, "إجمالي المسجلين") + RS_TYPES.map(function(t){ return rsKpi(cnt[t.k], t.pl); }).join("") + rsKpi(inc, "بيانات ناقصة (جوال/هوية)", "tan") + '</div>';
+    var h = '<div class="rs-kpis">' + rsKpi(ps.length, "إجمالي المسجلين") + rsTypesUI().map(function(t){ return rsKpi(cnt[t.k], t.pl); }).join("") + rsKpi(inc, "بيانات ناقصة (جوال/هوية)", "tan") + '</div>';
     if(!ps.length){
       return h + '<div class="rs-empty"><b>السجل فارغ</b><p>ابدأ برفع ملفات Excel للمدربين والمتدربين والمتطوعين من تبويب «رفع ومطابقة» — تتم مطابقتهم تلقائياً ويُصدر لكل شخص رقم تسجيل.</p>' +
         (can("roster.import") ? '<button type="button" class="btn-primary" data-rs="tab" data-v="import">رفع ملف الآن</button>' : '') + '</div>';
     }
     var rows = rsFiltered();
     h += '<div class="rs-tools"><input type="search" data-rs-in="q" data-rs-keep="q" placeholder="ابحث بالاسم أو رقم التسجيل أو الجوال أو الهوية" value="' + escapeHTML(rsUI.q) + '"/>' +
-      '<div class="rs-chips"><button type="button" data-rs="type" data-v="" class="' + (!rsUI.type ? "on" : "") + '">الكل</button>' + RS_TYPES.map(function(t){ return '<button type="button" data-rs="type" data-v="' + t.k + '" class="' + (rsUI.type === t.k ? "on" : "") + '">' + t.pl + '</button>'; }).join("") + '</div>' +
+      '<div class="rs-chips"><button type="button" data-rs="type" data-v="" class="' + (!rsUI.type ? "on" : "") + '">الكل</button>' + rsTypesUI().map(function(t){ return '<button type="button" data-rs="type" data-v="' + t.k + '" class="' + (rsUI.type === t.k ? "on" : "") + '">' + t.pl + '</button>'; }).join("") + '</div>' +
       '<select data-rs-ch="flt"><option value="">كل الحالات</option>' + [["incomplete", "بيانات ناقصة"], ["badphone", "جوال غير صحيح"], ["badnid", "هوية غير صحيحة"], ["inactive", "غير نشط"]].map(function(o){ return '<option value="' + o[0] + '"' + (rsUI.flt === o[0] ? " selected" : "") + '>' + o[1] + '</option>'; }).join("") + '</select></div>';
-    h += '<div class="rs-bar"><span>' + rows.length + ' نتيجة</span>' + (can("roster.export") ? '<button type="button" class="btn-secondary" data-rs="export-reg">تصدير Excel</button><button type="button" class="btn-secondary" data-rs="cards-reg">طباعة بطاقات QR</button>' : '') + '</div>';
+    var ng = can("roster.edit") ? rsGenderGuesses().length : 0;
+    h += '<div class="rs-bar"><span>' + rows.length + ' نتيجة</span>' + (ng ? '<button type="button" class="btn-secondary" data-rs="gender-guess">تحديد الجنس من الاسم (' + ng + ')</button>' : '') + (can("roster.export") ? '<button type="button" class="btn-secondary" data-rs="export-reg">تصدير Excel</button>' : '') + '</div>';
     if(!rows.length) return h + '<p class="report-empty">لا نتائج مطابقة</p>';
-    h += '<div class="rs-tablewrap"><table class="rs-table"><thead><tr><th>رقم التسجيل</th><th>الاسم</th><th>الفئة</th><th>الجوال</th><th>الهوية</th><th>الجنس</th><th></th></tr></thead><tbody>' +
+    h += '<div class="rs-tablewrap"><table class="rs-table"><thead><tr><th>الرقم التسلسلي</th><th>الاسم</th><th>الفئة</th><th>الجوال</th><th>الهوية</th><th>الجنس</th><th></th></tr></thead><tbody>' +
       rows.slice(0, rsUI.limit).map(function(p){
         var warn = [];
         if(!p.phone) warn.push("بلا جوال"); else if(!rsPhoneOk(p.phone)) warn.push("جوال غير صحيح");
-        if(!p.nid) warn.push("بلا هوية"); else if(!rsNidOk(p.nid)) warn.push("هوية غير صحيحة");
-        return '<tr data-rs="open" data-v="' + p.id + '" class="' + (p.status === "inactive" ? "rs-off" : "") + '"><td class="rs-reg" dir="ltr">' + escapeHTML(p.regNo || "") + '</td><td><b>' + escapeHTML(p.name) + '</b>' + (p.org ? '<small>' + escapeHTML(p.org) + '</small>' : '') + '</td>' +
-          '<td>' + rsRoles(p).map(rsTypeBadge).join(" ") + '</td><td dir="ltr">' + escapeHTML(p.phone || "—") + '</td><td dir="ltr">' + (p.nid ? rsMaskNid(p.nid) : "—") + '</td><td>' + escapeHTML(p.gender || "—") + '</td>' +
-          '<td>' + (warn.length ? '<i class="rs-warn" title="' + escapeHTML(warn.join("، ")) + '">!</i>' : '') + '</td></tr>';
+        if(!p.nid){ if(!RS_NOCARD[rsEffType(p)]) warn.push("بلا هوية"); } else if(!rsNidOk(p.nid)) warn.push("هوية غير صحيحة");
+        return '<tr data-rs="open" data-v="' + p.id + '" class="' + (p.status === "inactive" ? "rs-off" : "") + '"><td>' + (rsCardsFor(p.id).length ? rsCardsFor(p.id).map(function(c){ return rsChip(c); }).join(" ") : '<span class="rs-note">—</span>') + '</td><td><b>' + escapeHTML(p.name) + '</b>' + (p.org ? '<small>' + escapeHTML(p.org) + '</small>' : '') + '</td>' +
+          '<td>' + rsShowRoles(p) + '</td><td dir="ltr">' + escapeHTML(p.phone || "—") + '</td><td dir="ltr">' + (p.nid ? rsMaskNid(p.nid) : "—") + '</td><td>' + escapeHTML(p.gender || "—") + '</td>' +
+          '<td>' + (warn.length ? '<span class="rs-warntxt">' + escapeHTML(warn.join("، ")) + '</span>' : '') + '</td></tr>';
       }).join("") + '</tbody></table></div>';
     if(rows.length > rsUI.limit) h += '<div class="rs-more"><button type="button" class="btn-secondary" data-rs="more">عرض المزيد (' + (rows.length - rsUI.limit) + ')</button></div>';
     return h;
@@ -17395,7 +17453,7 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
   function rsImpUploadHTML(){
     var pg = rsUI.imp && rsUI.imp.prog ? rs.programs.find(function(g){ return g.id === rsUI.imp.prog; }) : null;
     var h = rsImpSteps(1) + '<div class="rs-card"><h3>صفة الأشخاص في هذا الملف</h3><div class="rs-chips rs-chips--lg">' +
-      RS_TYPES.map(function(t){ return '<button type="button" data-rs="imp-type" data-v="' + t.k + '" class="' + (rsUI.impType === t.k ? "on" : "") + '">' + t.pl + '</button>'; }).join("") +
+      rsTypesUI().map(function(t){ return '<button type="button" data-rs="imp-type" data-v="' + t.k + '" class="' + (rsUI.impType === t.k ? "on" : "") + '">' + t.pl + '</button>'; }).join("") +
       '<button type="button" data-rs="imp-type" data-v="col" class="' + (rsUI.impType === "col" ? "on" : "") + '">مختلطون — حسب عمود «الفئة»</button></div>' +
       (pg ? '<p class="rs-note">سيُلحق المستوردون ببرنامج «' + escapeHTML(pg.title) + '» تلقائياً.</p>' : '') +
       '<button type="button" class="rs-drop" data-rs="imp-pick"><b>اختر ملف Excel أو CSV</b><span>أو اسحبه وأفلته هنا — يُكتشف صف العناوين والأعمدة تلقائياً</span></button>' +
@@ -17405,7 +17463,7 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
       '<li><b>توحيد البيانات:</b> الأرقام العربية تتحول، والجوال يوحَّد بصيغة 05xxxxxxxx، والاسم يُطابَق دون اعتبار للهمزات والتشكيل.</li>' +
       '<li><b>المطابقة مع السجل:</b> بالهوية أولاً، ثم الجوال، ثم الاسم الكامل — فلا يتكرر شخص مسجل سابقاً، ويُكمَل الناقص من بياناته.</li>' +
       '<li><b>المشتبه به:</b> الأسماء المتقاربة أو نفس الجوال باسم مختلف تُعرض لقرارك قبل الاعتماد.</li>' +
-      '<li><b>أرقام التسجيل:</b> تُصدر للجدد فقط بتسلسل ثابت لكل فئة: ' + RS_TYPES.map(function(t){ return t.l + ' <code dir="ltr">' + t.pre + '-0001</code>'; }).join("، ") + '.</li></ul></div>';
+      '<li><b>أرقام التسجيل:</b> تُصدر للجدد فقط بتسلسل ثابت لكل فئة: ' + rsTypesUI().map(function(t){ return t.l + ' <code dir="ltr">' + t.pre + '-0001</code>'; }).join("، ") + '.</li></ul></div>';
     h += rsImpLogHTML();
     return h;
   }
@@ -17426,9 +17484,11 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
     };
     var h = rsImpSteps(2) + '<div class="rs-card"><div class="rs-row rs-row--sb"><h3>' + escapeHTML(imp.file) + ' — ' + imp.rows.length + ' صف</h3>' +
       (imp.wb && imp.wb.SheetNames.length > 1 ? '<label class="rs-inl">الورقة <select data-rs-ch="imp-sheet">' + imp.wb.SheetNames.map(function(s){ return '<option' + (s === imp.sheet ? " selected" : "") + '>' + escapeHTML(s) + '</option>'; }).join("") + '</select></label>' : '') + '</div>' +
-      '<p class="rs-note">تأكد من ربط كل حقل بالعمود الصحيح — الاسم إلزامي، والهوية والجوال أساس المطابقة.</p><div class="rs-map">' +
+      '<p class="rs-note">تأكد من ربط كل حقل بالعمود الصحيح — الاسم إلزامي، والهوية والجوال أساس المطابقة.</p>' +
+      '<div class="rs-impcat"><b>تصنيف الأشخاص في هذا الملف</b><div class="rs-chips">' + rsTypesUI().map(function(t){ return '<button type="button" data-rs="imp-cat" data-v="' + t.k + '" class="' + (imp.type === t.k ? "on" : "") + '">' + t.l + '</button>'; }).join("") +
+      '<button type="button" data-rs="imp-cat" data-v="col" class="' + (imp.type === "col" ? "on" : "") + '">حسب عمود «الفئة»</button></div></div><div class="rs-map">' +
       RS_FIELDS.filter(function(f){ return f.k !== "type" || imp.type === "col"; }).map(function(f){ return '<label><span>' + f.l + (f.k === "name" ? ' <em>*</em>' : '') + '</span><select data-rs-ch="imp-map" data-v="' + f.k + '">' + opts(f.k) + '</select></label>'; }).join("") + '</div>' +
-      (imp.type === "col" ? '<label class="rs-inl">إن كانت الفئة فارغة اعتبره <select data-rs-ch="imp-fallback">' + RS_TYPES.map(function(t){ return '<option value="' + t.k + '"' + (imp.fallback === t.k ? " selected" : "") + '>' + t.l + '</option>'; }).join("") + '</select></label>' : '') + '</div>';
+      (imp.type === "col" ? '<label class="rs-inl">إن كانت الفئة فارغة اعتبره <select data-rs-ch="imp-fallback">' + rsTypesUI().map(function(t){ return '<option value="' + t.k + '"' + (imp.fallback === t.k ? " selected" : "") + '>' + t.l + '</option>'; }).join("") + '</select></label>' : '') + '</div>';
     var prev = imp.rows.slice(0, 4);
     h += '<div class="rs-card"><h3>معاينة أول ' + prev.length + ' صفوف بعد التوحيد</h3><div class="rs-tablewrap"><table class="rs-table rs-table--plain"><thead><tr><th>الاسم</th><th>الجوال</th><th>الهوية</th><th>الجنس</th><th>الفئة</th></tr></thead><tbody>' +
       prev.map(function(r){ var tc = imp.type === "col" ? (rsTypeOf(rsImpGet(imp, r, "type")) || imp.fallback) : imp.type; return '<tr><td>' + escapeHTML(rsImpName(imp, r) || "—") + '</td><td dir="ltr">' + escapeHTML(rsPhone(rsImpGet(imp, r, "phone")) || "—") + '</td><td dir="ltr">' + escapeHTML(rsNid(rsImpGet(imp, r, "nid")) || "—") + '</td><td>' + escapeHTML(rsGender(rsImpGet(imp, r, "gender")) || "—") + '</td><td>' + rsT(tc).l + '</td></tr>'; }).join("") +
@@ -17470,7 +17530,7 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
           '<option value="skip"' + (r.act === "skip" ? " selected" : "") + '>تجاهل</option></select>';
         return '<tr class="' + (r.act === "hold" ? "rs-tr-hold" : r.act === "skip" ? "rs-tr-skip" : "") + '"><td>' + (r.i + 1) + '</td><td><b>' + escapeHTML(r.name || "—") + '</b>' + r.issues.map(function(x){ return '<small class="rs-issue">' + escapeHTML(x) + '</small>'; }).join("") + '</td>' +
           '<td dir="ltr">' + escapeHTML(r.phone || "—") + '</td><td dir="ltr">' + escapeHTML(r.nid || "—") + '</td>' +
-          '<td><select data-rs-ch="imp-rtype" data-v="' + r.i + '">' + RS_TYPES.map(function(t){ return '<option value="' + t.k + '"' + (r.type === t.k ? " selected" : "") + '>' + t.l + '</option>'; }).join("") + '</select></td>' +
+          '<td><select data-rs-ch="imp-rtype" data-v="' + r.i + '">' + rsTypesUI().map(function(t){ return '<option value="' + t.k + '"' + (r.type === t.k ? " selected" : "") + '>' + t.l + '</option>'; }).join("") + '</select></td>' +
           '<td class="rs-res">' + res + '</td><td>' + (r.st === "empty" ? "—" : sel) + '</td></tr>';
       }).join("") + '</tbody></table></div>';
     if(list.length > (imp.lim || 300)) h += '<div class="rs-more"><button type="button" class="btn-secondary" data-rs="imp-more">عرض المزيد (' + (list.length - (imp.lim || 300)) + ')</button></div>';
@@ -17503,7 +17563,8 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
         r.pid = pid; r.regNo = p.regNo; ids.push(pid);
         var patch = patched[pid] || { updatedAt: now, updatedBy: by };
         var roles = rsUniq(rsRoles(p).concat(patch.roles || [], [r.type]));
-        if(roles.length !== rsRoles(p).length || !p.roles) patch.roles = roles;
+        if(r.type !== "trainee" && r.type !== "trainer"){ roles = roles.filter(function(x){ return x !== "trainee"; }); if(p.type === "trainee") patch.type = r.type; }
+        if(roles.join("|") !== rsRoles(p).join("|") || !p.roles) patch.roles = roles;
         if(imp.fill) RS_PFIELDS.forEach(function(k){ if(!p[k] && r[k] && patch[k] == null) patch[k] = r[k]; });
         if(patch.name) patch.nameKey = rsNorm(patch.name);
         patched[pid] = patch;
@@ -17525,7 +17586,7 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
   function rsImpDoneHTML(imp){
     var news = imp.recs.filter(function(r){ return r.act === "new" && r.regNo; });
     var h = rsImpSteps(5) + '<div class="rs-card rs-done"><div class="rs-done-ic">✓</div><h3>اكتملت المطابقة</h3><p>' + news.length + ' شخص جديد صدر له رقم تسجيل، و' + imp.recs.filter(function(r){ return r.act.indexOf("link:") === 0; }).length + ' رُبط بسجله السابق' + (imp.prog ? '، وأُلحق الجميع بالبرنامج' : '') + '.</p>' +
-      '<div class="rs-row rs-row--c">' + (can("roster.export") ? '<button type="button" class="btn-secondary" data-rs="imp-export">تصدير الأسماء بأرقامها (Excel)</button><button type="button" class="btn-secondary" data-rs="imp-cards">طباعة بطاقات QR للجدد</button>' : '') +
+      '<div class="rs-row rs-row--c">' + (can("roster.export") ? '<button type="button" class="btn-secondary" data-rs="imp-export">تصدير الأسماء بأرقامها (Excel)</button>' : '') +
       '<button type="button" class="btn-primary" data-rs="imp-reset">رفع ملف آخر</button></div></div>';
     if(news.length) h += '<div class="rs-tablewrap"><table class="rs-table"><thead><tr><th>رقم التسجيل</th><th>الاسم</th><th>الفئة</th><th>الجوال</th><th></th></tr></thead><tbody>' + news.slice(0, 200).map(function(r){
       var p = rs.byId[r.pid] || { name: r.name, phone: r.phone, regNo: r.regNo, type: r.type };
@@ -17555,8 +17616,11 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
     return t.id;
   }
   function rsHeld(g){ var today = rsToday(); return rsSessions(g).filter(function(s){ var m = rs.att[s.id]; return (m && Object.keys(m).length) || (s.date && s.date < today); }); }
+  // يوم «للمتطوعين فقط» لا يُحتسب على من ليس متطوعاً/مشرفاً/إدارياً
   function rsRate(g, pid, held){
     held = held || rsHeld(g);
+    var pr = rsRoles(rs.byId[pid] || {}), crew = pr.indexOf("volunteer") > -1 || pr.indexOf("supervisor") > -1 || pr.indexOf("admin") > -1;
+    held = held.filter(function(s){ return !s.vol || crew; });
     if(!held.length) return null;
     var n = held.filter(function(s){ var m = (rs.att[s.id] || {})[pid]; return m && (m.s === "p" || m.s === "l"); }).length;
     return { n: n, of: held.length, pct: Math.round(n / held.length * 100) };
@@ -17587,7 +17651,7 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
     var ms = rsMembers(g);
     var h = '<div class="rs-phead"><button type="button" class="rs-back" data-rs="prog-back">→ البرامج</button><div class="rs-ptitle"><i>' + escapeHTML(g.kind || "برنامج") + '</i><h3>' + escapeHTML(g.title) + '</h3><small>' +
       (g.start ? rsDate(g.start) + (g.end && g.end !== g.start ? " — " + rsDate(g.end) : "") : "") + (g.place ? " · " + escapeHTML(g.place) : "") + ' · نسبة الشهادة ' + (g.threshold || 75) + '%</small></div>' +
-      '<div class="rs-row">' + (can("roster.export") && ms.length ? '<button type="button" class="rs-mini" data-rs="prog-cards">بطاقات المشاركين</button>' : '') + (can("roster.programs") ? '<button type="button" class="rs-mini" data-rs="prog-edit">تعديل البرنامج والجلسات</button>' : '') + '</div></div>';
+      '<div class="rs-row">' + (can("roster.programs") ? '<button type="button" class="rs-mini" data-rs="prog-edit">تعديل البرنامج والجلسات</button>' : '') + '</div></div>';
     h += '<div class="rs-ptabs">' + [["attend", "التحضير"], ["members", "المشاركون (" + ms.length + ")"], ["record", "سجل الحضور والشهادات"]].map(function(t){ return '<button type="button" data-rs="ptab" data-v="' + t[0] + '" class="' + (rsUI.ptab === t[0] ? "on" : "") + '">' + t[1] + '</button>'; }).join("") + '</div>';
     if(rsUI.ptab === "members") h += rsMembersHTML(g, ms);
     else if(rsUI.ptab === "record") h += rsRecordHTML(g, ms);
@@ -17605,8 +17669,8 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
     var canA = can("roster.attend");
     if(canA){
       var last = rsUI.last, lp = last && last.p ? rs.byId[last.p] : null;
-      h += '<div class="rs-scan"><div class="rs-scan-in"><input type="text" inputmode="text" autocomplete="off" data-rs-in="aq" data-rs-keep="aq" id="rsAq" placeholder="امسح البطاقة أو اكتب رقم التسجيل / الجوال / الهوية ثم Enter"/>' +
-        '<button type="button" class="btn-primary" data-rs="scan">📷 مسح بالكاميرا</button></div>' +
+      h += '<div class="rs-scan"><div class="rs-scan-in"><input type="text" inputmode="text" autocomplete="off" data-rs-in="aq" data-rs-keep="aq" id="rsAq" placeholder="اكتب الجوال أو الهوية ثم Enter"/>' +
+        '</div>' +
         '<div class="rs-row"><span class="rs-note">يُسجَّل القادم:</span><div class="rs-chips">' + [["p", "حاضر"], ["l", "متأخر"]].map(function(x){ return '<button type="button" data-rs="mode" data-v="' + x[0] + '" class="' + (rsUI.mode === x[0] ? "on" : "") + '">' + x[1] + '</button>'; }).join("") + '</div></div>' +
         (last ? '<div class="rs-flash ' + (last.ok ? (last.again ? "again" : "ok") : "bad") + '">' + (lp ? '<b>' + escapeHTML(lp.name) + '</b><span dir="ltr">' + escapeHTML(lp.regNo) + '</span>' + rsTypeBadge(lp.type) : '') + '<em>' + escapeHTML(last.msg || (rsMk(last.st) ? "تم التحضير: " + rsMk(last.st).l : "")) + '</em>' +
           (last.multi ? '<div class="rs-pick">' + last.multi.map(function(id){ var p = rs.byId[id]; return p ? '<button type="button" class="rs-mini" data-rs="pick" data-v="' + id + '">' + escapeHTML(p.regNo) + ' — ' + escapeHTML(p.name) + '</button>' : ''; }).join("") + '</div>' : '') + '</div>' : '') + '</div>';
@@ -17632,7 +17696,7 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
       res = rsUniq(res.map(function(p){ return p.id; })).map(function(id){ return rs.byId[id]; }).filter(function(p){ return p && !mem[p.id]; }).slice(0, 12);
       h += '<div class="rs-card"><h3>إضافة مشاركين</h3><input type="search" class="rs-wide" data-rs-in="addq" data-rs-keep="addq" placeholder="ابحث في السجل بالاسم أو الرقم أو الجوال" value="' + escapeHTML(rsUI.addq) + '"/>' +
         (res.length ? '<div class="rs-addlist">' + res.map(function(p){ return '<div><span class="rs-reg" dir="ltr">' + escapeHTML(p.regNo) + '</span><b>' + escapeHTML(p.name) + '</b>' + rsTypeBadge(p.type) + '<button type="button" class="rs-mini" data-rs="mem-add" data-v="' + p.id + '">＋ إضافة</button></div>'; }).join("") + '</div>' : (rsUI.addq.trim() ? '<p class="report-empty">لا نتائج غير مضافة</p>' : '')) +
-        '<div class="rs-row"><span class="rs-note">إضافة جماعية:</span>' + RS_TYPES.map(function(t){ return '<button type="button" class="rs-mini" data-rs="mem-type" data-v="' + t.k + '">كل ' + t.acc + '</button>'; }).join("") +
+        '<div class="rs-row"><span class="rs-note">إضافة جماعية:</span>' + rsTypesUI().map(function(t){ return '<button type="button" class="rs-mini" data-rs="mem-type" data-v="' + t.k + '">كل ' + t.acc + '</button>'; }).join("") +
         (can("roster.import") ? '<button type="button" class="rs-mini" data-rs="mem-import">رفع ملف لهذا البرنامج</button>' : '') + '</div></div>';
     }
     if(!ms.length) return h + '<p class="report-empty">لا يوجد مشاركون بعد</p>';
@@ -17644,7 +17708,10 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
   function rsRecordHTML(g, ms){
     var ss = rsSessions(g), held = rsHeld(g), th = g.threshold || 75;
     if(!ms.length) return '<p class="report-empty">لا يوجد مشاركون بعد</p>';
-    var trainees = ms.filter(function(p){ return p.type !== "trainer"; });
+    // الموارد البشرية (المدربون) ليسوا ضمن المتدربين: لا نسبة شهادة لهم، ويُعرضون آخر الجدول
+    var staff = function(p){ return !!RS_NOCARD[rsEffType(p)]; };
+    ms = ms.filter(function(p){ return !staff(p); }).concat(ms.filter(staff));
+    var trainees = ms.filter(function(p){ return !staff(p); });
     var elig = trainees.filter(function(p){ var r = rsRate(g, p.id, held); return r && r.pct >= th; });
     var avg = trainees.length && held.length ? Math.round(trainees.reduce(function(s, p){ var r = rsRate(g, p.id, held); return s + (r ? r.pct : 0); }, 0) / trainees.length) : 0;
     var h = '<div class="rs-kpis">' + rsKpi(held.length + " / " + ss.length, "جلسات منعقدة") + rsKpi(avg + "%", "متوسط نسبة الحضور") + rsKpi(elig.length, "مؤهل للشهادة (≥ " + th + "%)") + rsKpi(trainees.length - elig.length, "دون النسبة", "tan") + '</div>';
@@ -17652,9 +17719,9 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
     h += '<div class="rs-tablewrap"><table class="rs-table rs-matrix"><thead><tr><th>الرقم</th><th>الاسم</th>' + ss.map(function(s, i){ return '<th title="' + escapeHTML(s.title || "") + '">' + (i + 1) + '<small>' + rsDate(s.date) + '</small></th>'; }).join("") + '<th>النسبة</th><th>الشهادة</th></tr></thead><tbody>' +
       ms.map(function(p){
         var r = rsRate(g, p.id, held), ok = r && r.pct >= th;
-        return '<tr><td class="rs-reg" dir="ltr">' + escapeHTML(p.regNo) + '</td><td><b>' + escapeHTML(p.name) + '</b> ' + (p.type !== "trainee" ? rsTypeBadge(p.type) : '') + '</td>' +
+        return '<tr><td>' + (rsCardOf(p.id) ? rsChip(rsCardOf(p.id)) : '<span class="rs-note">—</span>') + '</td><td><b>' + escapeHTML(p.name) + '</b> ' + (rsEffType(p) !== "trainee" ? rsTypeBadge(rsEffType(p)) : '') + '</td>' +
           ss.map(function(s){ var m = (rs.att[s.id] || {})[p.id], k = m && rsMk(m.s); return '<td class="c m-' + (m ? m.s : "") + '">' + (k ? k.s : "·") + '</td>'; }).join("") +
-          '<td class="c"><b>' + (r ? r.pct + "%" : "—") + '</b></td><td class="c">' + (p.type === "trainer" ? "—" : r ? (ok ? '<i class="rs-st rs-st--new">مؤهل</i>' : '<i class="rs-st rs-st--dup">دون النسبة</i>') : "—") + '</td></tr>';
+          '<td class="c"><b>' + (r ? r.pct + "%" : "—") + '</b></td><td class="c">' + (staff(p) ? "—" : r ? (ok ? '<i class="rs-st rs-st--new">مؤهل</i>' : '<i class="rs-st rs-st--dup">دون النسبة</i>') : "—") + '</td></tr>';
       }).join("") + '</tbody></table></div>';
     h += '<p class="rs-note">لتوليد الشهادات: صدّر قائمة المؤهلين ثم ارفعها في قسم «إصدار» على نموذج الشهادة.</p>';
     return h;
@@ -17826,9 +17893,9 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
     var d = p ? shallowCopy(p) : { type: rsUI.type || "trainee", roles: [], status: "active" };
     d.roles = rsRoles(d).slice();
     rsUI.m = { kind: "person", id: id || "", d: d };
+    if(rsDeskProgId()) rsWatchAtt(rsDeskProgId());
     rsModalRender();
     if(p) rsLoadAllAtt().then(function(){ if(rsUI.m && rsUI.m.id === id) rsModalRender(); }).catch(function(){});
-    if(typeof window.qrcode !== "function") rsLoadQr().then(function(){ if(rsUI.m && rsUI.m.id === id) rsModalRender(); }).catch(function(){});
   }
   function rsFld(k, label, v, type, extra){ return '<label class="rs-f"><span>' + label + '</span><input type="' + (type || "text") + '" data-rs-in="pf" data-v="' + k + '" value="' + escapeHTML(v || "") + '"' + (extra || "") + '/></label>'; }
   function rsPersonModalHTML(m){
@@ -17836,11 +17903,13 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
     var h = '';
     if(p){
       var progs = rs.programs.filter(function(g){ return (g.members || []).indexOf(p.id) > -1; });
-      h += '<div class="rs-pcard"><div class="rs-pcard-qr">' + (rsQrSvg(p.regNo, 112) || '<span class="rs-note">QR…</span>') + '</div><div class="rs-pcard-in"><small>رقم التسجيل</small><b dir="ltr">' + escapeHTML(p.regNo) + '</b>' +
-        '<div class="rs-pcard-nm">' + escapeHTML(p.name) + '</div><div>' + rsRoles(p).map(rsTypeBadge).join(" ") + (p.status === "inactive" ? ' <i class="rs-tb">غير نشط</i>' : '') + '</div>' +
+      var pcd = rsCardOf(p.id), dg = rsDeskProg();
+      h += '<div class="rs-pcard"><div class="rs-pcard-in"><small>الرقم التسلسلي' + (dg ? ' — ' + escapeHTML(dg.title) : '') + '</small>' +
+        (pcd ? '<div class="rs-pserial">' + (rsCardImg(pcd) ? '<img class="rs-thumbcard" loading="lazy" decoding="async" src="' + rsCardImg(pcd) + '" alt=""/>' : '') + rsChip(pcd) + ' <span>' + escapeHTML((pcd.g === "m" || pcd.g === "f" || pcd.g === "a") ? rsColorName(pcd) : rsGkLabel(pcd.g)) + '</span></div>' : '<b class="rs-pnone">' + (RS_NOCARD[rsEffType(p)] ? "حضور فقط بلا رقم" : "يُمنح عند تأكيد الحضور") + '</b>') +
+        '<div class="rs-pcard-nm">' + escapeHTML(p.name) + '</div><div>' + rsShowRoles(p) + (p.status === "inactive" ? ' <i class="rs-tb">غير نشط</i>' : '') + '</div>' +
         ((p.oldRegNos || []).length ? '<small>أرقام سابقة مدموجة: <span dir="ltr">' + p.oldRegNos.map(escapeHTML).join("، ") + '</span></small>' : '') +
-        '<div class="rs-row"><button type="button" class="rs-mini" data-rs="m-copy">نسخ الرقم</button>' + (rsPhoneOk(p.phone) ? '<a class="rs-mini rs-mini--wa" target="_blank" rel="noopener" href="' + rsWaLink(p) + '">إرسال الرقم واتساب</a>' : '') +
-        (can("roster.export") ? '<button type="button" class="rs-mini" data-rs="m-cards">طباعة البطاقة</button>' : '') + '</div></div></div>';
+        '<div class="rs-row">' + (pcd && can("roster.attend") ? '<button type="button" class="rs-mini" data-rs="m-card-change" data-v="' + p.id + '">تغيير البطاقة</button>' : '') + (pcd ? '<button type="button" class="rs-mini" data-rs="m-copy">نسخ الرقم</button>' : '') + (rsPhoneOk(p.phone) ? '<a class="rs-mini rs-mini--wa" target="_blank" rel="noopener" href="' + rsWaLink(p) + '">إرسال الرقم واتساب</a>' : '') +
+        '</div></div></div>';
       if(progs.length){
         h += '<div class="rs-hist"><b>البرامج والحضور</b>' + progs.map(function(g){
           var ss = rsSessions(g), today = rsToday(), att = (rs.allAtt || []).filter(function(x){ return x.programId === g.id; }), am = {};
@@ -17851,12 +17920,18 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
         }).join("") + '</div>';
       }
     } else h += '<h3 class="rs-dlg-t">إضافة شخص للسجل</h3><p class="rs-note">يُصدر له رقم تسجيل تلقائياً عند الحفظ، مع فحص التكرار قبل الإضافة.</p>';
+    if(!p){
+      h += '<div class="rs-form">' + rsFld("name", "الاسم الكامل *", d.name, "text", ' autocomplete="off"') + rsFld("phone", "الجوال", d.phone, "tel", ' dir="ltr"') + rsFld("nid", "رقم الهوية / الإقامة", d.nid, "text", ' dir="ltr" inputmode="numeric"') + '</div>' +
+        '<p class="rs-note">يُضاف بصفة «' + rsT(d.type).l + '» — الصفة والجنس تُعدَّل لاحقاً من «تعديل» عند الحاجة.</p>' +
+        '<div class="rs-actions"><button type="button" class="btn-secondary" data-rs="m-close">إلغاء</button><button type="button" class="btn-primary" data-rs="m-save-person">حفظ</button></div>';
+      return h;
+    }
     h += '<div class="rs-form">' + rsFld("name", "الاسم الكامل *", d.name, "text", ro) +
-      '<label class="rs-f"><span>الفئة الأساسية</span><select data-rs-in="pf" data-v="type"' + ro + (p ? " disabled" : "") + '>' + RS_TYPES.map(function(t){ return '<option value="' + t.k + '"' + (d.type === t.k ? " selected" : "") + '>' + t.l + '</option>'; }).join("") + '</select>' + (p ? '<small>تحدد بادئة الرقم ولا تتغير</small>' : '') + '</label>' +
+      '<label class="rs-f"><span>الفئة الأساسية</span><select data-rs-in="pf" data-v="type"' + ro + '>' + rsTypesUI().map(function(t){ return '<option value="' + t.k + '"' + (d.type === t.k ? " selected" : "") + '>' + t.l + '</option>'; }).join("") + '</select><small>تحدد تسلسل بطاقته في الحضور</small></label>' +
       rsFld("phone", "الجوال", d.phone, "tel", ro + ' dir="ltr"') + rsFld("nid", "رقم الهوية / الإقامة", d.nid, "text", ro + ' dir="ltr" inputmode="numeric"') +
       '<label class="rs-f"><span>الجنس</span><select data-rs-in="pf" data-v="gender"' + ro + '><option value="">—</option>' + ["ذكر", "أنثى"].map(function(x){ return '<option' + (d.gender === x ? " selected" : "") + '>' + x + '</option>'; }).join("") + '</select></label>' +
       rsFld("email", "البريد الإلكتروني", d.email, "email", ro + ' dir="ltr"') + rsFld("birth", "تاريخ الميلاد", d.birth, "text", ro) + rsFld("org", "الجهة / التخصص", d.org, "text", ro) +
-      '<label class="rs-f rs-f--w"><span>أدوار إضافية</span><div class="rs-chips">' + RS_TYPES.map(function(t){ return '<button type="button"' + (ed ? ' data-rs="m-role" data-v="' + t.k + '"' : ' disabled') + ' class="' + (d.roles.indexOf(t.k) > -1 ? "on" : "") + '">' + t.l + '</button>'; }).join("") + '</div></label>' +
+      '<label class="rs-f rs-f--w"><span>أدوار إضافية</span><div class="rs-chips">' + rsTypesUI().map(function(t){ return '<button type="button"' + (ed ? ' data-rs="m-role" data-v="' + t.k + '"' : ' disabled') + ' class="' + (d.roles.indexOf(t.k) > -1 ? "on" : "") + '">' + t.l + '</button>'; }).join("") + '</div></label>' +
       '<label class="rs-f"><span>الحالة</span><select data-rs-in="pf" data-v="status"' + ro + '><option value="active"' + (d.status !== "inactive" ? " selected" : "") + '>نشط</option><option value="inactive"' + (d.status === "inactive" ? " selected" : "") + '>غير نشط</option></select></label>' +
       '<label class="rs-f rs-f--w"><span>ملاحظات</span><textarea data-rs-in="pf" data-v="notes" rows="2"' + ro + '>' + escapeHTML(d.notes || "") + '</textarea></label></div>';
     if(p) h += '<p class="rs-meta">أُضيف ' + (p.createdAt ? new Date(p.createdAt).toLocaleDateString("ar-SA-u-nu-latn") : "") + (p.createdBy ? " بواسطة " + escapeHTML(p.createdBy) : "") + (p.source ? " · المصدر: " + escapeHTML(p.source) : "") + '</p>';
@@ -17875,8 +17950,9 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
     if(rec.phone && !rsPhoneOk(rec.phone) && !confirm("الجوال " + rec.phone + " ليس بصيغة سعودية صحيحة (05xxxxxxxx). الحفظ رغم ذلك؟")) return;
     if(rec.nid && !rsNidOk(rec.nid) && !confirm("رقم الهوية " + rec.nid + " لا يجتاز التحقق. الحفظ رغم ذلك؟")) return;
     rec.nameKey = rsNorm(rec.name);
-    var type = m.id ? rs.byId[m.id].type : (d.type || "trainee");
-    rec.roles = rsUniq([type].concat(d.roles || []));
+    var oldType = m.id ? rs.byId[m.id].type : "", type = d.type || oldType || "trainee";
+    if(m.id) rec.type = type;
+    rec.roles = rsUniq([type].concat((d.roles || []).filter(function(r){ return !oldType || oldType === type || r !== oldType; })));
     var dupe = rs.people.find(function(p){ return p.id !== m.id && ((rec.nid && p.nid === rec.nid) || (rec.phone && p.phone === rec.phone && rsNameSim(p.nameKey, rec.nameKey) >= 0.5) || (p.nameKey === rec.nameKey && !rsConflict(rec, p) && rsTok(rec.nameKey).length >= 3)); });
     if(dupe && !confirm("يوجد في السجل قيد مشابه:\n" + dupe.regNo + " — " + dupe.name + (dupe.phone ? " · " + dupe.phone : "") + "\nالحفظ رغم ذلك؟")) return;
     var now = Date.now(), by = rsBy();
@@ -17889,7 +17965,7 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
     rsAllocate(need).then(function(start){
       var id = rsId("rp");
       rec.id = id; rec.type = type; rec.regNo = rsRegNo(type, start[type]); rec.batch = "manual"; rec.source = "إضافة يدوية"; rec.createdAt = now; rec.createdBy = by;
-      return rsPRef(id).set(rec).then(function(){ rsUI.busy = false; showToast("✔ أُضيف برقم " + rec.regNo); rsPersonOpen(id); });
+      return rsPRef(id).set(rec).then(function(){ rsUI.busy = false; showToast("✔ أُضيف " + rec.name); rsPersonOpen(id); });
     }).catch(fail);
   }
   function rsPersonDelete(){
@@ -17929,7 +18005,7 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
       '<label class="rs-f rs-f--w"><span>تسلسل الأرقام</span><select data-rs-in="gf" data-v="badgeSplit"><option value="1"' + (rsBadgeCfg(d).split ? " selected" : "") + '>منفصل للذكور والإناث (كل جنس يبدأ من ' + rsBadgeCfg(d).prefix + '-01)</option><option value="0"' + (rsBadgeCfg(d).split ? "" : " selected") + '>تسلسل واحد للجميع</option></select></label></div>' +
       rsColorsEdHTML(d) +
       '<div class="rs-sesed"><div class="rs-row rs-row--sb"><b>الجلسات (' + d.sessions.length + ')</b><div class="rs-row"><button type="button" class="rs-mini" data-rs="m-sess-gen">جلسة لكل يوم من «من» إلى «إلى»</button><button type="button" class="rs-mini" data-rs="m-sess-add">＋ جلسة</button></div></div>' +
-      (d.sessions.length ? d.sessions.map(function(s, i){ return '<div class="rs-sesrow"><i>' + (i + 1) + '</i><input type="date" data-rs-in="sf" data-v="' + i + '|date" value="' + escapeHTML(s.date || "") + '"/><input type="text" data-rs-in="sf" data-v="' + i + '|title" placeholder="عنوان الجلسة (اختياري)" value="' + escapeHTML(s.title || "") + '"/><button type="button" class="rs-mini rs-mini--del" data-rs="m-sess-rm" data-v="' + i + '">✕</button></div>'; }).join("") : '<p class="rs-note">لا جلسات — أضف جلسة أو ولّدها من التواريخ.</p>') + '</div>' +
+      (d.sessions.length ? d.sessions.map(function(s, i){ return '<div class="rs-sesrow"><i>' + (i + 1) + '</i><input type="date" data-rs-in="sf" data-v="' + i + '|date" value="' + escapeHTML(s.date || "") + '"/><input type="text" data-rs-in="sf" data-v="' + i + '|title" placeholder="عنوان الجلسة (اختياري)" value="' + escapeHTML(s.title || "") + '"/><label class="rs-volchk"><input type="checkbox" data-rs-in="sf" data-v="' + i + '|vol"' + (s.vol ? " checked" : "") + '/> للمتطوعين فقط</label><button type="button" class="rs-mini rs-mini--del" data-rs="m-sess-rm" data-v="' + i + '">✕</button></div>'; }).join("") : '<p class="rs-note">لا جلسات — أضف جلسة أو ولّدها من التواريخ.</p>') + '</div>' +
       '<div class="rs-actions">' + (m.id && can("roster.programs") ? '<button type="button" class="rs-mini rs-mini--del" data-rs="m-del-prog">حذف البرنامج</button>' : '') + '<button type="button" class="btn-secondary" data-rs="m-close">إلغاء</button><button type="button" class="btn-primary" data-rs="m-save-prog">حفظ</button></div>';
   }
   function rsProgSave(){
@@ -17939,7 +18015,7 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
     if(!title){ showToast("اسم البرنامج مطلوب"); return; }
     var now = Date.now(), id = m.id || rsId("rg");
     var rec = { id: id, title: title, kind: d.kind || RS_KINDS[0], place: String(d.place || "").trim(), start: d.start || "", end: d.end || d.start || "", threshold: Math.max(0, Math.min(100, +d.threshold || 75)),
-      sessions: rsSessions(d).map(function(s){ return { id: s.id || rsId("s"), date: s.date || "", title: String(s.title || "").trim() }; }), updatedAt: now, updatedBy: rsBy(),
+      sessions: rsSessions(d).map(function(s){ return { id: s.id || rsId("s"), date: s.date || "", title: String(s.title || "").trim(), vol: !!s.vol }; }), updatedAt: now, updatedBy: rsBy(),
       badge: { prefix: String(d.badgePrefix || "MT").toUpperCase().replace(/[^A-Z0-9]/g, "") || "MT", size: Math.max(1, Math.min(99, +d.badgeSize || 15)), split: d.badgeSplit !== "0",
         colors: (d.colors || []).map(function(c){ return { n: String(c.n || "").trim(), c: String(c.c || "").toLowerCase() }; }).filter(function(c){ return c.n && /^#[0-9a-f]{6}$/.test(c.c); }) } };
     if(!rec.badge.colors.length){ showToast("أضف لوناً واحداً على الأقل باسمه"); return; }
@@ -17982,20 +18058,61 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
     var cols = Array.isArray(b.colors) ? b.colors.filter(function(x){ return x && x.n && /^#[0-9a-f]{6}$/i.test(x.c || ""); }) : [];
     return { prefix: String(b.prefix || "MT").toUpperCase(), size: Math.max(1, +b.size || 15), split: b.split !== false, colors: cols.length ? cols : RS_COLORS, custom: !!cols.length };
   }
+  // تسلسل البطاقات لكل فئة: المتدربون بالألوان ومنفصل للذكور والإناث، المتطوعون تسلسل واحد حتى 100 بلون واحد،
+  // مشرفو المتطوعين تسلسل مستقل (10)، الإداريون تسلسل موحد (30)، الموارد البشرية والمدربون بلا رقم
+  var RS_SCHEMES = {
+    volunteer: { gk: "v", label: "المتطوعون", prefix: "VL", max: 100, color: { n: "تنظيم", c: "#b88956" }, img: "vl" },
+    supervisor: { gk: "s", label: "مشرفو المتطوعين", prefix: "VS", max: 10, color: { n: "إشراف", c: "#1b2226" }, img: "vs" },
+    admin: { gk: "d", label: "الإداريون", prefix: "AD", max: 30, color: { n: "إدارة", c: "#276b78" }, img: "ad" }
+  };
+  // بلا رقم تسلسلي: الموارد البشرية حضور فقط، والمدربون لكل منهم بطاقة شخصية مطبوعة باسمه وصورته
+  var RS_NOCARD = { hr: 1, trainer: 1 };
+  var RS_NOCARD_NOTE = { hr: "بطاقته الشخصية المطبوعة باسمه — لا رقم تسلسلي", trainer: "بطاقته الشخصية المطبوعة باسمه — لا رقم تسلسلي" };
+  // بطاقات الموارد البشرية المطبوعة (باسم كل شخص وصورته) بترتيب ملف الطباعة؛ تُطابق بالاسم.
+  // الصور لا تُحفظ في ملفات الموقع: تُرفع من داخل البوابة (زر «رفع بطاقاتهم») إلى مخزن الوسائط، وروابطها في hubMeta/roster.hrCards
+  var RS_TR_CARDS = ["روان جعفر ال شهاب","أحمد حسين البوخمسين","جعفر محمد أبوالرحي","حسين عبدالله آل عبدالعزيز","مصطفى إبراهيم المسلم","زينب محمد آل الشيخ","عبدالعزيز علي كعبي","أحمد محمد الصادق","عبدالعال علي آل ريح","علاء أحمد الدبيسي","إبتهال محمد آل سيف","مأوى نسيب آل محسن","فايز عبدالعزيز","باسل عبدالرحمن البتيري","هاشم بن شرف السعيدي","عبدالله عبدالعزيز الوحيد","محمد سلمان آل جاسم","أحمد حسن الصحاف","نور علي آل جبر","نور عبدالله آل غانم","حسين علي ابوتاكي","محمد عادل ال محيسن","حسين علي المرهون","موسى صالح العنكي","مهدي تقي اليوسف","علي عبدالله آل عيد","عصام فريد المرهون","علي عبدالله ال حرز","حسين علي العوامي","علي أحمد آل خميس","سلمان فهد الشقاق","عبدالله محمد آل مويل","علي حسين النزر","خالد ناصر الشهراني","علي محمد القحطاني","حسين عبدالعزيز الزاير"];
+  var _rsTrIx = null;
+  function rsTrainerCard(p){
+    if(!p || !p.nameKey) return "";
+    if(!_rsTrIx) _rsTrIx = RS_TR_CARDS.map(function(n){ return rsNorm(n.replace(/(^|\s)(ال|آل)\s+/g, "$1آل")); });
+    var k = rsNorm(String(p.name || "").replace(/(^|\s)(ال|آل)\s+/g, "$1آل")), best = 0, at = -1;
+    _rsTrIx.forEach(function(t, i){ var sm = rsNameSim(k, t); if(sm > best){ best = sm; at = i; } });
+    var urls = (rs.meta && rs.meta.hrCards) || [];
+    return best >= 0.75 && urls[at] ? urls[at] : "";
+  }
+  // صورة البطاقة المطبوعة نفسها (Login/cards/vl-57.jpg …) لمن لهم بطاقات مطبوعة مرقّمة
+  function rsCardImg(m){
+    if(!m || !m.k) return "";
+    for(var t in RS_SCHEMES){ var sc = RS_SCHEMES[t]; if(sc.gk === m.g) return sc.img && m.k <= sc.max ? "cards/" + sc.img + "-" + m.k + ".jpg" : ""; }
+    return "";
+  }
+  function rsSchemeCfg(sc){ return { prefix: sc.prefix, size: 999, max: sc.max, split: false, colors: [sc.color], single: true, label: sc.label }; }
+  function rsCfgByGk(g, gk){
+    for(var t in RS_SCHEMES) if(RS_SCHEMES[t].gk === gk) return rsSchemeCfg(RS_SCHEMES[t]);
+    return rsBadgeCfg(g);
+  }
+  function rsNumW(cfg){ return cfg.single ? Math.max(2, String(cfg.max).length) : Math.max(2, String(cfg.size).length); }
+  function rsPadW(n, w){ n = String(n); while(n.length < w) n = "0" + n; return n; }
+  function rsPickN(cfg){ return cfg.single ? cfg.max : cfg.size; }
   function rsInk(hex){ var h = String(hex || "").replace("#", ""); if(h.length !== 6) return "#fff"; var r = parseInt(h.slice(0, 2), 16), g = parseInt(h.slice(2, 4), 16), b = parseInt(h.slice(4, 6), 16); return (0.299 * r + 0.587 * g + 0.114 * b) > 170 ? "#1b1b1b" : "#fff"; }
   // لون العلامة المحفوظ معها (الاسم والدرجة لحظة المنح) — تعديل قائمة الألوان لاحقاً لا يغيّر ما مُنح
   function rsMarkCol(m){ var d = RS_COLORS[m.c] || RS_COLORS[0]; return { n: m.cn || d.n, c: m.ch || d.c }; }
   function rsGk(gender){ return gender === "أنثى" ? "f" : gender === "ذكر" ? "m" : ""; }
-  function rsCodeOf(cfg, k){ var i = k - 1, num = i % cfg.size + 1, gi = Math.floor(i / cfg.size), L = cfg.colors.length, col = cfg.colors[gi % L]; return { code: cfg.prefix + "-" + pad2(num), c: gi % L, cn: col.n, ch: col.c, round: Math.floor(gi / L) }; }
+  function rsCodeOf(cfg, k){ var i = k - 1, num = i % cfg.size + 1, gi = Math.floor(i / cfg.size), L = cfg.colors.length, col = cfg.colors[gi % L]; return { code: cfg.prefix + "-" + rsPadW(num, rsNumW(cfg)), c: gi % L, cn: col.n, ch: col.c, round: Math.floor(gi / L) }; }
   function rsChip(m, big){
     if(!m || m.code == null) return m && m.n ? '<i class="rs-code">' + m.n + '</i>' : '';
     var col = rsMarkCol(m), gl = m.g === "f" ? "F" : m.g === "m" ? "M" : "";
+    var im = rsCardImg(m);
+    if(big && im) return '<div class="rs-realcard"><img decoding="async" src="' + im + '" alt="البطاقة ' + escapeHTML(m.code) + '"/><div><small>الرقم التسلسلي</small><b dir="ltr">' + escapeHTML(m.code) + '</b><span>سلّمه هذه البطاقة</span></div></div>';
     if(big) return '<div class="rs-mtcard" style="background:' + col.c + ';color:' + rsInk(col.c) + '" dir="ltr">' + (gl ? '<span class="rs-gl rs-gl--' + m.g + '">' + gl + '</span>' : '') + '<span class="rs-mtcode"><small>الرقم التسلسلي</small>' + escapeHTML(m.code) + '</span></div>';
     return '<i class="rs-code" style="background:' + col.c + ';color:' + rsInk(col.c) + '" dir="ltr">' + (gl ? gl + " · " : "") + escapeHTML(m.code) + '</i>';
   }
   function rsColorName(m){ return rsMarkCol(m).n + (m.round ? " (الدورة " + (m.round + 1) + ")" : ""); }
   var rsDesk = { res: null, busy: false, auto: false, form: null };
-  try{ rsDesk.auto = localStorage.getItem("rsDeskAuto") === "1"; rsDesk.manual = localStorage.getItem("rsDeskManual") === "1"; }catch(e){}
+  // الاختيار اليدوي الدائم أُلغي لتبسيط الشاشة — يبقى «اختيار بطاقة أخرى» لكل شخص عند الحاجة
+  // الرقم + Enter = تأكيد الحضور مباشرة (تتوقف الشاشة فقط عند ما يحتاج قراراً: غير موجود، أكثر من شخص، جنس غير محدد)
+  rsDesk.auto = true;
+  rsDesk.manual = false;
   function rsDeskProgId(){ var id = ""; try{ id = localStorage.getItem("rsDeskProg") || ""; }catch(e){} return rs.programs.some(function(g){ return g.id === id; }) ? id : ""; }
   function rsDeskSetProg(id){ try{ localStorage.setItem("rsDeskProg", id || ""); }catch(e){} rsDesk.res = null; rsDesk.sess = ""; }
   function rsDeskProg(){ var id = rsDeskProgId(); return id ? rs.programs.find(function(g){ return g.id === id; }) : null; }
@@ -18040,7 +18157,37 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
   function rsCardOf(pid){ return (rsCardsOf().cards || {})[pid] || null; }
   function rsNextK(cards, gk){ var used = cards.used || {}, k = (+cards["ptr_" + gk] || 0) + 1; while(used[gk + "|" + k]) k++; return k; }
   function rsMakeCard(cfg, gk, k, manual){ var cd = rsCodeOf(cfg, k); return { g: gk, k: k, code: cd.code, c: cd.c, cn: cd.cn, ch: cd.ch, round: cd.round, t: Date.now(), by: rsBy(), manual: !!manual }; }
-  function rsPersonGk(g, p){ return rsBadgeCfg(g).split ? rsGk(p && p.gender) : "a"; }
+  // صفات الشخص التي لها بطاقة (المتطوع المسجّل في الورشة: متطوع + متدرب ← بطاقتان). الأولى بطاقته الأساسية
+  var RS_CARD_ORDER = ["supervisor", "admin", "volunteer", "trainee"];
+  function rsCardRoles(p){
+    if(!p) return [];
+    var r = rsRoles(p).concat(p.type ? [p.type] : []);
+    if(r.indexOf("hr") > -1 || r.indexOf("trainer") > -1) return [];
+    return RS_CARD_ORDER.filter(function(x){ return r.indexOf(x) > -1; });
+  }
+  function rsRoleGk(g, p, r){ return RS_SCHEMES[r] ? RS_SCHEMES[r].gk : (rsBadgeCfg(g).split ? rsGk(p && p.gender) : "a"); }
+  function rsCardKey(pid, i, gk){ return i ? pid + "~" + gk : pid; }
+  // كل بطاقات الشخص في الفعالية (الأساسية + الإضافية)
+  function rsCardsFor(pid){ var cs = rsCardsOf().cards || {}, out = []; if(cs[pid]) out.push(cs[pid]); Object.keys(cs).forEach(function(k){ if(k.indexOf(pid + "~") === 0) out.push(cs[k]); }); return out; }
+  function rsPersonGk(g, p){
+    var cr = rsCardRoles(p);
+    if(p && cr.length) return rsRoleGk(g, p, cr[0]);
+    var t = p && rsEffType(p);
+    if(RS_NOCARD[t]) return "none";
+    if(RS_SCHEMES[t]) return RS_SCHEMES[t].gk;
+    return rsBadgeCfg(g).split ? rsGk(p && p.gender) : "a";
+  }
+  function rsGkLabel(gk){ return gk === "f" ? "إناث (F)" : gk === "m" ? "ذكور (M)" : gk === "a" ? "" : (function(){ for(var t in RS_SCHEMES) if(RS_SCHEMES[t].gk === gk) return RS_SCHEMES[t].label; return ""; })(); }
+  // إعادة المحاولة تلقائياً عند تزاحم الأجهزة على نفس المستند
+  function rsRetry(fn, n){
+    return fn().catch(function(e){
+      var c = e && e.code;
+      if((n || 0) < 3 && (c === "aborted" || c === "failed-precondition" || c === "unavailable" || c === "deadline-exceeded")) return new Promise(function(r){ setTimeout(r, 250 + Math.random() * 600); }).then(function(){ return rsRetry(fn, (n || 0) + 1); });
+      throw e;
+    });
+  }
+  // جهاز الاستقبال: للإناث أو للذكور أو للجميع (للتنبيه فقط — البطاقة تُصرف دائماً من كومة جنس الشخص، فأي جهاز يخدم أي شخص)
+  function rsDeskSide(){ var v = ""; try{ v = localStorage.getItem("rsDeskSide") || ""; }catch(e){} return v === "m" || v === "f" ? v : ""; }
   function rsDeskShow(p){
     rsDesk.res = { kind: "found", pid: p.id };
     rsDesk.pick = rsDesk.manual && !rsCardOf(p.id) ? { purpose: "assign" } : null;
@@ -18051,41 +18198,47 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
   function rsDeskConfirm(){
     var g = rsDeskProg(), sid = g ? rsDeskSess(g) : "", r = rsDesk.res;
     if(!g || !sid || !r || r.kind !== "found" || rsDesk.busy || !can("roster.attend")) return;
-    var pid = r.pid, pp = rs.byId[pid], cfg = rsBadgeCfg(g), gk = rsPersonGk(g, pp), pick = rsDesk.pick;
-    var has = rsCardOf(pid);
-    if(!has && !gk){ showToast("حدد الجنس أولاً — البطاقات منفصلة للذكور والإناث"); rsBeep(false); return; }
+    var pid = r.pid, pp = rs.byId[pid], roles = rsCardRoles(pp), pick = rsDesk.pick, noCard = !roles.length;
+    var has = rsCardsFor(pid), haveKeys = {};
+    var plan = roles.map(function(ro, i){ var gk = rsRoleGk(g, pp, ro); return { role: ro, gk: gk, key: rsCardKey(pid, i, gk) }; });
+    if(noCard) pick = null;
+    if(plan.some(function(x){ return !x.gk && !(rsCardsOf().cards || {})[x.key]; })){ showToast("حدد الجنس أولاً — بطاقات المتدربين منفصلة للذكور والإناث"); rsBeep(false); return; }
     var wantK = pick && pick.purpose === "assign" && pick.k ? pick.k : 0;
-    if(!has && pick && pick.purpose === "assign" && !wantK){ showToast("اختر اللون والرقم أولاً، أو ألغِ الاختيار اليدوي"); rsBeep(false); return; }
     var sref = db.collection("rosterAttendance").doc(g.id + "__" + sid), cref = rsCardsRef(g);
     rsDesk.busy = true; rsRender();
     if((g.members || []).indexOf(pid) === -1){
       g.members = (g.members || []).concat(pid);
       rsGRef(g.id).update({ members: firebase.firestore.FieldValue.arrayUnion(pid) }).catch(function(e){ console.error(e); });
     }
-    db.runTransaction(function(tx){
+    rsRetry(function(){ return db.runTransaction(function(tx){
       return Promise.all([tx.get(cref), tx.get(sref)]).then(function(ds){
         var cx = ds[0].exists ? ds[0].data() : {}, sx = ds[1].exists ? ds[1].data() : {};
-        var cards = cx.cards || {}, used = cx.used || {}, marks = sx.marks || {}, old = marks[pid], card = cards[pid], fresh = false;
+        var cards = cx.cards || {}, used = cx.used || {}, marks = sx.marks || {}, old = marks[pid], fresh = false;
         cx.cards = cards; cx.used = used;
-        if(!card){
-          var k;
-          if(wantK){
-            if(used[gk + "|" + wantK] && used[gk + "|" + wantK] !== pid) throw { code: "card-used", who: used[gk + "|" + wantK], k: wantK };
+        var co = { programId: g.id, sessionId: "__cards", cards: {}, used: {} }, wrote = false;
+        plan.forEach(function(x, i){
+          if(cards[x.key]) return;
+          var cfg = rsCfgByGk(g, x.gk), manual = i === 0 && wantK, k;
+          if(manual){
+            if(used[x.gk + "|" + wantK] && used[x.gk + "|" + wantK] !== pid) throw { code: "card-used", who: used[x.gk + "|" + wantK], k: wantK };
             k = wantK;
-          } else k = rsNextK(cx, gk);
-          card = rsMakeCard(cfg, gk, k, !!wantK); fresh = true;
-          var co = { programId: g.id, sessionId: "__cards", cards: {}, used: {} };
-          co.cards[pid] = card; co.used[gk + "|" + k] = pid;
-          if(!wantK) co["ptr_" + gk] = Math.max(+cx["ptr_" + gk] || 0, k);
-          tx.set(cref, co, { merge: true });
-        }
+          } else k = rsNextK(cx, x.gk);
+          var card = rsMakeCard(cfg, x.gk, k, !!manual);
+          cards[x.key] = card; used[x.gk + "|" + k] = pid; co.cards[x.key] = card; co.used[x.gk + "|" + k] = pid;
+          if(!manual){ cx["ptr_" + x.gk] = Math.max(+cx["ptr_" + x.gk] || 0, k); co["ptr_" + x.gk] = cx["ptr_" + x.gk]; }
+          fresh = wrote = true;
+        });
+        if(wrote) tx.set(cref, co, { merge: true });
+        var card = plan.length ? cards[plan[0].key] : null;
         if(old && (old.s === "p" || old.s === "l")) return { again: true, card: card, m: old, fresh: fresh };
-        var m = { s: "p", t: Date.now(), by: rsBy(), g: card.g, k: card.k, n: card.k, code: card.code, c: card.c, cn: card.cn, ch: card.ch, round: card.round }, o = { programId: g.id, sessionId: sid, marks: {} };
+        var m = { s: "p", t: Date.now(), by: rsBy() };
+        if(card){ m.g = card.g; m.k = card.k; m.n = card.k; m.code = card.code; m.c = card.c; m.cn = card.cn; m.ch = card.ch; m.round = card.round; }
+        var o = { programId: g.id, sessionId: sid, marks: {} };
         o.marks[pid] = m;
         tx.set(sref, o, { merge: true });
         return { again: false, card: card, m: m, fresh: fresh };
       });
-    }).then(function(res){
+    }); }).then(function(res){
       rsDesk.busy = false; rsDesk.pick = null;
       rs.att[sid] = rs.att[sid] || {}; rs.att[sid][pid] = res.m;
       rsDesk.res = { kind: "done", pid: pid, m: res.card, again: res.again, fresh: res.fresh };
@@ -18098,9 +18251,69 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
       rsRender(); rsDeskFocus();
     });
   }
+  // رفع ملف PDF لبطاقات الموارد البشرية: كل صفحة تُحوَّل لصورة وتُرفع لمخزن الوسائط، ثم تُحفظ الروابط بالترتيب
+  var RS_PDFJS = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js";
+  function rsHrCardsPick(){
+    var inp = document.createElement("input"); inp.type = "file"; inp.accept = "application/pdf";
+    inp.onchange = function(){ if(inp.files && inp.files[0]) rsHrCardsUpload(inp.files[0]); };
+    inp.click();
+  }
+  function rsHrCardsUpload(file){
+    if(rsDesk.busy) return;
+    var up = function(dataUrl){ return new Promise(function(ok){ uploadDataUrlToR2(dataUrl, "templates", ok); }); };
+    rsDesk.busy = true; showToast("جارٍ قراءة الملف…");
+    (window.pdfjsLib ? Promise.resolve() : bdoLoadJs(RS_PDFJS)).then(function(){
+      window.pdfjsLib.GlobalWorkerOptions.workerSrc = RS_PDFJS.replace("pdf.min.js", "pdf.worker.min.js");
+      return file.arrayBuffer();
+    }).then(function(buf){ return window.pdfjsLib.getDocument({ data: buf }).promise; }).then(function(pdf){
+      if(pdf.numPages !== RS_TR_CARDS.length && !confirm("الملف فيه " + pdf.numPages + " صفحة والمتوقع " + RS_TR_CARDS.length + " بنفس ترتيب ملف الطباعة. المتابعة؟")) throw { code: "cancel" };
+      var urls = [], i = 0;
+      var next = function(){
+        if(++i > pdf.numPages) return Promise.resolve(urls);
+        showToast("رفع البطاقة " + i + " من " + pdf.numPages + "…");
+        return pdf.getPage(i).then(function(pg){
+          var v0 = pg.getViewport({ scale: 1 }), vp = pg.getViewport({ scale: 320 / v0.width }), c = document.createElement("canvas");
+          c.width = Math.round(vp.width); c.height = Math.round(vp.height);
+          return pg.render({ canvasContext: c.getContext("2d"), viewport: vp }).promise.then(function(){ return up(c.toDataURL("image/jpeg", 0.82)); });
+        }).then(function(u){ if(!/^https?:/.test(u || "")) throw { code: "upload" }; urls.push(u); return next(); });
+      };
+      return next();
+    }).then(function(urls){
+      return db.collection("hubMeta").doc("roster").set({ hrCards: urls, hrCardsAt: Date.now(), hrCardsBy: rsBy() }, { merge: true }).then(function(){ return urls; });
+    }).then(function(urls){ rsDesk.busy = false; showToast("✔ رُفعت " + urls.length + " بطاقة"); rsRender(); })
+      .catch(function(e){ rsDesk.busy = false; console.error(e); if(!(e && e.code === "cancel")) showToast(e && e.code === "upload" ? "⚠️ تعذّر رفع إحدى الصور — أعد المحاولة" : "⚠️ تعذّر قراءة الملف"); rsRender(); });
+  }
+  // حذف تأكيد حضور خاطئ من الجلسة الحالية. إن لم يحضر الشخص أي يوم آخر تُعاد بطاقته للكومة
+  // (وإن كانت آخر بطاقة صُرفت تعود هي «البطاقة التالية» فتُعطى لمن بعده)
+  function rsDeskUndo(pid){
+    var g = rsDeskProg(), sid = g ? rsDeskSess(g) : "", p = rs.byId[pid];
+    if(!g || !sid || !p || rsDesk.busy || !can("roster.attend")) return;
+    var other = rsSessions(g).some(function(x){ if(x.id === sid) return false; var m = (rs.att[x.id] || {})[pid]; return m && (m.s === "p" || m.s === "l"); });
+    var cl = rsCardsFor(pid);
+    if(!confirm("إلغاء تأكيد حضور " + p.name + " اليوم؟" + (cl.length && !other ? "\nوتُعاد " + (cl.length > 1 ? "بطاقاته " : "بطاقته ") + cl.map(function(c){ return c.code; }).join(" و ") + " للكومة — استرجعها منه." : ""))) return;
+    var sref = db.collection("rosterAttendance").doc(g.id + "__" + sid), cref = rsCardsRef(g);
+    rsDesk.busy = true;
+    rsRetry(function(){ return db.runTransaction(function(tx){
+      return Promise.all([tx.get(cref), tx.get(sref)]).then(function(ds){
+        if(ds[1].exists && (ds[1].data().marks || {})[pid]) tx.update(sref, new firebase.firestore.FieldPath("marks", pid), firebase.firestore.FieldValue.delete());
+        var cx = ds[0].exists ? ds[0].data() : null, cs = (cx && cx.cards) || {};
+        var keys = Object.keys(cs).filter(function(k){ return k === pid || k.indexOf(pid + "~") === 0; });
+        if(keys.length && !other){
+          var args = [];
+          keys.forEach(function(k){ var c = cs[k]; args.push(new firebase.firestore.FieldPath("cards", k), firebase.firestore.FieldValue.delete(), new firebase.firestore.FieldPath("used", c.g + "|" + c.k), firebase.firestore.FieldValue.delete()); if(+cx["ptr_" + c.g] === c.k) args.push("ptr_" + c.g, c.k - 1); });
+          tx.update.apply(tx, [cref].concat(args));
+        }
+      });
+    }); }).then(function(){
+      rsDesk.busy = false;
+      if(rs.att[sid]) delete rs.att[sid][pid];
+      if(rsDesk.res && rsDesk.res.pid === pid) rsDesk.res = null;
+      showToast("✔ أُلغي تأكيد حضور " + p.name); rsRender(); rsDeskFocus();
+    }).catch(function(e){ rsDesk.busy = false; console.error(e); showToast("⚠️ تعذّر الحذف — أعد المحاولة"); rsRender(); });
+  }
   // تغيير بطاقة شخص (ضاعت/أُعطي غيرها بالخطأ) أو ضبط «البطاقة التالية» في الكومة
   function rsDeskApplyPick(){
-    var g = rsDeskProg(), pick = rsDesk.pick, cfg = rsBadgeCfg(g);
+    var g = rsDeskProg(), pick = rsDesk.pick, cfg = rsCfgByGk(g, pick && pick.g);
     if(!g || !pick || !pick.k || rsDesk.busy) return;
     var cref = rsCardsRef(g), sid = rsDeskSess(g);
     if(pick.purpose === "ptr"){
@@ -18113,10 +18326,10 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
     if(pick.purpose !== "change") return;
     var pid = pick.pid, sref = sid ? db.collection("rosterAttendance").doc(g.id + "__" + sid) : null;
     rsDesk.busy = true; rsRender();
-    db.runTransaction(function(tx){
+    rsRetry(function(){ return db.runTransaction(function(tx){
       return Promise.all([tx.get(cref)].concat(sref ? [tx.get(sref)] : [])).then(function(ds){
         var cx = ds[0].exists ? ds[0].data() : {}, used = cx.used || {}, cards = cx.cards || {}, cur = cards[pid];
-        var gk = cur ? cur.g : pick.g, key = gk + "|" + pick.k;
+        var gk = pick.g || (cur ? cur.g : ""), key = gk + "|" + pick.k;
         if(used[key] && used[key] !== pid) throw { code: "card-used", who: used[key] };
         var card = rsMakeCard(cfg, gk, pick.k, true), up = {};
         up["cards." + pid] = card; up["used." + key] = pid;
@@ -18132,7 +18345,7 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
         }
         return card;
       });
-    }).then(function(card){
+    }); }).then(function(card){
       rsDesk.busy = false; rsDesk.pick = null;
       if(rsDesk.res && rsDesk.res.pid === pid && rsDesk.res.kind === "done") rsDesk.res.m = card;
       showToast("✔ غُيّرت البطاقة إلى " + card.cn + " " + card.code); rsRender(); rsDeskFocus();
@@ -18145,45 +18358,40 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
   }
   // منتقي البطاقة: اللون ثم الرقم، والمشغول معطّل
   function rsPickerHTML(g, gk, pick){
-    var cfg = rsBadgeCfg(g), used = rsCardsOf().used || {}, sel = pick.k ? rsCodeOf(cfg, pick.k) : null, ci = pick.ci != null ? pick.ci : (sel ? sel.c : -1);
-    var title = pick.purpose === "ptr" ? "البطاقة التالية في كومة " + (gk === "f" ? "الإناث (F)" : gk === "m" ? "الذكور (M)" : "البطاقات") : pick.purpose === "change" ? "اختر البطاقة الجديدة" : "اختر البطاقة يدوياً";
+    var cfg = rsCfgByGk(g, gk), used = rsCardsOf().used || {}, sel = pick.k ? rsCodeOf(cfg, pick.k) : null, ci = pick.ci != null ? pick.ci : (sel ? sel.c : (cfg.single ? 0 : -1)), PN = rsPickN(cfg);
+    var title = pick.purpose === "ptr" ? "البطاقة التالية في كومة " + (rsGkLabel(gk) || "البطاقات") : pick.purpose === "change" ? "اختر البطاقة الجديدة" : "اختر البطاقة يدوياً";
     var h = '<div class="rs-pick-card"><div class="rs-row rs-row--sb"><b>' + title + '</b><button type="button" class="rs-mini" data-rs="pick-cancel">' + (pick.purpose === "assign" ? "رجوع للتسلسل التلقائي" : "إلغاء") + '</button></div>' +
       '<div class="rs-pick-cols">' + cfg.colors.map(function(col, i){
-        var free = 0; for(var n = 1; n <= cfg.size; n++) if(!used[gk + "|" + (i * cfg.size + n)]) free++;
+        var free = 0; for(var n = 1; n <= PN; n++) if(!used[gk + "|" + (i * cfg.size + n)]) free++;
         return '<button type="button" data-rs="pick-col" data-v="' + i + '" class="' + (ci === i ? "on" : "") + '" style="--pc:' + col.c + '" title="' + escapeHTML(col.n) + '"><i style="background:' + col.c + '"></i><span>' + escapeHTML(col.n) + '</span><small>' + free + ' متاحة</small></button>';
       }).join("") + '</div>';
     if(ci > -1){
-      h += '<div class="rs-pick-nums">' + Array.apply(null, Array(cfg.size)).map(function(_, j){
+      h += '<div class="rs-pick-nums">' + Array.apply(null, Array(PN)).map(function(_, j){
         var k = ci * cfg.size + j + 1, who = used[gk + "|" + k], mine = pick.pid && who === pick.pid, busy = who && !mine && pick.purpose !== "ptr";
         var col = cfg.colors[ci];
-        return '<button type="button" data-rs="pick-num" data-v="' + k + '"' + (busy ? ' disabled title="مع ' + escapeHTML(rs.byId[who] ? rs.byId[who].name : "شخص آخر") + '"' : '') + ' class="' + (pick.k === k ? "on" : "") + (who ? " used" : "") + '" style="--pc:' + col.c + ';--pi:' + rsInk(col.c) + '" dir="ltr">' + cfg.prefix + "-" + pad2(j + 1) + '</button>';
+        return '<button type="button" data-rs="pick-num" data-v="' + k + '"' + (busy ? ' disabled title="مع ' + escapeHTML(rs.byId[who] ? rs.byId[who].name : "شخص آخر") + '"' : '') + ' class="' + (pick.k === k ? "on" : "") + (who ? " used" : "") + '" style="--pc:' + col.c + ';--pi:' + rsInk(col.c) + '" dir="ltr">' + cfg.prefix + "-" + rsPadW(j + 1, rsNumW(cfg)) + '</button>';
       }).join("") + '</div>';
     }
     if(pick.purpose !== "assign") h += '<div class="rs-dk-acts"><button type="button" class="btn-primary" data-rs="pick-apply"' + (pick.k && !rsDesk.busy ? "" : " disabled") + '>' + (pick.purpose === "ptr" ? "اعتماد كالبطاقة التالية" : "حفظ البطاقة الجديدة") + '</button></div>';
     return h + '</div>';
   }
   function rsDeskFormOpen(){
-    var q = rsDesk.res && rsDesk.res.q || "", d = rsDigits(q).replace(/\D/g, ""), f = { name: "", type: rsDesk.lastType || "trainee", nid: "", phone: "", gender: "" };
+    var q = rsDesk.res && rsDesk.res.q || "", d = rsDigits(q).replace(/\D/g, ""), sd = rsDeskSide(), f = { name: "", type: rsDesk.lastType || "trainee", nid: "", phone: "", gender: sd === "f" ? "أنثى" : sd === "m" ? "ذكر" : "" };
     if(/^[12]\d{9}$/.test(d)) f.nid = d; else if(d) f.phone = rsPhone(d); else f.name = q;
     rsDesk.form = f; rsRender();
-    setTimeout(function(){ var n = document.querySelector('#rosterRoot [data-rs-in="df"][data-v="' + (!f.name ? "name" : !f.nid ? "nid" : "phone") + '"]'); if(n) n.focus(); }, 30);
+    setTimeout(function(){ var n = document.querySelector('#rosterRoot [data-rs-in="df"][data-v="name"]'); if(n) n.focus(); }, 30);
   }
-  // التسجيل السريع: الاسم والهوية والجوال فقط، والجنس من زر الحفظ نفسه (يحدد كومة البطاقة M/F)
-  function rsDeskRegister(gender){
+  function rsDeskRegister(){
     var f = rsDesk.form, g = rsDeskProg();
     if(!f || rsDesk.busy) return;
-    if(gender) f.gender = gender;
-    var name = String(f.name || "").replace(/\s+/g, " ").trim(), nid = rsNid(f.nid), ph = rsPhone(f.phone), err = "", focus = "";
-    if(rsTok(rsNorm(name)).length < 2){ err = "اكتب الاسم الكامل (اسمان على الأقل)"; focus = "name"; }
-    else if(!/^[12]\d{9}$/.test(nid)){ err = "رقم الهوية يجب أن يكون 10 أرقام يبدأ بـ1 أو 2"; focus = "nid"; }
-    else if(!rsPhoneOk(ph)){ err = "رقم الجوال يجب أن يكون بصيغة 05xxxxxxxx"; focus = "phone"; }
-    else if(!rsNidOk(nid) && f.warned !== nid){ err = "رقم الهوية لا يجتاز التحقق — راجعه، أو اضغط زر التسجيل مرة أخرى إن كان صحيحاً"; focus = "nid"; f.warned = nid; }
-    if(err){ f.err = err; rsBeep(false); rsRender(); setTimeout(function(){ var el = document.querySelector('#rosterRoot [data-rs-in="df"][data-v="' + focus + '"]'); if(el) el.focus(); }, 30); return; }
-    f.err = ""; f.name = name; f.nid = nid; f.phone = ph;
-    if(rsBadgeCfg(g).split && !f.gender){ showToast("اختر ذكر أو أنثى"); return; }
+    var name = String(f.name || "").replace(/\s+/g, " ").trim();
+    if(!name){ showToast("اكتب الاسم"); return; }
+    if(rsBadgeCfg(g).split && !f.gender && rsPersonGk(g, { type: f.type || "trainee", gender: "" }) === ""){ showToast("حدد الجنس — بطاقات المتدربين منفصلة للذكور والإناث"); return; }
     var rec = { name: name, nameKey: rsNorm(name), nid: rsNid(f.nid), phone: rsPhone(f.phone), gender: f.gender || "", email: "", birth: "", org: "", notes: "", type: f.type || "trainee", roles: [f.type || "trainee"], status: "active" };
     var clash = rs.people.find(function(p){ return (rec.nid && p.nid === rec.nid) || (rec.phone && p.phone === rec.phone && rsNameSim(p.nameKey, rec.nameKey) >= 0.5); });
-    if(clash){ rsDesk.form = null; showToast("هذا الشخص مسجل مسبقاً — " + clash.regNo); rsDeskShow(clash); return; }
+    if(clash){ rsDesk.form = null; showToast("هذا الشخص مسجل مسبقاً — " + clash.name); rsDeskShow(clash); return; }
+    var samePh = rec.phone && rs.people.find(function(p){ return p.phone === rec.phone; });
+    if(samePh && !confirm("الجوال " + rec.phone + " مسجّل باسم: " + samePh.name + "\n\nإن كان هو نفس الشخص اضغط «إلغاء» لعرض بطاقته.\nتسجيل شخص جديد بنفس الجوال؟")){ rsDesk.form = null; rsDeskShow(samePh); return; }
     var need = {}; need[rec.type] = 1;
     rsDesk.busy = true; rsDesk.lastType = rec.type; rsRender();
     rsAllocate(need).then(function(start){
@@ -18213,7 +18421,7 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
   }
   function rsPersonInfoHTML(p, big){
     return '<div class="rs-dk-person"><div class="rs-dk-avatar">' + escapeHTML(String(p.name || "?").trim().charAt(0)) + '</div><div class="rs-dk-pin"><b class="rs-dk-name">' + escapeHTML(p.name) + '</b>' +
-      '<div class="rs-dk-tags">' + rsRoles(p).map(rsTypeBadge).join(" ") + '<span class="rs-reg" dir="ltr">' + escapeHTML(p.regNo) + '</span></div>' +
+      '<div class="rs-dk-tags">' + rsShowRoles(p) + (rsCardOf(p.id) ? " " + rsChip(rsCardOf(p.id)) : "") + '</div>' +
       '<dl><div><dt>الهوية</dt><dd dir="ltr">' + escapeHTML(p.nid || "—") + '</dd></div><div><dt>الجوال</dt><dd dir="ltr">' + escapeHTML(p.phone || "—") + '</dd></div><div><dt>الجنس</dt><dd>' + escapeHTML(p.gender || "—") + '</dd></div>' + (p.org ? '<div><dt>الجهة</dt><dd>' + escapeHTML(p.org) + '</dd></div>' : '') + '</dl></div></div>';
   }
   function rsDeskHTML(){
@@ -18227,10 +18435,10 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
     var sid = rsDeskSess(g), ss = rsSessions(g), marks = rs.att[sid] || {};
     var done = Object.keys(marks).filter(function(k){ return marks[k].s === "p" || marks[k].s === "l"; });
     var h = '<div class="rs-dk-bar"><div class="rs-dk-ev"><small>تسجيل حضور</small><b>' + escapeHTML(g.title) + '</b></div>' +
-      (ss.length > 1 ? '<select data-rs-ch="desk-sess"><option value="">— الجلسة —</option>' + ss.map(function(s, i){ return '<option value="' + s.id + '"' + (s.id === sid ? " selected" : "") + '>' + escapeHTML(s.title || ("الجلسة " + (i + 1))) + ' — ' + rsDate(s.date) + '</option>'; }).join("") + '</select>' : '') +
+      (ss.length > 1 ? '<select data-rs-ch="desk-sess"><option value="">— الجلسة —</option>' + ss.map(function(s, i){ return '<option value="' + s.id + '"' + (s.id === sid ? " selected" : "") + '>' + escapeHTML(s.title || ("الجلسة " + (i + 1))) + ' — ' + rsDate(s.date) + (s.vol ? " (للمتطوعين)" : "") + '</option>'; }).join("") + '</select>' : '') +
       '<div class="rs-dk-count"><b>' + done.length + '</b><span>حضور مؤكد' + ((g.members || []).length ? ' من ' + (g.members || []).length : '') + '</span></div>' +
-      '<label class="rs-dk-auto" title="يؤكد الحضور فور إدخال الرقم دون خطوة ثانية — للطوابير الطويلة (لا يعمل مع الاختيار اليدوي)"><input type="checkbox" data-rs-ch="desk-auto"' + (rsDesk.auto ? " checked" : "") + (rsDesk.manual ? " disabled" : "") + '/> تأكيد فوري</label>' +
-      '<label class="rs-dk-auto" title="الموظف يختار لون البطاقة ورقمها بنفسه لكل شخص جديد بدل التسلسل"><input type="checkbox" data-rs-ch="desk-manual"' + (rsDesk.manual ? " checked" : "") + '/> اختيار البطاقة يدوياً</label>' +
+      '<span class="rs-net' + (navigator.onLine === false ? " off" : "") + '">' + (navigator.onLine === false ? "● لا يوجد اتصال — لن يُحفظ التسجيل" : "● متصل ومتزامن مع كل الأجهزة") + '</span>' +
+      '<div class="rs-chips rs-dk-sidesel" title="أي جهاز يخدم أي شخص — البطاقة تُصرف دائماً من كومة جنسه">' + [["", "جهاز للجميع"], ["f", "جهاز الإناث"], ["m", "جهاز الذكور"]].map(function(o){ return '<button type="button" data-rs="desk-side" data-v="' + o[0] + '" class="' + (rsDeskSide() === o[0] ? "on" : "") + '">' + o[1] + '</button>'; }).join("") + '</div>' +
       '<button type="button" class="rs-mini" data-rs="desk-kiosk">' + (document.body.classList.contains("rs-kiosk") ? "إنهاء ملء الشاشة" : "ملء الشاشة") + '</button><button type="button" class="rs-mini" data-rs="desk-change">تغيير الفعالية</button></div>';
     if(!sid){
       return h + '<div class="rs-empty"><b>لا توجد جلسة بتاريخ اليوم في هذه الفعالية</b><p>' + (ss.length ? "اختر الجلسة من القائمة أعلاه، أو أضف جلسة اليوم." : "أضف جلسة اليوم لتبدأ التسجيل.") + '</p>' + (can("roster.programs") ? '<button type="button" class="btn-primary" data-rs="desk-today">إضافة جلسة اليوم</button>' : '') + '</div>';
@@ -18242,73 +18450,97 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
     if(rsDesk.form){
       var f = rsDesk.form;
       h += '<div class="rs-dk-card rs-dk-card--new"><div class="rs-dk-alert">⚠ الرقم <b dir="ltr">' + escapeHTML(r ? r.q : "") + '</b> غير موجود في السجل — سجّله الآن</div>' +
-        '<div class="rs-dk-form"><label class="rs-dk-full"><span>الاسم الكامل</span><input type="text" data-rs-in="df" data-v="name" value="' + escapeHTML(f.name) + '" autocomplete="off" enterkeyhint="next"/></label>' +
-        '<label><span>رقم الهوية</span><input type="text" inputmode="numeric" dir="ltr" maxlength="14" data-rs-in="df" data-v="nid" value="' + escapeHTML(f.nid) + '" autocomplete="off" enterkeyhint="next"/></label>' +
-        '<label><span>الجوال</span><input type="tel" dir="ltr" maxlength="16" data-rs-in="df" data-v="phone" value="' + escapeHTML(f.phone) + '" autocomplete="off" enterkeyhint="done"/></label></div>' +
-        (f.err ? '<p class="rs-dk-ferr">' + f.err + '</p>' : '') +
-        '<div class="rs-dk-acts rs-dk-acts--g">' + (rsBadgeCfg(rsDeskProg()).split ?
-          '<button type="button" class="btn-primary rs-dk-big rs-dk-gm" data-rs="df-save" data-v="ذكر"' + (rsDesk.busy ? " disabled" : "") + '>' + (rsDesk.busy ? "جارٍ التسجيل…" : '<b>M</b> تسجيل — ذكر') + '</button>' +
-          '<button type="button" class="btn-primary rs-dk-big rs-dk-gf" data-rs="df-save" data-v="أنثى"' + (rsDesk.busy ? " disabled" : "") + '>' + (rsDesk.busy ? "جارٍ التسجيل…" : '<b>F</b> تسجيل — أنثى') + '</button>' :
-          '<button type="button" class="btn-primary rs-dk-big" data-rs="df-save"' + (rsDesk.busy ? " disabled" : "") + '>' + (rsDesk.busy ? "جارٍ التسجيل…" : "تسجيل وتأكيد الحضور") + '</button>') +
-        '</div><div class="rs-dk-acts"><button type="button" class="btn-secondary" data-rs="desk-reset">إلغاء</button></div></div>';
+        '<div class="rs-dk-form"><label class="rs-dk-full"><span>الاسم الكامل *</span><input type="text" data-rs-in="df" data-v="name" value="' + escapeHTML(f.name) + '" autocomplete="off"/></label>' +
+        '<div class="rs-dk-full"><span>الصفة</span><div class="rs-chips rs-chips--lg">' + ["trainee", "volunteer", "supervisor", "admin", "hr"].map(function(k){ return '<button type="button" data-rs="df-type" data-v="' + k + '" class="' + (f.type === k ? "on" : "") + '">' + rsT(k).l + '</button>'; }).join("") + '</div></div>' +
+        '<label><span>رقم الهوية</span><input type="text" inputmode="numeric" dir="ltr" data-rs-in="df" data-v="nid" value="' + escapeHTML(f.nid) + '"/></label>' +
+        '<label><span>الجوال</span><input type="tel" dir="ltr" data-rs-in="df" data-v="phone" value="' + escapeHTML(f.phone) + '"/></label>' +
+        '<div class="rs-dk-full"><span>الجنس' + ((f.type || "trainee") === "trainee" ? " *" : "") + '</span><div class="rs-chips rs-chips--lg">' + ["ذكر", "أنثى"].map(function(x){ return '<button type="button" data-rs="df-gender" data-v="' + x + '" class="' + (f.gender === x ? "on" : "") + '">' + x + '</button>'; }).join("") + '</div></div></div>' +
+        '<div class="rs-dk-acts"><button type="button" class="btn-secondary" data-rs="desk-reset">إلغاء</button><button type="button" class="btn-primary rs-dk-big" data-rs="df-save"' + (rsDesk.busy ? " disabled" : "") + '>' + (rsDesk.busy ? "جارٍ التسجيل…" : "تسجيل وتأكيد الحضور") + '</button></div></div>';
     } else if(r && r.kind === "none"){
       h += '<div class="rs-dk-card rs-dk-card--bad"><div class="rs-dk-ic">✕</div><b class="rs-dk-title">الرقم غير موجود في السجل</b><span class="rs-dk-q" dir="ltr">' + escapeHTML(r.q) + '</span>' + (r.hint ? '<p class="rs-dk-hint">' + r.hint + '</p>' : '') +
         '<div class="rs-dk-acts">' + (canA ? '<button type="button" class="btn-primary rs-dk-big" data-rs="desk-new">تسجيل شخص جديد</button>' : '') + '<button type="button" class="btn-secondary" data-rs="desk-reset">إعادة الإدخال</button></div></div>';
     } else if(r && r.kind === "multi"){
-      h += '<div class="rs-dk-card"><b class="rs-dk-title">أكثر من شخص بهذا الرقم — اختر:</b><div class="rs-dk-multi">' + r.ids.map(function(id){ var x = rs.byId[id]; return x ? '<button type="button" data-rs="desk-pick" data-v="' + id + '"><b>' + escapeHTML(x.name) + '</b><span dir="ltr">' + escapeHTML(x.regNo) + '</span>' + rsTypeBadge(x.type) + '</button>' : ''; }).join("") + '</div></div>';
+      h += '<div class="rs-dk-card"><b class="rs-dk-title">أكثر من شخص بهذا الرقم — اختر:</b><div class="rs-dk-multi">' + r.ids.map(function(id){ var x = rs.byId[id]; return x ? '<button type="button" data-rs="desk-pick" data-v="' + id + '"><b>' + escapeHTML(x.name) + '</b><span dir="ltr">' + escapeHTML(x.phone || rsMaskNid(x.nid) || "") + '</span>' + rsTypeBadge(rsEffType(x)) + '</button>' : ''; }).join("") + '</div></div>';
     } else if(r && r.kind === "found" && p){
       var old = marks[p.id], already = old && (old.s === "p" || old.s === "l");
       h += '<div class="rs-dk-card' + (already ? " rs-dk-card--again" : "") + '">' + rsPersonInfoHTML(p) +
         (already ? '<div class="rs-dk-alert rs-dk-alert--info">سبق تأكيد حضوره اليوم الساعة ' + rsTime(old.t) + (rsCardOf(p.id) ? ' — بطاقته ' + rsChip(rsCardOf(p.id)) + ' ' + rsColorName(rsCardOf(p.id)) : '') + '</div>' : '') +
-        rsFoundCardHTML(g, p, already) +
+        rsFoundCardHTML(g, p, already) + rsExtraCardsHTML(g, p, already) +
         '<div class="rs-dk-acts"><button type="button" class="btn-secondary" data-rs="desk-reset">إلغاء</button>' +
         (already ? '' : '<button type="button" class="btn-primary rs-dk-big" data-rs="desk-confirm"' + (rsDesk.busy || (rsDesk.pick && rsDesk.pick.purpose === "assign" && !rsDesk.pick.k && !rsCardOf(p.id)) ? " disabled" : "") + '>' + (rsDesk.busy ? "جارٍ التأكيد…" : "✓ تأكيد الحضور") + '</button>') + '</div>' +
         (already ? '' : '<p class="rs-dk-tip">اضغط Enter للتأكيد</p>') + '</div>';
     } else if(r && r.kind === "done" && p){
-      var dm = r.m || {}, dcol = dm.code ? rsMarkCol(dm) : null;
+      var dm = r.m || {}, dcol = dm.code ? rsMarkCol(dm) : null, sd0 = rsDeskSide(), pc0 = rsCardOf(p.id);
+      var sideWarn = sd0 && pc0 && (pc0.g === "m" || pc0.g === "f") && pc0.g !== sd0 && !r.again ? '<div class="rs-dk-alert rs-dk-side">⚠️ ' + (pc0.g === "f" ? "مشاركة (أنثى)" : "مشارك (ذكر)") + ' على جهاز ' + (sd0 === "f" ? "الإناث" : "الذكور") + ' — سلّمها بطاقة من كومة <b>' + (pc0.g === "f" ? "الإناث F" : "الذكور M") + '</b></div>' : '';
       var cur0 = rsCardOf(p.id); if(cur0) dm = cur0;
-      h += '<div class="rs-dk-card rs-dk-card--ok' + (r.again ? " rs-dk-card--again" : "") + '"' + (dcol && dm.code ? ' style="border-color:color-mix(in srgb,' + dcol.c + ' 75%,#141c1b)"' : '') + '><div class="rs-dk-serial"><small>' + (r.again ? "حضوره مؤكد مسبقاً اليوم — بطاقته" : r.fresh ? "تم تأكيد الحضور — سلّمه البطاقة" : "تم تأكيد الحضور — بطاقته من يوم سابق (لا تُسلَّم بطاقة جديدة)") + '</small>' +
-        (dm.code ? rsChip(dm, true) + '<span class="rs-dk-color">البطاقة ' + rsColorName(dm) + ' · ' + (dm.g === "f" ? "إناث (F)" : dm.g === "m" ? "ذكور (M)" : "") + '</span>' +
-          (dm.round ? '<p class="rs-dk-alert">تجاوز العدد بطاقات الألوان المطبوعة (' + (rsBadgeCfg(rsDeskProg()).colors.length * rsBadgeCfg(rsDeskProg()).size) + ' لكل جنس) — عاد الترقيم لأول لون</p>' : '') : '<b>' + (dm.n || "") + '</b>') + '</div>' + rsPersonInfoHTML(p) +
-        (rsDesk.pick && rsDesk.pick.purpose === "change" && rsDesk.pick.pid === p.id ? rsPickerHTML(g, dm.g || rsPersonGk(g, p), rsDesk.pick) : (dm.code && can("roster.attend") ? '<div class="rs-dk-acts"><button type="button" class="rs-mini" data-rs="pick-change" data-v="' + p.id + '">تغيير البطاقة (أُعطي بطاقة أخرى / ضاعت)</button></div>' : '')) +
+      h += '<div class="rs-dk-card rs-dk-card--ok' + (r.again ? " rs-dk-card--again" : "") + '"' + (dcol && dm.code ? ' style="border-color:color-mix(in srgb,' + dcol.c + ' 75%,#141c1b)"' : '') + '>' + sideWarn + '<div class="rs-dk-serial"><small>' + (r.again ? "حضوره مؤكد مسبقاً اليوم" + (dm.code ? " — بطاقته" : "") : !dm.code ? "تم تأكيد الحضور" : r.fresh ? "تم تأكيد الحضور — سلّمه البطاقة" : "تم تأكيد الحضور — بطاقته من يوم سابق (لا تُسلَّم بطاقة جديدة)") + '</small>' +
+        (dm.code ? rsChip(dm, true) + '<span class="rs-dk-color">' + (dm.g === "f" || dm.g === "m" || dm.g === "a" ? 'البطاقة ' + rsColorName(dm) + ' · ' : '') + rsGkLabel(dm.g) + '</span>' +
+          (dm.round && (dm.g === "f" || dm.g === "m" || dm.g === "a") ? '<p class="rs-dk-alert">تجاوز العدد بطاقات الألوان المطبوعة (' + (rsBadgeCfg(rsDeskProg()).colors.length * rsBadgeCfg(rsDeskProg()).size) + ' لكل جنس) — عاد الترقيم لأول لون</p>' : '') : (RS_NOCARD[rsEffType(p)] ? '<b class="rs-dk-nc">' : '<b>') + (RS_NOCARD[rsEffType(p)] ? "✓ حضور مؤكد — " + escapeHTML(rsT(rsEffType(p)).l) + (rsTrainerCard(p) ? '</b><div class="rs-realcard"><img decoding="async" src="' + rsTrainerCard(p) + '" alt=""/><div><span>سلّمه بطاقته الشخصية</span></div></div><b>' : rsEffType(p) === "trainer" ? "<br><small>سلّمه بطاقته الشخصية المطبوعة باسمه</small>" : "") : (dm.n || "")) + '</b>') + '</div>' + rsPersonInfoHTML(p) +
+        (rsDesk.pick && rsDesk.pick.purpose === "change" && rsDesk.pick.pid === p.id ? rsPickerHTML(g, rsDesk.pick.g || dm.g, rsDesk.pick) : (dm.code && can("roster.attend") ? '<div class="rs-dk-acts"><button type="button" class="rs-mini" data-rs="pick-change" data-v="' + p.id + '">تغيير البطاقة (أُعطي بطاقة أخرى / ضاعت)</button></div>' : '')) +
+        (rsCardsFor(p.id).length > 1 ? '<div class="rs-dk-cardline">' + (r.again ? "بطاقاته" : "سلّمه البطاقتين") + ': ' + rsCardsFor(p.id).map(function(c){ return rsChip(c); }).join(" ") + '</div>' : '') + rsExtraCardsHTML(g, p, true) +
         '<p class="rs-dk-tip">أدخل رقم الشخص التالي مباشرة</p></div>';
     } else {
-      h += '<div class="rs-dk-idle"><b>أدخل رقم الهوية أو الجوال ثم Enter</b><span>يقبل أيضاً رقم التسجيل أو مسح بطاقة QR بقارئ الباركود' + (rsDesk.auto ? " — التأكيد الفوري مفعّل" : " — ثم Enter مرة ثانية لتأكيد الحضور") + '</span></div>';
+      h += '<div class="rs-dk-idle"><b>أدخل رقم الهوية أو الجوال ثم Enter</b><span>يقبل أيضاً رقم التسجيل أو مسح بطاقة QR بقارئ الباركود' + " — ويُؤكَّد الحضور مباشرة" + '</span></div>';
     }
     h += '</div>';
-    var recent = Object.keys(marks).filter(function(k){ return (marks[k].s === "p" || marks[k].s === "l") && rs.byId[k]; }).sort(function(a, b){ return (marks[b].t || 0) - (marks[a].t || 0); }).slice(0, 8);
-    if(recent.length) h += '<div class="rs-dk-recent"><b>آخر من تم تأكيد حضورهم (كل الأجهزة)</b>' + recent.map(function(k){ var x = rs.byId[k], m = marks[k]; return '<div>' + (m.code ? rsChip(m) : '<i>' + (m.n || "—") + '</i>') + '<span>' + escapeHTML(x.name) + '</span>' + rsTypeBadge(x.type) + '<small>' + rsTime(m.t) + '</small></div>'; }).join("") + '</div>';
+    var recentAll = Object.keys(marks).filter(function(k){ return (marks[k].s === "p" || marks[k].s === "l") && rs.byId[k]; }).sort(function(a, b){ return (marks[b].t || 0) - (marks[a].t || 0); });
+    var recent = rsDesk.allRecent ? recentAll : recentAll.slice(0, 8);
+    if(recent.length) h += '<div class="rs-dk-recent"><div class="rs-row rs-row--sb" style="border:0;padding:0"><b>آخر من تم تأكيد حضورهم (كل الأجهزة)</b>' + (recentAll.length > 8 ? '<button type="button" class="rs-mini" data-rs="recent-all">' + (rsDesk.allRecent ? "آخر 8 فقط" : "عرض الكل (" + recentAll.length + ")") + '</button>' : '') + '</div>' + recent.map(function(k){ var x = rs.byId[k], m = marks[k], cl = rsCardsFor(k); if(!cl.length && m.code) cl = [m]; return '<div>' + (cl.length ? cl.map(function(c){ return rsChip(c); }).join(" ") : '<i>✓</i>') + '<span>' + escapeHTML(x.name) + '</span>' + rsTypeBadge(rsEffType(x)) + '<small>' + rsTime(m.t) + '</small>' +
+      '<button type="button" class="rs-mini" data-rs="recent-edit" data-v="' + k + '">تعديل</button><button type="button" class="rs-mini rs-mini--del" data-rs="recent-del" data-v="' + k + '" title="إلغاء تأكيد حضوره اليوم">حذف</button></div>'; }).join("") + '</div>';
     h += rsDeskGroupsHTML(g, marks);
+    return h;
+  }
+  // البطاقات الإضافية لمن له أكثر من صفة (متطوع ومتدرب)، وزر لتسجيل المتطوع/المشرف/الإداري متدرباً في الورشة أيضاً
+  function rsExtraCardsHTML(g, p, already){
+    var cr = rsCardRoles(p), cs = rsCardsOf().cards || {}, cx = rsCardsOf(), h = "";
+    cr.slice(1).forEach(function(ro, i){
+      var gk = rsRoleGk(g, p, ro), key = rsCardKey(p.id, i + 1, gk), have = cs[key];
+      if(have){ if(!already) h += '<div class="rs-dk-cardline">وبطاقته كـ' + escapeHTML(rsT(ro).l) + ': ' + rsChip(have) + '</div>'; return; }
+      if(!gk) return;
+      var nc = rsMakeCard(rsCfgByGk(g, gk), gk, rsNextK(cx, gk)), im = rsCardImg(nc);
+      h += '<div class="rs-dk-cardline">' + (im ? '<img class="rs-thumbcard" loading="lazy" decoding="async" src="' + im + '" alt=""/>' : '') + 'وبطاقة ' + escapeHTML(rsT(ro).l) + ': ' + rsChip(nc) + '</div>';
+    });
+    if(cr.length && cr.indexOf("trainee") === -1 && can("roster.attend")) h += '<div class="rs-dk-acts"><button type="button" class="rs-mini" data-rs="desk-addtrainee" data-v="' + p.id + '">＋ تسجيله متدرباً في الورشة أيضاً</button></div>';
     return h;
   }
   // ملخص المجموعات اللونية: كم امتلأ من كل لون للذكور والإناث
   function rsFoundCardHTML(g, p, already){
-    var card = rsCardOf(p.id), gk = rsPersonGk(g, p), cfg = rsBadgeCfg(g);
+    var card = rsCardOf(p.id), gk = rsPersonGk(g, p), cfg = rsCfgByGk(g, gk);
+    var trc = rsTrainerCard(p);
+    if(gk === "none") return already ? '' : '<div class="rs-dk-cardline">' + (trc ? '<img class="rs-thumbcard rs-thumbcard--lg" decoding="async" src="' + trc + '" alt=""/>' : '') + escapeHTML(rsT(rsEffType(p)).l) + ' — <b>' + (trc ? "سلّمه بطاقته الشخصية (الظاهرة)" : RS_NOCARD_NOTE[rsEffType(p)]) + '</b></div>';
+    var side = rsDeskSide(), other = side && (gk === "m" || gk === "f") && gk !== side;
+    var warn = other && !card ? '<div class="rs-dk-alert rs-dk-side">⚠️ ' + (gk === "f" ? "مشاركة (أنثى)" : "مشارك (ذكر)") + ' على جهاز ' + (side === "f" ? "الإناث" : "الذكور") + ' — سلّمها بطاقة من كومة <b>' + (gk === "f" ? "الإناث F" : "الذكور M") + '</b></div>' : '';
     if(card) return already ? '' : '<div class="rs-dk-cardline">بطاقته من يوم سابق: ' + rsChip(card) + ' <b>' + escapeHTML(rsColorName(card)) + '</b> <span>— لا تُسلَّم بطاقة جديدة</span></div>';
     if(!gk) return '<div class="rs-dk-alert">الجنس غير مسجل — حدده لتُمنح البطاقة من كومته:<div class="rs-chips rs-chips--lg" style="margin-top:8px">' + ["ذكر", "أنثى"].map(function(x){ return '<button type="button" data-rs="desk-gender" data-v="' + x + '">' + x + '</button>'; }).join("") + '</div></div>';
-    if(rsDesk.pick && rsDesk.pick.purpose === "assign") return rsPickerHTML(g, gk, rsDesk.pick);
+    if(rsDesk.pick && rsDesk.pick.purpose === "assign") return warn + rsPickerHTML(g, gk, rsDesk.pick);
     var nk = rsNextK(rsCardsOf(), gk), nc = rsMakeCard(cfg, gk, nk);
-    return '<div class="rs-dk-cardline">البطاقة التي ستُسلَّم: ' + rsChip(nc) + ' <b>' + escapeHTML(rsColorName(nc)) + '</b> <button type="button" class="rs-mini" data-rs="pick-start">اختيار بطاقة أخرى</button></div>';
+    if(cfg.single && nk > cfg.max) warn += '<div class="rs-dk-alert">تجاوز العدد ' + cfg.max + ' في تسلسل ' + escapeHTML(cfg.label) + '</div>';
+    var nim = rsCardImg(nc);
+    return warn + '<div class="rs-dk-cardline">' + (nim ? '<img class="rs-thumbcard" loading="lazy" decoding="async" src="' + nim + '" alt=""/>' : '') + 'البطاقة التي ستُسلَّم: ' + rsChip(nc) + ' <b>' + escapeHTML(cfg.single ? cfg.label : rsColorName(nc)) + '</b> <button type="button" class="rs-mini" data-rs="pick-start">اختيار بطاقة أخرى</button></div>';
   }
   // لوحة الألوان: البطاقات الممنوحة (أشخاص فريدون طوال الفعالية) والبطاقة التالية لكل جنس
   function rsDeskGroupsHTML(g, marks){
     var cfg = rsBadgeCfg(g), cx = rsCardsOf(), cards = cx.cards || {}, grp = {}, order = [];
     var slot = function(key, col, round){ if(!grp[key]){ grp[key] = { n: col.n, c: col.c, round: round, m: 0, f: 0, a: 0 }; order.push(key); } return grp[key]; };
     cfg.colors.forEach(function(col){ slot("0|" + col.n + "|" + col.c, col, 0); });
-    Object.keys(cards).forEach(function(k){ var m = cards[k], col = rsMarkCol(m), o = slot((m.round || 0) + "|" + col.n + "|" + col.c, col, m.round || 0); o[m.g === "f" ? "f" : m.g === "m" ? "m" : "a"]++; });
+    Object.keys(cards).forEach(function(k){ var m = cards[k]; if(m.g !== "m" && m.g !== "f" && m.g !== "a") return; var col = rsMarkCol(m), o = slot((m.round || 0) + "|" + col.n + "|" + col.c, col, m.round || 0); o[m.g === "f" ? "f" : m.g === "m" ? "m" : "a"]++; });
     var gks = cfg.split ? ["m", "f"] : ["a"], cur = {}, next = {};
     gks.forEach(function(gk){ next[gk] = rsMakeCard(cfg, gk, rsNextK(cx, gk)); cur[gk] = (next[gk].round || 0) + "|" + next[gk].cn + "|" + next[gk].ch; });
     var canP = can("roster.attend"), pk = rsDesk.pick && rsDesk.pick.purpose === "ptr" ? rsDesk.pick : null;
     return '<div class="rs-dk-groups"><div class="rs-row rs-row--sb"><b>البطاقات (' + cfg.size + ' لكل لون' + (cfg.split ? '، لكل جنس' : '') + ') — ' + Object.keys(cards).length + ' بطاقة مُسلَّمة</b><div class="rs-row" style="margin:0">' +
       (can("roster.programs") ? '<button type="button" class="rs-mini" data-rs="desk-colors">تعديل الألوان والترقيم</button>' : '') + (can("roster.export") ? '<button type="button" class="rs-mini" data-rs="desk-export">تصدير الحضور والبطاقات Excel</button>' : '') + '</div></div>' +
       '<div class="rs-dk-next">' + gks.map(function(gk){ return '<div><span>التالية ' + (gk === "f" ? "للإناث" : gk === "m" ? "للذكور" : "") + ':</span> ' + rsChip(next[gk]) + ' <b>' + escapeHTML(next[gk].cn) + '</b>' + (canP ? ' <button type="button" class="rs-mini" data-rs="pick-ptr" data-v="' + gk + '">تعديل</button>' : '') + '</div>'; }).join("") + '</div>' +
-      (pk ? rsPickerHTML(g, pk.g, pk) : '') +
+      (pk && (pk.g === "m" || pk.g === "f" || pk.g === "a") ? rsPickerHTML(g, pk.g, pk) : '') +
       '<div class="rs-dk-grid">' +
       order.map(function(key, i){ var o = grp[key];
         var now = cfg.split ? [cur.m === key ? "الذكور الآن" : "", cur.f === key ? "الإناث الآن" : ""].filter(Boolean).join(" · ") : (cur.a === key ? "الجاري الآن" : "");
         return '<div class="rs-dk-grp' + (now ? " is-now" : "") + '" style="--gc:' + o.c + '"><i style="background:' + o.c + '"></i><b>' + (o.round ? "" : (i + 1) + ". ") + escapeHTML(o.n) + (o.round ? " — الدورة " + (o.round + 1) : "") + '</b>' +
           (cfg.split ? '<span>ذكور <em>' + o.m + '/' + cfg.size + '</em></span><span>إناث <em>' + o.f + '/' + cfg.size + '</em></span>' : '<span><em>' + o.a + '/' + cfg.size + '</em></span>') + (now ? '<small>◀ ' + now + '</small>' : '') + '</div>';
-      }).join("") + '</div></div>';
+      }).join("") + '</div>' +
+      '<div class="rs-dk-seqs">' + Object.keys(RS_SCHEMES).map(function(t){ var sc = RS_SCHEMES[t], scf = rsSchemeCfg(sc), n = Object.keys(cards).filter(function(k){ return cards[k].g === sc.gk; }).length, nx = rsMakeCard(scf, sc.gk, rsNextK(cx, sc.gk));
+        return '<div style="--gc:' + sc.color.c + '"><i style="background:' + sc.color.c + '"></i><b>' + sc.label + '</b><span><em>' + n + '/' + sc.max + '</em></span><span>التالي ' + rsChip(nx) + '</span>' + (canP ? '<button type="button" class="rs-mini" data-rs="pick-ptr" data-v="' + sc.gk + '">تعديل</button>' : '') + '</div>'; }).join("") +
+      '<div style="--gc:#8a9593"><i style="background:#8a9593"></i><b>الموارد البشرية</b><span>بطاقة شخصية باسمه — ' + ((rs.meta.hrCards || []).length ? (rs.meta.hrCards || []).length + ' بطاقة مرفوعة' : 'لم تُرفع صورها') + '</span>' + (can("roster.programs") ? '<button type="button" class="rs-mini" data-rs="hr-cards">' + ((rs.meta.hrCards || []).length ? "استبدال" : "رفع") + ' بطاقاتهم (PDF)</button>' : '') + '</div></div>' +
+      (pk && !(pk.g === "m" || pk.g === "f" || pk.g === "a") ? rsPickerHTML(g, pk.g, pk) : '') + '</div>';
   }
   function rsDeskExport(){
     var g = rsDeskProg();
@@ -18317,7 +18549,7 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
     var ids = rsUniq(Object.keys(cards).concat.apply(Object.keys(cards), ss.map(function(s){ return Object.keys(rs.att[s.id] || {}); }))).filter(function(k){ return rs.byId[k]; });
     var rows = ids.sort(function(a, b){ var x = cards[a] || {}, y = cards[b] || {}; return String(x.g || "z").localeCompare(String(y.g || "z")) || (x.k || 9999) - (y.k || 9999); }).map(function(k){
       var p = rs.byId[k], c = cards[k];
-      var row = { "الجنس": c ? (c.g === "f" ? "أنثى (F)" : c.g === "m" ? "ذكر (M)" : "") : (p.gender || ""), "لون البطاقة": c ? rsColorName(c) : "", "رقم البطاقة": c ? c.code : "", "الاسم": p.name, "الصفة": rsT(p.type).l, "رقم التسجيل": p.regNo, "الهوية": p.nid || "", "الجوال": p.phone || "" };
+      var row = { "الجنس": p.gender || "", "لون البطاقة": c ? rsColorName(c) : "", "رقم البطاقة": c ? c.code : "", "بطاقة إضافية": rsCardsFor(k).slice(1).map(function(x){ return x.code; }).join("، "), "تسلسل": c ? rsGkLabel(c.g) : (RS_NOCARD[rsEffType(p)] ? "حضور فقط" : ""), "الاسم": p.name, "الصفة": rsT(rsEffType(p)).l, "رقم التسجيل": p.regNo, "الهوية": p.nid || "", "الجوال": p.phone || "" };
       ss.forEach(function(s, i){ var m = (rs.att[s.id] || {})[k]; row[(s.title || ("اليوم " + (i + 1))) + " " + rsDate(s.date)] = m && (m.s === "p" || m.s === "l") ? "حاضر " + rsTime(m.t) : ""; });
       row["بطاقة يدوية"] = c && c.manual ? "نعم" : ""; row["سلّمها"] = c ? c.by || "" : "";
       return row;
@@ -18340,7 +18572,7 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
       case "desk-kiosk": document.body.classList.toggle("rs-kiosk"); rsRender(); rsDeskFocus(); return true;
       case "df-type": if(rsDesk.form){ rsDesk.form.type = v; rsRender(); } return true;
       case "df-gender": if(rsDesk.form){ rsDesk.form.gender = v; rsRender(); } return true;
-      case "df-save": rsDeskRegister(v); return true;
+      case "df-save": rsDeskRegister(); return true;
       case "desk-export": rsDeskExport(); return true;
       case "desk-colors": var gd = rsDeskProg(); if(gd) rsProgOpen(gd.id); return true;
       case "desk-gender":
@@ -18348,14 +18580,84 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
         if(p0){ p0.gender = v; rsPRef(p0.id).update({ gender: v, updatedAt: Date.now(), updatedBy: rsBy() }).catch(function(e){ console.error(e); }); if(rsDesk.manual){ rsDesk.pick = { purpose: "assign" }; rsRender(); } else rsDeskConfirm(); }
         return true;
       case "pick-start": rsDesk.pick = { purpose: "assign" }; rsRender(); return true;
-      case "pick-change": var pc = rsCardOf(v); rsDesk.pick = { purpose: "change", pid: v, g: pc ? pc.g : "", ci: pc ? pc.c : null }; rsRender(); return true;
-      case "pick-ptr": var nk0 = rsNextK(rsCardsOf(), v); rsDesk.pick = { purpose: "ptr", g: v, k: nk0, ci: Math.floor((nk0 - 1) / rsBadgeCfg(g).size) % rsBadgeCfg(g).colors.length }; rsRender(); return true;
+      case "pick-change": var pc = rsCardOf(v), pgk = rsPersonGk(g, rs.byId[v]), ng = pgk && pgk !== "none" ? pgk : (pc ? pc.g : ""); rsDesk.pick = { purpose: "change", pid: v, g: ng, ci: pc && pc.g === ng ? pc.c : (rsCfgByGk(g, ng).single ? 0 : null) }; rsRender(); return true;
+      case "pick-ptr": var nk0 = rsNextK(rsCardsOf(), v), pcf = rsCfgByGk(g, v); rsDesk.pick = { purpose: "ptr", g: v, k: nk0, ci: Math.floor((nk0 - 1) / pcf.size) % pcf.colors.length }; rsRender(); return true;
+      case "desk-side": try{ localStorage.setItem("rsDeskSide", v); }catch(e5){} rsRender(); rsDeskFocus(); return true;
+      case "hr-cards": if(can("roster.programs")) rsHrCardsPick(); return true;
+      case "desk-addtrainee":
+        var pa = rs.byId[v];
+        if(pa){ pa.roles = rsUniq(rsRoles(pa).concat(["trainee"])); rsPRef(v).update({ roles: firebase.firestore.FieldValue.arrayUnion("trainee"), updatedAt: Date.now(), updatedBy: rsBy() }).catch(function(e){ console.error(e); showToast("⚠️ تعذّر الحفظ"); }); showToast("✔ سُجّل متدرباً أيضاً — " + (rsDesk.res && rsDesk.res.kind === "done" ? "أدخل رقمه مرة أخرى لمنحه بطاقة المتدرب" : "أكّد حضوره لمنحه البطاقتين")); rsRender(); rsDeskFocus(); }
+        return true;
+      case "gen-add": rsGenAdd(); return true;
+      case "gen-del": rsGenDel(v); return true;
+      case "gen-export": rsGenExport(); return true;
+      case "recent-all": rsDesk.allRecent = !rsDesk.allRecent; rsRender(); return true;
+      case "recent-edit": rsPersonOpen(v); return true;
+      case "recent-del": rsDeskUndo(v); return true;
+      case "m-card-change": var mc = rsCardOf(v); rsModalClose(); rsUI.tab = "desk"; rsDesk.res = { kind: "done", pid: v, m: mc, again: true }; rsDeskAct("pick-change", v); window.scrollTo(0, 0); return true;
       case "pick-cancel": rsDesk.pick = null; rsRender(); rsDeskFocus(); return true;
       case "pick-col": if(rsDesk.pick){ rsDesk.pick.ci = +v; rsDesk.pick.k = 0; rsRender(); } return true;
       case "pick-num": if(rsDesk.pick){ rsDesk.pick.k = +v; rsRender(); rsDeskFocus(); } return true;
       case "pick-apply": rsDeskApplyPick(); return true;
     }
     return false;
+  }
+
+  // ===== كشف حضور عام: تسجيل سريع جداً (اسم، جوال، صفة) لأي حضور خارج السجل — مستند لكل يوم =====
+  // rosterAttendance/general__YYYY-MM-DD: { programId: "__general", sessionId: التاريخ, entries: { id: {name, phone, role, t, by} } }
+  // الصفات المضافة عبر «غير ذلك» تُحفظ في hubMeta/roster.genRoles وتظهر للجميع
+  var RS_GEN_BASE = ["متدرب", "متطوع", "مشرف متطوعين", "إداري", "موارد بشرية", "ضيف"];
+  var rsGen = { date: "", data: null, unsub: null, f: { name: "", phone: "", role: "متدرب", other: "" }, busy: false };
+  function rsGenRef(d){ return db.collection("rosterAttendance").doc("general__" + d); }
+  function rsGenWatch(d){
+    if(rsGen.date === d && rsGen.unsub) return;
+    if(rsGen.unsub){ rsGen.unsub(); rsGen.unsub = null; }
+    rsGen.date = d; rsGen.data = null;
+    rsGen.unsub = rsGenRef(d).onSnapshot(function(x){ rsGen.data = x.exists ? x.data() : {}; rsDirty(); }, function(e){ console.error(e); });
+  }
+  function rsGenRoles(){ return rsUniq(RS_GEN_BASE.concat((rs.meta && rs.meta.genRoles) || [])); }
+  function rsGenHTML(){
+    var d = rsGen.date || rsToday(); rsGenWatch(d);
+    var f = rsGen.f, ents = (rsGen.data && rsGen.data.entries) || {}, ids = Object.keys(ents).sort(function(a, b){ return (ents[b].t || 0) - (ents[a].t || 0); });
+    var cnt = {}; ids.forEach(function(k){ var r = ents[k].role || "—"; cnt[r] = (cnt[r] || 0) + 1; });
+    var h = '<div class="rs-card rs-gen"><div class="rs-row rs-row--sb"><h3 style="margin:0">كشف حضور عام</h3><label class="rs-inl" style="margin:0">اليوم <input type="date" data-rs-ch="gen-date" value="' + d + '"/></label></div>' +
+      '<div class="rs-gen-form"><input type="text" data-rs-in="gen" data-v="name" data-rs-keep="genname" id="rsGenName" placeholder="الاسم" value="' + escapeHTML(f.name) + '" autocomplete="off"/>' +
+      '<input type="tel" dir="ltr" data-rs-in="gen" data-v="phone" data-rs-keep="genphone" placeholder="الجوال" value="' + escapeHTML(f.phone) + '" autocomplete="off"/>' +
+      '<select data-rs-ch="gen-role">' + rsGenRoles().map(function(r){ return '<option' + (f.role === r ? " selected" : "") + '>' + escapeHTML(r) + '</option>'; }).join("") + '<option value="__other"' + (f.role === "__other" ? " selected" : "") + '>غير ذلك…</option></select>' +
+      (f.role === "__other" ? '<input type="text" data-rs-in="gen" data-v="other" data-rs-keep="genother" placeholder="اكتب الصفة الجديدة" value="' + escapeHTML(f.other) + '"/>' : '') +
+      '<button type="button" class="btn-primary" data-rs="gen-add"' + (rsGen.busy ? " disabled" : "") + '>＋ إضافة</button></div>' +
+      '<p class="rs-note">اكتب الاسم والجوال واختر الصفة ثم Enter — يُسجَّل حضوره لهذا اليوم مباشرة. «غير ذلك» يضيف صفة جديدة للقائمة.</p></div>';
+    h += '<div class="rs-card"><div class="rs-row rs-row--sb"><b>' + ids.length + ' حاضر · ' + rsDate(d) + '</b>' + (ids.length && can("roster.export") ? '<button type="button" class="rs-mini" data-rs="gen-export">تصدير Excel</button>' : '') + '</div>' +
+      (ids.length ? '<div class="rs-gen-cnt">' + Object.keys(cnt).map(function(r){ return '<span>' + escapeHTML(r) + ' <b>' + cnt[r] + '</b></span>'; }).join("") + '</div>' : '') +
+      (ids.length ? '<div class="rs-dk-recent rs-gen-list">' + ids.map(function(k){ var e = ents[k]; return '<div><span>' + escapeHTML(e.name) + '</span><i class="rs-tb">' + escapeHTML(e.role || "") + '</i><small dir="ltr">' + escapeHTML(e.phone || "") + '</small><small>' + rsTime(e.t) + '</small><button type="button" class="rs-mini rs-mini--del" data-rs="gen-del" data-v="' + k + '">حذف</button></div>'; }).join("") + '</div>' : '<p class="rs-note">لا يوجد حضور مسجّل في هذا اليوم بعد.</p>') + '</div>';
+    return h;
+  }
+  function rsGenAdd(){
+    var f = rsGen.f, name = String(f.name || "").replace(/\s+/g, " ").trim(), phone = rsPhone(f.phone), role = f.role === "__other" ? String(f.other || "").trim() : f.role;
+    if(!name){ showToast("اكتب الاسم"); var n0 = document.getElementById("rsGenName"); if(n0) n0.focus(); return; }
+    if(!role){ showToast("اكتب الصفة"); return; }
+    var d = rsGen.date || rsToday(), ents = (rsGen.data && rsGen.data.entries) || {};
+    var dup = Object.keys(ents).find(function(k){ return phone && ents[k].phone === phone; });
+    if(dup && !confirm(ents[dup].name + " مسجّل اليوم بنفس الجوال. إضافته مرة أخرى؟")) return;
+    var id = rsId("g"), o = { programId: "__general", sessionId: d, entries: {} };
+    o.entries[id] = { name: name, phone: phone, role: role, t: Date.now(), by: rsBy() };
+    rsGen.busy = true;
+    rsRetry(function(){ return rsGenRef(d).set(o, { merge: true }); }).then(function(){
+      rsGen.busy = false;
+      if(f.role === "__other" && rsGenRoles().indexOf(role) === -1) db.collection("hubMeta").doc("roster").set({ genRoles: firebase.firestore.FieldValue.arrayUnion(role) }, { merge: true }).catch(function(e){ console.error(e); });
+      rsGen.f = { name: "", phone: "", role: f.role === "__other" ? role : f.role, other: "" };
+      showToast("✔ " + name + " — " + role); rsBeep(true); rsRender();
+      setTimeout(function(){ var n = document.getElementById("rsGenName"); if(n) n.focus(); }, 30);
+    }).catch(function(e){ rsGen.busy = false; console.error(e); showToast("⚠️ لم يُحفظ — تحقق من الاتصال"); rsRender(); });
+  }
+  function rsGenDel(id){
+    var d = rsGen.date || rsToday(), e = ((rsGen.data && rsGen.data.entries) || {})[id];
+    if(!e || !confirm("حذف " + e.name + " من كشف اليوم؟")) return;
+    rsGenRef(d).update(new firebase.firestore.FieldPath("entries", id), firebase.firestore.FieldValue.delete()).catch(function(err){ console.error(err); showToast("⚠️ تعذّر الحذف"); });
+  }
+  function rsGenExport(){
+    var d = rsGen.date || rsToday(), ents = (rsGen.data && rsGen.data.entries) || {};
+    rsXlsx("كشف-حضور-عام-" + d, Object.keys(ents).sort(function(a, b){ return (ents[a].t || 0) - (ents[b].t || 0); }).map(function(k, i){ var e = ents[k]; return { "م": i + 1, "الاسم": e.name, "الجوال": e.phone || "", "الصفة": e.role || "", "الوقت": rsTime(e.t), "سجّله": e.by || "" }; }), "كشف الحضور");
   }
 
   // ----- الأحداث -----
@@ -18371,6 +18673,8 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
       case "export-reg": if(can("roster.export")) rsXlsx("سجل-المشاركين", rsFiltered().map(rsPersonRow), "السجل"); break;
       case "cards-reg": if(can("roster.export")) rsCards(rsFiltered().map(function(p){ return p.id; }), "بطاقات التسجيل"); break;
       case "imp-type": rsUI.impType = v; rsRender(); break;
+      case "gender-guess": rsGenderApply(); break;
+      case "imp-cat": if(imp){ imp.type = v; if(v !== "col") rsUI.impType = v; rsRender(); } break;
       case "imp-tpl":
         if(typeof window.XLSX === "undefined"){ showToast("مكتبة Excel غير متوفرة الآن"); break; }
         (function(){ var ws = window.XLSX.utils.aoa_to_sheet([RS_FIELDS.map(function(f){ return f.l.replace(/ \(.*\)$/, ""); }), ["محمد علي حسن آل فلان", "1012345678", "0551234567", "ذكر", "", "", "", "متدرب", ""]]); var wb = window.XLSX.utils.book_new(); wb.Workbook = { Views: [{ RTL: true }] }; window.XLSX.utils.book_append_sheet(wb, ws, "المشاركون"); window.XLSX.writeFile(wb, "نموذج-رفع-المشاركين.xlsx"); })();
@@ -18418,12 +18722,12 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
         if(g){ var held = rsHeld(g), ss = rsSessions(g); rsXlsx("حضور-" + g.title.slice(0, 40), rsMembers(g).map(function(p){
           var row = { "رقم التسجيل": p.regNo, "الاسم": p.name, "الفئة": rsT(p.type).l, "الجوال": p.phone || "" };
           ss.forEach(function(s, i){ var m2 = (rs.att[s.id] || {})[p.id], k = m2 && rsMk(m2.s); row[(i + 1) + " — " + (s.date || "")] = k ? k.l : ""; });
-          var r = rsRate(g, p.id, held); row["نسبة الحضور"] = r ? r.pct + "%" : ""; row["مؤهل للشهادة"] = p.type === "trainer" ? "" : r && r.pct >= (g.threshold || 75) ? "نعم" : "لا";
+          var r = rsRate(g, p.id, held); row["نسبة الحضور"] = r ? r.pct + "%" : ""; row["مؤهل للشهادة"] = RS_NOCARD[rsEffType(p)] ? "" : r && r.pct >= (g.threshold || 75) ? "نعم" : "لا";
           return row;
         }), "سجل الحضور"); }
         break;
       case "rec-cert":
-        if(g){ var held2 = rsHeld(g); rsXlsx("المؤهلون-" + g.title.slice(0, 40), rsMembers(g).filter(function(p){ var r = rsRate(g, p.id, held2); return p.type !== "trainer" && r && r.pct >= (g.threshold || 75); }).map(function(p){
+        if(g){ var held2 = rsHeld(g); rsXlsx("المؤهلون-" + g.title.slice(0, 40), rsMembers(g).filter(function(p){ var r = rsRate(g, p.id, held2); return !RS_NOCARD[rsEffType(p)] && r && r.pct >= (g.threshold || 75); }).map(function(p){
           var r = rsRate(g, p.id, held2); return { "الاسم": p.name, "رقم التسجيل": p.regNo, "البرنامج": g.title, "من": g.start || "", "إلى": g.end || "", "نسبة الحضور": r.pct + "%", "الجنس": p.gender || "" };
         }), "المؤهلون"); }
         break;
@@ -18436,7 +18740,7 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
       case "m-save-person": rsPersonSave(); break;
       case "m-del": rsPersonDelete(); break;
       case "m-role": if(rsUI.m && rsUI.m.d){ var rl = rsUI.m.d.roles, i = rl.indexOf(v); if(i > -1){ if(v !== (rsUI.m.id ? rs.byId[rsUI.m.id].type : rsUI.m.d.type)) rl.splice(i, 1); } else rl.push(v); rsModalRender(); } break;
-      case "m-copy": if(rsUI.m && rsUI.m.id){ var rn = rs.byId[rsUI.m.id].regNo; try{ navigator.clipboard.writeText(rn).then(function(){ showToast("✔ نُسخ " + rn); }); }catch(e){ showToast(rn); } } break;
+      case "m-copy": if(rsUI.m && rsUI.m.id){ var rcd = rsCardOf(rsUI.m.id), rn = rcd ? rcd.code : rs.byId[rsUI.m.id].regNo; try{ navigator.clipboard.writeText(rn).then(function(){ showToast("✔ نُسخ " + rn); }); }catch(e){ showToast(rn); } } break;
       case "m-cards": if(rsUI.m && rsUI.m.id) rsCards([rsUI.m.id], "بطاقة " + rs.byId[rsUI.m.id].name); break;
       case "m-sess-add": if(rsUI.m){ var ss2 = rsUI.m.d.sessions, lastD = ss2.length ? ss2[ss2.length - 1].date : (rsUI.m.d.start || rsToday()); ss2.push({ id: rsId("s"), date: lastD, title: "" }); rsModalRender(); } break;
       case "m-sess-rm": if(rsUI.m){ rsUI.m.d.sessions.splice(+v, 1); rsModalRender(); } break;
@@ -18470,6 +18774,7 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
     if(!k || !currentUser) return;
     var v = t.getAttribute("data-v");
     if(k === "deskq") rsDesk.q = t.value;
+    else if(k === "gen") rsGen.f[v] = t.value;
     else if(k === "df" && rsDesk.form) rsDesk.form[v] = t.value;
     else if(k === "q"){ rsUI.q = t.value; rsUI.limit = 150; rsRender(); }
     else if(k === "mq"){ rsUI.mq = t.value; rsRender(); }
@@ -18477,12 +18782,14 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
     else if(k === "pf" && rsUI.m && rsUI.m.d){ rsUI.m.d[v] = t.value; if(v === "type"){ rsUI.m.d.roles = rsUniq([t.value].concat(rsUI.m.d.roles.filter(function(r){ return RS_TYPES.some(function(x){ return x.k === r; }); }))); rsModalRender(); } }
     else if(k === "gf" && rsUI.m && rsUI.m.d){ rsUI.m.d[v] = t.value; if(v === "badgeSize" || v === "badgePrefix" || v === "badgeSplit"){ var ce = document.querySelector("#rsModal .rs-coled"); if(ce) ce.outerHTML = rsColorsEdHTML(rsUI.m.d); } }
     else if(k === "cf" && rsUI.m && rsUI.m.d){ var cp = v.split("|"), co = rsUI.m.d.colors[+cp[0]]; if(co) co[cp[1]] = t.value; }
-    else if(k === "sf" && rsUI.m && rsUI.m.d){ var pv = v.split("|"), s = rsUI.m.d.sessions[+pv[0]]; if(s) s[pv[1]] = t.value; }
+    else if(k === "sf" && rsUI.m && rsUI.m.d){ var pv = v.split("|"), s = rsUI.m.d.sessions[+pv[0]]; if(s) s[pv[1]] = t.type === "checkbox" ? t.checked : t.value; }
   });
   document.addEventListener("change", function(e){
     var t = e.target, k = t.getAttribute && t.getAttribute("data-rs-ch");
     if(!k || !currentUser) return;
     var imp = rsUI.imp, v = t.getAttribute("data-v");
+    if(k === "gen-date"){ rsGen.date = t.value || rsToday(); rsRender(); return; }
+    if(k === "gen-role"){ rsGen.f.role = t.value; rsRender(); if(t.value === "__other") setTimeout(function(){ var o = document.querySelector('#rosterRoot [data-v="other"]'); if(o) o.focus(); }, 30); return; }
     if(k === "desk-prog"){ rsDeskSetProg(t.value); rsRender(); rsDeskFocus(); }
     else if(k === "desk-sess"){ rsDesk.sess = t.value; rsDesk.res = null; rsRender(); rsDeskFocus(); }
     else if(k === "desk-manual"){ rsDesk.manual = t.checked; rsDesk.pick = null; try{ localStorage.setItem("rsDeskManual", t.checked ? "1" : "0"); }catch(e3){} rsRender(); rsDeskFocus(); }
@@ -18497,6 +18804,8 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
     else if(imp && k === "imp-prog"){ imp.prog = t.value; }
     else if(k === "dup-keep"){ rsUI.dupKeep[v] = t.value; rsRender(); }
   });
+  window.addEventListener("online", function(){ if(rsActive()) rsRender(true); });
+  window.addEventListener("offline", function(){ if(rsActive()) rsRender(true); });
   document.addEventListener("keydown", function(e){
     if(e.key === "Escape" && rsUI.m){ rsModalClose(); return; }
     var dt = e.target;
@@ -18510,14 +18819,8 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
       rsDeskLookup(dv);
       return;
     }
-    if(dt && dt.getAttribute && dt.getAttribute("data-rs-in") === "df" && e.key === "Enter"){
-      e.preventDefault();
-      var nx = { name: "nid", nid: "phone" }[dt.getAttribute("data-v")];
-      if(nx){ var ne = document.querySelector('#rosterRoot [data-rs-in="df"][data-v="' + nx + '"]'); if(ne){ ne.focus(); ne.select(); } }
-      else if(!rsBadgeCfg(rsDeskProg()).split) rsDeskRegister();
-      else { var gb = document.querySelector("#rosterRoot .rs-dk-acts--g"); if(gb){ gb.classList.remove("rs-flash-g"); void gb.offsetWidth; gb.classList.add("rs-flash-g"); } }
-      return;
-    }
+    if(dt && dt.getAttribute && dt.getAttribute("data-rs-in") === "df" && e.key === "Enter"){ e.preventDefault(); rsDeskRegister(); return; }
+    if(dt && dt.getAttribute && dt.getAttribute("data-rs-in") === "gen" && e.key === "Enter"){ e.preventDefault(); rsGenAdd(); return; }
     if(e.key !== "Enter" || !e.target || e.target.id !== "rsAq") return;
     e.preventDefault();
     var val = e.target.value; e.target.value = "";
