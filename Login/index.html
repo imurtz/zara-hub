@@ -2603,6 +2603,7 @@
 #rosterRoot .rs-dk-card--again .rs-dk-serial small{color:#2c5f99}
 #rosterRoot .rs-dk-serial b{display:block;font-size:84px;line-height:1.05;font-weight:700;color:#22764a;font-variant-numeric:tabular-nums}
 #rosterRoot .rs-dk-card--again .rs-dk-serial b{color:#2c5f99}
+#rosterRoot .rs-dk-serial b.rs-dk-nc{font-size:26px;line-height:1.5}
 #rosterRoot .rs-dk-multi{display:flex;flex-direction:column;gap:8px;margin-top:10px}
 #rosterRoot .rs-dk-multi button{display:flex;align-items:center;gap:10px;font:inherit;text-align:start;border:1px solid var(--rs-line);background:#fff;border-radius:14px;padding:12px 14px;cursor:pointer}
 #rosterRoot .rs-dk-multi button b{flex:1;font-size:15px}
@@ -2634,6 +2635,7 @@
 #rosterRoot .rs-realcard small{display:block;font-size:12px;color:#6b7775}
 #rosterRoot .rs-realcard b{display:block;font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:44px;line-height:1.1;color:#141c1b}
 #rosterRoot .rs-realcard span{display:block;font-size:14px;font-weight:600;color:#2f6f5e;margin-top:4px}
+#rosterRoot .rs-thumbcard--lg{width:52px}
 #rosterRoot .rs-thumbcard,#rsModal .rs-thumbcard{width:34px;height:auto;border-radius:4px;vertical-align:middle;margin-inline-end:8px;box-shadow:0 2px 6px rgba(20,28,27,.2)}
 #rosterRoot .rs-mtcard{display:inline-flex;align-items:center;gap:16px;border-radius:20px;padding:14px 22px;margin:8px auto 8px;box-shadow:0 12px 30px rgba(20,28,27,.2),inset 0 0 0 1px rgba(20,28,27,.15)}
 #rosterRoot .rs-mtcard .rs-gl{width:58px;height:58px;border-radius:14px;background:#fff;display:grid;place-items:center;font:700 36px/1 "IBM Plex Sans",system-ui,sans-serif}
@@ -16903,7 +16905,8 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
   // rosterImports (سجل عمليات الرفع)، وعدّاد الأرقام وقائمة «ليسوا مكررين» في hubMeta/roster
   // =====================================================================================
   var RS_TYPES = [
-    { k: "trainer", l: "مدرب", pl: "المدربون", acc: "المدربين", pre: "TR" },
+    // «مدرب» أُلغيت كفئة مستقلة: المدربون هم الموارد البشرية — تبقى للقيود القديمة وتُعرض «موارد بشرية»
+    { k: "trainer", l: "موارد بشرية", pl: "الموارد البشرية", acc: "الموارد البشرية", pre: "TR" },
     { k: "trainee", l: "متدرب", pl: "المتدربون", acc: "المتدربين", pre: "ST" },
     { k: "volunteer", l: "متطوع", pl: "المتطوعون", acc: "المتطوعين", pre: "VL" },
     { k: "supervisor", l: "مشرف متطوعين", pl: "مشرفو المتطوعين", acc: "مشرفي المتطوعين", pre: "VS" },
@@ -16936,6 +16939,7 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
   var rsUI = { tab: "desk", q: "", type: "", flt: "", limit: 150, prog: "", ptab: "attend", sess: "", mode: "p", mq: "", addq: "", last: null, imp: null, impType: "trainee", logs: null, dupKeep: {}, m: null, busy: false };
 
   // ----- أدوات عامة -----
+  function rsTypesUI(){ return RS_TYPES.filter(function(t){ return t.k !== "trainer"; }); }
   function rsT(k){ for(var i = 0; i < RS_TYPES.length; i++) if(RS_TYPES[i].k === k) return RS_TYPES[i]; return RS_TYPES[1]; }
   function rsMk(k){ for(var i = 0; i < RS_MARKS.length; i++) if(RS_MARKS[i].k === k) return RS_MARKS[i]; return null; }
   function rsId(pre){ return pre + "-" + Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
@@ -16990,7 +16994,7 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
     if(n.indexOf("موارد") > -1 || /\bhr\b/.test(n)) return "hr";
     if(n.indexOf("اداري") > -1 || /admin/.test(n)) return "admin";
     if(n.indexOf("متدرب") > -1 || n.indexOf("طالب") > -1 || n.indexOf("مستفيد") > -1 || /trainee|student/.test(n)) return "trainee";
-    if(n.indexOf("مدرب") > -1 || n.indexOf("محاضر") > -1 || n.indexOf("مقدم") > -1 || /trainer|coach|instructor/.test(n)) return "trainer";
+    if(n.indexOf("مدرب") > -1 || n.indexOf("محاضر") > -1 || n.indexOf("مقدم") > -1 || /trainer|coach|instructor/.test(n)) return "hr";
     if(n.indexOf("تطوع") > -1 || /volunt/.test(n)) return "volunteer";
     return "";
   }
@@ -17208,14 +17212,14 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
     RS_TYPES.forEach(function(t){ cnt[t.k] = 0; });
     ps.forEach(function(p){ rsRoles(p).forEach(function(r){ if(cnt[r] != null) cnt[r]++; }); });
     var inc = ps.filter(function(p){ return !p.phone || !p.nid; }).length;
-    var h = '<div class="rs-kpis">' + rsKpi(ps.length, "إجمالي المسجلين") + RS_TYPES.map(function(t){ return rsKpi(cnt[t.k], t.pl); }).join("") + rsKpi(inc, "بيانات ناقصة (جوال/هوية)", "tan") + '</div>';
+    var h = '<div class="rs-kpis">' + rsKpi(ps.length, "إجمالي المسجلين") + rsTypesUI().map(function(t){ return rsKpi(cnt[t.k], t.pl); }).join("") + rsKpi(inc, "بيانات ناقصة (جوال/هوية)", "tan") + '</div>';
     if(!ps.length){
       return h + '<div class="rs-empty"><b>السجل فارغ</b><p>ابدأ برفع ملفات Excel للمدربين والمتدربين والمتطوعين من تبويب «رفع ومطابقة» — تتم مطابقتهم تلقائياً ويُصدر لكل شخص رقم تسجيل.</p>' +
         (can("roster.import") ? '<button type="button" class="btn-primary" data-rs="tab" data-v="import">رفع ملف الآن</button>' : '') + '</div>';
     }
     var rows = rsFiltered();
     h += '<div class="rs-tools"><input type="search" data-rs-in="q" data-rs-keep="q" placeholder="ابحث بالاسم أو رقم التسجيل أو الجوال أو الهوية" value="' + escapeHTML(rsUI.q) + '"/>' +
-      '<div class="rs-chips"><button type="button" data-rs="type" data-v="" class="' + (!rsUI.type ? "on" : "") + '">الكل</button>' + RS_TYPES.map(function(t){ return '<button type="button" data-rs="type" data-v="' + t.k + '" class="' + (rsUI.type === t.k ? "on" : "") + '">' + t.pl + '</button>'; }).join("") + '</div>' +
+      '<div class="rs-chips"><button type="button" data-rs="type" data-v="" class="' + (!rsUI.type ? "on" : "") + '">الكل</button>' + rsTypesUI().map(function(t){ return '<button type="button" data-rs="type" data-v="' + t.k + '" class="' + (rsUI.type === t.k ? "on" : "") + '">' + t.pl + '</button>'; }).join("") + '</div>' +
       '<select data-rs-ch="flt"><option value="">كل الحالات</option>' + [["incomplete", "بيانات ناقصة"], ["badphone", "جوال غير صحيح"], ["badnid", "هوية غير صحيحة"], ["inactive", "غير نشط"]].map(function(o){ return '<option value="' + o[0] + '"' + (rsUI.flt === o[0] ? " selected" : "") + '>' + o[1] + '</option>'; }).join("") + '</select></div>';
     h += '<div class="rs-bar"><span>' + rows.length + ' نتيجة</span>' + (can("roster.export") ? '<button type="button" class="btn-secondary" data-rs="export-reg">تصدير Excel</button><button type="button" class="btn-secondary" data-rs="cards-reg">طباعة بطاقات QR</button>' : '') + '</div>';
     if(!rows.length) return h + '<p class="report-empty">لا نتائج مطابقة</p>';
@@ -17416,7 +17420,7 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
   function rsImpUploadHTML(){
     var pg = rsUI.imp && rsUI.imp.prog ? rs.programs.find(function(g){ return g.id === rsUI.imp.prog; }) : null;
     var h = rsImpSteps(1) + '<div class="rs-card"><h3>صفة الأشخاص في هذا الملف</h3><div class="rs-chips rs-chips--lg">' +
-      RS_TYPES.map(function(t){ return '<button type="button" data-rs="imp-type" data-v="' + t.k + '" class="' + (rsUI.impType === t.k ? "on" : "") + '">' + t.pl + '</button>'; }).join("") +
+      rsTypesUI().map(function(t){ return '<button type="button" data-rs="imp-type" data-v="' + t.k + '" class="' + (rsUI.impType === t.k ? "on" : "") + '">' + t.pl + '</button>'; }).join("") +
       '<button type="button" data-rs="imp-type" data-v="col" class="' + (rsUI.impType === "col" ? "on" : "") + '">مختلطون — حسب عمود «الفئة»</button></div>' +
       (pg ? '<p class="rs-note">سيُلحق المستوردون ببرنامج «' + escapeHTML(pg.title) + '» تلقائياً.</p>' : '') +
       '<button type="button" class="rs-drop" data-rs="imp-pick"><b>اختر ملف Excel أو CSV</b><span>أو اسحبه وأفلته هنا — يُكتشف صف العناوين والأعمدة تلقائياً</span></button>' +
@@ -17426,7 +17430,7 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
       '<li><b>توحيد البيانات:</b> الأرقام العربية تتحول، والجوال يوحَّد بصيغة 05xxxxxxxx، والاسم يُطابَق دون اعتبار للهمزات والتشكيل.</li>' +
       '<li><b>المطابقة مع السجل:</b> بالهوية أولاً، ثم الجوال، ثم الاسم الكامل — فلا يتكرر شخص مسجل سابقاً، ويُكمَل الناقص من بياناته.</li>' +
       '<li><b>المشتبه به:</b> الأسماء المتقاربة أو نفس الجوال باسم مختلف تُعرض لقرارك قبل الاعتماد.</li>' +
-      '<li><b>أرقام التسجيل:</b> تُصدر للجدد فقط بتسلسل ثابت لكل فئة: ' + RS_TYPES.map(function(t){ return t.l + ' <code dir="ltr">' + t.pre + '-0001</code>'; }).join("، ") + '.</li></ul></div>';
+      '<li><b>أرقام التسجيل:</b> تُصدر للجدد فقط بتسلسل ثابت لكل فئة: ' + rsTypesUI().map(function(t){ return t.l + ' <code dir="ltr">' + t.pre + '-0001</code>'; }).join("، ") + '.</li></ul></div>';
     h += rsImpLogHTML();
     return h;
   }
@@ -17448,10 +17452,10 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
     var h = rsImpSteps(2) + '<div class="rs-card"><div class="rs-row rs-row--sb"><h3>' + escapeHTML(imp.file) + ' — ' + imp.rows.length + ' صف</h3>' +
       (imp.wb && imp.wb.SheetNames.length > 1 ? '<label class="rs-inl">الورقة <select data-rs-ch="imp-sheet">' + imp.wb.SheetNames.map(function(s){ return '<option' + (s === imp.sheet ? " selected" : "") + '>' + escapeHTML(s) + '</option>'; }).join("") + '</select></label>' : '') + '</div>' +
       '<p class="rs-note">تأكد من ربط كل حقل بالعمود الصحيح — الاسم إلزامي، والهوية والجوال أساس المطابقة.</p>' +
-      '<div class="rs-impcat"><b>تصنيف الأشخاص في هذا الملف</b><div class="rs-chips">' + RS_TYPES.map(function(t){ return '<button type="button" data-rs="imp-cat" data-v="' + t.k + '" class="' + (imp.type === t.k ? "on" : "") + '">' + t.l + '</button>'; }).join("") +
+      '<div class="rs-impcat"><b>تصنيف الأشخاص في هذا الملف</b><div class="rs-chips">' + rsTypesUI().map(function(t){ return '<button type="button" data-rs="imp-cat" data-v="' + t.k + '" class="' + (imp.type === t.k ? "on" : "") + '">' + t.l + '</button>'; }).join("") +
       '<button type="button" data-rs="imp-cat" data-v="col" class="' + (imp.type === "col" ? "on" : "") + '">حسب عمود «الفئة»</button></div></div><div class="rs-map">' +
       RS_FIELDS.filter(function(f){ return f.k !== "type" || imp.type === "col"; }).map(function(f){ return '<label><span>' + f.l + (f.k === "name" ? ' <em>*</em>' : '') + '</span><select data-rs-ch="imp-map" data-v="' + f.k + '">' + opts(f.k) + '</select></label>'; }).join("") + '</div>' +
-      (imp.type === "col" ? '<label class="rs-inl">إن كانت الفئة فارغة اعتبره <select data-rs-ch="imp-fallback">' + RS_TYPES.map(function(t){ return '<option value="' + t.k + '"' + (imp.fallback === t.k ? " selected" : "") + '>' + t.l + '</option>'; }).join("") + '</select></label>' : '') + '</div>';
+      (imp.type === "col" ? '<label class="rs-inl">إن كانت الفئة فارغة اعتبره <select data-rs-ch="imp-fallback">' + rsTypesUI().map(function(t){ return '<option value="' + t.k + '"' + (imp.fallback === t.k ? " selected" : "") + '>' + t.l + '</option>'; }).join("") + '</select></label>' : '') + '</div>';
     var prev = imp.rows.slice(0, 4);
     h += '<div class="rs-card"><h3>معاينة أول ' + prev.length + ' صفوف بعد التوحيد</h3><div class="rs-tablewrap"><table class="rs-table rs-table--plain"><thead><tr><th>الاسم</th><th>الجوال</th><th>الهوية</th><th>الجنس</th><th>الفئة</th></tr></thead><tbody>' +
       prev.map(function(r){ var tc = imp.type === "col" ? (rsTypeOf(rsImpGet(imp, r, "type")) || imp.fallback) : imp.type; return '<tr><td>' + escapeHTML(rsImpName(imp, r) || "—") + '</td><td dir="ltr">' + escapeHTML(rsPhone(rsImpGet(imp, r, "phone")) || "—") + '</td><td dir="ltr">' + escapeHTML(rsNid(rsImpGet(imp, r, "nid")) || "—") + '</td><td>' + escapeHTML(rsGender(rsImpGet(imp, r, "gender")) || "—") + '</td><td>' + rsT(tc).l + '</td></tr>'; }).join("") +
@@ -17493,7 +17497,7 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
           '<option value="skip"' + (r.act === "skip" ? " selected" : "") + '>تجاهل</option></select>';
         return '<tr class="' + (r.act === "hold" ? "rs-tr-hold" : r.act === "skip" ? "rs-tr-skip" : "") + '"><td>' + (r.i + 1) + '</td><td><b>' + escapeHTML(r.name || "—") + '</b>' + r.issues.map(function(x){ return '<small class="rs-issue">' + escapeHTML(x) + '</small>'; }).join("") + '</td>' +
           '<td dir="ltr">' + escapeHTML(r.phone || "—") + '</td><td dir="ltr">' + escapeHTML(r.nid || "—") + '</td>' +
-          '<td><select data-rs-ch="imp-rtype" data-v="' + r.i + '">' + RS_TYPES.map(function(t){ return '<option value="' + t.k + '"' + (r.type === t.k ? " selected" : "") + '>' + t.l + '</option>'; }).join("") + '</select></td>' +
+          '<td><select data-rs-ch="imp-rtype" data-v="' + r.i + '">' + rsTypesUI().map(function(t){ return '<option value="' + t.k + '"' + (r.type === t.k ? " selected" : "") + '>' + t.l + '</option>'; }).join("") + '</select></td>' +
           '<td class="rs-res">' + res + '</td><td>' + (r.st === "empty" ? "—" : sel) + '</td></tr>';
       }).join("") + '</tbody></table></div>';
     if(list.length > (imp.lim || 300)) h += '<div class="rs-more"><button type="button" class="btn-secondary" data-rs="imp-more">عرض المزيد (' + (list.length - (imp.lim || 300)) + ')</button></div>';
@@ -17656,7 +17660,7 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
       res = rsUniq(res.map(function(p){ return p.id; })).map(function(id){ return rs.byId[id]; }).filter(function(p){ return p && !mem[p.id]; }).slice(0, 12);
       h += '<div class="rs-card"><h3>إضافة مشاركين</h3><input type="search" class="rs-wide" data-rs-in="addq" data-rs-keep="addq" placeholder="ابحث في السجل بالاسم أو الرقم أو الجوال" value="' + escapeHTML(rsUI.addq) + '"/>' +
         (res.length ? '<div class="rs-addlist">' + res.map(function(p){ return '<div><span class="rs-reg" dir="ltr">' + escapeHTML(p.regNo) + '</span><b>' + escapeHTML(p.name) + '</b>' + rsTypeBadge(p.type) + '<button type="button" class="rs-mini" data-rs="mem-add" data-v="' + p.id + '">＋ إضافة</button></div>'; }).join("") + '</div>' : (rsUI.addq.trim() ? '<p class="report-empty">لا نتائج غير مضافة</p>' : '')) +
-        '<div class="rs-row"><span class="rs-note">إضافة جماعية:</span>' + RS_TYPES.map(function(t){ return '<button type="button" class="rs-mini" data-rs="mem-type" data-v="' + t.k + '">كل ' + t.acc + '</button>'; }).join("") +
+        '<div class="rs-row"><span class="rs-note">إضافة جماعية:</span>' + rsTypesUI().map(function(t){ return '<button type="button" class="rs-mini" data-rs="mem-type" data-v="' + t.k + '">كل ' + t.acc + '</button>'; }).join("") +
         (can("roster.import") ? '<button type="button" class="rs-mini" data-rs="mem-import">رفع ملف لهذا البرنامج</button>' : '') + '</div></div>';
     }
     if(!ms.length) return h + '<p class="report-empty">لا يوجد مشاركون بعد</p>';
@@ -17885,11 +17889,11 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
       return h;
     }
     h += '<div class="rs-form">' + rsFld("name", "الاسم الكامل *", d.name, "text", ro) +
-      '<label class="rs-f"><span>الفئة الأساسية</span><select data-rs-in="pf" data-v="type"' + ro + '>' + RS_TYPES.map(function(t){ return '<option value="' + t.k + '"' + (d.type === t.k ? " selected" : "") + '>' + t.l + '</option>'; }).join("") + '</select><small>تحدد تسلسل بطاقته في الحضور</small></label>' +
+      '<label class="rs-f"><span>الفئة الأساسية</span><select data-rs-in="pf" data-v="type"' + ro + '>' + rsTypesUI().map(function(t){ return '<option value="' + t.k + '"' + (d.type === t.k ? " selected" : "") + '>' + t.l + '</option>'; }).join("") + '</select><small>تحدد تسلسل بطاقته في الحضور</small></label>' +
       rsFld("phone", "الجوال", d.phone, "tel", ro + ' dir="ltr"') + rsFld("nid", "رقم الهوية / الإقامة", d.nid, "text", ro + ' dir="ltr" inputmode="numeric"') +
       '<label class="rs-f"><span>الجنس</span><select data-rs-in="pf" data-v="gender"' + ro + '><option value="">—</option>' + ["ذكر", "أنثى"].map(function(x){ return '<option' + (d.gender === x ? " selected" : "") + '>' + x + '</option>'; }).join("") + '</select></label>' +
       rsFld("email", "البريد الإلكتروني", d.email, "email", ro + ' dir="ltr"') + rsFld("birth", "تاريخ الميلاد", d.birth, "text", ro) + rsFld("org", "الجهة / التخصص", d.org, "text", ro) +
-      '<label class="rs-f rs-f--w"><span>أدوار إضافية</span><div class="rs-chips">' + RS_TYPES.map(function(t){ return '<button type="button"' + (ed ? ' data-rs="m-role" data-v="' + t.k + '"' : ' disabled') + ' class="' + (d.roles.indexOf(t.k) > -1 ? "on" : "") + '">' + t.l + '</button>'; }).join("") + '</div></label>' +
+      '<label class="rs-f rs-f--w"><span>أدوار إضافية</span><div class="rs-chips">' + rsTypesUI().map(function(t){ return '<button type="button"' + (ed ? ' data-rs="m-role" data-v="' + t.k + '"' : ' disabled') + ' class="' + (d.roles.indexOf(t.k) > -1 ? "on" : "") + '">' + t.l + '</button>'; }).join("") + '</div></label>' +
       '<label class="rs-f"><span>الحالة</span><select data-rs-in="pf" data-v="status"' + ro + '><option value="active"' + (d.status !== "inactive" ? " selected" : "") + '>نشط</option><option value="inactive"' + (d.status === "inactive" ? " selected" : "") + '>غير نشط</option></select></label>' +
       '<label class="rs-f rs-f--w"><span>ملاحظات</span><textarea data-rs-in="pf" data-v="notes" rows="2"' + ro + '>' + escapeHTML(d.notes || "") + '</textarea></label></div>';
     if(p) h += '<p class="rs-meta">أُضيف ' + (p.createdAt ? new Date(p.createdAt).toLocaleDateString("ar-SA-u-nu-latn") : "") + (p.createdBy ? " بواسطة " + escapeHTML(p.createdBy) : "") + (p.source ? " · المصدر: " + escapeHTML(p.source) : "") + '</p>';
@@ -18025,7 +18029,19 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
   };
   // بلا رقم تسلسلي: الموارد البشرية حضور فقط، والمدربون لكل منهم بطاقة شخصية مطبوعة باسمه وصورته
   var RS_NOCARD = { hr: 1, trainer: 1 };
-  var RS_NOCARD_NOTE = { hr: "حضور فقط بلا رقم تسلسلي", trainer: "بطاقته الشخصية المطبوعة باسمه — لا رقم تسلسلي" };
+  var RS_NOCARD_NOTE = { hr: "بطاقته الشخصية المطبوعة باسمه — لا رقم تسلسلي", trainer: "بطاقته الشخصية المطبوعة باسمه — لا رقم تسلسلي" };
+  // بطاقات الموارد البشرية المطبوعة (باسم كل شخص وصورته) بترتيب ملف الطباعة؛ تُطابق بالاسم.
+  // الصور لا تُحفظ في ملفات الموقع: تُرفع من داخل البوابة (زر «رفع بطاقاتهم») إلى مخزن الوسائط، وروابطها في hubMeta/roster.hrCards
+  var RS_TR_CARDS = ["روان جعفر ال شهاب","أحمد حسين البوخمسين","جعفر محمد أبوالرحي","حسين عبدالله آل عبدالعزيز","مصطفى إبراهيم المسلم","زينب محمد آل الشيخ","عبدالعزيز علي كعبي","أحمد محمد الصادق","عبدالعال علي آل ريح","علاء أحمد الدبيسي","إبتهال محمد آل سيف","مأوى نسيب آل محسن","فايز عبدالعزيز","باسل عبدالرحمن البتيري","هاشم بن شرف السعيدي","عبدالله عبدالعزيز الوحيد","محمد سلمان آل جاسم","أحمد حسن الصحاف","نور علي آل جبر","نور عبدالله آل غانم","حسين علي ابوتاكي","محمد عادل ال محيسن","حسين علي المرهون","موسى صالح العنكي","مهدي تقي اليوسف","علي عبدالله آل عيد","عصام فريد المرهون","علي عبدالله ال حرز","حسين علي العوامي","علي أحمد آل خميس","سلمان فهد الشقاق","عبدالله محمد آل مويل","علي حسين النزر","خالد ناصر الشهراني","علي محمد القحطاني","حسين عبدالعزيز الزاير"];
+  var _rsTrIx = null;
+  function rsTrainerCard(p){
+    if(!p || !p.nameKey) return "";
+    if(!_rsTrIx) _rsTrIx = RS_TR_CARDS.map(function(n){ return rsNorm(n.replace(/(^|\s)(ال|آل)\s+/g, "$1آل")); });
+    var k = rsNorm(String(p.name || "").replace(/(^|\s)(ال|آل)\s+/g, "$1آل")), best = 0, at = -1;
+    _rsTrIx.forEach(function(t, i){ var sm = rsNameSim(k, t); if(sm > best){ best = sm; at = i; } });
+    var urls = (rs.meta && rs.meta.hrCards) || [];
+    return best >= 0.75 && urls[at] ? urls[at] : "";
+  }
   // صورة البطاقة المطبوعة نفسها (Login/cards/vl-57.jpg …) لمن لهم بطاقات مطبوعة مرقّمة
   function rsCardImg(m){
     if(!m || !m.k) return "";
@@ -18182,6 +18198,38 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
       else showToast(e && e.code === "permission-denied" ? "⚠️ قواعد قاعدة البيانات لا تسمح بالحفظ في هذا القسم بعد" : "⚠️ لم يُؤكَّد الحضور — تحقق من الاتصال وأعد المحاولة");
       rsRender(); rsDeskFocus();
     });
+  }
+  // رفع ملف PDF لبطاقات الموارد البشرية: كل صفحة تُحوَّل لصورة وتُرفع لمخزن الوسائط، ثم تُحفظ الروابط بالترتيب
+  var RS_PDFJS = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js";
+  function rsHrCardsPick(){
+    var inp = document.createElement("input"); inp.type = "file"; inp.accept = "application/pdf";
+    inp.onchange = function(){ if(inp.files && inp.files[0]) rsHrCardsUpload(inp.files[0]); };
+    inp.click();
+  }
+  function rsHrCardsUpload(file){
+    if(rsDesk.busy) return;
+    var up = function(dataUrl){ return new Promise(function(ok){ uploadDataUrlToR2(dataUrl, "templates", ok); }); };
+    rsDesk.busy = true; showToast("جارٍ قراءة الملف…");
+    (window.pdfjsLib ? Promise.resolve() : bdoLoadJs(RS_PDFJS)).then(function(){
+      window.pdfjsLib.GlobalWorkerOptions.workerSrc = RS_PDFJS.replace("pdf.min.js", "pdf.worker.min.js");
+      return file.arrayBuffer();
+    }).then(function(buf){ return window.pdfjsLib.getDocument({ data: buf }).promise; }).then(function(pdf){
+      if(pdf.numPages !== RS_TR_CARDS.length && !confirm("الملف فيه " + pdf.numPages + " صفحة والمتوقع " + RS_TR_CARDS.length + " بنفس ترتيب ملف الطباعة. المتابعة؟")) throw { code: "cancel" };
+      var urls = [], i = 0;
+      var next = function(){
+        if(++i > pdf.numPages) return Promise.resolve(urls);
+        showToast("رفع البطاقة " + i + " من " + pdf.numPages + "…");
+        return pdf.getPage(i).then(function(pg){
+          var v0 = pg.getViewport({ scale: 1 }), vp = pg.getViewport({ scale: 320 / v0.width }), c = document.createElement("canvas");
+          c.width = Math.round(vp.width); c.height = Math.round(vp.height);
+          return pg.render({ canvasContext: c.getContext("2d"), viewport: vp }).promise.then(function(){ return up(c.toDataURL("image/jpeg", 0.82)); });
+        }).then(function(u){ if(!/^https?:/.test(u || "")) throw { code: "upload" }; urls.push(u); return next(); });
+      };
+      return next();
+    }).then(function(urls){
+      return db.collection("hubMeta").doc("roster").set({ hrCards: urls, hrCardsAt: Date.now(), hrCardsBy: rsBy() }, { merge: true }).then(function(){ return urls; });
+    }).then(function(urls){ rsDesk.busy = false; showToast("✔ رُفعت " + urls.length + " بطاقة"); rsRender(); })
+      .catch(function(e){ rsDesk.busy = false; console.error(e); if(!(e && e.code === "cancel")) showToast(e && e.code === "upload" ? "⚠️ تعذّر رفع إحدى الصور — أعد المحاولة" : "⚠️ تعذّر قراءة الملف"); rsRender(); });
   }
   // حذف تأكيد حضور خاطئ من الجلسة الحالية. إن لم يحضر الشخص أي يوم آخر تُعاد بطاقته للكومة
   // (وإن كانت آخر بطاقة صُرفت تعود هي «البطاقة التالية» فتُعطى لمن بعده)
@@ -18348,7 +18396,7 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
       var f = rsDesk.form;
       h += '<div class="rs-dk-card rs-dk-card--new"><div class="rs-dk-alert">⚠ الرقم <b dir="ltr">' + escapeHTML(r ? r.q : "") + '</b> غير موجود في السجل — سجّله الآن</div>' +
         '<div class="rs-dk-form"><label class="rs-dk-full"><span>الاسم الكامل *</span><input type="text" data-rs-in="df" data-v="name" value="' + escapeHTML(f.name) + '" autocomplete="off"/></label>' +
-        '<div class="rs-dk-full"><span>الصفة</span><div class="rs-chips rs-chips--lg">' + ["trainee", "volunteer", "supervisor", "admin", "hr", "trainer"].map(function(k){ return '<button type="button" data-rs="df-type" data-v="' + k + '" class="' + (f.type === k ? "on" : "") + '">' + rsT(k).l + '</button>'; }).join("") + '</div></div>' +
+        '<div class="rs-dk-full"><span>الصفة</span><div class="rs-chips rs-chips--lg">' + ["trainee", "volunteer", "supervisor", "admin", "hr"].map(function(k){ return '<button type="button" data-rs="df-type" data-v="' + k + '" class="' + (f.type === k ? "on" : "") + '">' + rsT(k).l + '</button>'; }).join("") + '</div></div>' +
         '<label><span>رقم الهوية</span><input type="text" inputmode="numeric" dir="ltr" data-rs-in="df" data-v="nid" value="' + escapeHTML(f.nid) + '"/></label>' +
         '<label><span>الجوال</span><input type="tel" dir="ltr" data-rs-in="df" data-v="phone" value="' + escapeHTML(f.phone) + '"/></label>' +
         '<div class="rs-dk-full"><span>الجنس' + ((f.type || "trainee") === "trainee" ? " *" : "") + '</span><div class="rs-chips rs-chips--lg">' + ["ذكر", "أنثى"].map(function(x){ return '<button type="button" data-rs="df-gender" data-v="' + x + '" class="' + (f.gender === x ? "on" : "") + '">' + x + '</button>'; }).join("") + '</div></div></div>' +
@@ -18371,7 +18419,7 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
       var cur0 = rsCardOf(p.id); if(cur0) dm = cur0;
       h += '<div class="rs-dk-card rs-dk-card--ok' + (r.again ? " rs-dk-card--again" : "") + '"' + (dcol && dm.code ? ' style="border-color:color-mix(in srgb,' + dcol.c + ' 75%,#141c1b)"' : '') + '><div class="rs-dk-serial"><small>' + (r.again ? "حضوره مؤكد مسبقاً اليوم" + (dm.code ? " — بطاقته" : "") : !dm.code ? "تم تأكيد الحضور" : r.fresh ? "تم تأكيد الحضور — سلّمه البطاقة" : "تم تأكيد الحضور — بطاقته من يوم سابق (لا تُسلَّم بطاقة جديدة)") + '</small>' +
         (dm.code ? rsChip(dm, true) + '<span class="rs-dk-color">' + (dm.g === "f" || dm.g === "m" || dm.g === "a" ? 'البطاقة ' + rsColorName(dm) + ' · ' : '') + rsGkLabel(dm.g) + '</span>' +
-          (dm.round && (dm.g === "f" || dm.g === "m" || dm.g === "a") ? '<p class="rs-dk-alert">تجاوز العدد بطاقات الألوان المطبوعة (' + (rsBadgeCfg(rsDeskProg()).colors.length * rsBadgeCfg(rsDeskProg()).size) + ' لكل جنس) — عاد الترقيم لأول لون</p>' : '') : '<b>' + (RS_NOCARD[rsEffType(p)] ? "✓ حضور مؤكد — " + escapeHTML(rsT(rsEffType(p)).l) + (rsEffType(p) === "trainer" ? "<br><small>سلّمه بطاقته الشخصية المطبوعة باسمه</small>" : "") : (dm.n || "")) + '</b>') + '</div>' + rsPersonInfoHTML(p) +
+          (dm.round && (dm.g === "f" || dm.g === "m" || dm.g === "a") ? '<p class="rs-dk-alert">تجاوز العدد بطاقات الألوان المطبوعة (' + (rsBadgeCfg(rsDeskProg()).colors.length * rsBadgeCfg(rsDeskProg()).size) + ' لكل جنس) — عاد الترقيم لأول لون</p>' : '') : (RS_NOCARD[rsEffType(p)] ? '<b class="rs-dk-nc">' : '<b>') + (RS_NOCARD[rsEffType(p)] ? "✓ حضور مؤكد — " + escapeHTML(rsT(rsEffType(p)).l) + (rsTrainerCard(p) ? '</b><div class="rs-realcard"><img decoding="async" src="' + rsTrainerCard(p) + '" alt=""/><div><span>سلّمه بطاقته الشخصية</span></div></div><b>' : rsEffType(p) === "trainer" ? "<br><small>سلّمه بطاقته الشخصية المطبوعة باسمه</small>" : "") : (dm.n || "")) + '</b>') + '</div>' + rsPersonInfoHTML(p) +
         (rsDesk.pick && rsDesk.pick.purpose === "change" && rsDesk.pick.pid === p.id ? rsPickerHTML(g, dm.g || rsPersonGk(g, p), rsDesk.pick) : (dm.code && can("roster.attend") ? '<div class="rs-dk-acts"><button type="button" class="rs-mini" data-rs="pick-change" data-v="' + p.id + '">تغيير البطاقة (أُعطي بطاقة أخرى / ضاعت)</button></div>' : '')) +
         '<p class="rs-dk-tip">أدخل رقم الشخص التالي مباشرة</p></div>';
     } else {
@@ -18388,7 +18436,8 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
   // ملخص المجموعات اللونية: كم امتلأ من كل لون للذكور والإناث
   function rsFoundCardHTML(g, p, already){
     var card = rsCardOf(p.id), gk = rsPersonGk(g, p), cfg = rsCfgByGk(g, gk);
-    if(gk === "none") return already ? '' : '<div class="rs-dk-cardline">' + escapeHTML(rsT(rsEffType(p)).l) + ' — <b>' + RS_NOCARD_NOTE[rsEffType(p)] + '</b></div>';
+    var trc = rsTrainerCard(p);
+    if(gk === "none") return already ? '' : '<div class="rs-dk-cardline">' + (trc ? '<img class="rs-thumbcard rs-thumbcard--lg" decoding="async" src="' + trc + '" alt=""/>' : '') + escapeHTML(rsT(rsEffType(p)).l) + ' — <b>' + (trc ? "سلّمه بطاقته الشخصية (الظاهرة)" : RS_NOCARD_NOTE[rsEffType(p)]) + '</b></div>';
     var side = rsDeskSide(), other = side && (gk === "m" || gk === "f") && gk !== side;
     var warn = other && !card ? '<div class="rs-dk-alert rs-dk-side">⚠️ ' + (gk === "f" ? "مشاركة (أنثى)" : "مشارك (ذكر)") + ' على جهاز ' + (side === "f" ? "الإناث" : "الذكور") + ' — سلّمها بطاقة من كومة <b>' + (gk === "f" ? "الإناث F" : "الذكور M") + '</b></div>' : '';
     if(card) return already ? '' : '<div class="rs-dk-cardline">بطاقته من يوم سابق: ' + rsChip(card) + ' <b>' + escapeHTML(rsColorName(card)) + '</b> <span>— لا تُسلَّم بطاقة جديدة</span></div>';
@@ -18420,7 +18469,7 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
       }).join("") + '</div>' +
       '<div class="rs-dk-seqs">' + Object.keys(RS_SCHEMES).map(function(t){ var sc = RS_SCHEMES[t], scf = rsSchemeCfg(sc), n = Object.keys(cards).filter(function(k){ return cards[k].g === sc.gk; }).length, nx = rsMakeCard(scf, sc.gk, rsNextK(cx, sc.gk));
         return '<div style="--gc:' + sc.color.c + '"><i style="background:' + sc.color.c + '"></i><b>' + sc.label + '</b><span><em>' + n + '/' + sc.max + '</em></span><span>التالي ' + rsChip(nx) + '</span>' + (canP ? '<button type="button" class="rs-mini" data-rs="pick-ptr" data-v="' + sc.gk + '">تعديل</button>' : '') + '</div>'; }).join("") +
-      '<div style="--gc:#8a9593"><i style="background:#8a9593"></i><b>الموارد البشرية</b><span>حضور فقط بلا رقم</span></div><div style="--gc:#8a9593"><i style="background:#8a9593"></i><b>المدربون</b><span>بطاقة شخصية باسمه</span></div></div>' +
+      '<div style="--gc:#8a9593"><i style="background:#8a9593"></i><b>الموارد البشرية</b><span>بطاقة شخصية باسمه — ' + ((rs.meta.hrCards || []).length ? (rs.meta.hrCards || []).length + ' بطاقة مرفوعة' : 'لم تُرفع صورها') + '</span>' + (can("roster.programs") ? '<button type="button" class="rs-mini" data-rs="hr-cards">' + ((rs.meta.hrCards || []).length ? "استبدال" : "رفع") + ' بطاقاتهم (PDF)</button>' : '') + '</div></div>' +
       (pk && !(pk.g === "m" || pk.g === "f" || pk.g === "a") ? rsPickerHTML(g, pk.g, pk) : '') + '</div>';
   }
   function rsDeskExport(){
@@ -18464,6 +18513,7 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
       case "pick-change": var pc = rsCardOf(v); rsDesk.pick = { purpose: "change", pid: v, g: pc ? pc.g : "", ci: pc ? pc.c : null }; rsRender(); return true;
       case "pick-ptr": var nk0 = rsNextK(rsCardsOf(), v), pcf = rsCfgByGk(g, v); rsDesk.pick = { purpose: "ptr", g: v, k: nk0, ci: Math.floor((nk0 - 1) / pcf.size) % pcf.colors.length }; rsRender(); return true;
       case "desk-side": try{ localStorage.setItem("rsDeskSide", v); }catch(e5){} rsRender(); rsDeskFocus(); return true;
+      case "hr-cards": if(can("roster.programs")) rsHrCardsPick(); return true;
       case "recent-all": rsDesk.allRecent = !rsDesk.allRecent; rsRender(); return true;
       case "recent-edit": rsPersonOpen(v); return true;
       case "recent-del": rsDeskUndo(v); return true;
