@@ -18146,7 +18146,7 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
   function rsNextK(cards, gk){ var used = cards.used || {}, k = (+cards["ptr_" + gk] || 0) + 1; while(used[gk + "|" + k]) k++; return k; }
   function rsMakeCard(cfg, gk, k, manual){ var cd = rsCodeOf(cfg, k); return { g: gk, k: k, code: cd.code, c: cd.c, cn: cd.cn, ch: cd.ch, round: cd.round, t: Date.now(), by: rsBy(), manual: !!manual }; }
   function rsPersonGk(g, p){
-    var t = p && rsEffType(p);
+    var t = p && ((rsDesk.as || {})[p.id] || rsEffType(p));
     if(RS_NOCARD[t]) return "none";
     if(RS_SCHEMES[t]) return RS_SCHEMES[t].gk;
     return rsBadgeCfg(g).split ? rsGk(p && p.gender) : "a";
@@ -18303,7 +18303,7 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
     rsRetry(function(){ return db.runTransaction(function(tx){
       return Promise.all([tx.get(cref)].concat(sref ? [tx.get(sref)] : [])).then(function(ds){
         var cx = ds[0].exists ? ds[0].data() : {}, used = cx.used || {}, cards = cx.cards || {}, cur = cards[pid];
-        var gk = cur ? cur.g : pick.g, key = gk + "|" + pick.k;
+        var gk = pick.g || (cur ? cur.g : ""), key = gk + "|" + pick.k;
         if(used[key] && used[key] !== pid) throw { code: "card-used", who: used[key] };
         var card = rsMakeCard(cfg, gk, pick.k, true), up = {};
         up["cards." + pid] = card; up["used." + key] = pid;
@@ -18363,7 +18363,9 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
     if(rsBadgeCfg(g).split && !f.gender && rsPersonGk(g, { type: f.type || "trainee", gender: "" }) === ""){ showToast("حدد الجنس — بطاقات المتدربين منفصلة للذكور والإناث"); return; }
     var rec = { name: name, nameKey: rsNorm(name), nid: rsNid(f.nid), phone: rsPhone(f.phone), gender: f.gender || "", email: "", birth: "", org: "", notes: "", type: f.type || "trainee", roles: [f.type || "trainee"], status: "active" };
     var clash = rs.people.find(function(p){ return (rec.nid && p.nid === rec.nid) || (rec.phone && p.phone === rec.phone && rsNameSim(p.nameKey, rec.nameKey) >= 0.5); });
-    if(clash){ rsDesk.form = null; showToast("هذا الشخص مسجل مسبقاً — " + clash.regNo); rsDeskShow(clash); return; }
+    if(clash){ rsDesk.form = null; showToast("هذا الشخص مسجل مسبقاً — " + clash.name); rsDeskShow(clash); return; }
+    var samePh = rec.phone && rs.people.find(function(p){ return p.phone === rec.phone; });
+    if(samePh && !confirm("الجوال " + rec.phone + " مسجّل باسم: " + samePh.name + "\n\nإن كان هو نفس الشخص اضغط «إلغاء» لعرض بطاقته.\nتسجيل شخص جديد بنفس الجوال؟")){ rsDesk.form = null; rsDeskShow(samePh); return; }
     var need = {}; need[rec.type] = 1;
     rsDesk.busy = true; rsDesk.lastType = rec.type; rsRender();
     rsAllocate(need).then(function(start){
@@ -18437,7 +18439,7 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
       var old = marks[p.id], already = old && (old.s === "p" || old.s === "l");
       h += '<div class="rs-dk-card' + (already ? " rs-dk-card--again" : "") + '">' + rsPersonInfoHTML(p) +
         (already ? '<div class="rs-dk-alert rs-dk-alert--info">سبق تأكيد حضوره اليوم الساعة ' + rsTime(old.t) + (rsCardOf(p.id) ? ' — بطاقته ' + rsChip(rsCardOf(p.id)) + ' ' + rsColorName(rsCardOf(p.id)) : '') + '</div>' : '') +
-        rsFoundCardHTML(g, p, already) +
+        rsAsRoleHTML(p, already) + rsFoundCardHTML(g, p, already) +
         '<div class="rs-dk-acts"><button type="button" class="btn-secondary" data-rs="desk-reset">إلغاء</button>' +
         (already ? '' : '<button type="button" class="btn-primary rs-dk-big" data-rs="desk-confirm"' + (rsDesk.busy || (rsDesk.pick && rsDesk.pick.purpose === "assign" && !rsDesk.pick.k && !rsCardOf(p.id)) ? " disabled" : "") + '>' + (rsDesk.busy ? "جارٍ التأكيد…" : "✓ تأكيد الحضور") + '</button>') + '</div>' +
         (already ? '' : '<p class="rs-dk-tip">اضغط Enter للتأكيد</p>') + '</div>';
@@ -18447,7 +18449,7 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
       h += '<div class="rs-dk-card rs-dk-card--ok' + (r.again ? " rs-dk-card--again" : "") + '"' + (dcol && dm.code ? ' style="border-color:color-mix(in srgb,' + dcol.c + ' 75%,#141c1b)"' : '') + '><div class="rs-dk-serial"><small>' + (r.again ? "حضوره مؤكد مسبقاً اليوم" + (dm.code ? " — بطاقته" : "") : !dm.code ? "تم تأكيد الحضور" : r.fresh ? "تم تأكيد الحضور — سلّمه البطاقة" : "تم تأكيد الحضور — بطاقته من يوم سابق (لا تُسلَّم بطاقة جديدة)") + '</small>' +
         (dm.code ? rsChip(dm, true) + '<span class="rs-dk-color">' + (dm.g === "f" || dm.g === "m" || dm.g === "a" ? 'البطاقة ' + rsColorName(dm) + ' · ' : '') + rsGkLabel(dm.g) + '</span>' +
           (dm.round && (dm.g === "f" || dm.g === "m" || dm.g === "a") ? '<p class="rs-dk-alert">تجاوز العدد بطاقات الألوان المطبوعة (' + (rsBadgeCfg(rsDeskProg()).colors.length * rsBadgeCfg(rsDeskProg()).size) + ' لكل جنس) — عاد الترقيم لأول لون</p>' : '') : (RS_NOCARD[rsEffType(p)] ? '<b class="rs-dk-nc">' : '<b>') + (RS_NOCARD[rsEffType(p)] ? "✓ حضور مؤكد — " + escapeHTML(rsT(rsEffType(p)).l) + (rsTrainerCard(p) ? '</b><div class="rs-realcard"><img decoding="async" src="' + rsTrainerCard(p) + '" alt=""/><div><span>سلّمه بطاقته الشخصية</span></div></div><b>' : rsEffType(p) === "trainer" ? "<br><small>سلّمه بطاقته الشخصية المطبوعة باسمه</small>" : "") : (dm.n || "")) + '</b>') + '</div>' + rsPersonInfoHTML(p) +
-        (rsDesk.pick && rsDesk.pick.purpose === "change" && rsDesk.pick.pid === p.id ? rsPickerHTML(g, dm.g || rsPersonGk(g, p), rsDesk.pick) : (dm.code && can("roster.attend") ? '<div class="rs-dk-acts"><button type="button" class="rs-mini" data-rs="pick-change" data-v="' + p.id + '">تغيير البطاقة (أُعطي بطاقة أخرى / ضاعت)</button></div>' : '')) +
+        (rsDesk.pick && rsDesk.pick.purpose === "change" && rsDesk.pick.pid === p.id ? rsPickerHTML(g, rsDesk.pick.g || dm.g, rsDesk.pick) : (dm.code && can("roster.attend") ? '<div class="rs-dk-acts"><button type="button" class="rs-mini" data-rs="pick-change" data-v="' + p.id + '">تغيير البطاقة (أُعطي بطاقة أخرى / ضاعت)</button></div>' : '')) +
         '<p class="rs-dk-tip">أدخل رقم الشخص التالي مباشرة</p></div>';
     } else {
       h += '<div class="rs-dk-idle"><b>أدخل رقم الهوية أو الجوال ثم Enter</b><span>يقبل أيضاً رقم التسجيل أو مسح بطاقة QR بقارئ الباركود' + (rsDesk.auto ? " — التأكيد الفوري مفعّل" : " — ثم Enter مرة ثانية لتأكيد الحضور") + '</span></div>';
@@ -18459,6 +18461,14 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
       '<button type="button" class="rs-mini" data-rs="recent-edit" data-v="' + k + '">تعديل</button><button type="button" class="rs-mini rs-mini--del" data-rs="recent-del" data-v="' + k + '" title="إلغاء تأكيد حضوره اليوم">حذف</button></div>'; }).join("") + '</div>';
     h += rsDeskGroupsHTML(g, marks);
     return h;
+  }
+  // شخص مسجّل بأكثر من صفة لها بطاقة (مثل متدرب ومتطوع): الموظف يختار بأي صفة يحضر اليوم قبل منح البطاقة
+  function rsAsRoleHTML(p, already){
+    if(already || rsCardOf(p.id)) return '';
+    var rr = rsUniq(rsRoles(p)).filter(function(r){ return r === "trainee" || RS_SCHEMES[r]; });
+    if(rr.length < 2) return '';
+    var cur = (rsDesk.as || {})[p.id] || rsEffType(p);
+    return '<div class="rs-dk-alert rs-dk-as">مسجّل بأكثر من صفة — يحضر اليوم بصفة: <div class="rs-chips" style="margin-top:8px">' + rr.map(function(r){ return '<button type="button" data-rs="desk-as" data-v="' + r + '" class="' + (cur === r ? "on" : "") + '">' + rsT(r).l + '</button>'; }).join("") + '</div></div>';
   }
   // ملخص المجموعات اللونية: كم امتلأ من كل لون للذكور والإناث
   function rsFoundCardHTML(g, p, already){
@@ -18537,14 +18547,15 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
         if(p0){ p0.gender = v; rsPRef(p0.id).update({ gender: v, updatedAt: Date.now(), updatedBy: rsBy() }).catch(function(e){ console.error(e); }); if(rsDesk.manual){ rsDesk.pick = { purpose: "assign" }; rsRender(); } else rsDeskConfirm(); }
         return true;
       case "pick-start": rsDesk.pick = { purpose: "assign" }; rsRender(); return true;
-      case "pick-change": var pc = rsCardOf(v); rsDesk.pick = { purpose: "change", pid: v, g: pc ? pc.g : "", ci: pc ? pc.c : null }; rsRender(); return true;
+      case "pick-change": var pc = rsCardOf(v), pgk = rsPersonGk(g, rs.byId[v]), ng = pgk && pgk !== "none" ? pgk : (pc ? pc.g : ""); rsDesk.pick = { purpose: "change", pid: v, g: ng, ci: pc && pc.g === ng ? pc.c : (rsCfgByGk(g, ng).single ? 0 : null) }; rsRender(); return true;
       case "pick-ptr": var nk0 = rsNextK(rsCardsOf(), v), pcf = rsCfgByGk(g, v); rsDesk.pick = { purpose: "ptr", g: v, k: nk0, ci: Math.floor((nk0 - 1) / pcf.size) % pcf.colors.length }; rsRender(); return true;
       case "desk-side": try{ localStorage.setItem("rsDeskSide", v); }catch(e5){} rsRender(); rsDeskFocus(); return true;
       case "hr-cards": if(can("roster.programs")) rsHrCardsPick(); return true;
+      case "desk-as": var ra = rsDesk.res; if(ra && ra.pid){ rsDesk.as = rsDesk.as || {}; rsDesk.as[ra.pid] = v; rsDesk.pick = null; rsRender(); rsDeskFocus(); } return true;
       case "recent-all": rsDesk.allRecent = !rsDesk.allRecent; rsRender(); return true;
       case "recent-edit": rsPersonOpen(v); return true;
       case "recent-del": rsDeskUndo(v); return true;
-      case "m-card-change": var mc = rsCardOf(v); rsModalClose(); rsUI.tab = "desk"; rsDesk.res = { kind: "done", pid: v, m: mc, again: true }; rsDesk.pick = { purpose: "change", pid: v, g: mc ? mc.g : "", ci: mc ? mc.c : null }; rsRender(); window.scrollTo(0, 0); return true;
+      case "m-card-change": var mc = rsCardOf(v); rsModalClose(); rsUI.tab = "desk"; rsDesk.res = { kind: "done", pid: v, m: mc, again: true }; rsDeskAct("pick-change", v); window.scrollTo(0, 0); return true;
       case "pick-cancel": rsDesk.pick = null; rsRender(); rsDeskFocus(); return true;
       case "pick-col": if(rsDesk.pick){ rsDesk.pick.ci = +v; rsDesk.pick.k = 0; rsRender(); } return true;
       case "pick-num": if(rsDesk.pick){ rsDesk.pick.k = +v; rsRender(); rsDeskFocus(); } return true;
