@@ -2629,6 +2629,12 @@
 #rsModal .rs-pnone{display:block;font-size:14px;color:#6b7775;margin:4px 0}
 #rosterRoot .rs-code,#rsModal .rs-code{display:inline-block;font-style:normal;font-family:"IBM Plex Mono",ui-monospace,monospace;font-weight:700;font-size:12.5px;border-radius:8px;padding:2px 8px;background:#324c4b;color:#fff;letter-spacing:.5px;white-space:nowrap;box-shadow:inset 0 0 0 1px rgba(20,28,27,.18)}
 #rosterRoot .rs-code--big{font-size:64px;line-height:1;border-radius:22px;padding:14px 30px;margin:8px auto 6px;display:inline-block;box-shadow:0 12px 30px rgba(20,28,27,.18)}
+#rosterRoot .rs-realcard{display:inline-flex;align-items:center;gap:22px;margin:8px auto;text-align:start}
+#rosterRoot .rs-realcard img{width:150px;height:auto;border-radius:12px;box-shadow:0 14px 30px rgba(20,28,27,.25)}
+#rosterRoot .rs-realcard small{display:block;font-size:12px;color:#6b7775}
+#rosterRoot .rs-realcard b{display:block;font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:44px;line-height:1.1;color:#141c1b}
+#rosterRoot .rs-realcard span{display:block;font-size:14px;font-weight:600;color:#2f6f5e;margin-top:4px}
+#rosterRoot .rs-thumbcard,#rsModal .rs-thumbcard{width:34px;height:auto;border-radius:4px;vertical-align:middle;margin-inline-end:8px;box-shadow:0 2px 6px rgba(20,28,27,.2)}
 #rosterRoot .rs-mtcard{display:inline-flex;align-items:center;gap:16px;border-radius:20px;padding:14px 22px;margin:8px auto 8px;box-shadow:0 12px 30px rgba(20,28,27,.2),inset 0 0 0 1px rgba(20,28,27,.15)}
 #rosterRoot .rs-mtcard .rs-gl{width:58px;height:58px;border-radius:14px;background:#fff;display:grid;place-items:center;font:700 36px/1 "IBM Plex Sans",system-ui,sans-serif}
 #rosterRoot .rs-gl--m{color:#2f55d4}
@@ -17857,7 +17863,7 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
       var progs = rs.programs.filter(function(g){ return (g.members || []).indexOf(p.id) > -1; });
       var pcd = rsCardOf(p.id), dg = rsDeskProg();
       h += '<div class="rs-pcard"><div class="rs-pcard-qr">' + (rsQrSvg(p.regNo, 112) || '<span class="rs-note">QR…</span>') + '</div><div class="rs-pcard-in"><small>الرقم التسلسلي' + (dg ? ' — ' + escapeHTML(dg.title) : '') + '</small>' +
-        (pcd ? '<div class="rs-pserial">' + rsChip(pcd) + ' <span>' + escapeHTML((pcd.g === "m" || pcd.g === "f" || pcd.g === "a") ? rsColorName(pcd) : rsGkLabel(pcd.g)) + '</span></div>' : '<b class="rs-pnone">' + (RS_NOCARD[rsEffType(p)] ? "حضور فقط بلا رقم" : "يُمنح عند تأكيد الحضور") + '</b>') +
+        (pcd ? '<div class="rs-pserial">' + (rsCardImg(pcd) ? '<img class="rs-thumbcard" src="' + rsCardImg(pcd) + '" alt=""/>' : '') + rsChip(pcd) + ' <span>' + escapeHTML((pcd.g === "m" || pcd.g === "f" || pcd.g === "a") ? rsColorName(pcd) : rsGkLabel(pcd.g)) + '</span></div>' : '<b class="rs-pnone">' + (RS_NOCARD[rsEffType(p)] ? "حضور فقط بلا رقم" : "يُمنح عند تأكيد الحضور") + '</b>') +
         '<div class="rs-pcard-nm">' + escapeHTML(p.name) + '</div><div>' + rsShowRoles(p) + (p.status === "inactive" ? ' <i class="rs-tb">غير نشط</i>' : '') + '</div>' +
         ((p.oldRegNos || []).length ? '<small>أرقام سابقة مدموجة: <span dir="ltr">' + p.oldRegNos.map(escapeHTML).join("، ") + '</span></small>' : '') +
         '<div class="rs-row">' + (pcd && can("roster.attend") ? '<button type="button" class="rs-mini" data-rs="m-card-change" data-v="' + p.id + '">تغيير البطاقة</button>' : '') + (pcd ? '<button type="button" class="rs-mini" data-rs="m-copy">نسخ الرقم</button>' : '') + (rsPhoneOk(p.phone) ? '<a class="rs-mini rs-mini--wa" target="_blank" rel="noopener" href="' + rsWaLink(p) + '">إرسال الرقم واتساب</a>' : '') +
@@ -18013,12 +18019,18 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
   // تسلسل البطاقات لكل فئة: المتدربون بالألوان ومنفصل للذكور والإناث، المتطوعون تسلسل واحد حتى 100 بلون واحد،
   // مشرفو المتطوعين تسلسل مستقل (10)، الإداريون والمدربون تسلسل موحد لكل منهم، الموارد البشرية حضور فقط بلا رقم
   var RS_SCHEMES = {
-    volunteer: { gk: "v", label: "المتطوعون", prefix: "VL", max: 100, color: { n: "متطوع", c: "#4b7071" } },
-    supervisor: { gk: "s", label: "مشرفو المتطوعين", prefix: "VS", max: 10, color: { n: "مشرف", c: "#263548" } },
-    admin: { gk: "d", label: "الإداريون", prefix: "AD", max: 50, color: { n: "إداري", c: "#8e4228" } },
-    trainer: { gk: "t", label: "المدربون", prefix: "TR", max: 50, color: { n: "مدرب", c: "#8a6440" } }
+    volunteer: { gk: "v", label: "المتطوعون", prefix: "VL", max: 100, color: { n: "تنظيم", c: "#b88956" }, img: "vl" },
+    supervisor: { gk: "s", label: "مشرفو المتطوعين", prefix: "VS", max: 10, color: { n: "إشراف", c: "#1b2226" }, img: "vs" },
+    admin: { gk: "d", label: "الإداريون", prefix: "AD", max: 30, color: { n: "إدارة", c: "#276b78" }, img: "ad" },
+    trainer: { gk: "t", label: "المدربون", prefix: "TR", max: 50, color: { n: "مدرب", c: "#5b6e8c" } }
   };
   var RS_NOCARD = { hr: 1 };
+  // صورة البطاقة المطبوعة نفسها (Login/cards/vl-57.jpg …) لمن لهم بطاقات مطبوعة مرقّمة
+  function rsCardImg(m){
+    if(!m || !m.k) return "";
+    for(var t in RS_SCHEMES){ var sc = RS_SCHEMES[t]; if(sc.gk === m.g) return sc.img && m.k <= sc.max ? "cards/" + sc.img + "-" + m.k + ".jpg" : ""; }
+    return "";
+  }
   function rsSchemeCfg(sc){ return { prefix: sc.prefix, size: 999, max: sc.max, split: false, colors: [sc.color], single: true, label: sc.label }; }
   function rsCfgByGk(g, gk){
     for(var t in RS_SCHEMES) if(RS_SCHEMES[t].gk === gk) return rsSchemeCfg(RS_SCHEMES[t]);
@@ -18035,6 +18047,8 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
   function rsChip(m, big){
     if(!m || m.code == null) return m && m.n ? '<i class="rs-code">' + m.n + '</i>' : '';
     var col = rsMarkCol(m), gl = m.g === "f" ? "F" : m.g === "m" ? "M" : "";
+    var im = rsCardImg(m);
+    if(big && im) return '<div class="rs-realcard"><img src="' + im + '" alt="البطاقة ' + escapeHTML(m.code) + '"/><div><small>الرقم التسلسلي</small><b dir="ltr">' + escapeHTML(m.code) + '</b><span>سلّمه هذه البطاقة</span></div></div>';
     if(big) return '<div class="rs-mtcard" style="background:' + col.c + ';color:' + rsInk(col.c) + '" dir="ltr">' + (gl ? '<span class="rs-gl rs-gl--' + m.g + '">' + gl + '</span>' : '') + '<span class="rs-mtcode"><small>الرقم التسلسلي</small>' + escapeHTML(m.code) + '</span></div>';
     return '<i class="rs-code" style="background:' + col.c + ';color:' + rsInk(col.c) + '" dir="ltr">' + (gl ? gl + " · " : "") + escapeHTML(m.code) + '</i>';
   }
@@ -18381,7 +18395,8 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
     if(rsDesk.pick && rsDesk.pick.purpose === "assign") return warn + rsPickerHTML(g, gk, rsDesk.pick);
     var nk = rsNextK(rsCardsOf(), gk), nc = rsMakeCard(cfg, gk, nk);
     if(cfg.single && nk > cfg.max) warn += '<div class="rs-dk-alert">تجاوز العدد ' + cfg.max + ' في تسلسل ' + escapeHTML(cfg.label) + '</div>';
-    return warn + '<div class="rs-dk-cardline">البطاقة التي ستُسلَّم: ' + rsChip(nc) + ' <b>' + escapeHTML(cfg.single ? cfg.label : rsColorName(nc)) + '</b> <button type="button" class="rs-mini" data-rs="pick-start">اختيار بطاقة أخرى</button></div>';
+    var nim = rsCardImg(nc);
+    return warn + '<div class="rs-dk-cardline">' + (nim ? '<img class="rs-thumbcard" src="' + nim + '" alt=""/>' : '') + 'البطاقة التي ستُسلَّم: ' + rsChip(nc) + ' <b>' + escapeHTML(cfg.single ? cfg.label : rsColorName(nc)) + '</b> <button type="button" class="rs-mini" data-rs="pick-start">اختيار بطاقة أخرى</button></div>';
   }
   // لوحة الألوان: البطاقات الممنوحة (أشخاص فريدون طوال الفعالية) والبطاقة التالية لكل جنس
   function rsDeskGroupsHTML(g, marks){
