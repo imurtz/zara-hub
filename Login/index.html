@@ -2620,6 +2620,8 @@
 #rosterRoot .rs-att-list h3{font-size:17px;margin:0}
 #rosterRoot .rs-att-list .rs-kpis{margin-top:12px;grid-template-columns:repeat(auto-fit,minmax(110px,1fr))}
 #rosterRoot .rs-att-list .rs-tools select{min-width:120px}
+#rosterRoot .rs-dk-form input.rs-dk-pre{border-color:#2e8b57 !important;background:#eef8f1 !important}
+#rosterRoot .rs-dk-fix{justify-content:center;gap:8px}
 #rosterRoot .rs-dk-more{max-width:720px;margin:14px auto 0;text-align:center}
 #rosterRoot .rs-dk-form select{font-size:16px;padding:10px;border-radius:12px;border:1px solid var(--rs-line)}
 #rosterRoot .rs-dk-recent{max-width:720px;margin:18px auto 0;background:#fff;border:1px solid var(--rs-line);border-radius:18px;padding:12px 16px}
@@ -16930,7 +16932,8 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
     { k: "volunteer", l: "متطوع", pl: "المتطوعون", acc: "المتطوعين", pre: "VL" },
     { k: "supervisor", l: "مشرف متطوعين", pl: "مشرفو المتطوعين", acc: "مشرفي المتطوعين", pre: "VS" },
     { k: "admin", l: "إداري", pl: "الإداريون", acc: "الإداريين", pre: "AD" },
-    { k: "hr", l: "موارد بشرية", pl: "الموارد البشرية", acc: "الموارد البشرية", pre: "HR" }
+    { k: "hr", l: "موارد بشرية", pl: "الموارد البشرية", acc: "الموارد البشرية", pre: "HR" },
+    { k: "guest", l: "ضيف", pl: "الضيوف", acc: "الضيوف", pre: "GS" }
   ];
   var RS_MARKS = [
     { k: "p", l: "حاضر", s: "✓" },
@@ -16969,7 +16972,7 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
   function rsMaxSeq(type){ var pre = rsT(type).pre; return rs.people.reduce(function(m, p){ var s = rsSeqOf(p.regNo); return s && s.pre === pre ? Math.max(m, s.n) : m; }, 0); }
   function rsRoles(p){ return p.roles && p.roles.length ? p.roles : [p.type || "trainee"]; }
   // الصفة الفعلية في الفعاليات: من له دور تنظيمي (موارد بشرية/إداري/مشرف/متطوع/مدرب) لا يُعامل متدرباً ولو كان قيده الأول متدرب
-  var RS_PRIO = ["hr", "admin", "supervisor", "volunteer", "trainer", "trainee"];
+  var RS_PRIO = ["hr", "admin", "supervisor", "volunteer", "trainer", "trainee", "guest"];
   function rsEffType(p){ var r = rsRoles(p).concat(p.type ? [p.type] : []); for(var i = 0; i < RS_PRIO.length; i++) if(r.indexOf(RS_PRIO[i]) > -1) return RS_PRIO[i]; return p.type || "trainee"; }
   function rsShowRoles(p){ var r = rsUniq(rsRoles(p)); if(r.indexOf("hr") > -1 || r.indexOf("trainer") > -1) r = r.filter(function(x){ return x !== "trainee" && x !== "trainer"; }).concat(r.indexOf("hr") > -1 ? [] : ["hr"]); return rsUniq(r).map(rsTypeBadge).join(" "); }
   function rsClean(o){ var r = {}; for(var k in o){ if(Object.prototype.hasOwnProperty.call(o, k) && o[k] !== undefined) r[k] = o[k]; } return r; }
@@ -17010,6 +17013,7 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
     var n = rsNorm(s);
     if(!n) return "";
     if(n.indexOf("مشرف") > -1) return "supervisor";
+    if(n.indexOf("ضيف") > -1 || /guest/.test(n)) return "guest";
     if(n.indexOf("موارد") > -1 || /\bhr\b/.test(n)) return "hr";
     if(n.indexOf("اداري") > -1 || /admin/.test(n)) return "admin";
     if(n.indexOf("متدرب") > -1 || n.indexOf("طالب") > -1 || n.indexOf("مستفيد") > -1 || /trainee|student/.test(n)) return "trainee";
@@ -18075,8 +18079,8 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
     admin: { gk: "d", label: "الإداريون", prefix: "AD", max: 30, color: { n: "إدارة", c: "#276b78" }, img: "ad" }
   };
   // بلا رقم تسلسلي: الموارد البشرية حضور فقط، والمدربون لكل منهم بطاقة شخصية مطبوعة باسمه وصورته
-  var RS_NOCARD = { hr: 1, trainer: 1 };
-  var RS_NOCARD_NOTE = { hr: "بطاقته الشخصية المطبوعة باسمه — لا رقم تسلسلي", trainer: "بطاقته الشخصية المطبوعة باسمه — لا رقم تسلسلي", trainee: "حضور فقط — بلا بطاقة ولا رقم" };
+  var RS_NOCARD = { hr: 1, trainer: 1, guest: 1 };
+  var RS_NOCARD_NOTE = { hr: "بطاقته الشخصية المطبوعة باسمه — لا رقم تسلسلي", trainer: "بطاقته الشخصية المطبوعة باسمه — لا رقم تسلسلي", trainee: "حضور فقط — بلا بطاقة ولا رقم", guest: "ضيف — حضور فقط" };
   // بطاقات الموارد البشرية المطبوعة (باسم كل شخص وصورته) بترتيب ملف الطباعة؛ تُطابق بالاسم.
   // الصور لا تُحفظ في ملفات الموقع: تُرفع من داخل البوابة (زر «رفع بطاقاتهم») إلى مخزن الوسائط، وروابطها في hubMeta/roster.hrCards
   var RS_TR_CARDS = ["روان جعفر ال شهاب","أحمد حسين البوخمسين","جعفر محمد أبوالرحي","حسين عبدالله آل عبدالعزيز","مصطفى إبراهيم المسلم","زينب محمد آل الشيخ","عبدالعزيز علي كعبي","أحمد محمد الصادق","عبدالعال علي آل ريح","علاء أحمد الدبيسي","إبتهال محمد آل سيف","مأوى نسيب آل محسن","فايز عبدالعزيز","باسل عبدالرحمن البتيري","هاشم بن شرف السعيدي","عبدالله عبدالعزيز الوحيد","محمد سلمان آل جاسم","أحمد حسن الصحاف","نور علي آل جبر","نور عبدالله آل غانم","حسين علي ابوتاكي","محمد عادل ال محيسن","حسين علي المرهون","موسى صالح العنكي","مهدي تقي اليوسف","علي عبدالله آل عيد","عصام فريد المرهون","علي عبدالله ال حرز","حسين علي العوامي","علي أحمد آل خميس","سلمان فهد الشقاق","عبدالله محمد آل مويل","علي حسين النزر","خالد ناصر الشهراني","علي محمد القحطاني","حسين عبدالعزيز الزاير"];
@@ -18087,7 +18091,7 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
   function rsTrFam(t){ return String(t || "").replace(/^(ال|آل|ال)/, "").replace(/^ا?ل/, ""); }
   function rsTrNear(a, b){ if(a === b) return true; if(Math.abs(a.length - b.length) > 1) return false; var d = 0, i = 0, j = 0; while(i < a.length && j < b.length){ if(a[i] === b[j]){ i++; j++; continue; } if(++d > 1) return false; if(a.length > b.length) i++; else if(b.length > a.length) j++; else { i++; j++; } } return d + (a.length - i) + (b.length - j) <= 1; }
   function rsTrBuild(){
-    var hr = rs.people.filter(function(p){ return RS_NOCARD[rsEffType(p)]; }), sig = hr.length + "|" + rs.people.length;
+    var hr = rs.people.filter(function(p){ var t = rsEffType(p); return t === "hr" || t === "trainer"; }), sig = hr.length + "|" + rs.people.length;
     if(_rsTrMap && _rsTrSig === sig) return _rsTrMap;
     if(!_rsTrIx) _rsTrIx = RS_TR_CARDS.map(rsTrKey);
     var map = {}, used = {}, rest = [];
@@ -18478,15 +18482,15 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
     if(rsDesk.list) return h + rsAttListHTML(g, sid);
     if(!canA) return h + '<div class="rs-empty"><p>ليست لديك صلاحية تحضير الحضور.</p></div>';
     var r = rsDesk.res, p = r && r.pid ? rs.byId[r.pid] : null;
-    h += '<div class="rs-dk-main"><div class="rs-dk-input"><input type="text" id="rsDeskQ" data-rs-in="deskq" data-rs-keep="deskq" value="' + escapeHTML(rsDesk.q || "") + '" inputmode="numeric" autocomplete="off" enterkeyhint="go" placeholder="رقم الهوية أو الجوال"' + (rsDesk.form ? ' disabled' : '') + '/>' +
+    h += '<div class="rs-dk-main"><div class="rs-dk-input"><input type="text" id="rsDeskQ" data-rs-in="deskq" data-rs-keep="deskq" value="' + escapeHTML(rsDesk.form && r ? r.q : (rsDesk.q || "")) + '" inputmode="numeric" autocomplete="off" enterkeyhint="go" placeholder="رقم الهوية أو الجوال"' + (rsDesk.form ? ' disabled' : '') + '/>' +
       '<button type="button" class="btn-primary" data-rs="desk-go"' + (rsDesk.form ? ' disabled' : '') + '>بحث</button></div>';
     if(rsDesk.form){
       var f = rsDesk.form;
-      h += '<div class="rs-dk-card rs-dk-card--new"><div class="rs-dk-alert">غير مسجّل — أكمل بياناته ويتأكد حضوره</div>' +
+      h += '<div class="rs-dk-card rs-dk-card--new"><div class="rs-dk-alert">غير مسجّل — رقمه منقول تحت ✓ اكتب اسمه ثم Enter</div>' +
         '<div class="rs-dk-form"><label class="rs-dk-full"><span>الاسم الكامل</span><input type="text" data-rs-in="df" data-v="name" value="' + escapeHTML(f.name) + '" autocomplete="off" enterkeyhint="next"/></label>' +
-        '<label><span>الجوال</span><input type="tel" dir="ltr" data-rs-in="df" data-v="phone" value="' + escapeHTML(f.phone) + '" autocomplete="off" enterkeyhint="next"/></label>' +
-        '<label><span>رقم الهوية</span><input type="text" inputmode="numeric" dir="ltr" data-rs-in="df" data-v="nid" value="' + escapeHTML(f.nid) + '" autocomplete="off" enterkeyhint="done"/></label>' +
-        '<label class="rs-dk-full"><span>الصفة</span><select data-rs-ch="df-type">' + ["trainee", "volunteer", "supervisor", "admin", "hr"].map(function(k){ return '<option value="' + k + '"' + (f.type === k ? " selected" : "") + '>' + rsT(k).l + '</option>'; }).join("") + '</select></label></div>' +
+        '<label><span>الجوال' + (f.phone && r && rsPhone(r.q) === f.phone ? ' ✓' : '') + '</span><input type="tel" dir="ltr" data-rs-in="df" data-v="phone"' + (f.phone && r && rsPhone(r.q) === f.phone ? ' class="rs-dk-pre"' : '') + ' value="' + escapeHTML(f.phone) + '" autocomplete="off" enterkeyhint="next"/></label>' +
+        '<label><span>رقم الهوية' + (f.nid ? ' ✓' : '') + '</span><input type="text" inputmode="numeric" dir="ltr" data-rs-in="df" data-v="nid"' + (f.nid ? ' class="rs-dk-pre"' : '') + ' value="' + escapeHTML(f.nid) + '" autocomplete="off" enterkeyhint="done"/></label>' +
+        '<label class="rs-dk-full"><span>الصفة</span><select data-rs-ch="df-type">' + ["trainee", "volunteer", "supervisor", "admin", "hr", "guest"].map(function(k){ return '<option value="' + k + '"' + (f.type === k ? " selected" : "") + '>' + rsT(k).l + '</option>'; }).join("") + '</select></label></div>' +
         '<div class="rs-dk-acts"><button type="button" class="btn-secondary" data-rs="desk-reset">إلغاء</button><button type="button" class="btn-primary rs-dk-big" data-rs="df-save"' + (rsDesk.busy ? " disabled" : "") + '>' + (rsDesk.busy ? "جارٍ التسجيل…" : "✓ تسجيل وتأكيد الحضور") + '</button></div><p class="rs-dk-tip">Enter ينتقل للخانة التالية ثم يسجّل</p></div>';
     } else if(r && r.kind === "none"){
       h += '<div class="rs-dk-card rs-dk-card--bad"><div class="rs-dk-ic">✕</div><b class="rs-dk-title">الرقم غير موجود في السجل</b><span class="rs-dk-q" dir="ltr">' + escapeHTML(r.q) + '</span>' + (r.hint ? '<p class="rs-dk-hint">' + r.hint + '</p>' : '') +
@@ -18510,6 +18514,7 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
           (dm.round && (dm.g === "f" || dm.g === "m" || dm.g === "a") ? '<p class="rs-dk-alert">تجاوز العدد بطاقات الألوان المطبوعة (' + (rsBadgeCfg(rsDeskProg()).colors.length * rsBadgeCfg(rsDeskProg()).size) + ' لكل جنس) — عاد الترقيم لأول لون</p>' : '') : (!rsCardRoles(p).length ? '<b class="rs-dk-nc">' : '<b>') + (!rsCardRoles(p).length ? "✓ حضور مؤكد — " + escapeHTML(rsT(rsEffType(p)).l) + (rsTrainerCard(p) ? '</b><div class="rs-realcard"><img decoding="async" src="' + rsTrainerCard(p) + '" alt=""/><div><span>سلّمه بطاقته الشخصية</span></div></div><b>' : rsEffType(p) === "trainer" ? "<br><small>سلّمه بطاقته الشخصية المطبوعة باسمه</small>" : "") : (dm.n || "")) + '</b>') + '</div>' + rsPersonInfoHTML(p) +
         (rsDesk.pick && rsDesk.pick.purpose === "change" && rsDesk.pick.pid === p.id ? rsPickerHTML(g, rsDesk.pick.g || dm.g, rsDesk.pick) : (dm.code && can("roster.attend") ? '<div class="rs-dk-acts"><button type="button" class="rs-mini" data-rs="pick-change" data-v="' + p.id + '">تغيير البطاقة (أُعطي بطاقة أخرى / ضاعت)</button></div>' : '')) +
         (rsCardsFor(p.id).length > 1 ? '<div class="rs-dk-cardline">' + (r.again ? "بطاقاته" : "سلّمه البطاقتين") + ': ' + rsCardsFor(p.id).map(function(c){ return rsChip(c); }).join(" ") + '</div>' : '') + rsExtraCardsHTML(g, p, true) +
+        (can("roster.attend") ? '<div class="rs-dk-acts rs-dk-fix"><button type="button" class="rs-mini" data-rs="recent-edit" data-v="' + p.id + '">✎ تعديل بياناته</button><button type="button" class="rs-mini rs-mini--del" data-rs="recent-del" data-v="' + p.id + '">✕ إلغاء حضوره</button></div>' : '') +
         '<p class="rs-dk-tip">أدخل رقم الشخص التالي مباشرة</p></div>';
     } else {
       h += '<div class="rs-dk-idle"><b>أدخل رقم الهوية أو الجوال ثم Enter</b><span>مسجّل ← يتأكد حضوره مباشرة · غير مسجّل ← تكتب اسمه ويتأكد</span></div>';
