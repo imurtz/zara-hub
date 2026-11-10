@@ -18342,6 +18342,8 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
     }); }).then(function(){
       rsDesk.busy = false;
       if(rs.att[sid]) delete rs.att[sid][pid];
+      // لم يحضر أي يوم آخر ← يُزال من مشاركي البرنامج حتى لا يُحسب بلا حضور
+      if(!other && (g.members || []).indexOf(pid) > -1){ g.members = g.members.filter(function(x){ return x !== pid; }); rsGRef(g.id).update({ members: firebase.firestore.FieldValue.arrayRemove(pid) }).catch(function(e){ console.error(e); }); }
       if(rsDesk.res && rsDesk.res.pid === pid) rsDesk.res = null;
       showToast("✔ أُلغي تأكيد حضور " + p.name); rsRender(); rsDeskFocus();
     }).catch(function(e){ rsDesk.busy = false; console.error(e); showToast("⚠️ تعذّر الحذف — أعد المحاولة"); rsRender(); });
