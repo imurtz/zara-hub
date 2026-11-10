@@ -2617,6 +2617,18 @@
 #rosterRoot button.rs-dk-count:hover{box-shadow:0 0 0 2px rgba(34,118,74,.35)}
 #rosterRoot .rs-mini--list{font-weight:700}
 #rosterRoot .rs-mini--list.on{background:#324c4b;color:#fff;border-color:#324c4b}
+#rosterRoot .rs-bulk-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:6px;margin:10px 0}
+#rosterRoot .rs-bulk-row{display:flex;align-items:center;gap:8px;background:#fff;border:1.5px solid var(--rs-line);border-radius:12px;padding:9px 11px;cursor:pointer;font-size:13.5px}
+#rosterRoot .rs-bulk-row input{width:18px;height:18px;flex:none}
+#rosterRoot .rs-bulk-row b{flex:1;min-width:0}
+#rosterRoot .rs-bulk-row span{font-size:11.5px;color:var(--rs-soft)}
+#rosterRoot .rs-bulk-row em{font-style:normal;font-size:11.5px;font-weight:700;white-space:nowrap}
+#rosterRoot .rs-bulk-row.is-on{border-color:rgba(34,118,74,.45);background:#f4fbf6}
+#rosterRoot .rs-bulk-row.is-on em{color:#22764a}
+#rosterRoot .rs-bulk-row.is-off{border-color:rgba(179,69,63,.45);background:#fdf5f4}
+#rosterRoot .rs-bulk-row.is-off em{color:#b3453f}
+#rosterRoot .rs-bulk-row.is-done,#rosterRoot .rs-bulk-row.is-card{opacity:.6;cursor:default}
+#rosterRoot .rs-bulk-abs{background:#fdf5f4;border-radius:12px;padding:10px 14px;font-size:13.5px;color:#8a3a33;margin-bottom:8px}
 #rosterRoot .rs-att-list h3{font-size:17px;margin:0}
 #rosterRoot .rs-att-list .rs-kpis{margin-top:12px;grid-template-columns:repeat(auto-fit,minmax(110px,1fr))}
 #rosterRoot .rs-att-list .rs-tools select{min-width:120px}
@@ -18562,11 +18574,14 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
       (ss.length > 1 ? '<select data-rs-ch="desk-sess"><option value="">— الجلسة —</option>' + ss.map(function(s, i){ return '<option value="' + s.id + '"' + (s.id === sid ? " selected" : "") + '>' + escapeHTML(s.title || ("الجلسة " + (i + 1))) + ' — ' + rsDate(s.date) + (s.vol ? " (للمتطوعين)" : "") + '</option>'; }).join("") + '</select>' : '') +
       '<button type="button" class="rs-dk-count" data-rs="att-list" title="عرض قائمة الحاضرين كاملة"><b>' + done.length + '</b><span>حضور مؤكد من ' + rsDeskExpected(g, sid) + '</span></button>' +
       '<button type="button" class="rs-mini rs-mini--list' + (rsDesk.list ? " on" : "") + '" data-rs="att-list">' + (rsDesk.list ? "← رجوع للتسجيل" : "☰ قائمة الحاضرين") + '</button>' +
+      (can("roster.attend") ? '<button type="button" class="rs-mini rs-mini--list' + (rsDesk.bulk ? " on" : "") + '" data-rs="bulk-open">✓ تحضير جماعي</button>' : '') +
+      '<button type="button" class="rs-mini rs-mini--list" data-rs="report-open">📊 التقرير الإحصائي</button>' +
       '<span class="rs-net' + (navigator.onLine === false ? " off" : "") + '">' + (navigator.onLine === false ? "● لا يوجد اتصال — لن يُحفظ التسجيل" : "● متصل ومتزامن مع كل الأجهزة") + '</span>' +
             '<button type="button" class="rs-mini" data-rs="desk-kiosk">' + (document.body.classList.contains("rs-kiosk") ? "إنهاء ملء الشاشة" : "ملء الشاشة") + '</button><button type="button" class="rs-mini" data-rs="desk-change">تغيير الفعالية</button></div>';
     if(!sid){
       return h + '<div class="rs-empty"><b>لا توجد جلسة بتاريخ اليوم في هذه الفعالية</b><p>' + (ss.length ? "اختر الجلسة من القائمة أعلاه، أو أضف جلسة اليوم." : "أضف جلسة اليوم لتبدأ التسجيل.") + '</p>' + (can("roster.programs") ? '<button type="button" class="btn-primary" data-rs="desk-today">إضافة جلسة اليوم</button>' : '') + '</div>';
     }
+    if(rsDesk.bulk) return h + rsBulkHTML(g);
     if(rsDesk.list) return h + rsAttListHTML(g, sid);
     if(!canA) return h + '<div class="rs-empty"><p>ليست لديك صلاحية تحضير الحضور.</p></div>';
     var r = rsDesk.res, p = r && r.pid ? rs.byId[r.pid] : null;
@@ -18741,6 +18756,144 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
       '<table><thead><tr><th>#</th><th>البطاقة</th><th>الاسم</th><th>الصفة</th><th>الجنس</th><th>الجوال</th><th>' + (F.day === "all" ? "أيام الحضور" : "الوقت") + '</th><th>ملاحظة</th></tr></thead><tbody>' + rows + '</tbody></table></body></html>');
     w.document.close();
   }
+  // ===== التحضير الجماعي: فئة كاملة في يوم محدد — الكل محدد، تُزال علامة من لم يحضر ثم تأكيد واحد =====
+  // لمن لا بطاقة له فقط (الموارد البشرية، المتدربون…)؛ من تُصرف له بطاقة يُسجَّل من الشاشة العادية
+  function rsBulkPeople(role){ return rs.people.filter(function(p){ return !p.mergedInto && p.status !== "inactive" && rsAttRole(p) === role; }).sort(function(a, b){ return String(a.name).localeCompare(String(b.name), "ar"); }); }
+  function rsBulkOpen(){
+    var g = rsDeskProg(); if(!g) return;
+    var B = rsDesk.bulk = { role: "hr", sid: rsDeskSess(g) || (rsSessions(g)[0] || {}).id || "", q: "", off: {}, absent: true };
+    rsDesk.list = false; rsRender(); window.scrollTo(0, 0);
+    return B;
+  }
+  function rsBulkHTML(g){
+    var B = rsDesk.bulk, ss = rsSessions(g), mk = rs.att[B.sid] || {};
+    var roles = {}; rs.people.forEach(function(p){ if(!p.mergedInto && p.status !== "inactive"){ var r = rsAttRole(p); roles[r] = (roles[r] || 0) + 1; } });
+    var ppl = rsBulkPeople(B.role), q = rsNorm(B.q);
+    var done = function(p){ var m = mk[p.id]; return m && (m.s === "p" || m.s === "l"); };
+    var carded = function(p){ return rsCardRoles(p).length > 0; };
+    var todo = ppl.filter(function(p){ return !done(p) && !carded(p); });
+    var isOff = function(p){ return B.off[p.id] != null ? !!B.off[p.id] : !!(mk[p.id] && mk[p.id].s === "a"); };
+    var sel = todo.filter(function(p){ return !isOff(p); }), abs = todo.filter(isOff);
+    var se = ss.find(function(x){ return x.id === B.sid; });
+    var h = '<div class="rs-att-list rs-bulk"><div class="rs-row rs-row--sb"><h3>تحضير جماعي</h3><button type="button" class="rs-mini" data-rs="bulk-close">← رجوع للتسجيل</button></div>' +
+      '<p class="rs-note">اختر الفئة واليوم. الجميع محدد مسبقاً — أزل العلامة عمّن لم يحضر، ثم «تأكيد الحضور» مرة واحدة.</p>' +
+      '<div class="rs-tools"><select data-rs-ch="bulk-role">' + Object.keys(roles).map(function(k){ return '<option value="' + k + '"' + (B.role === k ? " selected" : "") + '>' + escapeHTML(rsT(k).pl) + ' (' + roles[k] + ')</option>'; }).join("") + '</select>' +
+      '<select data-rs-ch="bulk-sid">' + ss.map(function(x, i){ return '<option value="' + x.id + '"' + (B.sid === x.id ? " selected" : "") + '>' + escapeHTML(x.title || ("اليوم " + (i + 1))) + ' — ' + rsDate(x.date) + '</option>'; }).join("") + '</select>' +
+      '<input type="search" data-rs-in="bulk-q" data-rs-keep="bulkq" placeholder="ابحث لإيجاد شخص بسرعة" value="' + escapeHTML(B.q) + '"/>' +
+      '<button type="button" class="rs-mini" data-rs="bulk-all" data-v="1">تحديد الكل</button><button type="button" class="rs-mini" data-rs="bulk-all" data-v="0">إلغاء الكل</button></div>';
+    h += '<div class="rs-kpis rs-kpis--sm">' + rsKpi(ppl.length, "في السجل") + rsKpi(ppl.filter(done).length, "مؤكد مسبقاً") + rsKpi(sel.length, "سيُؤكَّد الآن") + rsKpi(abs.length, "لم يحضر", "tan") + '</div>';
+    h += '<div class="rs-bulk-list">' + ppl.filter(function(p){ return !q || (p.nameKey || rsNorm(p.name)).indexOf(q) > -1; }).map(function(p){
+      var d = done(p), c = carded(p), on = !d && !c && !isOff(p);
+      return '<label class="rs-bulk-row' + (d ? " is-done" : c ? " is-card" : on ? " is-on" : " is-off") + '"><input type="checkbox" data-rs-ch="bulk-p" data-v="' + p.id + '"' + (on || d ? " checked" : "") + (d || c ? " disabled" : "") + '/>' +
+        '<b>' + escapeHTML(p.name) + '</b><span dir="ltr">' + escapeHTML(p.phone || "") + '</span><em>' + (d ? "مؤكد " + rsTime(mk[p.id].t) : c ? "له بطاقة — من الشاشة العادية" : on ? "حاضر" : (mk[p.id] && mk[p.id].s === "a" && B.off[p.id] == null ? "غياب مسجّل" : "لم يحضر")) + '</em></label>';
+    }).join("") + '</div>';
+    if(abs.length) h += '<div class="rs-bulk-abs"><b>لم يحضر (' + abs.length + '):</b> ' + abs.map(function(p){ return escapeHTML(p.name); }).join("، ") + '</div>';
+    h += '<div class="rs-actions rs-actions--sticky"><label class="rs-check"><input type="checkbox" data-rs-ch="bulk-absent"' + (B.absent ? " checked" : "") + '/> تسجيل غير المحددين «غائب» (يظهرون في التقرير)</label>' +
+      '<button type="button" class="btn-primary" data-rs="bulk-save"' + (sel.length + (B.absent ? abs.length : 0) && !rsDesk.busy ? "" : " disabled") + '>' + (rsDesk.busy ? "جارٍ الحفظ…" : "تأكيد حضور " + sel.length + " — " + escapeHTML(rsT(B.role).pl) + (se ? " · " + rsDate(se.date) : "")) + '</button></div></div>';
+    return h;
+  }
+  function rsBulkSave(){
+    var g = rsDeskProg(), B = rsDesk.bulk;
+    if(!g || !B || !B.sid || rsDesk.busy || !can("roster.attend")) return;
+    var mk = rs.att[B.sid] || {}, done = function(p){ var m = mk[p.id]; return m && (m.s === "p" || m.s === "l"); };
+    var todo = rsBulkPeople(B.role).filter(function(p){ return !done(p) && !rsCardRoles(p).length; });
+    var isOff = function(p){ return B.off[p.id] != null ? !!B.off[p.id] : !!(mk[p.id] && mk[p.id].s === "a"); };
+    var sel = todo.filter(function(p){ return !isOff(p); }), abs = B.absent ? todo.filter(function(p){ return isOff(p) && !(mk[p.id] && mk[p.id].s === "a"); }) : [];
+    if(!sel.length && !abs.length) return;
+    if(!confirm("تأكيد حضور " + sel.length + " من " + rsT(B.role).pl + (abs.length ? "\nوتسجيل غياب: " + abs.map(function(p){ return p.name; }).join("، ") : "") + "؟")) return;
+    var t = Date.now(), by = rsBy(), o = { programId: g.id, sessionId: B.sid, marks: {} };
+    sel.forEach(function(p){ o.marks[p.id] = { s: "p", t: t, by: by, bulk: true }; });
+    abs.forEach(function(p){ o.marks[p.id] = { s: "a", t: t, by: by, bulk: true }; });
+    var ids = sel.map(function(p){ return p.id; });
+    rsDesk.busy = true; rsRender();
+    rsRetry(function(){ return db.collection("rosterAttendance").doc(g.id + "__" + B.sid).set(o, { merge: true }); }).then(function(){
+      return ids.length ? rsGRef(g.id).update({ members: firebase.firestore.FieldValue.arrayUnion.apply(null, ids) }) : null;
+    }).then(function(){
+      rsDesk.busy = false; rs.att[B.sid] = rs.att[B.sid] || {}; Object.keys(o.marks).forEach(function(k){ rs.att[B.sid][k] = o.marks[k]; });
+      showToast("✔ تأكد حضور " + sel.length + (abs.length ? " وسُجّل غياب " + abs.length : "")); B.off = {}; rsRender();
+    }).catch(function(e){ rsDesk.busy = false; console.error(e); showToast("⚠️ لم يُحفظ — تحقق من الاتصال وأعد المحاولة"); rsRender(); });
+  }
+
+  // ===== التقرير الإحصائي (إنفوجرافيك A4 للطباعة أو الحفظ PDF) — من البيانات الحية لكل الأجهزة =====
+  function rsReportOpen(){
+    var g = rsDeskProg(); if(!g) return;
+    var w = window.open("", "_blank");
+    if(!w){ showToast("المتصفح منع فتح نافذة التقرير — اسمح بالنوافذ المنبثقة"); return; }
+    w.document.write(rsReportHTML(g)); w.document.close();
+  }
+  function rsReportHTML(g){
+    var ss = rsSessions(g), ok = function(m){ return m && (m.s === "p" || m.s === "l"); };
+    var ppl = rs.people.filter(function(p){ return !p.mergedInto && p.status !== "inactive"; });
+    var ORDER = ["trainee", "hr", "admin", "supervisor", "volunteer", "guest"];
+    var roleOf = function(p){ return rsAttRole(p); };
+    var reg = {}, att = {}, perDay = ss.map(function(){ return {}; }), gender = { "ذكر": 0, "أنثى": 0, "": 0 }, uniq = {}, absent = {};
+    ppl.forEach(function(p){ var r = roleOf(p); reg[r] = (reg[r] || 0) + 1; });
+    ss.forEach(function(se, i){ var mk = rs.att[se.id] || {}; Object.keys(mk).forEach(function(k){ var p = rs.byId[k]; if(!p || p.mergedInto) return; var r = roleOf(p);
+      if(ok(mk[k])){ perDay[i][r] = (perDay[i][r] || 0) + 1; perDay[i]._t = (perDay[i]._t || 0) + 1; (uniq[k] = uniq[k] || []).push(i); }
+      else if(mk[k].s === "a"){ (absent[i] = absent[i] || []).push(p); } }); });
+    Object.keys(uniq).forEach(function(k){ var p = rs.byId[k], r = roleOf(p); att[r] = (att[r] || 0) + 1; gender[p.gender === "ذكر" || p.gender === "أنثى" ? p.gender : ""]++; });
+    var roles = ORDER.filter(function(r){ return reg[r] || att[r]; }).concat(Object.keys(reg).filter(function(r){ return ORDER.indexOf(r) === -1; }));
+    var totalAtt = Object.keys(uniq).length, totalReg = ppl.length;
+    var both = ss.length > 1 ? Object.keys(uniq).filter(function(k){ return uniq[k].length === ss.length; }).length : 0;
+    var deskNew = ppl.filter(function(p){ return p.batch === "desk" || /عند الحضور/.test(p.source || ""); }).length;
+    var cards = Object.keys(rsCardsOf().cards || {}).length;
+    // ساعات الوصول (للتأكيدات الفردية فقط؛ التحضير الجماعي لا وقت وصول حقيقي له)
+    var hours = {}; ss.forEach(function(se){ var mk = rs.att[se.id] || {}; Object.keys(mk).forEach(function(k){ var m = mk[k]; if(ok(m) && !m.bulk && m.t){ var hh = new Date(m.t).getHours(); hours[hh] = (hours[hh] || 0) + 1; } }); });
+    var hk = Object.keys(hours).map(Number).sort(function(a, b){ return a - b; }), hmax = Math.max.apply(null, hk.map(function(x){ return hours[x]; }).concat([1]));
+    var staff = {}; ss.forEach(function(se){ var mk = rs.att[se.id] || {}; Object.keys(mk).forEach(function(k){ if(ok(mk[k]) && mk[k].by) staff[mk[k].by] = (staff[mk[k].by] || 0) + 1; }); });
+    var staffL = Object.keys(staff).sort(function(a, b){ return staff[b] - staff[a]; }).slice(0, 6), smax = staffL.length ? staff[staffL[0]] : 1;
+    var esc = escapeHTML, pct = function(a, b){ return b ? Math.round(a / b * 100) : 0; }, fmt = function(n){ return Number(n || 0).toLocaleString("en-US"); };
+    var gm = gender["ذكر"], gf = gender["أنثى"], gt = gm + gf || 1;
+    // دونات الجنس: سلسلتان باللونين الأول والثاني من اللوحة المعتمدة مع فاصل 2px
+    var R = 64, C = 2 * Math.PI * R, mLen = C * gm / gt;
+    var donut = '<svg viewBox="0 0 180 180" width="170" height="170" role="img" aria-label="ذكور ' + gm + '، إناث ' + gf + '"><circle cx="90" cy="90" r="' + R + '" fill="none" stroke="#e6ebea" stroke-width="22"/>' +
+      (gm ? '<circle cx="90" cy="90" r="' + R + '" fill="none" stroke="#2a78d6" stroke-width="22" stroke-dasharray="' + Math.max(0, mLen - 2) + ' ' + C + '" transform="rotate(-90 90 90)"><title>ذكور: ' + gm + '</title></circle>' : '') +
+      (gf ? '<circle cx="90" cy="90" r="' + R + '" fill="none" stroke="#eb6834" stroke-width="22" stroke-dasharray="' + Math.max(0, C - mLen - 2) + ' ' + C + '" stroke-dashoffset="' + (-mLen) + '" transform="rotate(-90 90 90)"><title>إناث: ' + gf + '</title></circle>' : '') +
+      '<text x="90" y="86" text-anchor="middle" font-size="30" font-weight="700" fill="#141c1b">' + (gm + gf) + '</text><text x="90" y="110" text-anchor="middle" font-size="12" fill="#5b6765">حاضر</text></svg>';
+    var roleRows = roles.map(function(r){
+      var a = att[r] || 0, n = reg[r] || 0, p = pct(a, n);
+      return '<div class="rr"><div class="rl"><b>' + esc(rsT(r).pl) + '</b><span>' + fmt(a) + ' من ' + fmt(n) + '</span></div><div class="bar" title="' + esc(rsT(r).pl) + ': ' + a + ' من ' + n + ' (' + p + '%)"><i style="width:' + Math.min(100, p) + '%"></i></div><em>' + p + '%</em></div>';
+    }).join("");
+    var dayCards = ss.map(function(se, i){
+      var d = perDay[i], ab = absent[i] || [];
+      return '<div class="day"><div class="dh"><b>' + esc(se.title || ("اليوم " + (i + 1))) + '</b><span>' + rsDate(se.date) + '</span></div><div class="dn">' + fmt(d._t || 0) + '<small>حاضر</small></div>' +
+        '<ul>' + roles.filter(function(r){ return d[r]; }).map(function(r){ return '<li><span>' + esc(rsT(r).pl) + '</span><b>' + d[r] + '</b></li>'; }).join("") + '</ul>' +
+        (ab.length ? '<p class="abs">غياب مسجّل (' + ab.length + '): ' + ab.map(function(p){ return esc(p.name); }).join("، ") + '</p>' : '') + '</div>';
+    }).join("");
+    var hourBars = hk.length ? '<div class="hours">' + hk.map(function(x){ var v = hours[x], hh = Math.round(v / hmax * 100); return '<div class="hc" title="الساعة ' + x + ':00 — ' + v + ' وصول"><span class="hv">' + (v === hmax ? v : "") + '</span><i style="height:' + Math.max(4, hh) + '%"></i><span class="hl">' + (x > 12 ? x - 12 : x) + (x >= 12 ? "م" : "ص") + '</span></div>'; }).join("") + '</div>' : '<p class="muted">لا توجد أوقات وصول فردية بعد.</p>';
+    var staffBars = staffL.map(function(s){ return '<div class="sr"><span>' + esc(s) + '</span><div class="bar sm"><i style="width:' + Math.round(staff[s] / smax * 100) + '%"></i></div><b>' + staff[s] + '</b></div>'; }).join("");
+    var tbl = '<table><thead><tr><th>الفئة</th><th>المسجلون</th>' + ss.map(function(se, i){ return '<th>' + esc(se.title || ("اليوم " + (i + 1))) + '</th>'; }).join("") + '<th>حضر (أشخاص)</th><th>النسبة</th></tr></thead><tbody>' +
+      roles.map(function(r){ return '<tr><td>' + esc(rsT(r).pl) + '</td><td>' + (reg[r] || 0) + '</td>' + ss.map(function(se, i){ return '<td>' + (perDay[i][r] || 0) + '</td>'; }).join("") + '<td>' + (att[r] || 0) + '</td><td>' + pct(att[r] || 0, reg[r] || 0) + '%</td></tr>'; }).join("") +
+      '<tr class="tot"><td>الإجمالي</td><td>' + totalReg + '</td>' + ss.map(function(se, i){ return '<td>' + (perDay[i]._t || 0) + '</td>'; }).join("") + '<td>' + totalAtt + '</td><td>' + pct(totalAtt, totalReg) + '%</td></tr></tbody></table>';
+    var kpi = function(n, l, s){ return '<div class="k"><b>' + n + '</b><span>' + l + '</span>' + (s ? '<small>' + s + '</small>' : '') + '</div>'; };
+    var css = '@page{size:A4;margin:0}*{box-sizing:border-box;margin:0;padding:0;-webkit-print-color-adjust:exact;print-color-adjust:exact}body{font-family:"IBM Plex Sans Arabic",Cairo,Tahoma,sans-serif;color:#141c1b;background:#e9eeed}' +
+      '.bar0{position:sticky;top:0;display:flex;gap:10px;justify-content:center;padding:10px;background:#141c1b}.bar0 button{font:inherit;font-weight:700;border:0;border-radius:999px;padding:9px 22px;background:#b88d66;color:#141c1b;cursor:pointer}' +
+      '.page{width:210mm;min-height:297mm;margin:12px auto;background:#f6f8f7;overflow:hidden;position:relative}' +
+      '.hd{background:#324c4b;color:#fff;padding:28px 34px 26px;position:relative}.hd small{color:#e8cfaf;font-weight:600;font-size:12px}.hd h1{font-family:"Readex Pro",Cairo,sans-serif;font-size:30px;margin:4px 0 4px}.hd p{color:#d5e0df;font-size:13px}' +
+      '.hero{position:absolute;left:34px;top:22px;text-align:center}.hero b{display:block;font-family:"Readex Pro",Cairo,sans-serif;font-size:58px;line-height:1;color:#fff}.hero span{font-size:12px;color:#e8cfaf}' +
+      '.wrap{padding:18px 26px 24px;display:flex;flex-direction:column;gap:12px}.kp{display:grid;grid-template-columns:repeat(4,1fr);gap:9px}.k{background:#fff;border-radius:14px;padding:11px 13px;border:1px solid #e1e7e6}.k b{display:block;font-family:"Readex Pro",Cairo,sans-serif;font-size:26px;color:#324c4b;font-variant-numeric:tabular-nums}.k span{font-size:11.5px;color:#3f4a48;font-weight:600}.k small{display:block;font-size:10.5px;color:#5b6765}' +
+      '.row{display:grid;grid-template-columns:1.45fr 1fr;gap:12px}.card{background:#fff;border:1px solid #e1e7e6;border-radius:16px;padding:14px 16px}.card h2{font-size:14px;margin-bottom:10px;font-family:"Readex Pro",Cairo,sans-serif}' +
+      '.rr{display:grid;grid-template-columns:118px 1fr 40px;align-items:center;gap:8px;margin:7px 0}.rl b{display:block;font-size:12.5px}.rl span{font-size:11px;color:#5b6765}.bar{height:12px;background:#e6ebea;border-radius:6px;overflow:hidden}.bar i{display:block;height:100%;background:#324c4b;border-radius:0 6px 6px 0}.bar.sm{height:8px}.rr em{font-style:normal;font-weight:700;font-size:12.5px;text-align:left}' +
+      '.gd{display:flex;align-items:center;gap:12px}.lg{display:flex;flex-direction:column;gap:8px;font-size:12.5px}.lg div{display:flex;align-items:center;gap:7px}.lg i{width:12px;height:12px;border-radius:3px}.lg b{margin-inline-start:auto;padding-inline-start:10px;white-space:nowrap}' +
+      '.days{display:grid;grid-template-columns:repeat(' + Math.max(1, Math.min(3, ss.length)) + ',1fr);gap:10px}.day{background:#fff;border:1px solid #e1e7e6;border-radius:16px;padding:12px 14px}.dh{display:flex;justify-content:space-between;font-size:12.5px}.dh span{color:#5b6765}.dn{font-family:"Readex Pro",Cairo,sans-serif;font-size:34px;font-weight:700;color:#324c4b;margin:2px 0 6px}.dn small{font-size:12px;color:#5b6765;margin-inline-start:6px;font-weight:500}.day ul{list-style:none;font-size:12px}.day li{display:flex;justify-content:space-between;padding:3px 0;border-top:1px solid #eef2f1}.abs{margin-top:6px;font-size:11px;color:#8a4b2a;background:#fbf1e8;border-radius:8px;padding:6px 8px;line-height:1.6}' +
+      '.hours{display:flex;align-items:flex-end;gap:6px;height:120px;padding-top:14px}.hc{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;gap:3px}.hc i{display:block;width:100%;max-width:26px;background:#b88d66;border-radius:4px 4px 0 0}.hl{font-size:10px;color:#5b6765}.hv{font-size:10.5px;font-weight:700}' +
+      '.sr{display:grid;grid-template-columns:110px 1fr 30px;gap:8px;align-items:center;font-size:12px;margin:6px 0}.sr b{text-align:left}' +
+      'table{width:100%;border-collapse:collapse;font-size:12px}th,td{padding:6px 8px;text-align:center;border-bottom:1px solid #e6ebea}th{background:#eef3f2;font-weight:700}td:first-child,th:first-child{text-align:right}.tot td{font-weight:700;background:#f6f1ea}.muted{color:#5b6765;font-size:12px}' +
+      '.ft{display:flex;justify-content:space-between;font-size:10.5px;color:#5b6765;padding:0 26px 16px}@media print{body{background:#fff}.bar0{display:none}.page{margin:0}}';
+    return '<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>التقرير الإحصائي — ' + esc(g.title) + '</title>' +
+      '<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;600;700&family=Readex+Pro:wght@500;700&display=swap" rel="stylesheet"><style>' + css + '</style></head><body>' +
+      '<div class="bar0"><button onclick="window.print()">طباعة / حفظ PDF</button></div><div class="page">' +
+      '<div class="hd"><small>التقرير الإحصائي للحضور</small><h1>' + esc(g.title) + '</h1><p>' + ss.map(function(se, i){ return esc(se.title || ("اليوم " + (i + 1))) + " " + rsDate(se.date); }).join(" · ") + ' — حتى ' + new Date().toLocaleString("ar-SA-u-nu-latn", { dateStyle: "medium", timeStyle: "short" }) + '</p>' +
+      '<div class="hero"><b>' + fmt(totalAtt) + '</b><span>شخص حضر</span></div></div>' +
+      '<div class="wrap"><div class="kp">' + kpi(fmt(att.trainee || 0), "متدرب حضر", "من " + fmt(reg.trainee || 0) + " مسجل · " + pct(att.trainee || 0, reg.trainee || 0) + "%") + kpi(fmt(att.hr || 0), "موارد بشرية", "من " + fmt(reg.hr || 0) + " · " + pct(att.hr || 0, reg.hr || 0) + "%") + kpi(fmt(att.admin || 0), "إداري", "من " + fmt(reg.admin || 0)) +
+        ((reg.volunteer || 0) + (reg.supervisor || 0) ? kpi(fmt((att.volunteer || 0) + (att.supervisor || 0)), "متطوع ومشرف", "من " + fmt((reg.volunteer || 0) + (reg.supervisor || 0))) : kpi(fmt(deskNew), "سُجّلوا عند الباب", "لم يكونوا في الكشوف")) + '</div>' +
+      '<div class="kp">' + kpi(pct(totalAtt, totalReg) + "%", "نسبة الحضور العامة", fmt(totalAtt) + " من " + fmt(totalReg)) + (ss.length > 1 && perDay.slice(1).some(function(d){ return d._t; }) ? kpi(fmt(both), "حضروا كل الأيام", pct(both, totalAtt) + "% من الحاضرين") : kpi(fmt(gf), "إناث حضرن", pct(gf, gt) + "% من الحاضرين")) + kpi(fmt(Object.keys(absent).reduce(function(a, k){ return a + absent[k].length; }, 0)), "غياب مسجّل", "من التحضير الجماعي") + kpi(fmt(cards), "بطاقة مُسلّمة", "") + '</div>' +
+      '<div class="row"><div class="card"><h2>الحضور حسب الفئة (حضر من المسجلين)</h2>' + roleRows + '</div><div class="card"><h2>الحاضرون حسب الجنس</h2><div class="gd">' + donut + '<div class="lg"><div><i style="background:#2a78d6"></i>ذكور<b>' + gm + ' · ' + pct(gm, gt) + '%</b></div><div><i style="background:#eb6834"></i>إناث<b>' + gf + ' · ' + pct(gf, gt) + '%</b></div>' + (gender[""] ? '<div><i style="background:#c9d1cf"></i>غير محدد<b>' + gender[""] + '</b></div>' : '') + '</div></div></div></div>' +
+      '<div class="days">' + dayCards + '</div>' +
+      '<div class="row"><div class="card"><h2>أوقات الوصول (التسجيل الفردي)</h2>' + hourBars + '</div><div class="card"><h2>من سجّل الحضور</h2>' + (staffBars || '<p class="muted">—</p>') + '</div></div>' +
+      '<div class="card"><h2>الجدول التفصيلي</h2>' + tbl + '</div></div>' +
+      '<div class="ft"><span>بوابة زارة · جمعية العوامية الخيرية</span><span>الأرقام من سجل الحضور الحي لكل الأجهزة — الشخص يُحسب مرة واحدة مهما تكرر حضوره</span></div></div></body></html>';
+  }
   function rsDeskAct(a, v){
     var g = rsDeskProg();
     switch(a){
@@ -18779,7 +18932,12 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
       case "gen-del": rsGenDel(v); return true;
       case "gen-export": rsGenExport(); return true;
       case "recent-all": rsDesk.allRecent = !rsDesk.allRecent; rsRender(); return true;
-      case "att-list": rsDesk.list = !rsDesk.list; rsRender(); window.scrollTo(0, 0); if(!rsDesk.list) rsDeskFocus(); return true;
+      case "bulk-open": if(rsDesk.bulk){ rsDesk.bulk = null; rsRender(); rsDeskFocus(); } else rsBulkOpen(); return true;
+      case "bulk-close": rsDesk.bulk = null; rsRender(); rsDeskFocus(); return true;
+      case "bulk-save": rsBulkSave(); return true;
+      case "bulk-all": if(rsDesk.bulk){ var Bb = rsDesk.bulk; Bb.off = {}; rsBulkPeople(Bb.role).forEach(function(p){ Bb.off[p.id] = v === "0" ? 1 : 0; }); rsRender(); } return true;
+      case "report-open": rsReportOpen(); return true;
+      case "att-list": rsDesk.bulk = null; rsDesk.list = !rsDesk.list; rsRender(); window.scrollTo(0, 0); if(!rsDesk.list) rsDeskFocus(); return true;
       case "att-print": rsAttPrint(); return true;
       case "recent-edit": rsPersonOpen(v); return true;
       case "recent-del": rsDeskUndo(v); return true;
@@ -18977,6 +19135,7 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
     if(!k || !currentUser) return;
     var v = t.getAttribute("data-v");
     if(k === "deskq") rsDesk.q = t.value;
+    else if(k === "bulk-q" && rsDesk.bulk){ rsDesk.bulk.q = t.value; rsRender(); }
     else if(k === "att-q"){ (rsDesk.lst = rsDesk.lst || { day: "", q: "", role: "", gender: "", sort: "time" }).q = t.value; rsRender(); }
     else if(k === "gen") rsGen.f[v] = t.value;
     else if(k === "df" && rsDesk.form) rsDesk.form[v] = t.value;
@@ -18994,6 +19153,10 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
     var imp = rsUI.imp, v = t.getAttribute("data-v");
     if(k === "gen-date"){ rsGen.date = t.value || rsToday(); rsRender(); return; }
     if(k === "gen-role"){ rsGen.f.role = t.value; rsRender(); if(t.value === "__other") setTimeout(function(){ var o = document.querySelector('#rosterRoot [data-v="other"]'); if(o) o.focus(); }, 30); return; }
+    if(k === "bulk-role" && rsDesk.bulk){ rsDesk.bulk.role = t.value; rsDesk.bulk.off = {}; rsRender(); return; }
+    if(k === "bulk-sid" && rsDesk.bulk){ rsDesk.bulk.sid = t.value; rsRender(); return; }
+    if(k === "bulk-absent" && rsDesk.bulk){ rsDesk.bulk.absent = t.checked; rsRender(); return; }
+    if(k === "bulk-p" && rsDesk.bulk){ rsDesk.bulk.off[v] = t.checked ? 0 : 1; rsRender(); return; }
     if(k === "att-day" || k === "att-role" || k === "att-gender" || k === "att-sort"){ var LL = rsDesk.lst = rsDesk.lst || { day: "", q: "", role: "", gender: "", sort: "time" }; LL[k.slice(4)] = t.value; rsRender(); }
     else if(k === "desk-prog"){ rsDeskSetProg(t.value); rsRender(); rsDeskFocus(); }
     else if(k === "desk-sess"){ rsDesk.sess = t.value; rsDesk.res = null; rsRender(); rsDeskFocus(); }
