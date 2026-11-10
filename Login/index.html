@@ -2622,6 +2622,12 @@
 #rosterRoot .rs-att-list .rs-tools select{min-width:120px}
 #rosterRoot .rs-dk-form input.rs-dk-pre{border-color:#2e8b57 !important;background:#eef8f1 !important}
 #rosterRoot .rs-dk-fix{justify-content:center;gap:8px}
+#rosterRoot .rs-dk-near{margin:10px 0;background:#fff7e8;border:1px solid #e9c98f;border-radius:14px;padding:10px 12px;display:flex;flex-direction:column;gap:6px}
+#rosterRoot .rs-dk-near b{font-size:13.5px;color:#8a5a12}
+#rosterRoot .rs-dk-near button{display:flex;align-items:center;gap:10px;background:#fff;border:1px solid #e4d6bd;border-radius:10px;padding:8px 12px;font:inherit;cursor:pointer;text-align:right}
+#rosterRoot .rs-dk-near button:hover{border-color:#b88d66}
+#rosterRoot .rs-dk-near span{font-weight:700;flex:1}
+#rosterRoot .rs-dk-near em{font-style:normal;font-size:12.5px;color:#2e7d4f;font-weight:700}
 #rosterRoot .rs-dk-more{max-width:720px;margin:14px auto 0;text-align:center}
 #rosterRoot .rs-dk-form select{font-size:16px;padding:10px;border-radius:12px;border:1px solid var(--rs-line)}
 #rosterRoot .rs-dk-recent{max-width:720px;margin:18px auto 0;background:#fff;border:1px solid var(--rs-line);border-radius:18px;padding:12px 16px}
@@ -18415,8 +18421,24 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
   function rsDeskFormOpen(){
     var q = rsDesk.res && rsDesk.res.q || "", d = rsDigits(q).replace(/\D/g, ""), sd = rsDeskSide(), f = { name: "", type: rsDesk.lastType || "trainee", nid: "", phone: "", gender: sd === "f" ? "أنثى" : sd === "m" ? "ذكر" : "" };
     if(/^[12]\d{9}$/.test(d)) f.nid = d; else if(d) f.phone = rsPhone(d); else f.name = q;
+    f.near = rsDeskNear(q, "");
     rsDesk.form = f; rsRender();
     setTimeout(function(){ var n = document.querySelector('#rosterRoot [data-rs-in="df"][data-v="' + (!f.name ? "name" : !f.nid ? "nid" : "phone") + '"]'); if(n) n.focus(); }, 30);
+  }
+  // أشخاص قريبون مما كُتب: رقم يختلف بخانة واحدة (خطأ كتابة) أو اسم مشابه — لمنع تسجيل الشخص مرتين
+  function rsDeskNear(q, name){
+    var d = rsDigits(q || "").replace(/\D/g, ""), ph = d ? rsPhone(d) : "", out = [], seen = {};
+    var add = function(p, why){ if(!seen[p.id]){ seen[p.id] = 1; out.push({ p: p, why: why }); } };
+    if(d.length >= 8) rs.people.forEach(function(p){
+      if(p.phone && (rsTrNear(p.phone, ph) || rsTrNear(p.phone, d))) add(p, "جواله " + p.phone);
+      else if(p.nid && rsTrNear(p.nid, d)) add(p, "هويته " + p.nid);
+    });
+    var k = rsNorm(name || ""), A = rsTok(k);
+    if(A.length >= 2) rs.people.forEach(function(p){
+      var B = rsTok(p.nameKey || rsNorm(p.name));
+      if(rsNameSim(k, p.nameKey || rsNorm(p.name)) >= 0.75 || (B.length && A[0] === B[0] && rsTrFam(A[A.length - 1]) === rsTrFam(B[B.length - 1]))) add(p, "اسم مشابه");
+    });
+    return out.slice(0, 6);
   }
   function rsDeskRegister(){
     var f = rsDesk.form, g = rsDeskProg();
@@ -18424,6 +18446,12 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
     var name = String(f.name || "").replace(/\s+/g, " ").trim();
     if(rsTok(rsNorm(name)).length < 2){ showToast("اكتب الاسم الكامل"); return; }
     if(!rsNid(f.nid) && !rsPhone(f.phone)){ showToast("اكتب الجوال أو الهوية"); return; }
+    if(f.phone && !rsPhoneOk(rsPhone(f.phone))){ showToast("رقم الجوال غير صحيح — 10 أرقام تبدأ بـ 05"); rsBeep(false); return; }
+    if(f.nid && !/^[12]\d{9}$/.test(rsNid(f.nid))){ showToast("رقم الهوية غير صحيح — 10 أرقام تبدأ بـ 1 أو 2"); rsBeep(false); return; }
+    if(!f.nearOk){
+      var nr = rsDeskNear("", name).filter(function(x){ return x.why === "اسم مشابه"; });
+      if(nr.length){ f.near = nr; f.nearOk = 1; f.name = name; rsBeep(false); rsRender(); showToast("يوجد اسم مشابه مسجّل — تأكد أنه ليس نفس الشخص"); return; }
+    }
     if(!f.gender) f.gender = rsGuessGender(name) || "";
     var rec = { name: name, nameKey: rsNorm(name), nid: rsNid(f.nid), phone: rsPhone(f.phone), gender: f.gender || "", email: "", birth: "", org: "", notes: "", type: f.type || "trainee", roles: [f.type || "trainee"], status: "active" };
     var clash = rs.people.find(function(p){ return (rec.nid && p.nid === rec.nid) || (rec.phone && p.phone === rec.phone && rsNameSim(p.nameKey, rec.nameKey) >= 0.5); });
@@ -18494,6 +18522,7 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
     if(rsDesk.form){
       var f = rsDesk.form;
       h += '<div class="rs-dk-card rs-dk-card--new"><div class="rs-dk-alert">غير مسجّل — رقمه منقول تحت ✓ اكتب اسمه ثم Enter</div>' +
+        (f.near && f.near.length ? '<div class="rs-dk-near"><b>⚠ هل هو أحد هؤلاء؟ (رقم قريب أو اسم مشابه — غالباً خطأ كتابة)</b>' + f.near.map(function(x){ var pr = (marks[x.p.id] || {}).s; return '<button type="button" data-rs="df-same" data-v="' + x.p.id + '"><span>' + escapeHTML(x.p.name) + '</span><small dir="ltr">' + escapeHTML(x.why) + '</small>' + (pr === "p" || pr === "l" ? '<em>حضوره مؤكد اليوم</em>' : '<em>نعم هو ← تأكيد حضوره</em>') + '</button>'; }).join("") + '</div>' : '') +
         '<div class="rs-dk-form"><label class="rs-dk-full"><span>الاسم الكامل</span><input type="text" data-rs-in="df" data-v="name" value="' + escapeHTML(f.name) + '" autocomplete="off" enterkeyhint="next"/></label>' +
         '<label><span>الجوال' + (f.phone && r && rsPhone(r.q) === f.phone ? ' ✓' : '') + '</span><input type="tel" dir="ltr" data-rs-in="df" data-v="phone"' + (f.phone && r && rsPhone(r.q) === f.phone ? ' class="rs-dk-pre"' : '') + ' value="' + escapeHTML(f.phone) + '" autocomplete="off" enterkeyhint="next"/></label>' +
         '<label><span>رقم الهوية' + (f.nid ? ' ✓' : '') + '</span><input type="text" inputmode="numeric" dir="ltr" data-rs-in="df" data-v="nid"' + (f.nid ? ' class="rs-dk-pre"' : '') + ' value="' + escapeHTML(f.nid) + '" autocomplete="off" enterkeyhint="done"/></label>' +
@@ -18668,6 +18697,7 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
       case "desk-new": rsDeskFormOpen(); return true;
       case "desk-more": rsDesk.more = !rsDesk.more; rsRender(); return true;
       case "desk-pick": var p = rs.byId[v]; if(p) rsDeskShow(p); return true;
+      case "df-same": var ps = rs.byId[v]; if(ps){ rsDesk.form = null; rsDeskShow(ps); } return true;
       case "desk-change": rsDeskSetProg(""); rsDesk.pick = null; rsRender(); return true;
       case "desk-quick": rsDeskQuickProg(); return true;
       case "desk-today":
