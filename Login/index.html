@@ -18819,51 +18819,91 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
     var g = rsDeskProg(); if(!g) return;
     var w = window.open("", "_blank");
     if(!w){ showToast("المتصفح منع فتح نافذة التقرير — اسمح بالنوافذ المنبثقة"); return; }
-    w.document.write(rsReportHTML(g)); w.document.close();
+    w.document.write('<p style="font-family:sans-serif;padding:40px;direction:rtl">جارٍ جمع الأرقام من كل الأجهزة…</p>');
+    // يُجمع: حضور شاشة التسجيل لهذه الفعالية + «كشف حضور عام» لأيامها + تنبيه بأي حضور سُجّل على فعالية أخرى في نفس الأيام
+    var dates = rsUniq(rsSessions(g).map(function(x){ return x.date; }));
+    Promise.all([Promise.all(dates.map(function(d){ return rsGenRef(d).get().then(function(x){ return { d: d, e: (x.exists && x.data().entries) || {} }; }).catch(function(){ return { d: d, e: {} }; }); })), rsLoadAllAtt(true).catch(function(){ return []; })])
+      .then(function(res){ w.document.open(); w.document.write(rsReportHTML(g, { gen: res[0], all: res[1] })); w.document.close(); })
+      .catch(function(e){ console.error(e); w.document.open(); w.document.write(rsReportHTML(g, { gen: [], all: [] })); w.document.close(); });
   }
-  function rsReportHTML(g){
+  function rsReportHTML(g, X){
+    X = X || { gen: [], all: [] };
     var ss = rsSessions(g), ok = function(m){ return m && (m.s === "p" || m.s === "l"); };
     var ppl = rs.people.filter(function(p){ return !p.mergedInto && p.status !== "inactive"; });
     var ORDER = ["trainee", "hr", "admin", "supervisor", "volunteer", "guest"];
     var roleOf = function(p){ return rsAttRole(p); };
+    var hours0 = {}, staff0 = {};
     var reg = {}, att = {}, perDay = ss.map(function(){ return {}; }), gender = { "ذكر": 0, "أنثى": 0, "": 0 }, uniq = {}, absent = {};
     ppl.forEach(function(p){ var r = roleOf(p); reg[r] = (reg[r] || 0) + 1; });
     ss.forEach(function(se, i){ var mk = rs.att[se.id] || {}; Object.keys(mk).forEach(function(k){ var p = rs.byId[k]; if(!p || p.mergedInto) return; var r = roleOf(p);
       if(ok(mk[k])){ perDay[i][r] = (perDay[i][r] || 0) + 1; perDay[i]._t = (perDay[i]._t || 0) + 1; (uniq[k] = uniq[k] || []).push(i); }
       else if(mk[k].s === "a"){ (absent[i] = absent[i] || []).push(p); } }); });
     Object.keys(uniq).forEach(function(k){ var p = rs.byId[k], r = roleOf(p); att[r] = (att[r] || 0) + 1; gender[p.gender === "ذكر" || p.gender === "أنثى" ? p.gender : ""]++; });
-    var roles = ORDER.filter(function(r){ return reg[r] || att[r]; }).concat(Object.keys(reg).filter(function(r){ return ORDER.indexOf(r) === -1; }));
+    // «كشف حضور عام»: أشخاص أُضيفوا يدوياً خارج السجل. يُطابَق بالجوال لمنع العدّ مرتين
+    var GEN_MAP = { "متدرب": "trainee", "متطوع": "volunteer", "مشرف متطوعين": "supervisor", "إداري": "admin", "موارد بشرية": "hr", "ضيف": "guest" };
+    var phoneIdx = {}; ppl.forEach(function(p){ if(p.phone) phoneIdx[rsPhone(p.phone)] = p; });
+    var genU = {}, genN = 0;
+    (X.gen || []).forEach(function(gd){
+      ss.forEach(function(se, i){
+        if(se.date !== gd.d) return;
+        Object.keys(gd.e).forEach(function(k){
+          var e = gd.e[k], ph = rsPhone(e.phone || ""), rp = ph && phoneIdx[ph];
+          if(rp && ok((rs.att[se.id] || {})[rp.id])) return;
+          var r = GEN_MAP[e.role] || ("x:" + (e.role || "غير محدد"));
+          perDay[i][r] = (perDay[i][r] || 0) + 1; perDay[i]._t = (perDay[i]._t || 0) + 1; genN++;
+          var uk = ph || rsNorm(e.name || k);
+          if(!genU[uk]){ genU[uk] = 1; att[r] = (att[r] || 0) + 1; gender[""]++; uniq["g:" + uk] = [i]; }
+          else uniq["g:" + uk].push(i);
+          if(e.t && !e.desk){ var hh0 = new Date(e.t).getHours(); hours0[hh0] = (hours0[hh0] || 0) + 1; }
+          if(e.by) staff0[e.by] = (staff0[e.by] || 0) + 1;
+        });
+      });
+    });
+    // حضور سُجّل على فعالية أخرى في نفس الأيام (اختيار فعالية مختلف على أحد الأجهزة)
+    var dateSet = {}; ss.forEach(function(se){ dateSet[se.date] = 1; });
+    var other = {};
+    (X.all || []).forEach(function(d){
+      if(!d.programId || d.programId === g.id || d.sessionId === "__cards") return;
+      var og = rs.programs.find(function(x){ return x.id === d.programId; }); if(!og) return;
+      var se2 = rsSessions(og).find(function(x){ return x.id === d.sessionId; }); if(!se2 || !dateSet[se2.date]) return;
+      var n2 = Object.keys(d.marks || {}).filter(function(k){ return ok(d.marks[k]); }).length;
+      if(n2) other[og.title] = (other[og.title] || 0) + n2;
+    });
+    var roles = ORDER.filter(function(r){ return reg[r] || att[r]; }).concat(Object.keys(reg).concat(Object.keys(att)).filter(function(r, i, a){ return ORDER.indexOf(r) === -1 && a.indexOf(r) === i; }));
+    var RL = function(r){ return r.indexOf("x:") === 0 ? r.slice(2) : rsT(r).pl; };
     var totalAtt = Object.keys(uniq).length, totalReg = ppl.length;
     var both = ss.length > 1 ? Object.keys(uniq).filter(function(k){ return uniq[k].length === ss.length; }).length : 0;
     var deskNew = ppl.filter(function(p){ return p.batch === "desk" || /عند الحضور/.test(p.source || ""); }).length;
     var cards = Object.keys(rsCardsOf().cards || {}).length;
     // ساعات الوصول (للتأكيدات الفردية فقط؛ التحضير الجماعي لا وقت وصول حقيقي له)
-    var hours = {}; ss.forEach(function(se){ var mk = rs.att[se.id] || {}; Object.keys(mk).forEach(function(k){ var m = mk[k]; if(ok(m) && !m.bulk && m.t){ var hh = new Date(m.t).getHours(); hours[hh] = (hours[hh] || 0) + 1; } }); });
+    var hours = shallowCopy(hours0); ss.forEach(function(se){ var mk = rs.att[se.id] || {}; Object.keys(mk).forEach(function(k){ var m = mk[k]; if(ok(m) && !m.bulk && m.t){ var hh = new Date(m.t).getHours(); hours[hh] = (hours[hh] || 0) + 1; } }); });
     var hk = Object.keys(hours).map(Number).sort(function(a, b){ return a - b; }), hmax = Math.max.apply(null, hk.map(function(x){ return hours[x]; }).concat([1]));
-    var staff = {}; ss.forEach(function(se){ var mk = rs.att[se.id] || {}; Object.keys(mk).forEach(function(k){ if(ok(mk[k]) && mk[k].by) staff[mk[k].by] = (staff[mk[k].by] || 0) + 1; }); });
+    var staff = shallowCopy(staff0); ss.forEach(function(se){ var mk = rs.att[se.id] || {}; Object.keys(mk).forEach(function(k){ if(ok(mk[k]) && mk[k].by) staff[mk[k].by] = (staff[mk[k].by] || 0) + 1; }); });
     var staffL = Object.keys(staff).sort(function(a, b){ return staff[b] - staff[a]; }).slice(0, 6), smax = staffL.length ? staff[staffL[0]] : 1;
     var esc = escapeHTML, pct = function(a, b){ return b ? Math.round(a / b * 100) : 0; }, fmt = function(n){ return Number(n || 0).toLocaleString("en-US"); };
-    var gm = gender["ذكر"], gf = gender["أنثى"], gt = gm + gf || 1;
+    var gm = gender["ذكر"], gf = gender["أنثى"], gu = gender[""], gt = gm + gf + gu || 1;
     // دونات الجنس: سلسلتان باللونين الأول والثاني من اللوحة المعتمدة مع فاصل 2px
     var R = 64, C = 2 * Math.PI * R, mLen = C * gm / gt;
     var donut = '<svg viewBox="0 0 180 180" width="170" height="170" role="img" aria-label="ذكور ' + gm + '، إناث ' + gf + '"><circle cx="90" cy="90" r="' + R + '" fill="none" stroke="#e6ebea" stroke-width="22"/>' +
       (gm ? '<circle cx="90" cy="90" r="' + R + '" fill="none" stroke="#2a78d6" stroke-width="22" stroke-dasharray="' + Math.max(0, mLen - 2) + ' ' + C + '" transform="rotate(-90 90 90)"><title>ذكور: ' + gm + '</title></circle>' : '') +
-      (gf ? '<circle cx="90" cy="90" r="' + R + '" fill="none" stroke="#eb6834" stroke-width="22" stroke-dasharray="' + Math.max(0, C - mLen - 2) + ' ' + C + '" stroke-dashoffset="' + (-mLen) + '" transform="rotate(-90 90 90)"><title>إناث: ' + gf + '</title></circle>' : '') +
-      '<text x="90" y="86" text-anchor="middle" font-size="30" font-weight="700" fill="#141c1b">' + (gm + gf) + '</text><text x="90" y="110" text-anchor="middle" font-size="12" fill="#5b6765">حاضر</text></svg>';
+      (gf ? '<circle cx="90" cy="90" r="' + R + '" fill="none" stroke="#eb6834" stroke-width="22" stroke-dasharray="' + Math.max(0, C * gf / gt - 2) + ' ' + C + '" stroke-dashoffset="' + (-mLen) + '" transform="rotate(-90 90 90)"><title>إناث: ' + gf + '</title></circle>' : '') +
+      (gu ? '<circle cx="90" cy="90" r="' + R + '" fill="none" stroke="#b9c2c0" stroke-width="22" stroke-dasharray="' + Math.max(0, C * gu / gt - 2) + ' ' + C + '" stroke-dashoffset="' + (-(mLen + C * gf / gt)) + '" transform="rotate(-90 90 90)"><title>غير محدد: ' + gu + '</title></circle>' : '') +
+      '<text x="90" y="86" text-anchor="middle" font-size="30" font-weight="700" fill="#141c1b">' + (gm + gf + gu) + '</text><text x="90" y="110" text-anchor="middle" font-size="12" fill="#5b6765">حاضر</text></svg>';
     var roleRows = roles.map(function(r){
       var a = att[r] || 0, n = reg[r] || 0, p = pct(a, n);
-      return '<div class="rr"><div class="rl"><b>' + esc(rsT(r).pl) + '</b><span>' + fmt(a) + ' من ' + fmt(n) + '</span></div><div class="bar" title="' + esc(rsT(r).pl) + ': ' + a + ' من ' + n + ' (' + p + '%)"><i style="width:' + Math.min(100, p) + '%"></i></div><em>' + p + '%</em></div>';
+      if(!n) return '<div class="rr"><div class="rl"><b>' + esc(RL(r)) + '</b><span>' + fmt(a) + ' حاضر — خارج السجل</span></div><div class="bar out"><i style="width:100%"></i></div><em>' + fmt(a) + '</em></div>';
+      return '<div class="rr"><div class="rl"><b>' + esc(RL(r)) + '</b><span>' + fmt(a) + ' من ' + fmt(n) + '</span></div><div class="bar" title="' + esc(RL(r)) + ': ' + a + ' من ' + n + ' (' + p + '%)"><i style="width:' + Math.min(100, p) + '%"></i></div><em>' + p + '%</em></div>';
     }).join("");
     var dayCards = ss.map(function(se, i){
       var d = perDay[i], ab = absent[i] || [];
       return '<div class="day"><div class="dh"><b>' + esc(se.title || ("اليوم " + (i + 1))) + '</b><span>' + rsDate(se.date) + '</span></div><div class="dn">' + fmt(d._t || 0) + '<small>حاضر</small></div>' +
-        '<ul>' + roles.filter(function(r){ return d[r]; }).map(function(r){ return '<li><span>' + esc(rsT(r).pl) + '</span><b>' + d[r] + '</b></li>'; }).join("") + '</ul>' +
+        '<ul>' + roles.filter(function(r){ return d[r]; }).map(function(r){ return '<li><span>' + esc(RL(r)) + '</span><b>' + d[r] + '</b></li>'; }).join("") + '</ul>' +
         (ab.length ? '<p class="abs">غياب مسجّل (' + ab.length + '): ' + ab.map(function(p){ return esc(p.name); }).join("، ") + '</p>' : '') + '</div>';
     }).join("");
     var hourBars = hk.length ? '<div class="hours">' + hk.map(function(x){ var v = hours[x], hh = Math.round(v / hmax * 100); return '<div class="hc" title="الساعة ' + x + ':00 — ' + v + ' وصول"><span class="hv">' + (v === hmax ? v : "") + '</span><i style="height:' + Math.max(4, hh) + '%"></i><span class="hl">' + (x > 12 ? x - 12 : x) + (x >= 12 ? "م" : "ص") + '</span></div>'; }).join("") + '</div>' : '<p class="muted">لا توجد أوقات وصول فردية بعد.</p>';
     var staffBars = staffL.map(function(s){ return '<div class="sr"><span>' + esc(s) + '</span><div class="bar sm"><i style="width:' + Math.round(staff[s] / smax * 100) + '%"></i></div><b>' + staff[s] + '</b></div>'; }).join("");
     var tbl = '<table><thead><tr><th>الفئة</th><th>المسجلون</th>' + ss.map(function(se, i){ return '<th>' + esc(se.title || ("اليوم " + (i + 1))) + '</th>'; }).join("") + '<th>حضر (أشخاص)</th><th>النسبة</th></tr></thead><tbody>' +
-      roles.map(function(r){ return '<tr><td>' + esc(rsT(r).pl) + '</td><td>' + (reg[r] || 0) + '</td>' + ss.map(function(se, i){ return '<td>' + (perDay[i][r] || 0) + '</td>'; }).join("") + '<td>' + (att[r] || 0) + '</td><td>' + pct(att[r] || 0, reg[r] || 0) + '%</td></tr>'; }).join("") +
+      roles.map(function(r){ return '<tr><td>' + esc(RL(r)) + '</td><td>' + (reg[r] || 0) + '</td>' + ss.map(function(se, i){ return '<td>' + (perDay[i][r] || 0) + '</td>'; }).join("") + '<td>' + (att[r] || 0) + '</td><td>' + (reg[r] ? pct(att[r] || 0, reg[r]) + '%' : '—') + '</td></tr>'; }).join("") +
       '<tr class="tot"><td>الإجمالي</td><td>' + totalReg + '</td>' + ss.map(function(se, i){ return '<td>' + (perDay[i]._t || 0) + '</td>'; }).join("") + '<td>' + totalAtt + '</td><td>' + pct(totalAtt, totalReg) + '%</td></tr></tbody></table>';
     var kpi = function(n, l, s){ return '<div class="k"><b>' + n + '</b><span>' + l + '</span>' + (s ? '<small>' + s + '</small>' : '') + '</div>'; };
     var css = '@page{size:A4;margin:0}*{box-sizing:border-box;margin:0;padding:0;-webkit-print-color-adjust:exact;print-color-adjust:exact}body{font-family:"IBM Plex Sans Arabic",Cairo,Tahoma,sans-serif;color:#141c1b;background:#e9eeed}' +
@@ -18873,22 +18913,25 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
       '.hero{position:absolute;left:34px;top:22px;text-align:center}.hero b{display:block;font-family:"Readex Pro",Cairo,sans-serif;font-size:58px;line-height:1;color:#fff}.hero span{font-size:12px;color:#e8cfaf}' +
       '.wrap{padding:18px 26px 24px;display:flex;flex-direction:column;gap:12px}.kp{display:grid;grid-template-columns:repeat(4,1fr);gap:9px}.k{background:#fff;border-radius:14px;padding:11px 13px;border:1px solid #e1e7e6}.k b{display:block;font-family:"Readex Pro",Cairo,sans-serif;font-size:26px;color:#324c4b;font-variant-numeric:tabular-nums}.k span{font-size:11.5px;color:#3f4a48;font-weight:600}.k small{display:block;font-size:10.5px;color:#5b6765}' +
       '.row{display:grid;grid-template-columns:1.45fr 1fr;gap:12px}.card{background:#fff;border:1px solid #e1e7e6;border-radius:16px;padding:14px 16px}.card h2{font-size:14px;margin-bottom:10px;font-family:"Readex Pro",Cairo,sans-serif}' +
-      '.rr{display:grid;grid-template-columns:118px 1fr 40px;align-items:center;gap:8px;margin:7px 0}.rl b{display:block;font-size:12.5px}.rl span{font-size:11px;color:#5b6765}.bar{height:12px;background:#e6ebea;border-radius:6px;overflow:hidden}.bar i{display:block;height:100%;background:#324c4b;border-radius:0 6px 6px 0}.bar.sm{height:8px}.rr em{font-style:normal;font-weight:700;font-size:12.5px;text-align:left}' +
+      '.rr{display:grid;grid-template-columns:118px 1fr 40px;align-items:center;gap:8px;margin:7px 0}.rl b{display:block;font-size:12.5px}.rl span{font-size:11px;color:#5b6765}.bar{height:12px;background:#e6ebea;border-radius:6px;overflow:hidden}.bar i{display:block;height:100%;background:#324c4b;border-radius:0 6px 6px 0}.bar.sm{height:8px}.bar.out i{background:repeating-linear-gradient(135deg,#b88d66 0 6px,#d9c2ab 6px 12px)}.rr em{font-style:normal;font-weight:700;font-size:12.5px;text-align:left}' +
       '.gd{display:flex;align-items:center;gap:12px}.lg{display:flex;flex-direction:column;gap:8px;font-size:12.5px}.lg div{display:flex;align-items:center;gap:7px}.lg i{width:12px;height:12px;border-radius:3px}.lg b{margin-inline-start:auto;padding-inline-start:10px;white-space:nowrap}' +
       '.days{display:grid;grid-template-columns:repeat(' + Math.max(1, Math.min(3, ss.length)) + ',1fr);gap:10px}.day{background:#fff;border:1px solid #e1e7e6;border-radius:16px;padding:12px 14px}.dh{display:flex;justify-content:space-between;font-size:12.5px}.dh span{color:#5b6765}.dn{font-family:"Readex Pro",Cairo,sans-serif;font-size:34px;font-weight:700;color:#324c4b;margin:2px 0 6px}.dn small{font-size:12px;color:#5b6765;margin-inline-start:6px;font-weight:500}.day ul{list-style:none;font-size:12px}.day li{display:flex;justify-content:space-between;padding:3px 0;border-top:1px solid #eef2f1}.abs{margin-top:6px;font-size:11px;color:#8a4b2a;background:#fbf1e8;border-radius:8px;padding:6px 8px;line-height:1.6}' +
       '.hours{display:flex;align-items:flex-end;gap:6px;height:120px;padding-top:14px}.hc{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;gap:3px}.hc i{display:block;width:100%;max-width:26px;background:#b88d66;border-radius:4px 4px 0 0}.hl{font-size:10px;color:#5b6765}.hv{font-size:10.5px;font-weight:700}' +
       '.sr{display:grid;grid-template-columns:110px 1fr 30px;gap:8px;align-items:center;font-size:12px;margin:6px 0}.sr b{text-align:left}' +
       'table{width:100%;border-collapse:collapse;font-size:12px}th,td{padding:6px 8px;text-align:center;border-bottom:1px solid #e6ebea}th{background:#eef3f2;font-weight:700}td:first-child,th:first-child{text-align:right}.tot td{font-weight:700;background:#f6f1ea}.muted{color:#5b6765;font-size:12px}' +
+      '.warn{background:#fdf0e6;border:1.5px solid #e2a46f;color:#7a3f12;border-radius:12px;padding:10px 14px;font-size:12.5px;font-weight:600}.src{font-size:11.5px;color:#3f4a48;background:#fff;border:1px dashed #c9d3d1;border-radius:10px;padding:7px 12px}' +
       '.ft{display:flex;justify-content:space-between;font-size:10.5px;color:#5b6765;padding:0 26px 16px}@media print{body{background:#fff}.bar0{display:none}.page{margin:0}}';
     return '<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>التقرير الإحصائي — ' + esc(g.title) + '</title>' +
       '<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;600;700&family=Readex+Pro:wght@500;700&display=swap" rel="stylesheet"><style>' + css + '</style></head><body>' +
       '<div class="bar0"><button onclick="window.print()">طباعة / حفظ PDF</button></div><div class="page">' +
       '<div class="hd"><small>التقرير الإحصائي للحضور</small><h1>' + esc(g.title) + '</h1><p>' + ss.map(function(se, i){ return esc(se.title || ("اليوم " + (i + 1))) + " " + rsDate(se.date); }).join(" · ") + ' — حتى ' + new Date().toLocaleString("ar-SA-u-nu-latn", { dateStyle: "medium", timeStyle: "short" }) + '</p>' +
       '<div class="hero"><b>' + fmt(totalAtt) + '</b><span>شخص حضر</span></div></div>' +
-      '<div class="wrap"><div class="kp">' + kpi(fmt(att.trainee || 0), "متدرب حضر", "من " + fmt(reg.trainee || 0) + " مسجل · " + pct(att.trainee || 0, reg.trainee || 0) + "%") + kpi(fmt(att.hr || 0), "موارد بشرية", "من " + fmt(reg.hr || 0) + " · " + pct(att.hr || 0, reg.hr || 0) + "%") + kpi(fmt(att.admin || 0), "إداري", "من " + fmt(reg.admin || 0)) +
+      '<div class="wrap">' + (Object.keys(other).length ? '<div class="warn">⚠️ يوجد حضور مسجّل على فعالية أخرى في نفس الأيام ولم يُحسب هنا: ' + Object.keys(other).map(function(t){ return esc(t) + ' (' + other[t] + ')'; }).join("، ") + ' — غالباً أحد الأجهزة اختار فعالية مختلفة.</div>' : '') +
+      '<div class="src">المصادر: شاشة تسجيل الحضور (' + fmt(Object.keys(uniq).filter(function(k){ return k.indexOf("g:") !== 0; }).length) + ' شخص) + كشف الحضور العام (' + fmt(Object.keys(genU).length) + ' شخص، ' + fmt(genN) + ' تسجيل)</div>' +
+      '<div class="kp">' + kpi(fmt(att.trainee || 0), "متدرب حضر", "من " + fmt(reg.trainee || 0) + " مسجل · " + pct(att.trainee || 0, reg.trainee || 0) + "%") + kpi(fmt(att.hr || 0), "موارد بشرية", "من " + fmt(reg.hr || 0) + " · " + pct(att.hr || 0, reg.hr || 0) + "%") + kpi(fmt(att.admin || 0), "إداري", "من " + fmt(reg.admin || 0)) +
         ((reg.volunteer || 0) + (reg.supervisor || 0) ? kpi(fmt((att.volunteer || 0) + (att.supervisor || 0)), "متطوع ومشرف", "من " + fmt((reg.volunteer || 0) + (reg.supervisor || 0))) : kpi(fmt(deskNew), "سُجّلوا عند الباب", "لم يكونوا في الكشوف")) + '</div>' +
       '<div class="kp">' + kpi(pct(totalAtt, totalReg) + "%", "نسبة الحضور العامة", fmt(totalAtt) + " من " + fmt(totalReg)) + (ss.length > 1 && perDay.slice(1).some(function(d){ return d._t; }) ? kpi(fmt(both), "حضروا كل الأيام", pct(both, totalAtt) + "% من الحاضرين") : kpi(fmt(gf), "إناث حضرن", pct(gf, gt) + "% من الحاضرين")) + kpi(fmt(Object.keys(absent).reduce(function(a, k){ return a + absent[k].length; }, 0)), "غياب مسجّل", "من التحضير الجماعي") + kpi(fmt(cards), "بطاقة مُسلّمة", "") + '</div>' +
-      '<div class="row"><div class="card"><h2>الحضور حسب الفئة (حضر من المسجلين)</h2>' + roleRows + '</div><div class="card"><h2>الحاضرون حسب الجنس</h2><div class="gd">' + donut + '<div class="lg"><div><i style="background:#2a78d6"></i>ذكور<b>' + gm + ' · ' + pct(gm, gt) + '%</b></div><div><i style="background:#eb6834"></i>إناث<b>' + gf + ' · ' + pct(gf, gt) + '%</b></div>' + (gender[""] ? '<div><i style="background:#c9d1cf"></i>غير محدد<b>' + gender[""] + '</b></div>' : '') + '</div></div></div></div>' +
+      '<div class="row"><div class="card"><h2>الحضور حسب الفئة (حضر من المسجلين)</h2>' + roleRows + '</div><div class="card"><h2>الحاضرون حسب الجنس</h2><div class="gd">' + donut + '<div class="lg"><div><i style="background:#2a78d6"></i>ذكور<b>' + gm + ' · ' + pct(gm, gt) + '%</b></div><div><i style="background:#eb6834"></i>إناث<b>' + gf + ' · ' + pct(gf, gt) + '%</b></div>' + (gu ? '<div><i style="background:#b9c2c0"></i>غير محدد<b>' + gu + ' · ' + pct(gu, gt) + '%</b></div>' : '') + '</div></div></div></div>' +
       '<div class="days">' + dayCards + '</div>' +
       '<div class="row"><div class="card"><h2>أوقات الوصول (التسجيل الفردي)</h2>' + hourBars + '</div><div class="card"><h2>من سجّل الحضور</h2>' + (staffBars || '<p class="muted">—</p>') + '</div></div>' +
       '<div class="card"><h2>الجدول التفصيلي</h2>' + tbl + '</div></div>' +
