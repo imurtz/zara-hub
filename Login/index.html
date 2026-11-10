@@ -2628,6 +2628,12 @@
 #rosterRoot .rs-dk-near button:hover{border-color:#b88d66}
 #rosterRoot .rs-dk-near span{font-weight:700;flex:1}
 #rosterRoot .rs-dk-near em{font-style:normal;font-size:12.5px;color:#2e7d4f;font-weight:700}
+#rosterRoot .rs-typo{border-color:#e9c98f;background:#fffaf0}
+#rosterRoot .rs-typo-row{display:flex;align-items:center;gap:12px;padding:10px 0;border-top:1px solid rgba(20,28,27,.07)}
+#rosterRoot .rs-typo-row>div{flex:1;display:flex;flex-direction:column;gap:2px}
+#rosterRoot .rs-typo-row small{color:#6b7775}
+#rosterRoot .rs-typo-row i{font-style:normal;font-size:12px;color:#8a6440}
+#rosterRoot .rs-typo-row>span{color:#b88d66;font-size:20px}
 #rosterRoot .rs-dk-more{max-width:720px;margin:14px auto 0;text-align:center}
 #rosterRoot .rs-dk-form select{font-size:16px;padding:10px;border-radius:12px;border:1px solid var(--rs-line)}
 #rosterRoot .rs-dk-recent{max-width:720px;margin:18px auto 0;background:#fff;border:1px solid var(--rs-line);border-radius:18px;padding:12px 16px}
@@ -17198,7 +17204,7 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
     if(keep){ try{ selS = ae.selectionStart; selE = ae.selectionEnd; }catch(e){} }
     var tabs = [["desk", "تسجيل الحضور", "roster.attend"], ["general", "كشف حضور عام", "roster.attend"], ["registry", "السجل", "roster.view"], ["import", "رفع ومطابقة", "roster.import"], ["programs", "البرامج والتحضير", "roster.view"], ["dupes", "فحص التكرار", "roster.edit"]].filter(function(t){ return can(t[2]); });
     if(!tabs.some(function(t){ return t[0] === rsUI.tab; })) rsUI.tab = tabs[0][0];
-    var dupN = can("roster.edit") ? rsDupClusters().length : 0;
+    var dupN = can("roster.edit") ? rsDupClusters().length + rsTypoPairs().length : 0;
     var h = '<div class="rs-head"><div><h2>مطابقة البيانات</h2><p>المتدربون والمتطوعون والمشرفون والإداريون والموارد البشرية — اكتب الجوال أو الهوية وEnter، فيتأكد الحضور وتظهر البطاقة</p></div>' +
       (can("roster.edit") ? '<button type="button" class="btn-primary" data-rs="new-person">＋ إضافة شخص</button>' : '') + '</div>' +
       '<div class="events-subnav rs-nav">' + tabs.map(function(t){ return '<button type="button" data-rs="tab" data-v="' + t[0] + '" class="' + (rsUI.tab === t[0] ? "active" : "") + '">' + t[1] + (t[0] === "dupes" && dupN ? ' <i class="rs-badge">' + dupN + '</i>' : '') + '</button>'; }).join("") + '</div>';
@@ -17856,7 +17862,53 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
     rsDupClusters.at = rs.people; rsDupClusters.meta = rs.meta; rsDupClusters.v = out;
     return out;
   }
+  // ----- دمج آمن لمن سُجّل عند الاستقبال برقم فيه خطأ كتابة (خانة واحدة) — بلا حذف: المكرر يبقى «مدموج» ويحوَّل حضوره للأصلي -----
+  function rsTypoPairs(){
+    var act = rs.people.filter(function(p){ return p.status !== "inactive" && !p.mergedInto; }), out = [];
+    act.forEach(function(d){
+      if(d.batch !== "desk") return;
+      var o = act.find(function(x){ return x.id !== d.id && x.batch !== "desk" && ((d.phone && x.phone && d.phone !== x.phone && rsTrNear(d.phone, x.phone)) || (d.nid && x.nid && d.nid !== x.nid && rsTrNear(d.nid, x.nid))); });
+      if(o) out.push({ d: d, o: o });
+    });
+    return out;
+  }
+  function rsSafeMerge(list){
+    if(!list.length || rsUI.busy || !can("roster.edit")) return;
+    if(!confirm("دمج " + list.length + " سجل مكرر في سجلاتهم الأصلية؟\n\n" + list.map(function(x){ return "• " + x.d.name + " ← " + x.o.name; }).join("\n") + "\n\nلا يُحذف شيء: ينتقل الحضور للسجل الأصلي، ويبقى المكرر محفوظاً بحالة «مدموج».")) return;
+    rsUI.busy = true; rsRender();
+    var now = Date.now(), FV = firebase.firestore.FieldValue;
+    var progs = rs.programs.filter(function(g){ return list.some(function(x){ return (g.members || []).indexOf(x.d.id) > -1; }); });
+    Promise.all(progs.map(function(g){
+      return db.collection("rosterAttendance").where("programId", "==", g.id).get().then(function(snap){
+        return Promise.all(snap.docs.filter(function(doc){ return !/__cards$/.test(doc.id); }).map(function(doc){
+          return rsRetry(function(){ return db.runTransaction(function(tx){
+            return tx.get(doc.ref).then(function(ds){
+              var mk = (ds.data() || {}).marks || {}, up = {};
+              list.forEach(function(x){ if(mk[x.d.id] && !mk[x.o.id]){ up["marks." + x.o.id] = Object.assign({}, mk[x.d.id], { movedFrom: x.d.id }); up["marks." + x.d.id] = FV.delete(); } });
+              if(Object.keys(up).length) tx.update(doc.ref, up);
+            });
+          }); });
+        })).then(function(){
+          var ds = list.filter(function(x){ return (g.members || []).indexOf(x.d.id) > -1; });
+          return rsGRef(g.id).update({ members: FV.arrayUnion.apply(FV, ds.map(function(x){ return x.o.id; })) }).then(function(){ return rsGRef(g.id).update({ members: FV.arrayRemove.apply(FV, ds.map(function(x){ return x.d.id; })) }); });
+        });
+      });
+    })).then(function(){
+      return Promise.all(list.map(function(x){ return rsPRef(x.d.id).update({ status: "inactive", mergedInto: x.o.id, mergeNote: "مكرر بخطأ كتابة الرقم عند الاستقبال — دُمج في " + x.o.name + " وانتقل حضوره إليه", updatedAt: now, updatedBy: rsBy() }); }));
+    }).then(function(){ rsUI.busy = false; showToast("✔ دُمج " + list.length + " — لم يُحذف شيء"); rsRender(); })
+      .catch(function(e){ rsUI.busy = false; console.error(e); showToast("⚠️ تعذّر الدمج — لم يكتمل، أعد المحاولة"); rsRender(); });
+  }
+  function rsTypoHTML(){
+    var L = rsTypoPairs();
+    if(!L.length) return "";
+    return '<div class="rs-card rs-typo"><div class="rs-row rs-row--sb"><b>⚠ ' + L.length + ' شخص سُجّل مرتين بسبب خطأ في كتابة الرقم عند الاستقبال</b>' + (can("roster.edit") ? '<button type="button" class="btn-primary" data-rs="safe-merge" data-v="all"' + (rsUI.busy ? " disabled" : "") + '>دمج الكل (بدون حذف)</button>' : '') + '</div>' +
+      '<p class="rs-note">ينتقل حضوره للسجل الأصلي، ويبقى السجل المكرر محفوظاً بحالة «مدموج» — ولو كُتب رقمه الخطأ لاحقاً يفتح السجل الأصلي.</p>' +
+      L.map(function(x){ return '<div class="rs-typo-row"><div><b>' + escapeHTML(x.d.name) + '</b><small dir="ltr">' + escapeHTML(x.d.phone || x.d.nid || "") + '</small><i>سُجّل عند الاستقبال</i></div><span>←</span><div><b>' + escapeHTML(x.o.name) + '</b><small dir="ltr">' + escapeHTML(x.o.phone || x.o.nid || "") + '</small><i>' + escapeHTML(rsT(rsEffType(x.o)).l) + ' — السجل الأصلي</i></div>' + (can("roster.edit") ? '<button type="button" class="rs-mini" data-rs="safe-merge" data-v="' + x.d.id + '">دمج</button>' : '') + '</div>'; }).join("") + '</div>';
+  }
   function rsDupesHTML(){
+    return rsTypoHTML() + rsDupesHTML0();
+  }
+  function rsDupesHTML0(){
     var cl = rsDupClusters();
     if(!cl.length) return '<div class="rs-empty"><b>✓ لا يوجد تكرار</b><p>كل شخص في السجل له قيد واحد — تُفحص الهوية والجوال والاسم الكامل.</p></div>';
     return '<p class="rs-note">' + cl.length + ' مجموعة يُحتمل أنها لنفس الشخص. اختر القيد الأساسي (يبقى رقمه) ثم «دمج» — تنتقل إليه البيانات الناقصة والبرامج والحضور، وتبقى أرقام المكررين صالحة للبحث والمسح.</p>' +
@@ -18173,7 +18225,8 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
   function rsDeskLookup(q){
     q = String(q || "").trim();
     if(!q) return;
-    var hits = rsFind(q);
+    // السجل المدموج (مكرر) يحوّل لسجله الأصلي
+    var hits = rsUniq(rsFind(q).map(function(p){ return p.mergedInto && rs.byId[p.mergedInto] ? rs.byId[p.mergedInto].id : p.id; })).map(function(id){ return rs.byId[id]; });
     if(!hits.length){
       var d = rsDigits(q).replace(/\D/g, "");
       rsDesk.res = { kind: "none", q: q, hint: rsDeskHint(q) }; rsDesk.pick = null;
@@ -18428,7 +18481,7 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
   // أشخاص قريبون مما كُتب: رقم يختلف بخانة واحدة (خطأ كتابة) أو اسم مشابه — لمنع تسجيل الشخص مرتين
   function rsDeskNear(q, name){
     var d = rsDigits(q || "").replace(/\D/g, ""), ph = d ? rsPhone(d) : "", out = [], seen = {};
-    var add = function(p, why){ if(!seen[p.id]){ seen[p.id] = 1; out.push({ p: p, why: why }); } };
+    var add = function(p, why){ if(p.mergedInto && rs.byId[p.mergedInto]) p = rs.byId[p.mergedInto]; if(!seen[p.id]){ seen[p.id] = 1; out.push({ p: p, why: why }); } };
     if(d.length >= 8) rs.people.forEach(function(p){
       if(p.phone && (rsTrNear(p.phone, ph) || rsTrNear(p.phone, d))) add(p, "جواله " + p.phone);
       else if(p.nid && rsTrNear(p.nid, d)) add(p, "هويته " + p.nid);
@@ -18812,6 +18865,7 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
   // ----- الأحداث -----
   function rsAct(a, v, t){
     if(rsDeskAct(a, v)) return;
+    if(a === "safe-merge"){ var tl = rsTypoPairs(); rsSafeMerge(v === "all" ? tl : tl.filter(function(x){ return x.d.id === v; })); return; }
     var imp = rsUI.imp, g = rsCurProg();
     switch(a){
       case "tab": rsUI.tab = v; if(v !== "programs"){ rsUI.prog = ""; } if(v === "import") rsUI.logs = null; rsRender(); window.scrollTo(0, 0); break;
