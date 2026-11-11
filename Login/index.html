@@ -3172,6 +3172,8 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
   };
   firebase.initializeApp(firebaseConfig);
   var db = firebase.firestore();
+  // نسخة محلية على الجهاز: إعادة فتح الصفحة لا تعيد قراءة كل السجلات من الخادم (توفير حد القراءة اليومي)
+  try{ db.enablePersistence({ synchronizeTabs: true }).catch(function(e){ console.warn("persistence", e && e.code); }); }catch(e){}
 
   var GEMINI_PROXY_URL = "https://zara-gemini-proxy.murtada-ud.workers.dev/";
 
