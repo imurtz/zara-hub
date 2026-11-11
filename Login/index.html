@@ -17218,7 +17218,7 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
     if(!tabs.some(function(t){ return t[0] === rsUI.tab; })) rsUI.tab = tabs[0][0];
     var dupN = can("roster.edit") ? rsDupClusters().length + rsTypoPairs().length : 0;
     var h = '<div class="rs-head"><div><h2>مطابقة البيانات</h2><p>المتدربون والمتطوعون والمشرفون والإداريون والموارد البشرية — اكتب الجوال أو الهوية وEnter، فيتأكد الحضور وتظهر البطاقة</p></div>' +
-      (can("roster.edit") ? '<button type="button" class="btn-primary" data-rs="new-person">＋ إضافة شخص</button>' : '') + '</div>' +
+      (can("roster.export") ? '<button type="button" class="btn-secondary" data-rs="export-all"' + (rs.exporting ? " disabled" : "") + '>' + (rs.exporting ? "جارٍ تجهيز الملف…" : "⬇ تنزيل كل البيانات Excel") + '</button>' : '') + (can("roster.edit") ? '<button type="button" class="btn-primary" data-rs="new-person">＋ إضافة شخص</button>' : '') + '</div>' +
       '<div class="events-subnav rs-nav">' + tabs.map(function(t){ return '<button type="button" data-rs="tab" data-v="' + t[0] + '" class="' + (rsUI.tab === t[0] ? "active" : "") + '">' + t[1] + (t[0] === "dupes" && dupN ? ' <i class="rs-badge">' + dupN + '</i>' : '') + '</button>'; }).join("") + '</div>';
     if(rsUI.tab === "desk") h += rsDeskHTML();
     else if(rsUI.tab === "registry"){ if(rsDeskProgId()) rsWatchAtt(rsDeskProgId()); h += rsRegistryHTML(); }
@@ -17311,6 +17311,44 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
       "الجوال": p.phone || "", "رقم الهوية": p.nid || "", "الجنس": p.gender || "", "البريد الإلكتروني": p.email || "",
       "تاريخ الميلاد": p.birth || "", "الجهة / التخصص": p.org || "", "الحالة": p.status === "inactive" ? "غير نشط" : "نشط", "ملاحظات": p.notes || ""
     };
+  }
+  // ملف Excel واحد بكل البيانات: ملخص، السجل، الحضور لكل برنامج، البطاقات، كشف الحضور العام
+  function rsExportAll(){
+    if(rs.exporting) return;
+    if(typeof window.XLSX === "undefined"){ showToast("مكتبة Excel غير متوفرة الآن — أعد المحاولة بعد لحظات"); return; }
+    rs.exporting = true; rsRender();
+    var col = db.collection("rosterAttendance");
+    Promise.all(rs.programs.map(function(g){ return col.where("programId", "==", g.id).get(); }).concat([col.where("programId", "==", "__general").get()])).then(function(snaps){
+      var X = window.XLSX, wb = X.utils.book_new(), add = function(name, rows){ X.utils.book_append_sheet(wb, X.utils.json_to_sheet(rows.length ? rows : [{ "—": "لا توجد بيانات" }]), name.slice(0, 30)); };
+      wb.Workbook = { Views: [{ RTL: true }] };
+      var ok = function(m){ return m && (m.s === "p" || m.s === "l"); }, dt = function(t){ return t ? new Date(t).toLocaleString("ar-SA-u-nu-latn", { dateStyle: "short", timeStyle: "short" }) : ""; };
+      var sum = [], attSheets = [], cardRows = [];
+      rs.programs.forEach(function(g, gi){
+        var docs = {}; snaps[gi].docs.forEach(function(d){ docs[d.id] = d.data() || {}; });
+        var ss = rsSessions(g), cards = (docs[g.id + "__cards"] || {}).cards || {};
+        var marks = ss.map(function(se){ return (docs[g.id + "__" + se.id] || {}).marks || {}; });
+        var ids = rsUniq((g.members || []).concat.apply((g.members || []).slice(), marks.map(function(m){ return Object.keys(m); })));
+        var rows = ids.map(function(pid){
+          var p = rs.byId[pid] || { name: "(سجل محذوف)", id: pid }, r = { "الاسم": p.name, "الصفة": p.type ? rsT(rsEffType(p)).l : "", "الجنس": p.gender || "", "الجوال": p.phone || "", "الهوية": p.nid || "", "رقم التسجيل": p.regNo || "" };
+          var n = 0;
+          ss.forEach(function(se, i){ var m = marks[i][pid], lb = (se.title || ("الجلسة " + (i + 1))) + " " + (se.date || ""); r[lb] = ok(m) ? "حاضر" : m && m.s === "e" ? "معتذر" : ""; r[lb + " — الوقت"] = ok(m) ? dt(m.t) : ""; r[lb + " — سجّله"] = ok(m) ? (m.by || "") : ""; if(ok(m)) n++; });
+          r["أيام الحضور"] = n; r["البطاقات"] = Object.keys(cards).filter(function(k){ return k === pid || k.indexOf(pid + "~") === 0; }).map(function(k){ return cards[k].code; }).join("، ");
+          return r;
+        });
+        attSheets.push({ name: "حضور " + g.title, rows: rows });
+        ss.forEach(function(se, i){
+          var cnt = {}; Object.keys(marks[i]).forEach(function(k){ if(!ok(marks[i][k])) return; var p = rs.byId[k], t = p ? rsT(rsEffType(p)).pl : "سجل محذوف"; cnt[t] = (cnt[t] || 0) + 1; });
+          var row = { "البرنامج": g.title, "اليوم": (se.title || "") + " " + (se.date || ""), "إجمالي الحضور": Object.keys(cnt).reduce(function(a, k){ return a + cnt[k]; }, 0) };
+          Object.keys(cnt).forEach(function(k){ row[k] = cnt[k]; }); sum.push(row);
+        });
+        Object.keys(cards).forEach(function(k){ var c = cards[k], pid = k.split("~")[0], p = rs.byId[pid]; cardRows.push({ "البرنامج": g.title, "رقم البطاقة": c.code || "", "التسلسل": rsGkLabel(c.g), "الاسم": p ? p.name : "(سجل محذوف)", "الجوال": p ? p.phone || "" : "" }); });
+      });
+      var gen = []; snaps[rs.programs.length].docs.forEach(function(d){ var x = d.data() || {}, e = x.entries || {}; Object.keys(e).forEach(function(k){ gen.push({ "اليوم": x.sessionId || "", "الاسم": e[k].name, "الجوال": e[k].phone || "", "الصفة": e[k].role || "", "الوقت": dt(e[k].t), "سجّله": e[k].by || "" }); }); });
+      var reg = rs.people.map(function(p){ return { "الاسم": p.name, "الصفة": rsT(rsEffType(p)).l, "كل الصفات": rsRoles(p).concat(p.type ? [p.type] : []).filter(function(v, i, a){ return a.indexOf(v) === i; }).map(function(k){ return rsT(k).l; }).join("، "), "الجنس": p.gender || "", "الجوال": p.phone || "", "الهوية": p.nid || "", "رقم التسجيل": p.regNo || "", "الحالة": p.mergedInto ? "مدموج في " + ((rs.byId[p.mergedInto] || {}).name || "") : p.status === "inactive" ? "غير نشط" : "نشط", "المصدر": p.source || p.batch || "", "أُضيف": dt(p.createdAt), "أضافه": p.createdBy || "" }; });
+      add("ملخص", sum); add("السجل", reg); attSheets.forEach(function(a){ add(a.name, a.rows); }); add("البطاقات", cardRows); add("كشف حضور عام", gen);
+      X.writeFile(wb, "مطابقة-البيانات-كاملة-" + rsToday() + ".xlsx");
+      rs.exporting = false; rsRender(); showToast("✔ نزل الملف — " + reg.length + " شخص");
+    }).catch(function(e){ console.error(e); rs.exporting = false; rsRender(); showToast("⚠️ تعذّر تجهيز الملف — تحقق من الاتصال"); });
   }
   function rsXlsx(name, rows, sheet){
     if(typeof window.XLSX === "undefined"){ showToast("مكتبة Excel غير متوفرة الآن — أعد المحاولة بعد لحظات"); return; }
@@ -19066,6 +19104,7 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
   // ----- الأحداث -----
   function rsAct(a, v, t){
     if(rsDeskAct(a, v)) return;
+    if(a === "export-all"){ rsExportAll(); return; }
     if(a === "safe-merge"){ var tl = rsTypoPairs(); rsSafeMerge(v === "all" ? tl : tl.filter(function(x){ return x.d.id === v; })); return; }
     var imp = rsUI.imp, g = rsCurProg();
     switch(a){
