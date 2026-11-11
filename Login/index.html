@@ -17327,15 +17327,24 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
         var docs = {}; snaps[gi].docs.forEach(function(d){ docs[d.id] = d.data() || {}; });
         var ss = rsSessions(g), cards = (docs[g.id + "__cards"] || {}).cards || {};
         var marks = ss.map(function(se){ return (docs[g.id + "__" + se.id] || {}).marks || {}; });
-        var ids = rsUniq((g.members || []).concat.apply((g.members || []).slice(), marks.map(function(m){ return Object.keys(m); })));
-        var rows = ids.map(function(pid){
+        // كل المسجلين النشطين + كل من له حضور، ثم شيت لكل تصنيف
+        var ids = rsUniq(rs.people.filter(function(p){ return p.status !== "inactive" && !p.mergedInto; }).map(function(p){ return p.id; }).concat((g.members || []), [].concat.apply([], marks.map(function(m){ return Object.keys(m); }))));
+        var byCat = {};
+        ids.forEach(function(pid){
           var p = rs.byId[pid] || { name: "(سجل محذوف)", id: pid }, r = { "الاسم": p.name, "الصفة": p.type ? rsT(rsEffType(p)).l : "", "الجنس": p.gender || "", "الجوال": p.phone || "", "الهوية": p.nid || "", "رقم التسجيل": p.regNo || "" };
           var n = 0;
           ss.forEach(function(se, i){ var m = marks[i][pid], lb = (se.title || ("الجلسة " + (i + 1))) + " " + (se.date || ""); r[lb] = ok(m) ? "حاضر" : m && m.s === "e" ? "معتذر" : ""; r[lb + " — الوقت"] = ok(m) ? dt(m.t) : ""; r[lb + " — سجّله"] = ok(m) ? (m.by || "") : ""; if(ok(m)) n++; });
           r["أيام الحضور"] = n; r["البطاقات"] = Object.keys(cards).filter(function(k){ return k === pid || k.indexOf(pid + "~") === 0; }).map(function(k){ return cards[k].code; }).join("، ");
-          return r;
+          var cat = rs.byId[pid] ? rsT(rsEffType(p)).pl : "سجلات محذوفة";
+          (byCat[cat] = byCat[cat] || []).push(r);
         });
-        attSheets.push({ name: "حضور " + g.title, rows: rows });
+        var catOrder = ["trainee", "hr", "volunteer", "supervisor", "admin", "guest"].map(function(k){ return rsT(k).pl; }).concat(["سجلات محذوفة"]);
+        catOrder.forEach(function(cat){
+          var L = byCat[cat]; if(!L || !L.length) return;
+          L.sort(function(a, b){ return (b["أيام الحضور"] - a["أيام الحضور"]) || String(a["الاسم"]).localeCompare(String(b["الاسم"]), "ar"); });
+          L.forEach(function(r, i){ r["م"] = i + 1; });
+          attSheets.push({ name: rs.programs.length > 1 ? cat + " - " + g.title : cat, rows: L.map(function(r){ var o = { "م": r["م"] }; Object.keys(r).forEach(function(k){ if(k !== "م") o[k] = r[k]; }); return o; }) });
+        });
         ss.forEach(function(se, i){
           var cnt = {}; Object.keys(marks[i]).forEach(function(k){ if(!ok(marks[i][k])) return; var p = rs.byId[k], t = p ? rsT(rsEffType(p)).pl : "سجل محذوف"; cnt[t] = (cnt[t] || 0) + 1; });
           var row = { "البرنامج": g.title, "اليوم": (se.title || "") + " " + (se.date || ""), "إجمالي الحضور": Object.keys(cnt).reduce(function(a, k){ return a + cnt[k]; }, 0) };
@@ -17345,7 +17354,7 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
       });
       var gen = []; snaps[rs.programs.length].docs.forEach(function(d){ var x = d.data() || {}, e = x.entries || {}; Object.keys(e).forEach(function(k){ gen.push({ "اليوم": x.sessionId || "", "الاسم": e[k].name, "الجوال": e[k].phone || "", "الصفة": e[k].role || "", "الوقت": dt(e[k].t), "سجّله": e[k].by || "" }); }); });
       var reg = rs.people.map(function(p){ return { "الاسم": p.name, "الصفة": rsT(rsEffType(p)).l, "كل الصفات": rsRoles(p).concat(p.type ? [p.type] : []).filter(function(v, i, a){ return a.indexOf(v) === i; }).map(function(k){ return rsT(k).l; }).join("، "), "الجنس": p.gender || "", "الجوال": p.phone || "", "الهوية": p.nid || "", "رقم التسجيل": p.regNo || "", "الحالة": p.mergedInto ? "مدموج في " + ((rs.byId[p.mergedInto] || {}).name || "") : p.status === "inactive" ? "غير نشط" : "نشط", "المصدر": p.source || p.batch || "", "أُضيف": dt(p.createdAt), "أضافه": p.createdBy || "" }; });
-      add("ملخص", sum); add("السجل", reg); attSheets.forEach(function(a){ add(a.name, a.rows); }); add("البطاقات", cardRows); add("كشف حضور عام", gen);
+      add("ملخص", sum); attSheets.forEach(function(a){ add(a.name, a.rows); }); add("البطاقات", cardRows); add("كشف حضور عام", gen); add("السجل الكامل", reg);
       X.writeFile(wb, "مطابقة-البيانات-كاملة-" + rsToday() + ".xlsx");
       rs.exporting = false; rsRender(); showToast("✔ نزل الملف — " + reg.length + " شخص");
     }).catch(function(e){ console.error(e); rs.exporting = false; rsRender(); showToast("⚠️ تعذّر تجهيز الملف — تحقق من الاتصال"); });
