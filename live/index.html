@@ -342,6 +342,11 @@ body.screen .dupnote{display:none}
 @media (max-width:640px){.cfm{grid-template-columns:1fr;padding:18px 16px}.cfm .tm{justify-content:center}.cfm h2,.cfm p,.cfm .hd{text-align:center}.cfm .side{min-width:0}.cfm .pb{width:100%}}
 body.screen .cfm{display:none}
 body.screen .nodup{color:#F6E3CF}
+.evalbn{display:flex;align-items:center;gap:14px;text-decoration:none;color:#fff;background:linear-gradient(125deg,#2F4A49,#4B7071 55%,#8E7A5E);border-radius:22px;padding:16px 20px;box-shadow:0 10px 26px -16px rgba(20,28,27,.5)}
+.evalbn .eb-i{font-size:26px}.evalbn .eb-t{flex:1;min-width:0}.evalbn b{display:block;font-size:18px}.evalbn small{font-size:13px;color:rgba(255,255,255,.82)}
+.evalbn .eb-go{font-size:13px;font-weight:700;background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.3);border-radius:999px;padding:7px 14px;white-space:nowrap}
+@media (max-width:560px){.evalbn{flex-wrap:wrap}.evalbn .eb-go{width:100%;text-align:center}}
+body.screen .evalbn{display:none}
 </style>
 </head>
 <body>
@@ -356,6 +361,7 @@ body.screen .nodup{color:#F6E3CF}
     </div>
   </header>
 
+  <a class="evalbn" href="/live/eval/"><span class="eb-i">⭐</span><span class="eb-t"><b>نتائج تقييم الورشة</b><small>ماذا قال المتدربون والمدربون عن «مفاتيح التوظيف 2»؟ — مباشر</small></span><span class="eb-go">عرض التقييم ←</span></a>
   <section class="card event">
     <div>
       <span class="kicker">عدّاد التسجيل المباشر</span>
