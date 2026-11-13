@@ -1,19 +1,19 @@
 {
  "فعاليات الصالات": {
-  "source": "إعدادات Lightroom المضمّنة في صور محمود الخميس (87 صورة)",
+  "source": "مستخرج من صورتي قبل/بعد (قروب مفاتيح التوظيف 2، 2026/11/11) — التعريض تلقائي لكل صورة",
   "adj": {
    "amount": 100,
-   "auto": 0,
+   "auto": 100,
    "exposure": 0,
-   "contrast": 5,
-   "highlights": -31,
-   "shadows": 40,
-   "whites": -10,
-   "blacks": -3,
-   "temp": 0,
-   "tint": 0,
-   "vibrance": 20,
-   "saturation": 2,
+   "contrast": -16,
+   "highlights": -40,
+   "shadows": 49,
+   "whites": -6,
+   "blacks": 9,
+   "temp": -128,
+   "tint": 60,
+   "vibrance": -10,
+   "saturation": 0,
    "h_red": 0,
    "h_orange": 0,
    "h_yellow": 0,
@@ -49,25 +49,12 @@
    "sharp": 0,
    "vignette": 0,
    "pc_sh": 0,
-   "pc_dk": 0,
-   "pc_lt": 0,
-   "pc_hi": 0,
+   "pc_dk": 36,
+   "pc_lt": 100,
+   "pc_hi": -37,
    "cg_blend": 50,
    "cg_bal": 0,
-   "tc": [
-    [
-     0,
-     15
-    ],
-    [
-     50,
-     48
-    ],
-    [
-     255,
-     255
-    ]
-   ]
+   "autoWb": 0
   }
  },
  "قاعة الاجتماعات": {

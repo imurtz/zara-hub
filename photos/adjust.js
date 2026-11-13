@@ -14,8 +14,8 @@ export const ADJ = [
   { g: "الضوء", k: "shadows",    l: "الظلال",   min: -100, max: 100, step: 1 },
   { g: "الضوء", k: "whites",     l: "الأبيض",   min: -100, max: 100, step: 1 },
   { g: "الضوء", k: "blacks",     l: "الأسود",   min: -100, max: 100, step: 1 },
-  { g: "اللون", k: "temp",       l: "الحرارة",  min: -100, max: 100, step: 1 },
-  { g: "اللون", k: "tint",       l: "الصبغة",   min: -100, max: 100, step: 1 },
+  { g: "اللون", k: "temp",       l: "الحرارة",  min: -150, max: 150, step: 1 },
+  { g: "اللون", k: "tint",       l: "الصبغة",   min: -150, max: 150, step: 1 },
   { g: "اللون", k: "vibrance",   l: "الحيوية",  min: -100, max: 100, step: 1 },
   { g: "اللون", k: "saturation", l: "التشبع",   min: -100, max: 100, step: 1 },
   ...["h", "s", "l"].flatMap(t => BANDS.map(([k, l, , c]) => ({ g: "hsl-" + t, k: `${t}_${k}`, l, c, min: -100, max: 100, step: 1, adv: 1 }))),
@@ -109,7 +109,7 @@ function hueRGB(h) { // لون صافٍ من الدرجة (مطروحاً منه
 export function applyAdjust(img, p) {
   if (isZero(p)) return img;
   p = { ...ZERO, ...p };
-  if (p.auto) Object.assign(p, autoStats(img, p.auto / 100));
+  if (p.auto) Object.assign(p, autoStats(img, p.auto / 100, p.autoWb !== 0));
   const [R, G, B] = buildLUT(p), d = img.data, n = d.length;
   const sat = 1 + (p.saturation || 0) / 100, vib = (p.vibrance || 0) / 100;
   const T = hslTables(p);
@@ -292,7 +292,7 @@ export function lutFromPair(src, dst, n = 33) {
 
 
 /* ============ تصحيح تلقائي محافظ: توازن الأبيض + التعريض لكل صورة ============ */
-function autoStats(img, k) {
+function autoStats(img, k, wb = true) {
   const d = img.data, n = d.length / 4, step = Math.max(1, Math.floor(n / 60000)) * 4;
   const Ys = [], neu = [0, 0, 0]; let nw = 0;
   for (let i = 0; i < d.length; i += step) {
@@ -304,12 +304,12 @@ function autoStats(img, k) {
   Ys.sort((a, b) => a - b);
   const q = f => Ys[Math.min(Ys.length - 1, Math.floor(f * Ys.length))] || 1e-4;
   // التعريض: وسط الصورة نحو 0.18 دون حرق الإضاءات
-  let ev = Math.log2(0.18 / Math.max(q(0.5), 1e-4)); const evHi = Math.log2(0.82 / Math.max(q(0.985), 1e-4));
+  let ev = Math.log2(0.18 / Math.max(q(0.5), 1e-4)); const evHi = Math.log2(0.95 / Math.max(q(0.985), 1e-4));
   ev = ev > 0 ? Math.max(0, Math.min(ev, evHi)) : Math.max(ev, Math.min(0, evHi));
   ev = Math.max(-0.8, Math.min(0.8, ev)) * k;
   // الأبيض: تحييد لون الرماديات (بحدود محافظة)
   let g = [1, 1, 1];
-  if (nw > 0) { const m = neu.map(v => v / nw); g = m.map(v => Math.max(0.82, Math.min(1.22, m[1] / Math.max(v, 1e-5)))); g = g.map(v => 1 + (v - 1) * k * 0.85); }
+  if (nw > 0 && wb) { const m = neu.map(v => v / nw); g = m.map(v => Math.max(0.82, Math.min(1.22, m[1] / Math.max(v, 1e-5)))); g = g.map(v => 1 + (v - 1) * k * 0.85); }
   return { _ev: ev, _g: g };
 }
 
