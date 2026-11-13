@@ -1,0 +1,2 @@
+{ "name": "معالجة صور الفعاليات — بوابة زارة", "short_name": "صور زارة", "start_url": "./", "scope": "./", "display": "standalone", "dir": "rtl", "lang": "ar",
+  "background_color": "#F5F6F5", "theme_color": "#324C4B", "icons": [ { "src": "/assets/favicon.png", "sizes": "512x512", "type": "image/png" } ] }

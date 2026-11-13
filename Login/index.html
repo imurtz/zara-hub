@@ -2925,6 +2925,10 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
       <span class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2.5"/><circle cx="8.5" cy="11" r="2.2"/><path d="M5 16.5c.6-1.6 2-2.5 3.5-2.5s2.9.9 3.5 2.5"/><path d="M14.5 10h4M14.5 13.500h3"/></svg></span>
       مطابقة البيانات
     </div>
+    <div class="nav-tab" data-section="photos">
+      <span class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8.5A2.5 2.5 0 0 1 6.5 6h1.8l1.4-2h4.6l1.4 2h1.8A2.5 2.5 0 0 1 20 8.5v9a2.5 2.5 0 0 1-2.5 2.5h-11A2.5 2.5 0 0 1 4 17.5z"/><circle cx="12" cy="12.5" r="3.6"/></svg></span>
+      معالجة الصور
+    </div>
     <div class="nav-tab admin-tab" data-section="admin" id="adminTabBtn" style="display:none;">
       <span class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3.2"/><path d="M12 2.5v3M12 18.5v3M21.5 12h-3M5.5 12h-3M18.5 5.5l-2 2M7.5 16.5l-2 2M18.5 18.5l-2-2M7.5 7.5l-2-2"/></svg></span>
       لوحة التحكم
@@ -2951,6 +2955,11 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
     <!-- ===== التقاويم الميلادية: صفحة مستقلة (Login/calendar/) مضمَّنة، تتصل باللوحة عبر window.__zaraCal ===== -->
     <div class="section-view" id="view-calendars">
       <div id="calendarsRoot"></div>
+    </div>
+    <!-- ===== معالجة صور الفعاليات: أداة مستقلة (/photos/) تعمل كلها في المتصفح بلا Firebase — تُضمَّن عند فتح التبويب فقط ===== -->
+    <div class="section-view" id="view-photos">
+      <div style="display:flex;justify-content:flex-end;margin:0 0 8px"><a href="/photos/" target="_blank" rel="noopener" style="font-size:13px;font-weight:600;color:#324C4B">فتح في نافذة مستقلة ↗</a></div>
+      <div id="photosRoot"></div>
     </div>
     <!-- ===== نماذج التصاميم: قوالب بمتغيرات تُعبّأ يدوياً أو من Excel ثم تُنزَّل نسخة أو مجموعة نسخ ===== -->
     <div class="section-view" id="view-designs">
@@ -3189,7 +3198,8 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
     { key: "calendars", label: "التقاويم الميلادية" },
     { key: "designs", label: "إصدار — منصة التصاميم الجاهزة" },
     { key: "bldg", label: "أوامر صرف" },
-    { key: "roster", label: "مطابقة البيانات" }
+    { key: "roster", label: "مطابقة البيانات" },
+    { key: "photos", label: "معالجة الصور" }
   ];
 
   var currentUser = null;
@@ -3352,6 +3362,7 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
     if(activeSectionNow === "designs") dsnRender();
     if(activeSectionNow === "bldg") bdoRender();
     if(activeSectionNow === "roster") rsRender();
+    if(activeSectionNow === "photos") phRender();
     if(activeSectionNow === "events"){
       var evTab = parts[1];
       if(evTab && EVENTS_TAB_KEYS.indexOf(evTab) > -1) eventsUI.tab = evTab;
@@ -3399,6 +3410,9 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
       { k: "docs.add", l: "توثيق الأحداث والأرقام والملفات" },
       { k: "docs.review", l: "مراجعة واعتماد التوثيقات" },
       { k: "docs.export", l: "تنزيل الحزمة" }
+    ] },
+    { key: "photos", label: "معالجة صور الفعاليات", perms: [
+      { k: "photos.view", l: "فتح أداة القص وإضافة الحقوق" }
     ] },
     { key: "calendars", label: "التقاويم الميلادية", perms: [
       { k: "calendars.view", l: "فتح القسم واستعراض التقاويم المعتمدة" },
@@ -3783,6 +3797,13 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
   });
   document.addEventListener("change", function(e){ if(e.target.id === "calYearSel"){ calUI.year = Number(e.target.value) || 2027; calRender(); } });
 
+  // ===== معالجة الصور: تُحمَّل الأداة مرة واحدة عند أول فتح =====
+  function phRender(){
+    var root = document.getElementById("photosRoot");
+    if(!root || root.firstChild) return;
+    root.innerHTML = '<iframe title="معالجة الصور" src="/photos/" allow="clipboard-write" style="width:100%;height:calc(100vh - 150px);min-height:640px;border:0;border-radius:18px;background:#F5F6F5"></iframe>';
+  }
+
   // ===== tab switching =====
   var tabs = document.querySelectorAll(".nav-tab");
   tabs.forEach(function(tab){
@@ -3800,6 +3821,7 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
       if(tab.dataset.section === "designs") dsnRender();
       if(tab.dataset.section === "bldg") bdoRender();
       if(tab.dataset.section === "roster") rsRender();
+      if(tab.dataset.section === "photos") phRender();
     });
   });
 

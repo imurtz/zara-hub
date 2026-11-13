@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#324C4B">
+<title>معالجة الصور | بوابة زارة</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="/assets/favicon.svg?v=4" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<style>
+/* خط الواجهة من الجهاز (بلا أي CDN) — والحقوق بخط DIN Next من مجلد المنظومة أو الجهاز */
+:root{
+  --bg:#F5F6F5; --card:#fff; --line:#E4E9E8; --ink:#141C1B; --soft:#6B7775;
+  --teal:#4B7071; --teal-d:#324C4B; --teal-t:#E8F0EF; --tan:#B88D66; --tan-d:#8A6440; --tan-t:#F6EEE5; --warn:#B3453F;
+  --ui:"IBM Plex Sans Arabic","DIN Next LT Arabic","Geeza Pro","Segoe UI",Tahoma,system-ui,sans-serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font-family:var(--ui);line-height:1.6;min-height:100vh;
+  padding:max(14px,env(safe-area-inset-top)) max(14px,env(safe-area-inset-right)) 40px max(14px,env(safe-area-inset-left));
+  background-image:radial-gradient(60% 40% at 85% 0%,rgba(75,112,113,.10),transparent 70%),radial-gradient(50% 35% at 0% 10%,rgba(184,141,102,.10),transparent 70%)}
+button,input,select,textarea{font:inherit;color:inherit}
+.wrap{max-width:1240px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
+header{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+header img{height:36px}
+header h1{font-size:19px;margin:0;flex:1}
+header h1 small{display:block;font-size:12.5px;color:var(--soft);font-weight:500}
+.pill{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:600;border:1px solid var(--line);background:var(--card);color:var(--teal-d);border-radius:999px;padding:7px 14px;cursor:pointer;text-decoration:none}
+.pill.warn{border-color:var(--tan);background:var(--tan-t);color:var(--tan-d)}
+.pill.ok{cursor:default;color:#2F6F5E}
+.card{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:18px;box-shadow:0 8px 24px -18px rgba(20,28,27,.25)}
+.step{display:flex;align-items:center;gap:10px;margin:0 0 12px;font-size:16.5px}
+.step b{width:28px;height:28px;border-radius:9px;display:grid;place-items:center;background:var(--teal);color:#fff;font-size:14px;flex:none}
+.main{display:grid;grid-template-columns:minmax(0,1.55fr) minmax(320px,1fr);gap:14px;align-items:start}
+@media (max-width:980px){.main{grid-template-columns:1fr}}
+.pri{background:var(--teal);color:#fff;border:0;border-radius:14px;padding:12px 20px;font-weight:700;font-size:15px;cursor:pointer}
+.pri:disabled{opacity:.5;cursor:default}
+.ghost{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:9px 14px;font-weight:600;cursor:pointer;color:var(--teal-d)}
+.big{font-size:17px;padding:16px 26px;border-radius:16px}
+.lnk{background:none;border:0;padding:0;color:var(--teal-d);text-decoration:underline;cursor:pointer;font-weight:600}
+.src{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.src .info{color:var(--soft);font-size:14px}
+.src .info b{color:var(--ink)}
+.note{font-size:12.5px;color:var(--tan-d);background:var(--tan-t);border-radius:12px;padding:8px 12px;margin-top:10px}
+
+/* المعاينة */
+.pv{display:flex;flex-direction:column;gap:10px;position:sticky;top:10px}
+.pvbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.seg{display:inline-flex;background:var(--bg);border:1px solid var(--line);border-radius:999px;padding:3px}
+.seg button{border:0;background:none;border-radius:999px;padding:6px 14px;font-size:13.5px;font-weight:600;color:var(--soft);cursor:pointer}
+.seg button.on{background:var(--teal);color:#fff}
+.chk{display:inline-flex;align-items:center;gap:6px;font-size:13px;color:var(--soft);cursor:pointer}
+.canvasBox{position:relative;background:#E9ECEB;border-radius:14px;overflow:hidden;display:grid;place-items:center;min-height:200px}
+#prev{display:block;max-width:100%;max-height:72vh;width:auto;height:auto;touch-action:none}
+.nav{position:absolute;top:50%;transform:translateY(-50%);width:38px;height:38px;border-radius:50%;border:0;background:rgba(255,255,255,.88);font-size:20px;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.18)}
+#prevPrev{right:10px}#prevNext{left:10px}
+.empty .nav{display:none}
+#prevMeta{font-size:12.5px;color:var(--soft)}
+#prevMeta .hint{color:var(--tan-d)}
+
+/* الشبكة */
+#gridWrap .top{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:10px;font-size:13px;color:var(--soft)}
+#grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(112px,1fr));gap:8px;max-height:430px;overflow:auto;padding:2px}
+.cell{position:relative;border:2px solid transparent;border-radius:12px;padding:0;overflow:hidden;background:#E9ECEB;aspect-ratio:3/2;cursor:pointer}
+.cell img{width:100%;height:100%;object-fit:cover;display:block}
+.cell.cur{border-color:var(--teal)}
+.cell.err{border-color:var(--warn)}
+.cell em{position:absolute;top:4px;right:6px;font-style:normal;font-size:11px;background:rgba(0,0,0,.45);color:#fff;border-radius:6px;padding:0 5px}
+.cell .fc,.cell .pt,.cell .ed{position:absolute;bottom:4px;font-size:10.5px;color:#fff;border-radius:6px;padding:0 5px}
+.cell .fc{right:6px;background:rgba(75,112,113,.85)}
+.cell .pt{left:6px;background:rgba(184,141,102,.9)}
+.cell .ed{left:6px;top:4px;bottom:auto;background:rgba(242,193,78,.95);color:#000}
+.cell .st{position:absolute;inset:0;display:grid;place-items:center;font-size:26px;color:#fff;background:rgba(47,111,94,.45)}
+.cell .st.fail{background:rgba(179,69,63,.55)}.cell .st.run{background:rgba(0,0,0,.35)}.cell .st.skip{background:rgba(107,119,117,.45)}
+.sk{display:block;width:100%;height:100%;background:linear-gradient(90deg,#E4E8E7,#F1F3F2,#E4E8E7);background-size:200% 100%;animation:sk 1.2s infinite}
+@keyframes sk{from{background-position:100% 0}to{background-position:-100% 0}}
+
+/* النموذج */
+.f{display:flex;flex-direction:column;gap:5px;margin-bottom:12px}
+.f>label,.f>span{font-size:13px;font-weight:600;color:var(--teal-d)}
+.f small{font-size:11.5px;color:var(--soft);font-weight:400}
+input[type=text],input[type=date],input[type=number],textarea,select{width:100%;border:1px solid var(--line);border-radius:12px;padding:9px 12px;background:#FBFCFC;outline:none}
+input:focus,textarea:focus,select:focus{border-color:var(--teal);background:#fff}
+textarea{resize:vertical;min-height:64px}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.logos{display:flex;flex-wrap:wrap;gap:7px}
+.logo{position:relative;width:58px;height:58px;border-radius:13px;border:2px solid var(--line);background:#fff;padding:7px;cursor:pointer;display:grid;place-items:center}
+.logo img{max-width:100%;max-height:100%;object-fit:contain}
+.logo.on{border-color:var(--teal);box-shadow:0 0 0 3px var(--teal-t)}
+.logo i{position:absolute;top:-6px;left:-6px;width:20px;height:20px;border-radius:50%;background:var(--teal);color:#fff;font-style:normal;font-size:12px;display:none;place-items:center}
+.logo.on i{display:grid}
+.logo.add,.logo.none{font-size:20px;color:var(--soft);border-style:dashed;line-height:1;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.logo.add small{font-size:10.5px}
+.logo.none{font-size:12px;font-weight:600}
+.fixed{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--soft)}
+.fixed span{width:40px;height:40px;border-radius:10px;background:#fff;border:1px solid var(--line);display:grid;place-items:center;padding:6px}
+.fixed img{max-width:100%;max-height:100%}
+.fstate{font-size:12.5px;border-radius:10px;padding:7px 10px}
+.fstate.ok{background:#E8F3EE;color:#2F6F5E}.fstate.bad{background:#FBECEA;color:var(--warn)}
+.opts{display:flex;flex-wrap:wrap;gap:8px}
+.opt{display:flex;align-items:center;gap:7px;border:1px solid var(--line);border-radius:12px;padding:8px 12px;cursor:pointer;font-size:14px;background:#FBFCFC}
+.opt:has(input:checked){border-color:var(--teal);background:var(--teal-t);color:var(--teal-d);font-weight:600}
+.opt input{accent-color:var(--teal);width:16px;height:16px}
+#nameEx{font-family:ui-monospace,Menlo,monospace;font-size:12px;direction:ltr;text-align:left;color:var(--soft);background:var(--bg);border-radius:8px;padding:4px 8px}
+.ex{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:6px}
+#prog{margin-top:12px}
+.bar{height:10px;border-radius:999px;background:var(--line);overflow:hidden}
+#bar{height:100%;width:0;background:linear-gradient(90deg,var(--teal),var(--tan));transition:width .4s}
+#progTxt{font-size:13px;color:var(--soft);margin-top:6px}
+#doneBox{margin-top:10px;font-size:14px;background:#E8F3EE;color:#2F6F5E;border-radius:12px;padding:10px 12px}
+body.running .lockable{pointer-events:none;opacity:.55}
+#toast{position:fixed;bottom:20px;left:50%;transform:translate(-50%,30px);background:#1F2B2A;color:#fff;border-radius:12px;padding:10px 16px;font-size:14px;opacity:0;transition:.25s;pointer-events:none;z-index:9;max-width:90vw}
+#toast.on{opacity:1;transform:translate(-50%,0)}
+dialog{border:0;border-radius:18px;padding:20px;max-width:420px;box-shadow:0 20px 60px rgba(0,0,0,.3)}
+dialog::backdrop{background:rgba(20,28,27,.4)}
+dialog .acts{display:flex;flex-direction:column;gap:8px;margin-top:14px}
+.foot{text-align:center;font-size:12px;color:var(--soft)}
+[hidden]{display:none!important}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <a href="/"><img src="/assets/logo.png" alt="خيرية العوامية"></a>
+    <h1>معالجة صور الفعاليات<small>قص ذكي + تذييل الحقوق — كل المعالجة على جهازك، لا شيء يُرفع</small></h1>
+    <span class="pill ok" id="offline" hidden title="تعمل بدون إنترنت بعد أول فتح">● جاهزة بدون إنترنت</span>
+    <button type="button" class="pill" id="sysBtn">📁 اختر مجلد المنظومة</button>
+  </header>
+
+  <section class="card lockable">
+    <h2 class="step"><b>1</b> اختر الصور</h2>
+    <div class="src">
+      <button type="button" class="pri" id="srcBtn">📂 اختر مجلد الصور</button>
+      <span class="info" id="srcInfo"></span>
+      <span class="info" id="anaState"></span>
+    </div>
+    <input type="file" id="fileInp" accept="image/*" multiple hidden>
+    <div class="note" id="fsNote" hidden>هذا المتصفح لا يدعم الحفظ في المجلدات مباشرة — ستُنزَّل النتيجة كملف مضغوط (ZIP). للأفضل استخدم Chrome أو Edge على الكمبيوتر.</div>
+  </section>
+
+  <div class="main">
+    <section class="card pv" id="step2">
+      <div class="pvbar">
+        <div class="seg"><button type="button" data-ratio="16:10" class="on">16:10</button><button type="button" data-ratio="4:5">4:5</button></div>
+        <label class="chk"><input type="checkbox" id="showRights" checked> الحقوق</label>
+        <label class="chk"><input type="checkbox" id="showFaces"> الوجوه المكتشفة</label>
+      </div>
+      <div class="canvasBox empty" id="prevWrap">
+        <canvas id="prev" width="1400" height="875"></canvas>
+        <button type="button" class="nav" id="prevPrev" aria-label="السابقة">›</button>
+        <button type="button" class="nav" id="prevNext" aria-label="التالية">‹</button>
+      </div>
+      <div id="prevMeta"></div>
+      <div id="gridWrap" hidden>
+        <div class="top"><span>كل الصور — اضغط صورة لمعاينتها وتعديل قصها</span><button type="button" class="lnk" id="srcBtn2">تغيير المجلد</button></div>
+        <div id="grid"></div>
+      </div>
+    </section>
+
+    <div style="display:flex;flex-direction:column;gap:14px">
+      <section class="card lockable">
+        <h2 class="step"><b>2</b> بيانات الحقوق</h2>
+        <div class="f"><label for="title">عنوان الفعالية</label>
+          <textarea id="title" rows="2" placeholder="مثال: 200 متدرب ومتدربة يشاركون في تدريب عملي لتطوير السير الذاتية ضمن «مفاتيح التوظيف»"></textarea>
+          <small>يلتف تلقائياً على سطرين — ولكسر السطر بنفسك اضغط Enter</small></div>
+        <div class="row2">
+          <div class="f"><label for="date">التاريخ الميلادي</label><input type="date" id="date"></div>
+          <div class="f"><label for="hijri">الهجري <small>(أم القرى — قابل للتعديل)</small></label><input type="text" id="hijri" dir="ltr" inputmode="numeric"></div>
+        </div>
+        <div class="f"><label for="photographer">المصوّر</label><input type="text" id="photographer" list="photogList" placeholder="اكتب الاسم — يُحفظ لاختياره لاحقاً"><datalist id="photogList"></datalist></div>
+        <div class="f"><span>شعار الجمعية <small>(ثابت)</small> + شعارات الشركاء بجانبه</span>
+          <div class="fixed"><span><img src="assets/mark.png" alt=""></span> ثابت دائماً أولاً من اليسار</div>
+          <div class="logos" id="partners"></div></div>
+        <div class="f"><span>شعار الفعالية <small>(أعلى اليمين — اختياري)</small></span><div class="logos" id="eventLogos"></div>
+          <small id="logoHint">أضف الشعارات مرة واحدة (PNG شفاف أو SVG) وتُحفظ في مجلد المنظومة.</small></div>
+        <div id="fontState" class="fstate"></div>
+      </section>
+
+      <section class="card lockable">
+        <h2 class="step"><b>3</b> التصدير</h2>
+        <div class="f"><span>المقاسات</span><div class="opts">
+          <label class="opt"><input type="checkbox" name="ratio" value="16:10"> 16:10 <small>الموقع</small></label>
+          <label class="opt"><input type="checkbox" name="ratio" value="4:5"> 4:5 <small>إنستقرام</small></label></div></div>
+        <div class="f"><span>النسخ</span><div class="opts">
+          <label class="opt"><input type="checkbox" id="rights"> مع الحقوق</label>
+          <label class="opt"><input type="checkbox" id="plain"> بدون حقوق <small>(قص فقط)</small></label></div></div>
+        <div class="f"><label for="quality">الجودة</label>
+          <select id="quality"><option value="orig">أصلية — نفس الدقة، أعلى جودة</option><option value="social">سوشيال — 2560px</option><option value="wa">واتساب — 1600px</option><option value="custom">مخصص</option></select>
+          <div class="row2" id="customBox" hidden><input type="number" id="customEdge" min="600" max="8000" step="100" placeholder="الضلع الطويل px"><input type="number" id="customQ" min="40" max="98" placeholder="الجودة 40–98"></div></div>
+        <div class="row2">
+          <div class="f"><label for="short">اسم مختصر للملفات</label><input type="text" id="short" placeholder="مفاتيح-التوظيف"></div>
+          <div class="f"><label for="pattern">نمط التسمية</label><input type="text" id="pattern" dir="ltr"></div>
+        </div>
+        <div class="f"><small>الرموز: {اسم} {تاريخ} {رقم} {الأصل} — مثال: <span id="nameEx"></span></small></div>
+        <div class="ex">
+          <button type="button" class="pri big" id="exportBtn">⬇ صدّر الصور</button>
+          <button type="button" class="ghost" id="stopBtn" hidden>إيقاف</button>
+        </div>
+        <div id="prog" hidden><div class="bar"><div id="bar"></div></div><div id="progTxt"></div></div>
+        <div id="doneBox" hidden></div>
+      </section>
+    </div>
+  </div>
+  <p class="foot">الأصل لا يُعدَّل أبداً — النتائج تُحفظ في مجلد جديد «‹اسم المجلد›_معالجة» داخل مجلد الصور، مع تقرير.txt و مشروع.json.</p>
+</div>
+<dialog id="ask"><p></p><div class="acts"></div></dialog>
+<div id="toast"></div>
+<script type="module" src="app.js"></script>
+</body>
+</html>
