@@ -350,3 +350,67 @@ function vignette(img, v) {
       const t = rr < 0.35 ? 0 : rr > 1 ? 1 : (rr - 0.35) / 0.65, m = t * t * (3 - 2 * t), f = 1 + v * 0.75 * m;
       if (f !== 1) { const i = (y * w + x) * 4; d[i] *= f; d[i + 1] *= f; d[i + 2] *= f; } } }
 }
+
+/* ============ مطابقة صورة مرجعية: تحليل كل صورة وحساب تصحيح مستقل لها ============ */
+// تُفصل الإضاءة عن اللون: الأبيض من الرماديات، التعريض من الوجوه (أو وسط مشذّب)، التباين من أطراف التوزيع المشذّب، التشبع من الألوان الواضحة فقط.
+export function imageStats(img, faces = [], opt = {}) {
+  const d = img.data, W = img.width, H = img.height, step = Math.max(1, Math.floor(Math.sqrt((W * H) / 90000)));
+  // للمرجع: تجاهل شريط الشعارات أعلى الصورة ومنطقة تذييل الحقوق أسفلها إن وُجدت
+  const y0 = opt.skipRights ? Math.round(H * 0.14) : 0, y1 = opt.skipRights ? Math.round(H * 0.66) : H;
+  const inFace = (x, y) => faces.some(f => x >= (f.x + f.w * 0.2) * W && x <= (f.x + f.w * 0.8) * W && y >= (f.y + f.h * 0.2) * H && y <= (f.y + f.h * 0.8) * H);
+  const Yall = [], faceY = [], sats = [], neu = [0, 0, 0]; let nw = 0;
+  for (let y = y0; y < y1; y += step) for (let x = 0; x < W; x += step) {
+    const i = (y * W + x) * 4, R = d[i] / 255, G = d[i + 1] / 255, B = d[i + 2] / 255;
+    const rl = s2l(R), gl = s2l(G), bl = s2l(B), Yl = 0.2126 * rl + 0.7152 * gl + 0.0722 * bl, Yg = 0.2126 * R + 0.7152 * G + 0.0722 * B;
+    const mx = Math.max(R, G, B), mn = Math.min(R, G, B), ch = mx - mn;
+    if (faces.length && inFace(x, y)) { faceY.push(Yl); continue; }
+    if (Yg > 0.03 && Yg < 0.97) Yall.push(Yg);
+    // رماديات متوسطة السطوع (لا البياض المحروق ولا السواد) لتقدير لون الإضاءة
+    if (Yg > 0.18 && Yg < 0.92 && ch < 0.1 + 0.12 * mx) { const w = Yg; neu[0] += rl * w; neu[1] += gl * w; neu[2] += bl * w; nw += w; }
+    if (ch > 0.1 && Yg > 0.08 && Yg < 0.95) sats.push(ch / Math.max(mx, 1e-3));
+  }
+  const pct = (a, f) => { if (!a.length) return null; a.sort((x, y) => x - y); return a[Math.min(a.length - 1, Math.floor(f * a.length))]; };
+  const Ys = Yall.sort((a, b) => a - b), q = f => Ys.length ? Ys[Math.min(Ys.length - 1, Math.floor(f * Ys.length))] : 0.5;
+  return {
+    neutral: nw > 0 ? neu.map(v => v / nw) : null,
+    face: faceY.length > 40 ? pct(faceY, 0.5) : null,
+    p05: q(0.05), p10: q(0.1), p50: q(0.5), p90: q(0.9), p98: q(0.98),
+    sat: pct(sats, 0.5)
+  };
+}
+
+/** يحسب تصحيح صورة واحدة لتقترب من المرجع — بحدود تحمي البشرة والأبيض والظلال */
+export function matchAdj(t, r) {
+  const a = { ...ZERO };
+  // 1) الأبيض/الميل اللوني: نقل لون الرماديات إلى لون رماديات المرجع
+  let g = [1, 1, 1];
+  if (t.neutral && r.neutral) {
+    const tn = t.neutral.map(v => v / t.neutral[1]), rn = r.neutral.map(v => v / r.neutral[1]);
+    g = [rn[0] / tn[0], 1, rn[2] / tn[2]].map(v => Math.max(0.8, Math.min(1.25, v)));
+  }
+  a._g = g;
+  // 2) التعريض: من سطوع الوجوه إن وُجدت في الاثنين، وإلا من الوسط المشذّب
+  const lin = v => s2l(Math.max(0, Math.min(1, v)));
+  // بدون وجوه: نرسو على أفتح المساحات (الجدران/الثياب البيضاء) لأنها أثبت من الوسط أمام اختلاف المحتوى
+  const evW = Math.log2(lin(r.p90) / Math.max(lin(t.p90), 1e-4)) * 0.85;
+  let ev = t.face && r.face ? 0.6 * Math.log2(r.face / t.face) + 0.4 * evW : evW;
+  ev = Math.max(-1, Math.min(1, ev));
+  // حماية الأبيض: لا نرفع أعلى الصورة فوق 0.97
+  const hiLin = lin(t.p98) * Math.pow(2, ev); if (ev > 0 && hiLin > 0.86) ev = Math.max(0, Math.log2(0.86 / Math.max(lin(t.p98), 1e-4)));
+  a.exposure = Math.round(ev * 100) / 100;
+  // 3) التباين: منحنى بثلاث نقاط يقرّب ظلال/إضاءات الصورة (بعد التعريض) من المرجع — نصف المسافة وبحدود
+  const k = Math.pow(2, ev), after = v => l2s(Math.min(1, lin(v) * k));
+  const t10 = after(t.p10), t90 = after(t.p90), t50 = after(t.p50);
+  const mv = (from, to, lim) => from + Math.max(-lim, Math.min(lim, (to - from) * 0.5));
+  let o10 = mv(t10, r.p10, 0.06), o90 = mv(t90, r.p90, 0.06), o50 = t50;
+  o10 = Math.max(0.01, Math.min(o10, o50 - 0.05)); o90 = Math.min(0.99, Math.max(o90, o50 + 0.05));
+  if (t90 > 0.9) o90 = Math.max(o90, t90 - 0.02);         // لا نطفئ الأبيض
+  if (t10 < 0.06) o10 = Math.max(Math.min(o10, t10 + 0.04), t10 - 0.01); // لا نسحق الظلال
+  a.tc = [[0, 0], [Math.round(t10 * 255), Math.round(o10 * 255)], [Math.round(t50 * 255), Math.round(o50 * 255)], [Math.round(t90 * 255), Math.round(o90 * 255)], [255, 255]];
+  // 4) التشبع: نسبة تشبع الألوان الواضحة (70% من الفرق، بحدود)؛ الزيادة بالحيوية لأنها تحمي البشرة
+  if (t.sat && r.sat) {
+    const ratio = Math.max(0.8, Math.min(1.25, 1 + (r.sat / t.sat - 1) * 0.7));
+    if (ratio >= 1) a.vibrance = Math.round((ratio - 1) * 140); else a.saturation = Math.round((ratio - 1) * 100);
+  }
+  return a;
+}

@@ -1,5 +1,5 @@
 // معالجة صور الفعاليات — بوابة زارة. كل شيء داخل المتصفح: لا Firebase ولا رفع ولا أي خادم.
-import { ADJ, ZERO, isZero, applyAdjust, histogram, fromXMP, BANDS, parseCube, lutFromPair } from "./adjust.js";
+import { ADJ, ZERO, isZero, applyAdjust, histogram, fromXMP, BANDS, parseCube, lutFromPair, imageStats, matchAdj } from "./adjust.js";
 import { RATIOS, hijriOf, gregOf, cropRect, drawFooter, FONT_M, FONT_R, LOGO_FILL, titleCheck } from "./footer.js";
 
 const $ = s => document.querySelector(s);
@@ -261,6 +261,7 @@ async function analyze() {
       it.ar = bmp.width / bmp.height;
       const c = new OffscreenCanvas(bmp.width, bmp.height); c.getContext("2d").drawImage(bmp, 0, 0); bmp.close();
       it.faces = detectFaces(c);
+      try { it.stats = imageStats(c.getContext("2d").getImageData(0, 0, c.width, c.height), it.faces); } catch (e) {}
       const tw = 360, th = Math.round(tw / it.ar), t = new OffscreenCanvas(tw, th); t.getContext("2d").drawImage(c, 0, 0, tw, th);
       it.thumb = URL.createObjectURL(await t.convertToBlob({ type: "image/jpeg", quality: 0.8 }));
     } catch (e) { it.faces = []; it.err = "تعذّر قراءة الصورة: " + (e.message || e); }
@@ -412,7 +413,13 @@ function setBox(b) {
 })();
 
 /* ============ الألوان ============ */
-const adjOf = it => (it && it.adj) || F().adj || ZERO;
+// مطابقة المرجع: تصحيح محسوب لكل صورة على حدة (ما لم يكن للصورة تعديل خاص)
+const matching = () => !!(F().matchOn && F().ref && F().ref.stats);
+const adjOf = it => {
+  if (it && it.adj) return it.adj;
+  if (matching() && it && it.stats) return { ...matchAdj(it.stats, F().ref.stats), amount: F().adj?.amount ?? 100 };
+  return F().adj || ZERO;
+};
 const curAdj = () => { const it = S.items[S.cur]; return it && it.adj ? it.adj : F().adj; };
 function paintAdj() {
   const it = S.items[S.cur], own = !!(it && it.adj), a = curAdj();
@@ -423,6 +430,8 @@ function paintAdj() {
   const grp = g => ADJ.filter(d => d.g === g).map(sl).join("");
   const hslOn = BANDS.some(([k]) => a["h_" + k] || a["s_" + k] || a["l_" + k]), cgOn = ["sh", "mid", "hi"].some(k => a[`cg_${k}_s`]);
   const ht = S.hslTab || "h";
+  $("#refBox").innerHTML = refHTML();
+  if (matching() && !own) { $("#adjBox").innerHTML = `<div class="amt">${ADJ.filter(d => d.k === "amount").map(sl).join("")}</div><div class="matchNote">🎯 المطابقة مفعّلة: لكل صورة تصحيح محسوب لها لتقترب من المرجع (الأبيض، الميل اللوني، السطوع، التباين، التشبع). «قوة المؤثرات» تخفف المطابقة.</div>`; $("#adjReset").hidden = true; $("#adjTag").textContent = "مطابقة المرجع"; paintPresets(); return; }
   $("#adjBox").innerHTML = `<div class="amt">${grp("amount")}</div>${a.lut ? `<div class="lutTag">🎯 مطابقة ألوان مفعّلة (${a.lut.n}³)</div>` : ""}<h4>الضوء</h4>${grp("الضوء")}<h4>اللون</h4>${grp("اللون")}<h4>التفاصيل</h4>${grp("التفاصيل")}
     <details class="adv" ${S.openHsl ? "open" : ""} data-det="openHsl"><summary>ألوان محددة (HSL)${hslOn ? " <em>●</em>" : ""}</summary>
       <div class="seg mini3">${[["h", "درجة اللون"], ["s", "التشبع"], ["l", "الإضاءة"]].map(([k, l]) => `<button type="button" data-hsl="${k}" class="${ht === k ? "on" : ""}">${l}</button>`).join("")}</div>
@@ -551,6 +560,60 @@ $("#presetDel").onclick = async () => {
   if (S.sys) { try { await (await sysDir("بريستات")).removeEntry(n.replace(/[\\/:*?"<>|]/g, "-") + ".json"); } catch (e) {} }
   F().preset = ""; saveSoon(); paintAdj();
 };
+
+/* ============ مطابقة صورة مرجعية ============ */
+function refHTML() {
+  const r = F().ref;
+  if (!r) return `<button type="button" class="ghost sm" data-ref="pick">🎯 اختر صورة مرجعية للمطابقة</button><small class="muted"> اختياري — صورة معدّلة بالشكل اللي تبغاه</small>`;
+  return `<div class="refRow"><img src="${r.thumb}" alt=""><div><b>${esc(r.name)}</b><small>${r.stats.face ? "فيها وجوه — السطوع يُطابق من البشرة" : "بدون وجوه — السطوع يُطابق من المساحات الفاتحة"}</small>
+    <div class="refActs"><label class="chk"><input type="checkbox" data-ref="on" ${F().matchOn ? "checked" : ""}> مطابقة كل الصور</label>
+    <button type="button" class="lnk" data-ref="cmp">قارن قبل/بعد</button><button type="button" class="lnk" data-ref="pick">تغيير</button><button type="button" class="lnk" data-ref="del">إزالة</button></div></div></div>`;
+}
+async function pickRef() {
+  const f = await pickFile("image/*"); if (!f) return;
+  try {
+    await getDetector();
+    const b = await createImageBitmap(f, { imageOrientation: "from-image", resizeWidth: 1280, resizeQuality: "high" });
+    const c = new OffscreenCanvas(b.width, b.height); c.getContext("2d").drawImage(b, 0, 0); b.close();
+    // المرجع غالباً عليه حقوق: نتجاهل الوجوه داخل منطقة التذييل والشعارات
+    const faces = detectFaces(c).filter(x => x.y > 0.12 && x.y + x.h < 0.68);
+    const stats = imageStats(c.getContext("2d").getImageData(0, 0, c.width, c.height), faces, { skipRights: true });
+    const t = new OffscreenCanvas(240, Math.round(240 * c.height / c.width)); t.getContext("2d").drawImage(c, 0, 0, t.width, t.height);
+    const thumb = await new Promise(res => { const fr = new FileReader(); t.convertToBlob({ type: "image/jpeg", quality: 0.8 }).then(bl => { fr.onload = () => res(fr.result); fr.readAsDataURL(bl); }); });
+    F().ref = { name: f.name, stats, thumb }; F().matchOn = false; saveSoon(); paintAdj();
+    if (S.items.length) compareMatch(); else toast("اختر صور الفعالية، ثم «قارن قبل/بعد»");
+  } catch (e) { toast("تعذّرت قراءة المرجع: " + (e.message || e)); }
+}
+// تجربة على 3–5 صور مختلفة قبل التعميم
+async function compareMatch() {
+  const its = S.items.filter(x => x.stats && x.thumb); if (!its.length) return toast("انتظر حتى ينتهي تحليل الصور");
+  const n = Math.min(5, its.length), pick = Array.from({ length: n }, (_, i) => its[Math.round(i * (its.length - 1) / Math.max(1, n - 1))]);
+  const rows = [];
+  for (const it of pick) {
+    const img = new Image(); img.src = it.thumb; await img.decode();
+    const c = new OffscreenCanvas(img.naturalWidth, img.naturalHeight), x = c.getContext("2d", { willReadFrequently: true }); x.drawImage(img, 0, 0);
+    const id = x.getImageData(0, 0, c.width, c.height); applyAdjust(id, { ...matchAdj(it.stats, F().ref.stats), amount: F().adj?.amount ?? 100 }); x.putImageData(id, 0, 0);
+    const after = URL.createObjectURL(await c.convertToBlob({ type: "image/jpeg", quality: 0.85 }));
+    rows.push(`<div class="cmpRow"><figure><img src="${it.thumb}"><figcaption>قبل</figcaption></figure><figure><img src="${after}"><figcaption>بعد</figcaption></figure></div>`);
+  }
+  const d = $("#cmpDlg");
+  d.innerHTML = `<div class="cmpHead"><b>تجربة المطابقة على ${n} صور</b><figure class="refFig"><img src="${F().ref.thumb}"><figcaption>المرجع</figcaption></figure></div><div class="cmpBody">${rows.join("")}</div>
+    <div class="acts2"><button type="button" class="pri" data-cmp="ok">✓ اعتماد — مطابقة كل الصور</button><button type="button" class="ghost" data-cmp="x">إغلاق</button></div>`;
+  d.showModal();
+}
+document.addEventListener("click", e => {
+  const r = e.target.closest("[data-ref]"); if (r && r.tagName !== "INPUT") {
+    const v = r.dataset.ref;
+    if (v === "pick") pickRef(); else if (v === "cmp") compareMatch();
+    else if (v === "del") { F().ref = null; F().matchOn = false; saveSoon(); paintAdj(); renderPreview(); }
+    return;
+  }
+  const c = e.target.closest("[data-cmp]"); if (c) {
+    $("#cmpDlg").close();
+    if (c.dataset.cmp === "ok") { F().matchOn = true; F().preset = ""; saveSoon(); paintAdj(); renderPreview(); toast("المطابقة مفعّلة — يُحسب التصحيح لكل صورة عند المعاينة والتصدير"); }
+  }
+});
+document.addEventListener("change", e => { const r = e.target.closest('[data-ref="on"]'); if (!r) return; F().matchOn = r.checked; saveSoon(); paintAdj(); renderPreview(); });
 
 /* ============ معاينة بصفحة كاملة ============ */
 $("#fullBtn").onclick = async () => {
