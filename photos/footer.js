@@ -15,7 +15,7 @@ export const L = {
   title: { size: 0.0200, lh: 1.52, base: 0.059 },
   date: { size: 0.0087, track: 0.155, base: 0.028, left: 0.0595, gap: 0.0145 },
   credit: { right: 0.0665, lblSize: 0.0086, lblBase: 0.042, nameSize: 0.0113, nameBase: 0.0265 },
-  founding: { opacity: 0.07, h: 0.085 }
+  founding: { opacity: 0.07, h: 543.27 / 3312 }  // بعرض الصورة كاملاً مثل الأصل (3312px)
 };
 
 export const FONT_M = "ZaraDinMedium", FONT_R = "ZaraDinRegular";
