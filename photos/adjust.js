@@ -20,6 +20,7 @@ export const ADJ = [
   ...[["sh", "الظلال"], ["mid", "الوسط"], ["hi", "الإضاءات"]].flatMap(([k, l]) => [
     { g: "grade", k: `cg_${k}_h`, l: `لون ${l}`, min: 0, max: 360, step: 1, hue: 1, adv: 1 },
     { g: "grade", k: `cg_${k}_s`, l: `قوة ${l}`, min: 0, max: 100, step: 1, adv: 1 }]),
+  ...[["pc_sh", "الظلال العميقة"], ["pc_dk", "الداكن"], ["pc_lt", "الفاتح"], ["pc_hi", "الإضاءات العالية"]].map(([k, l]) => ({ g: "curve", k, l, min: -100, max: 100, step: 1, adv: 1 })),
   { g: "grade", k: "cg_blend", l: "المزج", min: 0, max: 100, step: 1, def: 50, adv: 1 },
   { g: "grade", k: "cg_bal", l: "التوازن", min: -100, max: 100, step: 1, adv: 1 }
 ];
@@ -37,6 +38,7 @@ export function buildLUT(p) {
   const gains = [1 + 0.22 * t + 0.04 * ti, 1 - 0.16 * ti, 1 - 0.26 * t + 0.04 * ti];
   const ev = Math.pow(2, p.exposure || 0);
   const c = (p.contrast || 0) / 100, h = (p.highlights || 0) / 100, sh = (p.shadows || 0) / 100, w = (p.whites || 0) / 100, b = (p.blacks || 0) / 100;
+  const pc = ["pc_sh", "pc_dk", "pc_lt", "pc_hi"].map(k => (p[k] || 0) / 100);
   const out = [new Uint8ClampedArray(256), new Uint8ClampedArray(256), new Uint8ClampedArray(256)];
   for (let ch = 0; ch < 3; ch++) {
     let prev = 0;
@@ -44,6 +46,8 @@ export function buildLUT(p) {
       let x = l2s(clamp(s2l(i / 255) * gains[ch] * ev));
       x = x + w * 0.16 * bell(x, 0.93, 0.13) + b * 0.12 * bell(x, 0.06, 0.12);
       x = x + h * 0.2 * bell(x, 0.76, 0.17) + sh * 0.22 * bell(x, 0.24, 0.17);
+      // منحنى التون (Parametric) — أربع مناطق
+      x = x + (pc[0] * bell(x, 0.12, 0.12) + pc[1] * bell(x, 0.37, 0.13) + pc[2] * bell(x, 0.63, 0.13) + pc[3] * bell(x, 0.88, 0.12)) * 0.13;
       if (c) { const s = x - 0.5; x = 0.5 + s * (1 + c * 0.9 * (1 - Math.min(1, Math.abs(s) * 2) ** 2)); }
       x = clamp(x);
       if (x < prev) x = prev; prev = x;
@@ -149,15 +153,21 @@ export function fromXMP(text) {
   const LR = { red: "Red", orange: "Orange", yellow: "Yellow", green: "Green", aqua: "Aqua", blue: "Blue", purple: "Purple", magenta: "Magenta" };
   for (const [k, n] of Object.entries(LR)) { a[`h_${k}`] = num("HueAdjustment" + n); a[`s_${k}`] = num("SaturationAdjustment" + n); a[`l_${k}`] = num("LuminanceAdjustment" + n); }
   for (const [k, n] of [["sh", "Shadow"], ["mid", "Midtone"], ["hi", "Highlight"]]) { a[`cg_${k}_h`] = num(`ColorGrade${n}Hue`); a[`cg_${k}_s`] = num(`ColorGrade${n}Sat`); }
+  // Split Toning القديم = تدرج الظلال/الإضاءات إن لم يُحدَّد ColorGrade
+  if (!a.cg_sh_s && num("SplitToningShadowSaturation")) { a.cg_sh_h = num("SplitToningShadowHue"); a.cg_sh_s = num("SplitToningShadowSaturation"); }
+  if (!a.cg_hi_s && num("SplitToningHighlightSaturation")) { a.cg_hi_h = num("SplitToningHighlightHue"); a.cg_hi_s = num("SplitToningHighlightSaturation"); }
+  a.pc_sh = num("ParametricShadows"); a.pc_dk = num("ParametricDarks"); a.pc_lt = num("ParametricLights"); a.pc_hi = num("ParametricHighlights");
   a.cg_blend = v("ColorGradeBlending") != null ? num("ColorGradeBlending") : 50; a.cg_bal = num("ColorGradeBalance");
+  if (!a.cg_bal && num("SplitToningBalance")) a.cg_bal = num("SplitToningBalance");
   for (const k in a) a[k] = Math.round(a[k] * 100) / 100;
   const name = (text.match(/<crs:Name>[\s\S]*?<rdf:li[^>]*>([^<]+)</) || [])[1] || "";
-  const unsupported = ["Texture", "Sharpness", "PostCropVignetteAmount", "ToneCurvePV2012", "RedPrimaryHue", "ShadowTint"].filter(k => v(k) != null && num(k) !== 0);
+  const unsupported = ["Texture", "Sharpness", "PostCropVignetteAmount", "RedPrimaryHue", "ShadowTint", "LuminanceSmoothing"].filter(k => v(k) != null && num(k) !== 0);
   return { name: name.trim(), adj: a, unsupported };
 }
 // قراءة سمات crs:* وعناصرها بدون DOMParser (يعمل في العامل أيضاً)
-function DOMParserish(t) {
-  const m = {};
+function DOMParserish(t0) {
+  const m = {}, t = (t0.match(/<rdf:Description[\s\S]*?>/) || [t0])[0];
+  t0.replace(/<crs:Name>[\s\S]*?<\/crs:Name>/, x => { m.__name = x; });
   t.replace(/crs:([A-Za-z0-9]+)="([^"]*)"/g, (_, k, v) => { m[k] = v; });
   t.replace(/<crs:([A-Za-z0-9]+)>([^<]*)<\/crs:\1>/g, (_, k, v) => { m[k] = v; });
   this.get = k => m[k];

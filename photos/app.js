@@ -421,6 +421,7 @@ function paintAdj() {
     <details class="adv" ${S.openHsl ? "open" : ""} data-det="openHsl"><summary>ألوان محددة (HSL)${hslOn ? " <em>●</em>" : ""}</summary>
       <div class="seg mini3">${[["h", "درجة اللون"], ["s", "التشبع"], ["l", "الإضاءة"]].map(([k, l]) => `<button type="button" data-hsl="${k}" class="${ht === k ? "on" : ""}">${l}</button>`).join("")}</div>
       ${grp("hsl-" + ht)}</details>
+    <details class="adv" ${S.openCurve ? "open" : ""} data-det="openCurve"><summary>منحنى التون${["pc_sh", "pc_dk", "pc_lt", "pc_hi"].some(k => a[k]) ? " <em>●</em>" : ""}</summary>${grp("curve")}</details>
     <details class="adv" ${S.openCg ? "open" : ""} data-det="openCg"><summary>تدرج الألوان (ظلال / وسط / إضاءات)${cgOn ? " <em>●</em>" : ""}</summary>${grp("grade")}</details>`;
   $("#adjReset").hidden = isZero(a);
   $("#adjTag").textContent = own ? "تعديل خاص بهذه الصورة" : (F().preset ? "البريست: " + F().preset : (isZero(F().adj) ? "بدون تعديل" : "تعديل على كل الصور"));
