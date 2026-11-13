@@ -31,7 +31,7 @@ export const ADJ = [
   { g: "grade", k: "cg_bal", l: "التوازن", min: -100, max: 100, step: 1, adv: 1 }
 ];
 export const ZERO = Object.fromEntries(ADJ.map(a => [a.k, a.def || 0]));
-export const isZero = p => !p || (!p.lut && !(p.tc && p.tc.length) && ADJ.every(a => a.k === "amount" || (p[a.k] ?? (a.def || 0)) === (a.def || 0) || (a.hue && !p[a.k.replace(/_h$/, "_s")]))) || (p.amount === 0);
+export const isZero = p => !p || (!p.lut && !(p.tc && p.tc.length) && !["tcR", "tcG", "tcB"].some(k => p[k] && p[k].length) && !p.cg_gl_s && ADJ.every(a => a.k === "amount" || (p[a.k] ?? (a.def || 0)) === (a.def || 0) || (a.hue && !p[a.k.replace(/_h$/, "_s")]))) || (p.amount === 0);
 const _isZeroOld = p => !p || ADJ.every(a => (p[a.k] ?? (a.def || 0)) === (a.def || 0) || (a.hue && !p[a.k.replace(/_h$/, "_s")]));
 
 const s2l = v => v <= 0.04045 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4);
@@ -49,6 +49,7 @@ export function buildLUT(p) {
   const pc = ["pc_sh", "pc_dk", "pc_lt", "pc_hi"].map(k => (p[k] || 0) / 100);
   const out = [new Uint8ClampedArray(256), new Uint8ClampedArray(256), new Uint8ClampedArray(256)];
   const TC = p.tc && p.tc.length >= 2 ? monoCurve(p.tc) : null;   // منحنى النقاط (ToneCurvePV2012)
+  const TCC = ["tcR", "tcG", "tcB"].map(k => p[k] && p[k].length >= 2 ? monoCurve(p[k]) : null);
   for (let ch = 0; ch < 3; ch++) {
     let prev = 0;
     for (let i = 0; i < 256; i++) {
@@ -60,6 +61,7 @@ export function buildLUT(p) {
       if (c) { const s = x - 0.5; x = 0.5 + s * (1 + c * 0.9 * (1 - Math.min(1, Math.abs(s) * 2) ** 2)); }
       x = clamp(x);
       if (TC) x = TC(x);
+      if (TCC[ch]) x = TCC[ch](x);
       if (x < prev) x = prev; prev = x;
       out[ch][i] = Math.round(x * 255);
     }
@@ -115,7 +117,8 @@ export function applyAdjust(img, p) {
   const T = hslTables(p);
   // تدرج الألوان
   const cg = [["sh", 0], ["mid", 1], ["hi", 2]].map(([k]) => { const s = (p[`cg_${k}_s`] || 0) / 100; return s ? hueRGB(p[`cg_${k}_h`] || 0).map(v => v * s * 0.32) : null; });
-  const [c0, c1, c2] = cg, doCG = cg.some(Boolean), blend = 0.5 + ((p.cg_blend ?? 50) - 50) / 100, bal = (p.cg_bal || 0) / 200;
+  const cgl = p.cg_gl_s ? hueRGB(p.cg_gl_h || 0).map(v => v * p.cg_gl_s / 100 * 0.25) : null;
+  const [c0, c1, c2] = cg, doCG = cg.some(Boolean) || !!cgl, blend = 0.5 + ((p.cg_blend ?? 50) - 50) / 100, bal = (p.cg_bal || 0) / 200;
   const perPixel = T || doCG || sat !== 1 || vib !== 0;
   const L3 = p.lut ? decodeLUT(p.lut) : null, N = L3 ? L3.n : 0, N1 = N - 1, LD = L3 ? L3.d : null;
   const amt = Math.max(0, Math.min(1, (p.amount ?? 100) / 100)), mix = amt < 1;
@@ -152,6 +155,7 @@ export function applyAdjust(img, p) {
         if (c0 && wsh) { r += c0[0] * wsh; g += c0[1] * wsh; b += c0[2] * wsh; }
         if (c1 && wmid) { r += c1[0] * wmid; g += c1[1] * wmid; b += c1[2] * wmid; }
         if (c2 && whi) { r += c2[0] * whi; g += c2[1] * whi; b += c2[2] * whi; }
+        if (cgl) { r += cgl[0]; g += cgl[1]; b += cgl[2]; }
       }
       r *= 255; g *= 255; b *= 255;
     }
@@ -206,6 +210,11 @@ export function fromXMP(text) {
   a.cg_blend = v("ColorGradeBlending") != null ? num("ColorGradeBlending") : 50; a.cg_bal = num("ColorGradeBalance");
   if (!a.cg_bal && num("SplitToningBalance")) a.cg_bal = num("SplitToningBalance");
   for (const k in a) a[k] = Math.round(a[k] * 100) / 100;
+  for (const [k, n] of [["tcR", "Red"], ["tcG", "Green"], ["tcB", "Blue"]]) {
+    const m = text.match(new RegExp(`<crs:ToneCurvePV2012${n}>[\\s\\S]*?<\\/crs:ToneCurvePV2012${n}>`));
+    if (m) { const pts = [...m[0].matchAll(/<rdf:li>\s*(\d+)\s*,\s*(\d+)\s*<\/rdf:li>/g)].map(x => [+x[1], +x[2]]); if (pts.length >= 2 && pts.some(([x, y]) => x !== y)) a[k] = pts; }
+  }
+  a.cg_gl_h = num("ColorGradeGlobalHue"); a.cg_gl_s = num("ColorGradeGlobalSat");
   const tcm = text.match(/<crs:ToneCurvePV2012>[\s\S]*?<\/crs:ToneCurvePV2012>/);
   if (tcm) { const pts = [...tcm[0].matchAll(/<rdf:li>\s*(\d+)\s*,\s*(\d+)\s*<\/rdf:li>/g)].map(m => [+m[1], +m[2]]); if (pts.length >= 2 && pts.some(([x, y]) => x !== y)) a.tc = pts; }
   const name = (text.match(/<crs:Name>[\s\S]*?<rdf:li[^>]*>([^<]+)</) || [])[1] || "";

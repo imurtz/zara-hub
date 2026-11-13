@@ -319,6 +319,7 @@ async function renderPreview() {
   }
   const r = cropRect(prevBmp.width, prevBmp.height, S.ratio, it.faces || [], it.pos[S.ratio]);
   prevRect = r;
+  if (S.cropMode) { drawCropMode(cv, it, r); paintCrop(); return; }
   const maxW = 1400, k = Math.min(1, maxW / r.sw), w = Math.round(r.sw * k), h = Math.round(r.sh * k);
   cv.width = w; cv.height = h;
   const ctx = cv.getContext("2d"); ctx.imageSmoothingQuality = "high";
@@ -361,7 +362,7 @@ async function paintCrop() {
   for (const f of [1 / 3, 2 / 3]) { c.moveTo((r.sx + r.sw * f) * k, r.sy * k); c.lineTo((r.sx + r.sw * f) * k, (r.sy + r.sh) * k); c.moveTo(r.sx * k, (r.sy + r.sh * f) * k); c.lineTo((r.sx + r.sw) * k, (r.sy + r.sh * f) * k); }
   c.stroke();
   const manual = it.pos[S.ratio] != null, z = r.z || 1;
-  $("#cropHint").textContent = "اسحب الإطار الأصفر لتحريكه · غيّر الحجم من الشريط أو بعجلة الفأرة";
+  $("#cropHint").textContent = S.cropMode ? "حدد القص على الصورة الكبيرة فوق" : "للتحديد الدقيق اضغط «✂️ حدد القص» أو مفتاح C";
   $("#cropBtns").innerHTML = `<button type="button" data-crop="auto" class="${manual ? "" : "on"}">تلقائي</button><button type="button" data-crop="center">توسيط</button><button type="button" data-crop="all" title="ينسخ نفس الإطار لكل الصور">نفس القص لكل الصور</button>`;
   const rg = $("#cropRange"); rg.hidden = false; rg.min = 20; rg.max = 100; rg.value = Math.round(z * 100);
   $("#cropZoom").textContent = Math.round(z * 100) + "%";
@@ -412,6 +413,66 @@ function setBox(b) {
   });
 })();
 
+/* ============ وضع القص على الصورة الكبيرة ============ */
+let cropView = null;
+function drawCropMode(cv, it, r) {
+  const W = prevBmp.width, H = prevBmp.height, maxW = 1400, maxH = 900, k = Math.min(maxW / W, maxH / H, 1.5);
+  cv.width = Math.round(W * k); cv.height = Math.round(H * k);
+  const c = cv.getContext("2d"); c.imageSmoothingQuality = "high"; c.drawImage(prevBmp, 0, 0, cv.width, cv.height);
+  const x = r.sx * k, y = r.sy * k, w = r.sw * k, h = r.sh * k;
+  c.fillStyle = "rgba(10,14,13,.62)";
+  c.fillRect(0, 0, cv.width, y); c.fillRect(0, y + h, cv.width, cv.height - y - h); c.fillRect(0, y, x, h); c.fillRect(x + w, y, cv.width - x - w, h);
+  c.strokeStyle = "#F2C14E"; c.lineWidth = 3; c.strokeRect(x + 1.5, y + 1.5, w - 3, h - 3);
+  c.strokeStyle = "rgba(255,255,255,.5)"; c.lineWidth = 1; c.beginPath();
+  for (const f of [1 / 3, 2 / 3]) { c.moveTo(x + w * f, y); c.lineTo(x + w * f, y + h); c.moveTo(x, y + h * f); c.lineTo(x + w, y + h * f); }
+  c.stroke();
+  // مقابض الزوايا
+  const hs = Math.max(14, cv.width / 70); c.fillStyle = "#F2C14E";
+  for (const [hx, hy] of [[x, y], [x + w, y], [x, y + h], [x + w, y + h]]) c.fillRect(hx - hs / 2, hy - hs / 2, hs, hs);
+  // معاينة صغيرة للنتيجة النهائية (مع الحقوق) أعلى الإطار
+  cropView = { k, x, y, w, h, hs, W, H };
+  $("#prevMeta").innerHTML = `✂️ وضع القص — اسحب الإطار لتحريكه، واسحب الزوايا لتكبيره أو تصغيره · المقاس ${S.ratio} ثابت · <button type="button" class="lnk" id="cropDone">تم ✓</button>`;
+  $("#cropDone").onclick = () => setCropMode(false);
+  cv.style.cursor = "move";
+}
+function setCropMode(on) { S.cropMode = on; $("#cropModeBtn").classList.toggle("on", on); $("#prevWrap").classList.toggle("cropping", on); renderPreview(); }
+(() => {
+  const cv = $("#prev"); let drag = null;
+  const pt = e => { const p = e.touches ? e.touches[0] : e, b = cv.getBoundingClientRect(); return { x: (p.clientX - b.left) * cv.width / b.width, y: (p.clientY - b.top) * cv.height / b.height }; };
+  const base = () => cropRect(prevBmp.width, prevBmp.height, S.ratio, [], { cx: 0.5, cy: 0.5, z: 1 });
+  const down = e => {
+    if (!S.cropMode || !cropView || !S.items[S.cur]) return; e.preventDefault();
+    const p = pt(e), v = cropView, tol = v.hs * 1.2;
+    const corners = [[v.x, v.y, v.x + v.w, v.y + v.h], [v.x + v.w, v.y, v.x, v.y + v.h], [v.x, v.y + v.h, v.x + v.w, v.y], [v.x + v.w, v.y + v.h, v.x, v.y]];
+    const hit = corners.find(([cx, cy]) => Math.abs(p.x - cx) < tol && Math.abs(p.y - cy) < tol);
+    if (hit) { drag = { mode: "size", ax: hit[2], ay: hit[3] }; return; }
+    const inside = p.x >= v.x && p.x <= v.x + v.w && p.y >= v.y && p.y <= v.y + v.h;
+    if (!inside) { const cb = curBox(); setBox({ ...cb, cx: p.x / v.k / v.W, cy: p.y / v.k / v.H }); }
+    drag = { mode: "move", p, b: inside ? curBox() : { ...curBox(), cx: p.x / v.k / v.W, cy: p.y / v.k / v.H } };
+  };
+  const move = e => {
+    if (!drag || !cropView) {
+      if (S.cropMode && cropView && !e.touches) { const p = pt(e), v = cropView, tol = v.hs * 1.2; const onC = [[v.x, v.y], [v.x + v.w, v.y + v.h]].some(([a, b]) => Math.abs(p.x - a) < tol && Math.abs(p.y - b) < tol) ? "nwse-resize" : [[v.x + v.w, v.y], [v.x, v.y + v.h]].some(([a, b]) => Math.abs(p.x - a) < tol && Math.abs(p.y - b) < tol) ? "nesw-resize" : "move"; cv.style.cursor = onC; }
+      return;
+    }
+    const p = pt(e), v = cropView;
+    if (drag.mode === "move") { const dx = (p.x - drag.p.x) / v.k / v.W, dy = (p.y - drag.p.y) / v.k / v.H; setBox({ ...drag.b, cx: drag.b.cx + dx, cy: drag.b.cy + dy }); return; }
+    // تغيير الحجم من زاوية مع تثبيت الزاوية المقابلة والنسبة
+    const bw = base().sw * v.k, R = RATIOS[S.ratio].r;
+    let w = Math.max(Math.abs(p.x - drag.ax), Math.abs(p.y - drag.ay) * R); w = Math.max(bw * 0.2, Math.min(bw, w));
+    const h = w / R, sx = p.x < drag.ax ? -1 : 1, sy = p.y < drag.ay ? -1 : 1;
+    const cx = drag.ax + sx * w / 2, cy = drag.ay + sy * h / 2;
+    setBox({ cx: cx / v.k / v.W, cy: cy / v.k / v.H, z: w / bw });
+  };
+  cv.addEventListener("mousedown", down); cv.addEventListener("touchstart", down, { passive: false });
+  addEventListener("mousemove", move); addEventListener("touchmove", e => { if (drag) { e.preventDefault(); move(e); } }, { passive: false });
+  addEventListener("mouseup", () => drag = null); addEventListener("touchend", () => drag = null);
+  cv.addEventListener("wheel", e => { if (!S.cropMode || !prevRect) return; e.preventDefault(); const cb = curBox(); setBox({ ...cb, z: cb.z * (e.deltaY > 0 ? 1.05 : 0.95) }); }, { passive: false });
+  cv.addEventListener("dblclick", () => { if (S.cropMode) setCropMode(false); });
+  addEventListener("keydown", e => { if (e.key === "Escape" && S.cropMode) setCropMode(false); if ((e.key === "c" || e.key === "ص") && !/INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName) && S.items.length) setCropMode(!S.cropMode); });
+  $("#cropModeBtn").onclick = () => { if (!S.items.length) return toast("اختر الصور أولاً"); setCropMode(!S.cropMode); };
+})();
+
 /* ============ الألوان ============ */
 // مطابقة المرجع: تصحيح محسوب لكل صورة على حدة (ما لم يكن للصورة تعديل خاص)
 const matching = () => !!(F().matchOn && F().ref && F().ref.stats);
@@ -426,7 +487,7 @@ function paintAdj() {
   $("#adjScope").innerHTML = `<button type="button" data-scope="all" class="${own ? "" : "on"}">كل الصور</button><button type="button" data-scope="one" class="${own ? "on" : ""}" ${it ? "" : "disabled"}>هذه الصورة فقط</button>`;
   const sl = d => { const v = a[d.k] ?? (d.def || 0);
     const bg = d.hue ? ` style="background:linear-gradient(90deg,#f00,#ff0,#0f0,#0ff,#00f,#f0f,#f00);border-radius:9px;height:6px"` : "";
-    return `<label class="sl${d.c ? " band" : ""}">${d.c ? `<i style="background:${d.c}"></i>` : ""}<span class="n">${d.l}</span><input type="range" min="${d.min}" max="${d.max}" step="${d.step}" value="${v}" data-adj="${d.k}" data-def="${d.def || 0}" title="نقرتان للتصفير"${bg}><span class="v">${fmtAdj(d, v)}</span></label>`; };
+    return `<label class="sl${d.c ? " band" : ""}">${d.c ? `<i style="background:${d.c}"></i>` : ""}<span class="n">${d.l}</span><input type="range" min="${d.min}" max="${d.max}" step="${d.step}" value="${v}" data-adj="${d.k}" data-def="${d.def || 0}" title="نقرتان للتصفير"${bg}><input type="number" class="vn" data-adjn="${d.k}" min="${d.min}" max="${d.max}" step="${d.step}" value="${v}" title="اكتب الرقم"></label>`; };
   const grp = g => ADJ.filter(d => d.g === g).map(sl).join("");
   const hslOn = BANDS.some(([k]) => a["h_" + k] || a["s_" + k] || a["l_" + k]), cgOn = ["sh", "mid", "hi"].some(k => a[`cg_${k}_s`]);
   const ht = S.hslTab || "h";
@@ -439,18 +500,26 @@ function paintAdj() {
     <details class="adv" ${S.openCurve ? "open" : ""} data-det="openCurve"><summary>منحنى التون${["pc_sh", "pc_dk", "pc_lt", "pc_hi"].some(k => a[k]) ? " <em>●</em>" : ""}</summary>${grp("curve")}</details>
     <details class="adv" ${S.openCg ? "open" : ""} data-det="openCg"><summary>تدرج الألوان (ظلال / وسط / إضاءات)${cgOn ? " <em>●</em>" : ""}</summary>${grp("grade")}</details>`;
   $("#adjReset").hidden = isZero(a);
-  $("#adjTag").textContent = own ? "تعديل خاص بهذه الصورة" : (F().preset ? "البريست: " + F().preset : (isZero(F().adj) ? "بدون تعديل" : "تعديل على كل الصور"));
+  $("#adjTag").textContent = own ? "تعديل خاص بهذه الصورة" : (F().preset && lrFind(F().preset) ? "Lightroom: " + lrFind(F().preset).name : (isZero(F().adj) ? "بدون تعديل" : "تعديل على كل الصور"));
   paintPresets();
 }
 const fmtAdj = (d, v) => d.k === "exposure" ? (v > 0 ? "+" : "") + (+v).toFixed(2) : d.hue ? v + "°" : d.min === 0 ? String(v) : (v > 0 ? "+" : "") + v;
-document.addEventListener("input", e => {
-  const r = e.target.closest("[data-adj]"); if (!r) return;
-  const d = ADJ.find(x => x.k === r.dataset.adj), it = S.items[S.cur], v = +r.value;
-  if (it && it.adj) it.adj = { ...it.adj, [d.k]: v }; else { F().adj = { ...F().adj, [d.k]: v }; F().preset = ""; saveSoon(); }
-  r.nextElementSibling.textContent = fmtAdj(d, v);
+function setAdjVal(k, v) {
+  const d = ADJ.find(x => x.k === k), it = S.items[S.cur];
+  if (!d || isNaN(v)) return;
+  v = Math.max(d.min, Math.min(d.max, v));
+  if (it && it.adj) it.adj = { ...it.adj, [k]: v }; else { F().adj = { ...F().adj, [k]: v }; F().preset = ""; saveSoon(); }
+  const rg = document.querySelector(`[data-adj="${k}"]`), nb = document.querySelector(`[data-adjn="${k}"]`);
+  if (rg && +rg.value !== v) rg.value = v;
+  if (nb && document.activeElement !== nb) nb.value = v;
   $("#adjReset").hidden = isZero(curAdj());
   previewRAF();
+}
+document.addEventListener("input", e => {
+  const r = e.target.closest("[data-adj]"); if (r) return setAdjVal(r.dataset.adj, +r.value);
+  const n = e.target.closest("[data-adjn]"); if (n && n.value !== "" && n.value !== "-") setAdjVal(n.dataset.adjn, +n.value);
 });
+document.addEventListener("change", e => { const n = e.target.closest("[data-adjn]"); if (n) { const d = ADJ.find(x => x.k === n.dataset.adjn); const v = +n.value; n.value = isNaN(v) ? (d.def || 0) : Math.max(d.min, Math.min(d.max, v)); setAdjVal(n.dataset.adjn, +n.value); } });
 document.addEventListener("dblclick", e => { const r = e.target.closest("[data-adj]"); if (!r) return; r.value = r.dataset.def || 0; r.dispatchEvent(new Event("input", { bubbles: true })); });
 document.addEventListener("click", e => {
   const hb = e.target.closest("[data-hsl]"); if (hb) { S.hslTab = hb.dataset.hsl; paintAdj(); return; }
@@ -486,80 +555,32 @@ function paintHist(id) {
   $("#clipL").classList.toggle("on", clipL > 0.01); $("#clipH").classList.toggle("on", clipH > 0.01);
 }
 // البريستات: ملفات JSON في «مجلد المنظومة/بريستات» (أو في هذا المتصفح إن لم يُختر المجلد)
-let PRESETS = {}, BUILTIN = {};
+// مقترحات Lightroom الجاهزة (بريستات Adobe الرسمية التي تعتمد على الأشرطة الأساسية) — assets/lr-presets.json
+let LR = [];
 document.addEventListener("toggle", e => { const d = e.target.closest && e.target.closest("[data-det]"); if (d) S[d.dataset.det] = d.open; }, true);
 async function loadPresets() {
-  try { const j = await (await fetch("./assets/presets.json")).json(); BUILTIN = Object.fromEntries(Object.entries(j).map(([n, v]) => [n, v.adj])); } catch (e) {}
-  PRESETS = { ...BUILTIN, ...ls.get("presets", {}) };
-  if (S.sys) { try { const d = await sysDir("بريستات"); for await (const [n, h] of d.entries()) if (h.kind === "file" && /\.json$/i.test(n)) { try { const j = JSON.parse(await (await h.getFile()).text()); PRESETS[j.name || n.replace(/\.json$/i, "")] = j.adj || j; } catch (e) {} } } catch (e) {} }
+  try { LR = await (await fetch("./assets/lr-presets.json")).json(); } catch (e) { LR = []; }
   paintPresets();
 }
+const lrFind = key => { const [g, i] = String(key).split(":").map(Number); return LR[g] && LR[g].items[i]; };
 function paintPresets() {
-  const names = Object.keys(PRESETS).sort((a, b) => a.localeCompare(b, "ar"));
-  $("#presetSel").innerHTML = `<option value="">— اختر بريست —</option>` + names.map(n => `<option ${F().preset === n ? "selected" : ""}>${esc(n)}</option>`).join("");
-  $("#presetDel").hidden = !F().preset || !PRESETS[F().preset] || !!BUILTIN[F().preset];
+  const sel = $("#lrSel"); if (!sel) return;
+  sel.innerHTML = `<option value="">— بدون —</option>` + LR.map((g, gi) => `<optgroup label="${esc(g.group)}">` + g.items.map((it, i) => `<option value="${gi}:${i}" ${F().preset === gi + ":" + i ? "selected" : ""}>${esc(it.name)}</option>`).join("") + `</optgroup>`).join("");
 }
-$("#presetSel").onchange = e => {
-  const n = e.target.value; if (!n) return;
-  const a = { ...ZERO, ...PRESETS[n] }, it = S.items[S.cur];
-  if (it && it.adj) it.adj = a; else { F().adj = a; F().preset = n; saveSoon(); }
+function applyLR(key) {
+  const p = key ? lrFind(key) : null, it = S.items[S.cur];
+  const a = { ...ZERO, ...(p ? p.adj : {}), amount: (it && it.adj ? it.adj.amount : F().adj?.amount) ?? 100 };
+  if (it && it.adj) it.adj = a; else { F().adj = a; F().preset = key || ""; if (F().matchOn) { F().matchOn = false; toast("أُوقفت مطابقة المرجع لتطبيق المقترح"); } saveSoon(); }
   paintAdj(); renderPreview();
-};
-async function savePreset(n, a) {
-  PRESETS[n] = a; const local = ls.get("presets", {}); local[n] = a; ls.set("presets", local);
-  if (S.sys) { try { await writeFile(await sysDir("بريستات"), n.replace(/[\\/:*?"<>|]/g, "-") + ".json", JSON.stringify({ name: n, adj: a, savedAt: new Date().toISOString() }, null, 2)); } catch (e) {} }
 }
-$("#presetImport").onclick = () => {
-  const inp = document.createElement("input"); inp.type = "file"; inp.accept = ".xmp,.XMP"; inp.multiple = true;
-  inp.onchange = async () => {
-    let last = "", miss = new Set();
-    for (const f of inp.files) {
-      try { const r = fromXMP(await f.text()); const n = r.name || f.name.replace(/\.xmp$/i, ""); await savePreset(n, r.adj); last = n; r.unsupported.forEach(x => miss.add(x)); } catch (e) { toast("تعذّر قراءة " + f.name); }
-    }
-    if (!last) return;
-    F().preset = last; F().adj = { ...ZERO, ...PRESETS[last] }; S.items.forEach(it => delete it.adj); saveSoon(); paintAdj(); renderPreview();
-    toast(`استُورد البريست «${last}» — التحويل تقريبي${miss.size ? " (تُجوهلت: " + [...miss].join("، ") + ")" : ""}`);
-  };
-  inp.click();
-};
 function pickFile(accept) { return new Promise(res => { const i = document.createElement("input"); i.type = "file"; i.accept = accept; i.onchange = () => res(i.files[0] || null); i.click(); }); }
-async function decodeTo(file, w) { const b = await createImageBitmap(file, { imageOrientation: "from-image", resizeWidth: w, resizeQuality: "high" }); const c = new OffscreenCanvas(b.width, b.height), x = c.getContext("2d", { willReadFrequently: true }); x.drawImage(b, 0, 0); b.close(); return x.getImageData(0, 0, c.width, c.height); }
-function useNewPreset(n) { F().preset = n; F().adj = { ...ZERO, ...PRESETS[n] }; S.items.forEach(it => delete it.adj); saveSoon(); paintAdj(); renderPreview(); }
-$("#lutImport").onclick = async () => {
-  const f = await pickFile(".cube"); if (!f) return;
-  try { const lut = parseCube(await f.text()); const n = f.name.replace(/\.cube$/i, ""); await savePreset(n, { ...ZERO, lut }); useNewPreset(n); toast(`استُورد «${n}» ✓`); }
-  catch (e) { toast("تعذّر قراءة الملف: " + (e.message || e)); }
-};
-$("#matchLR").onclick = async () => {
-  if (!(await ask("مطابقة ألوان Lightroom بدقة: اختر صورة أصلية، ثم نفس الصورة بعد تعديلها في Lightroom بالبريست (بدون قص ولا تدوير). الأداة تتعلّم الألوان منهما وتحفظها كبريست.", [["go", "اختر الصورتين"], ["x", "إلغاء"]])) === "x") return;
-  toast("1/2 — اختر الصورة الأصلية (قبل التعديل)");
-  const a = await pickFile("image/*"); if (!a) return;
-  toast("2/2 — اختر نفس الصورة بعد تعديل Lightroom");
-  const b = await pickFile("image/*"); if (!b) return;
-  try {
-    const A = await decodeTo(a, 1200), B = await decodeTo(b, 1200);
-    if (Math.abs(A.width / A.height - B.width / B.height) > 0.01) return toast("الصورتان بمقاسين مختلفين — صدّر من Lightroom بدون قص");
-    const Bs = A.height === B.height ? B : await decodeTo(b, A.width);
-    const lut = lutFromPair(A, Bs);
-    const n = (prompt("اسم البريست المطابق:", (F().preset ? F().preset + " — مطابق" : "مطابقة Lightroom")) || "").trim(); if (!n) return;
-    await savePreset(n, { ...ZERO, lut: { n: lut.n, b64: lut.b64 } }); useNewPreset(n);
-    toast(`حُفظ «${n}» ✓ — غطّت الصورة ${Math.round(lut.cover * 100)}% من الألوان${lut.cover < 0.08 ? " (استخدم صورة ألوانها أكثر تنوعاً لدقة أعلى)" : ""}`);
-  } catch (e) { toast("تعذّرت المطابقة: " + (e.message || e)); }
-};
-$("#presetSave").onclick = async () => {
-  const n = (prompt("اسم البريست:", F().preset || "") || "").trim(); if (!n) return;
-  if (BUILTIN[n]) return toast("هذا اسم بريست جاهز — اختر اسماً آخر");
-  const a = { ...curAdj() }; PRESETS[n] = a; F().preset = n;
-  const local = ls.get("presets", {}); local[n] = a; ls.set("presets", local);
-  if (S.sys) { try { await writeFile(await sysDir("بريستات"), n.replace(/[\\/:*?"<>|]/g, "-") + ".json", JSON.stringify({ name: n, adj: a, savedAt: new Date().toISOString() }, null, 2)); } catch (e) {} }
-  saveSoon(); paintAdj(); toast(S.sys ? "حُفظ البريست في مجلد المنظومة ✓" : "حُفظ البريست في هذا المتصفح — اختر مجلد المنظومة ليُحفظ دائماً");
-};
-$("#presetDel").onclick = async () => {
-  const n = F().preset; if (!n || !confirm(`حذف البريست «${n}»؟`)) return;
-  delete PRESETS[n]; const local = ls.get("presets", {}); delete local[n]; ls.set("presets", local);
-  if (S.sys) { try { await (await sysDir("بريستات")).removeEntry(n.replace(/[\\/:*?"<>|]/g, "-") + ".json"); } catch (e) {} }
-  F().preset = ""; saveSoon(); paintAdj();
-};
+(() => {
+  const sel = $("#lrSel"); if (!sel) return;
+  sel.onchange = e => applyLR(e.target.value);
+  // التنقل بين المقترحات بالأسهم مع المعاينة الفورية
+  $("#lrPrev").onclick = () => { if (sel.selectedIndex > 0) { sel.selectedIndex--; applyLR(sel.value); } };
+  $("#lrNext").onclick = () => { if (sel.selectedIndex < sel.options.length - 1) { sel.selectedIndex++; applyLR(sel.value); } };
+})();
 
 /* ============ مطابقة صورة مرجعية ============ */
 function refHTML() {

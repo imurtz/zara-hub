@@ -67,9 +67,11 @@ header h1 small{display:block;font-size:12.5px;color:var(--soft);font-weight:500
 .ghost.sm{padding:6px 11px;font-size:12.5px;border-radius:10px}
 #beforeBtn.on{background:var(--ink);color:#fff}
 #adjBox h4{margin:12px 0 4px;font-size:12.5px;color:var(--soft)}
-.sl{display:grid;grid-template-columns:76px 1fr 44px;align-items:center;gap:8px;font-size:13px;padding:2px 0}
+.sl{display:grid;grid-template-columns:76px 1fr 60px;align-items:center;gap:8px;font-size:13px;padding:2px 0}
 .sl input{width:100%;accent-color:var(--teal);direction:ltr}
 .sl .v{font-size:12px;color:var(--soft);text-align:left;direction:ltr;font-variant-numeric:tabular-nums}
+.sl .vn{width:58px;border:1px solid var(--line);border-radius:8px;padding:3px 5px;font-size:12px;text-align:center;direction:ltr;background:#FBFCFC;font-variant-numeric:tabular-nums}
+.sl .vn:focus{border-color:var(--teal);outline:none;background:#fff}
 .refBox{background:var(--teal-t);border-radius:12px;padding:8px 10px;margin-bottom:10px;font-size:13px}
 .refRow{display:flex;gap:10px;align-items:center}.refRow img{width:76px;border-radius:8px}
 .refRow small{display:block;color:var(--soft);font-size:11.5px}.refActs{display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin-top:4px}
@@ -81,6 +83,7 @@ header h1 small{display:block;font-size:12.5px;color:var(--soft);font-weight:500
 .cmpDlg figure{margin:0;position:relative}.cmpDlg figure img{width:100%;display:block;border-radius:10px}
 .cmpDlg figcaption{position:absolute;top:6px;right:6px;background:rgba(0,0,0,.55);color:#fff;font-size:11.5px;border-radius:6px;padding:1px 7px}
 .refFig{width:150px}.acts2{display:flex;gap:8px;margin-top:12px}
+.lrBox>span{font-size:12.5px;font-weight:700;color:var(--teal-d)}
 .imps{display:flex;gap:14px;flex-wrap:wrap}
 .amt{background:var(--tan-t);border-radius:12px;padding:6px 10px;margin:6px 0 4px}
 .amt .sl .n{font-weight:700;color:var(--tan-d)}
@@ -91,7 +94,7 @@ details.adv summary{cursor:pointer;font-size:13px;font-weight:700;color:var(--te
 details.adv summary::before{content:"◂ ";color:var(--soft)}details.adv[open] summary::before{content:"▾ "}
 details.adv summary em{color:var(--tan);font-style:normal}
 .mini3{margin:8px 0 4px}.mini3 button{padding:4px 11px;font-size:12px}
-.sl.band{grid-template-columns:10px 62px 1fr 44px}
+.sl.band{grid-template-columns:10px 62px 1fr 60px}
 .sl.band i{width:10px;height:10px;border-radius:50%}
 .adjActs{display:flex;align-items:center;justify-content:space-between;margin:10px 0 6px}
 .muted{color:var(--soft);font-size:11.5px}
@@ -100,6 +103,10 @@ details.adv summary em{color:var(--tan);font-style:normal}
 .clip{font-size:11px;color:var(--soft);opacity:.35}
 .clip.on{opacity:1;color:var(--warn);font-weight:700}
 .cell .ad{position:absolute;top:4px;left:26px;font-size:11px}
+.sm3{padding:7px 14px;font-size:13px;border-radius:11px}
+#cropModeBtn.on{background:var(--tan);}
+.canvasBox.cropping{background:#0E1413}
+.canvasBox.cropping .nav{display:none}
 .cropbar{display:flex;gap:14px;align-items:center;background:var(--bg);border-radius:14px;padding:10px}
 .mini{flex:none;width:260px}
 .zoomRow{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--soft)}
@@ -203,6 +210,7 @@ dialog .acts{display:flex;flex-direction:column;gap:8px;margin-top:14px}
     <section class="card pv" id="step2">
       <div class="pvbar">
         <div class="seg"><button type="button" data-ratio="16:10" class="on">16:10</button><button type="button" data-ratio="4:5">4:5</button></div>
+        <button type="button" class="ghost sm" id="cropModeBtn2" onclick="document.getElementById('cropModeBtn').click()">✂️ قص</button>
         <button type="button" class="ghost sm" id="fullBtn" title="يفتح الصورة بدقة عالية في صفحة مستقلة">⤢ صفحة كاملة</button>
         <button type="button" class="ghost sm" id="beforeBtn" title="اضغط مطولاً لرؤية الصورة قبل التعديل">قبل ◐</button>
         <label class="chk"><input type="checkbox" id="showRights" checked> الحقوق</label>
@@ -218,7 +226,7 @@ dialog .acts{display:flex;flex-direction:column;gap:8px;margin-top:14px}
       <div class="cropbar" id="cropbar" hidden>
         <div class="mini"><canvas id="mini"></canvas></div>
         <div class="cb">
-          <b>القص</b> <small id="cropHint">اضغط أو اسحب على الصورة الصغيرة لتحديد الإطار</small>
+          <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap"><b>القص</b><button type="button" class="pri sm3" id="cropModeBtn">✂️ حدد القص على الصورة</button></div> <small id="cropHint">اضغط أو اسحب على الصورة الصغيرة لتحديد الإطار</small>
           <div class="qbtns" id="cropBtns"></div>
           <label class="zoomRow">الحجم <input type="range" id="cropRange" min="20" max="100" step="1"> <span id="cropZoom">100%</span></label>
         </div>
@@ -234,12 +242,8 @@ dialog .acts{display:flex;flex-direction:column;gap:8px;margin-top:14px}
         <h2 class="step"><b>2</b> الألوان <small class="tag" id="adjTag"></small></h2>
         <div class="seg scope" id="adjScope"></div>
         <div id="refBox" class="refBox"></div>
-        <div class="presets">
-          <select id="presetSel"></select>
-          <button type="button" class="ghost sm" id="presetSave">حفظ كبريست</button>
-          <button type="button" class="ghost sm" id="presetDel" hidden>حذف</button>
-        </div>
-        <div class="imps"><button type="button" class="lnk sm2" id="presetImport">⤓ بريست Lightroom (.xmp)</button><button type="button" class="lnk sm2" id="lutImport">⤓ ملف LUT (.cube)</button><button type="button" class="lnk sm2" id="matchLR">🎯 مطابقة دقيقة مع Lightroom</button></div>
+        <div class="lrBox"><span>مقترحات Lightroom</span>
+          <div class="presets"><button type="button" class="ghost sm" id="lrPrev" title="السابق">›</button><select id="lrSel"></select><button type="button" class="ghost sm" id="lrNext" title="التالي">‹</button></div></div>
         <div id="adjBox"></div>
         <div class="adjActs">
           <button type="button" class="ghost sm" id="adjApplyAll">طبّق على كل الصور</button>
