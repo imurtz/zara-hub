@@ -1,4 +1,5 @@
 // معالجة صور الفعاليات — بوابة زارة. كل شيء داخل المتصفح: لا Firebase ولا رفع ولا أي خادم.
+import { ADJ, ZERO, isZero, applyAdjust, histogram } from "./adjust.js";
 import { RATIOS, hijriOf, gregOf, cropRect, drawFooter, FONT_M, FONT_R, LOGO_FILL, titleCheck } from "./footer.js";
 
 const $ = s => document.querySelector(s);
@@ -39,7 +40,7 @@ const S = {
   running: false
 };
 const F = () => S.settings;
-const defaults = { title: "", date: new Date().toISOString().slice(0, 10), hijri: "", photographer: "", photographers: [], pattern: "{اسم}_{تاريخ}_{رقم}", short: "", ratios: ["16:10", "4:5"], plain: true, rights: true, quality: "orig", customEdge: 2000, customQ: 85, partners: [], event: "" };
+const defaults = { title: "", date: new Date().toISOString().slice(0, 10), hijri: "", photographer: "", photographers: [], pattern: "{اسم}_{تاريخ}_{رقم}", short: "", ratios: ["16:10", "4:5"], adj: { ...ZERO }, preset: "", plain: true, rights: true, quality: "orig", customEdge: 2000, customQ: 85, partners: [], event: "" };
 for (const k in defaults) if (F()[k] === undefined) F()[k] = defaults[k];
 
 /* ============ مجلد المنظومة ============ */
@@ -76,8 +77,8 @@ async function loadSys() {
   if (!(await ensurePerm(S.sys))) return paintSys(true);
   const st = await readJSON(S.sys, "إعدادات.json");
   if (st) { S.settings = Object.assign({}, defaults, st); }
-  await loadFonts(); await loadLogos();
-  paintForm(); paintSys(); renderPreview();
+  await loadFonts(); await loadLogos(); await loadPresets();
+  paintForm(); paintAdj(); paintSys(); renderPreview();
 }
 function paintSys(needPerm) {
   const b = $("#sysBtn");
@@ -204,7 +205,7 @@ function setItems(list) {
   S.items = list.map(x => ({ ...x, faces: null, thumb: null, pos: {}, status: "" }));
   S.cur = 0;
   if (!F().short) { F().short = S.srcName; }
-  paintForm(); paintGrid(); analyze(); renderPreview();
+  paintForm(); paintGrid(); paintAdj(); analyze(); renderPreview();
   $("#step2").scrollIntoView({ behavior: "smooth", block: "start" });
 }
 const getFile = it => it.file ? Promise.resolve(it.file) : it.handle.getFile();
@@ -286,14 +287,14 @@ function paintCell(i) {
   const port = it.ar && it.ar < 1;
   el.innerHTML = (it.thumb ? `<img src="${it.thumb}" alt="" loading="lazy">` : `<span class="sk"></span>`) +
     `<em>${i + 1}</em>` + (it.faces && it.faces.length ? `<span class="fc">☺ ${it.faces.length}</span>` : "") +
-    (port ? `<span class="pt">عمودية</span>` : "") + (Object.keys(it.pos).length ? `<span class="ed">✎</span>` : "") +
+    (port ? `<span class="pt">عمودية</span>` : "") + (Object.keys(it.pos).length ? `<span class="ed">✎</span>` : "") + (it.adj ? `<span class="ad">🎨</span>` : "") +
     (it.status ? `<span class="st ${it.status}">${it.status === "done" ? "✓" : it.status === "fail" ? "✕" : it.status === "skip" ? "↷" : "…"}</span>` : "");
 }
 
 /* ============ المعاينة ============ */
 let prevBmp = null, prevFor = -1, prevTok = 0, prevRect = null;
 function textOpts() {
-  return { title: F().title, hijri: F().hijri || hijriOf(F().date), greg: gregOf(F().date), photographer: F().photographer, label: "التغطية الفوتوغرافية" };
+  return { title: F().title, hijri: F().hijri || hijriOf(F().date), greg: gregOf(F().date), photographer: F().noCredit ? "" : F().photographer, label: "التغطية الفوتوغرافية", noCredit: !!F().noCredit };
 }
 function assetsNow() {
   const by = n => (S.logos.find(l => l.name === n) || {}).bmp;
@@ -321,7 +322,10 @@ async function renderPreview() {
   cv.width = w; cv.height = h;
   const ctx = cv.getContext("2d"); ctx.imageSmoothingQuality = "high";
   ctx.drawImage(prevBmp, r.sx, r.sy, r.sw, r.sh, 0, 0, w, h);
-  if ($("#showRights").checked) drawFooter(ctx, w, h, S.ratio, textOpts(), assetsNow());
+  const adj = adjOf(it);
+  if (!S.before && !isZero(adj)) { const id = ctx.getImageData(0, 0, w, h); applyAdjust(id, adj); ctx.putImageData(id, 0, 0); }
+  paintHist(ctx.getImageData(0, 0, w, Math.round(h * 0.78)));
+  if ($("#showRights").checked && !S.before) drawFooter(ctx, w, h, S.ratio, textOpts(), assetsNow());
   if ($("#showFaces").checked && it.faces) {
     ctx.strokeStyle = "#F2C14E"; ctx.lineWidth = Math.max(2, w / 500);
     it.faces.forEach(f => ctx.strokeRect((f.x * prevBmp.width - r.sx) * k, (f.y * prevBmp.height - r.sy) * k, f.w * prevBmp.width * k, f.h * prevBmp.height * k));
@@ -401,11 +405,101 @@ function setPos(v) {
   });
 })();
 
+/* ============ الألوان ============ */
+const adjOf = it => (it && it.adj) || F().adj || ZERO;
+const curAdj = () => { const it = S.items[S.cur]; return it && it.adj ? it.adj : F().adj; };
+function paintAdj() {
+  const it = S.items[S.cur], own = !!(it && it.adj), a = curAdj();
+  $("#adjScope").innerHTML = `<button type="button" data-scope="all" class="${own ? "" : "on"}">كل الصور</button><button type="button" data-scope="one" class="${own ? "on" : ""}" ${it ? "" : "disabled"}>هذه الصورة فقط</button>`;
+  let g = "";
+  $("#adjBox").innerHTML = ADJ.map(d => {
+    const head = d.g !== g ? `<h4>${d.g}</h4>` : ""; g = d.g;
+    const v = a[d.k] || 0;
+    return head + `<label class="sl"><span class="n">${d.l}</span><input type="range" min="${d.min}" max="${d.max}" step="${d.step}" value="${v}" data-adj="${d.k}" title="نقرتان للتصفير"><span class="v">${fmtAdj(d, v)}</span></label>`;
+  }).join("");
+  $("#adjReset").hidden = isZero(a);
+  $("#adjTag").textContent = own ? "تعديل خاص بهذه الصورة" : (F().preset ? "البريست: " + F().preset : (isZero(F().adj) ? "بدون تعديل" : "تعديل على كل الصور"));
+  paintPresets();
+}
+const fmtAdj = (d, v) => d.k === "exposure" ? (v > 0 ? "+" : "") + (+v).toFixed(2) : (v > 0 ? "+" : "") + v;
+document.addEventListener("input", e => {
+  const r = e.target.closest("[data-adj]"); if (!r) return;
+  const d = ADJ.find(x => x.k === r.dataset.adj), it = S.items[S.cur], v = +r.value;
+  if (it && it.adj) it.adj = { ...it.adj, [d.k]: v }; else { F().adj = { ...F().adj, [d.k]: v }; F().preset = ""; saveSoon(); }
+  r.nextElementSibling.textContent = fmtAdj(d, v);
+  $("#adjReset").hidden = isZero(curAdj());
+  previewRAF();
+});
+document.addEventListener("dblclick", e => { const r = e.target.closest("[data-adj]"); if (!r) return; r.value = 0; r.dispatchEvent(new Event("input", { bubbles: true })); });
+document.addEventListener("click", e => {
+  const sc = e.target.closest("[data-scope]"); if (sc) {
+    const it = S.items[S.cur]; if (!it) return;
+    if (sc.dataset.scope === "one" && !it.adj) it.adj = { ...F().adj };
+    if (sc.dataset.scope === "all") delete it.adj;
+    paintCell(S.cur); paintAdj(); renderPreview(); return;
+  }
+});
+$("#adjReset").onclick = () => { const it = S.items[S.cur]; if (it && it.adj) it.adj = { ...ZERO }; else { F().adj = { ...ZERO }; F().preset = ""; saveSoon(); } paintAdj(); renderPreview(); };
+$("#adjApplyAll").onclick = () => { const a = { ...curAdj() }; F().adj = a; S.items.forEach((it, i) => { delete it.adj; paintCell(i); }); saveSoon(); paintAdj(); renderPreview(); toast("طُبّق التعديل على كل الصور"); };
+let rafP = 0; function previewRAF() { if (rafP) return; rafP = requestAnimationFrame(() => { rafP = 0; renderPreview(); }); }
+// قبل / بعد: ضغطة مطولة على الزر أو مفتاح \
+(() => {
+  const b = $("#beforeBtn"), on = v => { if (S.before === v) return; S.before = v; b.classList.toggle("on", v); renderPreview(); };
+  b.addEventListener("mousedown", () => on(true)); b.addEventListener("touchstart", e => { e.preventDefault(); on(true); }, { passive: false });
+  addEventListener("mouseup", () => on(false)); addEventListener("touchend", () => on(false));
+  addEventListener("keydown", e => { if (e.key === "\\" && !/INPUT|TEXTAREA/.test(document.activeElement.tagName)) on(true); });
+  addEventListener("keyup", e => { if (e.key === "\\") on(false); });
+})();
+function paintHist(id) {
+  const cv = $("#hist"), c = cv.getContext("2d"), H = histogram(id), W = cv.width, Ht = cv.height;
+  c.clearRect(0, 0, W, Ht);
+  const mx = Math.max(1, ...H.l, ...H.r, ...H.g, ...H.b) * 1.05;
+  c.globalCompositeOperation = "lighter";
+  for (const [k, col] of [["r", "rgba(220,70,70,.55)"], ["g", "rgba(70,190,90,.55)"], ["b", "rgba(70,110,230,.55)"]]) {
+    c.fillStyle = col; c.beginPath(); c.moveTo(0, Ht);
+    H[k].forEach((v, i) => c.lineTo(i / 63 * W, Ht - v / mx * Ht)); c.lineTo(W, Ht); c.fill();
+  }
+  c.globalCompositeOperation = "source-over";
+  const clipL = H.l[0] / (H.l.reduce((a, b) => a + b, 0) || 1), clipH = H.l[63] / (H.l.reduce((a, b) => a + b, 0) || 1);
+  $("#clipL").classList.toggle("on", clipL > 0.01); $("#clipH").classList.toggle("on", clipH > 0.01);
+}
+// البريستات: ملفات JSON في «مجلد المنظومة/بريستات» (أو في هذا المتصفح إن لم يُختر المجلد)
+let PRESETS = {};
+async function loadPresets() {
+  PRESETS = ls.get("presets", {});
+  if (S.sys) { try { const d = await sysDir("بريستات"); for await (const [n, h] of d.entries()) if (h.kind === "file" && /\.json$/i.test(n)) { try { const j = JSON.parse(await (await h.getFile()).text()); PRESETS[j.name || n.replace(/\.json$/i, "")] = j.adj || j; } catch (e) {} } } catch (e) {} }
+  paintPresets();
+}
+function paintPresets() {
+  const names = Object.keys(PRESETS).sort((a, b) => a.localeCompare(b, "ar"));
+  $("#presetSel").innerHTML = `<option value="">— اختر بريست —</option>` + names.map(n => `<option ${F().preset === n ? "selected" : ""}>${esc(n)}</option>`).join("");
+  $("#presetDel").hidden = !F().preset || !PRESETS[F().preset];
+}
+$("#presetSel").onchange = e => {
+  const n = e.target.value; if (!n) return;
+  const a = { ...ZERO, ...PRESETS[n] }, it = S.items[S.cur];
+  if (it && it.adj) it.adj = a; else { F().adj = a; F().preset = n; saveSoon(); }
+  paintAdj(); renderPreview();
+};
+$("#presetSave").onclick = async () => {
+  const n = (prompt("اسم البريست:", F().preset || "") || "").trim(); if (!n) return;
+  const a = { ...curAdj() }; PRESETS[n] = a; F().preset = n;
+  const local = ls.get("presets", {}); local[n] = a; ls.set("presets", local);
+  if (S.sys) { try { await writeFile(await sysDir("بريستات"), n.replace(/[\\/:*?"<>|]/g, "-") + ".json", JSON.stringify({ name: n, adj: a, savedAt: new Date().toISOString() }, null, 2)); } catch (e) {} }
+  saveSoon(); paintAdj(); toast(S.sys ? "حُفظ البريست في مجلد المنظومة ✓" : "حُفظ البريست في هذا المتصفح — اختر مجلد المنظومة ليُحفظ دائماً");
+};
+$("#presetDel").onclick = async () => {
+  const n = F().preset; if (!n || !confirm(`حذف البريست «${n}»؟`)) return;
+  delete PRESETS[n]; const local = ls.get("presets", {}); delete local[n]; ls.set("presets", local);
+  if (S.sys) { try { await (await sysDir("بريستات")).removeEntry(n.replace(/[\\/:*?"<>|]/g, "-") + ".json"); } catch (e) {} }
+  F().preset = ""; saveSoon(); paintAdj();
+};
+
 /* ============ النموذج ============ */
 function paintForm() {
   const f = F();
   $("#title").value = f.title; $("#date").value = f.date; $("#hijri").value = f.hijri || hijriOf(f.date); $("#hijri").placeholder = hijriOf(f.date);
-  $("#photographer").value = f.photographer; $("#short").value = f.short; $("#pattern").value = f.pattern;
+  $("#photographer").value = f.photographer; $("#noCredit").checked = !!f.noCredit; $("#photographer").disabled = !!f.noCredit; $("#short").value = f.short; $("#pattern").value = f.pattern;
   $("#photogList").innerHTML = (f.photographers || []).map(n => `<option value="${esc(n)}">`).join("");
   $$("[name=ratio]").forEach(c => c.checked = f.ratios.includes(c.value));
   $("#plain").checked = f.plain; $("#rights").checked = f.rights;
@@ -442,6 +536,7 @@ bind("#title", "title", "input", paintTitleState);
 bind("#date", "date", "change", () => { F().hijri = ""; $("#hijri").value = hijriOf(F().date); $("#hijri").placeholder = hijriOf(F().date); paintName(); });
 bind("#hijri", "hijri");
 bind("#photographer", "photographer");
+$("#noCredit").onchange = e => { F().noCredit = e.target.checked; $("#photographer").disabled = e.target.checked; saveSoon(); renderPreview(); };
 $("#photographer").addEventListener("change", () => { const n = F().photographer.trim(); if (n && !F().photographers.includes(n)) { F().photographers.push(n); paintForm(); saveSoon(); } });
 bind("#short", "short", "input", paintName);
 bind("#pattern", "pattern", "input", paintName);
@@ -467,7 +562,7 @@ document.addEventListener("click", e => {
 });
 function go(i) {
   if (!S.items.length) return;
-  const old = S.cur; S.cur = (i + S.items.length) % S.items.length; paintCell(old); paintCell(S.cur); renderPreview();
+  const old = S.cur; S.cur = (i + S.items.length) % S.items.length; paintCell(old); paintCell(S.cur); paintAdj(); renderPreview();
 }
 $("#prevNext").onclick = () => go(S.cur + 1); $("#prevPrev").onclick = () => go(S.cur - 1);
 addEventListener("keydown", e => { if (/INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName)) return; if (e.key === "ArrowLeft") go(S.cur + 1); if (e.key === "ArrowRight") go(S.cur - 1); });
@@ -533,7 +628,7 @@ async function exportAll() {
     zip.length = 0; zipBytes = 0;
   };
 
-  const project = { version: 1, createdAt: new Date().toISOString(), source: S.srcName, settings: { ...f, photographers: undefined }, quality: q, items: S.items.map((it, i) => ({ name: it.name, out: fileName(i, it.name), faces: it.faces, pos: it.pos })) };
+  const project = { version: 1, createdAt: new Date().toISOString(), source: S.srcName, settings: { ...f, photographers: undefined }, quality: q, items: S.items.map((it, i) => ({ name: it.name, out: fileName(i, it.name), faces: it.faces, pos: it.pos, adj: it.adj || null })) };
   if (out) await writeFile(out, "مشروع.json", JSON.stringify(project, null, 2));
 
   S.running = true; document.body.classList.add("running");
@@ -549,7 +644,8 @@ async function exportAll() {
   const exists = async (dir, name) => { try { await dir.getFileHandle(name); return true; } catch (e) { return false; } };
   const freeName = async (dir, name) => { if (!(await exists(dir, name))) return name; const b = name.replace(/\.jpg$/, ""); let k = 2; while (await exists(dir, `${b}-${k}.jpg`)) k++; return `${b}-${k}.jpg`; };
 
-  const meta = { photographer: f.photographer, rights: `© ${ORG}${f.photographer ? " — تصوير: " + f.photographer : ""}`, org: ORG, title: f.title.replace(/\s*\n\s*/g, " "), date: f.date };
+  const pg = f.noCredit ? "" : f.photographer;
+  const meta = { photographer: pg, rights: `© ${ORG}${pg ? " — تصوير: " + pg : ""}`, org: ORG, title: f.title.replace(/\s*\n\s*/g, " "), date: f.date };
   const text = textOpts();
   try {
     progress(0, S.items.length, t0, "تجهيز المعالجة…");
@@ -570,7 +666,7 @@ async function exportAll() {
           const res = await new Promise((res, rej) => {
             w.onmessage = e => e.data.type === "done" ? res(e.data) : rej(new Error(e.data.error));
             w.onerror = ev => rej(new Error(ev.message || "worker"));
-            w.postMessage({ type: "job", id: i, file, faces: it.faces || [], pos: it.pos, ratios: f.ratios, plain: f.plain, rights: f.rights, q, text, meta });
+            w.postMessage({ type: "job", id: i, file, faces: it.faces || [], pos: it.pos, adj: adjOf(it), ratios: f.ratios, plain: f.plain, rights: f.rights, q, text, meta });
           });
           for (const o of res.outs) {
             const blob = new Blob([o.buf], { type: "image/jpeg" });
@@ -647,7 +743,7 @@ function ask(msg, opts) {
   $("#srcBtn").innerHTML = HAS_FS ? "📂 اختر مجلد الصور" : "🖼️ اختر الصور";
   try { S.mark = (await rasterize("./assets/mark.png", 640)).bmp; } catch (e) {}
   try { S.founding = (await rasterize("./assets/founding.svg", 3312)).bmp; } catch (e) {}
-  paintSys(); paintForm();
+  paintSys(); paintForm(); paintAdj(); loadPresets();
   await loadFonts();
   await restoreSys();
   renderPreview();

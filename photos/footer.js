@@ -116,10 +116,12 @@ export function drawFooter(ctx, W, H, ratio, o, A) {
   // المصوّر (أسفل اليمين)
   ctx.direction = "rtl"; ctx.textAlign = "right";
   const xr = W - L.credit.right * u;
-  ctx.globalAlpha = 0.92; ctx.font = `400 ${L.credit.lblSize * u}px ${FONT_R}`;
-  ctx.fillText(o.label || "التغطية الفوتوغرافية", xr, H - L.credit.lblBase * u);
-  ctx.globalAlpha = 1;
-  if (o.photographer) { ctx.font = `500 ${L.credit.nameSize * u}px ${FONT_M}`; ctx.fillText(o.photographer, xr, H - L.credit.nameBase * u); }
+  if (!o.noCredit) {
+    ctx.globalAlpha = 0.92; ctx.font = `400 ${L.credit.lblSize * u}px ${FONT_R}`;
+    ctx.fillText(o.label || "التغطية الفوتوغرافية", xr, H - L.credit.lblBase * u);
+    ctx.globalAlpha = 1;
+  }
+  if (o.photographer && !o.noCredit) { ctx.font = `500 ${L.credit.nameSize * u}px ${FONT_M}`; ctx.fillText(o.photographer, xr, H - L.credit.nameBase * u); }
   ctx.restore();
 }
 

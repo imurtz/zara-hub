@@ -1,6 +1,6 @@
 // يخزّن كل أصول الأداة لتعمل بدون إنترنت بعد أول فتح. لا يلمس أي طلب خارج /photos/.
-const V = "zara-photos-v3";
-const ASSETS = ["./", "index.html", "app.js", "footer.js", "worker.js", "manifest.webmanifest",
+const V = "zara-photos-v4";
+const ASSETS = ["./", "index.html", "app.js", "footer.js", "adjust.js", "worker.js", "manifest.webmanifest",
   "assets/mark.png", "assets/founding.svg", "/assets/logo.png", "/assets/favicon.svg?v=4", "/apple-touch-icon.png",
   "vendor/jsquash/encode.js", "vendor/jsquash/meta.js", "vendor/jsquash/utils.js", "vendor/jsquash/codec/enc/mozjpeg_enc.js", "vendor/jsquash/codec/enc/mozjpeg_enc.wasm",
   "vendor/mediapipe/vision_bundle.mjs", "vendor/mediapipe/wasm/vision_wasm_internal.js", "vendor/mediapipe/wasm/vision_wasm_internal.wasm",

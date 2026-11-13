@@ -2,6 +2,7 @@
 // صورة واحدة في كل مرة، ويُغلق كل شيء بعدها حتى لا تمتلئ الذاكرة.
 import encode, { init as initEnc } from "./vendor/jsquash/encode.js";
 import { cropRect, drawFooter, FONT_M, FONT_R, RATIOS } from "./footer.js";
+import { applyAdjust, isZero } from "./adjust.js";
 
 let assets = null, encReady = null;
 
@@ -87,6 +88,7 @@ async function job(m) {
       const r = cropRect(bmp.width, bmp.height, ratio, m.faces, m.pos && m.pos[ratio]);
       const [tw, th] = sizeFor(r.sw, r.sh, m.q);
       const { out, ctx } = drawScaled(bmp, r, tw, th);
+      if (!isZero(m.adj)) { const id = ctx.getImageData(0, 0, tw, th); applyAdjust(id, m.adj); ctx.putImageData(id, 0, 0); }
       if (m.plain) res.outs.push({ ratio, kind: "plain", buf: (await jpeg(ctx, tw, th, m.q, m.meta)).buffer });
       if (m.rights) {
         drawFooter(ctx, tw, th, ratio, m.text, assets);
