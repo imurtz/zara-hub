@@ -37,6 +37,12 @@ export function cropRect(W, H, ratio, faces, pos) {
   const R = RATIOS[ratio].r;
   let cw, ch, axis;
   if (W / H > R) { ch = H; cw = Math.round(H * R); axis = "x"; } else { cw = W; ch = Math.round(W / R); axis = "y"; }
+  // قص يدوي حر: مركز الإطار (cx, cy) وحجمه z من أكبر إطار ممكن
+  if (pos && typeof pos === "object") {
+    const z = Math.max(0.2, Math.min(1, pos.z || 1)), w2 = Math.round(cw * z), h2 = Math.round(ch * z);
+    const sx = Math.round(Math.max(0, Math.min(W - w2, pos.cx * W - w2 / 2))), sy = Math.round(Math.max(0, Math.min(H - h2, pos.cy * H - h2 / 2)));
+    return { sx, sy, sw: w2, sh: h2, axis: "xy", t: 0, free: 1, manual: true, z };
+  }
   const free = axis === "x" ? W - cw : H - ch;
   let t;
   if (pos != null) t = pos;

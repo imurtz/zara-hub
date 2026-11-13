@@ -349,59 +349,65 @@ async function paintCrop() {
   if (!it || !prevBmp || !prevRect) { bar.hidden = true; return; }
   bar.hidden = false;
   const r = prevRect, mv = $("#mini"), W = prevBmp.width, H = prevBmp.height;
-  const mw = 340, mh = Math.round(mw * H / W); mv.width = mw; mv.height = mh;
+  const mw = 520, mh = Math.round(mw * H / W); mv.width = mw; mv.height = mh;
   const c = mv.getContext("2d"); c.drawImage(prevBmp, 0, 0, mw, mh);
   const k = mw / W;
-  c.fillStyle = "rgba(20,28,27,.55)";
+  c.fillStyle = "rgba(20,28,27,.6)";
   c.fillRect(0, 0, mw, r.sy * k); c.fillRect(0, (r.sy + r.sh) * k, mw, mh); c.fillRect(0, r.sy * k, r.sx * k, r.sh * k); c.fillRect((r.sx + r.sw) * k, r.sy * k, mw, r.sh * k);
   c.strokeStyle = "#F2C14E"; c.lineWidth = 3; c.strokeRect(r.sx * k + 1.5, r.sy * k + 1.5, r.sw * k - 3, r.sh * k - 3);
-  const manual = it.pos[S.ratio] != null;
-  const x = r.axis === "x";
-  $("#cropHint").textContent = r.free ? "اضغط أو اسحب على الصورة الصغيرة، أو استخدم الأزرار" : "الصورة بنفس المقاس — لا تحتاج قص";
-  $("#cropBtns").innerHTML = r.free ? [["auto", "تلقائي"], ["0", x ? "يسار" : "أعلى"], ["0.5", "وسط"], ["1", x ? "يمين" : "أسفل"]].map(([v, l]) => {
-    const on = v === "auto" ? !manual : manual && Math.abs(it.pos[S.ratio] - +v) < 0.01;
-    return `<button type="button" data-crop="${v}" class="${on ? "on" : ""}">${l}</button>`;
-  }).join("") + `<button type="button" data-crop="all" title="يطبّق هذا الموضع على كل الصور بنفس الاتجاه">نفس الموضع لكل الصور</button>` : "";
-  const rg = $("#cropRange"); rg.hidden = !r.free; rg.value = Math.round(r.t * 1000);
-  rg.style.direction = x ? "ltr" : "ltr";
+  // خطوط الأثلاث داخل الإطار
+  c.strokeStyle = "rgba(255,255,255,.45)"; c.lineWidth = 1; c.beginPath();
+  for (const f of [1 / 3, 2 / 3]) { c.moveTo((r.sx + r.sw * f) * k, r.sy * k); c.lineTo((r.sx + r.sw * f) * k, (r.sy + r.sh) * k); c.moveTo(r.sx * k, (r.sy + r.sh * f) * k); c.lineTo((r.sx + r.sw) * k, (r.sy + r.sh * f) * k); }
+  c.stroke();
+  const manual = it.pos[S.ratio] != null, z = r.z || 1;
+  $("#cropHint").textContent = "اسحب الإطار الأصفر لتحريكه · غيّر الحجم من الشريط أو بعجلة الفأرة";
+  $("#cropBtns").innerHTML = `<button type="button" data-crop="auto" class="${manual ? "" : "on"}">تلقائي</button><button type="button" data-crop="center">توسيط</button><button type="button" data-crop="all" title="ينسخ نفس الإطار لكل الصور">نفس القص لكل الصور</button>`;
+  const rg = $("#cropRange"); rg.hidden = false; rg.min = 20; rg.max = 100; rg.value = Math.round(z * 100);
+  $("#cropZoom").textContent = Math.round(z * 100) + "%";
 }
-function setPos(v) {
+// تحويل الإطار الحالي إلى قص يدوي حر {cx, cy, z}
+function curBox() { const r = prevRect, W = prevBmp.width, H = prevBmp.height; return { cx: (r.sx + r.sw / 2) / W, cy: (r.sy + r.sh / 2) / H, z: r.z || 1 }; }
+function setBox(b) {
   const it = S.items[S.cur]; if (!it) return;
-  if (v === "auto") delete it.pos[S.ratio]; else it.pos[S.ratio] = Math.max(0, Math.min(1, v));
-  paintCell(S.cur); renderPreview();
+  if (b === "auto") delete it.pos[S.ratio]; else it.pos[S.ratio] = { cx: Math.max(0, Math.min(1, b.cx)), cy: Math.max(0, Math.min(1, b.cy)), z: Math.max(0.2, Math.min(1, b.z)) };
+  paintCell(S.cur); previewRAF();
 }
 (() => {
-  const mv = $("#mini"); let drag = false;
-  const at = e => {
-    const r = prevRect; if (!r || !r.free) return;
-    const p = e.touches ? e.touches[0] : e, b = mv.getBoundingClientRect();
-    const fx = (p.clientX - b.left) / b.width, fy = (p.clientY - b.top) / b.height;
-    const W = prevBmp.width, H = prevBmp.height;
-    // مركز الإطار عند نقطة الضغط
-    const t = r.axis === "x" ? (fx * W - r.sw / 2) / r.free : (fy * H - r.sh / 2) / r.free;
-    setPos(t);
+  const mv = $("#mini"); let drag = null;
+  const pt = e => { const p = e.touches ? e.touches[0] : e, b = mv.getBoundingClientRect(); return { x: (p.clientX - b.left) / b.width, y: (p.clientY - b.top) / b.height }; };
+  const down = e => {
+    if (!prevRect) return; e.preventDefault();
+    const p = pt(e), cb = curBox(), W = prevBmp.width, H = prevBmp.height, r = prevRect;
+    const inside = p.x * W >= r.sx && p.x * W <= r.sx + r.sw && p.y * H >= r.sy && p.y * H <= r.sy + r.sh;
+    // داخل الإطار = سحب، خارجه = نقل المركز لنقطة الضغط
+    if (!inside) { setBox({ ...cb, cx: p.x, cy: p.y }); drag = { p, b: { ...cb, cx: p.x, cy: p.y } }; }
+    else drag = { p, b: cb };
   };
-  mv.addEventListener("mousedown", e => { drag = true; at(e); e.preventDefault(); });
-  mv.addEventListener("touchstart", e => { drag = true; at(e); e.preventDefault(); }, { passive: false });
-  addEventListener("mousemove", e => { if (drag) at(e); });
-  addEventListener("touchmove", e => { if (drag) at(e); }, { passive: true });
-  addEventListener("mouseup", () => drag = false); addEventListener("touchend", () => drag = false);
-  $("#cropRange").addEventListener("input", e => setPos(+e.target.value / 1000));
+  const move = e => { if (!drag) return; const p = pt(e); setBox({ ...drag.b, cx: drag.b.cx + (p.x - drag.p.x), cy: drag.b.cy + (p.y - drag.p.y) }); };
+  mv.addEventListener("mousedown", down); mv.addEventListener("touchstart", down, { passive: false });
+  addEventListener("mousemove", move); addEventListener("touchmove", move, { passive: true });
+  addEventListener("mouseup", () => drag = null); addEventListener("touchend", () => drag = null);
+  mv.addEventListener("wheel", e => { if (!prevRect) return; e.preventDefault(); const cb = curBox(); setBox({ ...cb, z: cb.z * (e.deltaY > 0 ? 1.05 : 0.95) }); }, { passive: false });
+  $("#cropRange").addEventListener("input", e => { if (!prevRect) return; setBox({ ...curBox(), z: +e.target.value / 100 }); });
   $("#cropBtns").addEventListener("click", e => {
     const b = e.target.closest("[data-crop]"); if (!b) return;
     const v = b.dataset.crop;
     if (v === "all") {
-      const it = S.items[S.cur], p = it.pos[S.ratio];
-      S.items.forEach((x, i) => { if (p == null) delete x.pos[S.ratio]; else x.pos[S.ratio] = p; paintCell(i); });
-      toast(p == null ? "رجعت كل الصور للقص التلقائي" : "طُبّق نفس الموضع على كل الصور"); renderPreview(); return;
+      const p = S.items[S.cur].pos[S.ratio];
+      S.items.forEach((x, i) => { if (p == null) delete x.pos[S.ratio]; else x.pos[S.ratio] = typeof p === "object" ? { ...p } : p; paintCell(i); });
+      toast(p == null ? "رجعت كل الصور للقص التلقائي" : "طُبّق نفس القص على كل الصور"); renderPreview(); return;
     }
-    setPos(v === "auto" ? "auto" : +v);
+    if (v === "auto") return setBox("auto");
+    if (v === "center") return setBox({ ...curBox(), cx: 0.5, cy: 0.5 });
   });
-  // أسهم لوحة المفاتيح مع Shift لتحريك القص
+  // Shift + الأسهم يحرك، Shift + (+/-) يكبّر ويصغّر
   addEventListener("keydown", e => {
-    if (!e.shiftKey || /INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName) || !prevRect || !prevRect.free) return;
-    const d = { ArrowLeft: -0.05, ArrowRight: 0.05, ArrowUp: -0.05, ArrowDown: 0.05 }[e.key]; if (d == null) return;
-    e.preventDefault(); setPos(prevRect.t + d);
+    if (!e.shiftKey || /INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName) || !prevRect) return;
+    const cb = curBox(), st = 0.02;
+    const m = { ArrowLeft: [-st, 0], ArrowRight: [st, 0], ArrowUp: [0, -st], ArrowDown: [0, st] }[e.key];
+    if (m) { e.preventDefault(); setBox({ ...cb, cx: cb.cx + m[0], cy: cb.cy + m[1] }); }
+    if (e.key === "+" || e.key === "=") { e.preventDefault(); setBox({ ...cb, z: cb.z * 0.95 }); }
+    if (e.key === "_" || e.key === "-") { e.preventDefault(); setBox({ ...cb, z: cb.z * 1.05 }); }
   });
 })();
 
