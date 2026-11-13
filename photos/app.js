@@ -1,5 +1,5 @@
 // معالجة صور الفعاليات — بوابة زارة. كل شيء داخل المتصفح: لا Firebase ولا رفع ولا أي خادم.
-import { ADJ, ZERO, isZero, applyAdjust, histogram } from "./adjust.js";
+import { ADJ, ZERO, isZero, applyAdjust, histogram, fromXMP, BANDS } from "./adjust.js";
 import { RATIOS, hijriOf, gregOf, cropRect, drawFooter, FONT_M, FONT_R, LOGO_FILL, titleCheck } from "./footer.js";
 
 const $ = s => document.querySelector(s);
@@ -411,17 +411,22 @@ const curAdj = () => { const it = S.items[S.cur]; return it && it.adj ? it.adj :
 function paintAdj() {
   const it = S.items[S.cur], own = !!(it && it.adj), a = curAdj();
   $("#adjScope").innerHTML = `<button type="button" data-scope="all" class="${own ? "" : "on"}">كل الصور</button><button type="button" data-scope="one" class="${own ? "on" : ""}" ${it ? "" : "disabled"}>هذه الصورة فقط</button>`;
-  let g = "";
-  $("#adjBox").innerHTML = ADJ.map(d => {
-    const head = d.g !== g ? `<h4>${d.g}</h4>` : ""; g = d.g;
-    const v = a[d.k] || 0;
-    return head + `<label class="sl"><span class="n">${d.l}</span><input type="range" min="${d.min}" max="${d.max}" step="${d.step}" value="${v}" data-adj="${d.k}" title="نقرتان للتصفير"><span class="v">${fmtAdj(d, v)}</span></label>`;
-  }).join("");
+  const sl = d => { const v = a[d.k] ?? (d.def || 0);
+    const bg = d.hue ? ` style="background:linear-gradient(90deg,#f00,#ff0,#0f0,#0ff,#00f,#f0f,#f00);border-radius:9px;height:6px"` : "";
+    return `<label class="sl${d.c ? " band" : ""}">${d.c ? `<i style="background:${d.c}"></i>` : ""}<span class="n">${d.l}</span><input type="range" min="${d.min}" max="${d.max}" step="${d.step}" value="${v}" data-adj="${d.k}" data-def="${d.def || 0}" title="نقرتان للتصفير"${bg}><span class="v">${fmtAdj(d, v)}</span></label>`; };
+  const grp = g => ADJ.filter(d => d.g === g).map(sl).join("");
+  const hslOn = BANDS.some(([k]) => a["h_" + k] || a["s_" + k] || a["l_" + k]), cgOn = ["sh", "mid", "hi"].some(k => a[`cg_${k}_s`]);
+  const ht = S.hslTab || "h";
+  $("#adjBox").innerHTML = `<h4>الضوء</h4>${grp("الضوء")}<h4>اللون</h4>${grp("اللون")}
+    <details class="adv" ${S.openHsl ? "open" : ""} data-det="openHsl"><summary>ألوان محددة (HSL)${hslOn ? " <em>●</em>" : ""}</summary>
+      <div class="seg mini3">${[["h", "درجة اللون"], ["s", "التشبع"], ["l", "الإضاءة"]].map(([k, l]) => `<button type="button" data-hsl="${k}" class="${ht === k ? "on" : ""}">${l}</button>`).join("")}</div>
+      ${grp("hsl-" + ht)}</details>
+    <details class="adv" ${S.openCg ? "open" : ""} data-det="openCg"><summary>تدرج الألوان (ظلال / وسط / إضاءات)${cgOn ? " <em>●</em>" : ""}</summary>${grp("grade")}</details>`;
   $("#adjReset").hidden = isZero(a);
   $("#adjTag").textContent = own ? "تعديل خاص بهذه الصورة" : (F().preset ? "البريست: " + F().preset : (isZero(F().adj) ? "بدون تعديل" : "تعديل على كل الصور"));
   paintPresets();
 }
-const fmtAdj = (d, v) => d.k === "exposure" ? (v > 0 ? "+" : "") + (+v).toFixed(2) : (v > 0 ? "+" : "") + v;
+const fmtAdj = (d, v) => d.k === "exposure" ? (v > 0 ? "+" : "") + (+v).toFixed(2) : d.hue ? v + "°" : d.min === 0 ? String(v) : (v > 0 ? "+" : "") + v;
 document.addEventListener("input", e => {
   const r = e.target.closest("[data-adj]"); if (!r) return;
   const d = ADJ.find(x => x.k === r.dataset.adj), it = S.items[S.cur], v = +r.value;
@@ -430,8 +435,9 @@ document.addEventListener("input", e => {
   $("#adjReset").hidden = isZero(curAdj());
   previewRAF();
 });
-document.addEventListener("dblclick", e => { const r = e.target.closest("[data-adj]"); if (!r) return; r.value = 0; r.dispatchEvent(new Event("input", { bubbles: true })); });
+document.addEventListener("dblclick", e => { const r = e.target.closest("[data-adj]"); if (!r) return; r.value = r.dataset.def || 0; r.dispatchEvent(new Event("input", { bubbles: true })); });
 document.addEventListener("click", e => {
+  const hb = e.target.closest("[data-hsl]"); if (hb) { S.hslTab = hb.dataset.hsl; paintAdj(); return; }
   const sc = e.target.closest("[data-scope]"); if (sc) {
     const it = S.items[S.cur]; if (!it) return;
     if (sc.dataset.scope === "one" && !it.adj) it.adj = { ...F().adj };
@@ -464,16 +470,18 @@ function paintHist(id) {
   $("#clipL").classList.toggle("on", clipL > 0.01); $("#clipH").classList.toggle("on", clipH > 0.01);
 }
 // البريستات: ملفات JSON في «مجلد المنظومة/بريستات» (أو في هذا المتصفح إن لم يُختر المجلد)
-let PRESETS = {};
+let PRESETS = {}, BUILTIN = {};
+document.addEventListener("toggle", e => { const d = e.target.closest && e.target.closest("[data-det]"); if (d) S[d.dataset.det] = d.open; }, true);
 async function loadPresets() {
-  PRESETS = ls.get("presets", {});
+  try { const j = await (await fetch("./assets/presets.json")).json(); BUILTIN = Object.fromEntries(Object.entries(j).map(([n, v]) => [n, v.adj])); } catch (e) {}
+  PRESETS = { ...BUILTIN, ...ls.get("presets", {}) };
   if (S.sys) { try { const d = await sysDir("بريستات"); for await (const [n, h] of d.entries()) if (h.kind === "file" && /\.json$/i.test(n)) { try { const j = JSON.parse(await (await h.getFile()).text()); PRESETS[j.name || n.replace(/\.json$/i, "")] = j.adj || j; } catch (e) {} } } catch (e) {} }
   paintPresets();
 }
 function paintPresets() {
   const names = Object.keys(PRESETS).sort((a, b) => a.localeCompare(b, "ar"));
   $("#presetSel").innerHTML = `<option value="">— اختر بريست —</option>` + names.map(n => `<option ${F().preset === n ? "selected" : ""}>${esc(n)}</option>`).join("");
-  $("#presetDel").hidden = !F().preset || !PRESETS[F().preset];
+  $("#presetDel").hidden = !F().preset || !PRESETS[F().preset] || !!BUILTIN[F().preset];
 }
 $("#presetSel").onchange = e => {
   const n = e.target.value; if (!n) return;
@@ -481,8 +489,26 @@ $("#presetSel").onchange = e => {
   if (it && it.adj) it.adj = a; else { F().adj = a; F().preset = n; saveSoon(); }
   paintAdj(); renderPreview();
 };
+async function savePreset(n, a) {
+  PRESETS[n] = a; const local = ls.get("presets", {}); local[n] = a; ls.set("presets", local);
+  if (S.sys) { try { await writeFile(await sysDir("بريستات"), n.replace(/[\\/:*?"<>|]/g, "-") + ".json", JSON.stringify({ name: n, adj: a, savedAt: new Date().toISOString() }, null, 2)); } catch (e) {} }
+}
+$("#presetImport").onclick = () => {
+  const inp = document.createElement("input"); inp.type = "file"; inp.accept = ".xmp,.XMP"; inp.multiple = true;
+  inp.onchange = async () => {
+    let last = "", miss = new Set();
+    for (const f of inp.files) {
+      try { const r = fromXMP(await f.text()); const n = r.name || f.name.replace(/\.xmp$/i, ""); await savePreset(n, r.adj); last = n; r.unsupported.forEach(x => miss.add(x)); } catch (e) { toast("تعذّر قراءة " + f.name); }
+    }
+    if (!last) return;
+    F().preset = last; F().adj = { ...ZERO, ...PRESETS[last] }; S.items.forEach(it => delete it.adj); saveSoon(); paintAdj(); renderPreview();
+    toast(`استُورد البريست «${last}» — التحويل تقريبي${miss.size ? " (تُجوهلت: " + [...miss].join("، ") + ")" : ""}`);
+  };
+  inp.click();
+};
 $("#presetSave").onclick = async () => {
   const n = (prompt("اسم البريست:", F().preset || "") || "").trim(); if (!n) return;
+  if (BUILTIN[n]) return toast("هذا اسم بريست جاهز — اختر اسماً آخر");
   const a = { ...curAdj() }; PRESETS[n] = a; F().preset = n;
   const local = ls.get("presets", {}); local[n] = a; ls.set("presets", local);
   if (S.sys) { try { await writeFile(await sysDir("بريستات"), n.replace(/[\\/:*?"<>|]/g, "-") + ".json", JSON.stringify({ name: n, adj: a, savedAt: new Date().toISOString() }, null, 2)); } catch (e) {} }
@@ -493,6 +519,40 @@ $("#presetDel").onclick = async () => {
   delete PRESETS[n]; const local = ls.get("presets", {}); delete local[n]; ls.set("presets", local);
   if (S.sys) { try { await (await sysDir("بريستات")).removeEntry(n.replace(/[\\/:*?"<>|]/g, "-") + ".json"); } catch (e) {} }
   F().preset = ""; saveSoon(); paintAdj();
+};
+
+/* ============ معاينة بصفحة كاملة ============ */
+$("#fullBtn").onclick = async () => {
+  const it = S.items[S.cur]; if (!it) return toast("اختر الصور أولاً");
+  const win = window.open("", "_blank"); if (!win) return toast("اسمح للنوافذ المنبثقة لهذه الصفحة");
+  win.document.write(`<title>معاينة…</title><body style="margin:0;background:#111;color:#ccc;font:16px system-ui;display:grid;place-items:center;height:100vh" dir="rtl">جارٍ تجهيز المعاينة بدقة عالية…</body>`);
+  try {
+    const w = await makeWorker(), file = await getFile(it), q = { maxEdge: 3200, quality: 92, chroma444: true };
+    const run = (adj, rights) => new Promise((res, rej) => { w.onmessage = e => e.data.type === "done" ? res(e.data) : rej(new Error(e.data.error)); w.postMessage({ type: "job", id: 0, file, faces: it.faces || [], pos: it.pos, adj, ratios: [S.ratio], plain: !rights, rights, q, text: textOpts(), meta: {} }); });
+    const rights = $("#showRights").checked;
+    const after = await run(adjOf(it), rights), before = await run(ZERO, rights);
+    w.terminate();
+    const u1 = URL.createObjectURL(new Blob([after.outs[0].buf], { type: "image/jpeg" })), u0 = URL.createObjectURL(new Blob([before.outs[0].buf], { type: "image/jpeg" }));
+    const name = esc(it.name), tag = esc(F().preset || (isZero(adjOf(it)) ? "بدون تعديل" : "تعديل يدوي"));
+    win.document.open();
+    win.document.write(`<!doctype html><html dir="rtl" lang="ar"><head><meta charset="utf-8"><title>${name} — معاينة</title><style>
+      html,body{margin:0;height:100%;background:#0E1413;overflow:hidden;font-family:system-ui,"IBM Plex Sans Arabic",sans-serif}
+      img{position:fixed;inset:0;width:100%;height:100%;object-fit:contain;user-select:none;-webkit-user-drag:none}
+      #b{opacity:0}body.cmp #b{opacity:1}
+      .bar{position:fixed;top:12px;right:12px;left:12px;display:flex;gap:8px;align-items:center;justify-content:space-between;pointer-events:none}
+      .bar span{background:rgba(0,0,0,.55);color:#fff;border-radius:999px;padding:6px 14px;font-size:13px;backdrop-filter:blur(6px)}
+      .bar b{color:#F2C14E}body.cmp .st{background:#B3453F}</style></head>
+      <body><img id="a" src="${u1}" alt=""><img id="b" src="${u0}" alt="">
+      <div class="bar"><span class="st">${name} · ${S.ratio} · <b>${tag}</b> <span class="w">— بعد</span></span><span>اضغط مطولاً على الصورة أو مسافة = قبل · F = ملء الشاشة</span></div>
+      <script>
+        const b=document.body,w=document.querySelector('.w'),on=v=>{b.classList.toggle('cmp',v);w.textContent=v?'— قبل':'— بعد'};
+        addEventListener('mousedown',()=>on(true));addEventListener('mouseup',()=>on(false));
+        addEventListener('touchstart',()=>on(true));addEventListener('touchend',()=>on(false));
+        addEventListener('keydown',e=>{if(e.code==='Space'){e.preventDefault();on(true)}if(e.key==='f'||e.key==='F'){document.fullscreenElement?document.exitFullscreen():document.documentElement.requestFullscreen()}});
+        addEventListener('keyup',e=>{if(e.code==='Space')on(false)});
+      <\/script></body></html>`);
+    win.document.close();
+  } catch (e) { try { win.document.body.textContent = "تعذّر تجهيز المعاينة: " + (e.message || e); } catch (x) {} }
 };
 
 /* ============ النموذج ============ */
