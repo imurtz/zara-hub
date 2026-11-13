@@ -246,7 +246,8 @@ export function lutFromPair(src, dst, n = 33) {
         if (ax < 0 || ay < 0 || az < 0 || ax > N1 || ay > N1 || az > N1) continue;
         const q = idx(ax, ay, az); if (!known[q]) continue; s0 += off[q * 3]; s1 += off[q * 3 + 1]; s2 += off[q * 3 + 2]; k++;
       }
-      if (k) { off[c * 3] = s0 / k; off[c * 3 + 1] = s1 / k; off[c * 3 + 2] = s2 / k; known[c] = 2; changed++; }
+      // كلما ابتعد اللون عن ألوان الصورة يخفت التعديل نحو «بلا تغيير» حتى لا تُخترع ألوان غريبة
+      if (k) { off[c * 3] = s0 / k * 0.8; off[c * 3 + 1] = s1 / k * 0.8; off[c * 3 + 2] = s2 / k * 0.8; known[c] = 2; changed++; }
     }
     if (!changed) break;
   }
