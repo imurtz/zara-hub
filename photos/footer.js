@@ -95,8 +95,9 @@ export function drawFooter(ctx, W, H, ratio, o, A) {
   // 4) مربعات الشعارات
   const bx = L.box, s = bx.size * u, top = bx.top * u;
   const left = [A.mark, ...(A.partners || [])].filter(Boolean);
-  left.forEach((img, i) => logoBox(ctx, bx.side * u + i * (s + bx.gap * u), top, s, img, u));
-  if (A.event) logoBox(ctx, W - bx.side * u - s, top, s, A.event, u);
+  const fills = [MARK_FILL, ...(A.partnerFills || [])];
+  left.forEach((img, i) => logoBox(ctx, bx.side * u + i * (s + bx.gap * u), top, s, img, u, fills[i]));
+  if (A.event) logoBox(ctx, W - bx.side * u - s, top, s, A.event, u, A.eventFill);
   // 5) النصوص
   ctx.fillStyle = "#fff"; ctx.textBaseline = "alphabetic";
   // العنوان
@@ -127,13 +128,15 @@ function tracked(ctx, t, x, y, sp) {
   return x - sp;
 }
 
-function logoBox(ctx, x, y, s, img, u) {
+export const MARK_FILL = 0.62, LOGO_FILL = 0.8;
+// fill = نسبة ما يشغله الشعار من المربع الأبيض (0.5–0.96)
+function logoBox(ctx, x, y, s, img, u, fill) {
   const r = s * L.box.radius;
   ctx.save();
   ctx.shadowColor = "rgba(0,0,0,0.16)"; ctx.shadowBlur = 0.012 * u; ctx.shadowOffsetY = 0.003 * u;
   rr(ctx, x, y, s, s, r); ctx.fillStyle = "#fff"; ctx.fill();
   ctx.restore();
-  const p = s * L.box.pad, iw = img.width, ih = img.height, k = Math.min((s - 2 * p) / iw, (s - 2 * p) / ih);
+  const f = Math.max(0.4, Math.min(0.96, fill || LOGO_FILL)), inner = s * f, iw = img.width, ih = img.height, k = Math.min(inner / iw, inner / ih);
   const w = iw * k, h = ih * k;
   ctx.imageSmoothingQuality = "high";
   ctx.drawImage(img, x + (s - w) / 2, y + (s - h) / 2, w, h);
@@ -143,6 +146,13 @@ function rr(ctx, x, y, w, h, r) {
   ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath();
 }
 
+export const TITLE_MIN = 0.8;
+/** فحص العنوان للواجهة: هل يتسع لسطرين؟ */
+export function titleCheck(text) {
+  const c = new OffscreenCanvas(10, 10).getContext("2d"), u = 2000, cfg = RATIOS["16:10"];
+  const r = fitTitle(c, text, cfg.titleW * u, L.title.size * u);
+  return { lines: r.list.length, scale: r.scale, ok: r.list.length <= 2 && !r.over };
+}
 /** التفاف العنوان: سطران بالحجم المعتمد، وإن طال يُصغَّر حتى 72% ثم يُسمح بثلاثة أسطر */
 export function fitTitle(ctx, text, maxW, size) {
   const words = String(text).trim().split(/\s+/);
@@ -157,10 +167,11 @@ export function fitTitle(ctx, text, maxW, size) {
   if (/\n|\s\/\s/.test(text)) {
     const parts = String(text).split(/\n|\s\/\s/).map(s => s.trim()).filter(Boolean);
     let sz = size; ctx.font = `500 ${sz}px ${FONT_M}`;
-    while (sz > size * 0.6 && parts.some(p => ctx.measureText(p).width > maxW)) { sz *= 0.96; ctx.font = `500 ${sz}px ${FONT_M}`; }
-    return { size: sz, list: parts };
+    while (sz > size * TITLE_MIN && parts.some(p => ctx.measureText(p).width > maxW)) { sz *= 0.97; ctx.font = `500 ${sz}px ${FONT_M}`; }
+    const over = parts.some(p => ctx.measureText(p).width > maxW * 1.01);
+    return { size: sz, list: parts, scale: sz / size, over };
   }
   let sz = size, list = wrap(sz);
-  while (list.length > 2 && sz > size * 0.72) { sz *= 0.96; list = wrap(sz); }
-  return { size: sz, list };
+  while (list.length > 2 && sz > size * TITLE_MIN) { sz *= 0.97; list = wrap(sz); }
+  return { size: sz, list, scale: sz / size };
 }

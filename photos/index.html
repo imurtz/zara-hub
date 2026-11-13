@@ -59,6 +59,21 @@ header h1 small{display:block;font-size:12.5px;color:var(--soft);font-weight:500
 .empty .nav{display:none}
 #prevMeta{font-size:12.5px;color:var(--soft)}
 #prevMeta .hint{color:var(--tan-d)}
+.cropbar{display:flex;gap:14px;align-items:center;background:var(--bg);border-radius:14px;padding:10px}
+.mini{flex:none;width:170px}
+#mini{display:block;width:100%;height:auto;border-radius:8px;cursor:crosshair;touch-action:none}
+.cb{flex:1;display:flex;flex-direction:column;gap:7px;font-size:13px}
+.cb small{color:var(--soft)}
+.qbtns{display:flex;gap:6px;flex-wrap:wrap}
+.qbtns button{border:1px solid var(--line);background:#fff;border-radius:10px;padding:5px 11px;font-size:12.5px;font-weight:600;cursor:pointer;color:var(--teal-d)}
+.qbtns button.on{background:var(--teal);color:#fff;border-color:var(--teal)}
+#cropRange{width:100%;accent-color:var(--teal)}
+.tstate{font-size:12px;border-radius:9px;padding:4px 9px;margin-top:2px;width:max-content;max-width:100%}
+.tstate.ok{background:#E8F3EE;color:#2F6F5E}.tstate.warn{background:var(--tan-t);color:var(--tan-d)}.tstate.bad{background:#FBECEA;color:var(--warn)}
+.lsz{display:flex;align-items:center;gap:9px;font-size:12.5px;margin-top:6px}
+.lsz img{width:30px;height:30px;object-fit:contain;background:#fff;border:1px solid var(--line);border-radius:7px;padding:3px}
+.lsz input{flex:1;accent-color:var(--teal)}
+.lsz span{min-width:34px;color:var(--soft)}
 
 /* الشبكة */
 #gridWrap .top{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:10px;font-size:13px;color:var(--soft)}
@@ -145,7 +160,7 @@ dialog .acts{display:flex;flex-direction:column;gap:8px;margin-top:14px}
       <div class="pvbar">
         <div class="seg"><button type="button" data-ratio="16:10" class="on">16:10</button><button type="button" data-ratio="4:5">4:5</button></div>
         <label class="chk"><input type="checkbox" id="showRights" checked> الحقوق</label>
-        <label class="chk"><input type="checkbox" id="showFaces"> الوجوه المكتشفة</label>
+        <label class="chk" title="الأداة تكشف الوجوه لتقص الصورة بدونها مقطوعة وتبعدها عن منطقة الحقوق — هذا الخيار يُظهر المربعات فقط للتأكد"><input type="checkbox" id="showFaces"> إظهار الوجوه اللي اعتمد عليها القص</label>
       </div>
       <div class="canvasBox empty" id="prevWrap">
         <canvas id="prev" width="1400" height="875"></canvas>
@@ -153,6 +168,14 @@ dialog .acts{display:flex;flex-direction:column;gap:8px;margin-top:14px}
         <button type="button" class="nav" id="prevNext" aria-label="التالية">‹</button>
       </div>
       <div id="prevMeta"></div>
+      <div class="cropbar" id="cropbar" hidden>
+        <div class="mini"><canvas id="mini"></canvas></div>
+        <div class="cb">
+          <b>القص</b> <small id="cropHint">اضغط أو اسحب على الصورة الصغيرة لتحديد الإطار</small>
+          <div class="qbtns" id="cropBtns"></div>
+          <input type="range" id="cropRange" min="0" max="1000" step="1">
+        </div>
+      </div>
       <div id="gridWrap" hidden>
         <div class="top"><span>كل الصور — اضغط صورة لمعاينتها وتعديل قصها</span><button type="button" class="lnk" id="srcBtn2">تغيير المجلد</button></div>
         <div id="grid"></div>
@@ -164,7 +187,7 @@ dialog .acts{display:flex;flex-direction:column;gap:8px;margin-top:14px}
         <h2 class="step"><b>2</b> بيانات الحقوق</h2>
         <div class="f"><label for="title">عنوان الفعالية</label>
           <textarea id="title" rows="2" placeholder="مثال: 200 متدرب ومتدربة يشاركون في تدريب عملي لتطوير السير الذاتية ضمن «مفاتيح التوظيف»"></textarea>
-          <small>يلتف تلقائياً على سطرين — ولكسر السطر بنفسك اضغط Enter</small></div>
+          <small>يلتف تلقائياً على سطرين — ولكسر السطر بنفسك اضغط Enter</small><div id="titleState" class="tstate"></div></div>
         <div class="row2">
           <div class="f"><label for="date">التاريخ الميلادي</label><input type="date" id="date"></div>
           <div class="f"><label for="hijri">الهجري <small>(أم القرى — قابل للتعديل)</small></label><input type="text" id="hijri" dir="ltr" inputmode="numeric"></div>
@@ -174,6 +197,7 @@ dialog .acts{display:flex;flex-direction:column;gap:8px;margin-top:14px}
           <div class="fixed"><span><img src="assets/mark.png" alt=""></span> ثابت دائماً أولاً من اليسار</div>
           <div class="logos" id="partners"></div></div>
         <div class="f"><span>شعار الفعالية <small>(أعلى اليمين — اختياري)</small></span><div class="logos" id="eventLogos"></div>
+          <div id="logoSizes"></div>
           <small id="logoHint">أضف الشعارات مرة واحدة (PNG شفاف أو SVG) وتُحفظ في مجلد المنظومة.</small></div>
         <div id="fontState" class="fstate"></div>
       </section>

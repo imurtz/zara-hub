@@ -102,7 +102,7 @@ async function job(m) {
 self.onmessage = async e => {
   const m = e.data;
   try {
-    if (m.type === "setup") { await setup(m); self.postMessage({ type: "ready" }); return; }
+    if (m.type === "setup") { await setup(m); self.postMessage({ type: "ready", fontsOK: self.fonts.check(`500 20px ${FONT_M}`) && self.fonts.check(`400 20px ${FONT_R}`) }); return; }
     if (m.type === "job") {
       const r = await job(m);
       self.postMessage({ type: "done", ...r }, r.outs.map(o => o.buf));

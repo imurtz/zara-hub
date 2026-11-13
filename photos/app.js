@@ -1,5 +1,5 @@
 // معالجة صور الفعاليات — بوابة زارة. كل شيء داخل المتصفح: لا Firebase ولا رفع ولا أي خادم.
-import { RATIOS, hijriOf, gregOf, cropRect, drawFooter, FONT_M, FONT_R } from "./footer.js";
+import { RATIOS, hijriOf, gregOf, cropRect, drawFooter, FONT_M, FONT_R, LOGO_FILL, titleCheck } from "./footer.js";
 
 const $ = s => document.querySelector(s);
 const $$ = s => [...document.querySelectorAll(s)];
@@ -134,7 +134,11 @@ async function rasterize(blobOrUrl, max = 640) {
   const w0 = img.naturalWidth || 512, h0 = img.naturalHeight || 512, k = Math.min(1, max / Math.max(w0, h0)) || 1;
   const svg = /svg/.test(blobOrUrl.type || "") || /\.svg($|\?)/.test(url);
   const kk = svg ? max / Math.max(w0, h0) : k;
-  const c = new OffscreenCanvas(Math.round(w0 * kk), Math.round(h0 * kk)); c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
+  const c = new OffscreenCanvas(Math.round(w0 * kk), Math.round(h0 * kk)); const cx = c.getContext("2d", { willReadFrequently: true }); cx.drawImage(img, 0, 0, c.width, c.height);
+  // قصّ الهوامش الشفافة/البيضاء حول الشعار حتى يملأ المربع
+  const d = cx.getImageData(0, 0, c.width, c.height).data; let x0 = c.width, y0 = c.height, x1 = -1, y1 = -1;
+  for (let y = 0; y < c.height; y++) for (let x = 0; x < c.width; x++) { const i = (y * c.width + x) * 4; if (d[i + 3] > 12 && !(d[i] > 245 && d[i + 1] > 245 && d[i + 2] > 245)) { if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; } }
+  if (x1 > x0 && y1 > y0 && (x1 - x0 < c.width - 4 || y1 - y0 < c.height - 4)) return { bmp: await createImageBitmap(c, x0, y0, x1 - x0 + 1, y1 - y0 + 1), url };
   return { bmp: await createImageBitmap(c), url };
 }
 async function loadLogos() {
@@ -171,6 +175,10 @@ function paintLogos() {
   $("#partners").innerHTML = S.logos.map(l => chip(l, P.includes(l.name), "p")).join("") + `<button type="button" class="logo add" data-add>＋<small>شعار</small></button>`;
   $("#eventLogos").innerHTML = `<button type="button" class="logo none${E ? "" : " on"}" data-logo="" data-kind="e">بدون</button>` + S.logos.map(l => chip(l, E === l.name, "e")).join("") + `<button type="button" class="logo add" data-add>＋<small>شعار</small></button>`;
   $("#logoHint").hidden = !!S.logos.length;
+  const sel = [...P, E].filter((n, i, a) => n && a.indexOf(n) === i && S.logos.some(l => l.name === n));
+  const LF = F().logoFill || {};
+  $("#logoSizes").innerHTML = sel.length ? `<small>حجم الشعار داخل المربع الأبيض</small>` + sel.map(n => { const l = S.logos.find(x => x.name === n), v = Math.round((LF[n] || LOGO_FILL) * 100);
+    return `<label class="lsz"><img src="${l.url}" alt=""><input type="range" min="50" max="96" value="${v}" data-lsz="${esc(n)}"><span>${v}%</span></label>`; }).join("") : "";
 }
 
 /* ============ اختيار الصور + التحليل (كشف الوجوه) ============ */
@@ -289,13 +297,15 @@ function textOpts() {
 }
 function assetsNow() {
   const by = n => (S.logos.find(l => l.name === n) || {}).bmp;
-  return { mark: S.mark, partners: (F().partners || []).map(by).filter(Boolean), event: F().event ? by(F().event) : null, founding: S.founding };
+  const fill = n => (F().logoFill || {})[n] || LOGO_FILL;
+  const ps = (F().partners || []).filter(n => by(n));
+  return { mark: S.mark, partners: ps.map(by), partnerFills: ps.map(fill), event: F().event && by(F().event) ? by(F().event) : null, eventFill: fill(F().event), founding: S.founding };
 }
 async function renderPreview() {
   const cv = $("#prev"), it = S.items[S.cur];
   $("#prevWrap").classList.toggle("empty", !it);
   $$("[data-ratio]").forEach(b => b.classList.toggle("on", b.dataset.ratio === S.ratio));
-  if (!it) { drawDemo(cv); return; }
+  if (!it) { $("#cropbar").hidden = true; drawDemo(cv); return; }
   const tok = ++prevTok;
   if (prevFor !== S.cur) {
     try {
@@ -316,9 +326,8 @@ async function renderPreview() {
     ctx.strokeStyle = "#F2C14E"; ctx.lineWidth = Math.max(2, w / 500);
     it.faces.forEach(f => ctx.strokeRect((f.x * prevBmp.width - r.sx) * k, (f.y * prevBmp.height - r.sy) * k, f.w * prevBmp.width * k, f.h * prevBmp.height * k));
   }
-  $("#prevMeta").innerHTML = `${S.cur + 1} / ${S.items.length} · ${esc(it.name)}${it.faces ? ` · ${it.faces.length ? it.faces.length + " وجه" : "بلا وجوه — قص من المنتصف"}` : ""}${r.free ? ` · <span class="hint">اسحب الصورة لتعديل القص ${r.axis === "x" ? "↔" : "↕"}</span>` : ""}${it.pos[S.ratio] != null ? ` · <button type="button" class="lnk" id="resetCrop">رجوع للقص التلقائي</button>` : ""}`;
-  const rc = $("#resetCrop"); if (rc) rc.onclick = () => { delete it.pos[S.ratio]; paintCell(S.cur); renderPreview(); };
-  cv.style.cursor = r.free ? (r.axis === "x" ? "ew-resize" : "ns-resize") : "default";
+  $("#prevMeta").innerHTML = `${S.cur + 1} / ${S.items.length} · ${esc(it.name)}${it.faces ? ` · ${it.faces.length ? it.faces.length + " وجه" : "بلا وجوه — قص من المنتصف"}` : ""}`;
+  paintCrop();
 }
 function drawDemo(cv) {
   const w = 1400, h = Math.round(w / RATIOS[S.ratio].r); cv.width = w; cv.height = h;
@@ -329,22 +338,67 @@ function drawDemo(cv) {
   drawFooter(ctx, w, h, S.ratio, textOpts(), assetsNow());
   $("#prevMeta").textContent = "معاينة الحقوق";
 }
-// سحب لتعديل القص
+// ===== تعديل القص: صورة مصغّرة كاملة عليها الإطار + أزرار سريعة + شريط =====
+let miniBmp = null, miniFor = -1;
+async function paintCrop() {
+  const it = S.items[S.cur], bar = $("#cropbar");
+  if (!it || !prevBmp || !prevRect) { bar.hidden = true; return; }
+  bar.hidden = false;
+  const r = prevRect, mv = $("#mini"), W = prevBmp.width, H = prevBmp.height;
+  const mw = 340, mh = Math.round(mw * H / W); mv.width = mw; mv.height = mh;
+  const c = mv.getContext("2d"); c.drawImage(prevBmp, 0, 0, mw, mh);
+  const k = mw / W;
+  c.fillStyle = "rgba(20,28,27,.55)";
+  c.fillRect(0, 0, mw, r.sy * k); c.fillRect(0, (r.sy + r.sh) * k, mw, mh); c.fillRect(0, r.sy * k, r.sx * k, r.sh * k); c.fillRect((r.sx + r.sw) * k, r.sy * k, mw, r.sh * k);
+  c.strokeStyle = "#F2C14E"; c.lineWidth = 3; c.strokeRect(r.sx * k + 1.5, r.sy * k + 1.5, r.sw * k - 3, r.sh * k - 3);
+  const manual = it.pos[S.ratio] != null;
+  const x = r.axis === "x";
+  $("#cropHint").textContent = r.free ? "اضغط أو اسحب على الصورة الصغيرة، أو استخدم الأزرار" : "الصورة بنفس المقاس — لا تحتاج قص";
+  $("#cropBtns").innerHTML = r.free ? [["auto", "تلقائي"], ["0", x ? "يسار" : "أعلى"], ["0.5", "وسط"], ["1", x ? "يمين" : "أسفل"]].map(([v, l]) => {
+    const on = v === "auto" ? !manual : manual && Math.abs(it.pos[S.ratio] - +v) < 0.01;
+    return `<button type="button" data-crop="${v}" class="${on ? "on" : ""}">${l}</button>`;
+  }).join("") + `<button type="button" data-crop="all" title="يطبّق هذا الموضع على كل الصور بنفس الاتجاه">نفس الموضع لكل الصور</button>` : "";
+  const rg = $("#cropRange"); rg.hidden = !r.free; rg.value = Math.round(r.t * 1000);
+  rg.style.direction = x ? "ltr" : "ltr";
+}
+function setPos(v) {
+  const it = S.items[S.cur]; if (!it) return;
+  if (v === "auto") delete it.pos[S.ratio]; else it.pos[S.ratio] = Math.max(0, Math.min(1, v));
+  paintCell(S.cur); renderPreview();
+}
 (() => {
-  const cv = $("#prev"); let drag = null;
-  const pt = e => (e.touches ? e.touches[0] : e);
-  const down = e => { const it = S.items[S.cur]; if (!it || !prevRect || !prevRect.free) return; drag = { x: pt(e).clientX, y: pt(e).clientY, t: prevRect.t, r: prevRect }; e.preventDefault(); };
-  const move = e => {
-    if (!drag) return;
-    const it = S.items[S.cur], r = drag.r, rect = cv.getBoundingClientRect(), k = rect.width / r.sw;
-    const d = r.axis === "x" ? (pt(e).clientX - drag.x) : (pt(e).clientY - drag.y);
-    it.pos[S.ratio] = Math.max(0, Math.min(1, drag.t - (d / k) / r.free));
-    renderPreview();
+  const mv = $("#mini"); let drag = false;
+  const at = e => {
+    const r = prevRect; if (!r || !r.free) return;
+    const p = e.touches ? e.touches[0] : e, b = mv.getBoundingClientRect();
+    const fx = (p.clientX - b.left) / b.width, fy = (p.clientY - b.top) / b.height;
+    const W = prevBmp.width, H = prevBmp.height;
+    // مركز الإطار عند نقطة الضغط
+    const t = r.axis === "x" ? (fx * W - r.sw / 2) / r.free : (fy * H - r.sh / 2) / r.free;
+    setPos(t);
   };
-  const up = () => { if (drag) { drag = null; paintCell(S.cur); } };
-  cv.addEventListener("mousedown", down); cv.addEventListener("touchstart", down, { passive: false });
-  addEventListener("mousemove", move); addEventListener("touchmove", move, { passive: false });
-  addEventListener("mouseup", up); addEventListener("touchend", up);
+  mv.addEventListener("mousedown", e => { drag = true; at(e); e.preventDefault(); });
+  mv.addEventListener("touchstart", e => { drag = true; at(e); e.preventDefault(); }, { passive: false });
+  addEventListener("mousemove", e => { if (drag) at(e); });
+  addEventListener("touchmove", e => { if (drag) at(e); }, { passive: true });
+  addEventListener("mouseup", () => drag = false); addEventListener("touchend", () => drag = false);
+  $("#cropRange").addEventListener("input", e => setPos(+e.target.value / 1000));
+  $("#cropBtns").addEventListener("click", e => {
+    const b = e.target.closest("[data-crop]"); if (!b) return;
+    const v = b.dataset.crop;
+    if (v === "all") {
+      const it = S.items[S.cur], p = it.pos[S.ratio];
+      S.items.forEach((x, i) => { if (p == null) delete x.pos[S.ratio]; else x.pos[S.ratio] = p; paintCell(i); });
+      toast(p == null ? "رجعت كل الصور للقص التلقائي" : "طُبّق نفس الموضع على كل الصور"); renderPreview(); return;
+    }
+    setPos(v === "auto" ? "auto" : +v);
+  });
+  // أسهم لوحة المفاتيح مع Shift لتحريك القص
+  addEventListener("keydown", e => {
+    if (!e.shiftKey || /INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName) || !prevRect || !prevRect.free) return;
+    const d = { ArrowLeft: -0.05, ArrowRight: 0.05, ArrowUp: -0.05, ArrowDown: 0.05 }[e.key]; if (d == null) return;
+    e.preventDefault(); setPos(prevRect.t + d);
+  });
 })();
 
 /* ============ النموذج ============ */
@@ -357,7 +411,15 @@ function paintForm() {
   $("#plain").checked = f.plain; $("#rights").checked = f.rights;
   $("#quality").value = f.quality; $("#customEdge").value = f.customEdge; $("#customQ").value = f.customQ;
   $("#customBox").hidden = f.quality !== "custom";
-  paintLogos(); paintName();
+  paintLogos(); paintName(); paintTitleState();
+}
+function paintTitleState() {
+  const el = $("#titleState"), t = (F().title || "").trim();
+  if (!t) { el.className = "tstate"; el.textContent = ""; return; }
+  const c = titleCheck(t), n = t.replace(/\s+/g, " ").length;
+  if (c.ok && c.scale > 0.99) { el.className = "tstate ok"; el.textContent = `✓ يتسع لسطرين · ${n} حرف`; }
+  else if (c.ok) { el.className = "tstate warn"; el.textContent = `يتسع لسطرين بتصغير الخط ${Math.round(c.scale * 100)}% · ${n} حرف — الأفضل اختصاره قليلاً`; }
+  else { el.className = "tstate bad"; el.textContent = `✕ أطول من سطرين · ${n} حرف — اختصر العنوان حتى يتسع`; }
 }
 function paintName() {
   $("#nameEx").textContent = fileName(0, S.items[0] ? S.items[0].name : "DSC0001.jpg");
@@ -369,9 +431,14 @@ function fileName(i, orig) {
   n = n.replace(/[\\/:*?"<>|]+/g, "").replace(/^[-_.\s]+|[-_.\s]+$/g, "") || String(i + 1).padStart(3, "0");
   return n + ".jpg";
 }
+document.addEventListener("input", e => {
+  const r = e.target.closest("[data-lsz]"); if (!r) return;
+  F().logoFill = Object.assign({}, F().logoFill, { [r.dataset.lsz]: +r.value / 100 });
+  r.nextElementSibling.textContent = r.value + "%"; saveSoon(); renderPreviewSoon();
+});
 const bind = (sel, key, ev = "input", fn) => $(sel).addEventListener(ev, e => { F()[key] = e.target.value; fn && fn(); saveSoon(); renderPreviewSoon(); });
 let rpT; const renderPreviewSoon = () => { clearTimeout(rpT); rpT = setTimeout(renderPreview, 120); };
-bind("#title", "title");
+bind("#title", "title", "input", paintTitleState);
 bind("#date", "date", "change", () => { F().hijri = ""; $("#hijri").value = hijriOf(F().date); $("#hijri").placeholder = hijriOf(F().date); paintName(); });
 bind("#hijri", "hijri");
 bind("#photographer", "photographer");
@@ -413,9 +480,9 @@ async function makeWorker() {
   const base = assetsNow(), fonts = S.fontBufs;
   const w = new Worker(new URL("./worker.js", import.meta.url), { type: "module" });
   const copy = async b => b ? createImageBitmap(b) : null;
-  const assets = { mark: await copy(base.mark), founding: await copy(base.founding), event: await copy(base.event), partners: await Promise.all(base.partners.map(copy)) };
+  const assets = { mark: await copy(base.mark), founding: await copy(base.founding), event: await copy(base.event), partners: await Promise.all(base.partners.map(copy)), partnerFills: base.partnerFills, eventFill: base.eventFill };
   const tr = [assets.mark, assets.founding, assets.event, ...assets.partners].filter(Boolean);
-  const ready = new Promise((res, rej) => { w.onmessage = e => e.data.type === "ready" ? res() : rej(new Error(e.data.error)); w.onerror = ev => rej(new Error(ev.message || "worker")); });
+  const ready = new Promise((res, rej) => { w.onmessage = e => e.data.type === "ready" ? (e.data.fontsOK || !F().rights ? res() : rej(new Error("FONT"))) : rej(new Error(e.data.error)); w.onerror = ev => rej(new Error(ev.message || "worker")); });
   w.postMessage({ type: "setup", fonts: fonts ? { M: fonts.M.slice(0), R: fonts.R.slice(0) } : null, assets }, tr);
   await ready;
   return w;
@@ -433,6 +500,7 @@ async function exportAll() {
   if (!f.plain && !f.rights) return toast("اختر نسخة واحدة على الأقل: بدون حقوق أو مع حقوق");
   if (f.rights && !S.fontSrc) return toast("خط DIN Next غير موجود — أضفه أولاً");
   if (f.rights && !f.title.trim()) { $("#title").focus(); return toast("اكتب عنوان الفعالية"); }
+  if (f.rights && !titleCheck(f.title.trim()).ok) { $("#title").focus(); return toast("العنوان أطول من سطرين — اختصره"); }
   const q = f.quality === "custom" ? { maxEdge: +f.customEdge || 2000, quality: +f.customQ || 85, chroma444: false } : QUALITY[f.quality];
   if (f.photographer && !f.photographers.includes(f.photographer)) f.photographers.push(f.photographer);
   await saveSettings();
@@ -523,7 +591,8 @@ async function exportAll() {
     };
     await Promise.all(pool.map(w => runWorker(w)));
   } catch (err) {
-    log.push("✕ خطأ عام: " + (err.message || err)); toast("حدث خطأ: " + (err.message || err));
+    if (err.message === "FONT") { log.push("✕ لم يصل خط DIN Next إلى معالج التصدير"); await ask("خط DIN Next لم يصل لمعالج التصدير على هذا الجهاز، فتوقف التصدير حتى لا تطلع الحقوق بخط مختلف. اضغط «انسخه لمجلد المنظومة» تحت بيانات الحقوق (أو أضف ملفي Medium و Regular) ثم صدّر من جديد.", [["ok", "حسناً"]]); }
+    else { log.push("✕ خطأ عام: " + (err.message || err)); toast("حدث خطأ: " + (err.message || err)); }
   } finally { killPool(); }
 
   const secs = Math.round((Date.now() - t0) / 1000);
