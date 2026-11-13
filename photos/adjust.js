@@ -7,6 +7,7 @@ export { BANDS };
 
 export const ADJ = [
   { g: "amount", k: "amount", l: "قوة المؤثرات", min: 0, max: 100, step: 1, def: 100 },
+  { g: "amount", k: "auto", l: "تصحيح تلقائي", min: 0, max: 100, step: 1 },
   { g: "الضوء", k: "exposure",   l: "التعريض",  min: -3,   max: 3,   step: 0.05 },
   { g: "الضوء", k: "contrast",   l: "التباين",  min: -100, max: 100, step: 1 },
   { g: "الضوء", k: "highlights", l: "الإضاءات", min: -100, max: 100, step: 1 },
@@ -21,6 +22,10 @@ export const ADJ = [
   ...[["sh", "الظلال"], ["mid", "الوسط"], ["hi", "الإضاءات"]].flatMap(([k, l]) => [
     { g: "grade", k: `cg_${k}_h`, l: `لون ${l}`, min: 0, max: 360, step: 1, hue: 1, adv: 1 },
     { g: "grade", k: `cg_${k}_s`, l: `قوة ${l}`, min: 0, max: 100, step: 1, adv: 1 }]),
+  { g: "التفاصيل", k: "texture", l: "النسيج", min: -100, max: 100, step: 1 },
+  { g: "التفاصيل", k: "clarity", l: "الوضوح", min: -100, max: 100, step: 1 },
+  { g: "التفاصيل", k: "sharp", l: "الحدّة", min: 0, max: 150, step: 1 },
+  { g: "التفاصيل", k: "vignette", l: "تعتيم الأطراف", min: -100, max: 100, step: 1 },
   ...[["pc_sh", "الظلال العميقة"], ["pc_dk", "الداكن"], ["pc_lt", "الفاتح"], ["pc_hi", "الإضاءات العالية"]].map(([k, l]) => ({ g: "curve", k, l, min: -100, max: 100, step: 1, adv: 1 })),
   { g: "grade", k: "cg_blend", l: "المزج", min: 0, max: 100, step: 1, def: 50, adv: 1 },
   { g: "grade", k: "cg_bal", l: "التوازن", min: -100, max: 100, step: 1, adv: 1 }
@@ -37,8 +42,9 @@ const clamp = v => v < 0 ? 0 : v > 1 ? 1 : v;
 /** جداول القنوات الثلاث (256 قيمة لكل قناة) */
 export function buildLUT(p) {
   const t = (p.temp || 0) / 100, ti = (p.tint || 0) / 100;
-  const gains = [1 + 0.22 * t + 0.04 * ti, 1 - 0.16 * ti, 1 - 0.26 * t + 0.04 * ti];
-  const ev = Math.pow(2, p.exposure || 0);
+  const ag = p._g || [1, 1, 1];
+  const gains = [(1 + 0.22 * t + 0.04 * ti) * ag[0], (1 - 0.16 * ti) * ag[1], (1 - 0.26 * t + 0.04 * ti) * ag[2]];
+  const ev = Math.pow(2, (p.exposure || 0) + (p._ev || 0));
   const c = (p.contrast || 0) / 100, h = (p.highlights || 0) / 100, sh = (p.shadows || 0) / 100, w = (p.whites || 0) / 100, b = (p.blacks || 0) / 100;
   const pc = ["pc_sh", "pc_dk", "pc_lt", "pc_hi"].map(k => (p[k] || 0) / 100);
   const out = [new Uint8ClampedArray(256), new Uint8ClampedArray(256), new Uint8ClampedArray(256)];
@@ -103,6 +109,7 @@ function hueRGB(h) { // لون صافٍ من الدرجة (مطروحاً منه
 export function applyAdjust(img, p) {
   if (isZero(p)) return img;
   p = { ...ZERO, ...p };
+  if (p.auto) Object.assign(p, autoStats(img, p.auto / 100));
   const [R, G, B] = buildLUT(p), d = img.data, n = d.length;
   const sat = 1 + (p.saturation || 0) / 100, vib = (p.vibrance || 0) / 100;
   const T = hslTables(p);
@@ -163,6 +170,8 @@ export function applyAdjust(img, p) {
     if (mix) { r = r0 + (r - r0) * amt; g = g0 + (g - g0) * amt; b = b0 + (b - b0) * amt; }
     d[i] = r; d[i + 1] = g; d[i + 2] = b;
   }
+  if (p.texture || p.clarity || p.sharp) localContrast(img, p, amt);
+  if (p.vignette) vignette(img, p.vignette / 100 * amt);
   return img;
 }
 
@@ -185,7 +194,8 @@ export function fromXMP(text) {
   a.whites = num("Whites2012"); a.blacks = num("Blacks2012"); a.vibrance = num("Vibrance"); a.saturation = num("Saturation");
   a.temp = num("IncrementalTemperature"); a.tint = num("IncrementalTint");
   // التباين الخفيف لـ Dehaze/Clarity (تقريب بسيط)
-  a.contrast += num("Dehaze") * 0.5 + num("Clarity2012") * 0.3;
+  a.contrast += num("Dehaze") * 0.5;
+  a.clarity = num("Clarity2012"); a.texture = num("Texture"); a.sharp = num("Sharpness"); a.vignette = num("PostCropVignetteAmount");
   const LR = { red: "Red", orange: "Orange", yellow: "Yellow", green: "Green", aqua: "Aqua", blue: "Blue", purple: "Purple", magenta: "Magenta" };
   for (const [k, n] of Object.entries(LR)) { a[`h_${k}`] = num("HueAdjustment" + n); a[`s_${k}`] = num("SaturationAdjustment" + n); a[`l_${k}`] = num("LuminanceAdjustment" + n); }
   for (const [k, n] of [["sh", "Shadow"], ["mid", "Midtone"], ["hi", "Highlight"]]) { a[`cg_${k}_h`] = num(`ColorGrade${n}Hue`); a[`cg_${k}_s`] = num(`ColorGrade${n}Sat`); }
@@ -199,7 +209,7 @@ export function fromXMP(text) {
   const tcm = text.match(/<crs:ToneCurvePV2012>[\s\S]*?<\/crs:ToneCurvePV2012>/);
   if (tcm) { const pts = [...tcm[0].matchAll(/<rdf:li>\s*(\d+)\s*,\s*(\d+)\s*<\/rdf:li>/g)].map(m => [+m[1], +m[2]]); if (pts.length >= 2 && pts.some(([x, y]) => x !== y)) a.tc = pts; }
   const name = (text.match(/<crs:Name>[\s\S]*?<rdf:li[^>]*>([^<]+)</) || [])[1] || "";
-  const unsupported = ["Texture", "Sharpness", "PostCropVignetteAmount", "RedPrimaryHue", "ShadowTint", "LuminanceSmoothing"].filter(k => v(k) != null && num(k) !== 0);
+  const unsupported = ["RedPrimaryHue", "ShadowTint", "LuminanceSmoothing"].filter(k => v(k) != null && num(k) !== 0);
   return { name: name.trim(), adj: a, unsupported };
 }
 // قراءة سمات crs:* وعناصرها بدون DOMParser (يعمل في العامل أيضاً)
@@ -278,4 +288,65 @@ export function lutFromPair(src, dst, n = 33) {
   }
   const cover = known.reduce((s, v) => s + (v === 1), 0) / cells;
   return { ...encodeLUT(n, u), cover };
+}
+
+
+/* ============ تصحيح تلقائي محافظ: توازن الأبيض + التعريض لكل صورة ============ */
+function autoStats(img, k) {
+  const d = img.data, n = d.length / 4, step = Math.max(1, Math.floor(n / 60000)) * 4;
+  const Ys = [], neu = [0, 0, 0]; let nw = 0;
+  for (let i = 0; i < d.length; i += step) {
+    const r = s2l(d[i] / 255), g = s2l(d[i + 1] / 255), b = s2l(d[i + 2] / 255), Y = 0.2126 * r + 0.7152 * g + 0.0722 * b;
+    Ys.push(Y);
+    const mx = Math.max(d[i], d[i + 1], d[i + 2]), mn = Math.min(d[i], d[i + 1], d[i + 2]);
+    if (Y > 0.12 && Y < 0.9 && mx - mn < 0.25 * mx + 8) { const w = Y * Y; neu[0] += r * w; neu[1] += g * w; neu[2] += b * w; nw += w; }
+  }
+  Ys.sort((a, b) => a - b);
+  const q = f => Ys[Math.min(Ys.length - 1, Math.floor(f * Ys.length))] || 1e-4;
+  // التعريض: وسط الصورة نحو 0.18 دون حرق الإضاءات
+  let ev = Math.log2(0.18 / Math.max(q(0.5), 1e-4)); const evHi = Math.log2(0.82 / Math.max(q(0.985), 1e-4));
+  ev = ev > 0 ? Math.max(0, Math.min(ev, evHi)) : Math.max(ev, Math.min(0, evHi));
+  ev = Math.max(-0.8, Math.min(0.8, ev)) * k;
+  // الأبيض: تحييد لون الرماديات (بحدود محافظة)
+  let g = [1, 1, 1];
+  if (nw > 0) { const m = neu.map(v => v / nw); g = m.map(v => Math.max(0.82, Math.min(1.22, m[1] / Math.max(v, 1e-5)))); g = g.map(v => 1 + (v - 1) * k * 0.85); }
+  return { _ev: ev, _g: g };
+}
+
+/* ============ النسيج + الوضوح + الحدّة (تباين موضعي على الإضاءة) ============ */
+function boxBlur(src, w, h, r, tmp, out) {
+  // ثلاث مرات صندوقية ≈ غاوسي
+  let a = src, b = out;
+  for (let pass = 0; pass < 3; pass++) {
+    for (let y = 0; y < h; y++) { const o = y * w; let acc = 0; const L = r * 2 + 1;
+      for (let x = -r; x <= r; x++) acc += a[o + Math.min(w - 1, Math.max(0, x))];
+      for (let x = 0; x < w; x++) { tmp[o + x] = acc / L; acc += a[o + Math.min(w - 1, x + r + 1)] - a[o + Math.max(0, x - r)]; } }
+    for (let x = 0; x < w; x++) { let acc = 0; const L = r * 2 + 1;
+      for (let y = -r; y <= r; y++) acc += tmp[Math.min(h - 1, Math.max(0, y)) * w + x];
+      for (let y = 0; y < h; y++) { b[y * w + x] = acc / L; acc += tmp[Math.min(h - 1, y + r + 1) * w + x] - tmp[Math.max(0, y - r) * w + x]; } }
+    a = b;
+  }
+  return b;
+}
+function localContrast(img, p, amt) {
+  const w = img.width, h = img.height, d = img.data, N = w * h;
+  if (!w || !h) return;
+  const Y = new Float32Array(N), tmp = new Float32Array(N), bl = new Float32Array(N), add = new Float32Array(N);
+  for (let i = 0, j = 0; j < N; i += 4, j++) Y[j] = (0.2126 * d[i] + 0.7152 * d[i + 1] + 0.0722 * d[i + 2]) / 255;
+  const ops = [];
+  if (p.texture) ops.push([Math.max(1, Math.round(w * 0.0025)), p.texture / 100 * 0.55, "mid"]);
+  if (p.clarity) ops.push([Math.max(2, Math.round(w * 0.012)), p.clarity / 100 * 0.45, "mid"]);
+  if (p.sharp) ops.push([Math.max(1, Math.round(w / 3500)), p.sharp / 100 * 0.9, "all"]);
+  for (const [r, k0, mode] of ops) {
+    const k = k0 * amt; boxBlur(Y, w, h, r, tmp, bl);
+    for (let j = 0; j < N; j++) { const y = Y[j], m = mode === "mid" ? 1 - (2 * y - 1) ** 2 : 1; add[j] += (y - bl[j]) * k * m; }
+  }
+  for (let i = 0, j = 0; j < N; i += 4, j++) { const v = add[j] * 255; if (v) { d[i] += v; d[i + 1] += v; d[i + 2] += v; } }
+}
+function vignette(img, v) {
+  const w = img.width, h = img.height, d = img.data, cx = w / 2, cy = h / 2;
+  for (let y = 0; y < h; y++) { const dy = (y - cy) / cy;
+    for (let x = 0; x < w; x++) { const dx = (x - cx) / cx, rr = Math.sqrt(dx * dx + dy * dy) / Math.SQRT2;
+      const t = rr < 0.35 ? 0 : rr > 1 ? 1 : (rr - 0.35) / 0.65, m = t * t * (3 - 2 * t), f = 1 + v * 0.75 * m;
+      if (f !== 1) { const i = (y * w + x) * 4; d[i] *= f; d[i + 1] *= f; d[i + 2] *= f; } } }
 }

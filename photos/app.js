@@ -417,7 +417,7 @@ function paintAdj() {
   const grp = g => ADJ.filter(d => d.g === g).map(sl).join("");
   const hslOn = BANDS.some(([k]) => a["h_" + k] || a["s_" + k] || a["l_" + k]), cgOn = ["sh", "mid", "hi"].some(k => a[`cg_${k}_s`]);
   const ht = S.hslTab || "h";
-  $("#adjBox").innerHTML = `<div class="amt">${grp("amount")}</div>${a.lut ? `<div class="lutTag">🎯 مطابقة ألوان مفعّلة (${a.lut.n}³)</div>` : ""}<h4>الضوء</h4>${grp("الضوء")}<h4>اللون</h4>${grp("اللون")}
+  $("#adjBox").innerHTML = `<div class="amt">${grp("amount")}</div>${a.lut ? `<div class="lutTag">🎯 مطابقة ألوان مفعّلة (${a.lut.n}³)</div>` : ""}<h4>الضوء</h4>${grp("الضوء")}<h4>اللون</h4>${grp("اللون")}<h4>التفاصيل</h4>${grp("التفاصيل")}
     <details class="adv" ${S.openHsl ? "open" : ""} data-det="openHsl"><summary>ألوان محددة (HSL)${hslOn ? " <em>●</em>" : ""}</summary>
       <div class="seg mini3">${[["h", "درجة اللون"], ["s", "التشبع"], ["l", "الإضاءة"]].map(([k, l]) => `<button type="button" data-hsl="${k}" class="${ht === k ? "on" : ""}">${l}</button>`).join("")}</div>
       ${grp("hsl-" + ht)}</details>
