@@ -70,6 +70,10 @@ header h1 small{display:block;font-size:12.5px;color:var(--soft);font-weight:500
 .sl{display:grid;grid-template-columns:76px 1fr 44px;align-items:center;gap:8px;font-size:13px;padding:2px 0}
 .sl input{width:100%;accent-color:var(--teal);direction:ltr}
 .sl .v{font-size:12px;color:var(--soft);text-align:left;direction:ltr;font-variant-numeric:tabular-nums}
+.imps{display:flex;gap:14px;flex-wrap:wrap}
+.amt{background:var(--tan-t);border-radius:12px;padding:6px 10px;margin:6px 0 4px}
+.amt .sl .n{font-weight:700;color:var(--tan-d)}
+.lutTag{font-size:12px;color:#2F6F5E;background:#E8F3EE;border-radius:9px;padding:4px 9px;margin:4px 0;width:max-content}
 .sm2{font-size:12.5px;margin:2px 0 6px;display:inline-block}
 details.adv{margin-top:10px;border-top:1px solid var(--line);padding-top:8px}
 details.adv summary{cursor:pointer;font-size:13px;font-weight:700;color:var(--teal-d);list-style:none}
@@ -220,7 +224,7 @@ dialog .acts{display:flex;flex-direction:column;gap:8px;margin-top:14px}
           <button type="button" class="ghost sm" id="presetSave">حفظ كبريست</button>
           <button type="button" class="ghost sm" id="presetDel" hidden>حذف</button>
         </div>
-        <button type="button" class="lnk sm2" id="presetImport">⤓ استيراد بريست Lightroom (.xmp)</button>
+        <div class="imps"><button type="button" class="lnk sm2" id="presetImport">⤓ بريست Lightroom (.xmp)</button><button type="button" class="lnk sm2" id="lutImport">⤓ ملف LUT (.cube)</button><button type="button" class="lnk sm2" id="matchLR">🎯 مطابقة دقيقة مع Lightroom</button></div>
         <div id="adjBox"></div>
         <div class="adjActs">
           <button type="button" class="ghost sm" id="adjApplyAll">طبّق على كل الصور</button>

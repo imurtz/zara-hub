@@ -1,5 +1,5 @@
 // معالجة صور الفعاليات — بوابة زارة. كل شيء داخل المتصفح: لا Firebase ولا رفع ولا أي خادم.
-import { ADJ, ZERO, isZero, applyAdjust, histogram, fromXMP, BANDS } from "./adjust.js";
+import { ADJ, ZERO, isZero, applyAdjust, histogram, fromXMP, BANDS, parseCube, lutFromPair } from "./adjust.js";
 import { RATIOS, hijriOf, gregOf, cropRect, drawFooter, FONT_M, FONT_R, LOGO_FILL, titleCheck } from "./footer.js";
 
 const $ = s => document.querySelector(s);
@@ -417,7 +417,7 @@ function paintAdj() {
   const grp = g => ADJ.filter(d => d.g === g).map(sl).join("");
   const hslOn = BANDS.some(([k]) => a["h_" + k] || a["s_" + k] || a["l_" + k]), cgOn = ["sh", "mid", "hi"].some(k => a[`cg_${k}_s`]);
   const ht = S.hslTab || "h";
-  $("#adjBox").innerHTML = `<h4>الضوء</h4>${grp("الضوء")}<h4>اللون</h4>${grp("اللون")}
+  $("#adjBox").innerHTML = `<div class="amt">${grp("amount")}</div>${a.lut ? `<div class="lutTag">🎯 مطابقة ألوان مفعّلة (${a.lut.n}³)</div>` : ""}<h4>الضوء</h4>${grp("الضوء")}<h4>اللون</h4>${grp("اللون")}
     <details class="adv" ${S.openHsl ? "open" : ""} data-det="openHsl"><summary>ألوان محددة (HSL)${hslOn ? " <em>●</em>" : ""}</summary>
       <div class="seg mini3">${[["h", "درجة اللون"], ["s", "التشبع"], ["l", "الإضاءة"]].map(([k, l]) => `<button type="button" data-hsl="${k}" class="${ht === k ? "on" : ""}">${l}</button>`).join("")}</div>
       ${grp("hsl-" + ht)}</details>
@@ -506,6 +506,30 @@ $("#presetImport").onclick = () => {
     toast(`استُورد البريست «${last}» — التحويل تقريبي${miss.size ? " (تُجوهلت: " + [...miss].join("، ") + ")" : ""}`);
   };
   inp.click();
+};
+function pickFile(accept) { return new Promise(res => { const i = document.createElement("input"); i.type = "file"; i.accept = accept; i.onchange = () => res(i.files[0] || null); i.click(); }); }
+async function decodeTo(file, w) { const b = await createImageBitmap(file, { imageOrientation: "from-image", resizeWidth: w, resizeQuality: "high" }); const c = new OffscreenCanvas(b.width, b.height), x = c.getContext("2d", { willReadFrequently: true }); x.drawImage(b, 0, 0); b.close(); return x.getImageData(0, 0, c.width, c.height); }
+function useNewPreset(n) { F().preset = n; F().adj = { ...ZERO, ...PRESETS[n] }; S.items.forEach(it => delete it.adj); saveSoon(); paintAdj(); renderPreview(); }
+$("#lutImport").onclick = async () => {
+  const f = await pickFile(".cube"); if (!f) return;
+  try { const lut = parseCube(await f.text()); const n = f.name.replace(/\.cube$/i, ""); await savePreset(n, { ...ZERO, lut }); useNewPreset(n); toast(`استُورد «${n}» ✓`); }
+  catch (e) { toast("تعذّر قراءة الملف: " + (e.message || e)); }
+};
+$("#matchLR").onclick = async () => {
+  if (!(await ask("مطابقة ألوان Lightroom بدقة: اختر صورة أصلية، ثم نفس الصورة بعد تعديلها في Lightroom بالبريست (بدون قص ولا تدوير). الأداة تتعلّم الألوان منهما وتحفظها كبريست.", [["go", "اختر الصورتين"], ["x", "إلغاء"]])) === "x") return;
+  toast("1/2 — اختر الصورة الأصلية (قبل التعديل)");
+  const a = await pickFile("image/*"); if (!a) return;
+  toast("2/2 — اختر نفس الصورة بعد تعديل Lightroom");
+  const b = await pickFile("image/*"); if (!b) return;
+  try {
+    const A = await decodeTo(a, 1200), B = await decodeTo(b, 1200);
+    if (Math.abs(A.width / A.height - B.width / B.height) > 0.01) return toast("الصورتان بمقاسين مختلفين — صدّر من Lightroom بدون قص");
+    const Bs = A.height === B.height ? B : await decodeTo(b, A.width);
+    const lut = lutFromPair(A, Bs);
+    const n = (prompt("اسم البريست المطابق:", (F().preset ? F().preset + " — مطابق" : "مطابقة Lightroom")) || "").trim(); if (!n) return;
+    await savePreset(n, { ...ZERO, lut: { n: lut.n, b64: lut.b64 } }); useNewPreset(n);
+    toast(`حُفظ «${n}» ✓ — غطّت الصورة ${Math.round(lut.cover * 100)}% من الألوان${lut.cover < 0.08 ? " (استخدم صورة ألوانها أكثر تنوعاً لدقة أعلى)" : ""}`);
+  } catch (e) { toast("تعذّرت المطابقة: " + (e.message || e)); }
 };
 $("#presetSave").onclick = async () => {
   const n = (prompt("اسم البريست:", F().preset || "") || "").trim(); if (!n) return;

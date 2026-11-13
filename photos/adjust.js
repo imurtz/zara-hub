@@ -6,6 +6,7 @@ const BANDS = [["red", "الأحمر", 0, "#E0514A"], ["orange", "البرتقا
 export { BANDS };
 
 export const ADJ = [
+  { g: "amount", k: "amount", l: "قوة المؤثرات", min: 0, max: 100, step: 1, def: 100 },
   { g: "الضوء", k: "exposure",   l: "التعريض",  min: -3,   max: 3,   step: 0.05 },
   { g: "الضوء", k: "contrast",   l: "التباين",  min: -100, max: 100, step: 1 },
   { g: "الضوء", k: "highlights", l: "الإضاءات", min: -100, max: 100, step: 1 },
@@ -25,7 +26,8 @@ export const ADJ = [
   { g: "grade", k: "cg_bal", l: "التوازن", min: -100, max: 100, step: 1, adv: 1 }
 ];
 export const ZERO = Object.fromEntries(ADJ.map(a => [a.k, a.def || 0]));
-export const isZero = p => !p || ADJ.every(a => (p[a.k] ?? (a.def || 0)) === (a.def || 0) || (a.hue && !p[a.k.replace(/_h$/, "_s")]));
+export const isZero = p => !p || (!p.lut && ADJ.every(a => a.k === "amount" || (p[a.k] ?? (a.def || 0)) === (a.def || 0) || (a.hue && !p[a.k.replace(/_h$/, "_s")]))) || (p.amount === 0);
+const _isZeroOld = p => !p || ADJ.every(a => (p[a.k] ?? (a.def || 0)) === (a.def || 0) || (a.hue && !p[a.k.replace(/_h$/, "_s")]));
 
 const s2l = v => v <= 0.04045 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4);
 const l2s = v => v <= 0.0031308 ? v * 12.92 : 1.055 * Math.pow(v, 1 / 2.4) - 0.055;
@@ -90,8 +92,11 @@ export function applyAdjust(img, p) {
   const cg = [["sh", 0], ["mid", 1], ["hi", 2]].map(([k]) => { const s = (p[`cg_${k}_s`] || 0) / 100; return s ? hueRGB(p[`cg_${k}_h`] || 0).map(v => v * s * 0.32) : null; });
   const [c0, c1, c2] = cg, doCG = cg.some(Boolean), blend = 0.5 + ((p.cg_blend ?? 50) - 50) / 100, bal = (p.cg_bal || 0) / 200;
   const perPixel = T || doCG || sat !== 1 || vib !== 0;
+  const L3 = p.lut ? decodeLUT(p.lut) : null, N = L3 ? L3.n : 0, N1 = N - 1, LD = L3 ? L3.d : null;
+  const amt = Math.max(0, Math.min(1, (p.amount ?? 100) / 100)), mix = amt < 1;
   for (let i = 0; i < n; i += 4) {
-    let r = R[d[i]], g = G[d[i + 1]], b = B[d[i + 2]];
+    const r0 = d[i], g0 = d[i + 1], b0 = d[i + 2];
+    let r = R[r0], g = G[g0], b = B[b0];
     if (perPixel) {
       r /= 255; g /= 255; b /= 255;
       if (T || sat !== 1 || vib !== 0) {
@@ -125,6 +130,19 @@ export function applyAdjust(img, p) {
       }
       r *= 255; g *= 255; b *= 255;
     }
+    if (L3) {
+      // جدول ألوان ثلاثي الأبعاد (مطابقة Lightroom أو ملف .cube) — استيفاء ثلاثي
+      const fr = Math.max(0, Math.min(N1, r / 255 * N1)), fg = Math.max(0, Math.min(N1, g / 255 * N1)), fb = Math.max(0, Math.min(N1, b / 255 * N1));
+      const x0 = fr | 0, y0 = fg | 0, z0 = fb | 0, x1 = x0 < N1 ? x0 + 1 : x0, y1 = y0 < N1 ? y0 + 1 : y0, z1 = z0 < N1 ? z0 + 1 : z0;
+      const dx = fr - x0, dy = fg - y0, dz = fb - z0;
+      const at = (x, y, z) => ((z * N + y) * N + x) * 3;
+      const a000 = at(x0, y0, z0), a100 = at(x1, y0, z0), a010 = at(x0, y1, z0), a110 = at(x1, y1, z0), a001 = at(x0, y0, z1), a101 = at(x1, y0, z1), a011 = at(x0, y1, z1), a111 = at(x1, y1, z1);
+      const w000 = (1 - dx) * (1 - dy) * (1 - dz), w100 = dx * (1 - dy) * (1 - dz), w010 = (1 - dx) * dy * (1 - dz), w110 = dx * dy * (1 - dz), w001 = (1 - dx) * (1 - dy) * dz, w101 = dx * (1 - dy) * dz, w011 = (1 - dx) * dy * dz, w111 = dx * dy * dz;
+      r = LD[a000] * w000 + LD[a100] * w100 + LD[a010] * w010 + LD[a110] * w110 + LD[a001] * w001 + LD[a101] * w101 + LD[a011] * w011 + LD[a111] * w111;
+      g = LD[a000 + 1] * w000 + LD[a100 + 1] * w100 + LD[a010 + 1] * w010 + LD[a110 + 1] * w110 + LD[a001 + 1] * w001 + LD[a101 + 1] * w101 + LD[a011 + 1] * w011 + LD[a111 + 1] * w111;
+      b = LD[a000 + 2] * w000 + LD[a100 + 2] * w100 + LD[a010 + 2] * w010 + LD[a110 + 2] * w110 + LD[a001 + 2] * w001 + LD[a101 + 2] * w101 + LD[a011 + 2] * w011 + LD[a111 + 2] * w111;
+    }
+    if (mix) { r = r0 + (r - r0) * amt; g = g0 + (g - g0) * amt; b = b0 + (b - b0) * amt; }
     d[i] = r; d[i + 1] = g; d[i + 2] = b;
   }
   return img;
@@ -171,4 +189,72 @@ function DOMParserish(t0) {
   t.replace(/crs:([A-Za-z0-9]+)="([^"]*)"/g, (_, k, v) => { m[k] = v; });
   t.replace(/<crs:([A-Za-z0-9]+)>([^<]*)<\/crs:\1>/g, (_, k, v) => { m[k] = v; });
   this.get = k => m[k];
+}
+
+
+/* ============ جداول الألوان ثلاثية الأبعاد ============ */
+const _lutCache = new Map();
+function decodeLUT(l) {
+  if (_lutCache.has(l.b64)) return _lutCache.get(l.b64);
+  const bin = atob(l.b64), u = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i);
+  const v = { n: l.n, d: u }; if (_lutCache.size > 6) _lutCache.clear(); _lutCache.set(l.b64, v); return v;
+}
+function encodeLUT(n, u8) { let s = ""; for (let i = 0; i < u8.length; i += 0x8000) s += String.fromCharCode.apply(null, u8.subarray(i, i + 0x8000)); return { n, b64: btoa(s) }; }
+
+/** ملف .cube (Adobe/Resolve) → جدول 8-بت */
+export function parseCube(text) {
+  let n = 0; const vals = []; let dmin = [0, 0, 0], dmax = [1, 1, 1];
+  for (const line of text.split(/\r?\n/)) {
+    const t = line.trim(); if (!t || t[0] === "#") continue;
+    if (/^LUT_3D_SIZE/i.test(t)) { n = parseInt(t.split(/\s+/)[1]); continue; }
+    if (/^DOMAIN_MIN/i.test(t)) { dmin = t.split(/\s+/).slice(1).map(Number); continue; }
+    if (/^DOMAIN_MAX/i.test(t)) { dmax = t.split(/\s+/).slice(1).map(Number); continue; }
+    if (/^[A-Z_]/i.test(t)) continue;
+    const p = t.split(/\s+/).map(Number); if (p.length >= 3 && p.every(x => !isNaN(x))) vals.push(p[0], p[1], p[2]);
+  }
+  if (!n || vals.length < n * n * n * 3) throw new Error("ملف .cube غير صالح");
+  const u = new Uint8Array(n * n * n * 3);
+  for (let i = 0; i < u.length; i++) { const c = i % 3; u[i] = Math.max(0, Math.min(255, Math.round((vals[i] - dmin[c]) / (dmax[c] - dmin[c]) * 255))); }
+  return encodeLUT(n, u);
+}
+
+/** «مطابقة Lightroom»: يتعلّم جدول ألوان من صورة أصلية ونسختها المعدّلة (نفس القص) */
+export function lutFromPair(src, dst, n = 33) {
+  const N1 = n - 1, cells = n * n * n, sum = new Float64Array(cells * 3), wt = new Float64Array(cells);
+  const a = src.data, b = dst.data;
+  for (let i = 0; i < a.length; i += 4) {
+    const fr = a[i] / 255 * N1, fg = a[i + 1] / 255 * N1, fb = a[i + 2] / 255 * N1;
+    const x0 = Math.min(N1 - 1, fr | 0), y0 = Math.min(N1 - 1, fg | 0), z0 = Math.min(N1 - 1, fb | 0), dx = fr - x0, dy = fg - y0, dz = fb - z0;
+    for (let k = 0; k < 8; k++) {
+      const ox = k & 1, oy = (k >> 1) & 1, oz = (k >> 2) & 1;
+      const w = (ox ? dx : 1 - dx) * (oy ? dy : 1 - dy) * (oz ? dz : 1 - dz); if (w < 1e-4) continue;
+      const c = ((z0 + oz) * n + (y0 + oy)) * n + (x0 + ox);
+      // نحفظ «الفرق» عن اللون الأصلي للخلية حتى يمكن ملء الخلايا الفارغة بانسياب
+      sum[c * 3] += w * (b[i] - a[i]); sum[c * 3 + 1] += w * (b[i + 1] - a[i + 1]); sum[c * 3 + 2] += w * (b[i + 2] - a[i + 2]); wt[c] += w;
+    }
+  }
+  const off = new Float32Array(cells * 3), known = new Uint8Array(cells);
+  for (let c = 0; c < cells; c++) if (wt[c] > 0.5) { off[c * 3] = sum[c * 3] / wt[c]; off[c * 3 + 1] = sum[c * 3 + 1] / wt[c]; off[c * 3 + 2] = sum[c * 3 + 2] / wt[c]; known[c] = 1; }
+  // ملء الخلايا التي لا تمثّلها الصورة: انتشار من الجيران (فرق التعديل يتغير بانسياب)
+  const idx = (x, y, z) => (z * n + y) * n + x;
+  for (let pass = 0; pass < 60; pass++) {
+    let changed = 0;
+    for (let z = 0; z < n; z++) for (let y = 0; y < n; y++) for (let x = 0; x < n; x++) {
+      const c = idx(x, y, z); if (known[c] === 1) continue;
+      let s0 = 0, s1 = 0, s2 = 0, k = 0;
+      for (const [ax, ay, az] of [[x - 1, y, z], [x + 1, y, z], [x, y - 1, z], [x, y + 1, z], [x, y, z - 1], [x, y, z + 1]]) {
+        if (ax < 0 || ay < 0 || az < 0 || ax > N1 || ay > N1 || az > N1) continue;
+        const q = idx(ax, ay, az); if (!known[q]) continue; s0 += off[q * 3]; s1 += off[q * 3 + 1]; s2 += off[q * 3 + 2]; k++;
+      }
+      if (k) { off[c * 3] = s0 / k; off[c * 3 + 1] = s1 / k; off[c * 3 + 2] = s2 / k; known[c] = 2; changed++; }
+    }
+    if (!changed) break;
+  }
+  const u = new Uint8Array(cells * 3);
+  for (let z = 0; z < n; z++) for (let y = 0; y < n; y++) for (let x = 0; x < n; x++) {
+    const c = idx(x, y, z), base = [x, y, z].map(v => v / N1 * 255);
+    for (let ch = 0; ch < 3; ch++) u[c * 3 + ch] = Math.max(0, Math.min(255, Math.round(base[ch] + off[c * 3 + ch])));
+  }
+  const cover = known.reduce((s, v) => s + (v === 1), 0) / cells;
+  return { ...encodeLUT(n, u), cover };
 }
