@@ -26,7 +26,7 @@ export const ADJ = [
   { g: "grade", k: "cg_bal", l: "التوازن", min: -100, max: 100, step: 1, adv: 1 }
 ];
 export const ZERO = Object.fromEntries(ADJ.map(a => [a.k, a.def || 0]));
-export const isZero = p => !p || (!p.lut && ADJ.every(a => a.k === "amount" || (p[a.k] ?? (a.def || 0)) === (a.def || 0) || (a.hue && !p[a.k.replace(/_h$/, "_s")]))) || (p.amount === 0);
+export const isZero = p => !p || (!p.lut && !(p.tc && p.tc.length) && ADJ.every(a => a.k === "amount" || (p[a.k] ?? (a.def || 0)) === (a.def || 0) || (a.hue && !p[a.k.replace(/_h$/, "_s")]))) || (p.amount === 0);
 const _isZeroOld = p => !p || ADJ.every(a => (p[a.k] ?? (a.def || 0)) === (a.def || 0) || (a.hue && !p[a.k.replace(/_h$/, "_s")]));
 
 const s2l = v => v <= 0.04045 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4);
@@ -42,21 +42,39 @@ export function buildLUT(p) {
   const c = (p.contrast || 0) / 100, h = (p.highlights || 0) / 100, sh = (p.shadows || 0) / 100, w = (p.whites || 0) / 100, b = (p.blacks || 0) / 100;
   const pc = ["pc_sh", "pc_dk", "pc_lt", "pc_hi"].map(k => (p[k] || 0) / 100);
   const out = [new Uint8ClampedArray(256), new Uint8ClampedArray(256), new Uint8ClampedArray(256)];
+  const TC = p.tc && p.tc.length >= 2 ? monoCurve(p.tc) : null;   // منحنى النقاط (ToneCurvePV2012)
   for (let ch = 0; ch < 3; ch++) {
     let prev = 0;
     for (let i = 0; i < 256; i++) {
       let x = l2s(clamp(s2l(i / 255) * gains[ch] * ev));
       x = x + w * 0.16 * bell(x, 0.93, 0.13) + b * 0.12 * bell(x, 0.06, 0.12);
-      x = x + h * 0.2 * bell(x, 0.76, 0.17) + sh * 0.22 * bell(x, 0.24, 0.17);
+      x = x + h * 0.2 * bell(x, 0.86, 0.15) + sh * 0.22 * bell(x, 0.24, 0.17);
       // منحنى التون (Parametric) — أربع مناطق
       x = x + (pc[0] * bell(x, 0.12, 0.12) + pc[1] * bell(x, 0.37, 0.13) + pc[2] * bell(x, 0.63, 0.13) + pc[3] * bell(x, 0.88, 0.12)) * 0.13;
       if (c) { const s = x - 0.5; x = 0.5 + s * (1 + c * 0.9 * (1 - Math.min(1, Math.abs(s) * 2) ** 2)); }
       x = clamp(x);
+      if (TC) x = TC(x);
       if (x < prev) x = prev; prev = x;
       out[ch][i] = Math.round(x * 255);
     }
   }
   return out;
+}
+
+// منحنى رتيب ناعم يمر بالنقاط (Fritsch–Carlson) — النقاط بمقياس 0..255
+function monoCurve(pts) {
+  const P = pts.map(([x, y]) => [x / 255, y / 255]).sort((a, b) => a[0] - b[0]), n = P.length;
+  const dx = [], m = [], t = new Array(n);
+  for (let i = 0; i < n - 1; i++) { dx[i] = P[i + 1][0] - P[i][0] || 1e-6; m[i] = (P[i + 1][1] - P[i][1]) / dx[i]; }
+  t[0] = m[0]; t[n - 1] = m[n - 2];
+  for (let i = 1; i < n - 1; i++) t[i] = m[i - 1] * m[i] <= 0 ? 0 : (m[i - 1] + m[i]) / 2;
+  for (let i = 0; i < n - 1; i++) { if (!m[i]) { t[i] = t[i + 1] = 0; continue; } const a = t[i] / m[i], b = t[i + 1] / m[i], h = a * a + b * b; if (h > 9) { const k = 3 / Math.sqrt(h); t[i] = k * a * m[i]; t[i + 1] = k * b * m[i]; } }
+  return x => {
+    if (x <= P[0][0]) return P[0][1]; if (x >= P[n - 1][0]) return P[n - 1][1];
+    let i = 0; while (x > P[i + 1][0]) i++;
+    const h = dx[i], u = (x - P[i][0]) / h, u2 = u * u, u3 = u2 * u;
+    return (2 * u3 - 3 * u2 + 1) * P[i][1] + (u3 - 2 * u2 + u) * h * t[i] + (-2 * u3 + 3 * u2) * P[i + 1][1] + (u3 - u2) * h * t[i + 1];
+  };
 }
 
 // جداول HSL على 360 درجة (استيفاء بين مراكز الألوان الثمانية)
@@ -178,6 +196,8 @@ export function fromXMP(text) {
   a.cg_blend = v("ColorGradeBlending") != null ? num("ColorGradeBlending") : 50; a.cg_bal = num("ColorGradeBalance");
   if (!a.cg_bal && num("SplitToningBalance")) a.cg_bal = num("SplitToningBalance");
   for (const k in a) a[k] = Math.round(a[k] * 100) / 100;
+  const tcm = text.match(/<crs:ToneCurvePV2012>[\s\S]*?<\/crs:ToneCurvePV2012>/);
+  if (tcm) { const pts = [...tcm[0].matchAll(/<rdf:li>\s*(\d+)\s*,\s*(\d+)\s*<\/rdf:li>/g)].map(m => [+m[1], +m[2]]); if (pts.length >= 2 && pts.some(([x, y]) => x !== y)) a.tc = pts; }
   const name = (text.match(/<crs:Name>[\s\S]*?<rdf:li[^>]*>([^<]+)</) || [])[1] || "";
   const unsupported = ["Texture", "Sharpness", "PostCropVignetteAmount", "RedPrimaryHue", "ShadowTint", "LuminanceSmoothing"].filter(k => v(k) != null && num(k) !== 0);
   return { name: name.trim(), adj: a, unsupported };
