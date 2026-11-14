@@ -288,7 +288,7 @@ function paintCell(i) {
   const port = it.ar && it.ar < 1;
   el.innerHTML = (it.thumb ? `<img src="${it.thumb}" alt="" loading="lazy">` : `<span class="sk"></span>`) +
     `<em>${i + 1}</em>` + (it.faces && it.faces.length ? `<span class="fc">☺ ${it.faces.length}</span>` : "") +
-    (port ? `<span class="pt">عمودية</span>` : "") + (Object.keys(it.pos).length ? `<span class="ed">✎</span>` : "") + (it.adj ? `<span class="ad">🎨</span>` : "") +
+    (port ? `<span class="pt">عمودية</span>` : "") + (Object.keys(it.pos).length ? `<span class="ed">✎</span>` : "") + (it.adj ? `<span class="ad">🎨</span>` : hasTweak(it) ? `<span class="ad">🎚</span>` : "") +
     (it.status ? `<span class="st ${it.status}">${it.status === "done" ? "✓" : it.status === "fail" ? "✕" : it.status === "skip" ? "↷" : "…"}</span>` : "");
 }
 
@@ -476,9 +476,16 @@ function setCropMode(on) { S.cropMode = on; $("#cropModeBtn").classList.toggle("
 /* ============ الألوان ============ */
 // مطابقة المرجع: تصحيح محسوب لكل صورة على حدة (ما لم يكن للصورة تعديل خاص)
 const matching = () => !!(F().matchOn && F().ref && F().ref.stats);
+// ضبط يدوي لصورة بعينها فوق المطابقة (يُضاف إلى التصحيح المحسوب)
+const TWEAK_KEYS = ["exposure", "contrast", "highlights", "shadows", "whites", "blacks", "temp", "tint", "vibrance", "saturation"];
+const hasTweak = it => !!(it && it.tweak && TWEAK_KEYS.some(k => it.tweak[k]));
 const adjOf = it => {
   if (it && it.adj) return it.adj;
-  if (matching() && it && it.stats) return { ...matchAdj(it.stats, F().ref.stats), amount: F().adj?.amount ?? 100 };
+  if (matching() && it && it.stats) {
+    const a = { ...matchAdj(it.stats, F().ref.stats), amount: F().adj?.amount ?? 100 };
+    if (it.tweak) for (const k of TWEAK_KEYS) if (it.tweak[k]) a[k] = (a[k] || 0) + it.tweak[k];
+    return a;
+  }
   return F().adj || ZERO;
 };
 const curAdj = () => { const it = S.items[S.cur]; return it && it.adj ? it.adj : F().adj; };
@@ -492,7 +499,16 @@ function paintAdj() {
   const hslOn = BANDS.some(([k]) => a["h_" + k] || a["s_" + k] || a["l_" + k]), cgOn = ["sh", "mid", "hi"].some(k => a[`cg_${k}_s`]);
   const ht = S.hslTab || "h";
   $("#refBox").innerHTML = refHTML();
-  if (matching() && !own) { $("#adjBox").innerHTML = `<div class="amt">${ADJ.filter(d => d.k === "amount").map(sl).join("")}</div><div class="matchNote">🎯 المطابقة مفعّلة: لكل صورة تصحيح محسوب لها لتقترب من المرجع (الأبيض، الميل اللوني، السطوع، التباين، التشبع). «قوة المؤثرات» تخفف المطابقة.</div>`; $("#adjReset").hidden = true; $("#adjTag").textContent = "مطابقة المرجع"; paintPresets(); return; }
+  if (matching() && !own) {
+    const tw = (it && it.tweak) || {}, slT = d => sl({ ...d }).replace(/value="[^"]*"/g, `value="${tw[d.k] || 0}"`);
+    const grpT = g => ADJ.filter(d => d.g === g && TWEAK_KEYS.includes(d.k)).map(slT).join("");
+    $("#adjBox").innerHTML = `<div class="amt">${ADJ.filter(d => d.k === "amount").map(sl).join("")}</div>
+      <div class="matchNote">🎯 المطابقة مفعّلة: لكل صورة تصحيح محسوب لها لتقترب من المظهر المعتمد. «قوة المؤثرات» تخفف المطابقة.</div>
+      ${it ? `<div class="twHead"><b>🎚 ضبط هذه الصورة</b><small>${esc(it.name)} — يُضاف فوق المطابقة (0 = بدون تغيير)</small></div>
+      <h4>الضوء</h4>${grpT("الضوء")}<h4>اللون</h4>${grpT("اللون")}
+      <div class="adjActs"><button type="button" class="ghost sm" data-tw="all" ${hasTweak(it) ? "" : "disabled"}>انسخ هذا الضبط لكل الصور</button><button type="button" class="lnk" data-tw="reset" ${hasTweak(it) ? "" : "hidden"}>تصفير ضبط الصورة</button></div>` : ""}`;
+    $("#adjReset").hidden = true; $("#adjTag").textContent = "مطابقة المرجع"; paintPresets(); return;
+  }
   $("#adjBox").innerHTML = `<div class="amt">${grp("amount")}</div>${a.lut ? `<div class="lutTag">🎯 مطابقة ألوان مفعّلة (${a.lut.n}³)</div>` : ""}<h4>الضوء</h4>${grp("الضوء")}<h4>اللون</h4>${grp("اللون")}<h4>التفاصيل</h4>${grp("التفاصيل")}
     <details class="adv" ${S.openHsl ? "open" : ""} data-det="openHsl"><summary>ألوان محددة (HSL)${hslOn ? " <em>●</em>" : ""}</summary>
       <div class="seg mini3">${[["h", "درجة اللون"], ["s", "التشبع"], ["l", "الإضاءة"]].map(([k, l]) => `<button type="button" data-hsl="${k}" class="${ht === k ? "on" : ""}">${l}</button>`).join("")}</div>
@@ -508,7 +524,8 @@ function setAdjVal(k, v) {
   const d = ADJ.find(x => x.k === k), it = S.items[S.cur];
   if (!d || isNaN(v)) return;
   v = Math.max(d.min, Math.min(d.max, v));
-  if (it && it.adj) it.adj = { ...it.adj, [k]: v }; else { F().adj = { ...F().adj, [k]: v }; F().preset = ""; saveSoon(); }
+  if (matching() && it && !it.adj && k !== "amount") { it.tweak = { ...(it.tweak || {}), [k]: v }; paintCell(S.cur); const ta = document.querySelector('[data-tw="all"]'), tr = document.querySelector('[data-tw="reset"]'); if (ta) ta.disabled = !hasTweak(it); if (tr) tr.hidden = !hasTweak(it); }
+  else if (it && it.adj) it.adj = { ...it.adj, [k]: v }; else { F().adj = { ...F().adj, [k]: v }; F().preset = ""; saveSoon(); }
   const rg = document.querySelector(`[data-adj="${k}"]`), nb = document.querySelector(`[data-adjn="${k}"]`);
   if (rg && +rg.value !== v) rg.value = v;
   if (nb && document.activeElement !== nb) nb.value = v;
@@ -523,6 +540,12 @@ document.addEventListener("change", e => { const n = e.target.closest("[data-adj
 document.addEventListener("dblclick", e => { const r = e.target.closest("[data-adj]"); if (!r) return; r.value = r.dataset.def || 0; r.dispatchEvent(new Event("input", { bubbles: true })); });
 document.addEventListener("click", e => {
   const hb = e.target.closest("[data-hsl]"); if (hb) { S.hslTab = hb.dataset.hsl; paintAdj(); return; }
+  const tb = e.target.closest("[data-tw]"); if (tb) {
+    const it = S.items[S.cur]; if (!it) return;
+    if (tb.dataset.tw === "reset") { delete it.tweak; paintCell(S.cur); }
+    if (tb.dataset.tw === "all") { const t = { ...it.tweak }; S.items.forEach((x, i) => { x.tweak = { ...t }; paintCell(i); }); toast("نُسخ ضبط الصورة لكل الصور"); }
+    paintAdj(); renderPreview(); return;
+  }
   const sc = e.target.closest("[data-scope]"); if (sc) {
     const it = S.items[S.cur]; if (!it) return;
     if (sc.dataset.scope === "one" && !it.adj) it.adj = { ...F().adj };
@@ -853,7 +876,7 @@ async function exportAll() {
     zip.length = 0; zipBytes = 0;
   };
 
-  const project = { version: 1, createdAt: new Date().toISOString(), source: S.srcName, settings: { ...f, photographers: undefined }, quality: q, items: S.items.map((it, i) => ({ name: it.name, out: fileName(i, it.name), faces: it.faces, pos: it.pos, adj: it.adj || null })) };
+  const project = { version: 1, createdAt: new Date().toISOString(), source: S.srcName, settings: { ...f, photographers: undefined }, quality: q, items: S.items.map((it, i) => ({ name: it.name, out: fileName(i, it.name), faces: it.faces, pos: it.pos, adj: it.adj || null, tweak: it.tweak || null })) };
   if (out) await writeFile(out, "مشروع.json", JSON.stringify(project, null, 2));
 
   S.running = true; document.body.classList.add("running");
