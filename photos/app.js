@@ -279,7 +279,20 @@ function paintGrid() {
   $("#srcInfo").innerHTML = S.items.length ? `<b>${esc(S.srcName)}</b> · ${S.items.length} صورة` : "";
   $("#grid").innerHTML = S.items.map((_, i) => `<button type="button" class="cell" data-i="${i}"></button>`).join("");
   S.items.forEach((_, i) => paintCell(i));
+  $("#grid").insertAdjacentHTML("beforeend", `<button type="button" class="cell addCell" id="addMore" title="إضافة صور للدفعة الحالية — تعديلاتك تبقى كما هي">＋<small>إضافة صور</small></button>`);
 }
+// إضافة صور إلى الدفعة الحالية دون المساس بالتعديلات والقص الموجودة
+function addMore(files) {
+  const have = new Set(S.items.map(x => x.name + "|" + (x.file ? x.file.size : "")));
+  const add = [...files].filter(f => IMG_RE.test(f.name) && !have.has(f.name + "|" + f.size))
+    .sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true }))
+    .map(f => ({ name: f.name, file: f, faces: null, thumb: null, pos: {}, status: "" }));
+  if (!add.length) return toast("لا توجد صور جديدة (المكرر يُتجاهل)");
+  const first = S.items.length; S.items.push(...add);
+  paintGrid(); analyze(); go(first);
+  toast(`أُضيفت ${add.length} صورة · المجموع ${S.items.length}`);
+}
+$("#addInp").onchange = e => { addMore(e.target.files); e.target.value = ""; };
 function paintCell(i) {
   const el = document.querySelector(`.cell[data-i="${i}"]`); if (!el) return;
   const it = S.items[i];
@@ -880,6 +893,7 @@ document.addEventListener("click", e => {
   if (e.target.closest("[data-add]")) return addLogo();
   const r = e.target.closest("[data-ratio]"); if (r) { S.ratio = r.dataset.ratio; renderPreview(); return; }
   const rm = e.target.closest("[data-rm]"); if (rm) { e.stopPropagation(); removeItem(+rm.dataset.rm); return; }
+  if (e.target.closest("#addMore")) { $("#addInp").click(); return; }
   const c = e.target.closest(".cell"); if (c) { go(+c.dataset.i); return; }
 });
 // إزالة صورة من التعديل والقص والتصدير فقط — الملف الأصلي يبقى كما هو
