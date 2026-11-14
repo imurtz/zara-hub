@@ -303,7 +303,17 @@ function assetsNow() {
   const ps = (F().partners || []).filter(n => by(n));
   return { mark: S.mark, partners: ps.map(by), partnerFills: ps.map(fill), event: F().event && by(F().event) ? by(F().event) : null, eventFill: fill(F().event), founding: S.founding };
 }
-async function renderPreview() {
+// تُعرض الصورة كاملة داخل المساحة المتاحة أياً كان حجمها (الصفحة المستقلة أو داخل لوحة الموظفين)
+function fitCanvas() {
+  const cv = $("#prev"), box = $("#prevWrap"); if (!cv || !box) return;
+  const bw = box.clientWidth - 4, bh = box.clientHeight - 4;
+  if (bw <= 0 || bh <= 0 || !cv.width || !cv.height) return;
+  const k = Math.min(bw / cv.width, bh / cv.height);
+  cv.style.width = Math.floor(cv.width * k) + "px"; cv.style.height = Math.floor(cv.height * k) + "px";
+}
+if ("ResizeObserver" in window) new ResizeObserver(() => fitCanvas()).observe(document.getElementById("prevWrap"));
+async function renderPreview() { await _renderPreview(); fitCanvas(); }
+async function _renderPreview() {
   const cv = $("#prev"), it = S.items[S.cur];
   $("#prevWrap").classList.toggle("empty", !it);
   $$("[data-ratio]").forEach(b => b.classList.toggle("on", b.dataset.ratio === S.ratio));
