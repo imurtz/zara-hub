@@ -432,10 +432,10 @@ function drawCropMode(cv, it, r) {
   // معاينة صغيرة للنتيجة النهائية (مع الحقوق) أعلى الإطار
   cropView = { k, x, y, w, h, hs, W, H };
   $("#prevMeta").innerHTML = `✂️ وضع القص — اسحب الإطار لتحريكه، واسحب الزوايا لتكبيره أو تصغيره · المقاس ${S.ratio} ثابت · <button type="button" class="lnk" id="cropDone">تم ✓</button>`;
-  $("#cropDone").onclick = () => setCropMode(false);
+  $("#cropDone").onclick = () => setTab("color");
   cv.style.cursor = "move";
 }
-function setCropMode(on) { S.cropMode = on; $("#cropModeBtn").classList.toggle("on", on); $("#prevWrap").classList.toggle("cropping", on); renderPreview(); }
+function setCropMode(on) { S.cropMode = on; $("#cropModeBtn").classList.toggle("on", on); $("#cropModeBtn").textContent = on ? "✓ إنهاء القص" : "✂️ حدد القص على الصورة"; $("#prevWrap").classList.toggle("cropping", on); renderPreview(); }
 (() => {
   const cv = $("#prev"); let drag = null;
   const pt = e => { const p = e.touches ? e.touches[0] : e, b = cv.getBoundingClientRect(); return { x: (p.clientX - b.left) * cv.width / b.width, y: (p.clientY - b.top) * cv.height / b.height }; };
@@ -468,9 +468,23 @@ function setCropMode(on) { S.cropMode = on; $("#cropModeBtn").classList.toggle("
   addEventListener("mousemove", move); addEventListener("touchmove", e => { if (drag) { e.preventDefault(); move(e); } }, { passive: false });
   addEventListener("mouseup", () => drag = null); addEventListener("touchend", () => drag = null);
   cv.addEventListener("wheel", e => { if (!S.cropMode || !prevRect) return; e.preventDefault(); const cb = curBox(); setBox({ ...cb, z: cb.z * (e.deltaY > 0 ? 1.05 : 0.95) }); }, { passive: false });
-  cv.addEventListener("dblclick", () => { if (S.cropMode) setCropMode(false); });
-  addEventListener("keydown", e => { if (e.key === "Escape" && S.cropMode) setCropMode(false); if ((e.key === "c" || e.key === "ص") && !/INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName) && S.items.length) setCropMode(!S.cropMode); });
+  cv.addEventListener("dblclick", () => { if (S.cropMode) setTab("color"); });
+  addEventListener("keydown", e => { if (e.key === "Escape" && S.cropMode) setTab("color"); if ((e.key === "c" || e.key === "ص") && !/INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName) && S.items.length) setTab(S.tab === "crop" ? "color" : "crop"); });
   $("#cropModeBtn").onclick = () => { if (!S.items.length) return toast("اختر الصور أولاً"); setCropMode(!S.cropMode); };
+})();
+
+/* ============ تبويبات اللوحة الجانبية ============ */
+function setTab(t) {
+  $$("#sideTabs [data-tab]").forEach(b => b.classList.toggle("on", b.dataset.tab === t));
+  $$(".pane[data-pane]").forEach(p => p.hidden = p.dataset.pane !== t);
+  S.tab = t;
+  // تبويب القص يفتح وضع القص على الصورة الكبيرة مباشرة، والخروج منه يغلقه
+  if (t === "crop" && S.items.length && !S.cropMode) setCropMode(true);
+  if (t !== "crop" && S.cropMode) setCropMode(false);
+}
+(() => {
+  $("#sideTabs").addEventListener("click", e => { const b = e.target.closest("[data-tab]"); if (b) setTab(b.dataset.tab); });
+  const b2 = $("#cropModeBtn2"); if (b2) { b2.onclick = null; b2.setAttribute("onclick", ""); b2.addEventListener("click", () => { if (!S.items.length) return toast("اختر الصور أولاً"); setTab(S.tab === "crop" ? "color" : "crop"); }); }
 })();
 
 /* ============ الألوان ============ */
@@ -809,6 +823,7 @@ document.addEventListener("click", e => {
 function go(i) {
   if (!S.items.length) return;
   const old = S.cur; S.cur = (i + S.items.length) % S.items.length; paintCell(old); paintCell(S.cur); paintAdj(); renderPreview();
+  const el = document.querySelector(`.cell[data-i="${S.cur}"]`); if (el) el.scrollIntoView({ block: "nearest", inline: "center", behavior: "smooth" });
 }
 $("#prevNext").onclick = () => go(S.cur + 1); $("#prevPrev").onclick = () => go(S.cur - 1);
 addEventListener("keydown", e => { if (/INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName)) return; if (e.key === "ArrowLeft") go(S.cur + 1); if (e.key === "ArrowRight") go(S.cur - 1); });

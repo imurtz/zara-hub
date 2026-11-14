@@ -108,7 +108,204 @@ function hueRGB(h) { // لون صافٍ من الدرجة (مطروحاً منه
 }
 
 /** يطبّق التعديل على ImageData في مكانه */
+/* =====================================================================
+   محرك المعالجة (بأسلوب Lightroom):
+   1) خطي بدقة عشرية: توازن أبيض بالتكيّف اللوني (Bradford) + التعريض بالـEV.
+   2) نغمات موضعية: تُفصل الإضاءة إلى «قاعدة» ناعمة تحافظ على الحواف (مرشّح مُوجَّه سريع) و«تفاصيل»؛
+      الظلال/الإضاءات تعمل على القاعدة فتفتح المناطق وتحفظ تباينها الداخلي، والوضوح يقوّي التفاصيل.
+   3) التباين/الأبيض/الأسود بوحدات «ستوب» حول الرمادي المتوسط + كتف ناعم يمنع الحرق القاسي.
+   4) اللون في فضاء Oklab الإدراكي (تشبع/حيوية/HSL/تدرج) عبر جدول ثلاثي الأبعاد سريع.
+   ===================================================================== */
+const S2L = new Float32Array(256); for (let i = 0; i < 256; i++) S2L[i] = s2l(i / 255);
+const L2S_N = 4096, L2S = new Float32Array(L2S_N + 1); for (let i = 0; i <= L2S_N; i++) L2S[i] = l2s(i / L2S_N);
+const enc = v => v <= 0 ? 0 : v >= 1 ? 1 : L2S[(v * L2S_N + 0.5) | 0];
+const MID = Math.log2(0.18);
+// لوغاريتم سريع بجدول (للقيم ≤ 1)
+const LGN = 65536, LGT = new Float32Array(LGN + 2); for (let q = 0; q <= LGN + 1; q++) LGT[q] = Math.log2(Math.max(q / LGN, 1e-5));
+const flog2 = Y => { if (Y >= 1) return Math.log2(Y); const f = Y * LGN, q = f | 0; return LGT[q] + (LGT[q + 1] - LGT[q]) * (f - q); };
+
+// توازن الأبيض: إزاحة بالـ«مايرد» على منحنى الإضاءة النهارية + صبغة أخضر/أرجواني، ثم Bradford إلى D65
+function cctXY(K) {
+  K = Math.max(2500, Math.min(25000, K));
+  const x = K <= 7000 ? -4.607e9 / K ** 3 + 2.9678e6 / K ** 2 + 0.09911e3 / K + 0.244063 : -2.0064e9 / K ** 3 + 1.9018e6 / K ** 2 + 0.24748e3 / K + 0.23704;
+  return [x, -3 * x * x + 2.87 * x - 0.275];
+}
+const BR = [[0.8951, 0.2664, -0.1614], [-0.7502, 1.7135, 0.0367], [0.0389, -0.0685, 1.0296]];
+const BRi = [[0.9869929, -0.1470543, 0.1599627], [0.4323053, 0.5183603, 0.0492912], [-0.0085287, 0.0400428, 0.9684867]];
+const RGB2XYZ = [[0.4124, 0.3576, 0.1805], [0.2126, 0.7152, 0.0722], [0.0193, 0.1192, 0.9505]];
+const XYZ2RGB = [[3.2406, -1.5372, -0.4986], [-0.9689, 1.8758, 0.0415], [0.0557, -0.2040, 1.0570]];
+const mm = (A, B) => A.map((r, i) => B[0].map((_, j) => r[0] * B[0][j] + r[1] * B[1][j] + r[2] * B[2][j]));
+const mv3 = (A, v) => A.map(r => r[0] * v[0] + r[1] * v[1] + r[2] * v[2]);
+function wbMatrix(temp, tint) {
+  if (!temp && !tint) return null;
+  // موجب الحرارة = أدفأ: نفترض أن الإضاءة كانت أبرد ونكيّفها إلى D65
+  const mired = 1e6 / 6504 - temp * 0.75, [x, y0] = cctXY(1e6 / Math.max(40, mired)), y = y0 - tint * 0.00045;
+  const src = [x / y, 1, (1 - x - y) / y], dst = [0.95047, 1, 1.08883];
+  const cs = mv3(BR, src), cd = mv3(BR, dst), D = [[cd[0] / cs[0], 0, 0], [0, cd[1] / cs[1], 0], [0, 0, cd[2] / cs[2]]];
+  return mm(XYZ2RGB, mm(BRi, mm(D, mm(BR, RGB2XYZ))));
+}
+
+// Oklab
+function toOklab(r, g, b) {
+  const l = Math.cbrt(0.4122214708 * r + 0.5363325363 * g + 0.0514459929 * b), m = Math.cbrt(0.2119034982 * r + 0.6806995451 * g + 0.1073969566 * b), s = Math.cbrt(0.0883024619 * r + 0.2817188376 * g + 0.6299787005 * b);
+  return [0.2104542553 * l + 0.7936177850 * m - 0.0040720468 * s, 1.9779984951 * l - 2.4285922050 * m + 0.4505937099 * s, 0.0259040371 * l + 0.7827717662 * m - 0.8086757660 * s];
+}
+function fromOklab(L, a, b) {
+  const l = (L + 0.3963377774 * a + 0.2158037573 * b) ** 3, m = (L - 0.1055613458 * a - 0.0638541728 * b) ** 3, s = (L - 0.0894841775 * a - 1.2914855480 * b) ** 3;
+  return [4.0767416621 * l - 3.3077115913 * m + 0.2309699292 * s, -1.2684380046 * l + 2.6097574011 * m - 0.3413193965 * s, -0.0041960863 * l - 0.7034186147 * m + 1.7076147010 * s];
+}
+// مراكز الألوان الثمانية على تدرّج Oklch
+const OK_BANDS = [["red", 27], ["orange", 55], ["yellow", 100], ["green", 142], ["aqua", 195], ["blue", 258], ["purple", 300], ["magenta", 338]];
+const hueOk = h => { const c = hueRGB(h).map(v => s2l(Math.max(0, Math.min(1, v + 0.5)))); const [, a, b] = toOklab(...c); const n = Math.hypot(a, b) || 1; return [a / n, b / n]; };
+
+// جدول اللون ثلاثي الأبعاد (منحنيات + Oklab) — يُبنى مرة لكل إعداد
+const _clutCache = new Map();
+function colorLUT(p) {
+  const key = JSON.stringify([p.tc, p.tcR, p.tcG, p.tcB, p.pc_sh, p.pc_dk, p.pc_lt, p.pc_hi, p.saturation, p.vibrance, ...ADJ.filter(d => /^(h|s|l)_|^cg_/.test(d.k)).map(d => p[d.k])]);
+  if (_clutCache.has(key)) return _clutCache.get(key);
+  const n = 33, out = new Float32Array(n * n * n * 3);
+  const TC = p.tc && p.tc.length >= 2 ? monoCurve(p.tc) : null, TCC = ["tcR", "tcG", "tcB"].map(k => p[k] && p[k].length >= 2 ? monoCurve(p[k]) : null);
+  const pc = ["pc_sh", "pc_dk", "pc_lt", "pc_hi"].map(k => (p[k] || 0) / 100), hasPC = pc.some(Boolean);
+  const sat = 1 + (p.saturation || 0) / 100, vib = (p.vibrance || 0) / 100;
+  const hsl = OK_BANDS.map(([k, c]) => [c, (p["h_" + k] || 0), (p["s_" + k] || 0) / 100, (p["l_" + k] || 0) / 100]), hasHSL = hsl.some(x => x[1] || x[2] || x[3]);
+  const cgv = ["sh", "mid", "hi", "gl"].map(k => { const s = (p[`cg_${k}_s`] || 0) / 100; if (!s) return null; const [a, b] = hueOk(p[`cg_${k}_h`] || 0); return [a * s * 0.07, b * s * 0.07]; });
+  const blend = 0.5 + ((p.cg_blend ?? 50) - 50) / 100, bal = (p.cg_bal || 0) / 200;
+  const band = h => { // استيفاء بين أقرب مركزين
+    let i = OK_BANDS.length - 1; for (let j = 0; j < OK_BANDS.length; j++) if (OK_BANDS[j][1] <= h) i = j;
+    const A = hsl[i], B = hsl[(i + 1) % hsl.length], span = ((B[0] - A[0]) + 360) % 360 || 360, f = (((h - A[0]) + 360) % 360) / span;
+    return [A[1] + (B[1] - A[1]) * f, A[2] + (B[2] - A[2]) * f, A[3] + (B[3] - A[3]) * f];
+  };
+  for (let z = 0, o = 0; z < n; z++) for (let y = 0; y < n; y++) for (let x = 0; x < n; x++, o += 3) {
+    let r = x / (n - 1), g = y / (n - 1), b = z / (n - 1);
+    if (hasPC) { const f = v => v + (pc[0] * bell(v, 0.12, 0.12) + pc[1] * bell(v, 0.37, 0.13) + pc[2] * bell(v, 0.63, 0.13) + pc[3] * bell(v, 0.88, 0.12)) * 0.13; r = f(r); g = f(g); b = f(b); }
+    if (TC) { r = TC(clamp(r)); g = TC(clamp(g)); b = TC(clamp(b)); }
+    if (TCC[0]) r = TCC[0](clamp(r)); if (TCC[1]) g = TCC[1](clamp(g)); if (TCC[2]) b = TCC[2](clamp(b));
+    let [L, A, Bb] = toOklab(s2l(clamp(r)), s2l(clamp(g)), s2l(clamp(b)));
+    let C = Math.hypot(A, Bb), h = (Math.atan2(Bb, A) * 180 / Math.PI + 360) % 360;
+    if (C > 1e-4) {
+      const C0 = C;
+      if (hasHSL) { const [dh, ds, dl] = band(h), w = Math.min(1, C0 / 0.06); h = (h + dh * 0.25 * w + 360) % 360; C *= 1 + ds * w; L += dl * 0.12 * w * (1 - Math.abs(2 * L - 1) * 0.4); }
+      // الحيوية: تقوّي الباهت أكثر، وتحمي البشرة (دافئة متوسطة التشبع)
+      const skin = h > 25 && h < 80 && C0 < 0.13 ? 0.45 : 1;
+      C *= sat * (1 + vib * Math.max(0, 1 - C0 / 0.2) * skin);
+      const hr = h * Math.PI / 180; A = Math.max(0, C) * Math.cos(hr); Bb = Math.max(0, C) * Math.sin(hr);
+    }
+    if (cgv.some(Boolean)) {
+      const Y = L + bal, q1 = 1 - Y / blend, q2 = (Y - (1 - blend)) / blend, ws = q1 > 0 ? q1 * Math.sqrt(q1) : 0, wh = q2 > 0 ? q2 * Math.sqrt(q2) : 0, wm = Math.max(0, 1 - ws - wh) * 0.8;
+      for (const [v, w] of [[cgv[0], ws], [cgv[1], wm], [cgv[2], wh], [cgv[3], 1]]) if (v && w) { A += v[0] * w; Bb += v[1] * w; }
+    }
+    let [R, G, B] = fromOklab(L, A, Bb);
+    // خارج النطاق: نقرّب نحو الرمادي بدل القص القاسي
+    const mx = Math.max(R, G, B), mn = Math.min(R, G, B);
+    if (mx > 1 || mn < 0) { const Yl = 0.2126 * R + 0.7152 * G + 0.0722 * B, yl = clamp(Yl); let k = 1; if (mx > 1 && mx - Yl > 1e-6) k = Math.min(k, (1 - yl) / (mx - Yl)); if (mn < 0 && Yl - mn > 1e-6) k = Math.min(k, yl / (Yl - mn)); R = yl + (R - Yl) * k; G = yl + (G - Yl) * k; B = yl + (B - Yl) * k; }
+    out[o] = enc(R); out[o + 1] = enc(G); out[o + 2] = enc(B);
+  }
+  const v = { n, d: out, identity: !TC && !TCC.some(Boolean) && !hasPC && !hasHSL && sat === 1 && !vib && !cgv.some(Boolean) };
+  if (_clutCache.size > 8) _clutCache.clear(); _clutCache.set(key, v); return v;
+}
+
+// مرشّح مُوجَّه سريع على نسخة مصغّرة من لوغاريتم الإضاءة (يحفظ الحواف ويمنع الهالات)
+function baseLayer(lowSum, lowCnt, w, h, f) {
+  const I = new Float32Array(w * h); for (let i = 0; i < I.length; i++) I[i] = lowSum[i] / Math.max(1, lowCnt[i]);
+  const r = Math.max(2, Math.round(Math.max(w, h) * 0.035)), eps = 0.35;
+  const box = src => { const t = new Float32Array(w * h), o = new Float32Array(w * h), L = 2 * r + 1;
+    for (let y = 0; y < h; y++) { let a = 0; const ro = y * w; for (let x = -r; x <= r; x++) a += src[ro + Math.min(w - 1, Math.max(0, x))]; for (let x = 0; x < w; x++) { t[ro + x] = a / L; a += src[ro + Math.min(w - 1, x + r + 1)] - src[ro + Math.max(0, x - r)]; } }
+    for (let x = 0; x < w; x++) { let a = 0; for (let y = -r; y <= r; y++) a += t[Math.min(h - 1, Math.max(0, y)) * w + x]; for (let y = 0; y < h; y++) { o[y * w + x] = a / L; a += t[Math.min(h - 1, y + r + 1) * w + x] - t[Math.max(0, y - r) * w + x]; } }
+    return o; };
+  const II = new Float32Array(w * h); for (let i = 0; i < I.length; i++) II[i] = I[i] * I[i];
+  const mI = box(I), mII = box(II), A = new Float32Array(w * h), B = new Float32Array(w * h);
+  for (let i = 0; i < I.length; i++) { const v = mII[i] - mI[i] * mI[i], a = v / (v + eps); A[i] = a; B[i] = mI[i] - a * mI[i]; }
+  return { a: box(A), b: box(B), w, h, f };
+}
+
 export function applyAdjust(img, p) {
+  if (isZero(p)) return img;
+  p = { ...ZERO, ...p };
+  if (p.lut) return applyAdjustLegacy(img, p);
+  if (p.auto) Object.assign(p, autoStats(img, p.auto / 100, p.autoWb !== 0));
+  const W = img.width, H = img.height, d = img.data, N = W * H;
+  // 1) مصفوفة الأبيض + المكاسب التلقائية + التعريض
+  const ag = p._g || [1, 1, 1], WB = wbMatrix(p.temp || 0, p.tint || 0) || [[1, 0, 0], [0, 1, 0], [0, 0, 1]], ev = Math.pow(2, (p.exposure || 0) + (p._ev || 0));
+  const M = WB.map(r => r.map((v, j) => v * ag[j] * ev));
+  const sh = (p.shadows || 0) / 100, hi = (p.highlights || 0) / 100, wh = (p.whites || 0) / 100, bl = (p.blacks || 0) / 100, ct = (p.contrast || 0) / 100;
+  const cla = (p.clarity || 0) / 100, local = !!(sh || hi || cla) && W > 8 && H > 8;
+  const amt = Math.max(0, Math.min(1, (p.amount ?? 100) / 100)), mix = amt < 1;
+  const CL = colorLUT(p), cn = CL.n, cn1 = cn - 1, CD = CL.d;
+  // 2) لوغاريتم الإضاءة (للطبقة القاعدية)
+  let logL = null, base = null;
+  if (local) {
+    logL = new Float32Array(N);
+    // معاملات الإضاءة بعد المصفوفة: Y = cr*r + cg*g + cb*b
+    const cr = 0.2126 * M[0][0] + 0.7152 * M[1][0] + 0.0722 * M[2][0], cgc = 0.2126 * M[0][1] + 0.7152 * M[1][1] + 0.0722 * M[2][1], cb = 0.2126 * M[0][2] + 0.7152 * M[1][2] + 0.0722 * M[2][2];
+    const f = Math.max(1, Math.round(Math.max(W, H) / 640)), lw = Math.ceil(W / f), lh = Math.ceil(H / f), sum = new Float32Array(lw * lh), cnt = new Uint16Array(lw * lh);
+    const XL = new Int32Array(W); for (let x = 0; x < W; x++) XL[x] = (x / f) | 0;
+    for (let y = 0, i = 0, j = 0; y < H; y++) { const ro = ((y / f) | 0) * lw;
+      for (let x = 0; x < W; x++, i += 4, j++) { const lv = flog2(cr * S2L[d[i]] + cgc * S2L[d[i + 1]] + cb * S2L[d[i + 2]]); logL[j] = lv; const q = ro + XL[x]; sum[q] += lv; cnt[q]++; } }
+    base = baseLayer(sum, cnt, lw, lh, f);
+  }
+  const bw = base ? base.w : 0, bh = base ? base.h : 0, bf = base ? base.f : 1;
+  // جداول مسبقة للنغمات (بوحدات ستوب) — تُغني عن الحساب الثقيل لكل بكسل
+  const LO = -16, HI = 4, NB = 4096, sc = NB / (HI - LO);
+  const FU = new Float32Array(NB + 1), GC = new Float32Array(NB + 1), HY = new Float32Array(NB + 1);
+  for (let q = 0; q <= NB; q++) {
+    const lv = LO + q / sc; let u = lv - MID;
+    if (sh) u += sh * 1.55 * Math.max(0, Math.min(1, (0.6 - u) / 4.2)) ** 1.2;
+    if (hi) u += hi * 1.35 * Math.max(0, Math.min(1, (u + 0.2) / 2.8)) ** 1.3;
+    FU[q] = u; GC[q] = cla ? 1 + cla * 0.9 * Math.max(0, 1 - Math.abs(u) / 4.5) : 1;
+    let v = lv - MID;
+    if (ct) v = v * (1 + ct * 0.42) / (1 + ct * 0.42 * Math.min(1, Math.abs(v) / 6));
+    if (bl) v += bl * 1.1 * Math.max(0, Math.min(1, (-v - 2.2) / 3)) ** 1.5 * (bl < 0 ? 1.2 : 1);
+    if (wh) v += wh * 0.7 * Math.max(0, Math.min(1, (v + 0.4) / 2.6)) ** 2;
+    let Yn = Math.pow(2, v + MID); if (Yn > 0.8) Yn = 0.8 + 0.2 * Math.tanh((Yn - 0.8) / 0.2);
+    HY[q] = Yn;
+  }
+  const look = (T, lv) => { let f = (lv - LO) * sc; if (f <= 0) return T[0]; if (f >= NB) return T[NB]; const q = f | 0, t = f - q; return T[q] + (T[q + 1] - T[q]) * t; };
+  const sx = 3, sy = cn * 3, sz = cn * cn * 3, ident = CL.identity;
+  const BX0 = base ? new Int32Array(W) : null, BDX = base ? new Float32Array(W) : null;
+  if (base) for (let x = 0; x < W; x++) { const fx = Math.min(bw - 1.001, Math.max(0, (x + 0.5) / bf - 0.5)); BX0[x] = fx | 0; BDX[x] = fx - (fx | 0); }
+  for (let y = 0, i = 0, j = 0; y < H; y++) {
+    let y0 = 0, dy = 0; if (base) { const fy = Math.min(bh - 1.001, Math.max(0, (y + 0.5) / bf - 0.5)); y0 = fy | 0; dy = fy - y0; }
+    const dRow = (y * 13) & 7;
+    for (let x = 0; x < W; x++, i += 4, j++) {
+      const r0 = d[i], g0 = d[i + 1], b0 = d[i + 2];
+      const rl = S2L[r0], gl = S2L[g0], bL = S2L[b0];
+      let R = M[0][0] * rl + M[0][1] * gl + M[0][2] * bL, G = M[1][0] * rl + M[1][1] * gl + M[1][2] * bL, B = M[2][0] * rl + M[2][1] * gl + M[2][2] * bL;
+      const Y = Math.max(0.2126 * R + 0.7152 * G + 0.0722 * B, 1e-5);
+      let Yn;
+      if (base) {
+        const lY = logL[j], x0 = BX0[x], dx = BDX[x], o0 = y0 * bw + x0, o1 = o0 + bw, A = base.a, Bb = base.b;
+        const a = (A[o0] + (A[o0 + 1] - A[o0]) * dx) * (1 - dy) + (A[o1] + (A[o1 + 1] - A[o1]) * dx) * dy;
+        const b = (Bb[o0] + (Bb[o0 + 1] - Bb[o0]) * dx) * (1 - dy) + (Bb[o1] + (Bb[o1 + 1] - Bb[o1]) * dx) * dy;
+        const bs = a * lY + b, det = lY - bs;
+        Yn = look(HY, look(FU, bs) + det * look(GC, bs) + MID);
+      } else Yn = look(HY, flog2(Y));
+      const k = Yn / Y; R *= k; G *= k; B *= k;
+      const mx = R > G ? (R > B ? R : B) : (G > B ? G : B);
+      if (mx > 1) { const t = (mx - 1) / (mx - Yn + 1e-6); R += (Yn - R) * t; G += (Yn - G) * t; B += (Yn - B) * t; }
+      let er = R <= 0 ? 0 : R >= 1 ? 1 : L2S[(R * L2S_N + 0.5) | 0], eg = G <= 0 ? 0 : G >= 1 ? 1 : L2S[(G * L2S_N + 0.5) | 0], eb = B <= 0 ? 0 : B >= 1 ? 1 : L2S[(B * L2S_N + 0.5) | 0];
+      if (!ident) {
+        const fr = er * cn1, fg = eg * cn1, fb = eb * cn1, xa = fr < cn1 ? fr | 0 : cn1 - 1, ya = fg < cn1 ? fg | 0 : cn1 - 1, za = fb < cn1 ? fb | 0 : cn1 - 1;
+        const ux = fr - xa, uy = fg - ya, uz = fb - za, p0 = ((za * cn + ya) * cn + xa) * 3;
+        let c00 = CD[p0] + (CD[p0 + sx] - CD[p0]) * ux, c10 = CD[p0 + sy] + (CD[p0 + sy + sx] - CD[p0 + sy]) * ux, c01 = CD[p0 + sz] + (CD[p0 + sz + sx] - CD[p0 + sz]) * ux, c11 = CD[p0 + sz + sy] + (CD[p0 + sz + sy + sx] - CD[p0 + sz + sy]) * ux;
+        let e0 = c00 + (c10 - c00) * uy; er = e0 + (c01 + (c11 - c01) * uy - e0) * uz;
+        c00 = CD[p0 + 1] + (CD[p0 + 1 + sx] - CD[p0 + 1]) * ux; c10 = CD[p0 + 1 + sy] + (CD[p0 + 1 + sy + sx] - CD[p0 + 1 + sy]) * ux; c01 = CD[p0 + 1 + sz] + (CD[p0 + 1 + sz + sx] - CD[p0 + 1 + sz]) * ux; c11 = CD[p0 + 1 + sz + sy] + (CD[p0 + 1 + sz + sy + sx] - CD[p0 + 1 + sz + sy]) * ux;
+        e0 = c00 + (c10 - c00) * uy; eg = e0 + (c01 + (c11 - c01) * uy - e0) * uz;
+        c00 = CD[p0 + 2] + (CD[p0 + 2 + sx] - CD[p0 + 2]) * ux; c10 = CD[p0 + 2 + sy] + (CD[p0 + 2 + sy + sx] - CD[p0 + 2 + sy]) * ux; c01 = CD[p0 + 2 + sz] + (CD[p0 + 2 + sz + sx] - CD[p0 + 2 + sz]) * ux; c11 = CD[p0 + 2 + sz + sy] + (CD[p0 + 2 + sz + sy + sx] - CD[p0 + 2 + sz + sy]) * ux;
+        e0 = c00 + (c10 - c00) * uy; eb = e0 + (c01 + (c11 - c01) * uy - e0) * uz;
+      }
+      const dt = (((x * 7) & 7) ^ dRow) / 8 - 0.4375;
+      let r8 = er * 255 + dt, g8 = eg * 255 + dt, b8 = eb * 255 + dt;
+      if (mix) { r8 = r0 + (r8 - r0) * amt; g8 = g0 + (g8 - g0) * amt; b8 = b0 + (b8 - b0) * amt; }
+      d[i] = r8; d[i + 1] = g8; d[i + 2] = b8;
+    }
+  }
+  // النسيج والحدّة (تفاصيل صغيرة) — الوضوح صار ضمن الطبقة القاعدية أعلاه
+  if (p.texture || p.sharp) localContrast(img, { ...p, clarity: 0 }, amt);
+  if (p.vignette) vignette(img, p.vignette / 100 * amt);
+  return img;
+}
+
+function applyAdjustLegacy(img, p) {
   if (isZero(p)) return img;
   p = { ...ZERO, ...p };
   if (p.auto) Object.assign(p, autoStats(img, p.auto / 100, p.autoWb !== 0));

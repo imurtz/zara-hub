@@ -190,34 +190,66 @@ dialog{border:0;border-radius:18px;padding:20px;max-width:420px;box-shadow:0 20p
 dialog::backdrop{background:rgba(20,28,27,.4)}
 dialog .acts{display:flex;flex-direction:column;gap:8px;margin-top:14px}
 .foot{text-align:center;font-size:12px;color:var(--soft)}
+
+/* ===== تخطيط مساحة العمل (صورة كبيرة + شريط صور + لوحة تبويبات) ===== */
+body{padding:0;height:100vh;overflow:hidden}
+.app{display:flex;flex-direction:column;height:100vh}
+.topbar{display:flex;align-items:center;gap:12px;padding:8px 14px;background:var(--card);border-bottom:1px solid var(--line);flex-wrap:wrap}
+.topbar img{height:30px}.topbar h1{font-size:16px;margin:0}
+.srcBar{display:flex;align-items:center;gap:10px;flex:1;min-width:0;flex-wrap:wrap}
+.srcBar .pri{padding:8px 14px;font-size:13.5px}
+.srcBar .info{font-size:12.5px;color:var(--soft)}
+.ws{flex:1;min-height:0;display:grid;grid-template-columns:minmax(0,1fr) 410px;gap:0}
+.stage{display:flex;flex-direction:column;min-height:0;padding:10px 14px;gap:8px;background:#E9ECEB}
+.stage .pvbar{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:6px 8px}
+.stage .canvasBox{flex:1;min-height:0;background:#1E2524;border-radius:14px}
+.stage #prev{max-width:100%;max-height:100%;width:auto;height:auto;object-fit:contain}
+.stage .canvasBox.empty{background:#D9DEDD}
+.stageFoot{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.stageFoot #prevMeta{flex:1;min-width:200px}
+.strip{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:6px 8px}
+.strip .top{display:flex;justify-content:space-between;font-size:12px;color:var(--soft);margin-bottom:4px}
+.strip #grid{display:grid;grid-auto-flow:column;grid-auto-columns:96px;grid-template-columns:none;gap:6px;overflow-x:auto;overflow-y:hidden;max-height:none;padding-bottom:4px;scroll-behavior:smooth}
+.strip .cell{aspect-ratio:3/2}
+.side{display:flex;flex-direction:column;min-height:0;background:var(--card);border-inline-start:1px solid var(--line)}
+.tabs{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;padding:8px;border-bottom:1px solid var(--line)}
+.tabs button{border:0;background:var(--bg);border-radius:10px;padding:9px 4px;font-size:13px;font-weight:700;color:var(--soft);cursor:pointer}
+.tabs button.on{background:var(--teal);color:#fff}
+.panes{flex:1;min-height:0;overflow-y:auto;padding:12px 14px 30px}
+.pane .step{font-size:15px;margin:0 0 10px;display:flex;align-items:center;gap:8px}
+.pane .cropbar{flex-direction:column;align-items:stretch}
+.pane .mini{width:100%}
+.tips{font-size:12px;color:var(--soft);padding-inline-start:18px;line-height:1.9}
+.pane .foot{text-align:start;margin-top:14px}
+@media (max-width:980px){
+  body{height:auto;overflow:auto}.app{height:auto}
+  .ws{display:block}.stage{height:72vh;position:sticky;top:0;z-index:3}
+  .side{border:0}.panes{overflow:visible}
+}
 [hidden]{display:none!important}
 </style>
 </head>
 <body>
-<div class="wrap">
-  <header>
+<div class="app">
+  <header class="topbar">
     <a href="/"><img src="/assets/logo.png" alt="خيرية العوامية"></a>
-    <h1>معالجة صور الفعاليات<small>قص ذكي + تذييل الحقوق — كل المعالجة على جهازك، لا شيء يُرفع</small></h1>
-    <span class="pill ok" id="offline" hidden title="تعمل بدون إنترنت بعد أول فتح">● جاهزة بدون إنترنت</span>
-    <button type="button" class="pill" id="sysBtn">📁 اختر مجلد المنظومة</button>
-  </header>
-
-  <section class="card lockable">
-    <h2 class="step"><b>1</b> اختر الصور</h2>
-    <div class="src">
+    <h1>معالجة الصور</h1>
+    <div class="lockable srcBar">
       <button type="button" class="pri" id="srcBtn">📂 اختر مجلد الصور</button>
       <span class="info" id="srcInfo"></span>
       <span class="info" id="anaState"></span>
     </div>
-    <input type="file" id="fileInp" accept="image/*" multiple hidden>
-    <div class="note" id="fsNote" hidden>هذا المتصفح لا يدعم الحفظ في المجلدات مباشرة — ستُنزَّل النتيجة كملف مضغوط (ZIP). للأفضل استخدم Chrome أو Edge على الكمبيوتر.</div>
-  </section>
+    <span class="pill ok" id="offline" hidden title="تعمل بدون إنترنت بعد أول فتح">● بدون إنترنت</span>
+    <button type="button" class="pill" id="sysBtn">📁 اختر مجلد المنظومة</button>
+  </header>
+  <input type="file" id="fileInp" accept="image/*" multiple hidden>
+  <div class="note" id="fsNote" hidden>هذا المتصفح لا يدعم الحفظ في المجلدات مباشرة — ستُنزَّل النتيجة كملف مضغوط (ZIP). للأفضل استخدم Chrome أو Edge على الكمبيوتر.</div>
 
-  <div class="main">
-    <section class="card pv" id="step2">
+  <div class="ws">
+    <section class="stage pv" id="step2">
       <div class="pvbar">
         <div class="seg"><button type="button" data-ratio="16:10" class="on">16:10</button><button type="button" data-ratio="4:5">4:5</button></div>
-        <button type="button" class="ghost sm" id="cropModeBtn2" onclick="document.getElementById('cropModeBtn').click()">✂️ قص</button>
+        <button type="button" class="ghost sm" id="cropModeBtn2">✂️ قص</button>
         <button type="button" class="ghost sm" id="fullBtn" title="يفتح الصورة بدقة عالية في صفحة مستقلة">⤢ صفحة كاملة</button>
         <button type="button" class="ghost sm" id="beforeBtn" title="اضغط مطولاً لرؤية الصورة قبل التعديل">قبل ◐</button>
         <label class="chk"><input type="checkbox" id="showRights" checked> الحقوق</label>
@@ -228,25 +260,23 @@ dialog .acts{display:flex;flex-direction:column;gap:8px;margin-top:14px}
         <button type="button" class="nav" id="prevPrev" aria-label="السابقة">›</button>
         <button type="button" class="nav" id="prevNext" aria-label="التالية">‹</button>
       </div>
-      <div class="histRow"><canvas id="hist" width="300" height="70"></canvas><span id="clipL" class="clip" title="ظلال مقصوصة">◀ أسود</span><span id="clipH" class="clip" title="إضاءات محروقة">أبيض ▶</span></div>
-      <div id="prevMeta"></div>
-      <div class="cropbar" id="cropbar" hidden>
-        <div class="mini"><canvas id="mini"></canvas></div>
-        <div class="cb">
-          <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap"><b>القص</b><button type="button" class="pri sm3" id="cropModeBtn">✂️ حدد القص على الصورة</button></div> <small id="cropHint">اضغط أو اسحب على الصورة الصغيرة لتحديد الإطار</small>
-          <div class="qbtns" id="cropBtns"></div>
-          <label class="zoomRow">الحجم <input type="range" id="cropRange" min="20" max="100" step="1"> <span id="cropZoom">100%</span></label>
-        </div>
-      </div>
-      <div id="gridWrap" hidden>
-        <div class="top"><span>كل الصور — اضغط صورة لمعاينتها وتعديل قصها</span><button type="button" class="lnk" id="srcBtn2">تغيير المجلد</button></div>
+      <div class="stageFoot"><div class="histRow"><canvas id="hist" width="300" height="70"></canvas><span id="clipL" class="clip" title="ظلال مقصوصة">◀ أسود</span><span id="clipH" class="clip" title="إضاءات محروقة">أبيض ▶</span></div><div id="prevMeta"></div></div>
+      <div id="gridWrap" class="strip" hidden>
+        <div class="top"><span>الصور <small>(← → للتنقل)</small></span><button type="button" class="lnk" id="srcBtn2">تغيير المجلد</button></div>
         <div id="grid"></div>
       </div>
     </section>
 
-    <div style="display:flex;flex-direction:column;gap:14px">
-      <section class="card lockable" id="colorCard">
-        <h2 class="step"><b>2</b> الألوان <small class="tag" id="adjTag"></small></h2>
+    <aside class="side">
+      <nav class="tabs" id="sideTabs">
+        <button type="button" data-tab="color" class="on">🎨 الألوان</button>
+        <button type="button" data-tab="crop">✂️ القص</button>
+        <button type="button" data-tab="rights">🏷 الحقوق</button>
+        <button type="button" data-tab="export">⬇ التصدير</button>
+      </nav>
+      <div class="panes">
+        <section class="pane lockable" data-pane="color" id="colorCard">
+        <h2 class="step">الألوان <small class="tag" id="adjTag"></small></h2>
         <div class="seg scope" id="adjScope"></div>
         <div id="refBox" class="refBox"></div>
         <div class="lrBox"><span>مقترحات Lightroom</span>
@@ -258,8 +288,19 @@ dialog .acts{display:flex;flex-direction:column;gap:8px;margin-top:14px}
         </div>
         <small class="muted">نقرتان على أي شريط تصفّره · اضغط مطولاً على «قبل» أو مفتاح \ للمقارنة</small>
       </section>
-      <section class="card lockable">
-        <h2 class="step"><b>3</b> بيانات الحقوق</h2>
+        <section class="pane" data-pane="crop" hidden>
+          <h2 class="step">القص <small class="tag">المقاس من أعلى الصورة: 16:10 أو 4:5</small></h2>
+          <div class="cropbar" id="cropbar">
+        <div class="mini"><canvas id="mini"></canvas></div>
+        <div class="cb">
+          <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap"><button type="button" class="pri sm3" id="cropModeBtn">✂️ حدد القص على الصورة</button></div> <small id="cropHint">اضغط أو اسحب على الصورة الصغيرة لتحديد الإطار</small>
+          <div class="qbtns" id="cropBtns"></div>
+          <label class="zoomRow">الحجم <input type="range" id="cropRange" min="20" max="100" step="1"> <span id="cropZoom">100%</span></label>
+        </div>
+      </div>
+          <ul class="tips"><li>اسحب الإطار على الصورة الكبيرة لتحريكه، واسحب الزوايا لتكبيره أو تصغيره.</li><li>عجلة الفأرة = تكبير/تصغير · ← → صورة سابقة/تالية · Esc = إنهاء.</li><li>القص يُحفظ لكل مقاس على حدة.</li></ul>
+        </section>
+        <section class="pane lockable" data-pane="rights" hidden><h2 class="step">بيانات الحقوق</h2>
         <div class="f"><label for="title">عنوان الفعالية</label>
           <textarea id="title" rows="2" placeholder="مثال: 200 متدرب ومتدربة يشاركون في تدريب عملي لتطوير السير الذاتية ضمن «مفاتيح التوظيف»"></textarea>
           <small>يلتف تلقائياً على سطرين — ولكسر السطر بنفسك اضغط Enter</small><div id="titleState" class="tstate"></div></div>
@@ -276,9 +317,7 @@ dialog .acts{display:flex;flex-direction:column;gap:8px;margin-top:14px}
           <small id="logoHint">أضف الشعارات مرة واحدة (PNG شفاف أو SVG) وتُحفظ في مجلد المنظومة.</small></div>
         <div id="fontState" class="fstate"></div>
       </section>
-
-      <section class="card lockable">
-        <h2 class="step"><b>4</b> التصدير</h2>
+        <section class="pane lockable" data-pane="export" hidden><h2 class="step">التصدير</h2>
         <div class="f"><span>المقاسات</span><div class="opts">
           <label class="opt"><input type="checkbox" name="ratio" value="16:10"> 16:10 <small>الموقع</small></label>
           <label class="opt"><input type="checkbox" name="ratio" value="4:5"> 4:5 <small>إنستقرام</small></label></div></div>
@@ -300,10 +339,11 @@ dialog .acts{display:flex;flex-direction:column;gap:8px;margin-top:14px}
         </div>
         <div id="prog" hidden><div class="bar"><div id="bar"></div></div><div id="progTxt"></div></div>
         <div id="doneBox" hidden></div>
-      </section>
-    </div>
+      
+          <p class="foot">الأصل لا يُعدَّل أبداً — النتائج تُحفظ في مجلد جديد «‹اسم المجلد›_معالجة» داخل مجلد الصور، مع تقرير.txt و مشروع.json.</p></section>
+      </div>
+    </aside>
   </div>
-  <p class="foot">الأصل لا يُعدَّل أبداً — النتائج تُحفظ في مجلد جديد «‹اسم المجلد›_معالجة» داخل مجلد الصور، مع تقرير.txt و مشروع.json.</p>
 </div>
 <dialog id="cmpDlg" class="cmpDlg"></dialog>
 <dialog id="lookDlg" class="cmpDlg"></dialog>
