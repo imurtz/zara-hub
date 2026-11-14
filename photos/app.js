@@ -200,12 +200,66 @@ $("#fileInp").onchange = e => {
   if (!list.length) return;
   S.src = null; S.srcName = "صور"; setItems(list);
 };
+/* ============ حفظ تلقائي للمشروع واسترجاعه ============
+   كل تعديل (ألوان، قص، حذف من القائمة، الإعدادات) يُحفظ تلقائياً في ملف «مشروع التعديلات.json» داخل مجلد الصور نفسه
+   (+ نسخة في هذا المتصفح). عند فتح نفس المجلد لاحقاً تُعرض عليك استعادة التعديلات. */
+const PROJ_FILE = "مشروع التعديلات.json";
+const SET_KEYS = ["title", "date", "hijri", "photographer", "pattern", "short", "ratios", "plain", "rights", "quality", "customEdge", "customQ", "partners", "event", "adj", "preset", "noCredit", "logoFill", "scopeAll", "matchOn", "ref"];
+let lastProj = "";
+function projSnap() {
+  const f = F(), st = {}; for (const k of SET_KEYS) if (f[k] !== undefined) st[k] = f[k];
+  return { version: 2, source: S.srcName, settings: st, items: S.items.map(it => ({ name: it.name, pos: it.pos, adj: it.adj || null, preset: it.preset || "", tweak: it.tweak || null })), removed: [...(S.removed || [])] };
+}
+const projStr = () => S.items.length ? JSON.stringify(projSnap()) : "";
+const projKey = () => "proj:" + S.srcName + ":" + S.items.length;
+setInterval(async () => {
+  if (!S.items.length || S.running || S.restoring) return;
+  const str = projStr(); if (str === lastProj) return; lastProj = str;
+  const data = JSON.stringify({ ...JSON.parse(str), savedAt: new Date().toISOString() }, null, 1);
+  idb.set("proj:" + S.srcName, data);
+  if (S.src) { try { await writeFile(S.src, PROJ_FILE, data); } catch (e) {} }
+}, 2500);
+async function findProject() {
+  const cands = [];
+  if (S.src) {
+    try { cands.push(JSON.parse(await (await (await S.src.getFileHandle(PROJ_FILE)).getFile()).text())); } catch (e) {}
+    // أو آخر مشروع.json من مجلدات تصدير سابقة
+    try { for await (const [n, h] of S.src.entries()) if (h.kind === "directory" && n.startsWith(S.srcName + "_معالجة")) { try { const j = JSON.parse(await (await (await h.getFileHandle("مشروع.json")).getFile()).text()); j.savedAt = j.savedAt || j.createdAt; cands.push(j); } catch (e) {} } } catch (e) {}
+  }
+  try { const v = await idb.get("proj:" + S.srcName); if (v) cands.push(JSON.parse(v)); } catch (e) {}
+  // الأحدث الذي يطابق صور هذا المجلد (نصفها على الأقل)
+  const names = new Set(S.items.map(x => x.name));
+  return cands.filter(j => j && Array.isArray(j.items) && j.items.filter(x => names.has(x.name)).length >= Math.max(1, Math.min(names.size, j.items.length) / 2))
+    .sort((a, b) => String(b.savedAt || "").localeCompare(String(a.savedAt || "")))[0] || null;
+}
+async function restoreProject() {
+  const j = await findProject(); if (!j) return;
+  const edited = j.items.filter(x => (x.pos && Object.keys(x.pos).length) || x.adj || x.tweak).length, removed = (j.removed || []).length;
+  const hasSet = j.settings && (j.settings.title || (j.settings.adj && !isZero(j.settings.adj)));
+  if (!edited && !removed && !hasSet) return;
+  const when = j.savedAt ? new Date(j.savedAt).toLocaleString("ar-SA-u-nu-latn", { dateStyle: "medium", timeStyle: "short" }) : "";
+  const ch = await ask(`لقيت تعديلات محفوظة لهذا المجلد${when ? " (آخر حفظ: " + when + ")" : ""}: ${edited} صورة معدّلة${removed ? " · " + removed + " محذوفة من القائمة" : ""}${j.settings && j.settings.title ? " · العنوان: " + j.settings.title.slice(0, 40) : ""}`, [["yes", "استرجاع التعديلات"], ["no", "ابدأ من جديد"]]);
+  if (ch !== "yes") return;
+  S.restoring = true;
+  try {
+    if (j.settings) { const f = F(); for (const k of SET_KEYS) if (j.settings[k] !== undefined) f[k] = j.settings[k]; saveSoon(); }
+    const by = new Map(j.items.map(x => [x.name, x]));
+    const rm = new Set(j.removed || []);
+    S.items = S.items.filter(it => !rm.has(it.name)); S.removed = rm;
+    for (const it of S.items) { const x = by.get(it.name); if (!x) continue; it.pos = x.pos || {}; if (x.adj) it.adj = x.adj; else delete it.adj; if (x.preset) it.preset = x.preset; if (x.tweak) it.tweak = x.tweak; }
+    S.cur = Math.min(S.cur, Math.max(0, S.items.length - 1)); prevFor = -1;
+    paintForm(); try { paintLogos(); } catch (e) {} paintGrid(); paintAdj(); renderPreview(); analyze();
+    lastProj = projStr();
+    toast(`رجعت التعديلات ✓ (${edited} صورة معدّلة)`);
+  } finally { S.restoring = false; }
+}
 function setItems(list) {
   list.sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true }));
   S.items = list.map(x => ({ ...x, faces: null, thumb: null, pos: {}, status: "" }));
-  S.cur = 0;
+  S.cur = 0; S.removed = new Set(); lastProj = projStr();
   if (!F().short) { F().short = S.srcName; }
   paintForm(); paintGrid(); paintAdj(); analyze(); renderPreview();
+  restoreProject();
   $("#step2").scrollIntoView({ behavior: "smooth", block: "start" });
 }
 const getFile = it => it.file ? Promise.resolve(it.file) : it.handle.getFile();
@@ -921,7 +975,7 @@ document.addEventListener("click", e => {
 // إزالة صورة من التعديل والقص والتصدير فقط — الملف الأصلي يبقى كما هو
 function removeItem(i) {
   const it = S.items[i]; if (!it) return;
-  S.items.splice(i, 1);
+  S.items.splice(i, 1); (S.removed || (S.removed = new Set())).add(it.name);
   if (it.thumb) try { URL.revokeObjectURL(it.thumb); } catch (e) {}
   if (S.cur > i || S.cur >= S.items.length) S.cur = Math.max(0, S.cur - 1);
   prevFor = -1;
