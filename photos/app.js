@@ -516,11 +516,29 @@ const adjOf = it => {
   return F().adj || ZERO;
 };
 const curAdj = () => { const it = S.items[S.cur]; return it && it.adj ? it.adj : F().adj; };
+// مسار ملوّن للشريط مثل Lightroom (الحرارة أزرق←أصفر، الصبغة أخضر←أرجواني، التشبع رمادي←ألوان...)
+function trackFor(d) {
+  const hsl = (h, sat = 70, l = 52) => `hsl(${(h + 360) % 360} ${sat}% ${l}%)`;
+  const GRAY = "#b9bdbc", RAINBOW = "#c8a24a, #7fb85a, #4aa6c8, #6a5ad0, #c84a8a";
+  if (d.k === "temp") return "linear-gradient(90deg,#3f6fd1,#c9cccb,#e7c03a)";
+  if (d.k === "tint") return "linear-gradient(90deg,#3fae4a,#c9cccb,#c64fc0)";
+  if (d.k === "vibrance" || d.k === "saturation") return `linear-gradient(90deg,${GRAY} 0%,${GRAY} 42%,${RAINBOW})`;
+  if (d.k === "exposure" || d.k === "whites" || d.k === "highlights") return "linear-gradient(90deg,#3a3f3e,#f2f2f2)";
+  if (d.k === "blacks" || d.k === "shadows") return "linear-gradient(90deg,#1f2322,#d9dcdb)";
+  if (d.hue) return "linear-gradient(90deg,#f00,#ff0,#0f0,#0ff,#00f,#f0f,#f00)";
+  const band = BANDS.find(b => d.k === "h_" + b[0] || d.k === "s_" + b[0] || d.k === "l_" + b[0]);
+  if (band) { const h = band[2];
+    if (d.k.startsWith("h_")) return `linear-gradient(90deg,${hsl(h - 35)},${hsl(h)},${hsl(h + 35)})`;
+    if (d.k.startsWith("s_")) return `linear-gradient(90deg,${hsl(h, 6)},${hsl(h, 85)})`;
+    return `linear-gradient(90deg,${hsl(h, 60, 18)},${hsl(h, 70, 52)},${hsl(h, 60, 88)})`; }
+  if (/^cg_.*_s$/.test(d.k)) return `linear-gradient(90deg,${GRAY},#c58a4a)`;
+  return "linear-gradient(90deg,#c9cecd,#c9cecd)";
+}
 function paintAdj() {
   const it = S.items[S.cur], own = !!(it && it.adj), a = curAdj();
   $("#adjScope").innerHTML = `<button type="button" data-scope="all" class="${own ? "" : "on"}">كل الصور</button><button type="button" data-scope="one" class="${own ? "on" : ""}" ${it ? "" : "disabled"}>هذه الصورة فقط</button>`;
   const sl = d => { const v = a[d.k] ?? (d.def || 0);
-    const bg = d.hue ? ` style="background:linear-gradient(90deg,#f00,#ff0,#0f0,#0ff,#00f,#f0f,#f00);border-radius:9px;height:6px"` : "";
+    const bg = ` class="trk" style="--trk:${trackFor(d)}"`;
     return `<label class="sl${d.c ? " band" : ""}">${d.c ? `<i style="background:${d.c}"></i>` : ""}<span class="n">${d.l}</span><input type="range" min="${d.min}" max="${d.max}" step="${d.step}" value="${v}" data-adj="${d.k}" data-def="${d.def || 0}" title="نقرتان للتصفير"${bg}><input type="number" class="vn" data-adjn="${d.k}" min="${d.min}" max="${d.max}" step="${d.step}" value="${v}" title="اكتب الرقم"></label>`; };
   const grp = g => ADJ.filter(d => d.g === g).map(sl).join("");
   const hslOn = BANDS.some(([k]) => a["h_" + k] || a["s_" + k] || a["l_" + k]), cgOn = ["sh", "mid", "hi"].some(k => a[`cg_${k}_s`]);
