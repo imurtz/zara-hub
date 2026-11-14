@@ -529,7 +529,12 @@ const adjOf = it => {
   }
   return F().adj || ZERO;
 };
-const curAdj = () => { const it = S.items[S.cur]; return it && it.adj ? it.adj : F().adj; };
+const scopeAll = () => !!F().scopeAll;
+const curAdj = () => { const it = S.items[S.cur]; return it && it.adj && !scopeAll() ? it.adj : F().adj; };
+// هدف التعديل: في وضع «هذه الصورة فقط» تُفصل الصورة الحالية بنسخة خاصة عند أول تعديل
+function ownAdj() { const it = S.items[S.cur]; if (!it || scopeAll()) return null; if (!it.adj) { it.adj = { ...F().adj }; it.preset = F().preset || ""; paintCell(S.cur); const sn = $("#scopeNote"); if (sn) sn.innerHTML = `🎨 تعديل خاص بهذه الصورة فقط · <button type="button" class="lnk" data-unown>ألغِ وارجع للتعديل العام</button>`; } return it; }
+const presetKey = () => { const it = S.items[S.cur]; return it && it.adj && !scopeAll() ? (it.preset || "") : (F().preset || ""); };
+function setPresetKey(k) { const it = S.items[S.cur]; if (it && it.adj && !scopeAll()) it.preset = k; else { F().preset = k; saveSoon(); } }
 // مسار ملوّن للشريط مثل Lightroom (الحرارة أزرق←أصفر، الصبغة أخضر←أرجواني، التشبع رمادي←ألوان...)
 function trackFor(d) {
   const hsl = (h, sat = 70, l = 52) => `hsl(${(h + 360) % 360} ${sat}% ${l}%)`;
@@ -549,8 +554,11 @@ function trackFor(d) {
   return "linear-gradient(90deg,#c9cecd,#c9cecd)";
 }
 function paintAdj() {
-  const it = S.items[S.cur], own = !!(it && it.adj), a = curAdj();
-  $("#adjScope").innerHTML = `<button type="button" data-scope="all" class="${own ? "" : "on"}">كل الصور</button><button type="button" data-scope="one" class="${own ? "on" : ""}" ${it ? "" : "disabled"}>هذه الصورة فقط</button>`;
+  const it = S.items[S.cur], own = !!(it && it.adj), a = curAdj(), all = scopeAll();
+  $("#adjScope").innerHTML = `<button type="button" data-scope="one" class="${all ? "" : "on"}" ${it ? "" : "disabled"}>هذه الصورة فقط</button><button type="button" data-scope="all" class="${all ? "on" : ""}">كل الصور</button>`;
+  const sn = $("#scopeNote"); if (sn) sn.innerHTML = !it ? "" : all
+    ? (own ? `⚠️ هذه الصورة لها تعديل خاص ولن تتأثر · <button type="button" class="lnk" data-unown>اجعلها تتبع الكل</button>` : `التعديل الآن يُطبَّق على كل الصور (ما عدا التي لها تعديل خاص 🎨)`)
+    : (own ? `🎨 تعديل خاص بهذه الصورة فقط · <button type="button" class="lnk" data-unown>ألغِ وارجع للتعديل العام</button>` : `أي تعديل الآن يخص هذه الصورة فقط`);
   const sl = d => { const v = a[d.k] ?? (d.def || 0);
     const bg = ` class="trk" style="--trk:${trackFor(d)}"`;
     return `<label class="sl${d.c ? " band" : ""}">${d.c ? `<i style="background:${d.c}"></i>` : ""}<span class="n">${d.l}</span><input type="range" min="${d.min}" max="${d.max}" step="${d.step}" value="${v}" data-adj="${d.k}" data-def="${d.def || 0}" title="نقرتان للتصفير"${bg}><input type="number" class="vn" data-adjn="${d.k}" min="${d.min}" max="${d.max}" step="${d.step}" value="${v}" title="اكتب الرقم"></label>`; };
@@ -558,7 +566,7 @@ function paintAdj() {
   const hslOn = BANDS.some(([k]) => a["h_" + k] || a["s_" + k] || a["l_" + k]), cgOn = ["sh", "mid", "hi"].some(k => a[`cg_${k}_s`]);
   const ht = S.hslTab || "h";
   $("#refBox").innerHTML = refHTML();
-  if (matching() && !own) {
+  if (matching() && !own) { if (sn) sn.innerHTML = "";
     const tw = (it && it.tweak) || {}, slT = d => sl({ ...d }).replace(/value="[^"]*"/g, `value="${tw[d.k] || 0}"`);
     const grpT = g => ADJ.filter(d => d.g === g && TWEAK_KEYS.includes(d.k)).map(slT).join("");
     $("#adjBox").innerHTML = `<div class="amt">${ADJ.filter(d => d.k === "amount").map(sl).join("")}</div>
@@ -575,7 +583,8 @@ function paintAdj() {
     <details class="adv" ${S.openCurve ? "open" : ""} data-det="openCurve"><summary>Tone Curve${["pc_sh", "pc_dk", "pc_lt", "pc_hi"].some(k => a[k]) ? " <em>●</em>" : ""}</summary>${grp("curve")}</details>
     <details class="adv" ${S.openCg ? "open" : ""} data-det="openCg"><summary>Color Grading${cgOn ? " <em>●</em>" : ""}</summary>${grp("grade")}</details>`;
   $("#adjReset").hidden = isZero(a);
-  $("#adjTag").textContent = own ? "تعديل خاص بهذه الصورة" : (F().preset && lrFind(F().preset) ? "Lightroom: " + lrFind(F().preset).name : (isZero(F().adj) ? "بدون تعديل" : "تعديل على كل الصور"));
+  const pk = presetKey(), pn = pk && lrFind(pk) ? lrFind(pk).name : "";
+  $("#adjTag").textContent = own && !all ? "خاص بهذه الصورة" + (pn ? " · " + pn : "") : (pn ? "Lightroom: " + pn : (isZero(F().adj) ? "بدون تعديل" : "تعديل على كل الصور"));
   paintPresets();
 }
 const fmtAdj = (d, v) => d.k === "exposure" ? (v > 0 ? "+" : "") + (+v).toFixed(2) : d.hue ? v + "°" : d.min === 0 ? String(v) : (v > 0 ? "+" : "") + v;
@@ -584,7 +593,7 @@ function setAdjVal(k, v) {
   if (!d || isNaN(v)) return;
   v = Math.max(d.min, Math.min(d.max, v));
   if (matching() && it && !it.adj && k !== "amount") { it.tweak = { ...(it.tweak || {}), [k]: v }; paintCell(S.cur); const ta = document.querySelector('[data-tw="all"]'), tr = document.querySelector('[data-tw="reset"]'); if (ta) ta.disabled = !hasTweak(it); if (tr) tr.hidden = !hasTweak(it); }
-  else if (it && it.adj) it.adj = { ...it.adj, [k]: v }; else { F().adj = { ...F().adj, [k]: v }; F().preset = ""; saveSoon(); }
+  else { const o = ownAdj(); if (o) { o.adj = { ...o.adj, [k]: v }; o.preset = ""; } else { F().adj = { ...F().adj, [k]: v }; F().preset = ""; saveSoon(); } }
   const rg = document.querySelector(`[data-adj="${k}"]`), nb = document.querySelector(`[data-adjn="${k}"]`);
   if (rg && +rg.value !== v) rg.value = v;
   if (nb && document.activeElement !== nb) nb.value = v;
@@ -607,12 +616,12 @@ document.addEventListener("click", e => {
   }
   const sc = e.target.closest("[data-scope]"); if (sc) {
     const it = S.items[S.cur]; if (!it) return;
-    if (sc.dataset.scope === "one" && !it.adj) it.adj = { ...F().adj };
-    if (sc.dataset.scope === "all") delete it.adj;
-    paintCell(S.cur); paintAdj(); renderPreview(); return;
+    F().scopeAll = sc.dataset.scope === "all"; saveSoon();
+    paintAdj(); renderPreview(); return;
   }
+  if (e.target.closest("[data-unown]")) { const it = S.items[S.cur]; if (it) { delete it.adj; delete it.preset; paintCell(S.cur); paintAdj(); renderPreview(); } return; }
 });
-$("#adjReset").onclick = () => { const it = S.items[S.cur]; if (it && it.adj) it.adj = { ...ZERO }; else { F().adj = { ...ZERO }; F().preset = ""; saveSoon(); } paintAdj(); renderPreview(); };
+$("#adjReset").onclick = () => { const o = ownAdj(); if (o) { o.adj = { ...ZERO, amount: o.adj.amount ?? 100 }; o.preset = ""; } else { F().adj = { ...ZERO }; F().preset = ""; saveSoon(); } paintAdj(); renderPreview(); };
 $("#adjApplyAll").onclick = () => { const a = { ...curAdj() }; F().adj = a; S.items.forEach((it, i) => { delete it.adj; paintCell(i); }); saveSoon(); paintAdj(); renderPreview(); toast("طُبّق التعديل على كل الصور"); };
 let rafP = 0; function previewRAF() { if (rafP) return; rafP = requestAnimationFrame(() => { rafP = 0; renderPreview(); }); }
 // قبل / بعد: ضغطة مطولة على الزر أو مفتاح \
@@ -652,36 +661,38 @@ async function loadPresets() {
 const lrFind = key => { if (String(key).startsWith("my:")) return MINE.find(x => x.name === String(key).slice(3)); const [g, i] = String(key).split(":").map(Number); return LR[g] && LR[g].items[i]; };
 function paintPresets() {
   const sel = $("#lrSel"); if (!sel) return;
-  const opt = (v, n) => `<option value="${esc(v)}" ${F().preset === v ? "selected" : ""}>${esc(n)}</option>`;
+  const pk = presetKey(), opt = (v, n) => `<option value="${esc(v)}" ${pk === v ? "selected" : ""}>${esc(n)}</option>`;
   sel.innerHTML = `<option value="">— بدون —</option>` + (MINE.length ? `<optgroup label="⭐ بريستاتي">${MINE.map(x => opt("my:" + x.name, x.name)).join("")}</optgroup>` : "") +
     LR.map((g, gi) => `<optgroup label="${esc(g.group)}">` + g.items.map((it, i) => opt(gi + ":" + i, it.name)).join("") + `</optgroup>`).join("");
-  const del = $("#presetDel"); if (del) del.hidden = !String(F().preset || "").startsWith("my:");
+  const del = $("#presetDel"); if (del) del.hidden = !pk.startsWith("my:");
 }
 function applyLR(key) {
   const p = key ? lrFind(key) : null, it = S.items[S.cur];
-  const a = { ...ZERO, ...(p ? p.adj : {}), amount: (it && it.adj ? it.adj.amount : F().adj?.amount) ?? 100 };
-  if (it && it.adj) it.adj = a; else { F().adj = a; F().preset = key || ""; if (F().matchOn) { F().matchOn = false; toast("أُوقفت مطابقة المرجع لتطبيق المقترح"); } saveSoon(); }
+  const a = { ...ZERO, ...(p ? p.adj : {}), amount: (it && it.adj && !scopeAll() ? it.adj.amount : F().adj?.amount) ?? 100 };
+  if (matching() && it && !scopeAll()) { F().matchOn = false; saveSoon(); toast("أُوقفت مطابقة المرجع لتطبيق المقترح"); }
+  const o = ownAdj();
+  if (o) { o.adj = a; o.preset = key || ""; } else { F().adj = a; F().preset = key || ""; if (F().matchOn) { F().matchOn = false; toast("أُوقفت مطابقة المرجع لتطبيق المقترح"); } saveSoon(); }
   paintAdj(); paintPresets(); renderPreview();
 }
 async function savePresetAs() {
   const it = S.items[S.cur], cur = (it && (it.adj || (matching() && it.stats ? adjOf(it) : null))) || F().adj;
   const adj = Object.fromEntries(Object.entries(cur || {}).filter(([k, v]) => !k.startsWith("_") && v !== undefined));
   if (isZero(adj)) return toast("لا توجد تعديلات لحفظها — حرّك الأشرطة أولاً");
-  const def = String(F().preset || "").startsWith("my:") ? F().preset.slice(3) : "";
+  const def = presetKey().startsWith("my:") ? presetKey().slice(3) : "";
   const name = (prompt("اسم البريست:", def) || "").trim(); if (!name) return;
   if (MINE.some(x => x.name === name) && name !== def && !confirm(`يوجد بريست باسم «${name}» — استبداله؟`)) return;
   const rec = { name, adj, savedAt: new Date().toISOString() };
   const local = (ls.get("myPresets", []) || []).filter(x => x.name !== name); local.push(rec); ls.set("myPresets", local);
   let where = "في هذا المتصفح";
   if (S.sys) { try { await writeFile(await sysDir("بريستات"), safeName(name) + ".json", JSON.stringify(rec, null, 2)); where = "في مجلد المنظومة"; } catch (e) {} }
-  F().preset = "my:" + name; saveSoon(); await loadPresets(); toast(`حُفظ البريست «${name}» ${where} ✓`);
+  setPresetKey("my:" + name); await loadPresets(); toast(`حُفظ البريست «${name}» ${where} ✓`);
 }
 async function deletePreset() {
-  const key = String(F().preset || ""); if (!key.startsWith("my:")) return;
+  const key = presetKey(); if (!key.startsWith("my:")) return;
   const name = key.slice(3); if (!confirm(`حذف البريست «${name}»؟`)) return;
   ls.set("myPresets", (ls.get("myPresets", []) || []).filter(x => x.name !== name));
   if (S.sys) { try { await (await sysDir("بريستات")).removeEntry(safeName(name) + ".json"); } catch (e) {} }
-  F().preset = ""; saveSoon(); await loadPresets(); toast("حُذف البريست");
+  setPresetKey(""); await loadPresets(); toast("حُذف البريست");
 }
 function pickFile(accept) { return new Promise(res => { const i = document.createElement("input"); i.type = "file"; i.accept = accept; i.onchange = () => res(i.files[0] || null); i.click(); }); }
 (() => {
