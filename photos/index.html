@@ -147,6 +147,10 @@ details.adv summary em{color:var(--tan);font-style:normal}
 .cell{position:relative;border:2px solid transparent;border-radius:12px;padding:0;overflow:hidden;background:#E9ECEB;aspect-ratio:3/2;cursor:pointer}
 .cell img{width:100%;height:100%;object-fit:cover;display:block}
 .cell.cur{border-color:var(--teal)}
+.cell .rm{position:absolute;bottom:4px;left:50%;transform:translateX(-50%);width:26px;height:26px;display:grid;place-items:center;font-size:13px;background:rgba(0,0,0,.55);border-radius:8px;opacity:0;transition:opacity .15s}
+.cell:hover .rm,.cell.cur .rm{opacity:1}
+.cell .rm:hover{background:#C0392B}
+@media (hover:none){.cell .rm{opacity:1}}
 .cell.err{border-color:var(--warn)}
 .cell em{position:absolute;top:4px;right:6px;font-style:normal;font-size:11px;background:rgba(0,0,0,.45);color:#fff;border-radius:6px;padding:0 5px}
 .cell .fc,.cell .pt,.cell .ed{position:absolute;bottom:4px;font-size:10.5px;color:#fff;border-radius:6px;padding:0 5px}

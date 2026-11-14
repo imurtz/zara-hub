@@ -289,6 +289,7 @@ function paintCell(i) {
   el.innerHTML = (it.thumb ? `<img src="${it.thumb}" alt="" loading="lazy">` : `<span class="sk"></span>`) +
     `<em>${i + 1}</em>` + (it.faces && it.faces.length ? `<span class="fc">☺ ${it.faces.length}</span>` : "") +
     (port ? `<span class="pt">عمودية</span>` : "") + (Object.keys(it.pos).length ? `<span class="ed">✎</span>` : "") + (it.adj ? `<span class="ad">🎨</span>` : hasTweak(it) ? `<span class="ad">🎚</span>` : "") +
+    `<span class="rm" data-rm="${i}" role="button" title="إزالة من القائمة (الملف الأصلي لا يُحذف)">🗑</span>` +
     (it.status ? `<span class="st ${it.status}">${it.status === "done" ? "✓" : it.status === "fail" ? "✕" : it.status === "skip" ? "↷" : "…"}</span>` : "");
 }
 
@@ -878,15 +879,27 @@ document.addEventListener("click", e => {
   }
   if (e.target.closest("[data-add]")) return addLogo();
   const r = e.target.closest("[data-ratio]"); if (r) { S.ratio = r.dataset.ratio; renderPreview(); return; }
+  const rm = e.target.closest("[data-rm]"); if (rm) { e.stopPropagation(); removeItem(+rm.dataset.rm); return; }
   const c = e.target.closest(".cell"); if (c) { go(+c.dataset.i); return; }
 });
+// إزالة صورة من التعديل والقص والتصدير فقط — الملف الأصلي يبقى كما هو
+function removeItem(i) {
+  const it = S.items[i]; if (!it) return;
+  S.items.splice(i, 1);
+  if (it.thumb) try { URL.revokeObjectURL(it.thumb); } catch (e) {}
+  if (S.cur > i || S.cur >= S.items.length) S.cur = Math.max(0, S.cur - 1);
+  prevFor = -1;
+  if (!S.items.length && S.cropMode) setCropMode(false);
+  paintGrid(); paintAdj(); renderPreview(); analyze();
+  toast(`أُزيلت «${it.name}» من القائمة · ${S.items.length} صورة متبقية`);
+}
 function go(i) {
   if (!S.items.length) return;
   const old = S.cur; S.cur = (i + S.items.length) % S.items.length; paintCell(old); paintCell(S.cur); paintAdj(); renderPreview();
   const el = document.querySelector(`.cell[data-i="${S.cur}"]`); if (el) el.scrollIntoView({ block: "nearest", inline: "center", behavior: "smooth" });
 }
 $("#prevNext").onclick = () => go(S.cur + 1); $("#prevPrev").onclick = () => go(S.cur - 1);
-addEventListener("keydown", e => { if (/INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName)) return; if (e.key === "ArrowLeft") go(S.cur + 1); if (e.key === "ArrowRight") go(S.cur - 1); });
+addEventListener("keydown", e => { if (/INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName)) return; if (e.key === "Delete" && S.items.length) removeItem(S.cur); if (e.key === "ArrowLeft") go(S.cur + 1); if (e.key === "ArrowRight") go(S.cur - 1); });
 $("#srcBtn").onclick = pickSrc;
 $("#srcBtn2").onclick = pickSrc;
 
