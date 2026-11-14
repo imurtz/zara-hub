@@ -389,7 +389,8 @@ body{padding:0;height:100vh;overflow:hidden}
           <div class="f"><label for="short">اسم مختصر للملفات</label><input type="text" id="short" placeholder="مفاتيح-التوظيف"></div>
           <div class="f"><label for="pattern">نمط التسمية</label><input type="text" id="pattern" dir="ltr"></div>
         </div>
-        <div class="f"><small>الرموز: {اسم} {تاريخ} {رقم} {الأصل} — مثال: <span id="nameEx"></span></small></div>
+        <label class="chk"><input type="checkbox" id="keepName"> المسمى كما هو — نفس اسم الصورة الأصلية بدون أي تغيير</label>
+        <div class="f"><small><span id="nameRules">الرموز: {اسم} {تاريخ} {رقم} {الأصل} — </span>مثال: <span id="nameEx"></span></small></div>
         <div class="ex">
           <button type="button" class="pri big" id="exportBtn">⬇ صدّر الصور</button>
           <button type="button" class="ghost" id="stopBtn" hidden>إيقاف</button>

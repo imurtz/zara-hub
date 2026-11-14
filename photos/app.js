@@ -204,7 +204,7 @@ $("#fileInp").onchange = e => {
    كل تعديل (ألوان، قص، حذف من القائمة، الإعدادات) يُحفظ تلقائياً في ملف «مشروع التعديلات.json» داخل مجلد الصور نفسه
    (+ نسخة في هذا المتصفح). عند فتح نفس المجلد لاحقاً تُعرض عليك استعادة التعديلات. */
 const PROJ_FILE = "مشروع التعديلات.json";
-const SET_KEYS = ["title", "date", "hijri", "photographer", "pattern", "short", "ratios", "plain", "rights", "quality", "customEdge", "customQ", "partners", "event", "adj", "preset", "noCredit", "logoFill", "scopeAll", "matchOn", "ref"];
+const SET_KEYS = ["title", "date", "hijri", "photographer", "pattern", "short", "ratios", "plain", "rights", "quality", "customEdge", "customQ", "partners", "event", "keepName", "adj", "preset", "noCredit", "logoFill", "scopeAll", "matchOn", "ref"];
 let lastProj = "";
 function projSnap() {
   const f = F(), st = {}; for (const k of SET_KEYS) if (f[k] !== undefined) st[k] = f[k];
@@ -907,7 +907,7 @@ $("#fullBtn").onclick = async () => {
 function paintForm() {
   const f = F();
   $("#title").value = f.title; $("#date").value = f.date; $("#hijri").value = f.hijri || hijriOf(f.date); $("#hijri").placeholder = hijriOf(f.date);
-  $("#photographer").value = f.photographer; $("#noCredit").checked = !!f.noCredit; $("#photographer").disabled = !!f.noCredit; $("#short").value = f.short; $("#pattern").value = f.pattern;
+  $("#photographer").value = f.photographer; $("#noCredit").checked = !!f.noCredit; $("#photographer").disabled = !!f.noCredit; $("#short").value = f.short; $("#pattern").value = f.pattern; paintKeepName();
   $("#photogList").innerHTML = (f.photographers || []).map(n => `<option value="${esc(n)}">`).join("");
   $$("[name=ratio]").forEach(c => c.checked = f.ratios.includes(c.value));
   $("#plain").checked = f.plain; $("#rights").checked = f.rights;
@@ -929,6 +929,8 @@ function paintName() {
 }
 function fileName(i, orig) {
   const f = F(), base = (orig || "").replace(/\.[^.]+$/, "");
+  // «المسمى كما هو»: نفس اسم الملف الأصلي حرفياً (وامتداده إن كان JPEG، وإلا .jpg لأن الناتج JPEG)
+  if (f.keepName && orig) return /\.jpe?g$/i.test(orig) ? orig : base + ".jpg";
   const clean = s => String(s || "").trim().replace(/[\\/:*?"<>|]+/g, "").replace(/\s+/g, "-");
   let n = (f.pattern || defaults.pattern).replace(/\{اسم\}/g, clean(f.short || "فعالية")).replace(/\{تاريخ\}/g, f.date || "").replace(/\{رقم\}/g, String(i + 1).padStart(3, "0")).replace(/\{الأصل\}/g, clean(base));
   n = n.replace(/[\\/:*?"<>|]+/g, "").replace(/^[-_.\s]+|[-_.\s]+$/g, "") || String(i + 1).padStart(3, "0");
@@ -945,6 +947,8 @@ bind("#title", "title", "input", paintTitleState);
 bind("#date", "date", "change", () => { F().hijri = ""; $("#hijri").value = hijriOf(F().date); $("#hijri").placeholder = hijriOf(F().date); paintName(); });
 bind("#hijri", "hijri");
 bind("#photographer", "photographer");
+$("#keepName").onchange = e => { F().keepName = e.target.checked; paintKeepName(); paintName(); saveSoon(); };
+function paintKeepName() { const on = !!F().keepName; $("#keepName").checked = on; $("#pattern").disabled = on; $("#short").disabled = on; $("#nameRules").hidden = on; }
 $("#noCredit").onchange = e => { F().noCredit = e.target.checked; $("#photographer").disabled = e.target.checked; saveSoon(); renderPreview(); };
 $("#photographer").addEventListener("change", () => { const n = F().photographer.trim(); if (n && !F().photographers.includes(n)) { F().photographers.push(n); paintForm(); saveSoon(); } });
 bind("#short", "short", "input", paintName);
