@@ -624,22 +624,50 @@ function paintHist(id) {
 }
 // البريستات: ملفات JSON في «مجلد المنظومة/بريستات» (أو في هذا المتصفح إن لم يُختر المجلد)
 // مقترحات Lightroom الجاهزة (بريستات Adobe الرسمية التي تعتمد على الأشرطة الأساسية) — assets/lr-presets.json
-let LR = [];
+let LR = [], MINE = [];
 document.addEventListener("toggle", e => { const d = e.target.closest && e.target.closest("[data-det]"); if (d) S[d.dataset.det] = d.open; }, true);
+// بريستاتي: تُحفظ في «مجلد المنظومة/بريستات» (وتتوفر على أي جهاز يتزامن معه) + نسخة في هذا المتصفح
+const safeName = n => n.replace(/[\\/:*?"<>|]/g, "-");
 async function loadPresets() {
   try { LR = await (await fetch("./assets/lr-presets.json")).json(); } catch (e) { LR = []; }
+  const m = new Map((ls.get("myPresets", []) || []).map(x => [x.name, x]));
+  if (S.sys) { try { const d = await sysDir("بريستات"); for await (const [n, h] of d.entries()) if (h.kind === "file" && /\.json$/i.test(n)) { try { const j = JSON.parse(await (await h.getFile()).text()); if (j && j.adj) m.set(j.name || n.replace(/\.json$/i, ""), { name: j.name || n.replace(/\.json$/i, ""), adj: j.adj }); } catch (e) {} } } catch (e) {} }
+  MINE = [...m.values()].sort((a, b) => a.name.localeCompare(b.name, "ar"));
   paintPresets();
 }
-const lrFind = key => { const [g, i] = String(key).split(":").map(Number); return LR[g] && LR[g].items[i]; };
+const lrFind = key => { if (String(key).startsWith("my:")) return MINE.find(x => x.name === String(key).slice(3)); const [g, i] = String(key).split(":").map(Number); return LR[g] && LR[g].items[i]; };
 function paintPresets() {
   const sel = $("#lrSel"); if (!sel) return;
-  sel.innerHTML = `<option value="">— بدون —</option>` + LR.map((g, gi) => `<optgroup label="${esc(g.group)}">` + g.items.map((it, i) => `<option value="${gi}:${i}" ${F().preset === gi + ":" + i ? "selected" : ""}>${esc(it.name)}</option>`).join("") + `</optgroup>`).join("");
+  const opt = (v, n) => `<option value="${esc(v)}" ${F().preset === v ? "selected" : ""}>${esc(n)}</option>`;
+  sel.innerHTML = `<option value="">— بدون —</option>` + (MINE.length ? `<optgroup label="⭐ بريستاتي">${MINE.map(x => opt("my:" + x.name, x.name)).join("")}</optgroup>` : "") +
+    LR.map((g, gi) => `<optgroup label="${esc(g.group)}">` + g.items.map((it, i) => opt(gi + ":" + i, it.name)).join("") + `</optgroup>`).join("");
+  const del = $("#presetDel"); if (del) del.hidden = !String(F().preset || "").startsWith("my:");
 }
 function applyLR(key) {
   const p = key ? lrFind(key) : null, it = S.items[S.cur];
   const a = { ...ZERO, ...(p ? p.adj : {}), amount: (it && it.adj ? it.adj.amount : F().adj?.amount) ?? 100 };
   if (it && it.adj) it.adj = a; else { F().adj = a; F().preset = key || ""; if (F().matchOn) { F().matchOn = false; toast("أُوقفت مطابقة المرجع لتطبيق المقترح"); } saveSoon(); }
-  paintAdj(); renderPreview();
+  paintAdj(); paintPresets(); renderPreview();
+}
+async function savePresetAs() {
+  const it = S.items[S.cur], cur = (it && (it.adj || (matching() && it.stats ? adjOf(it) : null))) || F().adj;
+  const adj = Object.fromEntries(Object.entries(cur || {}).filter(([k, v]) => !k.startsWith("_") && v !== undefined));
+  if (isZero(adj)) return toast("لا توجد تعديلات لحفظها — حرّك الأشرطة أولاً");
+  const def = String(F().preset || "").startsWith("my:") ? F().preset.slice(3) : "";
+  const name = (prompt("اسم البريست:", def) || "").trim(); if (!name) return;
+  if (MINE.some(x => x.name === name) && name !== def && !confirm(`يوجد بريست باسم «${name}» — استبداله؟`)) return;
+  const rec = { name, adj, savedAt: new Date().toISOString() };
+  const local = (ls.get("myPresets", []) || []).filter(x => x.name !== name); local.push(rec); ls.set("myPresets", local);
+  let where = "في هذا المتصفح";
+  if (S.sys) { try { await writeFile(await sysDir("بريستات"), safeName(name) + ".json", JSON.stringify(rec, null, 2)); where = "في مجلد المنظومة"; } catch (e) {} }
+  F().preset = "my:" + name; saveSoon(); await loadPresets(); toast(`حُفظ البريست «${name}» ${where} ✓`);
+}
+async function deletePreset() {
+  const key = String(F().preset || ""); if (!key.startsWith("my:")) return;
+  const name = key.slice(3); if (!confirm(`حذف البريست «${name}»؟`)) return;
+  ls.set("myPresets", (ls.get("myPresets", []) || []).filter(x => x.name !== name));
+  if (S.sys) { try { await (await sysDir("بريستات")).removeEntry(safeName(name) + ".json"); } catch (e) {} }
+  F().preset = ""; saveSoon(); await loadPresets(); toast("حُذف البريست");
 }
 function pickFile(accept) { return new Promise(res => { const i = document.createElement("input"); i.type = "file"; i.accept = accept; i.onchange = () => res(i.files[0] || null); i.click(); }); }
 (() => {
@@ -648,6 +676,7 @@ function pickFile(accept) { return new Promise(res => { const i = document.creat
   // التنقل بين المقترحات بالأسهم مع المعاينة الفورية
   $("#lrPrev").onclick = () => { if (sel.selectedIndex > 0) { sel.selectedIndex--; applyLR(sel.value); } };
   $("#lrNext").onclick = () => { if (sel.selectedIndex < sel.options.length - 1) { sel.selectedIndex++; applyLR(sel.value); } };
+  $("#presetSave").onclick = savePresetAs; $("#presetDel").onclick = deletePreset;
 })();
 
 /* ============ مطابقة صورة مرجعية ============ */

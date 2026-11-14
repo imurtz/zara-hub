@@ -95,6 +95,7 @@ header h1 small{display:block;font-size:12.5px;color:var(--soft);font-weight:500
 .lk.on{border-color:var(--teal);box-shadow:0 0 0 3px var(--teal-t)}
 .lk.orig{cursor:default;opacity:.92}
 .lk figcaption{font-size:13px!important;padding:3px 10px!important}.acts2{display:flex;gap:8px;margin-top:12px}
+.presetActs{display:flex;align-items:center;gap:12px;margin-top:6px}
 .lrBox>span{font-size:12.5px;font-weight:700;color:var(--teal-d)}
 .imps{display:flex;gap:14px;flex-wrap:wrap}
 .amt{background:var(--tan-t);border-radius:12px;padding:6px 10px;margin:6px 0 4px}
@@ -305,7 +306,8 @@ body{padding:0;height:100vh;overflow:hidden}
         <div class="seg scope" id="adjScope"></div>
         <div id="refBox" class="refBox"></div>
         <div class="lrBox"><span>مقترحات Lightroom</span>
-          <div class="presets"><button type="button" class="ghost sm" id="lrPrev" title="السابق">›</button><select id="lrSel"></select><button type="button" class="ghost sm" id="lrNext" title="التالي">‹</button></div></div>
+          <div class="presets"><button type="button" class="ghost sm" id="lrPrev" title="السابق">›</button><select id="lrSel"></select><button type="button" class="ghost sm" id="lrNext" title="التالي">‹</button></div>
+          <div class="presetActs"><button type="button" class="pri sm3" id="presetSave">💾 حفظ التعديلات كبريست</button><button type="button" class="lnk" id="presetDel" hidden>حذف هذا البريست</button></div></div>
         <div id="adjBox"></div>
         <div class="adjActs">
           <button type="button" class="ghost sm" id="adjApplyAll">طبّق على كل الصور</button>
