@@ -1,34 +1,34 @@
 // تعديل الألوان — نفس الدالة للمعاينة وللتصدير (ما تراه هو ما يُصدَّر).
 // الضوء والتوازن اللوني في جداول لكل قناة (سريعة جداً)، ثم HSL لكل لون + تدرج الألوان + التشبع لكل بكسل.
 
-const BANDS = [["red", "الأحمر", 0, "#E0514A"], ["orange", "البرتقالي", 30, "#E8923A"], ["yellow", "الأصفر", 60, "#E6C93A"], ["green", "الأخضر", 120, "#4DB25A"],
-  ["aqua", "السماوي", 180, "#3CB8C2"], ["blue", "الأزرق", 240, "#3F6FD8"], ["purple", "البنفسجي", 270, "#8A5AD6"], ["magenta", "الأرجواني", 300, "#D04FB0"]];
+const BANDS = [["red", "Red", 0, "#E0514A"], ["orange", "Orange", 30, "#E8923A"], ["yellow", "Yellow", 60, "#E6C93A"], ["green", "Green", 120, "#4DB25A"],
+  ["aqua", "Aqua", 180, "#3CB8C2"], ["blue", "Blue", 240, "#3F6FD8"], ["purple", "Purple", 270, "#8A5AD6"], ["magenta", "Magenta", 300, "#D04FB0"]];
 export { BANDS };
 
 export const ADJ = [
-  { g: "amount", k: "amount", l: "قوة المؤثرات", min: 0, max: 100, step: 1, def: 100 },
-  { g: "amount", k: "auto", l: "تصحيح تلقائي", min: 0, max: 100, step: 1 },
-  { g: "الضوء", k: "exposure",   l: "التعريض",  min: -3,   max: 3,   step: 0.05 },
-  { g: "الضوء", k: "contrast",   l: "التباين",  min: -100, max: 100, step: 1 },
-  { g: "الضوء", k: "highlights", l: "الإضاءات", min: -100, max: 100, step: 1 },
-  { g: "الضوء", k: "shadows",    l: "الظلال",   min: -100, max: 100, step: 1 },
-  { g: "الضوء", k: "whites",     l: "الأبيض",   min: -100, max: 100, step: 1 },
-  { g: "الضوء", k: "blacks",     l: "الأسود",   min: -100, max: 100, step: 1 },
-  { g: "اللون", k: "temp",       l: "الحرارة",  min: -150, max: 150, step: 1 },
-  { g: "اللون", k: "tint",       l: "الصبغة",   min: -150, max: 150, step: 1 },
-  { g: "اللون", k: "vibrance",   l: "الحيوية",  min: -100, max: 100, step: 1 },
-  { g: "اللون", k: "saturation", l: "التشبع",   min: -100, max: 100, step: 1 },
+  { g: "amount", k: "amount", l: "Amount", min: 0, max: 100, step: 1, def: 100 },
+  { g: "amount", k: "auto", l: "Auto", min: 0, max: 100, step: 1 },
+  { g: "الضوء", k: "exposure",   l: "Exposure",  min: -3,   max: 3,   step: 0.05 },
+  { g: "الضوء", k: "contrast",   l: "Contrast",  min: -100, max: 100, step: 1 },
+  { g: "الضوء", k: "highlights", l: "Highlights", min: -100, max: 100, step: 1 },
+  { g: "الضوء", k: "shadows",    l: "Shadows",   min: -100, max: 100, step: 1 },
+  { g: "الضوء", k: "whites",     l: "Whites",   min: -100, max: 100, step: 1 },
+  { g: "الضوء", k: "blacks",     l: "Blacks",   min: -100, max: 100, step: 1 },
+  { g: "اللون", k: "temp",       l: "Temp",  min: -150, max: 150, step: 1 },
+  { g: "اللون", k: "tint",       l: "Tint",   min: -150, max: 150, step: 1 },
+  { g: "اللون", k: "vibrance",   l: "Vibrance",  min: -100, max: 100, step: 1 },
+  { g: "اللون", k: "saturation", l: "Saturation",   min: -100, max: 100, step: 1 },
   ...["h", "s", "l"].flatMap(t => BANDS.map(([k, l, , c]) => ({ g: "hsl-" + t, k: `${t}_${k}`, l, c, min: -100, max: 100, step: 1, adv: 1 }))),
-  ...[["sh", "الظلال"], ["mid", "الوسط"], ["hi", "الإضاءات"]].flatMap(([k, l]) => [
-    { g: "grade", k: `cg_${k}_h`, l: `لون ${l}`, min: 0, max: 360, step: 1, hue: 1, adv: 1 },
-    { g: "grade", k: `cg_${k}_s`, l: `قوة ${l}`, min: 0, max: 100, step: 1, adv: 1 }]),
-  { g: "التفاصيل", k: "texture", l: "النسيج", min: -100, max: 100, step: 1 },
-  { g: "التفاصيل", k: "clarity", l: "الوضوح", min: -100, max: 100, step: 1 },
-  { g: "التفاصيل", k: "sharp", l: "الحدّة", min: 0, max: 150, step: 1 },
-  { g: "التفاصيل", k: "vignette", l: "تعتيم الأطراف", min: -100, max: 100, step: 1 },
-  ...[["pc_sh", "الظلال العميقة"], ["pc_dk", "الداكن"], ["pc_lt", "الفاتح"], ["pc_hi", "الإضاءات العالية"]].map(([k, l]) => ({ g: "curve", k, l, min: -100, max: 100, step: 1, adv: 1 })),
-  { g: "grade", k: "cg_blend", l: "المزج", min: 0, max: 100, step: 1, def: 50, adv: 1 },
-  { g: "grade", k: "cg_bal", l: "التوازن", min: -100, max: 100, step: 1, adv: 1 }
+  ...[["sh", "Shadows"], ["mid", "Midtones"], ["hi", "Highlights"]].flatMap(([k, l]) => [
+    { g: "grade", k: `cg_${k}_h`, l: `${l} Hue`, min: 0, max: 360, step: 1, hue: 1, adv: 1 },
+    { g: "grade", k: `cg_${k}_s`, l: `${l} Sat`, min: 0, max: 100, step: 1, adv: 1 }]),
+  { g: "التفاصيل", k: "texture", l: "Texture", min: -100, max: 100, step: 1 },
+  { g: "التفاصيل", k: "clarity", l: "Clarity", min: -100, max: 100, step: 1 },
+  { g: "التفاصيل", k: "sharp", l: "Sharpening", min: 0, max: 150, step: 1 },
+  { g: "التفاصيل", k: "vignette", l: "Vignette", min: -100, max: 100, step: 1 },
+  ...[["pc_sh", "Shadows"], ["pc_dk", "Darks"], ["pc_lt", "Lights"], ["pc_hi", "Highlights"]].map(([k, l]) => ({ g: "curve", k, l, min: -100, max: 100, step: 1, adv: 1 })),
+  { g: "grade", k: "cg_blend", l: "Blending", min: 0, max: 100, step: 1, def: 50, adv: 1 },
+  { g: "grade", k: "cg_bal", l: "Balance", min: -100, max: 100, step: 1, adv: 1 }
 ];
 export const ZERO = Object.fromEntries(ADJ.map(a => [a.k, a.def || 0]));
 export const isZero = p => !p || (!p.lut && !(p.tc && p.tc.length) && !["tcR", "tcG", "tcB"].some(k => p[k] && p[k].length) && !p.cg_gl_s && ADJ.every(a => a.k === "amount" || (p[a.k] ?? (a.def || 0)) === (a.def || 0) || (a.hue && !p[a.k.replace(/_h$/, "_s")]))) || (p.amount === 0);

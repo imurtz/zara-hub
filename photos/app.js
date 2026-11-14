@@ -532,16 +532,16 @@ function paintAdj() {
     $("#adjBox").innerHTML = `<div class="amt">${ADJ.filter(d => d.k === "amount").map(sl).join("")}</div>
       <div class="matchNote">🎯 المطابقة مفعّلة: لكل صورة تصحيح محسوب لها لتقترب من المظهر المعتمد. «قوة المؤثرات» تخفف المطابقة.</div>
       ${it ? `<div class="twHead"><b>🎚 ضبط هذه الصورة</b><small>${esc(it.name)} — يُضاف فوق المطابقة (0 = بدون تغيير)</small></div>
-      <h4>الضوء</h4>${grpT("الضوء")}<h4>اللون</h4>${grpT("اللون")}
+      <h4>Light</h4>${grpT("الضوء")}<h4>Color</h4>${grpT("اللون")}
       <div class="adjActs"><button type="button" class="ghost sm" data-tw="all" ${hasTweak(it) ? "" : "disabled"}>انسخ هذا الضبط لكل الصور</button><button type="button" class="lnk" data-tw="reset" ${hasTweak(it) ? "" : "hidden"}>تصفير ضبط الصورة</button></div>` : ""}`;
     $("#adjReset").hidden = true; $("#adjTag").textContent = "مطابقة المرجع"; paintPresets(); return;
   }
-  $("#adjBox").innerHTML = `<div class="amt">${grp("amount")}</div>${a.lut ? `<div class="lutTag">🎯 مطابقة ألوان مفعّلة (${a.lut.n}³)</div>` : ""}<h4>الضوء</h4>${grp("الضوء")}<h4>اللون</h4>${grp("اللون")}<h4>التفاصيل</h4>${grp("التفاصيل")}
-    <details class="adv" ${S.openHsl ? "open" : ""} data-det="openHsl"><summary>ألوان محددة (HSL)${hslOn ? " <em>●</em>" : ""}</summary>
-      <div class="seg mini3">${[["h", "درجة اللون"], ["s", "التشبع"], ["l", "الإضاءة"]].map(([k, l]) => `<button type="button" data-hsl="${k}" class="${ht === k ? "on" : ""}">${l}</button>`).join("")}</div>
+  $("#adjBox").innerHTML = `<div class="amt">${grp("amount")}</div>${a.lut ? `<div class="lutTag">🎯 مطابقة ألوان مفعّلة (${a.lut.n}³)</div>` : ""}<h4>Light</h4>${grp("الضوء")}<h4>Color</h4>${grp("اللون")}<h4>Effects &amp; Detail</h4>${grp("التفاصيل")}
+    <details class="adv" ${S.openHsl ? "open" : ""} data-det="openHsl"><summary>Color Mixer (HSL)${hslOn ? " <em>●</em>" : ""}</summary>
+      <div class="seg mini3">${[["h", "Hue"], ["s", "Saturation"], ["l", "Luminance"]].map(([k, l]) => `<button type="button" data-hsl="${k}" class="${ht === k ? "on" : ""}">${l}</button>`).join("")}</div>
       ${grp("hsl-" + ht)}</details>
-    <details class="adv" ${S.openCurve ? "open" : ""} data-det="openCurve"><summary>منحنى التون${["pc_sh", "pc_dk", "pc_lt", "pc_hi"].some(k => a[k]) ? " <em>●</em>" : ""}</summary>${grp("curve")}</details>
-    <details class="adv" ${S.openCg ? "open" : ""} data-det="openCg"><summary>تدرج الألوان (ظلال / وسط / إضاءات)${cgOn ? " <em>●</em>" : ""}</summary>${grp("grade")}</details>`;
+    <details class="adv" ${S.openCurve ? "open" : ""} data-det="openCurve"><summary>Tone Curve${["pc_sh", "pc_dk", "pc_lt", "pc_hi"].some(k => a[k]) ? " <em>●</em>" : ""}</summary>${grp("curve")}</details>
+    <details class="adv" ${S.openCg ? "open" : ""} data-det="openCg"><summary>Color Grading${cgOn ? " <em>●</em>" : ""}</summary>${grp("grade")}</details>`;
   $("#adjReset").hidden = isZero(a);
   $("#adjTag").textContent = own ? "تعديل خاص بهذه الصورة" : (F().preset && lrFind(F().preset) ? "Lightroom: " + lrFind(F().preset).name : (isZero(F().adj) ? "بدون تعديل" : "تعديل على كل الصور"));
   paintPresets();
