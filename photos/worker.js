@@ -2,11 +2,12 @@
 // صورة واحدة في كل مرة، ويُغلق كل شيء بعدها حتى لا تمتلئ الذاكرة.
 import encode, { init as initEnc } from "./vendor/jsquash/encode.js";
 import { cropRect, drawFooter, FONT_M, FONT_R, RATIOS } from "./footer.js";
-import { applyAdjust, isZero } from "./adjust.js";
+import { applyAdjust, isZero, setACRCurves } from "./adjust.js";
 
 let assets = null, encReady = null;
 
 async function setup(msg) {
+  try { setACRCurves(await (await fetch(new URL("./assets/acr-curves.json", import.meta.url))).json()); } catch (e) {}
   if (!encReady) {
     encReady = (async () => {
       const wasm = await WebAssembly.compileStreaming(fetch(new URL("./vendor/jsquash/codec/enc/mozjpeg_enc.wasm", import.meta.url)));

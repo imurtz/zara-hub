@@ -1,5 +1,5 @@
 // معالجة صور الفعاليات — بوابة زارة. كل شيء داخل المتصفح: لا Firebase ولا رفع ولا أي خادم.
-import { ADJ, ZERO, isZero, applyAdjust, histogram, fromXMP, BANDS, parseCube, lutFromPair, imageStats, matchAdj, LOOKS, lookRef } from "./adjust.js";
+import { setACRCurves, ADJ, ZERO, isZero, applyAdjust, histogram, fromXMP, BANDS, parseCube, lutFromPair, imageStats, matchAdj, LOOKS, lookRef } from "./adjust.js";
 import { RATIOS, hijriOf, gregOf, cropRect, drawFooter, FONT_M, FONT_R, LOGO_FILL, titleCheck } from "./footer.js";
 
 const $ = s => document.querySelector(s);
@@ -1034,6 +1034,8 @@ function ask(msg, opts) {
 
 /* ============ البدء ============ */
 (async function init() {
+  // منحنيات Adobe المقاسة (معايرة المحرك على Lightroom)
+  try { setACRCurves(await (await fetch("./assets/acr-curves.json")).json()); } catch (e) { console.warn("acr curves", e); }
   $("#fsNote").hidden = HAS_FS;
   $("#srcBtn").innerHTML = HAS_FS ? "📂 اختر مجلد الصور" : "🖼️ اختر الصور";
   try { S.mark = (await rasterize("./assets/mark.png", 640)).bmp; } catch (e) {}

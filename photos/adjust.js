@@ -121,7 +121,35 @@ const L2S_N = 4096, L2S = new Float32Array(L2S_N + 1); for (let i = 0; i <= L2S_
 const enc = v => v <= 0 ? 0 : v >= 1 ? 1 : L2S[(v * L2S_N + 0.5) | 0];
 const MID = Math.log2(0.18);
 // ثوابت المعايرة على Lightroom (تُضبط بمقارنة نتائج حقيقية: نفس الأرقام ← نفس الشكل)
-export const CAL = { expK: 1, temp: 0.75, tint: 0.00045, ct: 0.42, bl: 1.1, wh: 0.7, sh: 1.55, hi: 1.35, cla: 0.9, tex: 0.55, desat: 0.22, knee: 0.5, roll: 1, sat: 1, vib: 1, pc: 0.13 };
+// منحنيات Adobe المقاسة (assets/acr-curves.json) — تُحمَّل مرة واحدة عند البدء
+let ACR = null;
+export function setACRCurves(o) { ACR = o && o.exposure ? o : null; _clutCache.clear && _clutCache.clear(); }
+// تقييم منحنى شريط بقيمة t (استيفاء بين القيم المقاسة، والصفر = بلا تغيير) على درجة g (0..1)
+function acrEval(name, t, g) {
+  const C = ACR && ACR[name]; if (!C || !t) return g;
+  const vals = C.vals, x = Math.max(0, Math.min(255, g * 255)), i0 = x | 0, fr = x - i0;
+  const at = j => { const c = C.c[j]; return (c[i0] + (c[Math.min(255, i0 + 1)] - c[i0]) * fr) / 255; };
+  // أقرب قيمتين مقاستين حول t (مع الصفر كهوية)
+  const pts = [[0, null], ...vals.map((v, j) => [v, j])].sort((a, b) => a[0] - b[0]);
+  let lo = pts[0], hi = pts[pts.length - 1];
+  for (let k = 0; k < pts.length - 1; k++) if (t >= pts[k][0] && t <= pts[k + 1][0]) { lo = pts[k]; hi = pts[k + 1]; break; }
+  const val = q => q[1] === null ? g : at(q[1]);
+  if (t <= pts[0][0]) return g + (val(pts[0]) - g) * (t / pts[0][0]);
+  if (t >= pts[pts.length - 1][0]) return g + (val(hi) - g) * (t / hi[0]);
+  const f = (t - lo[0]) / (hi[0] - lo[0] || 1); return val(lo) + (val(hi) - val(lo)) * f;
+}
+const ACR_ORDER = [["exposure", "exposure"], ["contrast", "contrast"], ["highlights", "highlights"], ["shadows", "shadows"], ["whites", "whites"], ["blacks", "blacks"], ["pc_sh", "pc_sh"], ["pc_dk", "pc_dk"], ["pc_lt", "pc_lt"], ["pc_hi", "pc_hi"]];
+function acrChain(p, keys, lv) { // lv = log2 للإضاءة الخطية ← log2 بعد المنحنيات
+  let g = lv >= 0 ? 1 : l2s(Math.pow(2, lv)); const extra = lv > 0 ? lv : 0;
+  if (!CAL.additive) { for (const [k, n] of ACR_ORDER) if (keys.includes(k) && p[k]) g = acrEval(n, p[k] * (CAL[k + 'K'] ?? 1), g); }
+  else { // التعريض أولاً، ثم تُجمع آثار بقية الأشرطة على نفس النقطة (أقرب لطريقة Adobe في دمج الأشرطة)
+    if (keys.includes("exposure") && p.exposure) g = acrEval("exposure", p.exposure, g);
+    let dsum = 0, cnt = 0; for (const [k, n] of ACR_ORDER) if (k !== "exposure" && keys.includes(k) && p[k]) { dsum += acrEval(n, p[k] * (CAL[k + 'K'] ?? 1), g) - g; cnt++; }
+    g = g + dsum / (1 + CAL.combG * Math.max(0, cnt - 1));
+  }
+  return Math.log2(Math.max(s2l(Math.max(0, Math.min(1, g))), 1e-6)) + extra;
+}
+export const CAL = { additive: 1, combG: 0.133, localAll: 0, shadowsK: 0.25, highlightsK: 0.65, contrastK: 0.4, expK: 1, temp: 0.75, tint: 0.00045, ct: 0.42, bl: 1.1, wh: 0.7, sh: 1.55, hi: 1.35, cla: 1.27, tex: 0.243, desat: 0.06, knee: 0.5, roll: 1, sat: 1.05, vib: 1.18, pc: 0.13 };
 // لوغاريتم سريع بجدول (للقيم ≤ 1)
 const LGN = 65536, LGT = new Float32Array(LGN + 2); for (let q = 0; q <= LGN + 1; q++) LGT[q] = Math.log2(Math.max(q / LGN, 1e-5));
 const flog2 = Y => { if (Y >= 1) return Math.log2(Y); const f = Y * LGN, q = f | 0; return LGT[q] + (LGT[q + 1] - LGT[q]) * (f - q); };
@@ -138,8 +166,31 @@ const RGB2XYZ = [[0.4124, 0.3576, 0.1805], [0.2126, 0.7152, 0.0722], [0.0193, 0.
 const XYZ2RGB = [[3.2406, -1.5372, -0.4986], [-0.9689, 1.8758, 0.0415], [0.0557, -0.2040, 1.0570]];
 const mm = (A, B) => A.map((r, i) => B[0].map((_, j) => r[0] * B[0][j] + r[1] * B[1][j] + r[2] * B[2][j]));
 const mv3 = (A, v) => A.map(r => r[0] * v[0] + r[1] * v[1] + r[2] * v[2]);
+function acrGains(name, t) { // مكاسب القنوات المقاسة من Adobe لقيمة t (استيفاء خطي، والصفر = 1)
+  const W = ACR && ACR.wb && ACR.wb[name]; if (!W || !t) return [1, 1, 1];
+  const pts = [[0, [1, 1, 1]], ...W.vals.map((v, j) => [v, W.g[j]])].sort((a, b) => a[0] - b[0]);
+  let lo = pts[0], hi = pts[pts.length - 1];
+  if (t < lo[0]) { hi = pts[1]; } else if (t > hi[0]) { lo = pts[pts.length - 2]; }
+  else for (let k = 0; k < pts.length - 1; k++) if (t >= pts[k][0] && t <= pts[k + 1][0]) { lo = pts[k]; hi = pts[k + 1]; break; }
+  const f = (t - lo[0]) / (hi[0] - lo[0] || 1);
+  return [0, 1, 2].map(c => Math.max(0.05, lo[1][c] + (hi[1][c] - lo[1][c]) * f));
+}
+// منحنيات القنوات المقاسة للحرارة/الصبغة: جدول دخل لكل قناة (256) بالقيمة الخطية
+function wbInputTables(temp, tint) {
+  if (!ACR || !ACR.wbc || (!temp && !tint)) return null;
+  const ev = (name, t, ch, g) => { const C = ACR.wbc[name]; if (!C || !t) return g;
+    const pts = [[0, null], ...C.vals.map((v, j) => [v, j])].sort((a, b) => a[0] - b[0]);
+    const at = (j, x) => { if (j === null) return x; const c = C.c[j][ch], i0 = Math.min(254, (x * 255) | 0), fr = x * 255 - i0; return (c[i0] + (c[i0 + 1] - c[i0]) * fr) / 255; };
+    let lo = pts[0], hi = pts[pts.length - 1];
+    if (t < lo[0]) hi = pts[1]; else if (t > hi[0]) lo = pts[pts.length - 2];
+    else for (let k = 0; k < pts.length - 1; k++) if (t >= pts[k][0] && t <= pts[k + 1][0]) { lo = pts[k]; hi = pts[k + 1]; break; }
+    const f = (t - lo[0]) / (hi[0] - lo[0] || 1), a = at(lo[1], g), b = at(hi[1], g); return Math.max(0, Math.min(1, a + (b - a) * f)); };
+  return [0, 1, 2].map(ch => { const T = new Float32Array(256); for (let i = 0; i < 256; i++) T[i] = s2l(ev("tint", tint, ch, ev("temp", temp, ch, i / 255))); return T; });
+}
 function wbMatrix(temp, tint) {
   if (!temp && !tint) return null;
+  if (ACR && ACR.wbc) return null;
+  if (ACR && ACR.wb) { const a = acrGains("temp", temp), b = acrGains("tint", tint); return [[a[0] * b[0], 0, 0], [0, a[1] * b[1], 0], [0, 0, a[2] * b[2]]]; }
   // موجب الحرارة = أدفأ: نفترض أن الإضاءة كانت أبرد ونكيّفها إلى D65
   const mired = 1e6 / 6504 - temp * CAL.temp, [x, y0] = cctXY(1e6 / Math.max(40, mired)), y = y0 - tint * CAL.tint;
   const src = [x / y, 1, (1 - x - y) / y], dst = [0.95047, 1, 1.08883];
@@ -163,11 +214,11 @@ const hueOk = h => { const c = hueRGB(h).map(v => s2l(Math.max(0, Math.min(1, v 
 // جدول اللون ثلاثي الأبعاد (منحنيات + Oklab) — يُبنى مرة لكل إعداد
 const _clutCache = new Map();
 function colorLUT(p) {
-  const key = JSON.stringify([CAL.sat, CAL.vib, CAL.pc, p.tc, p.tcR, p.tcG, p.tcB, p.pc_sh, p.pc_dk, p.pc_lt, p.pc_hi, p.saturation, p.vibrance, ...ADJ.filter(d => /^(h|s|l)_|^cg_/.test(d.k)).map(d => p[d.k])]);
+  const key = JSON.stringify([ACR ? 1 : 0, CAL.sat, CAL.vib, CAL.pc, p.tc, p.tcR, p.tcG, p.tcB, p.pc_sh, p.pc_dk, p.pc_lt, p.pc_hi, p.saturation, p.vibrance, ...ADJ.filter(d => /^(h|s|l)_|^cg_/.test(d.k)).map(d => p[d.k])]);
   if (_clutCache.has(key)) return _clutCache.get(key);
   const n = 33, out = new Float32Array(n * n * n * 3);
   const TC = p.tc && p.tc.length >= 2 ? monoCurve(p.tc) : null, TCC = ["tcR", "tcG", "tcB"].map(k => p[k] && p[k].length >= 2 ? monoCurve(p[k]) : null);
-  const pc = ["pc_sh", "pc_dk", "pc_lt", "pc_hi"].map(k => (p[k] || 0) / 100), hasPC = pc.some(Boolean);
+  const pc = ["pc_sh", "pc_dk", "pc_lt", "pc_hi"].map(k => ACR ? 0 : (p[k] || 0) / 100), hasPC = pc.some(Boolean);
   const sat = 1 + (p.saturation || 0) / 100 * CAL.sat, vib = (p.vibrance || 0) / 100 * CAL.vib;
   const hsl = OK_BANDS.map(([k, c]) => [c, (p["h_" + k] || 0), (p["s_" + k] || 0) / 100, (p["l_" + k] || 0) / 100]), hasHSL = hsl.some(x => x[1] || x[2] || x[3]);
   const cgv = ["sh", "mid", "hi", "gl"].map(k => { const s = (p[`cg_${k}_s`] || 0) / 100; if (!s) return null; const [a, b] = hueOk(p[`cg_${k}_h`] || 0); return [a * s * 0.07, b * s * 0.07]; });
@@ -227,10 +278,11 @@ export function applyAdjust(img, p) {
   if (p.auto) Object.assign(p, autoStats(img, p.auto / 100, p.autoWb !== 0));
   const W = img.width, H = img.height, d = img.data, N = W * H;
   // 1) مصفوفة الأبيض + المكاسب التلقائية + التعريض
-  const ag = p._g || [1, 1, 1], WB = wbMatrix(p.temp || 0, p.tint || 0) || [[1, 0, 0], [0, 1, 0], [0, 0, 1]], ev = Math.pow(2, (p.exposure || 0) * CAL.expK + (p._ev || 0));
+  const WBT = wbInputTables(p.temp || 0, p.tint || 0), TR = WBT ? WBT[0] : S2L, TG = WBT ? WBT[1] : S2L, TB = WBT ? WBT[2] : S2L;
+  const ag = p._g || [1, 1, 1], WB = wbMatrix(p.temp || 0, p.tint || 0) || [[1, 0, 0], [0, 1, 0], [0, 0, 1]], ev = Math.pow(2, (ACR ? 0 : (p.exposure || 0) * CAL.expK) + (p._ev || 0));
   const M = WB.map(r => r.map((v, j) => v * ag[j] * ev));
   const sh = (p.shadows || 0) / 100, hi = (p.highlights || 0) / 100, wh = (p.whites || 0) / 100, bl = (p.blacks || 0) / 100, ct = (p.contrast || 0) / 100;
-  const cla = (p.clarity || 0) / 100, local = !!(sh || hi || cla) && W > 8 && H > 8;
+  const cla = (p.clarity || 0) / 100, toneAny = ACR && ACR_ORDER.some(([k]) => p[k]), local = !!(sh || hi || cla || (toneAny && CAL.localAll)) && W > 8 && H > 8;
   const amt = Math.max(0, Math.min(1, (p.amount ?? 100) / 100)), mix = amt < 1;
   const CL = colorLUT(p), cn = CL.n, cn1 = cn - 1, CD = CL.d;
   // 2) لوغاريتم الإضاءة (للطبقة القاعدية)
@@ -242,7 +294,7 @@ export function applyAdjust(img, p) {
     const f = Math.max(1, Math.round(Math.max(W, H) / 640)), lw = Math.ceil(W / f), lh = Math.ceil(H / f), sum = new Float32Array(lw * lh), cnt = new Uint16Array(lw * lh);
     const XL = new Int32Array(W); for (let x = 0; x < W; x++) XL[x] = (x / f) | 0;
     for (let y = 0, i = 0, j = 0; y < H; y++) { const ro = ((y / f) | 0) * lw;
-      for (let x = 0; x < W; x++, i += 4, j++) { const lv = flog2(cr * S2L[d[i]] + cgc * S2L[d[i + 1]] + cb * S2L[d[i + 2]]); logL[j] = lv; const q = ro + XL[x]; sum[q] += lv; cnt[q]++; } }
+      for (let x = 0; x < W; x++, i += 4, j++) { const lv = flog2(cr * TR[d[i]] + cgc * TG[d[i + 1]] + cb * TB[d[i + 2]]); logL[j] = lv; const q = ro + XL[x]; sum[q] += lv; cnt[q]++; } }
     base = baseLayer(sum, cnt, lw, lh, f);
   }
   const bw = base ? base.w : 0, bh = base ? base.h : 0, bf = base ? base.f : 1;
@@ -271,6 +323,18 @@ export function applyAdjust(img, p) {
     let Yn = shoulder(Math.pow(2, v + MID)); if (!sa && Yn > 0.9) Yn = 0.9 + 0.1 * Math.tanh((Yn - 0.9) / 0.1);
     HY[q] = Yn;
   }
+  // وضع Adobe: منحنيات الإضاءة المقاسة تحل محل المعادلات
+  if (ACR && toneAny) {
+    const all = ACR_ORDER.map(x => x[0]), Lk = CAL.localAll ? all : ["highlights", "shadows"], Gk = all.filter(k => !Lk.includes(k));
+    for (let q = 0; q <= NB; q++) {
+      const lv = LO + q / sc;
+      if (local) {
+        const nb = acrChain(p, Lk, lv); FU[q] = nb - MID;
+        GC[q] = cla ? 1 + cla * CAL.cla * Math.max(0, 1 - Math.abs(nb - MID) / 4.5) : 1;
+        HY[q] = Math.pow(2, Gk.length ? acrChain(p, Gk, lv) : lv);
+      } else HY[q] = Math.pow(2, acrChain(p, all, lv));
+    }
+  }
   const look = (T, lv) => { let f = (lv - LO) * sc; if (f <= 0) return T[0]; if (f >= NB) return T[NB]; const q = f | 0, t = f - q; return T[q] + (T[q + 1] - T[q]) * t; };
   const sx = 3, sy = cn * 3, sz = cn * cn * 3, ident = CL.identity;
   const BX0 = base ? new Int32Array(W) : null, BDX = base ? new Float32Array(W) : null;
@@ -280,7 +344,7 @@ export function applyAdjust(img, p) {
     const dRow = (y * 13) & 7;
     for (let x = 0; x < W; x++, i += 4, j++) {
       const r0 = d[i], g0 = d[i + 1], b0 = d[i + 2];
-      const rl = S2L[r0], gl = S2L[g0], bL = S2L[b0];
+      const rl = TR[r0], gl = TG[g0], bL = TB[b0];
       let R = M[0][0] * rl + M[0][1] * gl + M[0][2] * bL, G = M[1][0] * rl + M[1][1] * gl + M[1][2] * bL, B = M[2][0] * rl + M[2][1] * gl + M[2][2] * bL;
       const Y = Math.max(0.2126 * R + 0.7152 * G + 0.0722 * B, 1e-5);
       let Yn;
