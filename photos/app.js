@@ -437,11 +437,11 @@ function drawCropMode(cv, it, r) {
   for (const f of [1 / 3, 2 / 3]) { c.moveTo(x + w * f, y); c.lineTo(x + w * f, y + h); c.moveTo(x, y + h * f); c.lineTo(x + w, y + h * f); }
   c.stroke();
   // مقابض الزوايا
-  const hs = Math.max(14, cv.width / 70); c.fillStyle = "#F2C14E";
+  const hs = Math.max(10, 16 * cv.width / Math.max(1, $("#prevWrap").clientWidth)); c.fillStyle = "#F2C14E";
   for (const [hx, hy] of [[x, y], [x + w, y], [x, y + h], [x + w, y + h]]) c.fillRect(hx - hs / 2, hy - hs / 2, hs, hs);
   // معاينة صغيرة للنتيجة النهائية (مع الحقوق) أعلى الإطار
   cropView = { k, x, y, w, h, hs, W, H };
-  $("#prevMeta").innerHTML = `✂️ وضع القص — اسحب الإطار لتحريكه، واسحب الزوايا لتكبيره أو تصغيره · <b>Enter</b> للاعتماد · <button type="button" class="lnk" id="cropDone">تم ✓</button>`;
+  $("#prevMeta").innerHTML = `✂️ وضع القص — اسحب الإطار لتحريكه، واسحب الزوايا لتكبيره أو تصغيره · اسحب خارج الإطار لرسم إطار جديد · <b>Enter</b> للاعتماد · <button type="button" class="lnk" id="cropDone">تم ✓</button>`;
   $("#cropDone").onclick = () => setTab("color");
   cv.style.cursor = "move";
 }
@@ -452,20 +452,22 @@ function setCropMode(on) { S.cropMode = on; $("#cropModeBtn").classList.toggle("
   const base = () => cropRect(prevBmp.width, prevBmp.height, S.ratio, [], { cx: 0.5, cy: 0.5, z: 1 });
   const down = e => {
     if (!S.cropMode || !cropView || !S.items[S.cur]) return; e.preventDefault();
-    const p = pt(e), v = cropView, tol = v.hs * 1.2;
+    const p = pt(e), v = cropView, tol = 24 * cv.width / Math.max(1, cv.getBoundingClientRect().width);
     const corners = [[v.x, v.y, v.x + v.w, v.y + v.h], [v.x + v.w, v.y, v.x, v.y + v.h], [v.x, v.y + v.h, v.x + v.w, v.y], [v.x + v.w, v.y + v.h, v.x, v.y]];
     const hit = corners.find(([cx, cy]) => Math.abs(p.x - cx) < tol && Math.abs(p.y - cy) < tol);
     if (hit) { drag = { mode: "size", ax: hit[2], ay: hit[3] }; return; }
     const inside = p.x >= v.x && p.x <= v.x + v.w && p.y >= v.y && p.y <= v.y + v.h;
-    if (!inside) { const cb = curBox(); setBox({ ...cb, cx: p.x / v.k / v.W, cy: p.y / v.k / v.H }); }
-    drag = { mode: "move", p, b: inside ? curBox() : { ...curBox(), cx: p.x / v.k / v.W, cy: p.y / v.k / v.H } };
+    // خارج الإطار: اسحب لرسم إطار جديد (أو نقرة واحدة لنقل الإطار إلى هذه النقطة)
+    if (!inside) { drag = { mode: "pending", p, ax: p.x, ay: p.y }; return; }
+    drag = { mode: "move", p, b: curBox() };
   };
   const move = e => {
     if (!drag || !cropView) {
-      if (S.cropMode && cropView && !e.touches) { const p = pt(e), v = cropView, tol = v.hs * 1.2; const onC = [[v.x, v.y], [v.x + v.w, v.y + v.h]].some(([a, b]) => Math.abs(p.x - a) < tol && Math.abs(p.y - b) < tol) ? "nwse-resize" : [[v.x + v.w, v.y], [v.x, v.y + v.h]].some(([a, b]) => Math.abs(p.x - a) < tol && Math.abs(p.y - b) < tol) ? "nesw-resize" : "move"; cv.style.cursor = onC; }
+      if (S.cropMode && cropView && !e.touches) { const p = pt(e), v = cropView, tol = 24 * cv.width / Math.max(1, cv.getBoundingClientRect().width); const onC = [[v.x, v.y], [v.x + v.w, v.y + v.h]].some(([a, b]) => Math.abs(p.x - a) < tol && Math.abs(p.y - b) < tol) ? "nwse-resize" : [[v.x + v.w, v.y], [v.x, v.y + v.h]].some(([a, b]) => Math.abs(p.x - a) < tol && Math.abs(p.y - b) < tol) ? "nesw-resize" : "move"; cv.style.cursor = onC; }
       return;
     }
     const p = pt(e), v = cropView;
+    if (drag.mode === "pending") { const sc = cv.width / Math.max(1, cv.getBoundingClientRect().width); if (Math.hypot(p.x - drag.p.x, p.y - drag.p.y) < 8 * sc) return; drag = { mode: "size", ax: drag.ax, ay: drag.ay }; }
     if (drag.mode === "move") { const dx = (p.x - drag.p.x) / v.k / v.W, dy = (p.y - drag.p.y) / v.k / v.H; setBox({ ...drag.b, cx: drag.b.cx + dx, cy: drag.b.cy + dy }); return; }
     // تغيير الحجم من زاوية مع تثبيت الزاوية المقابلة والنسبة
     const bw = base().sw * v.k, R = RATIOS[S.ratio].r;
@@ -476,10 +478,11 @@ function setCropMode(on) { S.cropMode = on; $("#cropModeBtn").classList.toggle("
   };
   cv.addEventListener("mousedown", down); cv.addEventListener("touchstart", down, { passive: false });
   addEventListener("mousemove", move); addEventListener("touchmove", e => { if (drag) { e.preventDefault(); move(e); } }, { passive: false });
-  addEventListener("mouseup", () => drag = null); addEventListener("touchend", () => drag = null);
+  const up = () => { if (drag && drag.mode === "pending" && cropView) { const v = cropView; setBox({ ...curBox(), cx: drag.ax / v.k / v.W, cy: drag.ay / v.k / v.H }); } drag = null; };
+  addEventListener("mouseup", up); addEventListener("touchend", up);
   cv.addEventListener("wheel", e => { if (!S.cropMode || !prevRect) return; e.preventDefault(); const cb = curBox(); setBox({ ...cb, z: cb.z * (e.deltaY > 0 ? 1.05 : 0.95) }); }, { passive: false });
   cv.addEventListener("dblclick", () => { if (S.cropMode) setTab("color"); });
-  addEventListener("keydown", e => { if ((e.key === "Escape" || e.key === "Enter") && S.cropMode && !/INPUT|TEXTAREA|SELECT|BUTTON/.test(document.activeElement.tagName)) { e.preventDefault(); setTab("color"); } if ((e.key === "c" || e.key === "ص") && !/INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName) && S.items.length) setTab(S.tab === "crop" ? "color" : "crop"); });
+  addEventListener("keydown", e => { if ((e.key === "Escape" || e.key === "Enter") && S.cropMode && !/INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName)) { e.preventDefault(); if (document.activeElement && document.activeElement.blur) document.activeElement.blur(); setTab("color"); } if ((e.key === "c" || e.key === "ص") && !/INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName) && S.items.length) setTab(S.tab === "crop" ? "color" : "crop"); });
   $("#cropModeBtn").onclick = () => { if (!S.items.length) return toast("اختر الصور أولاً"); setCropMode(!S.cropMode); };
 })();
 
