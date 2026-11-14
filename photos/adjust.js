@@ -247,6 +247,16 @@ export function applyAdjust(img, p) {
   // جداول مسبقة للنغمات (بوحدات ستوب) — تُغني عن الحساب الثقيل لكل بكسل
   const LO = -16, HI = 4, NB = 4096, sc = NB / (HI - LO);
   const FU = new Float32Array(NB + 1), GC = new Float32Array(NB + 1), HY = new Float32Array(NB + 1);
+  const rawY = lv => { let v = lv - MID;
+    if (ct) v = v * (1 + ct * 0.42) / (1 + ct * 0.42 * Math.min(1, Math.abs(v) / 6));
+    if (bl) v += bl * 1.1 * Math.max(0, Math.min(1, (-v - 2.2) / 3)) ** 1.5 * (bl < 0 ? 1.2 : 1);
+    if (wh) v += wh * 0.7 * Math.max(0, Math.min(1, (v + 0.4) / 2.6)) ** 2;
+    return Math.pow(2, v + MID); };
+  // كتف ناعم متكيّف (مثل Lightroom): يضغط ما يتجاوز الأبيض على مدى واسع يبدأ من 0.5 بدل القص المفاجئ
+  const gainMax = Math.max(ev * Math.max(...ag), 1), Ymax = Math.max(rawY(Math.log2(gainMax) + (sh > 0 ? 0.35 : 0)), 1);
+  const knee = 0.5, r = (Ymax - knee) / (1 - knee);
+  let sa = 0; if (r > 1.0001) { let lo = 1e-4, hi2 = 60; for (let it = 0; it < 60; it++) { const m = (lo + hi2) / 2; (m / (1 - Math.exp(-m)) > r ? (hi2 = m) : (lo = m)); } sa = (lo + hi2) / 2; }
+  const shoulder = Y => { if (!sa || Y <= knee) return Math.min(Y, sa ? Y : Y); const t = Math.min(1.5, (Y - knee) / (Ymax - knee)); return knee + (1 - knee) * (1 - Math.exp(-sa * t)) / (1 - Math.exp(-sa)); };
   for (let q = 0; q <= NB; q++) {
     const lv = LO + q / sc; let u = lv - MID;
     if (sh) u += sh * 1.55 * Math.max(0, Math.min(1, (0.6 - u) / 4.2)) ** 1.2;
@@ -256,7 +266,7 @@ export function applyAdjust(img, p) {
     if (ct) v = v * (1 + ct * 0.42) / (1 + ct * 0.42 * Math.min(1, Math.abs(v) / 6));
     if (bl) v += bl * 1.1 * Math.max(0, Math.min(1, (-v - 2.2) / 3)) ** 1.5 * (bl < 0 ? 1.2 : 1);
     if (wh) v += wh * 0.7 * Math.max(0, Math.min(1, (v + 0.4) / 2.6)) ** 2;
-    let Yn = Math.pow(2, v + MID); if (Yn > 0.8) Yn = 0.8 + 0.2 * Math.tanh((Yn - 0.8) / 0.2);
+    let Yn = shoulder(Math.pow(2, v + MID)); if (!sa && Yn > 0.9) Yn = 0.9 + 0.1 * Math.tanh((Yn - 0.9) / 0.1);
     HY[q] = Yn;
   }
   const look = (T, lv) => { let f = (lv - LO) * sc; if (f <= 0) return T[0]; if (f >= NB) return T[NB]; const q = f | 0, t = f - q; return T[q] + (T[q + 1] - T[q]) * t; };
@@ -280,6 +290,7 @@ export function applyAdjust(img, p) {
         Yn = look(HY, look(FU, bs) + det * look(GC, bs) + MID);
       } else Yn = look(HY, flog2(Y));
       const k = Yn / Y; R *= k; G *= k; B *= k;
+      if (k > 1.02) { const ds = Math.pow(1 / k, 0.22); R = Yn + (R - Yn) * ds; G = Yn + (G - Yn) * ds; B = Yn + (B - Yn) * ds; }
       const mx = R > G ? (R > B ? R : B) : (G > B ? G : B);
       if (mx > 1) { const t = (mx - 1) / (mx - Yn + 1e-6); R += (Yn - R) * t; G += (Yn - G) * t; B += (Yn - B) * t; }
       let er = R <= 0 ? 0 : R >= 1 ? 1 : L2S[(R * L2S_N + 0.5) | 0], eg = G <= 0 ? 0 : G >= 1 ? 1 : L2S[(G * L2S_N + 0.5) | 0], eb = B <= 0 ? 0 : B >= 1 ? 1 : L2S[(B * L2S_N + 0.5) | 0];
