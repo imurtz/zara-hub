@@ -123,11 +123,14 @@ export function drawFooter(ctx, W, H, ratio, o, A) {
   ctx.direction = "rtl"; ctx.textAlign = "right";
   const xr = W - L.credit.right * u;
   if (!o.noCredit) {
-    ctx.globalAlpha = 0.92; ctx.font = `400 ${L.credit.lblSize * u}px ${FONT_R}`;
-    ctx.fillText(o.label || "التغطية الفوتوغرافية", xr, H - L.credit.lblBase * u);
-    ctx.globalAlpha = 1;
+    // السطران في المنتصف بالنسبة لبعضهما، والكتلة كلها ملاصقة للهامش الأيمن
+    const lbl = o.label || "التغطية الفوتوغرافية", fL = `400 ${L.credit.lblSize * u}px ${FONT_R}`, fN = `500 ${L.credit.nameSize * u}px ${FONT_M}`;
+    ctx.font = fL; const wl = ctx.measureText(lbl).width;
+    let wn = 0; if (o.photographer) { ctx.font = fN; wn = ctx.measureText(o.photographer).width; }
+    const cx = xr - Math.max(wl, wn) / 2; ctx.textAlign = "center";
+    ctx.globalAlpha = 0.92; ctx.font = fL; ctx.fillText(lbl, cx, H - L.credit.lblBase * u); ctx.globalAlpha = 1;
+    if (o.photographer) { ctx.font = fN; ctx.fillText(o.photographer, cx, H - L.credit.nameBase * u); }
   }
-  if (o.photographer && !o.noCredit) { ctx.font = `500 ${L.credit.nameSize * u}px ${FONT_M}`; ctx.fillText(o.photographer, xr, H - L.credit.nameBase * u); }
   ctx.restore();
 }
 
