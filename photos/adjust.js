@@ -340,15 +340,37 @@ function boxBlur(src, w, h, r, tmp, out) {
 function localContrast(img, p, amt) {
   const w = img.width, h = img.height, d = img.data, N = w * h;
   if (!w || !h) return;
-  const Y = new Float32Array(N), tmp = new Float32Array(N), bl = new Float32Array(N), add = new Float32Array(N);
+  const Y = new Float32Array(N), add = new Float32Array(N);
   for (let i = 0, j = 0; j < N; i += 4, j++) Y[j] = (0.2126 * d[i] + 0.7152 * d[i + 1] + 0.0722 * d[i + 2]) / 255;
-  const ops = [];
-  if (p.texture) ops.push([Math.max(1, Math.round(w * 0.0025)), p.texture / 100 * 0.55, "mid"]);
-  if (p.clarity) ops.push([Math.max(2, Math.round(w * 0.012)), p.clarity / 100 * 0.45, "mid"]);
-  if (p.sharp) ops.push([Math.max(1, Math.round(w / 3500)), p.sharp / 100 * 0.9, "all"]);
-  for (const [r, k0, mode] of ops) {
-    const k = k0 * amt; boxBlur(Y, w, h, r, tmp, bl);
-    for (let j = 0; j < N; j++) { const y = Y[j], m = mode === "mid" ? 1 - (2 * y - 1) ** 2 : 1; add[j] += (y - bl[j]) * k * m; }
+  // الوضوح والنسيج: ضبابية على نسخة مصغّرة ثم استيفاء — نفس الأثر بسرعة أكبر بكثير
+  const big = (r, k, mid) => {
+    const f = Math.max(1, Math.floor(r / 3)), sw = Math.ceil(w / f), sh = Math.ceil(h / f), sm = new Float32Array(sw * sh);
+    for (let y = 0; y < sh; y++) for (let x = 0; x < sw; x++) {
+      let acc = 0, c = 0; const y0 = y * f, x0 = x * f;
+      for (let yy = y0; yy < Math.min(h, y0 + f); yy++) { const o = yy * w; for (let xx = x0; xx < Math.min(w, x0 + f); xx++) { acc += Y[o + xx]; c++; } }
+      sm[y * sw + x] = acc / c;
+    }
+    const rr = Math.max(1, Math.round(r / f)), tmp = new Float32Array(sw * sh), bl = new Float32Array(sw * sh);
+    boxBlur(sm, sw, sh, rr, tmp, bl);
+    for (let y = 0; y < h; y++) {
+      const fy = Math.min(sh - 1.001, Math.max(0, (y + 0.5) / f - 0.5)), y0 = fy | 0, dy = fy - y0, r0 = y0 * sw, r1 = (y0 + 1) * sw;
+      for (let x = 0; x < w; x++) {
+        const fx = Math.min(sw - 1.001, Math.max(0, (x + 0.5) / f - 0.5)), x0 = fx | 0, dx = fx - x0;
+        const bv = (bl[r0 + x0] * (1 - dx) + bl[r0 + x0 + 1] * dx) * (1 - dy) + (bl[r1 + x0] * (1 - dx) + bl[r1 + x0 + 1] * dx) * dy;
+        const j = y * w + x, yv = Y[j], m = mid ? 1 - (2 * yv - 1) ** 2 : 1;
+        add[j] += (yv - bv) * k * m;
+      }
+    }
+  };
+  if (p.texture) big(Math.max(1, Math.round(w * 0.0025)), p.texture / 100 * 0.55 * amt, true);
+  if (p.clarity) big(Math.max(2, Math.round(w * 0.012)), p.clarity / 100 * 0.45 * amt, true);
+  // الحدّة: قناع حاد صغير 3×3 على الإضاءة
+  if (p.sharp) {
+    const k = p.sharp / 100 * 0.9 * amt * (w > 3500 ? 1 : 0.8);
+    for (let y = 1; y < h - 1; y++) { const o = y * w; for (let x = 1; x < w - 1; x++) {
+      const j = o + x, b = (Y[j - 1] + Y[j + 1] + Y[j - w] + Y[j + w]) * 0.125 + (Y[j - w - 1] + Y[j - w + 1] + Y[j + w - 1] + Y[j + w + 1]) * 0.0625 + Y[j] * 0.25;
+      add[j] += (Y[j] - b) * k * 2;
+    } }
   }
   for (let i = 0, j = 0; j < N; i += 4, j++) { const v = add[j] * 255; if (v) { d[i] += v; d[i + 1] += v; d[i + 2] += v; } }
 }

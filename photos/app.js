@@ -678,6 +678,7 @@ function paintForm() {
   $("#photogList").innerHTML = (f.photographers || []).map(n => `<option value="${esc(n)}">`).join("");
   $$("[name=ratio]").forEach(c => c.checked = f.ratios.includes(c.value));
   $("#plain").checked = f.plain; $("#rights").checked = f.rights;
+  $("#hq").checked = !!f.hq;
   $("#quality").value = f.quality; $("#customEdge").value = f.customEdge; $("#customQ").value = f.customQ;
   $("#customBox").hidden = f.quality !== "custom";
   paintLogos(); paintName(); paintTitleState();
@@ -718,6 +719,7 @@ bind("#pattern", "pattern", "input", paintName);
 $$("[name=ratio]").forEach(c => c.onchange = () => { F().ratios = $$("[name=ratio]").filter(x => x.checked).map(x => x.value); saveSoon(); });
 $("#plain").onchange = e => { F().plain = e.target.checked; saveSoon(); };
 $("#rights").onchange = e => { F().rights = e.target.checked; saveSoon(); };
+$("#hq").onchange = e => { F().hq = e.target.checked; saveSoon(); };
 $("#quality").onchange = e => { F().quality = e.target.value; $("#customBox").hidden = e.target.value !== "custom"; saveSoon(); };
 $("#customEdge").oninput = e => { F().customEdge = +e.target.value || 2000; saveSoon(); };
 $("#customQ").oninput = e => { F().customQ = Math.max(40, Math.min(98, +e.target.value || 85)); saveSoon(); };
@@ -758,7 +760,9 @@ async function makeWorker() {
   return w;
 }
 async function makePool() {
-  const n = Math.max(1, Math.min(3, Math.floor((navigator.hardwareConcurrency || 4) / 3)));
+  // عدد المعالجات المتوازية حسب أنوية الجهاز وذاكرته (الدقة الأصلية تحتاج ذاكرة أكثر)
+  const cores = navigator.hardwareConcurrency || 4, mem = navigator.deviceMemory || 8, full = F().quality === "orig";
+  const n = Math.max(1, Math.min(cores - 1, full ? (mem >= 8 ? 4 : 2) : (mem >= 8 ? 6 : 3)));
   pool = await Promise.all(Array.from({ length: n }, makeWorker));
 }
 function killPool() { pool.forEach(w => w.terminate()); pool = []; }
@@ -771,7 +775,7 @@ async function exportAll() {
   if (f.rights && !S.fontSrc) return toast("خط DIN Next غير موجود — أضفه أولاً");
   if (f.rights && !f.title.trim()) { $("#title").focus(); return toast("اكتب عنوان الفعالية"); }
   if (f.rights && !titleCheck(f.title.trim()).ok) { $("#title").focus(); return toast("العنوان أطول من سطرين — اختصره"); }
-  const q = f.quality === "custom" ? { maxEdge: +f.customEdge || 2000, quality: +f.customQ || 85, chroma444: false } : QUALITY[f.quality];
+  const q = { ...(f.quality === "custom" ? { maxEdge: +f.customEdge || 2000, quality: +f.customQ || 85, chroma444: false } : QUALITY[f.quality]), fast: !f.hq };
   if (f.photographer && !f.photographers.includes(f.photographer)) f.photographers.push(f.photographer);
   await saveSettings();
 
@@ -850,6 +854,7 @@ async function exportAll() {
             if (zip) { zipBytes += blob.size; }
           }
           if (zip && zipBytes > 350e6) await flushZip(false);
+          if (window.__zp && res.T) console.log("TIMING " + JSON.stringify(Object.fromEntries(Object.entries(res.T).map(([k, v]) => [k, Math.round(v)]))));
           it.status = "done"; done++;
           log.push(`✓ ${it.name} → ${name} (${res.W}×${res.H})`);
         } catch (err) {

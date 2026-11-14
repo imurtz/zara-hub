@@ -47,7 +47,12 @@ function drawScaled(bmp, r, tw, th) {
   return { out, ctx };
 }
 
-async function jpeg(ctx, w, h, q, meta) {
+async function jpeg(ctx, w, h, q, meta, canvas) {
+  // الوضع السريع: مُرمّز JPEG المدمج في المتصفح (أسرع بكثير)؛ الوضع الأعلى جودة: MozJPEG
+  if (q.fast && canvas) {
+    const b = await canvas.convertToBlob({ type: "image/jpeg", quality: Math.min(0.99, q.quality / 100 + 0.02) });
+    return withXmp(new Uint8Array(await b.arrayBuffer()), meta);
+  }
   const data = ctx.getImageData(0, 0, w, h);
   const buf = await encode(data, {
     quality: q.quality, progressive: true, optimize_coding: true,
@@ -81,18 +86,20 @@ function withXmp(jpg, m) {
 }
 
 async function job(m) {
+  const T = { decode: 0, scale: 0, adjust: 0, encode: 0 }; let t0 = performance.now();
   const bmp = await createImageBitmap(m.file, { imageOrientation: "from-image", colorSpaceConversion: "default" });
-  const res = { id: m.id, W: bmp.width, H: bmp.height, outs: [] };
+  T.decode = performance.now() - t0;
+  const res = { id: m.id, W: bmp.width, H: bmp.height, outs: [], T };
   try {
     for (const ratio of m.ratios) {
       const r = cropRect(bmp.width, bmp.height, ratio, m.faces, m.pos && m.pos[ratio]);
       const [tw, th] = sizeFor(r.sw, r.sh, m.q);
-      const { out, ctx } = drawScaled(bmp, r, tw, th);
-      if (!isZero(m.adj)) { const id = ctx.getImageData(0, 0, tw, th); applyAdjust(id, m.adj); ctx.putImageData(id, 0, 0); }
-      if (m.plain) res.outs.push({ ratio, kind: "plain", buf: (await jpeg(ctx, tw, th, m.q, m.meta)).buffer });
+      t0 = performance.now(); const { out, ctx } = drawScaled(bmp, r, tw, th); T.scale += performance.now() - t0;
+      t0 = performance.now(); if (!isZero(m.adj)) { const id = ctx.getImageData(0, 0, tw, th); applyAdjust(id, m.adj); ctx.putImageData(id, 0, 0); } T.adjust += performance.now() - t0;
+      t0 = performance.now(); if (m.plain) res.outs.push({ ratio, kind: "plain", buf: (await jpeg(ctx, tw, th, m.q, m.meta, out)).buffer }); T.encode += performance.now() - t0;
       if (m.rights) {
         drawFooter(ctx, tw, th, ratio, m.text, assets);
-        res.outs.push({ ratio, kind: "rights", buf: (await jpeg(ctx, tw, th, m.q, m.meta)).buffer });
+        t0 = performance.now(); res.outs.push({ ratio, kind: "rights", buf: (await jpeg(ctx, tw, th, m.q, m.meta, out)).buffer }); T.encode += performance.now() - t0;
       }
       out.width = out.height = 0;
       res.size = res.size || {}; res.size[ratio] = [tw, th];
