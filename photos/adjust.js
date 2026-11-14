@@ -23,6 +23,7 @@ export const ADJ = [
     { g: "grade", k: `cg_${k}_h`, l: `${l} Hue`, min: 0, max: 360, step: 1, hue: 1, adv: 1 },
     { g: "grade", k: `cg_${k}_s`, l: `${l} Sat`, min: 0, max: 100, step: 1, adv: 1 }]),
   { g: "التفاصيل", k: "texture", l: "Texture", min: -100, max: 100, step: 1 },
+  { g: "التفاصيل", k: "dehaze", l: "Dehaze", min: -100, max: 100, step: 1 },
   { g: "التفاصيل", k: "clarity", l: "Clarity", min: -100, max: 100, step: 1 },
   { g: "التفاصيل", k: "sharp", l: "Sharpening", min: 0, max: 150, step: 1 },
   { g: "التفاصيل", k: "vignette", l: "Vignette", min: -100, max: 100, step: 1 },
@@ -126,7 +127,8 @@ let ACR = null;
 export function setACRCurves(o) { ACR = o && o.exposure ? o : null; _clutCache.clear && _clutCache.clear(); }
 // تقييم منحنى شريط بقيمة t (استيفاء بين القيم المقاسة، والصفر = بلا تغيير) على درجة g (0..1)
 function acrEval(name, t, g) {
-  const C = ACR && ACR[name]; if (!C || !t) return g;
+  // للأشرطة الموضعية نستخدم المنحنى المقاس من صور حقيقية إن وُجد
+  const C = ACR && (ACR[name + "_photo"] || ACR[name]); if (!C || !t) return g;
   const vals = C.vals, x = Math.max(0, Math.min(255, g * 255)), i0 = x | 0, fr = x - i0;
   const at = j => { const c = C.c[j]; return (c[i0] + (c[Math.min(255, i0 + 1)] - c[i0]) * fr) / 255; };
   // أقرب قيمتين مقاستين حول t (مع الصفر كهوية)
@@ -138,7 +140,7 @@ function acrEval(name, t, g) {
   if (t >= pts[pts.length - 1][0]) return g + (val(hi) - g) * (t / hi[0]);
   const f = (t - lo[0]) / (hi[0] - lo[0] || 1); return val(lo) + (val(hi) - val(lo)) * f;
 }
-const ACR_ORDER = [["exposure", "exposure"], ["contrast", "contrast"], ["highlights", "highlights"], ["shadows", "shadows"], ["whites", "whites"], ["blacks", "blacks"], ["pc_sh", "pc_sh"], ["pc_dk", "pc_dk"], ["pc_lt", "pc_lt"], ["pc_hi", "pc_hi"]];
+const ACR_ORDER = [["exposure", "exposure"], ["dehaze", "dehaze"], ["contrast", "contrast"], ["highlights", "highlights"], ["shadows", "shadows"], ["whites", "whites"], ["blacks", "blacks"], ["pc_sh", "pc_sh"], ["pc_dk", "pc_dk"], ["pc_lt", "pc_lt"], ["pc_hi", "pc_hi"]];
 function acrChain(p, keys, lv) { // lv = log2 للإضاءة الخطية ← log2 بعد المنحنيات
   let g = lv >= 0 ? 1 : l2s(Math.pow(2, lv)); const extra = lv > 0 ? lv : 0;
   if (!CAL.additive) { for (const [k, n] of ACR_ORDER) if (keys.includes(k) && p[k]) g = acrEval(n, p[k] * (CAL[k + 'K'] ?? 1), g); }
@@ -149,7 +151,7 @@ function acrChain(p, keys, lv) { // lv = log2 للإضاءة الخطية ← lo
   }
   return Math.log2(Math.max(s2l(Math.max(0, Math.min(1, g))), 1e-6)) + extra;
 }
-export const CAL = { additive: 1, combG: 0.133, localAll: 0, shadowsK: 0.25, highlightsK: 0.65, contrastK: 0.4, expK: 1, temp: 0.75, tint: 0.00045, ct: 0.42, bl: 1.1, wh: 0.7, sh: 1.55, hi: 1.35, cla: 1.27, tex: 0.243, desat: 0.06, knee: 0.5, roll: 1, sat: 1.05, vib: 1.18, pc: 0.13 };
+export const CAL = { baseR: 0.035, baseEps: 0.35, additive: 1, combG: 0.133, localAll: 0, shadowsK: 0.9, highlightsK: 0.9, contrastK: 1, expK: 1, temp: 0.75, tint: 0.00045, ct: 0.42, bl: 1.1, wh: 0.7, sh: 1.55, hi: 1.35, cla: 1.27, tex: 0.243, desat: 0.06, knee: 0.5, roll: 1, sat: 1.05, vib: 1.18, pc: 0.13 };
 // لوغاريتم سريع بجدول (للقيم ≤ 1)
 const LGN = 65536, LGT = new Float32Array(LGN + 2); for (let q = 0; q <= LGN + 1; q++) LGT[q] = Math.log2(Math.max(q / LGN, 1e-5));
 const flog2 = Y => { if (Y >= 1) return Math.log2(Y); const f = Y * LGN, q = f | 0; return LGT[q] + (LGT[q + 1] - LGT[q]) * (f - q); };
@@ -214,12 +216,14 @@ const hueOk = h => { const c = hueRGB(h).map(v => s2l(Math.max(0, Math.min(1, v 
 // جدول اللون ثلاثي الأبعاد (منحنيات + Oklab) — يُبنى مرة لكل إعداد
 const _clutCache = new Map();
 function colorLUT(p) {
-  const key = JSON.stringify([ACR ? 1 : 0, CAL.sat, CAL.vib, CAL.pc, p.tc, p.tcR, p.tcG, p.tcB, p.pc_sh, p.pc_dk, p.pc_lt, p.pc_hi, p.saturation, p.vibrance, ...ADJ.filter(d => /^(h|s|l)_|^cg_/.test(d.k)).map(d => p[d.k])]);
+  const key = JSON.stringify([ACR ? 1 : 0, p.dehaze, CAL.sat, CAL.vib, CAL.pc, p.tc, p.tcR, p.tcG, p.tcB, p.pc_sh, p.pc_dk, p.pc_lt, p.pc_hi, p.saturation, p.vibrance, ...ADJ.filter(d => /^(h|s|l)_|^cg_/.test(d.k)).map(d => p[d.k])]);
   if (_clutCache.has(key)) return _clutCache.get(key);
   const n = 33, out = new Float32Array(n * n * n * 3);
   const TC = p.tc && p.tc.length >= 2 ? monoCurve(p.tc) : null, TCC = ["tcR", "tcG", "tcB"].map(k => p[k] && p[k].length >= 2 ? monoCurve(p[k]) : null);
   const pc = ["pc_sh", "pc_dk", "pc_lt", "pc_hi"].map(k => ACR ? 0 : (p[k] || 0) / 100), hasPC = pc.some(Boolean);
-  const sat = 1 + (p.saturation || 0) / 100 * CAL.sat, vib = (p.vibrance || 0) / 100 * CAL.vib;
+  // Dehaze يرفع التشبع أيضاً (نسبة مقاسة من Adobe)
+  let dhS = 1; const DH = ACR && ACR.dehaze_photo; if (DH && p.dehaze) { const pts = [[0, 1], ...DH.vals.map((v, j) => [v, DH.sat[j]])].sort((a, b) => a[0] - b[0]); const t = p.dehaze; let lo = pts[0], hi = pts[pts.length - 1]; for (let k = 0; k < pts.length - 1; k++) if (t >= pts[k][0] && t <= pts[k + 1][0]) { lo = pts[k]; hi = pts[k + 1]; break; } dhS = lo[1] + (hi[1] - lo[1]) * ((t - lo[0]) / (hi[0] - lo[0] || 1)); }
+  const sat = (1 + (p.saturation || 0) / 100 * CAL.sat) * dhS, vib = (p.vibrance || 0) / 100 * CAL.vib;
   const hsl = OK_BANDS.map(([k, c]) => [c, (p["h_" + k] || 0), (p["s_" + k] || 0) / 100, (p["l_" + k] || 0) / 100]), hasHSL = hsl.some(x => x[1] || x[2] || x[3]);
   const cgv = ["sh", "mid", "hi", "gl"].map(k => { const s = (p[`cg_${k}_s`] || 0) / 100; if (!s) return null; const [a, b] = hueOk(p[`cg_${k}_h`] || 0); return [a * s * 0.07, b * s * 0.07]; });
   const blend = 0.5 + ((p.cg_blend ?? 50) - 50) / 100, bal = (p.cg_bal || 0) / 200;
@@ -260,7 +264,7 @@ function colorLUT(p) {
 // مرشّح مُوجَّه سريع على نسخة مصغّرة من لوغاريتم الإضاءة (يحفظ الحواف ويمنع الهالات)
 function baseLayer(lowSum, lowCnt, w, h, f) {
   const I = new Float32Array(w * h); for (let i = 0; i < I.length; i++) I[i] = lowSum[i] / Math.max(1, lowCnt[i]);
-  const r = Math.max(2, Math.round(Math.max(w, h) * 0.035)), eps = 0.35;
+  const r = Math.max(2, Math.round(Math.max(w, h) * CAL.baseR)), eps = CAL.baseEps;
   const box = src => { const t = new Float32Array(w * h), o = new Float32Array(w * h), L = 2 * r + 1;
     for (let y = 0; y < h; y++) { let a = 0; const ro = y * w; for (let x = -r; x <= r; x++) a += src[ro + Math.min(w - 1, Math.max(0, x))]; for (let x = 0; x < w; x++) { t[ro + x] = a / L; a += src[ro + Math.min(w - 1, x + r + 1)] - src[ro + Math.max(0, x - r)]; } }
     for (let x = 0; x < w; x++) { let a = 0; for (let y = -r; y <= r; y++) a += t[Math.min(h - 1, Math.max(0, y)) * w + x]; for (let y = 0; y < h; y++) { o[y * w + x] = a / L; a += t[Math.min(h - 1, y + r + 1) * w + x] - t[Math.max(0, y - r) * w + x]; } }
@@ -472,7 +476,7 @@ export function fromXMP(text) {
   a.whites = num("Whites2012"); a.blacks = num("Blacks2012"); a.vibrance = num("Vibrance"); a.saturation = num("Saturation");
   a.temp = num("IncrementalTemperature"); a.tint = num("IncrementalTint");
   // التباين الخفيف لـ Dehaze/Clarity (تقريب بسيط)
-  a.contrast += num("Dehaze") * 0.5;
+  a.dehaze = num("Dehaze");
   a.clarity = num("Clarity2012"); a.texture = num("Texture"); a.sharp = num("Sharpness"); a.vignette = num("PostCropVignetteAmount");
   const LR = { red: "Red", orange: "Orange", yellow: "Yellow", green: "Green", aqua: "Aqua", blue: "Blue", purple: "Purple", magenta: "Magenta" };
   for (const [k, n] of Object.entries(LR)) { a[`h_${k}`] = num("HueAdjustment" + n); a[`s_${k}`] = num("SaturationAdjustment" + n); a[`l_${k}`] = num("LuminanceAdjustment" + n); }
