@@ -3801,6 +3801,11 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
   function phRender(){
     var root = document.getElementById("photosRoot");
     if(!root || root.firstChild) return;
+    // على الجوال تُفتح الأداة بصفحة كاملة (الإطار المضمَّن ضيق ويُربك التمرير)
+    if(window.innerWidth < 900){
+      root.innerHTML = '<div style="text-align:center;padding:40px 18px;background:#fff;border-radius:18px;border:1px solid #E4E9E8"><div style="font-size:40px">📷</div><h3 style="margin:8px 0 6px">معالجة الصور</h3><p style="color:#6B7775;font-size:14px;margin:0 0 18px">على الجوال تعمل الأداة بصفحة كاملة لراحة أكبر في القص والتعديل.</p><a href="/photos/" style="display:inline-block;background:#4B7071;color:#fff;border-radius:14px;padding:13px 26px;font-weight:700;text-decoration:none">افتح أداة معالجة الصور</a></div>';
+      return;
+    }
     root.innerHTML = '<iframe title="معالجة الصور" src="/photos/" allow="clipboard-write" style="width:100%;height:calc(100vh - 140px);min-height:520px;border:0;border-radius:18px;background:#F5F6F5"></iframe>';
   }
 
