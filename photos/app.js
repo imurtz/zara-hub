@@ -441,7 +441,7 @@ function drawCropMode(cv, it, r) {
   for (const [hx, hy] of [[x, y], [x + w, y], [x, y + h], [x + w, y + h]]) c.fillRect(hx - hs / 2, hy - hs / 2, hs, hs);
   // معاينة صغيرة للنتيجة النهائية (مع الحقوق) أعلى الإطار
   cropView = { k, x, y, w, h, hs, W, H };
-  $("#prevMeta").innerHTML = `✂️ وضع القص — اسحب الإطار لتحريكه، واسحب الزوايا لتكبيره أو تصغيره · المقاس ${S.ratio} ثابت · <button type="button" class="lnk" id="cropDone">تم ✓</button>`;
+  $("#prevMeta").innerHTML = `✂️ وضع القص — اسحب الإطار لتحريكه، واسحب الزوايا لتكبيره أو تصغيره · <b>Enter</b> للاعتماد · <button type="button" class="lnk" id="cropDone">تم ✓</button>`;
   $("#cropDone").onclick = () => setTab("color");
   cv.style.cursor = "move";
 }
@@ -479,7 +479,7 @@ function setCropMode(on) { S.cropMode = on; $("#cropModeBtn").classList.toggle("
   addEventListener("mouseup", () => drag = null); addEventListener("touchend", () => drag = null);
   cv.addEventListener("wheel", e => { if (!S.cropMode || !prevRect) return; e.preventDefault(); const cb = curBox(); setBox({ ...cb, z: cb.z * (e.deltaY > 0 ? 1.05 : 0.95) }); }, { passive: false });
   cv.addEventListener("dblclick", () => { if (S.cropMode) setTab("color"); });
-  addEventListener("keydown", e => { if (e.key === "Escape" && S.cropMode) setTab("color"); if ((e.key === "c" || e.key === "ص") && !/INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName) && S.items.length) setTab(S.tab === "crop" ? "color" : "crop"); });
+  addEventListener("keydown", e => { if ((e.key === "Escape" || e.key === "Enter") && S.cropMode && !/INPUT|TEXTAREA|SELECT|BUTTON/.test(document.activeElement.tagName)) { e.preventDefault(); setTab("color"); } if ((e.key === "c" || e.key === "ص") && !/INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName) && S.items.length) setTab(S.tab === "crop" ? "color" : "crop"); });
   $("#cropModeBtn").onclick = () => { if (!S.items.length) return toast("اختر الصور أولاً"); setCropMode(!S.cropMode); };
 })();
 
