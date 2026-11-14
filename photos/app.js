@@ -1,5 +1,5 @@
 // معالجة صور الفعاليات — بوابة زارة. كل شيء داخل المتصفح: لا Firebase ولا رفع ولا أي خادم.
-import { ADJ, ZERO, isZero, applyAdjust, histogram, fromXMP, BANDS, parseCube, lutFromPair, imageStats, matchAdj } from "./adjust.js";
+import { ADJ, ZERO, isZero, applyAdjust, histogram, fromXMP, BANDS, parseCube, lutFromPair, imageStats, matchAdj, LOOKS, lookRef } from "./adjust.js";
 import { RATIOS, hijriOf, gregOf, cropRect, drawFooter, FONT_M, FONT_R, LOGO_FILL, titleCheck } from "./footer.js";
 
 const $ = s => document.querySelector(s);
@@ -585,10 +585,11 @@ function pickFile(accept) { return new Promise(res => { const i = document.creat
 /* ============ مطابقة صورة مرجعية ============ */
 function refHTML() {
   const r = F().ref;
-  if (!r) return `<button type="button" class="ghost sm" data-ref="pick">🎯 اختر صورة مرجعية للمطابقة</button><small class="muted"> اختياري — صورة معدّلة بالشكل اللي تبغاه</small>`;
+  const looksBtn = `<button type="button" class="ghost sm" data-ref="looks" title="من الصورة المعروضة حالياً">✨ ثلاث معاينات من صورة التغطية</button>`;
+  if (!r) return `<div class="refBtns">${looksBtn}<button type="button" class="ghost sm" data-ref="pick">🎯 صورة مرجعية من خارج التغطية</button></div><small class="muted">لتوحيد ألوان كل الصور — اختياري</small>`;
   return `<div class="refRow"><img src="${r.thumb}" alt=""><div><b>${esc(r.name)}</b><small>${r.stats.face ? "فيها وجوه — السطوع يُطابق من البشرة" : "بدون وجوه — السطوع يُطابق من المساحات الفاتحة"}</small>
     <div class="refActs"><label class="chk"><input type="checkbox" data-ref="on" ${F().matchOn ? "checked" : ""}> مطابقة كل الصور</label>
-    <button type="button" class="lnk" data-ref="cmp">قارن قبل/بعد</button><button type="button" class="lnk" data-ref="pick">تغيير</button><button type="button" class="lnk" data-ref="del">إزالة</button></div></div></div>`;
+    <button type="button" class="lnk" data-ref="cmp">قارن قبل/بعد</button><button type="button" class="lnk" data-ref="looks">✨ معاينات</button><button type="button" class="lnk" data-ref="pick">مرجع آخر</button><button type="button" class="lnk" data-ref="del">إزالة</button></div></div></div>`;
 }
 async function pickRef() {
   const f = await pickFile("image/*"); if (!f) return;
@@ -606,35 +607,80 @@ async function pickRef() {
   } catch (e) { toast("تعذّرت قراءة المرجع: " + (e.message || e)); }
 }
 // تجربة على 3–5 صور مختلفة قبل التعميم
-async function compareMatch() {
+let pendingRef = null;
+async function compareMatch(refObj) {
+  const R = refObj || F().ref; pendingRef = R;
   const its = S.items.filter(x => x.stats && x.thumb); if (!its.length) return toast("انتظر حتى ينتهي تحليل الصور");
   const n = Math.min(5, its.length), pick = Array.from({ length: n }, (_, i) => its[Math.round(i * (its.length - 1) / Math.max(1, n - 1))]);
   const rows = [];
   for (const it of pick) {
     const img = new Image(); img.src = it.thumb; await img.decode();
     const c = new OffscreenCanvas(img.naturalWidth, img.naturalHeight), x = c.getContext("2d", { willReadFrequently: true }); x.drawImage(img, 0, 0);
-    const id = x.getImageData(0, 0, c.width, c.height); applyAdjust(id, { ...matchAdj(it.stats, F().ref.stats), amount: F().adj?.amount ?? 100 }); x.putImageData(id, 0, 0);
+    const id = x.getImageData(0, 0, c.width, c.height); applyAdjust(id, { ...matchAdj(it.stats, R.stats), amount: F().adj?.amount ?? 100 }); x.putImageData(id, 0, 0);
     const after = URL.createObjectURL(await c.convertToBlob({ type: "image/jpeg", quality: 0.85 }));
     rows.push(`<div class="cmpRow"><figure><img src="${it.thumb}"><figcaption>قبل</figcaption></figure><figure><img src="${after}"><figcaption>بعد</figcaption></figure></div>`);
   }
   const d = $("#cmpDlg");
-  d.innerHTML = `<div class="cmpHead"><b>تجربة المطابقة على ${n} صور</b><figure class="refFig"><img src="${F().ref.thumb}"><figcaption>المرجع</figcaption></figure></div><div class="cmpBody">${rows.join("")}</div>
-    <div class="acts2"><button type="button" class="pri" data-cmp="ok">✓ اعتماد — مطابقة كل الصور</button><button type="button" class="ghost" data-cmp="x">إغلاق</button></div>`;
+  d.innerHTML = `<div class="cmpHead"><b>تجربة المطابقة على ${n} صور</b><figure class="refFig"><img src="${R.thumb}"><figcaption>${R.look ? "المظهر المختار" : "المرجع"}</figcaption></figure></div><div class="cmpBody">${rows.join("")}</div>
+    <div class="acts2"><button type="button" class="pri" data-cmp="ok">✓ اعتماد — مطابقة كل الصور</button><button type="button" class="ghost" data-cmp="x">إلغاء — بدون تطبيق</button></div>`;
   d.showModal();
 }
 document.addEventListener("click", e => {
   const r = e.target.closest("[data-ref]"); if (r && r.tagName !== "INPUT") {
     const v = r.dataset.ref;
-    if (v === "pick") pickRef(); else if (v === "cmp") compareMatch();
+    if (v === "pick") pickRef(); else if (v === "cmp") compareMatch(); else if (v === "looks") openLooks();
     else if (v === "del") { F().ref = null; F().matchOn = false; saveSoon(); paintAdj(); renderPreview(); }
     return;
   }
   const c = e.target.closest("[data-cmp]"); if (c) {
     $("#cmpDlg").close();
-    if (c.dataset.cmp === "ok") { F().matchOn = true; F().preset = ""; saveSoon(); paintAdj(); renderPreview(); toast("المطابقة مفعّلة — يُحسب التصحيح لكل صورة عند المعاينة والتصدير"); }
+    if (c.dataset.cmp === "ok") { if (pendingRef) F().ref = pendingRef; F().matchOn = true; F().preset = ""; saveSoon(); paintAdj(); renderPreview(); toast("المطابقة مفعّلة — يُحسب التصحيح لكل صورة عند المعاينة والتصدير"); }
   }
 });
 document.addEventListener("change", e => { const r = e.target.closest('[data-ref="on"]'); if (!r) return; F().matchOn = r.checked; saveSoon(); paintAdj(); renderPreview(); });
+
+/* ============ ثلاث معاينات من صورة ممثلة للتغطية ============ */
+let lookPick = null, lookData = null;
+async function openLooks() {
+  const it = S.items[S.cur];
+  if (!it) return toast("اختر صور التغطية أولاً");
+  if (!it.stats) return toast("انتظر حتى ينتهي تحليل هذه الصورة");
+  const d = $("#lookDlg");
+  d.innerHTML = `<div class="cmpHead"><b>اختر المظهر من الصورة: ${esc(it.name)}</b><small class="muted">جارٍ تجهيز المعاينات…</small></div>`; d.showModal();
+  try {
+    const f = await getFile(it);
+    const b = await createImageBitmap(f, { imageOrientation: "from-image", resizeWidth: 1100, resizeQuality: "high" });
+    const c = new OffscreenCanvas(b.width, b.height), x = c.getContext("2d", { willReadFrequently: true }); x.drawImage(b, 0, 0); b.close();
+    const base = x.getImageData(0, 0, c.width, c.height);
+    const toUrl = async id => { const cc = new OffscreenCanvas(id.width, id.height); cc.getContext("2d").putImageData(id, 0, 0); return URL.createObjectURL(await cc.convertToBlob({ type: "image/jpeg", quality: 0.9 })); };
+    const tiles = [{ k: "orig", label: "الأصل", url: await toUrl(base) }];
+    lookData = {};
+    for (const k of Object.keys(LOOKS)) {
+      const ref = lookRef(it.stats, k), id = new ImageData(new Uint8ClampedArray(base.data), base.width, base.height);
+      applyAdjust(id, matchAdj(it.stats, ref));
+      const url = await toUrl(id); lookData[k] = { ref, url };
+      tiles.push({ k, label: LOOKS[k].label, url });
+    }
+    lookPick = lookPick && lookData[lookPick] ? lookPick : "neutral";
+    const paint = () => {
+      d.innerHTML = `<div class="cmpHead"><b>اختر المظهر الأقرب لذوقك</b><small class="muted">من الصورة نفسها: ${esc(it.name)} — اضغط على معاينة لاختيارها</small></div>
+        <div class="lookGrid">${tiles.map(t => `<figure class="lk${t.k === lookPick ? " on" : ""}${t.k === "orig" ? " orig" : ""}" data-look="${t.k}"><img src="${t.url}"><figcaption>${t.label}${t.k === lookPick ? " ✓" : ""}</figcaption></figure>`).join("")}</div>
+        <div class="acts2"><button type="button" class="pri" data-lk="next">التالي — جرّبه على صور أخرى</button><button type="button" class="ghost" data-lk="x">إلغاء</button></div>`;
+    };
+    paint();
+    d.onclick = async e => {
+      const t = e.target.closest("[data-look]"); if (t && t.dataset.look !== "orig") { lookPick = t.dataset.look; paint(); return; }
+      const a = e.target.closest("[data-lk]"); if (!a) return;
+      if (a.dataset.lk === "x") { d.close(); return; }
+      // المعاينة المختارة تصبح مرجعاً: صورة مصغّرة + إحصاءات الهدف
+      const L = lookData[lookPick], img = new Image(); img.src = L.url; await img.decode();
+      const tc = new OffscreenCanvas(240, Math.round(240 * img.naturalHeight / img.naturalWidth)); tc.getContext("2d").drawImage(img, 0, 0, tc.width, tc.height);
+      const thumb = await new Promise(res => { const fr = new FileReader(); tc.convertToBlob({ type: "image/jpeg", quality: 0.8 }).then(bl => { fr.onload = () => res(fr.result); fr.readAsDataURL(bl); }); });
+      d.close();
+      compareMatch({ name: `${LOOKS[lookPick].label} — من ${it.name}`, stats: L.ref, thumb, look: lookPick });
+    };
+  } catch (e) { d.close(); toast("تعذّر تجهيز المعاينات: " + (e.message || e)); }
+}
 
 /* ============ معاينة بصفحة كاملة ============ */
 $("#fullBtn").onclick = async () => {

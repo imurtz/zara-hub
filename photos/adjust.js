@@ -445,3 +445,23 @@ export function matchAdj(t, r) {
   }
   return a;
 }
+
+/* ============ ثلاث معاينات بدون مرجع خارجي ============ */
+// تُبنى «إحصاءات مرجع افتراضي» من الصورة الممثلة نفسها: تصحيح نحو تعريض وتباين متوازنين، ثم ثلاثة أهداف للون الإضاءة.
+// المعاينة المختارة تصبح مرجعاً، ويُحسب لكل صورة تصحيح مستقل نحوها عبر matchAdj.
+export const LOOKS = {
+  neutral: { label: "متوازن ومحايد", tint: [1, 1, 1], sat: 1.0 },
+  warm:    { label: "أدفأ قليلاً",   tint: [1.085, 1, 0.87], sat: 1.08 },
+  cool:    { label: "أبرد قليلاً",   tint: [0.94, 0.995, 1.1], sat: 0.95 }
+};
+export function lookRef(t, kind) {
+  const L = LOOKS[kind] || LOOKS.neutral, lin = v => s2l(Math.max(0, Math.min(1, v)));
+  // شدة الاختلاف تتناسب مع حياد الصورة: الصورة المائلة لوناً أصلاً تحتاج ميلاً أخف حتى لا يتضاعف
+  let cast = 0; if (t.neutral) { const n = t.neutral.map(v => v / t.neutral[1]); cast = Math.min(1, (Math.abs(n[0] - 1) + Math.abs(n[2] - 1)) * 2); }
+  const k = 1 - cast * 0.3, tint = L.tint.map(v => 1 + (v - 1) * k);
+  // التعريض: البشرة نحو مدى طبيعي، وإلا الأبيض نحو 0.88 دون حرق
+  const face = t.face ? Math.min(0.26, Math.max(0.14, t.face + (0.19 - t.face) * 0.6)) : null;
+  const p90 = Math.min(0.92, Math.max(0.84, t.p90 + (0.88 - t.p90) * 0.6));
+  const p10 = Math.min(0.12, Math.max(0.05, t.p10 + (0.07 - t.p10) * 0.6));
+  return { neutral: tint.map(v => v * 0.5), face, p05: p10 * 0.8, p10, p50: t.p50, p90, p98: Math.min(0.97, p90 + 0.05), sat: t.sat ? t.sat * L.sat : null, look: kind };
+}

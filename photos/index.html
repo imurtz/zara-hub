@@ -82,7 +82,13 @@ header h1 small{display:block;font-size:12.5px;color:var(--soft);font-weight:500
 .cmpRow{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .cmpDlg figure{margin:0;position:relative}.cmpDlg figure img{width:100%;display:block;border-radius:10px}
 .cmpDlg figcaption{position:absolute;top:6px;right:6px;background:rgba(0,0,0,.55);color:#fff;font-size:11.5px;border-radius:6px;padding:1px 7px}
-.refFig{width:150px}.acts2{display:flex;gap:8px;margin-top:12px}
+.refFig{width:150px}
+.refBtns{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:4px}
+.lookGrid{display:grid;grid-template-columns:1fr 1fr;gap:10px;max-height:70vh;overflow:auto}
+.lk{cursor:pointer;border:3px solid transparent;border-radius:13px;overflow:hidden}
+.lk.on{border-color:var(--teal);box-shadow:0 0 0 3px var(--teal-t)}
+.lk.orig{cursor:default;opacity:.92}
+.lk figcaption{font-size:13px!important;padding:3px 10px!important}.acts2{display:flex;gap:8px;margin-top:12px}
 .lrBox>span{font-size:12.5px;font-weight:700;color:var(--teal-d)}
 .imps{display:flex;gap:14px;flex-wrap:wrap}
 .amt{background:var(--tan-t);border-radius:12px;padding:6px 10px;margin:6px 0 4px}
@@ -299,6 +305,7 @@ dialog .acts{display:flex;flex-direction:column;gap:8px;margin-top:14px}
   <p class="foot">الأصل لا يُعدَّل أبداً — النتائج تُحفظ في مجلد جديد «‹اسم المجلد›_معالجة» داخل مجلد الصور، مع تقرير.txt و مشروع.json.</p>
 </div>
 <dialog id="cmpDlg" class="cmpDlg"></dialog>
+<dialog id="lookDlg" class="cmpDlg"></dialog>
 <dialog id="ask"><p></p><div class="acts"></div></dialog>
 <div id="toast"></div>
 <script type="module" src="app.js"></script>
