@@ -255,6 +255,7 @@ async function analyze() {
     if (tok !== anaToken) return;
     const it = S.items[i];
     if (it.faces) continue;
+    while (S.dragging && tok === anaToken) await new Promise(r => setTimeout(r, 120));
     try {
       const f = await getFile(it);
       const bmp = await createImageBitmap(f, { imageOrientation: "from-image", resizeWidth: 1280, resizeQuality: "medium" });
@@ -307,7 +308,7 @@ function paintCell(i) {
 }
 
 /* ============ المعاينة ============ */
-let prevBmp = null, prevFor = -1, prevTok = 0, prevRect = null;
+let prevBmp = null, prevFor = -1, prevTok = 0, prevRect = null, srcKey = "", srcPix = null;
 function textOpts() {
   return { title: F().title, hijri: F().hijri || hijriOf(F().date), greg: gregOf(F().date), photographer: F().noCredit ? "" : F().photographer, label: "التغطية الفوتوغرافية", noCredit: !!F().noCredit };
 }
@@ -320,7 +321,7 @@ function assetsNow() {
 // تُعرض الصورة كاملة داخل المساحة المتاحة أياً كان حجمها (الصفحة المستقلة أو داخل لوحة الموظفين)
 function fitCanvas() {
   const cv = $("#prev"), box = $("#prevWrap"); if (!cv || !box) return;
-  const bw = box.clientWidth - 4, bh = box.clientHeight - 4;
+  const bw = box.clientWidth, bh = box.clientHeight;
   if (bw <= 0 || bh <= 0 || !cv.width || !cv.height) return;
   const k = Math.min(bw / cv.width, bh / cv.height);
   cv.style.width = Math.floor(cv.width * k) + "px"; cv.style.height = Math.floor(cv.height * k) + "px";
@@ -344,18 +345,23 @@ async function _renderPreview() {
   const r = cropRect(prevBmp.width, prevBmp.height, S.ratio, it.faces || [], it.pos[S.ratio]);
   prevRect = r;
   if (S.cropMode) { drawCropMode(cv, it, r); paintCrop(); return; }
-  const maxW = 1400, k = Math.min(1, maxW / r.sw), w = Math.round(r.sw * k), h = Math.round(r.sh * k);
-  cv.width = w; cv.height = h;
-  const ctx = cv.getContext("2d"); ctx.imageSmoothingQuality = "high";
-  ctx.drawImage(prevBmp, r.sx, r.sy, r.sw, r.sh, 0, 0, w, h);
-  const adj = adjOf(it);
-  if (!S.before && !isZero(adj)) { const id = ctx.getImageData(0, 0, w, h); applyAdjust(id, adj); ctx.putImageData(id, 0, 0); }
-  paintHist(ctx.getImageData(0, 0, w, Math.round(h * 0.78)));
+  // أثناء سحب المؤشر: معاينة أخف (أسرع) — وعند الإفلات تعود بالدقة الكاملة
+  const fast = !!S.dragging, maxW = fast ? 960 : 1400, k = Math.min(1, maxW / r.sw), w = Math.round(r.sw * k), h = Math.round(r.sh * k);
+  if (cv.width !== w || cv.height !== h) { cv.width = w; cv.height = h; }
+  const ctx = cv.getContext("2d", { willReadFrequently: true }); ctx.imageSmoothingQuality = "high";
+  // نسخة مخزنة من الصورة المقصوصة (لا نعيد الرسم من الأصل مع كل حركة)
+  const key = [S.cur, prevFor, r.sx, r.sy, r.sw, r.sh, w, h].join();
+  if (srcKey !== key) { ctx.drawImage(prevBmp, r.sx, r.sy, r.sw, r.sh, 0, 0, w, h); srcPix = ctx.getImageData(0, 0, w, h); srcKey = key; }
+  const adj = adjOf(it), id = new ImageData(new Uint8ClampedArray(srcPix.data), w, h);
+  if (!S.before && !isZero(adj)) applyAdjust(id, adj);
+  ctx.putImageData(id, 0, 0);
+  if (!fast) paintHist(new ImageData(id.data.subarray(0, w * Math.round(h * 0.78) * 4), w, Math.round(h * 0.78)));
   if ($("#showRights").checked && !S.before) drawFooter(ctx, w, h, S.ratio, textOpts(), assetsNow());
   if ($("#showFaces").checked && it.faces) {
     ctx.strokeStyle = "#F2C14E"; ctx.lineWidth = Math.max(2, w / 500);
     it.faces.forEach(f => ctx.strokeRect((f.x * prevBmp.width - r.sx) * k, (f.y * prevBmp.height - r.sy) * k, f.w * prevBmp.width * k, f.h * prevBmp.height * k));
   }
+  if (fast) return;
   $("#prevMeta").innerHTML = `${S.cur + 1} / ${S.items.length} · ${esc(it.name)}${it.faces ? ` · ${it.faces.length ? it.faces.length + " وجه" : "بلا وجوه — قص من المنتصف"}` : ""}`;
   paintCrop();
 }
@@ -605,6 +611,11 @@ document.addEventListener("input", e => {
   const n = e.target.closest("[data-adjn]"); if (n && n.value !== "" && n.value !== "-") setAdjVal(n.dataset.adjn, +n.value);
 });
 document.addEventListener("change", e => { const n = e.target.closest("[data-adjn]"); if (n) { const d = ADJ.find(x => x.k === n.dataset.adjn); const v = +n.value; n.value = isNaN(v) ? (d.def || 0) : Math.max(d.min, Math.min(d.max, v)); setAdjVal(n.dataset.adjn, +n.value); } });
+// سحب المؤشر: معاينة سريعة أثناء الحركة + إيقاف تحليل الصور مؤقتاً، ثم معاينة كاملة عند الإفلات
+document.addEventListener("pointerdown", e => { if (e.target.closest && e.target.closest("input[type=range][data-adj]")) S.dragging = true; });
+const endDrag = () => { if (!S.dragging) return; S.dragging = false; renderPreview(); };
+addEventListener("pointerup", endDrag); addEventListener("pointercancel", endDrag);
+document.addEventListener("change", e => { if (e.target.closest && e.target.closest("input[type=range][data-adj]")) endDrag(); });
 document.addEventListener("dblclick", e => { const r = e.target.closest("[data-adj]"); if (!r) return; r.value = r.dataset.def || 0; r.dispatchEvent(new Event("input", { bubbles: true })); });
 document.addEventListener("click", e => {
   const hb = e.target.closest("[data-hsl]"); if (hb) { S.hslTab = hb.dataset.hsl; paintAdj(); return; }
@@ -944,7 +955,9 @@ async function makeWorker() {
 async function makePool() {
   // عدد المعالجات المتوازية حسب أنوية الجهاز وذاكرته (الدقة الأصلية تحتاج ذاكرة أكثر)
   const cores = navigator.hardwareConcurrency || 4, mem = navigator.deviceMemory || 8, full = F().quality === "orig";
-  const n = Math.max(1, Math.min(cores - 1, full ? (mem >= 8 ? 4 : 2) : (mem >= 8 ? 6 : 3)));
+  // مع كرت الشاشة: 4 معالجات تكفي (أكثر منها يتزاحم على الكرت)؛ بدونه: حسب الأنوية والذاكرة
+  const gpu = (() => { try { return !!new OffscreenCanvas(1, 1).getContext("webgl2"); } catch (e) { return false; } })();
+  const n = window.__poolN || Math.max(1, Math.min(cores - 1, gpu ? (full && mem < 8 ? 2 : 4) : full ? (mem >= 8 ? 5 : 2) : (mem >= 8 ? 8 : 3)));
   pool = await Promise.all(Array.from({ length: n }, makeWorker));
 }
 function killPool() { pool.forEach(w => w.terminate()); pool = []; }

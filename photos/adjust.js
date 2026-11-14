@@ -296,6 +296,169 @@ function baseLayer(lowSum, lowCnt, w, h, f) {
   return { a: box(A), b: box(B), w, h, f };
 }
 
+/* ============ مسار كرت الشاشة (WebGL2) — نفس المعادلات حرفياً، لكل بكسل بالتوازي ============ */
+let USE_GPU = true, _gl = null, _glFail = false;
+export function setGPU(v) { USE_GPU = !!v; }
+export const gpuInfo = () => ({ on: USE_GPU && !_glFail, ready: !!_gl });
+const VS = `#version 300 es
+void main(){ vec2 p = vec2(float((gl_VertexID << 1) & 2), float(gl_VertexID & 2)); gl_Position = vec4(p * 2.0 - 1.0, 0.0, 1.0); }`;
+const FS = `#version 300 es
+precision highp float; precision highp int; precision highp sampler2D; precision highp sampler3D;
+uniform sampler2D uImg, uWB, uTone, uBase; uniform sampler3D uLut;
+uniform mat3 uM; uniform int uLocal, uIdent, uMix, uCn, uBW, uBH;
+uniform float uBF, uAmt, uDes, uLO, uSC, uNB, uMID;
+out vec4 o;
+vec4 tq(int q){ return texelFetch(uTone, ivec2(q & 63, q >> 6), 0); }
+vec4 tone(float lv){ float f = (lv - uLO) * uSC; if (f <= 0.0) return tq(0); if (f >= uNB) return tq(int(uNB)); int q = int(f); float t = f - float(q); return mix(tq(q), tq(q + 1), t); }
+float l2s(float v){ v = clamp(v, 0.0, 1.0); return v <= 0.0031308 ? v * 12.92 : 1.055 * pow(v, 1.0 / 2.4) - 0.055; }
+vec3 lut(vec3 e){
+  float n1 = float(uCn - 1); vec3 f = e * n1; ivec3 a = ivec3(min(floor(f), vec3(n1 - 1.0))); vec3 u = f - vec3(a);
+  ivec3 pA, pB; float wA, wB, wC;
+  if (u.x >= u.y) { if (u.y >= u.z) { pA = ivec3(1,0,0); pB = ivec3(1,1,0); wA = u.x-u.y; wB = u.y-u.z; wC = u.z; } else if (u.x >= u.z) { pA = ivec3(1,0,0); pB = ivec3(1,0,1); wA = u.x-u.z; wB = u.z-u.y; wC = u.y; } else { pA = ivec3(0,0,1); pB = ivec3(1,0,1); wA = u.z-u.x; wB = u.x-u.y; wC = u.y; } }
+  else { if (u.z >= u.y) { pA = ivec3(0,0,1); pB = ivec3(0,1,1); wA = u.z-u.y; wB = u.y-u.x; wC = u.x; } else if (u.z >= u.x) { pA = ivec3(0,1,0); pB = ivec3(0,1,1); wA = u.y-u.z; wB = u.z-u.x; wC = u.x; } else { pA = ivec3(0,1,0); pB = ivec3(1,1,0); wA = u.y-u.x; wB = u.x-u.z; wC = u.z; } }
+  return texelFetch(uLut, a, 0).rgb * (1.0 - wA - wB - wC) + texelFetch(uLut, a + pA, 0).rgb * wA + texelFetch(uLut, a + pB, 0).rgb * wB + texelFetch(uLut, a + 1, 0).rgb * wC;
+}
+void main(){
+  ivec2 p = ivec2(gl_FragCoord.xy);
+  vec4 src = texelFetch(uImg, p, 0); ivec3 c = ivec3(src.rgb * 255.0 + 0.5);
+  vec3 l = vec3(texelFetch(uWB, ivec2(c.r, 0), 0).r, texelFetch(uWB, ivec2(c.g, 1), 0).r, texelFetch(uWB, ivec2(c.b, 2), 0).r);
+  vec3 C = uM * l;
+  float Yr = dot(C, vec3(0.2126, 0.7152, 0.0722)), Y = max(Yr, 1e-5), Yn;
+  if (uLocal == 1) {
+    float lY = log2(max(Yr, 1e-5));
+    float fx = clamp((float(p.x) + 0.5) / uBF - 0.5, 0.0, float(uBW) - 1.001), fy = clamp((float(p.y) + 0.5) / uBF - 0.5, 0.0, float(uBH) - 1.001);
+    ivec2 b0 = ivec2(fx, fy); vec2 dd = vec2(fx, fy) - vec2(b0);
+    vec2 ab = mix(mix(texelFetch(uBase, b0, 0).rg, texelFetch(uBase, b0 + ivec2(1, 0), 0).rg, dd.x), mix(texelFetch(uBase, b0 + ivec2(0, 1), 0).rg, texelFetch(uBase, b0 + ivec2(1, 1), 0).rg, dd.x), dd.y);
+    float bs = ab.x * lY + ab.y, det = lY - bs; vec4 t = tone(bs);
+    Yn = tone(t.g + det * t.b + uMID).r;
+  } else Yn = tone(log2(Y)).r;
+  float k = Yn / Y; C *= k;
+  if (k > 1.02) { float ds = exp2(-uDes * log2(k)); C = Yn + (C - Yn) * ds; }
+  float mx = max(C.r, max(C.g, C.b));
+  if (mx > 1.0) { float t = (mx - 1.0) / (mx - Yn + 1e-6); C += (Yn - C) * t; }
+  vec3 e = vec3(l2s(C.r), l2s(C.g), l2s(C.b));
+  if (uIdent == 0) e = lut(e);
+  float dt = float(((p.x * 7) & 7) ^ ((p.y * 13) & 7)) / 8.0 - 0.4375;
+  vec3 r8 = e * 255.0 + dt;
+  if (uMix == 1) r8 = vec3(c) + (r8 - vec3(c)) * uAmt;
+  o = vec4(clamp(r8, 0.0, 255.0) / 255.0, src.a);
+}`;
+const FS2 = `#version 300 es
+precision highp float; precision highp int; precision highp sampler2D;
+uniform sampler2D uSrc, uTx; uniform int uTex, uW, uH, uTW, uTH, uVig; uniform float uTF, uTK, uSK, uVK; uniform float uP[21];
+out vec4 o;
+float lum(ivec2 q){ q = clamp(q, ivec2(0), ivec2(uW - 1, uH - 1)); vec3 c = floor(texelFetch(uSrc, q, 0).rgb * 255.0 + 0.5); return dot(c, vec3(0.2126, 0.7152, 0.0722)) / 255.0; }
+float s2l(float v){ return v <= 0.04045 ? v / 12.92 : pow((v + 0.055) / 1.055, 2.4); }
+float l2s(float v){ v = clamp(v, 0.0, 1.0); return v <= 0.0031308 ? v * 12.92 : 1.055 * pow(v, 1.0 / 2.4) - 0.055; }
+void main(){
+  ivec2 p = ivec2(gl_FragCoord.xy); vec4 s = texelFetch(uSrc, p, 0); vec3 c = floor(s.rgb * 255.0 + 0.5);
+  float Y = dot(c, vec3(0.2126, 0.7152, 0.0722)) / 255.0, add = 0.0;
+  if (uTex == 1) {
+    float fx = clamp((float(p.x) + 0.5) / uTF - 0.5, 0.0, float(uTW) - 1.001), fy = clamp((float(p.y) + 0.5) / uTF - 0.5, 0.0, float(uTH) - 1.001);
+    ivec2 b0 = ivec2(fx, fy); vec2 dd = vec2(fx, fy) - vec2(b0);
+    float bv = mix(mix(texelFetch(uTx, b0, 0).r, texelFetch(uTx, b0 + ivec2(1, 0), 0).r, dd.x), mix(texelFetch(uTx, b0 + ivec2(0, 1), 0).r, texelFetch(uTx, b0 + ivec2(1, 1), 0).r, dd.x), dd.y);
+    float m = 1.0 - (2.0 * Y - 1.0) * (2.0 * Y - 1.0); add += (Y - bv) * uTK * m;
+  }
+  if (uSK != 0.0 && p.x > 0 && p.y > 0 && p.x < uW - 1 && p.y < uH - 1) {
+    float b = (lum(p + ivec2(-1, 0)) + lum(p + ivec2(1, 0)) + lum(p + ivec2(0, -1)) + lum(p + ivec2(0, 1))) * 0.125 + (lum(p + ivec2(-1, -1)) + lum(p + ivec2(1, -1)) + lum(p + ivec2(-1, 1)) + lum(p + ivec2(1, 1))) * 0.0625 + Y * 0.25;
+    add += (Y - b) * uSK * 2.0;
+  }
+  c = clamp(floor(c + add * 255.0 + 0.5), 0.0, 255.0);
+  if (uVig == 1) {
+    vec2 cc = vec2(float(uW), float(uH)) * 0.5, dv = (vec2(p) - cc) / cc;
+    float rr = min(0.9999, length(dv) / 1.41421356), f = rr * 20.0 - 0.5; int i0 = clamp(int(floor(f)), 0, 18); float t = clamp(f - float(i0), 0.0, 1.0);
+    float m = exp2((uP[i0] + (uP[i0 + 1] - uP[i0]) * t) * uVK);
+    if (abs(m - 1.0) >= 0.002) c = floor(255.0 * vec3(l2s(s2l(c.r / 255.0) * m), l2s(s2l(c.g / 255.0) * m), l2s(s2l(c.b / 255.0) * m)) + 0.5);
+  }
+  o = vec4(c / 255.0, s.a);
+}`;
+function glInit() {
+  if (_gl || _glFail) return _gl;
+  try {
+    const cv = new OffscreenCanvas(1, 1), gl = cv.getContext("webgl2", { antialias: false, depth: false, stencil: false, premultipliedAlpha: false, preserveDrawingBuffer: false, powerPreference: "high-performance" });
+    if (!gl) throw new Error("no webgl2");
+    const sh = (t, src) => { const x = gl.createShader(t); gl.shaderSource(x, src); gl.compileShader(x); if (!gl.getShaderParameter(x, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(x)); return x; };
+    const pr = gl.createProgram(); gl.attachShader(pr, sh(gl.VERTEX_SHADER, VS)); gl.attachShader(pr, sh(gl.FRAGMENT_SHADER, FS)); gl.linkProgram(pr);
+    if (!gl.getProgramParameter(pr, gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(pr));
+    const U = {}; for (const n of ["uImg", "uWB", "uTone", "uBase", "uLut", "uM", "uLocal", "uIdent", "uMix", "uCn", "uBW", "uBH", "uBF", "uAmt", "uDes", "uLO", "uSC", "uNB", "uMID"]) U[n] = gl.getUniformLocation(pr, n);
+    const T = {}; ["img", "wb", "tone", "base", "lut", "out", "tx", "out2"].forEach((k, i) => { T[k] = gl.createTexture(); });
+    const fb = gl.createFramebuffer();
+    const pr2 = gl.createProgram(); gl.attachShader(pr2, sh(gl.VERTEX_SHADER, VS)); gl.attachShader(pr2, sh(gl.FRAGMENT_SHADER, FS2)); gl.linkProgram(pr2);
+    if (!gl.getProgramParameter(pr2, gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(pr2));
+    const U2 = {}; for (const n of ["uSrc", "uTx", "uTex", "uW", "uH", "uTW", "uTH", "uVig", "uTF", "uTK", "uSK", "uVK", "uP"]) U2[n] = gl.getUniformLocation(pr2, n);
+    cv.addEventListener && cv.addEventListener("webglcontextlost", e => { e.preventDefault(); _gl = null; });
+    _gl = { gl, U, T, fb, pr, pr2, U2, max: gl.getParameter(gl.MAX_TEXTURE_SIZE), lutRef: null, wbRef: null };
+  } catch (e) { console.warn("GPU off:", e.message || e); _glFail = true; _gl = null; }
+  return _gl;
+}
+// تحرير ذاكرة الصور الكبيرة من كرت الشاشة
+function gpuFree() {
+  const G = _gl; if (!G) return; const gl = G.gl;
+  try { for (const [u, t] of [[0, G.T.img], [5, G.T.out], [6, G.T.out2]]) { gl.activeTexture(gl.TEXTURE0 + u); gl.bindTexture(gl.TEXTURE_2D, t); gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA8, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, null); } } catch (e) {}
+}
+// المرحلة الثانية على كرت الشاشة: النسيج + الحدّة + التعتيم الجانبي (نفس معادلات localContrast/vignette)
+function gpuPost(o) {
+  const G = _gl; if (!G) return false;
+  const { gl, U2, T } = G, { W, H, d } = o;
+  try {
+    gl.useProgram(G.pr2);
+    gl.activeTexture(gl.TEXTURE5); gl.bindTexture(gl.TEXTURE_2D, T.out); gl.uniform1i(U2.uSrc, 5);
+    texSet(gl, 7, T.tx); gl.uniform1i(U2.uTx, 7);
+    if (o.tx) gl.texImage2D(gl.TEXTURE_2D, 0, gl.R32F, o.tx.sw, o.tx.sh, 0, gl.RED, gl.FLOAT, o.tx.bl);
+    else gl.texImage2D(gl.TEXTURE_2D, 0, gl.R32F, 1, 1, 0, gl.RED, gl.FLOAT, new Float32Array(1));
+    gl.uniform1i(U2.uTex, o.tx ? 1 : 0); gl.uniform1i(U2.uW, W); gl.uniform1i(U2.uH, H);
+    gl.uniform1i(U2.uTW, o.tx ? o.tx.sw : 1); gl.uniform1i(U2.uTH, o.tx ? o.tx.sh : 1); gl.uniform1f(U2.uTF, o.tx ? o.tx.f : 1); gl.uniform1f(U2.uTK, o.tx ? o.tx.k : 0);
+    gl.uniform1f(U2.uSK, o.sk || 0); gl.uniform1i(U2.uVig, o.vig ? 1 : 0); gl.uniform1f(U2.uVK, o.vig ? o.vig.k : 0);
+    const P = new Float32Array(21); if (o.vig) P.set(o.vig.P.slice(0, 21)); gl.uniform1fv(U2.uP, P);
+    texSet(gl, 6, T.out2); gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA8, W, H, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
+    gl.bindFramebuffer(gl.FRAMEBUFFER, G.fb); gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, T.out2, 0);
+    if (gl.checkFramebufferStatus(gl.FRAMEBUFFER) !== gl.FRAMEBUFFER_COMPLETE) return false;
+    gl.viewport(0, 0, W, H); gl.drawArrays(gl.TRIANGLES, 0, 3);
+    gl.readPixels(0, 0, W, H, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array(d.buffer, d.byteOffset, d.length));
+    return gl.getError() === gl.NO_ERROR;
+  } catch (e) { console.warn("GPU post failed:", e); return false; }
+}
+function texSet(gl, unit, tex, target = gl.TEXTURE_2D) {
+  gl.activeTexture(gl.TEXTURE0 + unit); gl.bindTexture(target, tex);
+  gl.texParameteri(target, gl.TEXTURE_MIN_FILTER, gl.NEAREST); gl.texParameteri(target, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+  gl.texParameteri(target, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE); gl.texParameteri(target, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+}
+function gpuRun(o) {
+  const G = glInit(); if (!G) return false;
+  const { gl, U, T } = G, { W, H, d } = o;
+  if (W > G.max || H > G.max) return false;
+  try {
+    if (gl.isContextLost()) { _gl = null; return false; }
+    gl.pixelStorei(gl.UNPACK_ALIGNMENT, 1); gl.pixelStorei(gl.PACK_ALIGNMENT, 1);
+    const u8 = new Uint8Array(d.buffer, d.byteOffset, d.length);
+    texSet(gl, 0, T.img); gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA8, W, H, 0, gl.RGBA, gl.UNSIGNED_BYTE, u8);
+    const wb = new Float32Array(768); wb.set(o.TR, 0); wb.set(o.TG, 256); wb.set(o.TB, 512);
+    texSet(gl, 1, T.wb); gl.texImage2D(gl.TEXTURE_2D, 0, gl.R32F, 256, 3, 0, gl.RED, gl.FLOAT, wb);
+    const NB = o.NB, rows = Math.ceil((NB + 1) / 64), tone = new Float32Array(64 * rows * 4);
+    for (let q = 0; q <= NB; q++) { tone[q * 4] = o.HY[q]; tone[q * 4 + 1] = o.FU[q]; tone[q * 4 + 2] = o.GC[q]; }
+    texSet(gl, 2, T.tone); gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA32F, 64, rows, 0, gl.RGBA, gl.FLOAT, tone);
+    const b = o.base;
+    texSet(gl, 3, T.base);
+    if (b) { const ab = new Float32Array(b.w * b.h * 2); for (let i = 0; i < b.w * b.h; i++) { ab[i * 2] = b.a[i]; ab[i * 2 + 1] = b.b[i]; } gl.texImage2D(gl.TEXTURE_2D, 0, gl.RG32F, b.w, b.h, 0, gl.RG, gl.FLOAT, ab); }
+    else gl.texImage2D(gl.TEXTURE_2D, 0, gl.RG32F, 1, 1, 0, gl.RG, gl.FLOAT, new Float32Array(2));
+    const CL = o.CL;
+    texSet(gl, 4, T.lut, gl.TEXTURE_3D);
+    if (G.lutRef !== CL) { gl.texImage3D(gl.TEXTURE_3D, 0, gl.RGB32F, CL.n, CL.n, CL.n, 0, gl.RGB, gl.FLOAT, CL.d); G.lutRef = CL; }
+    gl.useProgram(G.pr); [["uImg", 0], ["uWB", 1], ["uTone", 2], ["uBase", 3], ["uLut", 4]].forEach(([n, u]) => gl.uniform1i(U[n], u));
+    gl.uniformMatrix3fv(U.uM, true, o.M);
+    gl.uniform1i(U.uLocal, b ? 1 : 0); gl.uniform1i(U.uIdent, CL.identity ? 1 : 0); gl.uniform1i(U.uMix, o.mix ? 1 : 0); gl.uniform1i(U.uCn, CL.n);
+    gl.uniform1i(U.uBW, b ? b.w : 1); gl.uniform1i(U.uBH, b ? b.h : 1); gl.uniform1f(U.uBF, b ? b.f : 1);
+    gl.uniform1f(U.uAmt, o.amt); gl.uniform1f(U.uDes, CAL.desat); gl.uniform1f(U.uLO, o.LO); gl.uniform1f(U.uSC, o.sc); gl.uniform1f(U.uNB, NB); gl.uniform1f(U.uMID, MID);
+    texSet(gl, 5, T.out); gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA8, W, H, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
+    gl.bindFramebuffer(gl.FRAMEBUFFER, G.fb); gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, T.out, 0);
+    if (gl.checkFramebufferStatus(gl.FRAMEBUFFER) !== gl.FRAMEBUFFER_COMPLETE) return false;
+    gl.viewport(0, 0, W, H); gl.drawArrays(gl.TRIANGLES, 0, 3);
+    if (!o.keep) gl.readPixels(0, 0, W, H, gl.RGBA, gl.UNSIGNED_BYTE, u8);
+    G.W = W; G.H = H;
+    return gl.getError() === gl.NO_ERROR;
+  } catch (e) { console.warn("GPU run failed:", e); _glFail = true; return false; }
+}
+
 export function applyAdjust(img, p) {
   if (isZero(p)) return img;
   p = { ...ZERO, ...p };
@@ -313,13 +476,14 @@ export function applyAdjust(img, p) {
   // 2) لوغاريتم الإضاءة (للطبقة القاعدية)
   let logL = null, base = null;
   if (local) {
-    logL = new Float32Array(N);
+    const store = !(USE_GPU && N >= 120000 && glInit());
+    if (store) logL = new Float32Array(N);
     // معاملات الإضاءة بعد المصفوفة: Y = cr*r + cg*g + cb*b
     const cr = 0.2126 * M[0][0] + 0.7152 * M[1][0] + 0.0722 * M[2][0], cgc = 0.2126 * M[0][1] + 0.7152 * M[1][1] + 0.0722 * M[2][1], cb = 0.2126 * M[0][2] + 0.7152 * M[1][2] + 0.0722 * M[2][2];
     const f = Math.max(1, Math.round(Math.max(W, H) / 640)), lw = Math.ceil(W / f), lh = Math.ceil(H / f), sum = new Float32Array(lw * lh), cnt = new Uint16Array(lw * lh);
     const XL = new Int32Array(W); for (let x = 0; x < W; x++) XL[x] = (x / f) | 0;
     for (let y = 0, i = 0, j = 0; y < H; y++) { const ro = ((y / f) | 0) * lw;
-      for (let x = 0; x < W; x++, i += 4, j++) { const lv = flog2(cr * TR[d[i]] + cgc * TG[d[i + 1]] + cb * TB[d[i + 2]]); logL[j] = lv; const q = ro + XL[x]; sum[q] += lv; cnt[q]++; } }
+      for (let x = 0; x < W; x++, i += 4, j++) { const lv = flog2(cr * TR[d[i]] + cgc * TG[d[i + 1]] + cb * TB[d[i + 2]]); if (logL) logL[j] = lv; const q = ro + XL[x]; sum[q] += lv; cnt[q]++; } }
     base = baseLayer(sum, cnt, lw, lh, f);
   }
   const bw = base ? base.w : 0, bh = base ? base.h : 0, bf = base ? base.f : 1;
@@ -364,36 +528,45 @@ export function applyAdjust(img, p) {
   const sx = 3, sy = cn * 3, sz = cn * cn * 3, ident = CL.identity;
   const BX0 = base ? new Int32Array(W) : null, BDX = base ? new Float32Array(W) : null;
   if (base) for (let x = 0; x < W; x++) { const fx = Math.min(bw - 1.001, Math.max(0, (x + 0.5) / bf - 0.5)); BX0[x] = fx | 0; BDX[x] = fx - (fx | 0); }
-  for (let y = 0, i = 0, j = 0; y < H; y++) {
+  // ثوابت محلية (أسرع من الوصول للمصفوفات داخل الحلقة)
+  const m00 = M[0][0], m01 = M[0][1], m02 = M[0][2], m10 = M[1][0], m11 = M[1][1], m12 = M[1][2], m20 = M[2][0], m21 = M[2][1], m22 = M[2][2];
+  const BA = base ? base.a : null, BB = base ? base.b : null, dsK = -CAL.desat * Math.LN2;
+  // كرت الشاشة (WebGL2) أولاً — أسرع بعشرات المرات؛ وإلا المعالج كما هو
+  const vigOK = !p.vignette || !!(ACR && ACR.vig), postGPU = vigOK && !p.texture && (p.sharp || p.vignette);
+  const onGPU = USE_GPU && N >= 120000 && gpuRun({ W, H, d, TR, TG, TB, M: [m00, m01, m02, m10, m11, m12, m20, m21, m22], base, HY, FU, GC, CL, amt, mix, LO, sc, NB, keep: postGPU });
+  if (!onGPU && base && !logL) { logL = new Float32Array(N); for (let i = 0, j = 0; j < N; i += 4, j++) { const R = m00 * TR[d[i]] + m01 * TG[d[i + 1]] + m02 * TB[d[i + 2]], G = m10 * TR[d[i]] + m11 * TG[d[i + 1]] + m12 * TB[d[i + 2]], B = m20 * TR[d[i]] + m21 * TG[d[i + 1]] + m22 * TB[d[i + 2]]; logL[j] = flog2(0.2126 * R + 0.7152 * G + 0.0722 * B); } }
+  if (!onGPU) for (let y = 0, i = 0, j = 0; y < H; y++) {
     let y0 = 0, dy = 0; if (base) { const fy = Math.min(bh - 1.001, Math.max(0, (y + 0.5) / bf - 0.5)); y0 = fy | 0; dy = fy - y0; }
-    const dRow = (y * 13) & 7;
+    const dRow = (y * 13) & 7, ody = 1 - dy;
     for (let x = 0; x < W; x++, i += 4, j++) {
       const r0 = d[i], g0 = d[i + 1], b0 = d[i + 2];
       const rl = TR[r0], gl = TG[g0], bL = TB[b0];
-      let R = M[0][0] * rl + M[0][1] * gl + M[0][2] * bL, G = M[1][0] * rl + M[1][1] * gl + M[1][2] * bL, B = M[2][0] * rl + M[2][1] * gl + M[2][2] * bL;
-      const Y = Math.max(0.2126 * R + 0.7152 * G + 0.0722 * B, 1e-5);
+      let R = m00 * rl + m01 * gl + m02 * bL, G = m10 * rl + m11 * gl + m12 * bL, B = m20 * rl + m21 * gl + m22 * bL;
+      let Y = 0.2126 * R + 0.7152 * G + 0.0722 * B; if (Y < 1e-5) Y = 1e-5;
       let Yn;
       if (base) {
-        const lY = logL[j], x0 = BX0[x], dx = BDX[x], o0 = y0 * bw + x0, o1 = o0 + bw, A = base.a, Bb = base.b;
-        const a = (A[o0] + (A[o0 + 1] - A[o0]) * dx) * (1 - dy) + (A[o1] + (A[o1 + 1] - A[o1]) * dx) * dy;
-        const b = (Bb[o0] + (Bb[o0 + 1] - Bb[o0]) * dx) * (1 - dy) + (Bb[o1] + (Bb[o1 + 1] - Bb[o1]) * dx) * dy;
+        const lY = logL[j], x0 = BX0[x], dx = BDX[x], o0 = y0 * bw + x0, o1 = o0 + bw;
+        const a = (BA[o0] + (BA[o0 + 1] - BA[o0]) * dx) * ody + (BA[o1] + (BA[o1 + 1] - BA[o1]) * dx) * dy;
+        const b = (BB[o0] + (BB[o0 + 1] - BB[o0]) * dx) * ody + (BB[o1] + (BB[o1 + 1] - BB[o1]) * dx) * dy;
         const bs = a * lY + b, det = lY - bs;
         Yn = look(HY, look(FU, bs) + det * look(GC, bs) + MID);
       } else Yn = look(HY, flog2(Y));
       const k = Yn / Y; R *= k; G *= k; B *= k;
-      if (k > 1.02) { const ds = Math.pow(1 / k, CAL.desat); R = Yn + (R - Yn) * ds; G = Yn + (G - Yn) * ds; B = Yn + (B - Yn) * ds; }
+      if (k > 1.02) { const xx = dsK * flog2(k), ds = 1 + xx * (1 + xx * (0.5 + xx * 0.16666667)); R = Yn + (R - Yn) * ds; G = Yn + (G - Yn) * ds; B = Yn + (B - Yn) * ds; }
       const mx = R > G ? (R > B ? R : B) : (G > B ? G : B);
       if (mx > 1) { const t = (mx - 1) / (mx - Yn + 1e-6); R += (Yn - R) * t; G += (Yn - G) * t; B += (Yn - B) * t; }
       let er = R <= 0 ? 0 : R >= 1 ? 1 : L2S[(R * L2S_N + 0.5) | 0], eg = G <= 0 ? 0 : G >= 1 ? 1 : L2S[(G * L2S_N + 0.5) | 0], eb = B <= 0 ? 0 : B >= 1 ? 1 : L2S[(B * L2S_N + 0.5) | 0];
       if (!ident) {
+        // استيفاء رباعي الأوجه (tetrahedral): 4 نقاط بدل 8 — أسرع وأدق للألوان
         const fr = er * cn1, fg = eg * cn1, fb = eb * cn1, xa = fr < cn1 ? fr | 0 : cn1 - 1, ya = fg < cn1 ? fg | 0 : cn1 - 1, za = fb < cn1 ? fb | 0 : cn1 - 1;
-        const ux = fr - xa, uy = fg - ya, uz = fb - za, p0 = ((za * cn + ya) * cn + xa) * 3;
-        let c00 = CD[p0] + (CD[p0 + sx] - CD[p0]) * ux, c10 = CD[p0 + sy] + (CD[p0 + sy + sx] - CD[p0 + sy]) * ux, c01 = CD[p0 + sz] + (CD[p0 + sz + sx] - CD[p0 + sz]) * ux, c11 = CD[p0 + sz + sy] + (CD[p0 + sz + sy + sx] - CD[p0 + sz + sy]) * ux;
-        let e0 = c00 + (c10 - c00) * uy; er = e0 + (c01 + (c11 - c01) * uy - e0) * uz;
-        c00 = CD[p0 + 1] + (CD[p0 + 1 + sx] - CD[p0 + 1]) * ux; c10 = CD[p0 + 1 + sy] + (CD[p0 + 1 + sy + sx] - CD[p0 + 1 + sy]) * ux; c01 = CD[p0 + 1 + sz] + (CD[p0 + 1 + sz + sx] - CD[p0 + 1 + sz]) * ux; c11 = CD[p0 + 1 + sz + sy] + (CD[p0 + 1 + sz + sy + sx] - CD[p0 + 1 + sz + sy]) * ux;
-        e0 = c00 + (c10 - c00) * uy; eg = e0 + (c01 + (c11 - c01) * uy - e0) * uz;
-        c00 = CD[p0 + 2] + (CD[p0 + 2 + sx] - CD[p0 + 2]) * ux; c10 = CD[p0 + 2 + sy] + (CD[p0 + 2 + sy + sx] - CD[p0 + 2 + sy]) * ux; c01 = CD[p0 + 2 + sz] + (CD[p0 + 2 + sz + sx] - CD[p0 + 2 + sz]) * ux; c11 = CD[p0 + 2 + sz + sy] + (CD[p0 + 2 + sz + sy + sx] - CD[p0 + 2 + sz + sy]) * ux;
-        e0 = c00 + (c10 - c00) * uy; eb = e0 + (c01 + (c11 - c01) * uy - e0) * uz;
+        const ux = fr - xa, uy = fg - ya, uz = fb - za, p0 = ((za * cn + ya) * cn + xa) * 3, p7 = p0 + sx + sy + sz;
+        let pA, pB, wA, wB, wC;
+        if (ux >= uy) { if (uy >= uz) { pA = p0 + sx; pB = p0 + sx + sy; wA = ux - uy; wB = uy - uz; wC = uz; } else if (ux >= uz) { pA = p0 + sx; pB = p0 + sx + sz; wA = ux - uz; wB = uz - uy; wC = uy; } else { pA = p0 + sz; pB = p0 + sx + sz; wA = uz - ux; wB = ux - uy; wC = uy; } }
+        else { if (uz >= uy) { pA = p0 + sz; pB = p0 + sy + sz; wA = uz - uy; wB = uy - ux; wC = ux; } else if (uz >= ux) { pA = p0 + sy; pB = p0 + sy + sz; wA = uy - uz; wB = uz - ux; wC = ux; } else { pA = p0 + sy; pB = p0 + sx + sy; wA = uy - ux; wB = ux - uz; wC = uz; } }
+        const w0 = 1 - wA - wB - wC;
+        er = CD[p0] * w0 + CD[pA] * wA + CD[pB] * wB + CD[p7] * wC;
+        eg = CD[p0 + 1] * w0 + CD[pA + 1] * wA + CD[pB + 1] * wB + CD[p7 + 1] * wC;
+        eb = CD[p0 + 2] * w0 + CD[pA + 2] * wA + CD[pB + 2] * wB + CD[p7 + 2] * wC;
       }
       const dt = (((x * 7) & 7) ^ dRow) / 8 - 0.4375;
       let r8 = er * 255 + dt, g8 = eg * 255 + dt, b8 = eb * 255 + dt;
@@ -402,6 +575,17 @@ export function applyAdjust(img, p) {
     }
   }
   // النسيج والحدّة (تفاصيل صغيرة) — الوضوح صار ضمن الطبقة القاعدية أعلاه
+  if (onGPU && (p.texture || p.sharp || p.vignette) && vigOK) {
+    // النسيج يحتاج طبقة ضبابية من ناتج المرحلة الأولى (تُحسب على نسخة مصغّرة)، والباقي على كرت الشاشة
+    const tx = p.texture ? texLayer(img, Math.max(1, Math.round(W * 0.0025)), p.texture / 100 * CAL.tex * amt) : null;
+    const v = p.vignette ? p.vignette / 100 * amt : 0;
+    const ok = gpuPost({ W, H, d, tx, sk: p.sharp ? p.sharp / 100 * 0.9 * amt * (W > 3500 ? 1 : 0.8) : 0, vig: v ? { P: v < 0 ? ACR.vig.neg : ACR.vig.pos, k: Math.abs(v) / 0.5 } : null });
+    if (!ok && postGPU) { try { const G = _gl, gl = G.gl; gl.bindFramebuffer(gl.FRAMEBUFFER, G.fb); gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, G.T.out, 0); gl.readPixels(0, 0, W, H, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array(d.buffer, d.byteOffset, d.length)); } catch (e) {} }
+    gpuFree();
+    if (ok) return img;
+    if (postGPU) { if (p.texture || p.sharp) localContrast(img, { ...p, clarity: 0 }, amt); if (p.vignette) vignette(img, p.vignette / 100 * amt); return img; }
+  }
+  if (onGPU) gpuFree();
   if (p.texture || p.sharp) localContrast(img, { ...p, clarity: 0 }, amt);
   if (p.vignette) vignette(img, p.vignette / 100 * amt);
   return img;
@@ -635,6 +819,14 @@ function boxBlur(src, w, h, r, tmp, out) {
     a = b;
   }
   return b;
+}
+function texLayer(img, r, k) {
+  const w = img.width, h = img.height, d = img.data, f = Math.max(1, Math.floor(r / 3)), sw = Math.ceil(w / f), sh = Math.ceil(h / f), sm = new Float32Array(sw * sh), cnt = new Float32Array(sw * sh);
+  const XF = new Int32Array(w); for (let x = 0; x < w; x++) XF[x] = (x / f) | 0;
+  for (let y = 0, i = 0; y < h; y++) { const ro = ((y / f) | 0) * sw; for (let x = 0; x < w; x++, i += 4) { const q = ro + XF[x]; sm[q] += (0.2126 * d[i] + 0.7152 * d[i + 1] + 0.0722 * d[i + 2]) / 255; cnt[q]++; } }
+  for (let q = 0; q < sm.length; q++) sm[q] /= cnt[q] || 1;
+  const rr = Math.max(1, Math.round(r / f)), tmp = new Float32Array(sw * sh), bl = new Float32Array(sw * sh);
+  return { bl: boxBlur(sm, sw, sh, rr, tmp, bl), sw, sh, f, k };
 }
 function localContrast(img, p, amt) {
   const w = img.width, h = img.height, d = img.data, N = w * h;

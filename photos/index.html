@@ -4,6 +4,23 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="robots" content="noindex, nofollow">
+<script>
+// صفحة خاصة بموظفي الجمعية: تُفتح فقط بعد تسجيل الدخول في بوابة الموظفين (gzara.org/Login) وبصلاحية «معالجة صور الفعاليات»
+(function(){
+  var ok = false;
+  try {
+    var ses = JSON.parse(sessionStorage.getItem("zaraHub.session") || "null");
+    var emps = JSON.parse(localStorage.getItem("zaraHub.employees") || "[]");
+    var e = ses && emps.filter(function(x){ return x.id === ses.id; })[0];
+    ok = !!e && (e.role === "admin" || (Array.isArray(e.perms) ? e.perms.indexOf("photos.view") > -1 : (e.sections || []).indexOf("photos") > -1));
+  } catch (err) {}
+  window.__locked = !ok;
+  if (!ok) document.addEventListener("DOMContentLoaded", function(){
+    document.title = "معالجة الصور — للموظفين فقط";
+    document.body.innerHTML = '<div style="min-height:100vh;display:grid;place-items:center;background:#F5F6F5;font-family:IBM Plex Sans Arabic,system-ui,sans-serif;direction:rtl;padding:20px"><div style="background:#fff;border:1px solid #E4E9E8;border-radius:20px;padding:36px 28px;max-width:420px;text-align:center;box-shadow:0 10px 30px rgba(20,28,27,.08)"><img src="assets/mark.png" alt="" style="height:56px;margin-bottom:10px"><div style="font-size:34px">🔒</div><h2 style="margin:8px 0 6px;font-size:20px;color:#1E2524">أداة خاصة بموظفي الجمعية</h2><p style="color:#6B7775;font-size:14px;line-height:1.8;margin:0 0 20px">سجّل دخولك في بوابة الموظفين أولاً، ثم افتح «معالجة الصور» من القائمة.</p><a href="/Login/#/photos" style="display:inline-block;background:#4B7071;color:#fff;border-radius:14px;padding:12px 26px;font-weight:700;text-decoration:none">تسجيل الدخول</a></div></div>';
+  });
+})();
+</script>
 <meta name="theme-color" content="#324C4B">
 <title>معالجة الصور | بوابة زارة</title>
 <link rel="manifest" href="manifest.webmanifest">
@@ -219,6 +236,10 @@ body{padding:0;height:100vh;overflow:hidden}
 .stage #prev{max-width:none;max-height:none}
 .stage .canvasBox{overflow:hidden;min-height:180px}
 .stage .canvasBox.empty{background:#D9DEDD}
+/* الصورة تملأ الإطار: بلا جوانب سوداء — الخلفية بلون مساحة العمل والصورة بحواف ناعمة */
+.stage .canvasBox,.stage .canvasBox.cropping{background:transparent}
+.stage .canvasBox.empty{background:#D9DEDD}
+.stage #prev{border-radius:10px;box-shadow:0 4px 18px rgba(20,28,27,.16)}
 .stageFoot{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
 .stageFoot #prevMeta{flex:1;min-width:200px}
 .strip{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:6px 8px}
@@ -385,6 +406,6 @@ body{padding:0;height:100vh;overflow:hidden}
 <dialog id="lookDlg" class="cmpDlg"></dialog>
 <dialog id="ask"><p></p><div class="acts"></div></dialog>
 <div id="toast"></div>
-<script type="module" src="app.js"></script>
+<script type="module">if (!window.__locked) import("./app.js");</script>
 </body>
 </html>

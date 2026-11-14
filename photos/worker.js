@@ -2,7 +2,7 @@
 // صورة واحدة في كل مرة، ويُغلق كل شيء بعدها حتى لا تمتلئ الذاكرة.
 import encode, { init as initEnc } from "./vendor/jsquash/encode.js";
 import { cropRect, drawFooter, FONT_M, FONT_R, RATIOS } from "./footer.js";
-import { applyAdjust, isZero, setACRCurves } from "./adjust.js";
+import { applyAdjust, isZero, setACRCurves, gpuInfo } from "./adjust.js";
 
 let assets = null, encReady = null;
 
@@ -105,7 +105,7 @@ async function job(m) {
       out.width = out.height = 0;
       res.size = res.size || {}; res.size[ratio] = [tw, th];
     }
-  } finally { bmp.close(); }
+  } finally { bmp.close(); T.gpu = gpuInfo().ready ? 1 : 0; }
   return res;
 }
 
