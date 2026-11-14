@@ -120,6 +120,8 @@ const S2L = new Float32Array(256); for (let i = 0; i < 256; i++) S2L[i] = s2l(i 
 const L2S_N = 4096, L2S = new Float32Array(L2S_N + 1); for (let i = 0; i <= L2S_N; i++) L2S[i] = l2s(i / L2S_N);
 const enc = v => v <= 0 ? 0 : v >= 1 ? 1 : L2S[(v * L2S_N + 0.5) | 0];
 const MID = Math.log2(0.18);
+// ثوابت المعايرة على Lightroom (تُضبط بمقارنة نتائج حقيقية: نفس الأرقام ← نفس الشكل)
+export const CAL = { expK: 1, temp: 0.75, tint: 0.00045, ct: 0.42, bl: 1.1, wh: 0.7, sh: 1.55, hi: 1.35, cla: 0.9, tex: 0.55, desat: 0.22, knee: 0.5, roll: 1, sat: 1, vib: 1, pc: 0.13 };
 // لوغاريتم سريع بجدول (للقيم ≤ 1)
 const LGN = 65536, LGT = new Float32Array(LGN + 2); for (let q = 0; q <= LGN + 1; q++) LGT[q] = Math.log2(Math.max(q / LGN, 1e-5));
 const flog2 = Y => { if (Y >= 1) return Math.log2(Y); const f = Y * LGN, q = f | 0; return LGT[q] + (LGT[q + 1] - LGT[q]) * (f - q); };
@@ -139,7 +141,7 @@ const mv3 = (A, v) => A.map(r => r[0] * v[0] + r[1] * v[1] + r[2] * v[2]);
 function wbMatrix(temp, tint) {
   if (!temp && !tint) return null;
   // موجب الحرارة = أدفأ: نفترض أن الإضاءة كانت أبرد ونكيّفها إلى D65
-  const mired = 1e6 / 6504 - temp * 0.75, [x, y0] = cctXY(1e6 / Math.max(40, mired)), y = y0 - tint * 0.00045;
+  const mired = 1e6 / 6504 - temp * CAL.temp, [x, y0] = cctXY(1e6 / Math.max(40, mired)), y = y0 - tint * CAL.tint;
   const src = [x / y, 1, (1 - x - y) / y], dst = [0.95047, 1, 1.08883];
   const cs = mv3(BR, src), cd = mv3(BR, dst), D = [[cd[0] / cs[0], 0, 0], [0, cd[1] / cs[1], 0], [0, 0, cd[2] / cs[2]]];
   return mm(XYZ2RGB, mm(BRi, mm(D, mm(BR, RGB2XYZ))));
@@ -161,12 +163,12 @@ const hueOk = h => { const c = hueRGB(h).map(v => s2l(Math.max(0, Math.min(1, v 
 // جدول اللون ثلاثي الأبعاد (منحنيات + Oklab) — يُبنى مرة لكل إعداد
 const _clutCache = new Map();
 function colorLUT(p) {
-  const key = JSON.stringify([p.tc, p.tcR, p.tcG, p.tcB, p.pc_sh, p.pc_dk, p.pc_lt, p.pc_hi, p.saturation, p.vibrance, ...ADJ.filter(d => /^(h|s|l)_|^cg_/.test(d.k)).map(d => p[d.k])]);
+  const key = JSON.stringify([CAL.sat, CAL.vib, CAL.pc, p.tc, p.tcR, p.tcG, p.tcB, p.pc_sh, p.pc_dk, p.pc_lt, p.pc_hi, p.saturation, p.vibrance, ...ADJ.filter(d => /^(h|s|l)_|^cg_/.test(d.k)).map(d => p[d.k])]);
   if (_clutCache.has(key)) return _clutCache.get(key);
   const n = 33, out = new Float32Array(n * n * n * 3);
   const TC = p.tc && p.tc.length >= 2 ? monoCurve(p.tc) : null, TCC = ["tcR", "tcG", "tcB"].map(k => p[k] && p[k].length >= 2 ? monoCurve(p[k]) : null);
   const pc = ["pc_sh", "pc_dk", "pc_lt", "pc_hi"].map(k => (p[k] || 0) / 100), hasPC = pc.some(Boolean);
-  const sat = 1 + (p.saturation || 0) / 100, vib = (p.vibrance || 0) / 100;
+  const sat = 1 + (p.saturation || 0) / 100 * CAL.sat, vib = (p.vibrance || 0) / 100 * CAL.vib;
   const hsl = OK_BANDS.map(([k, c]) => [c, (p["h_" + k] || 0), (p["s_" + k] || 0) / 100, (p["l_" + k] || 0) / 100]), hasHSL = hsl.some(x => x[1] || x[2] || x[3]);
   const cgv = ["sh", "mid", "hi", "gl"].map(k => { const s = (p[`cg_${k}_s`] || 0) / 100; if (!s) return null; const [a, b] = hueOk(p[`cg_${k}_h`] || 0); return [a * s * 0.07, b * s * 0.07]; });
   const blend = 0.5 + ((p.cg_blend ?? 50) - 50) / 100, bal = (p.cg_bal || 0) / 200;
@@ -177,7 +179,7 @@ function colorLUT(p) {
   };
   for (let z = 0, o = 0; z < n; z++) for (let y = 0; y < n; y++) for (let x = 0; x < n; x++, o += 3) {
     let r = x / (n - 1), g = y / (n - 1), b = z / (n - 1);
-    if (hasPC) { const f = v => v + (pc[0] * bell(v, 0.12, 0.12) + pc[1] * bell(v, 0.37, 0.13) + pc[2] * bell(v, 0.63, 0.13) + pc[3] * bell(v, 0.88, 0.12)) * 0.13; r = f(r); g = f(g); b = f(b); }
+    if (hasPC) { const f = v => v + (pc[0] * bell(v, 0.12, 0.12) + pc[1] * bell(v, 0.37, 0.13) + pc[2] * bell(v, 0.63, 0.13) + pc[3] * bell(v, 0.88, 0.12)) * CAL.pc; r = f(r); g = f(g); b = f(b); }
     if (TC) { r = TC(clamp(r)); g = TC(clamp(g)); b = TC(clamp(b)); }
     if (TCC[0]) r = TCC[0](clamp(r)); if (TCC[1]) g = TCC[1](clamp(g)); if (TCC[2]) b = TCC[2](clamp(b));
     let [L, A, Bb] = toOklab(s2l(clamp(r)), s2l(clamp(g)), s2l(clamp(b)));
@@ -225,7 +227,7 @@ export function applyAdjust(img, p) {
   if (p.auto) Object.assign(p, autoStats(img, p.auto / 100, p.autoWb !== 0));
   const W = img.width, H = img.height, d = img.data, N = W * H;
   // 1) مصفوفة الأبيض + المكاسب التلقائية + التعريض
-  const ag = p._g || [1, 1, 1], WB = wbMatrix(p.temp || 0, p.tint || 0) || [[1, 0, 0], [0, 1, 0], [0, 0, 1]], ev = Math.pow(2, (p.exposure || 0) + (p._ev || 0));
+  const ag = p._g || [1, 1, 1], WB = wbMatrix(p.temp || 0, p.tint || 0) || [[1, 0, 0], [0, 1, 0], [0, 0, 1]], ev = Math.pow(2, (p.exposure || 0) * CAL.expK + (p._ev || 0));
   const M = WB.map(r => r.map((v, j) => v * ag[j] * ev));
   const sh = (p.shadows || 0) / 100, hi = (p.highlights || 0) / 100, wh = (p.whites || 0) / 100, bl = (p.blacks || 0) / 100, ct = (p.contrast || 0) / 100;
   const cla = (p.clarity || 0) / 100, local = !!(sh || hi || cla) && W > 8 && H > 8;
@@ -248,24 +250,24 @@ export function applyAdjust(img, p) {
   const LO = -16, HI = 4, NB = 4096, sc = NB / (HI - LO);
   const FU = new Float32Array(NB + 1), GC = new Float32Array(NB + 1), HY = new Float32Array(NB + 1);
   const rawY = lv => { let v = lv - MID;
-    if (ct) v = v * (1 + ct * 0.42) / (1 + ct * 0.42 * Math.min(1, Math.abs(v) / 6));
-    if (bl) v += bl * 1.1 * Math.max(0, Math.min(1, (-v - 2.2) / 3)) ** 1.5 * (bl < 0 ? 1.2 : 1);
-    if (wh) v += wh * 0.7 * Math.max(0, Math.min(1, (v + 0.4) / 2.6)) ** 2;
+    if (ct) v = v * (1 + ct * CAL.ct) / (1 + ct * CAL.ct * Math.min(1, Math.abs(v) / 6));
+    if (bl) v += bl * CAL.bl * Math.max(0, Math.min(1, (-v - 2.2) / 3)) ** 1.5 * (bl < 0 ? 1.2 : 1);
+    if (wh) v += wh * CAL.wh * Math.max(0, Math.min(1, (v + 0.4) / 2.6)) ** 2;
     return Math.pow(2, v + MID); };
   // كتف ناعم متكيّف (مثل Lightroom): يضغط ما يتجاوز الأبيض على مدى واسع يبدأ من 0.5 بدل القص المفاجئ
   const gainMax = Math.max(ev * Math.max(...ag), 1), Ymax = Math.max(rawY(Math.log2(gainMax) + (sh > 0 ? 0.35 : 0)), 1);
-  const knee = 0.5, r = (Ymax - knee) / (1 - knee);
+  const knee = CAL.knee, YmaxE = 1 + (Ymax - 1) * CAL.roll, r = (YmaxE - knee) / (1 - knee);
   let sa = 0; if (r > 1.0001) { let lo = 1e-4, hi2 = 60; for (let it = 0; it < 60; it++) { const m = (lo + hi2) / 2; (m / (1 - Math.exp(-m)) > r ? (hi2 = m) : (lo = m)); } sa = (lo + hi2) / 2; }
-  const shoulder = Y => { if (!sa || Y <= knee) return Math.min(Y, sa ? Y : Y); const t = Math.min(1.5, (Y - knee) / (Ymax - knee)); return knee + (1 - knee) * (1 - Math.exp(-sa * t)) / (1 - Math.exp(-sa)); };
+  const shoulder = Y => { if (!sa || Y <= knee) return Math.min(Y, sa ? Y : Y); const t = Math.min(1.5, (Y - knee) / (YmaxE - knee)); return knee + (1 - knee) * (1 - Math.exp(-sa * t)) / (1 - Math.exp(-sa)); };
   for (let q = 0; q <= NB; q++) {
     const lv = LO + q / sc; let u = lv - MID;
-    if (sh) u += sh * 1.55 * Math.max(0, Math.min(1, (0.6 - u) / 4.2)) ** 1.2;
-    if (hi) u += hi * 1.35 * Math.max(0, Math.min(1, (u + 0.2) / 2.8)) ** 1.3;
-    FU[q] = u; GC[q] = cla ? 1 + cla * 0.9 * Math.max(0, 1 - Math.abs(u) / 4.5) : 1;
+    if (sh) u += sh * CAL.sh * Math.max(0, Math.min(1, (0.6 - u) / 4.2)) ** 1.2;
+    if (hi) u += hi * CAL.hi * Math.max(0, Math.min(1, (u + 0.2) / 2.8)) ** 1.3;
+    FU[q] = u; GC[q] = cla ? 1 + cla * CAL.cla * Math.max(0, 1 - Math.abs(u) / 4.5) : 1;
     let v = lv - MID;
-    if (ct) v = v * (1 + ct * 0.42) / (1 + ct * 0.42 * Math.min(1, Math.abs(v) / 6));
-    if (bl) v += bl * 1.1 * Math.max(0, Math.min(1, (-v - 2.2) / 3)) ** 1.5 * (bl < 0 ? 1.2 : 1);
-    if (wh) v += wh * 0.7 * Math.max(0, Math.min(1, (v + 0.4) / 2.6)) ** 2;
+    if (ct) v = v * (1 + ct * CAL.ct) / (1 + ct * CAL.ct * Math.min(1, Math.abs(v) / 6));
+    if (bl) v += bl * CAL.bl * Math.max(0, Math.min(1, (-v - 2.2) / 3)) ** 1.5 * (bl < 0 ? 1.2 : 1);
+    if (wh) v += wh * CAL.wh * Math.max(0, Math.min(1, (v + 0.4) / 2.6)) ** 2;
     let Yn = shoulder(Math.pow(2, v + MID)); if (!sa && Yn > 0.9) Yn = 0.9 + 0.1 * Math.tanh((Yn - 0.9) / 0.1);
     HY[q] = Yn;
   }
@@ -290,7 +292,7 @@ export function applyAdjust(img, p) {
         Yn = look(HY, look(FU, bs) + det * look(GC, bs) + MID);
       } else Yn = look(HY, flog2(Y));
       const k = Yn / Y; R *= k; G *= k; B *= k;
-      if (k > 1.02) { const ds = Math.pow(1 / k, 0.22); R = Yn + (R - Yn) * ds; G = Yn + (G - Yn) * ds; B = Yn + (B - Yn) * ds; }
+      if (k > 1.02) { const ds = Math.pow(1 / k, CAL.desat); R = Yn + (R - Yn) * ds; G = Yn + (G - Yn) * ds; B = Yn + (B - Yn) * ds; }
       const mx = R > G ? (R > B ? R : B) : (G > B ? G : B);
       if (mx > 1) { const t = (mx - 1) / (mx - Yn + 1e-6); R += (Yn - R) * t; G += (Yn - G) * t; B += (Yn - B) * t; }
       let er = R <= 0 ? 0 : R >= 1 ? 1 : L2S[(R * L2S_N + 0.5) | 0], eg = G <= 0 ? 0 : G >= 1 ? 1 : L2S[(G * L2S_N + 0.5) | 0], eb = B <= 0 ? 0 : B >= 1 ? 1 : L2S[(B * L2S_N + 0.5) | 0];
@@ -570,7 +572,7 @@ function localContrast(img, p, amt) {
       }
     }
   };
-  if (p.texture) big(Math.max(1, Math.round(w * 0.0025)), p.texture / 100 * 0.55 * amt, true);
+  if (p.texture) big(Math.max(1, Math.round(w * 0.0025)), p.texture / 100 * CAL.tex * amt, true);
   if (p.clarity) big(Math.max(2, Math.round(w * 0.012)), p.clarity / 100 * 0.45 * amt, true);
   // الحدّة: قناع حاد صغير 3×3 على الإضاءة
   if (p.sharp) {
