@@ -2087,13 +2087,14 @@
         } };
       }
       case "\u0651": {
-        var r = u * 0.042;
-        return { h: r + t, draw: function(ctx, cx, yb){
-          ctx.save(); ctx.strokeStyle = ctx.fillStyle; ctx.lineWidth = t; ctx.lineJoin = "miter";
-          ctx.beginPath(); ctx.moveTo(cx - 3 * r, yb - t / 2);
-          ctx.arc(cx - 2 * r, yb - t / 2, r, Math.PI, 0);
-          ctx.arc(cx, yb - t / 2, r, Math.PI, 0);
-          ctx.arc(cx + 2 * r, yb - t / 2, r, Math.PI, 0);
+        // الشدّة بشكل w (كأسان متجاوران بثلاث شُعب للأعلى) — كانت مقلوبة (أقواس ∩∩∩) فتبدو كتاجٍ لا كشدّة
+        var r = u * 0.05, hh = r * 1.9;
+        return { h: hh, draw: function(ctx, cx, yb){
+          var yc = yb - t / 2 - r;
+          ctx.save(); ctx.strokeStyle = ctx.fillStyle; ctx.lineWidth = t; ctx.lineCap = "butt"; ctx.lineJoin = "round";
+          ctx.beginPath();
+          ctx.moveTo(cx - 2 * r, yb - hh); ctx.lineTo(cx - 2 * r, yc); ctx.arc(cx - r, yc, r, Math.PI, 0, true); ctx.lineTo(cx, yb - hh * 0.8);
+          ctx.moveTo(cx, yc); ctx.arc(cx + r, yc, r, Math.PI, 0, true); ctx.lineTo(cx + 2 * r, yb - hh);
           ctx.stroke(); ctx.restore();
         } };
       }
