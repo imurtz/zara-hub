@@ -7737,11 +7737,16 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
 
   // ===== كشيدة عربية: تمديد النصوص المتغيرة لتملأ عرضاً مستهدفاً بأناقة =====
   // حروف لا تتصل بما بعدها (يُمنع وضع كشيدة بعدها مباشرة)
-  var AR_NON_CONNECTING = "اأإآدذرزوةى";
+  var AR_NON_CONNECTING = "اأإآدذرزوؤءةى";
+  // الكشيدة تُوضع فقط بين حرفين متصلين فعلاً: الأول من الحروف التي تتصل بما بعدها (قائمة بيضاء —
+  // كانت قائمة سوداء ناقصة فدخلت كشيدة بعد «ؤ» مثل «لــؤــي»)، والثاني حرف عربي يتصل بما قبله
+  // (ليس «ء»)، مع تجنّب كسر «لا»
+  var AR_DUAL_JOIN = "بتثجحخسشصضطظعغفقكلمنهيئ";
   function canInsertKashidaAfter(ch, nextCh){
     if(!ch || !nextCh) return false;
-    if(AR_NON_CONNECTING.indexOf(ch) > -1) return false;
-    if(!/[ء-ي]/.test(ch) || !/[ء-ي]/.test(nextCh)) return false;
+    if(AR_DUAL_JOIN.indexOf(ch) < 0) return false;
+    if(!/[آ-ي]/.test(nextCh)) return false;
+    if(ch === "ل" && "اأإآ".indexOf(nextCh) > -1) return false;
     return true;
   }
   function kashidaJustifyText(ctx, text, targetWidth){

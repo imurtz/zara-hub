@@ -3132,7 +3132,7 @@ const pat=k=>`<div class="pat ${k}">${mkSvg("a")}${mkSvg("b")}${mkSvg("c")}${mkS
  const AR=/[ء-ي]/, MARK=/[ً-ٰٟ]/;
  // مواضع الكشيدة في كلمة: بعد حرف يتصل بما بعده وقبل حرف عربي، مع تجنّب «لا» وأول حرف في الكلمة؛ الأفضل قبل آخر حرف
  function spots(w){const out=[];for(let i=1;i<w.length;i++){const c=w[i];if(DUAL.indexOf(c)<0)continue;let j=i+1;while(j<w.length&&MARK.test(w[j]))j++;
-   if(j>=w.length||!AR.test(w[j]))continue;if(c==="ل"&&"اأإآ".indexOf(w[j])>-1)continue;out.push(j)}return out.reverse()}
+   if(j>=w.length||!AR.test(w[j])||w[j]==="ء")continue;if(c==="ل"&&"اأإآ".indexOf(w[j])>-1)continue;out.push(j)}return out.reverse()}
  function stretch(line,target){const words=line.textContent.split(" ");let guard=0;
   const W=()=>line.getBoundingClientRect().width;let w=W();if(target-w<.5)return;
   // ترتيب الكلمات: الأطول أولاً، وكشيدة واحدة لكل كلمة في كل جولة
