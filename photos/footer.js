@@ -144,7 +144,8 @@ export const MARK_FILL = 0.62, LOGO_FILL = 0.8;
 function logoBox(ctx, x, y, s, img, u, fill) {
   const r = s * L.box.radius;
   ctx.save();
-  ctx.shadowColor = "rgba(0,0,0,0.16)"; ctx.shadowBlur = 0.012 * u; ctx.shadowOffsetY = 0.003 * u;
+  // ظل مطابق للتصميم الأصلي: واضح عند الحافة وينتهي خلال ~5px (بمقياس 2000px)
+  ctx.shadowColor = "rgba(0,0,0,0.42)"; ctx.shadowBlur = 0.005 * u; ctx.shadowOffsetY = 0.0004 * u;
   rr(ctx, x, y, s, s, r); ctx.fillStyle = "#fff"; ctx.fill();
   ctx.restore();
   const f = Math.max(0.4, Math.min(0.96, fill || LOGO_FILL)), inner = s * f, iw = img.width, ih = img.height, k = Math.min(inner / iw, inner / ih);

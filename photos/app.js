@@ -400,7 +400,7 @@ async function _renderPreview() {
   prevRect = r;
   if (S.cropMode) { drawCropMode(cv, it, r); paintCrop(); return; }
   // أثناء سحب المؤشر: معاينة أخف (أسرع) — وعند الإفلات تعود بالدقة الكاملة
-  const fast = !!S.dragging, maxW = fast ? 960 : 1400, k = Math.min(1, maxW / r.sw), w = Math.round(r.sw * k), h = Math.round(r.sh * k);
+  const fast = !!S.dragging, boxW = ($("#prevWrap").clientWidth || 1000) * Math.min(2, window.devicePixelRatio || 1), maxW = fast ? 960 : Math.max(1400, Math.min(2400, Math.round(boxW))), k = Math.min(1, maxW / r.sw), w = Math.round(r.sw * k), h = Math.round(r.sh * k);
   if (cv.width !== w || cv.height !== h) { cv.width = w; cv.height = h; }
   const ctx = cv.getContext("2d", { willReadFrequently: true }); ctx.imageSmoothingQuality = "high";
   // نسخة مخزنة من الصورة المقصوصة (لا نعيد الرسم من الأصل مع كل حركة)

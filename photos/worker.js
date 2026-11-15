@@ -23,9 +23,11 @@ async function setup(msg) {
   await encReady;
 }
 
+// حد أدنى لدقة الناتج: الصور الصغيرة تُكبَّر إليه حتى تُرسم الشعارات والنصوص بوضوح كامل مهما كانت دقة الأصل
+const MIN_EDGE = 2560;
 function sizeFor(sw, sh, q) {
-  const long = Math.max(sw, sh);
-  const max = q.maxEdge && q.maxEdge < long ? q.maxEdge : long;
+  const long = Math.max(sw, sh), floor = q.maxEdge ? q.maxEdge : MIN_EDGE;
+  const max = q.maxEdge && q.maxEdge < long ? q.maxEdge : Math.max(long, floor);
   const k = max / long;
   return [Math.round(sw * k), Math.round(sh * k)];
 }
@@ -105,7 +107,7 @@ async function job(m) {
       out.width = out.height = 0;
       res.size = res.size || {}; res.size[ratio] = [tw, th];
     }
-  } finally { bmp.close(); T.gpu = gpuInfo().ready ? 1 : 0; }
+  } finally { bmp.close(); T.gpu = gpuInfo().ready ? 1 : 0; T.outW = res.size ? Math.max(...Object.values(res.size).map(v => Math.max(...v))) : 0; }
   return res;
 }
 
