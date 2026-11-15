@@ -7922,6 +7922,10 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
     if(!record || f.type !== "image") return { dx: 0, dy: 0, zoomMul: 1 };
     if(tmplGenFold && tmplGenFold.recId === record.id && tmplGenFold.fields.indexOf(f) !== -1) return { dx: 0, dy: 0, zoomMul: 1 };
     var dx = record[f.key + "PanX"], dy = record[f.key + "PanY"], zm = record[f.key + "ZoomAdj"];
+    if(f.key === "universityLogo" && typeof dx !== "number" && typeof dy !== "number" && typeof zm !== "number"){
+      var lp = uniLogoPosFor(record);
+      if(lp){ dx = lp.dx; dy = lp.dy; zm = lp.zoom; }
+    }
     return {
       dx: typeof dx === "number" ? dx : 0,
       dy: typeof dy === "number" ? dy : 0,
@@ -8723,6 +8727,11 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
     if(document.getElementById("uniLogosOverlay").classList.contains("active")) renderUniLogosPanel();
   }, function(err){ console.error("universityLogos snapshot error", err); });
   function loadUniversityLogos(){ return _uniLogosCache; }
+  // موضع كل شعار داخل إطار متغيره (تقريب/تحريك) — يُحفظ لكل جامعة عند ضبطه بأي تصميم، ويُستخدم تلقائياً
+  // لكل خريج من نفس الجامعة لم يُضبط شعاره يدوياً، فيبقى الشعار بنفس المكان والحجم في كل التصاميم
+  var _uniLogoPosCache = {};
+  db.collection("eventsMeta").doc("universityLogoPos").onSnapshot(function(doc){ _uniLogoPosCache = doc.exists ? doc.data() : {}; }, function(err){ console.error("universityLogoPos snapshot error", err); });
+  function uniLogoPosFor(rec){ var k = rec && String(rec.university || "").trim(); return (k && _uniLogoPosCache[k]) || null; }
   function saveUniversityLogos(map){ db.collection("eventsMeta").doc("universityLogos").set(map); }
   function findUniversityLogo(name){
     var key = String(name || "").trim();
@@ -9095,6 +9104,14 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
       var def = /ZoomAdj$/.test(k) ? 1 : 0, old = typeof rec[k] === "number" ? rec[k] : def;
       if(Math.abs(old - patch[k]) > 0.00005) changed = true;
     });
+    // شعار الجامعة: موضعه المضبوط يصير الموضع المعتمد لهذه الجامعة في كل التصاميم القادمة
+    if(rec.category === "graduates" && String(rec.university || "").trim() && ("universityLogoPanX" in patch)){
+      var uk = String(rec.university).trim(), np = { dx: patch.universityLogoPanX, dy: patch.universityLogoPanY, zoom: patch.universityLogoZoomAdj, at: Date.now() }, op = _uniLogoPosCache[uk];
+      if(!op || Math.abs(op.dx - np.dx) > 0.00005 || Math.abs(op.dy - np.dy) > 0.00005 || Math.abs(op.zoom - np.zoom) > 0.00005){
+        var posPatch = {}; posPatch[uk] = np; _uniLogoPosCache[uk] = np;
+        db.collection("eventsMeta").doc("universityLogoPos").set(posPatch, { merge: true }).catch(function(e){ console.error(e); });
+      }
+    }
     if(!changed) return;
     var upd = shallowCopy(rec);
     Object.keys(patch).forEach(function(k){ upd[k] = patch[k]; });

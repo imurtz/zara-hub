@@ -1930,6 +1930,11 @@
   function tmplRecordPanAdjustPublic(f, record){
     if(!record || f.type !== "image") return { dx: 0, dy: 0, zoomMul: 1 };
     var dx = record[f.key + "PanX"], dy = record[f.key + "PanY"], zm = record[f.key + "ZoomAdj"];
+    // شعار الجامعة بلا ضبط خاص: الموضع المعتمد لهذه الجامعة (يُحفظ من بوابة الموظفين)
+    if(f.key === "universityLogo" && typeof dx !== "number" && typeof dy !== "number" && typeof zm !== "number"){
+      var lp = window._uniLogoPosPublic && window._uniLogoPosPublic[String(record.university || "").trim()];
+      if(lp){ dx = lp.dx; dy = lp.dy; zm = lp.zoom; }
+    }
     return {
       dx: typeof dx === "number" ? dx : 0,
       dy: typeof dy === "number" ? dy : 0,
@@ -2891,6 +2896,9 @@
   db.collection("eventsMeta").doc("universityLogos").get().then(function(doc){
     _uniLogosCachePublic = doc.exists ? doc.data() : {};
   }).catch(function(err){ console.error("universityLogos fetch error", err); });
+  db.collection("eventsMeta").doc("universityLogoPos").get().then(function(doc){
+    window._uniLogoPosPublic = doc.exists ? doc.data() : {};
+  }).catch(function(){});
 })();
 </script>
 <script>
