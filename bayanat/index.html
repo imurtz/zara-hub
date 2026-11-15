@@ -926,6 +926,19 @@
     var key = String(name || "").trim();
     return (key && _uniLogosCachePublic[key]) ? _uniLogosCachePublic[key] : null;
   }
+  // نفس منطق بوابة الموظفين: شعار المكتبة بأحدث نسخة + موضع الشعار المعتمد (محفوظ للشعار نفسه)
+  function uniLogoKeyPublic(url){ var h = 5381; url = String(url || ""); for(var i = 0; i < url.length; i++) h = ((h * 33) ^ url.charCodeAt(i)) >>> 0; return "L" + h.toString(36) + url.length.toString(36); }
+  function tmplImageValuePublic(f, record){
+    var v = (record && record[f.key]) || "";
+    if(f.key === "universityLogo" && record){ var lib = findUniversityLogoPublic(record.university); if(lib && /\/logos\//.test(v)) v = lib; }
+    return v;
+  }
+  function uniLogoPosForPublic(rec){
+    var P = window._uniLogoPosPublic || {}, url = tmplImageValuePublic({ key: "universityLogo" }, rec); if(!url) return null;
+    if(P[uniLogoKeyPublic(url)]) return P[uniLogoKeyPublic(url)];
+    var k = String(rec.university || "").trim();
+    return (k && findUniversityLogoPublic(k) === url && P[k]) || null;
+  }
   function loadPublicFormConfig(){
     var cfg = { footerMessage: "", footerCredit: FOOTER_CREDIT_DEFAULT, photoPanPrompt: PHOTO_PAN_PROMPT_DEFAULT, defaultFemalePhotos: {}, showDesignPreview: true, banner: { enabled: BANNER_DEFAULTS.enabled, intervalSeconds: BANNER_DEFAULTS.intervalSeconds, slides: BANNER_DEFAULTS.slides.map(copyBannerSlide) } };
     CATEGORIES.forEach(function(c){ cfg[c.key] = { hidden: [], hints: {}, labels: {}, custom: [] }; });
@@ -1931,8 +1944,8 @@
     if(!record || f.type !== "image") return { dx: 0, dy: 0, zoomMul: 1 };
     var dx = record[f.key + "PanX"], dy = record[f.key + "PanY"], zm = record[f.key + "ZoomAdj"];
     // شعار الجامعة بلا ضبط خاص: الموضع المعتمد لهذه الجامعة (يُحفظ من بوابة الموظفين)
-    if(f.key === "universityLogo" && typeof dx !== "number" && typeof dy !== "number" && typeof zm !== "number"){
-      var lp = window._uniLogoPosPublic && window._uniLogoPosPublic[String(record.university || "").trim()];
+    if(f.key === "universityLogo"){
+      var lp = uniLogoPosForPublic(record);
       if(lp){ dx = lp.dx; dy = lp.dy; zm = lp.zoom; }
     }
     return {
@@ -2248,7 +2261,7 @@
     var imageByKey = {};
     var loadResults = await Promise.all(
       [loadImageAsyncPublic(template.image)].concat(imgFieldsList.map(function(f){
-        var v = record[f.key] || "";
+        var v = tmplImageValuePublic(f, record);
         return v ? loadImageAsyncPublic(v) : Promise.resolve(null);
       }))
     );
@@ -2286,7 +2299,7 @@
     for(var i = 0; i < template.fields.length; i++){
       var f = template.fields[i];
       if(f.type === "image"){
-        var srcVal = record[f.key] || "";
+        var srcVal = tmplImageValuePublic(f, record);
         var imgGeom = tmplGeomTargetPublic(f);
         if(srcVal && imgGeom.boxWidth > 0 && imgGeom.boxHeight > 0){
           var img = imageByKey[f.key];
