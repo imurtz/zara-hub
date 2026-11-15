@@ -325,7 +325,13 @@ async function analyze() {
     if (i === S.cur) renderPreview();
     await new Promise(r => setTimeout(r, 0));
   }
-  if (tok === anaToken) $("#anaState").textContent = `✓ ${S.items.length} صورة جاهزة · ${S.items.filter(x => x.faces && x.faces.length).length} فيها وجوه`;
+  if (tok !== anaToken) return;
+  const bad = S.items.filter(x => x.err).length;
+  if (bad) {
+    // غالباً: الصور في مجلد سحابي (OneDrive / iCloud) وغير منزّلة على الجهاز
+    $("#anaState").textContent = `⚠️ ${bad} من ${S.items.length} صورة ما انقرت — غالباً غير منزّلة على الجهاز`;
+    ask(`تعذّر فتح ${bad} من ${S.items.length} صورة.\n\nالسبب الغالب: المجلد في OneDrive أو iCloud والصور «على السحابة فقط» وغير منزّلة على الجهاز.\n\nالحل: من Finder اضغط بالزر الأيمن على المجلد ← «الاحتفاظ دائماً على هذا الجهاز» (Always Keep on This Device)، انتظر حتى تختفي أيقونة السحابة، ثم اختر المجلد مرة ثانية.`, [["ok", "تمام"]]);
+  } else $("#anaState").textContent = `✓ ${S.items.length} صورة جاهزة · ${S.items.filter(x => x.faces && x.faces.length).length} فيها وجوه`;
 }
 
 /* ============ الشبكة ============ */
