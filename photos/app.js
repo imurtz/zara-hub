@@ -978,7 +978,11 @@ document.addEventListener("click", e => {
   }
   if (e.target.closest("[data-add]")) return addLogo();
   const r = e.target.closest("[data-ratio]"); if (r) { S.ratio = r.dataset.ratio; renderPreview(); return; }
-  const rm = e.target.closest("[data-rm]"); if (rm) { e.stopPropagation(); removeItem(+rm.dataset.rm); return; }
+  // الحذف بضغطتين: الأولى تُظهر «حذف؟» والثانية خلال 3 ثوانٍ تحذف — حتى لا تُحذف صورة بالخطأ
+  const rm = e.target.closest("[data-rm]"); if (rm) { e.stopPropagation();
+    if (rm.classList.contains("arm")) { removeItem(+rm.dataset.rm); return; }
+    document.querySelectorAll(".cell .rm.arm").forEach(x => { x.classList.remove("arm"); x.textContent = "🗑"; });
+    rm.classList.add("arm"); rm.textContent = "حذف؟"; clearTimeout(rm._t); rm._t = setTimeout(() => { rm.classList.remove("arm"); rm.textContent = "🗑"; }, 3000); return; }
   if (e.target.closest("#addMore")) { $("#addInp").click(); return; }
   const c = e.target.closest(".cell"); if (c) { go(+c.dataset.i); return; }
 });

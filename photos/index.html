@@ -135,7 +135,7 @@ details.adv summary em{color:var(--tan);font-style:normal}
 #hist{width:220px;height:52px;background:#1F2B2A;border-radius:8px;direction:ltr}
 .clip{font-size:11px;color:var(--soft);opacity:.35}
 .clip.on{opacity:1;color:var(--warn);font-weight:700}
-.cell .ad{position:absolute;top:4px;left:26px;font-size:11px}
+.cell .ad{position:absolute;top:4px;left:48px;font-size:11px}
 .sm3{padding:7px 14px;font-size:13px;border-radius:11px}
 #cropModeBtn.on{background:var(--tan);}
 .canvasBox.cropping{background:#0E1413}
@@ -165,7 +165,8 @@ details.adv summary em{color:var(--tan);font-style:normal}
 .cell{position:relative;border:2px solid transparent;border-radius:12px;padding:0;overflow:hidden;background:#E9ECEB;aspect-ratio:3/2;cursor:pointer}
 .cell img{width:100%;height:100%;object-fit:cover;display:block}
 .cell.cur{border-color:var(--teal)}
-.cell .rm{position:absolute;bottom:4px;left:50%;transform:translateX(-50%);width:26px;height:26px;display:grid;place-items:center;font-size:13px;background:rgba(0,0,0,.55);border-radius:8px;opacity:0;transition:opacity .15s}
+.cell .rm{position:absolute;top:3px;left:3px;width:20px;height:20px;display:grid;place-items:center;font-size:10px;background:rgba(0,0,0,.5);border-radius:6px;opacity:0;transition:opacity .15s,width .15s;white-space:nowrap;color:#fff;overflow:hidden}
+.cell .rm.arm{width:auto;padding:0 6px;background:#C0392B;font-size:10.5px;font-weight:700;opacity:1}
 .cell:hover .rm,.cell.cur .rm{opacity:1}
 .cell .rm:hover{background:#C0392B}
 @media (hover:none){.cell .rm{opacity:1}}
@@ -174,7 +175,7 @@ details.adv summary em{color:var(--tan);font-style:normal}
 .cell .fc,.cell .pt,.cell .ed{position:absolute;bottom:4px;font-size:10.5px;color:#fff;border-radius:6px;padding:0 5px}
 .cell .fc{right:6px;background:rgba(75,112,113,.85)}
 .cell .pt{left:6px;background:rgba(184,141,102,.9)}
-.cell .ed{left:6px;top:4px;bottom:auto;background:rgba(242,193,78,.95);color:#000}
+.cell .ed{left:26px;top:4px;bottom:auto;background:rgba(242,193,78,.95);color:#000}
 .cell .st{position:absolute;inset:0;display:grid;place-items:center;font-size:26px;color:#fff;background:rgba(47,111,94,.45)}
 .cell .st.fail{background:rgba(179,69,63,.55)}.cell .st.run{background:rgba(0,0,0,.35)}.cell .st.skip{background:rgba(107,119,117,.45)}
 .sk{display:block;width:100%;height:100%;background:linear-gradient(90deg,#E4E8E7,#F1F3F2,#E4E8E7);background-size:200% 100%;animation:sk 1.2s infinite}
