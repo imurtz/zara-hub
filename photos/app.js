@@ -1,6 +1,6 @@
 // معالجة صور الفعاليات — بوابة زارة. كل شيء داخل المتصفح: لا Firebase ولا رفع ولا أي خادم.
 import { setACRCurves, ADJ, ZERO, isZero, applyAdjust, histogram, fromXMP, BANDS, parseCube, lutFromPair, imageStats, matchAdj, LOOKS, lookRef } from "./adjust.js";
-import { RATIOS, hijriOf, gregOf, cropRect, drawFooter, FONT_M, FONT_R, LOGO_FILL, titleCheck } from "./footer.js";
+import { RATIOS, hijriOf, gregOf, cropRect, drawFooter, FONT_M, FONT_R, LOGO_FILL, MARK_FILL, titleCheck } from "./footer.js";
 
 const $ = s => document.querySelector(s);
 const $$ = s => [...document.querySelectorAll(s)];
@@ -178,8 +178,10 @@ function paintLogos() {
   $("#logoHint").hidden = !!S.logos.length;
   const sel = [...P, E].filter((n, i, a) => n && a.indexOf(n) === i && S.logos.some(l => l.name === n));
   const LF = F().logoFill || {};
-  $("#logoSizes").innerHTML = sel.length ? `<small>حجم الشعار داخل المربع الأبيض</small>` + sel.map(n => { const l = S.logos.find(x => x.name === n), v = Math.round((LF[n] || LOGO_FILL) * 100);
-    return `<label class="lsz"><img src="${l.url}" alt=""><input type="range" min="50" max="96" value="${v}" data-lsz="${esc(n)}"><span>${v}%</span></label>`; }).join("") : "";
+  // شعار الجمعية دائماً أولاً (حتى بدون شركاء)، ثم الشعارات المختارة
+  const row = (key, url, v) => `<label class="lsz"><img src="${url}" alt=""><input type="range" min="40" max="96" value="${v}" data-lsz="${esc(key)}"><span>${v}%</span></label>`;
+  $("#logoSizes").innerHTML = `<small>حجم الشعار داخل المربع الأبيض</small>` + row("__mark", "./assets/mark.png", Math.round((LF.__mark || MARK_FILL) * 100)) +
+    sel.map(n => { const l = S.logos.find(x => x.name === n); return row(n, l.url, Math.round((LF[n] || LOGO_FILL) * 100)); }).join("");
 }
 
 /* ============ اختيار الصور + التحليل (كشف الوجوه) ============ */
@@ -376,7 +378,7 @@ function assetsNow() {
   const by = n => (S.logos.find(l => l.name === n) || {}).bmp;
   const fill = n => (F().logoFill || {})[n] || LOGO_FILL;
   const ps = (F().partners || []).filter(n => by(n));
-  return { mark: S.mark, partners: ps.map(by), partnerFills: ps.map(fill), event: F().event && by(F().event) ? by(F().event) : null, eventFill: fill(F().event), founding: S.founding };
+  return { mark: S.mark, markFill: (F().logoFill || {}).__mark || MARK_FILL, partners: ps.map(by), partnerFills: ps.map(fill), event: F().event && by(F().event) ? by(F().event) : null, eventFill: fill(F().event), founding: S.founding };
 }
 // تُعرض الصورة كاملة داخل المساحة المتاحة أياً كان حجمها (الصفحة المستقلة أو داخل لوحة الموظفين)
 function fitCanvas() {
@@ -1013,7 +1015,7 @@ async function makeWorker() {
   const base = assetsNow(), fonts = S.fontBufs;
   const w = new Worker(new URL("./worker.js", import.meta.url), { type: "module" });
   const copy = async b => b ? createImageBitmap(b) : null;
-  const assets = { mark: await copy(base.mark), founding: await copy(base.founding), event: await copy(base.event), partners: await Promise.all(base.partners.map(copy)), partnerFills: base.partnerFills, eventFill: base.eventFill };
+  const assets = { mark: await copy(base.mark), founding: await copy(base.founding), event: await copy(base.event), partners: await Promise.all(base.partners.map(copy)), partnerFills: base.partnerFills, eventFill: base.eventFill, markFill: base.markFill };
   const tr = [assets.mark, assets.founding, assets.event, ...assets.partners].filter(Boolean);
   const ready = new Promise((res, rej) => { w.onmessage = e => e.data.type === "ready" ? (e.data.fontsOK || !F().rights ? res() : rej(new Error("FONT"))) : rej(new Error(e.data.error)); w.onerror = ev => rej(new Error(ev.message || "worker")); });
   w.postMessage({ type: "setup", fonts: fonts ? { M: fonts.M.slice(0), R: fonts.R.slice(0) } : null, assets }, tr);

@@ -101,7 +101,7 @@ export function drawFooter(ctx, W, H, ratio, o, A) {
   // 4) مربعات الشعارات
   const bx = L.box, s = bx.size * u, top = bx.top * u;
   const left = [A.mark, ...(A.partners || [])].filter(Boolean);
-  const fills = [MARK_FILL, ...(A.partnerFills || [])];
+  const fills = [A.markFill || MARK_FILL, ...(A.partnerFills || [])];
   left.forEach((img, i) => logoBox(ctx, bx.side * u + i * (s + bx.gap * u), top, s, img, u, fills[i]));
   if (A.event) logoBox(ctx, W - bx.side * u - s, top, s, A.event, u, A.eventFill);
   // 5) النصوص
