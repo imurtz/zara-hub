@@ -101,6 +101,24 @@
   .done h2{font-size:21px; font-weight:600; margin-bottom:8px;}
   .done p{color:var(--ink-soft); font-size:14px; line-height:1.9;}
   .done .sum{margin:16px auto 0; max-width:360px; text-align:right; background:#fff; border:1px solid var(--line); border-radius:14px; padding:12px 14px; font-size:13.5px; line-height:2;}
+  .pay{margin-top:18px;}
+  .pay-h{display:flex; align-items:center; gap:9px; font-size:19px; font-weight:600; color:var(--teal-dark);}
+  .pay-h svg{width:24px; height:24px;}
+  .pay-sub{font-size:13px; color:var(--ink-soft); margin:4px 0 14px;}
+  .iban{display:flex; align-items:center; gap:10px; justify-content:space-between; border:1.5px solid var(--line); background:#fff; border-radius:16px; padding:11px 14px; margin-bottom:9px;}
+  .iban .bank{display:block; font-size:12.5px; color:var(--ink-soft);}
+  .iban b{display:block; font-size:clamp(13px, 3.7vw, 16px); font-weight:600; letter-spacing:.2px; white-space:nowrap; text-align:right; unicode-bidi:plaintext;}
+  .iban > div{min-width:0;}
+  .iban button{flex:none; border:0; background:var(--teal-tint); color:var(--teal-dark); border-radius:10px; padding:8px 14px; font-size:13px; font-weight:600; cursor:pointer;}
+  .iban button.ok{background:var(--teal); color:#fff;}
+  .after{background:var(--tan-tint); border:1px solid #eedfd0; color:#6e5038; border-radius:14px; padding:12px 14px; font-size:14px; line-height:1.9; margin:14px 0 16px;}
+  .after a{color:var(--teal-dark); font-weight:700; text-decoration:none;}
+  .rc-f{margin-bottom:14px;}
+  .rc-file{display:block; border:2px dashed #cfdad8; border-radius:14px; padding:13px; text-align:center; font-size:14px; color:var(--teal-dark); cursor:pointer; background:#fff; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .rc-file.has{border-style:solid; border-color:var(--teal); background:var(--teal-tint);}
+  .wa{width:100%; display:flex; align-items:center; justify-content:center; gap:10px; border:0; border-radius:16px; padding:14px; font-size:16px; font-weight:600; color:#fff; background:#1fa855; cursor:pointer; box-shadow:0 10px 24px rgba(31,168,85,.25);}
+  .wa svg{width:22px; height:22px;}
+  .wa:disabled{opacity:.6; cursor:wait;}
   .foot{text-align:center; color:var(--ink-soft); font-size:12px; margin-top:20px;}
 </style>
 </head>
@@ -163,6 +181,26 @@
     </div>
   </div>
 
+  <div class="card pay" id="pay">
+    <h2 class="pay-h"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10 12 4l9 6"/><path d="M5 10v8M9.5 10v8M14.5 10v8M19 10v8"/><path d="M3 20h18"/></svg>بيانات التحويل</h2>
+    <p class="pay-sub">المستفيد: جمعية العوامية الخيرية للخدمات الاجتماعية</p>
+    <div class="iban"><div><span class="bank">البنك الأهلي السعودي</span><b dir="ltr">SA15 1000 0007 2181 5000 0206</b></div><button type="button" data-copy="SA1510000007218150000206">نسخ</button></div>
+    <div class="iban"><div><span class="bank">بنك البلاد</span><b dir="ltr">SA67 1500 0999 1247 1653 0003</b></div><button type="button" data-copy="SA6715000999124716530003">نسخ</button></div>
+
+    <div class="after">بعد التحويل يرجى مراسلتنا بالإيصال <b>(واسم الجهة وغرض التحويل)</b> على رقم <a href="tel:0509712029" dir="ltr">0509712029</a></div>
+
+    <div class="rc">
+      <div class="rc-f"><label class="lb" for="rcOrg">اسم الجهة</label><input type="text" id="rcOrg" maxlength="150" placeholder="اسم الجهة المحوِّلة" /></div>
+      <div class="rc-f"><label class="lb" for="rcPurpose">غرض التحويل</label><input type="text" id="rcPurpose" maxlength="200" value="رعاية التقويم الميلادي 2027" /></div>
+      <div class="rc-f"><label class="lb">الإيصال (صورة أو PDF)</label>
+        <label class="rc-file" id="rcPick"><input type="file" id="rcFile" accept="image/*,application/pdf,.pdf" hidden /><span id="rcName">اضغط لاختيار الإيصال</span></label>
+      </div>
+      <div class="msg" id="rcMsg"></div>
+      <button type="button" class="wa" id="rcSend"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2zm0 18.2c-1.5 0-3-.4-4.2-1.2l-.3-.2-3 .8.8-2.9-.2-.3A8.2 8.2 0 1 1 12 20.2zm4.5-6.1c-.2-.1-1.5-.7-1.7-.8s-.4-.1-.6.1-.7.8-.8 1-.3.2-.5.1a6.7 6.7 0 0 1-3.3-2.9c-.3-.4.2-.4.7-1.4.1-.2 0-.3 0-.4l-.8-1.8c-.2-.5-.4-.4-.6-.4h-.5a1 1 0 0 0-.7.3 3 3 0 0 0-.9 2.2 5.2 5.2 0 0 0 1.1 2.7 11.9 11.9 0 0 0 4.6 4c1.7.7 2.4.8 3.2.7.5-.1 1.5-.6 1.7-1.2s.2-1.1.2-1.2-.2-.2-.4-.3z"/></svg>إرسال الإيصال عبر واتساب</button>
+      <p class="hint" style="text-align:center">يُرفق الإيصال برابط داخل الرسالة تلقائياً، مع اسم الجهة وغرض التحويل</p>
+    </div>
+  </div>
+
   <div class="foot">جمعية العوامية الخيرية للخدمات الاجتماعية · بوابة زارة</div>
 </div>
 
@@ -187,7 +225,7 @@
   var HIJRI = ["رجب – شعبان 1448","شعبان – رمضان 1448","رمضان – شوال 1448","شوال – ذو القعدة 1448","ذو القعدة – ذو الحجة 1448","ذو الحجة 1448 – محرم 1449","محرم – صفر 1449","صفر – ربيع الأول 1449","ربيع الأول – ربيع الآخر 1449","جمادى الأولى – جمادى الآخرة 1449","جمادى الآخرة – رجب 1449","رجب – شعبان 1449"];
 
   var $ = function(id){ return document.getElementById(id); };
-  var taken = {}, picked = "", file = null;
+  var taken = {}, picked = "", file = null, lastReq = "";
 
   // ----- الأشهر حسب الإتاحة (تتحدّث مباشرة لو حجز أحد آخر) -----
   function paintMonths(){
@@ -281,12 +319,13 @@
               status: "new", createdAt: Date.now(), ua: navigator.userAgent.slice(0, 160)
             });
           });
-        }).then(function(){ return ref.id; });
+        }).then(function(){ lastReq = ref.id; return ref.id; });
       })
       .then(function(){
         $("f").style.display = "none";
         $("sum").innerHTML = "<b>الجهة:</b> " + esc(org) + "<br><b>الشهر:</b> " + MONTHS[month - 1] + " 2027 <span style=color:#8f6a4b>(" + HIJRI[month - 1] + " هـ)</span><br><b>الجوال:</b> <span dir=ltr>" + phone + "</span>";
         $("done").style.display = "block";
+        $("rcOrg").value = org; $("rcPurpose").value = "رعاية شهر " + MONTHS[month - 1] + " من التقويم الميلادي 2027";
         window.scrollTo({ top: 0, behavior: "smooth" });
       })
       .catch(function(err){
@@ -299,6 +338,59 @@
         else showMsg("تعذّر إرسال الطلب، حاول مرة أخرى بعد لحظات.");
       });
   });
+  // ----- التحويل: نسخ الآيبان + إرسال الإيصال عبر واتساب -----
+  var WA_TO = "966509712029", rcFile = null;
+  document.addEventListener("click", function(e){
+    var b = e.target.closest && e.target.closest("[data-copy]"); if(!b) return;
+    var v = b.getAttribute("data-copy"), done = function(){ b.textContent = "تم النسخ ✓"; b.classList.add("ok"); setTimeout(function(){ b.textContent = "نسخ"; b.classList.remove("ok"); }, 1800); };
+    if(navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(v).then(done, function(){ prompt("انسخ الآيبان:", v); });
+    else prompt("انسخ الآيبان:", v);
+  });
+  $("rcFile").addEventListener("change", function(){
+    var f = this.files[0]; $("rcMsg").classList.remove("show");
+    if(!f){ return; }
+    var ok = /^image\//.test(f.type) || f.type === "application/pdf" || /\.(pdf|png|jpe?g|webp|heic)$/i.test(f.name);
+    if(!ok){ rcErr("الإيصال لازم يكون صورة أو PDF."); this.value = ""; return; }
+    if(f.size > 10 * 1024 * 1024){ rcErr("حجم الإيصال كبير — الحد الأقصى 10 ميجابايت."); this.value = ""; return; }
+    rcFile = f; $("rcName").textContent = "📎 " + f.name; $("rcPick").classList.add("has");
+  });
+  function rcErr(t){ $("rcMsg").textContent = t; $("rcMsg").classList.add("show"); }
+  function rcType(f){
+    if(f.type === "application/pdf" || /\.pdf$/i.test(f.name)) return "application/pdf";
+    if(/png/i.test(f.type) || /\.png$/i.test(f.name)) return "image/png";
+    if(/webp/i.test(f.type)) return "image/webp";
+    if(/heic|heif/i.test(f.type) || /\.hei[cf]$/i.test(f.name)) return "image/heic";
+    return "image/jpeg";
+  }
+  $("rcSend").addEventListener("click", function(){
+    $("rcMsg").classList.remove("show");
+    var org = $("rcOrg").value.trim().replace(/\s+/g, " "), purpose = $("rcPurpose").value.trim().replace(/\s+/g, " ");
+    if(org.length < 2){ $("rcOrg").focus(); return rcErr("اكتب اسم الجهة."); }
+    if(purpose.length < 2){ $("rcPurpose").focus(); return rcErr("اكتب غرض التحويل."); }
+    if(!rcFile) return rcErr("اختر صورة الإيصال أو ملف PDF.");
+    // تُفتح نافذة واتساب مباشرة مع الضغط (حتى لا يحجبها المتصفح)، ثم يُوجَّه إليها الرابط بعد رفع الإيصال
+    var w = null; try{ w = window.open("", "_blank"); }catch(err){}
+    var btn = this; btn.disabled = true; var lbl = btn.lastChild.textContent; btn.lastChild.textContent = "جارٍ رفع الإيصال…";
+    fetch(UPLOAD, { method: "POST", headers: { "Content-Type": rcType(rcFile), "X-Folder": "reports" }, body: rcFile })
+      .then(function(r){ if(!r.ok) throw new Error("upload_" + r.status); return r.json(); })
+      .then(function(up){
+        if(!up || !up.url) throw new Error("upload_nourl");
+        if(lastReq) REQS.doc(lastReq).update({ receiptUrl: up.url, receiptName: rcFile.name, receiptAt: Date.now(), purpose: purpose }).catch(function(){});
+        var text = "السلام عليكم ورحمة الله،\nتم التحويل، وهذا الإيصال:\n\n" +
+          "اسم الجهة: " + org + "\n" +
+          "غرض التحويل: " + purpose + "\n" +
+          "الإيصال: " + up.url;
+        var url = "https://wa.me/" + WA_TO + "?text=" + encodeURIComponent(text);
+        if(w && !w.closed) w.location.href = url; else location.href = url;
+        btn.disabled = false; btn.lastChild.textContent = lbl;
+      })
+      .catch(function(err){
+        console.error(err); if(w && !w.closed) w.close();
+        btn.disabled = false; btn.lastChild.textContent = lbl;
+        rcErr("تعذّر رفع الإيصال، تأكد من الاتصال وحاول مرة أخرى.");
+      });
+  });
+
   function esc(s){ return String(s).replace(/[&<>"]/g, function(c){ return { "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;" }[c]; }); }
 })();
 </script>

@@ -1166,6 +1166,7 @@
 #spRoot .sp-mini{border:0;background:none;color:var(--sp-t);font:inherit;font-size:12.5px;font-weight:600;cursor:pointer;padding:2px 5px}
 #spRoot .sp-mini.del{color:#b3453f}
 #spRoot .sp-warn{color:#b3453f}
+#spRoot .sp-meta a.sp-rc{color:#1f8a4c}
 @media(max-width:700px){#spRoot .sp-stats{grid-template-columns:repeat(2,1fr)}#spRoot .sp-row{flex-wrap:wrap}#spRoot .sp-ctl{flex-direction:row;width:100%;justify-content:space-between}}
 #bdoRoot .bdo-mini.del{color:#b4572a}
 #bdoRoot .bdo-empty{text-align:center;color:var(--ink-soft,#6b7775);padding:30px;background:#fff;border-radius:14px}
@@ -3920,7 +3921,8 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
         '<a class="sp-logo" href="' + spEsc(r.logoUrl) + '" target="_blank" rel="noopener" title="فتح الشعار">' + img + '</a>' +
         '<div class="sp-info"><b>' + spEsc(r.org) + '</b><div class="sp-meta"><span class="sp-chip">' + spEsc(r.monthName || SP_MONTHS[r.month - 1]) + ' ' + spUI.year + ' · ' + SP_HIJRI[r.month - 1] + '</span>' +
         '<a href="tel:' + spEsc(r.phone) + '" dir="ltr">' + spEsc(r.phone) + '</a> · <a href="https://wa.me/' + spEsc(wa) + '" target="_blank" rel="noopener">واتساب</a> · <span>' + spDate(r.createdAt) + '</span>' +
-        ' · <a href="' + spEsc(r.logoUrl) + '" download="' + spEsc(r.logoName || "logo") + '">تنزيل الشعار</a> <span class="sp-muted">(' + spEsc(r.logoName || "") + ')</span></div></div>' +
+        ' · <a href="' + spEsc(r.logoUrl) + '" download="' + spEsc(r.logoName || "logo") + '">تنزيل الشعار</a> <span class="sp-muted">(' + spEsc(r.logoName || "") + ')</span>' +
+        (r.receiptUrl ? ' · <a class="sp-rc" href="' + spEsc(r.receiptUrl) + '" target="_blank" rel="noopener">🧾 إيصال التحويل</a>' + (r.purpose ? ' <span class="sp-muted">(' + spEsc(r.purpose) + ')</span>' : "") : "") + '</div></div>' +
         '<div class="sp-ctl">' + (edit ? '<select data-sp="st" data-id="' + r.id + '">' + SP_STATUS.map(function(s){ return '<option value="' + s.k + '"' + ((r.status || "new") === s.k ? " selected" : "") + '>' + s.l + '</option>'; }).join("") + '</select>' +
           '<button type="button" class="sp-mini del" data-sp="del" data-id="' + r.id + '">حذف</button>' : '<i class="sp-tag" style="background:' + st.c + '">' + st.l + '</i>') +
         (r.status !== "cancelled" && !holds ? '<span class="sp-muted sp-warn">الشهر ليس محجوزاً لهذا الطلب</span>' : "") + '</div></div>';
@@ -3965,7 +3967,7 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
     if(!window.XLSX){ showToast("مكتبة Excel لم تُحمَّل بعد — حاول بعد لحظات"); return; }
     var rows = spUI.reqs.map(function(r, i){ return {
       "م": i + 1, "الشهر": r.monthName || SP_MONTHS[r.month - 1], "رقم الشهر": r.month, "الأشهر الهجرية": SP_HIJRI[r.month - 1], "اسم الجهة": r.org, "الجوال": r.phone,
-      "الحالة": spSt(r.status).l, "رابط الشعار": r.logoUrl, "اسم ملف الشعار": r.logoName || "", "تاريخ الطلب": r.createdAt ? new Date(r.createdAt).toLocaleString("en-GB") : ""
+      "الحالة": spSt(r.status).l, "رابط الشعار": r.logoUrl, "اسم ملف الشعار": r.logoName || "", "رابط الإيصال": r.receiptUrl || "", "غرض التحويل": r.purpose || "", "تاريخ الطلب": r.createdAt ? new Date(r.createdAt).toLocaleString("en-GB") : ""
     }; });
     var ws = window.XLSX.utils.json_to_sheet(rows); ws["!cols"] = [{ wch: 4 }, { wch: 10 }, { wch: 8 }, { wch: 36 }, { wch: 13 }, { wch: 11 }, { wch: 60 }, { wch: 24 }, { wch: 20 }];
     ws["!views"] = [{ RTL: true }];
