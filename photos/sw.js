@@ -1,5 +1,5 @@
 // يخزّن كل أصول الأداة لتعمل بدون إنترنت بعد أول فتح. لا يلمس أي طلب خارج /photos/.
-const V = "zara-photos-v45";
+const V = "zara-photos-v46";
 const ASSETS = ["./", "index.html", "app.js", "footer.js", "adjust.js", "worker.js", "manifest.webmanifest",
   "assets/mark.png", "assets/founding.svg", "assets/lr-presets.json", "assets/acr-curves.json", "/assets/logo.png", "/assets/favicon.svg?v=4", "/apple-touch-icon.png",
   "vendor/jsquash/encode.js", "vendor/jsquash/meta.js", "vendor/jsquash/utils.js", "vendor/jsquash/codec/enc/mozjpeg_enc.js", "vendor/jsquash/codec/enc/mozjpeg_enc.wasm",
@@ -11,6 +11,8 @@ self.addEventListener("activate", e => { e.waitUntil(caches.keys().then(ks => Pr
 self.addEventListener("fetch", e => {
   const u = new URL(e.request.url);
   if (e.request.method !== "GET" || u.origin !== location.origin) return;
-  e.respondWith(fetch(e.request).then(r => { if (r.ok) { const c = r.clone(); caches.open(V).then(x => x.put(e.request, c)); } return r; })
+  // no-cache: يتحقق من الخادم كل مرة (لا يُستخدم ملف قديم من ذاكرة المتصفح بعد أي تحديث — كان يخلط ملفاً جديداً بآخر قديم)
+  let req = e.request; if (req.mode !== "navigate") { try { req = new Request(e.request, { cache: "no-cache" }); } catch (err) {} }
+  e.respondWith(fetch(req).then(r => { if (r.ok) { const c = r.clone(); caches.open(V).then(x => x.put(e.request, c)); } return r; })
     .catch(() => caches.match(e.request, { ignoreSearch: false }).then(r => r || caches.match(e.request, { ignoreSearch: true }))));
 });
