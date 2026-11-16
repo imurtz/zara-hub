@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>تسجيل رعاية التقويم الميلادي 2027 | جمعية العوامية الخيرية</title>
+<meta property="og:type" content="website" />
+<meta property="og:title" content="تسجيل رعاية التقويم الميلادي 2027" />
+<meta property="og:description" content="سجّل جهتك لرعاية أحد أشهر التقويم الميلادي 2027 — جمعية العوامية الخيرية" />
+<meta property="og:image" content="https://gzara.org/assets/bawabat-zara-og.png" />
+<meta property="og:url" content="https://gzara.org/sponsor/" />
+<meta name="twitter:card" content="summary_large_image" />
+<link rel="icon" href="/assets/favicon.png?v=4" sizes="any" />
+<link rel="icon" href="/assets/favicon.svg?v=4" type="image/svg+xml" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+<style>
+  :root{
+    --teal:#517771; --teal-dark:#3d5b56; --teal-tint:#eef3f2;
+    --tan:#b8906e; --tan-dark:#8f6a4b; --tan-tint:#f8f1ea;
+    --ink:#2b3532; --ink-soft:#6b7876; --line:#e4e9e8; --white:#fff;
+    --danger:#b3453f; --shadow:0 14px 40px rgba(45,70,66,.10);
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{
+    font-family:'IBM Plex Sans Arabic', sans-serif; color:var(--ink); min-height:100vh; padding:28px 16px 48px;
+    background:
+      radial-gradient(circle at 12% 10%, var(--teal-tint) 0%, transparent 45%),
+      radial-gradient(circle at 90% 88%, var(--tan-tint) 0%, transparent 45%),
+      #fbfcfc;
+  }
+  button,input{font-family:inherit;}
+  .wrap{max-width:620px; margin:0 auto;}
+  .brand{display:flex; align-items:center; justify-content:center; gap:10px; margin-bottom:18px; color:var(--teal-dark); font-size:13px; font-weight:500; text-decoration:none;}
+  .brand img{height:38px;}
+  .hero{text-align:center; margin-bottom:22px;}
+  .hero .tag{display:inline-block; font-size:12px; font-weight:600; color:var(--tan-dark); background:var(--tan-tint); border:1px solid #eedfd0; padding:4px 14px; border-radius:30px; margin-bottom:12px;}
+  .hero h1{font-size:clamp(24px, 6vw, 32px); font-weight:300; line-height:1.4;}
+  .hero h1 b{font-weight:700; background:linear-gradient(90deg, var(--teal), var(--tan)); -webkit-background-clip:text; background-clip:text; color:transparent;}
+  .hero p{color:var(--ink-soft); font-size:14px; margin-top:8px; line-height:1.8;}
+  .card{background:rgba(255,255,255,.82); backdrop-filter:blur(14px); -webkit-backdrop-filter:blur(14px); border:1px solid rgba(255,255,255,.9); border-radius:24px; box-shadow:var(--shadow); padding:26px 22px;}
+  .field{margin-bottom:22px;}
+  .field:last-of-type{margin-bottom:8px;}
+  label.lb{display:block; font-weight:600; font-size:14.5px; margin-bottom:8px;}
+  label.lb .req{color:var(--danger); margin-inline-start:3px;}
+  .hint{font-size:12.5px; color:var(--ink-soft); margin-top:6px; line-height:1.7;}
+  input[type=text], input[type=tel]{width:100%; border:1.5px solid var(--line); background:#fff; border-radius:14px; padding:13px 15px; font-size:15.5px; color:var(--ink); outline:none; transition:border-color .2s, box-shadow .2s;}
+  input[type=tel]{direction:ltr; text-align:right; letter-spacing:.5px;}
+  input:focus{border-color:var(--teal); box-shadow:0 0 0 4px rgba(81,119,113,.12);}
+  .err-in{border-color:var(--danger) !important;}
+  .months{display:grid; grid-template-columns:repeat(4, 1fr); gap:9px;}
+  @media (max-width:480px){ .months{grid-template-columns:repeat(3, 1fr);} }
+  .mo{position:relative; border:1.5px solid var(--line); background:#fff; border-radius:14px; padding:11px 4px 9px; text-align:center; cursor:pointer; transition:all .18s; user-select:none;}
+  .mo input{position:absolute; opacity:0; pointer-events:none;}
+  .mo .n{display:block; font-size:11px; color:var(--ink-soft);}
+  .mo .t{display:block; font-size:14.5px; font-weight:600;}
+  .mo:hover{border-color:var(--teal);}
+  .mo.on{background:var(--teal); border-color:var(--teal); color:#fff; box-shadow:0 6px 16px rgba(81,119,113,.28);}
+  .mo.on .n{color:rgba(255,255,255,.8);}
+  .mo.off{cursor:not-allowed; background:#f3f4f4; color:#a9b1b0; border-style:dashed;}
+  .mo.off .t{text-decoration:line-through;}
+  .mo.off .n::after{content:" · محجوز";}
+  .months.loading .mo{opacity:.5; pointer-events:none;}
+  .legend{display:flex; gap:14px; font-size:12px; color:var(--ink-soft); margin-top:9px;}
+  .legend i{display:inline-block; width:11px; height:11px; border-radius:4px; vertical-align:-1px; margin-inline-end:5px; border:1.5px solid var(--line); background:#fff;}
+  .legend i.x{background:#f3f4f4; border-style:dashed;}
+  .drop{border:2px dashed #cfdad8; background:linear-gradient(180deg, #fff, var(--teal-tint)); border-radius:18px; padding:24px 16px; text-align:center; cursor:pointer; transition:all .2s;}
+  .drop:hover, .drop.over{border-color:var(--teal); background:var(--teal-tint);}
+  .drop svg{width:34px; height:34px; color:var(--teal); margin-bottom:6px;}
+  .drop b{display:block; font-size:14.5px;}
+  .drop span{font-size:12.5px; color:var(--ink-soft);}
+  .file{display:none; align-items:center; gap:12px; border:1.5px solid var(--line); background:#fff; border-radius:16px; padding:10px 12px;}
+  .file.show{display:flex;}
+  .file .pv{width:56px; height:56px; border-radius:10px; background:#f5f7f7 center/contain no-repeat; flex:none; display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:700; color:var(--danger);}
+  .file .meta{flex:1; min-width:0;}
+  .file .meta b{display:block; font-size:13.5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .file .meta span{font-size:12px; color:var(--ink-soft);}
+  .file button{border:0; background:#f6eceb; color:var(--danger); border-radius:10px; padding:7px 12px; font-size:12.5px; cursor:pointer;}
+  .note{display:flex; gap:10px; align-items:flex-start; background:var(--tan-tint); border:1px solid #eedfd0; color:#6e5038; border-radius:14px; padding:11px 13px; font-size:12.8px; line-height:1.75; margin-top:10px;}
+  .note svg{width:18px; height:18px; flex:none; margin-top:3px; color:var(--tan-dark);}
+  .msg{display:none; margin-top:14px; font-size:13.5px; color:var(--danger); background:#fbefee; border-radius:12px; padding:10px 13px;}
+  .msg.show{display:block;}
+  .send{width:100%; margin-top:18px; border:0; border-radius:16px; padding:15px; font-size:16.5px; font-weight:600; color:#fff; background:linear-gradient(90deg, var(--teal-dark), var(--teal)); cursor:pointer; box-shadow:0 10px 24px rgba(61,91,86,.25); transition:transform .15s, opacity .2s;}
+  .send:active{transform:scale(.99);}
+  .send:disabled{opacity:.6; cursor:wait;}
+  .done{display:none; text-align:center; padding:12px 4px;}
+  .done .ok{width:64px; height:64px; border-radius:50%; background:var(--teal-tint); color:var(--teal); display:flex; align-items:center; justify-content:center; margin:0 auto 14px;}
+  .done h2{font-size:21px; font-weight:600; margin-bottom:8px;}
+  .done p{color:var(--ink-soft); font-size:14px; line-height:1.9;}
+  .done .sum{margin:16px auto 0; max-width:360px; text-align:right; background:#fff; border:1px solid var(--line); border-radius:14px; padding:12px 14px; font-size:13.5px; line-height:2;}
+  .foot{text-align:center; color:var(--ink-soft); font-size:12px; margin-top:20px;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <a class="brand" href="https://gzara.org/"><img src="/assets/bawabat-zara-logo.png" alt="بوابة زارة" onerror="this.style.display='none'"></a>
+
+  <div class="hero">
+    <span class="tag">جمعية العوامية الخيرية</span>
+    <h1>تسجيل رعاية <b>التقويم الميلادي 2027</b></h1>
+    <p>اختر الشهر الذي ترغب جهتكم برعايته، وأرفق الشعار، وسنتواصل معكم لإتمام الرعاية.</p>
+  </div>
+
+  <div class="card">
+    <form id="f" novalidate>
+      <div class="field">
+        <label class="lb" for="org">اسم الجهة الرسمي<span class="req">*</span></label>
+        <input type="text" id="org" maxlength="150" autocomplete="organization" placeholder="كما يظهر في السجل التجاري أو الترخيص" />
+      </div>
+
+      <div class="field">
+        <label class="lb">الشهر المرغوب<span class="req">*</span></label>
+        <div class="months loading" id="months"></div>
+        <div class="legend"><span><i></i>متاح</span><span><i class="x"></i>محجوز</span></div>
+      </div>
+
+      <div class="field">
+        <label class="lb" for="phone">رقم الجوال للتواصل<span class="req">*</span></label>
+        <input type="tel" id="phone" inputmode="tel" maxlength="16" autocomplete="tel" placeholder="05XXXXXXXX" />
+      </div>
+
+      <div class="field">
+        <label class="lb">شعار الجهة<span class="req">*</span></label>
+        <div class="drop" id="drop" tabindex="0" role="button" aria-label="رفع الشعار">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4"/><path d="m7 9 5-5 5 5"/><path d="M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/></svg>
+          <b>اضغط لرفع الشعار أو اسحبه هنا</b>
+          <span>PNG أو PDF — الحد الأقصى 2 ميجابايت</span>
+        </div>
+        <input type="file" id="logo" accept="image/png,application/pdf,.png,.pdf" hidden />
+        <div class="file" id="file">
+          <div class="pv" id="pv"></div>
+          <div class="meta"><b id="fname"></b><span id="fsize"></span></div>
+          <button type="button" id="rm">إزالة</button>
+        </div>
+        <div class="note">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v5"/><path d="M12 16.5v.01"/></svg>
+          <div>نرجو توفير الشعار <b>بجودة عالية النقاوة</b> (يُفضَّل PDF أو PNG بخلفية شفافة ودقة عالية) لضمان ظهوره بوضوح في الطباعة.</div>
+        </div>
+      </div>
+
+      <div class="msg" id="msg"></div>
+      <button type="submit" class="send" id="send">إرسال طلب الرعاية</button>
+    </form>
+
+    <div class="done" id="done">
+      <div class="ok"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg></div>
+      <h2>تم استلام طلبكم، شكراً لكم</h2>
+      <p>تم حجز الشهر مبدئياً لجهتكم، وسيتواصل معكم فريق الجمعية قريباً لإتمام الرعاية.</p>
+      <div class="sum" id="sum"></div>
+    </div>
+  </div>
+
+  <div class="foot">جمعية العوامية الخيرية للخدمات الاجتماعية · بوابة زارة</div>
+</div>
+
+<script>
+(function(){
+  firebase.initializeApp({
+    apiKey: "AIzaSyBPos-QSrnK_x5HS742FJkNJVhXwGdq8j8",
+    authDomain: "awamia-zara.firebaseapp.com",
+    projectId: "awamia-zara",
+    storageBucket: "awamia-zara.firebasestorage.app",
+    messagingSenderId: "544481222945",
+    appId: "1:544481222945:web:f5c2ae0bd54b0393135e60"
+  });
+  var db = firebase.firestore();
+  var YEAR = "2027";
+  var META = db.collection("calSponsorMeta").doc(YEAR);       // { taken: { "1": requestId, ... } }
+  var REQS = db.collection("calSponsorRequests");
+  var UPLOAD = "https://zara-media-upload.murtada-ud.workers.dev/";
+  var MAX = 2 * 1024 * 1024;
+  var MONTHS = ["يناير","فبراير","مارس","أبريل","مايو","يونيو","يوليو","أغسطس","سبتمبر","أكتوبر","نوفمبر","ديسمبر"];
+
+  var $ = function(id){ return document.getElementById(id); };
+  var taken = {}, picked = "", file = null;
+
+  // ----- الأشهر حسب الإتاحة (تتحدّث مباشرة لو حجز أحد آخر) -----
+  function paintMonths(){
+    var h = "";
+    MONTHS.forEach(function(m, i){
+      var k = String(i + 1), off = !!taken[k];
+      if(off && picked === k) picked = "";
+      h += '<label class="mo' + (off ? " off" : "") + (picked === k ? " on" : "") + '" data-m="' + k + '">' +
+        '<input type="radio" name="month" value="' + k + '"' + (off ? " disabled" : "") + (picked === k ? " checked" : "") + '>' +
+        '<span class="n">' + k + '</span><span class="t">' + m + '</span></label>';
+    });
+    $("months").innerHTML = h;
+  }
+  paintMonths();
+  META.onSnapshot(function(s){
+    taken = (s.exists && s.data().taken) || {};
+    $("months").classList.remove("loading");
+    paintMonths();
+  }, function(e){ console.error(e); $("months").classList.remove("loading"); });
+  $("months").addEventListener("click", function(e){
+    var el = e.target.closest(".mo");
+    if(!el || el.classList.contains("off")) return;
+    picked = el.getAttribute("data-m"); paintMonths(); hideMsg();
+  });
+
+  // ----- الجوال -----
+  function digits(s){ return String(s || "").replace(/[٠-٩]/g, function(d){ return "٠١٢٣٤٥٦٧٨٩".indexOf(d); }).replace(/[۰-۹]/g, function(d){ return "۰۱۲۳۴۵۶۷۸۹".indexOf(d); }); }
+  function phoneNorm(s){
+    var d = digits(s).replace(/\D/g, "").replace(/^00/, "");
+    if(/^9665\d{8}$/.test(d)) d = "0" + d.slice(3);
+    else if(/^5\d{8}$/.test(d)) d = "0" + d;
+    return d;
+  }
+
+  // ----- الشعار -----
+  function kb(n){ return n > 1048576 ? (n / 1048576).toFixed(2) + " ميجابايت" : Math.ceil(n / 1024) + " كيلوبايت"; }
+  function isOk(f){ return f.type === "image/png" || f.type === "application/pdf" || /\.(png|pdf)$/i.test(f.name); }
+  function setFile(f){
+    hideMsg();
+    if(!f) return;
+    if(!isOk(f)){ showMsg("صيغة الملف غير مقبولة — المسموح PNG أو PDF فقط."); return; }
+    if(f.size > MAX){ showMsg("حجم الملف " + kb(f.size) + " — الحد الأقصى 2 ميجابايت."); return; }
+    file = f;
+    $("fname").textContent = f.name; $("fsize").textContent = kb(f.size);
+    var pv = $("pv"); pv.style.backgroundImage = ""; pv.textContent = "";
+    if(/pdf/i.test(f.type) || /\.pdf$/i.test(f.name)) pv.textContent = "PDF";
+    else pv.style.backgroundImage = "url(" + URL.createObjectURL(f) + ")";
+    $("file").classList.add("show"); $("drop").style.display = "none";
+  }
+  function clearFile(){ file = null; $("logo").value = ""; $("file").classList.remove("show"); $("drop").style.display = ""; }
+  $("drop").addEventListener("click", function(){ $("logo").click(); });
+  $("drop").addEventListener("keydown", function(e){ if(e.key === "Enter" || e.key === " "){ e.preventDefault(); $("logo").click(); } });
+  $("logo").addEventListener("change", function(){ setFile(this.files[0]); });
+  $("rm").addEventListener("click", clearFile);
+  ["dragenter","dragover"].forEach(function(t){ $("drop").addEventListener(t, function(e){ e.preventDefault(); this.classList.add("over"); }); });
+  ["dragleave","drop"].forEach(function(t){ $("drop").addEventListener(t, function(e){ e.preventDefault(); this.classList.remove("over"); }); });
+  $("drop").addEventListener("drop", function(e){ setFile(e.dataTransfer.files[0]); });
+
+  function showMsg(t){ $("msg").textContent = t; $("msg").classList.add("show"); }
+  function hideMsg(){ $("msg").classList.remove("show"); }
+  ["org","phone"].forEach(function(id){ $(id).addEventListener("input", function(){ this.classList.remove("err-in"); hideMsg(); }); });
+
+  // ----- الإرسال: رفع الشعار ثم حجز الشهر في معاملة واحدة (لا يُحجز الشهر مرتين) -----
+  $("f").addEventListener("submit", function(e){
+    e.preventDefault(); hideMsg();
+    var org = $("org").value.trim().replace(/\s+/g, " "), phone = phoneNorm($("phone").value);
+    if(org.length < 3){ $("org").classList.add("err-in"); $("org").focus(); return showMsg("اكتب اسم الجهة الرسمي."); }
+    if(!picked) return showMsg("اختر الشهر المرغوب.");
+    if(!/^05\d{8}$/.test(phone)){ $("phone").classList.add("err-in"); $("phone").focus(); return showMsg("رقم الجوال غير صحيح — مثال: 0501234567"); }
+    if(!file) return showMsg("ارفع شعار الجهة (PNG أو PDF).");
+
+    var btn = $("send"); btn.disabled = true; btn.textContent = "جارٍ رفع الشعار…";
+    var type = /\.pdf$/i.test(file.name) || /pdf/i.test(file.type) ? "application/pdf" : "image/png";
+    var month = picked;
+    fetch(UPLOAD, { method: "POST", headers: { "Content-Type": type, "X-Folder": "logos" }, body: file })
+      .then(function(r){ if(!r.ok) throw new Error("upload_" + r.status); return r.json(); })
+      .then(function(up){
+        if(!up || !up.url) throw new Error("upload_nourl");
+        btn.textContent = "جارٍ حجز الشهر…";
+        var ref = REQS.doc();
+        return db.runTransaction(function(tx){
+          return tx.get(META).then(function(s){
+            var t = (s.exists && s.data().taken) || {};
+            if(t[month]) throw new Error("taken");
+            var upd = {}; upd["taken." + month] = ref.id;
+            if(s.exists) tx.update(META, upd); else tx.set(META, { taken: (function(){ var o = {}; o[month] = ref.id; return o; })() });
+            tx.set(ref, {
+              id: ref.id, year: +YEAR, month: +month, monthName: MONTHS[month - 1],
+              org: org, phone: phone,
+              logoUrl: up.url, logoName: file.name, logoType: type, logoSize: file.size,
+              status: "new", createdAt: Date.now(), ua: navigator.userAgent.slice(0, 160)
+            });
+          });
+        }).then(function(){ return ref.id; });
+      })
+      .then(function(){
+        $("f").style.display = "none";
+        $("sum").innerHTML = "<b>الجهة:</b> " + esc(org) + "<br><b>الشهر:</b> " + MONTHS[month - 1] + " 2027<br><b>الجوال:</b> <span dir=ltr>" + phone + "</span>";
+        $("done").style.display = "block";
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      })
+      .catch(function(err){
+        console.error(err);
+        btn.disabled = false; btn.textContent = "إرسال طلب الرعاية";
+        var m = String(err && err.message || "");
+        if(m === "taken"){ picked = ""; paintMonths(); showMsg("عذراً، شهر " + MONTHS[month - 1] + " حُجز للتو من جهة أخرى — اختر شهراً آخر."); }
+        else if(m.indexOf("upload_413") === 0) showMsg("حجم الملف كبير — الحد الأقصى 2 ميجابايت.");
+        else if(m.indexOf("upload") === 0) showMsg("تعذّر رفع الشعار، تأكد من الاتصال وحاول مرة أخرى.");
+        else showMsg("تعذّر إرسال الطلب، حاول مرة أخرى بعد لحظات.");
+      });
+  });
+  function esc(s){ return String(s).replace(/[&<>"]/g, function(c){ return { "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;" }[c]; }); }
+})();
+</script>
+</body>
+</html>
