@@ -51,11 +51,14 @@
   input:focus{border-color:var(--teal); box-shadow:0 0 0 4px rgba(81,119,113,.12);}
   .err-in{border-color:var(--danger) !important;}
   .months{display:grid; grid-template-columns:repeat(4, 1fr); gap:9px;}
-  @media (max-width:480px){ .months{grid-template-columns:repeat(3, 1fr);} }
+  @media (max-width:600px){ .months{grid-template-columns:repeat(3, 1fr);} }
   .mo{position:relative; border:1.5px solid var(--line); background:#fff; border-radius:14px; padding:11px 4px 9px; text-align:center; cursor:pointer; transition:all .18s; user-select:none;}
   .mo input{position:absolute; opacity:0; pointer-events:none;}
   .mo .n{display:block; font-size:11px; color:var(--ink-soft);}
   .mo .t{display:block; font-size:14.5px; font-weight:600;}
+  .mo .h{display:block; font-size:10.5px; line-height:1.45; color:var(--tan-dark); margin-top:3px;}
+  .mo.on .h{color:rgba(255,255,255,.88);}
+  .mo.off .h{color:#b9c0bf;}
   .mo:hover{border-color:var(--teal);}
   .mo.on{background:var(--teal); border-color:var(--teal); color:#fff; box-shadow:0 6px 16px rgba(81,119,113,.28);}
   .mo.on .n{color:rgba(255,255,255,.8);}
@@ -172,6 +175,8 @@
   var UPLOAD = "https://zara-media-upload.murtada-ud.workers.dev/";
   var MAX = 2 * 1024 * 1024;
   var MONTHS = ["يناير","فبراير","مارس","أبريل","مايو","يونيو","يوليو","أغسطس","سبتمبر","أكتوبر","نوفمبر","ديسمبر"];
+  // ما يقابل كل شهر ميلادي من الأشهر الهجرية (تقويم أم القرى) — كل شهر ميلادي يقع على شهرين هجريين
+  var HIJRI = ["رجب – شعبان 1448","شعبان – رمضان 1448","رمضان – شوال 1448","شوال – ذو القعدة 1448","ذو القعدة – ذو الحجة 1448","ذو الحجة 1448 – محرم 1449","محرم – صفر 1449","صفر – ربيع الأول 1449","ربيع الأول – ربيع الآخر 1449","جمادى الأولى – جمادى الآخرة 1449","جمادى الآخرة – رجب 1449","رجب – شعبان 1449"];
 
   var $ = function(id){ return document.getElementById(id); };
   var taken = {}, picked = "", file = null;
@@ -184,7 +189,7 @@
       if(off && picked === k) picked = "";
       h += '<label class="mo' + (off ? " off" : "") + (picked === k ? " on" : "") + '" data-m="' + k + '">' +
         '<input type="radio" name="month" value="' + k + '"' + (off ? " disabled" : "") + (picked === k ? " checked" : "") + '>' +
-        '<span class="n">' + k + '</span><span class="t">' + m + '</span></label>';
+        '<span class="n">' + k + '</span><span class="t">' + m + '</span><span class="h">' + HIJRI[i] + '</span></label>';
     });
     $("months").innerHTML = h;
   }
@@ -262,7 +267,7 @@
             var upd = {}; upd["taken." + month] = ref.id;
             if(s.exists) tx.update(META, upd); else tx.set(META, { taken: (function(){ var o = {}; o[month] = ref.id; return o; })() });
             tx.set(ref, {
-              id: ref.id, year: +YEAR, month: +month, monthName: MONTHS[month - 1],
+              id: ref.id, year: +YEAR, month: +month, monthName: MONTHS[month - 1], hijri: HIJRI[month - 1],
               org: org, phone: phone,
               logoUrl: up.url, logoName: file.name, logoType: type, logoSize: file.size,
               status: "new", createdAt: Date.now(), ua: navigator.userAgent.slice(0, 160)
@@ -272,7 +277,7 @@
       })
       .then(function(){
         $("f").style.display = "none";
-        $("sum").innerHTML = "<b>الجهة:</b> " + esc(org) + "<br><b>الشهر:</b> " + MONTHS[month - 1] + " 2027<br><b>الجوال:</b> <span dir=ltr>" + phone + "</span>";
+        $("sum").innerHTML = "<b>الجهة:</b> " + esc(org) + "<br><b>الشهر:</b> " + MONTHS[month - 1] + " 2027 <span style=color:#8f6a4b>(" + HIJRI[month - 1] + " هـ)</span><br><b>الجوال:</b> <span dir=ltr>" + phone + "</span>";
         $("done").style.display = "block";
         window.scrollTo({ top: 0, behavior: "smooth" });
       })

@@ -1122,6 +1122,51 @@
 #bdoRoot .bdo-tag{display:inline-block;font-family:"IBM Plex Sans Arabic",sans-serif;font-size:11px;font-weight:700;border-radius:999px;padding:1px 8px;background:#f6eee5;color:#8a6440}
 #bdoRoot .bdo-tag.ok{background:#e4f1ec;color:#2f6f5e}
 #bdoRoot .bdo-mini{border:0;background:none;color:#4b7071;font:inherit;font-size:12.5px;font-weight:600;cursor:pointer;padding:2px 5px}
+
+/* ===== رعاة التقويم ===== */
+#spRoot{--sp-t:#4b7071;--sp-tan:#8f6a4b;--sp-l:#e4e9e8;--sp-s:#6b7876}
+#spRoot .sp-head{display:flex;justify-content:space-between;align-items:flex-start;gap:14px;flex-wrap:wrap;margin-bottom:16px}
+#spRoot .sp-head h2{font-size:22px;margin:0 0 4px}
+#spRoot .sp-head p{margin:0;color:var(--sp-s);font-size:13.5px}
+#spRoot .sp-acts{display:flex;gap:8px;flex-wrap:wrap}
+#spRoot .sp-btn{border:0;background:var(--sp-t);color:#fff;border-radius:12px;padding:9px 16px;font:inherit;font-size:13.5px;font-weight:600;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center}
+#spRoot .sp-btn.ghost{background:#fff;color:var(--sp-t);border:1px solid var(--sp-l)}
+#spRoot .sp-btn:disabled{opacity:.5;cursor:default}
+#spRoot .sp-err{background:#fbefee;color:#b3453f;border-radius:12px;padding:10px 14px;margin-bottom:12px;font-size:13.5px}
+#spRoot .sp-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px}
+#spRoot .sp-stats div{background:#fff;border:1px solid var(--sp-l);border-radius:16px;padding:12px 14px}
+#spRoot .sp-stats b{display:block;font-size:24px;color:var(--sp-t)}
+#spRoot .sp-stats span{font-size:12.5px;color:var(--sp-s)}
+#spRoot .sp-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(165px,1fr));gap:10px;margin-bottom:22px}
+#spRoot .sp-mo{background:#fff;border:1px dashed #cfd8d7;border-radius:16px;padding:10px 12px;min-height:118px;display:flex;flex-direction:column;gap:6px}
+#spRoot .sp-mo.taken{border:1px solid var(--sp-l);box-shadow:0 4px 14px rgba(45,70,66,.06)}
+#spRoot .sp-mo-h{display:flex;justify-content:space-between;align-items:flex-start;gap:6px;font-size:13px;font-weight:700}
+#spRoot .sp-mo-h small{display:block;font-size:10.5px;font-weight:500;color:var(--sp-tan);margin-top:2px}
+#spRoot .sp-mo-h i,#spRoot .sp-tag{font-style:normal;color:#fff;font-size:11px;border-radius:20px;padding:2px 9px;white-space:nowrap}
+#spRoot .sp-mo b{font-size:13px;line-height:1.5}
+#spRoot .sp-mo-logo{display:flex;align-items:center;justify-content:center;height:46px}
+#spRoot .sp-mo-logo img{max-height:46px;max-width:100%;object-fit:contain}
+#spRoot .sp-free{color:#3d7a5a;margin-top:auto}
+#spRoot .sp-muted{color:var(--sp-s);font-weight:400;font-size:12px}
+#spRoot .sp-pdf{display:inline-flex;align-items:center;justify-content:center;width:46px;height:46px;border-radius:10px;background:#fbefee;color:#b3453f;font-weight:700;font-size:12px}
+#spRoot .sp-list-h{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+#spRoot .sp-list-h h3{margin:0;font-size:17px}
+#spRoot select{font:inherit;font-size:13px;border:1px solid var(--sp-l);border-radius:10px;padding:6px 10px;background:#fff}
+#spRoot .sp-empty{background:#fff;border:1px dashed #cfd8d7;border-radius:16px;padding:26px;text-align:center;color:var(--sp-s)}
+#spRoot .sp-row{display:flex;align-items:center;gap:14px;background:#fff;border:1px solid var(--sp-l);border-radius:16px;padding:10px 14px;margin-bottom:8px}
+#spRoot .sp-row.off{opacity:.55}
+#spRoot .sp-logo{flex:none;width:64px;height:64px;border-radius:12px;background:#f5f7f7;display:flex;align-items:center;justify-content:center;overflow:hidden}
+#spRoot .sp-logo img{max-width:100%;max-height:100%;object-fit:contain}
+#spRoot .sp-info{flex:1;min-width:0}
+#spRoot .sp-info b{font-size:15px}
+#spRoot .sp-meta{font-size:12.5px;color:var(--sp-s);margin-top:4px;line-height:1.9}
+#spRoot .sp-meta a{color:var(--sp-t);font-weight:600;text-decoration:none}
+#spRoot .sp-chip{background:#f8f1ea;color:var(--sp-tan);border-radius:20px;padding:2px 10px;font-weight:600;margin-inline-end:6px}
+#spRoot .sp-ctl{display:flex;flex-direction:column;align-items:flex-end;gap:6px}
+#spRoot .sp-mini{border:0;background:none;color:var(--sp-t);font:inherit;font-size:12.5px;font-weight:600;cursor:pointer;padding:2px 5px}
+#spRoot .sp-mini.del{color:#b3453f}
+#spRoot .sp-warn{color:#b3453f}
+@media(max-width:700px){#spRoot .sp-stats{grid-template-columns:repeat(2,1fr)}#spRoot .sp-row{flex-wrap:wrap}#spRoot .sp-ctl{flex-direction:row;width:100%;justify-content:space-between}}
 #bdoRoot .bdo-mini.del{color:#b4572a}
 #bdoRoot .bdo-empty{text-align:center;color:var(--ink-soft,#6b7775);padding:30px;background:#fff;border-radius:14px}
 @media (max-width:980px){#bdoRoot .bdo-work{grid-template-columns:minmax(0,1fr)}#bdoRoot .bdo-side{display:none}#bdoRoot .bdo-bar{margin-left:58px}}
@@ -2913,6 +2958,10 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
       <span class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="5" width="16" height="15" rx="2.5"/><path d="M8 3v4M16 3v4M4 10h16"/><path d="M8.5 14h2M13.5 14h2M8.5 17h2"/></svg></span>
       التقاويم الميلادية
     </div>
+    <div class="nav-tab" data-section="sponsor">
+      <span class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="5" width="16" height="15" rx="2.5"/><path d="M8 3v4M16 3v4M4 10h16"/><path d="M12 13.2l1 2 2.2.3-1.6 1.5.4 2.2-2-1-2 1 .4-2.2-1.6-1.5 2.2-.3z"/></svg></span>
+      رعاة التقويم
+    </div>
     <div class="nav-tab" data-section="designs" id="dsnNavTab">
       <span class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="4.5" width="17" height="15" rx="2.5"/><path d="M3.5 15.5l4.5-4.5 4 4 2.5-2.5 6 6"/><circle cx="15.5" cy="9" r="1.6"/></svg></span>
       <span class="dsn-nav-lbl">إصدار</span>
@@ -2964,6 +3013,10 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
     <!-- ===== نماذج التصاميم: قوالب بمتغيرات تُعبّأ يدوياً أو من Excel ثم تُنزَّل نسخة أو مجموعة نسخ ===== -->
     <div class="section-view" id="view-designs">
       <div id="designsRoot"></div>
+    </div>
+    <!-- ===== رعاة التقويم: طلبات الرعاية من صفحة gzara.org/sponsor (calSponsorRequests + calSponsorMeta/<year>) ===== -->
+    <div class="section-view" id="view-sponsor">
+      <div id="spRoot"></div>
     </div>
     <!-- ===== أوامر صرف ← المبنى الإداري ===== -->
     <div class="section-view" id="view-bldg">
@@ -3196,6 +3249,7 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
     { key: "executive", label: "التقرير التنفيذي" },
     { key: "events", label: "المناسبات الاجتماعية" },
     { key: "calendars", label: "التقاويم الميلادية" },
+    { key: "sponsor", label: "رعاة التقويم" },
     { key: "designs", label: "إصدار — منصة التصاميم الجاهزة" },
     { key: "bldg", label: "أوامر صرف" },
     { key: "roster", label: "مطابقة البيانات" },
@@ -3363,6 +3417,7 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
     if(activeSectionNow === "bldg") bdoRender();
     if(activeSectionNow === "roster") rsRender();
     if(activeSectionNow === "photos") phRender();
+    if(activeSectionNow === "sponsor") spRender();
     if(activeSectionNow === "events"){
       var evTab = parts[1];
       if(evTab && EVENTS_TAB_KEYS.indexOf(evTab) > -1) eventsUI.tab = evTab;
@@ -3418,6 +3473,10 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
       { k: "calendars.view", l: "فتح القسم واستعراض التقاويم المعتمدة" },
       { k: "calendars.edit", l: "تصميم التقويم وتعديل محتواه" },
       { k: "calendars.approve", l: "اعتماد التقويم" }
+    ] },
+    { key: "sponsor", label: "رعاة التقويم الميلادي", perms: [
+      { k: "sponsor.view", l: "الاطلاع على طلبات الرعاية والشعارات وتصديرها" },
+      { k: "sponsor.edit", l: "تغيير حالة الطلب وإلغاؤه وتحرير الشهر وحذف الطلب" }
     ] },
     { key: "designs", label: "إصدار — منصة التصاميم الجاهزة", perms: [
       { k: "designs.view", l: "فتح القسم وتعبئة النماذج وتنزيل النسخ" },
@@ -3797,6 +3856,139 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
   });
   document.addEventListener("change", function(e){ if(e.target.id === "calYearSel"){ calUI.year = Number(e.target.value) || 2027; calRender(); } });
 
+  // ===== رعاة التقويم الميلادي: طلبات صفحة gzara.org/sponsor =====
+  // calSponsorRequests (طلب لكل مستند) + calSponsorMeta/<year>.taken {شهر: معرّف الطلب} — الشهر المحجوز يُشطَب في الصفحة العامة
+  var SP_MONTHS = ["يناير","فبراير","مارس","أبريل","مايو","يونيو","يوليو","أغسطس","سبتمبر","أكتوبر","نوفمبر","ديسمبر"];
+  var SP_HIJRI = ["رجب – شعبان 1448","شعبان – رمضان 1448","رمضان – شوال 1448","شوال – ذو القعدة 1448","ذو القعدة – ذو الحجة 1448","ذو الحجة 1448 – محرم 1449","محرم – صفر 1449","صفر – ربيع الأول 1449","ربيع الأول – ربيع الآخر 1449","جمادى الأولى – جمادى الآخرة 1449","جمادى الآخرة – رجب 1449","رجب – شعبان 1449"];
+  var SP_STATUS = [
+    { k: "new", l: "جديد", c: "#b8906e" },
+    { k: "contacted", l: "تم التواصل", c: "#4f7fa8" },
+    { k: "confirmed", l: "مؤكد", c: "#3d7a5a" },
+    { k: "cancelled", l: "ملغى", c: "#9aa3a2" }
+  ];
+  var spUI = { year: 2027, started: false, reqs: [], taken: {}, err: "", flt: "" };
+  function spSt(k){ for(var i = 0; i < SP_STATUS.length; i++) if(SP_STATUS[i].k === k) return SP_STATUS[i]; return SP_STATUS[0]; }
+  function spEsc(s){ return String(s == null ? "" : s).replace(/[&<>"']/g, function(c){ return { "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;" }[c]; }); }
+  function spDate(t){ if(!t) return ""; var d = new Date(t); return d.toLocaleDateString("ar-SA-u-ca-gregory-nu-latn", { day: "numeric", month: "short" }) + " · " + d.toLocaleTimeString("ar-SA-u-nu-latn", { hour: "numeric", minute: "2-digit" }); }
+  function spMetaRef(){ return db.collection("calSponsorMeta").doc(String(spUI.year)); }
+  function spStart(){
+    if(spUI.started) return; spUI.started = true;
+    db.collection("calSponsorRequests").onSnapshot(function(snap){
+      spUI.reqs = snap.docs.map(function(d){ var o = d.data(); o.id = d.id; return o; }).filter(function(o){ return !o.year || o.year === spUI.year; })
+        .sort(function(a, b){ return (a.month - b.month) || ((a.createdAt || 0) - (b.createdAt || 0)); });
+      spUI.err = ""; spPaintIfOpen();
+    }, function(e){ console.error("calSponsorRequests", e); spUI.err = e && e.code || "error"; spPaintIfOpen(); });
+    spMetaRef().onSnapshot(function(s){ spUI.taken = (s.exists && s.data().taken) || {}; spPaintIfOpen(); }, function(){});
+  }
+  function spPaintIfOpen(){ var a = document.querySelector(".nav-tab.active"); if(a && a.dataset.section === "sponsor") spRender(); }
+  function spRender(){
+    var root = document.getElementById("spRoot");
+    if(!root || !currentUser || !can("sponsor.view")) return;
+    spStart();
+    var edit = can("sponsor.edit"), byId = {};
+    spUI.reqs.forEach(function(r){ byId[r.id] = r; });
+    var live = spUI.reqs.filter(function(r){ return r.status !== "cancelled"; });
+    var nTaken = Object.keys(spUI.taken).filter(function(k){ return spUI.taken[k]; }).length;
+    var h = '<div class="sp-head"><div><h2>رعاة التقويم الميلادي ' + spUI.year + '</h2><p>الطلبات الواردة من صفحة التسجيل العامة — الشهر المحجوز يظهر مشطوباً للجهات الأخرى</p></div>' +
+      '<div class="sp-acts"><a class="sp-btn ghost" href="/sponsor/" target="_blank" rel="noopener">فتح صفحة التسجيل ↗</a>' +
+      '<button type="button" class="sp-btn ghost" data-sp="copy">نسخ الرابط</button>' +
+      '<button type="button" class="sp-btn" data-sp="excel"' + (spUI.reqs.length ? "" : " disabled") + '>تصدير Excel</button></div></div>';
+    if(spUI.err) h += '<div class="sp-err">تعذّر تحميل الطلبات (' + spEsc(spUI.err) + ')</div>';
+    h += '<div class="sp-stats"><div><b>' + spUI.reqs.length + '</b><span>كل الطلبات</span></div><div><b>' + nTaken + '</b><span>أشهر محجوزة</span></div><div><b>' + (12 - nTaken) + '</b><span>أشهر متاحة</span></div><div><b>' + live.filter(function(r){ return r.status === "confirmed"; }).length + '</b><span>رعاية مؤكدة</span></div></div>';
+    // شبكة الأشهر
+    h += '<div class="sp-grid">';
+    SP_MONTHS.forEach(function(m, i){
+      var k = String(i + 1), rid = spUI.taken[k], r = rid ? byId[rid] : null;
+      if(r){
+        var st = spSt(r.status), img = r.logoType === "application/pdf" ? '<span class="sp-pdf">PDF</span>' : '<img src="' + spEsc(r.logoUrl) + '" alt="" loading="lazy">';
+        h += '<div class="sp-mo taken"><div class="sp-mo-h"><span>' + k + ' · ' + m + '<small>' + SP_HIJRI[i] + '</small></span><i style="background:' + st.c + '">' + st.l + '</i></div><a class="sp-mo-logo" href="' + spEsc(r.logoUrl) + '" target="_blank" rel="noopener">' + img + '</a><b>' + spEsc(r.org) + '</b></div>';
+      } else if(rid){
+        h += '<div class="sp-mo taken"><div class="sp-mo-h"><span>' + k + ' · ' + m + '<small>' + SP_HIJRI[i] + '</small></span></div><b class="sp-muted">محجوز (طلب غير موجود)</b>' + (edit ? '<button type="button" class="sp-mini" data-sp="free" data-m="' + k + '">تحرير الشهر</button>' : "") + '</div>';
+      } else {
+        h += '<div class="sp-mo"><div class="sp-mo-h"><span>' + k + ' · ' + m + '<small>' + SP_HIJRI[i] + '</small></span></div><b class="sp-free">متاح</b></div>';
+      }
+    });
+    h += '</div>';
+    // قائمة الطلبات
+    h += '<div class="sp-list-h"><h3>الطلبات</h3><select data-sp="flt"><option value="">كل الحالات</option>' + SP_STATUS.map(function(s){ return '<option value="' + s.k + '"' + (spUI.flt === s.k ? " selected" : "") + '>' + s.l + '</option>'; }).join("") + '</select></div>';
+    var rows = spUI.reqs.filter(function(r){ return !spUI.flt || (r.status || "new") === spUI.flt; });
+    if(!rows.length) h += '<div class="sp-empty">' + (spUI.reqs.length ? "لا توجد طلبات بهذه الحالة" : "لم يصل أي طلب بعد — شارك رابط صفحة التسجيل مع الجهات") + '</div>';
+    rows.forEach(function(r){
+      var st = spSt(r.status), holds = spUI.taken[String(r.month)] === r.id, wa = "966" + String(r.phone || "").replace(/^0/, "");
+      var img = r.logoType === "application/pdf" ? '<span class="sp-pdf">PDF</span>' : '<img src="' + spEsc(r.logoUrl) + '" alt="" loading="lazy">';
+      h += '<div class="sp-row' + (r.status === "cancelled" ? " off" : "") + '">' +
+        '<a class="sp-logo" href="' + spEsc(r.logoUrl) + '" target="_blank" rel="noopener" title="فتح الشعار">' + img + '</a>' +
+        '<div class="sp-info"><b>' + spEsc(r.org) + '</b><div class="sp-meta"><span class="sp-chip">' + spEsc(r.monthName || SP_MONTHS[r.month - 1]) + ' ' + spUI.year + ' · ' + SP_HIJRI[r.month - 1] + '</span>' +
+        '<a href="tel:' + spEsc(r.phone) + '" dir="ltr">' + spEsc(r.phone) + '</a> · <a href="https://wa.me/' + spEsc(wa) + '" target="_blank" rel="noopener">واتساب</a> · <span>' + spDate(r.createdAt) + '</span>' +
+        ' · <a href="' + spEsc(r.logoUrl) + '" download="' + spEsc(r.logoName || "logo") + '">تنزيل الشعار</a> <span class="sp-muted">(' + spEsc(r.logoName || "") + ')</span></div></div>' +
+        '<div class="sp-ctl">' + (edit ? '<select data-sp="st" data-id="' + r.id + '">' + SP_STATUS.map(function(s){ return '<option value="' + s.k + '"' + ((r.status || "new") === s.k ? " selected" : "") + '>' + s.l + '</option>'; }).join("") + '</select>' +
+          '<button type="button" class="sp-mini del" data-sp="del" data-id="' + r.id + '">حذف</button>' : '<i class="sp-tag" style="background:' + st.c + '">' + st.l + '</i>') +
+        (r.status !== "cancelled" && !holds ? '<span class="sp-muted sp-warn">الشهر ليس محجوزاً لهذا الطلب</span>' : "") + '</div></div>';
+    });
+    root.innerHTML = h;
+  }
+  // الإلغاء يحرّر الشهر (يعود متاحاً في الصفحة العامة)؛ إعادة التفعيل تحجزه مجدداً إن كان متاحاً
+  function spSetStatus(id, st){
+    var r = spUI.reqs.find(function(x){ return x.id === id; }); if(!r) return;
+    var ref = db.collection("calSponsorRequests").doc(id), meta = spMetaRef(), mk = String(r.month);
+    db.runTransaction(function(tx){
+      return tx.get(meta).then(function(s){
+        var t = (s.exists && s.data().taken) || {}, upd = {};
+        if(st === "cancelled" && t[mk] === id){ upd["taken." + mk] = firebase.firestore.FieldValue.delete(); tx.update(meta, upd); }
+        if(st !== "cancelled" && t[mk] !== id){
+          if(t[mk]) throw new Error("taken");
+          if(s.exists){ upd["taken." + mk] = id; tx.update(meta, upd); } else { var o = {}; o[mk] = id; tx.set(meta, { taken: o }); }
+        }
+        tx.update(ref, { status: st, updatedAt: Date.now(), updatedBy: rsBy() });
+      });
+    }).then(function(){ showToast(st === "cancelled" ? "أُلغي الطلب وصار الشهر متاحاً" : "تم تحديث الحالة"); })
+      .catch(function(e){ console.error(e); showToast(e && e.message === "taken" ? "الشهر محجوز لجهة أخرى — ألغِ طلبها أولاً" : "تعذّر الحفظ"); spRender(); });
+  }
+  function spDelete(id){
+    var r = spUI.reqs.find(function(x){ return x.id === id; }); if(!r) return;
+    if(!confirm("حذف طلب «" + r.org + "» نهائياً؟ سيصير شهر " + SP_MONTHS[r.month - 1] + " متاحاً إن كان محجوزاً له.")) return;
+    var meta = spMetaRef(), mk = String(r.month);
+    db.runTransaction(function(tx){
+      return tx.get(meta).then(function(s){
+        var t = (s.exists && s.data().taken) || {};
+        if(t[mk] === id){ var upd = {}; upd["taken." + mk] = firebase.firestore.FieldValue.delete(); tx.update(meta, upd); }
+        tx.delete(db.collection("calSponsorRequests").doc(id));
+      });
+    }).then(function(){ showToast("حُذف الطلب"); }).catch(function(e){ console.error(e); showToast("تعذّر الحذف"); });
+  }
+  function spFree(mk){
+    if(!confirm("تحرير شهر " + SP_MONTHS[mk - 1] + " وإتاحته للتسجيل؟")) return;
+    var upd = {}; upd["taken." + mk] = firebase.firestore.FieldValue.delete();
+    spMetaRef().update(upd).then(function(){ showToast("صار الشهر متاحاً"); }).catch(function(){ showToast("تعذّر الحفظ"); });
+  }
+  function spExcel(){
+    if(!window.XLSX){ showToast("مكتبة Excel لم تُحمَّل بعد — حاول بعد لحظات"); return; }
+    var rows = spUI.reqs.map(function(r, i){ return {
+      "م": i + 1, "الشهر": r.monthName || SP_MONTHS[r.month - 1], "رقم الشهر": r.month, "الأشهر الهجرية": SP_HIJRI[r.month - 1], "اسم الجهة": r.org, "الجوال": r.phone,
+      "الحالة": spSt(r.status).l, "رابط الشعار": r.logoUrl, "اسم ملف الشعار": r.logoName || "", "تاريخ الطلب": r.createdAt ? new Date(r.createdAt).toLocaleString("en-GB") : ""
+    }; });
+    var ws = window.XLSX.utils.json_to_sheet(rows); ws["!cols"] = [{ wch: 4 }, { wch: 10 }, { wch: 8 }, { wch: 36 }, { wch: 13 }, { wch: 11 }, { wch: 60 }, { wch: 24 }, { wch: 20 }];
+    ws["!views"] = [{ RTL: true }];
+    var wb = window.XLSX.utils.book_new(); wb.Workbook = { Views: [{ RTL: true }] };
+    window.XLSX.utils.book_append_sheet(wb, ws, "طلبات الرعاية");
+    window.XLSX.writeFile(wb, "رعاة-التقويم-" + spUI.year + ".xlsx");
+  }
+  document.addEventListener("click", function(e){
+    var b = e.target.closest && e.target.closest("#spRoot [data-sp]");
+    if(!b || b.tagName === "SELECT" || !currentUser) return;
+    var a = b.getAttribute("data-sp");
+    if(a === "copy"){ copyToClipboard("https://gzara.org/sponsor/"); showToast("نُسخ رابط صفحة التسجيل"); }
+    else if(a === "excel") spExcel();
+    else if(a === "del" && can("sponsor.edit")) spDelete(b.getAttribute("data-id"));
+    else if(a === "free" && can("sponsor.edit")) spFree(+b.getAttribute("data-m"));
+  });
+  document.addEventListener("change", function(e){
+    var el = e.target; if(!el.closest || !el.closest("#spRoot")) return;
+    var a = el.getAttribute("data-sp");
+    if(a === "flt"){ spUI.flt = el.value; spRender(); }
+    else if(a === "st" && can("sponsor.edit")) spSetStatus(el.getAttribute("data-id"), el.value);
+  });
+
   // ===== معالجة الصور: تُحمَّل الأداة مرة واحدة عند أول فتح =====
   function phRender(){
     var root = document.getElementById("photosRoot");
@@ -3827,6 +4019,7 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
       if(tab.dataset.section === "bldg") bdoRender();
       if(tab.dataset.section === "roster") rsRender();
       if(tab.dataset.section === "photos") phRender();
+      if(tab.dataset.section === "sponsor") spRender();
     });
   });
 
