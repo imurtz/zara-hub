@@ -17373,6 +17373,15 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
     });
     return ix;
   }
+  // مطابقة الاسم بأي جزء منه: كل كلمة مكتوبة يجب أن تظهر في الاسم بأي ترتيب (الأول أو الأب أو العائلة أو جزء منها)،
+  // و«آل X» = «الX» = «X»
+  function rsJoinAl(k){ return (" " + k + " ").replace(/ ال /g, " ال").trim(); }
+  function rsNameHit(p, q){
+    var k = typeof q === "string" ? rsJoinAl(rsNorm(q)) : "";
+    if(!k) return false;
+    var nk = " " + rsJoinAl(p.nameKey || rsNorm(p.name || "")) + " ";
+    return k.split(" ").every(function(w){ return w && (nk.indexOf(w) > -1 || (w.length > 3 && w.indexOf("ال") === 0 && nk.indexOf(w.slice(2)) > -1)); });
+  }
   // البحث بأي معرّف: رقم التسجيل (بالبادئة أو بدونها)، الهوية، الجوال، أو جزء من الاسم
   function rsFind(q){
     var raw = rsDigits(q).trim();
@@ -17390,7 +17399,7 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
     }
     var k = rsNorm(raw);
     if(!k) return [];
-    return rs.people.filter(function(p){ return (p.nameKey || "").indexOf(k) > -1; }).slice(0, 12);
+    return rs.people.filter(function(p){ return !p.mergedInto && rsNameHit(p, raw); }).slice(0, 30);
   }
 
   // ----- البيانات -----
@@ -17521,7 +17530,7 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
       if(!q && !qd) return true;
       if(qu && String(p.regNo || "").toUpperCase().indexOf(qu) > -1) return true;
       if(qd.length >= 3 && ((p.phone || "").indexOf(qd) > -1 || (p.nid || "").indexOf(qd) > -1)) return true;
-      return !!q && (p.nameKey || "").indexOf(q) > -1;
+      return !!q && rsNameHit(p, rsUI.q);
     }).sort(function(a, b){
       var A = rsSeqOf(a.regNo) || { pre: "", n: 0 }, B = rsSeqOf(b.regNo) || { pre: "", n: 0 };
       return (order[A.pre] || 0) - (order[B.pre] || 0) || A.n - B.n;
@@ -18034,7 +18043,7 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
     h += '<div class="rs-kpis rs-kpis--sm">' + rsKpi(cnt.p, "حاضر") + rsKpi(cnt.l, "متأخر") + rsKpi(cnt.e, "معتذر") + rsKpi(cnt.a, "غائب") + rsKpi(none, "لم يُحضَّر", "tan") + '</div>';
     if(!ms.length) return h + '<div class="rs-empty"><p>لا يوجد مشاركون في البرنامج بعد — أضفهم من تبويب «المشاركون»، أو امسح بطاقة أي شخص مسجل لإضافته وتحضيره مباشرة.</p></div>';
     var q = rsNorm(rsUI.mq), qd = rsDigits(rsUI.mq).replace(/\D/g, "");
-    var list = ms.filter(function(p){ return !q && !qd || (q && (p.nameKey || "").indexOf(q) > -1) || (qd && (String(p.regNo).indexOf(qd) > -1 || (p.phone || "").indexOf(qd) > -1)); });
+    var list = ms.filter(function(p){ return !q && !qd || (q && rsNameHit(p, rsUI.mq)) || (qd && (String(p.regNo).indexOf(qd) > -1 || (p.phone || "").indexOf(qd) > -1)); });
     h += '<div class="rs-tools"><input type="search" data-rs-in="mq" data-rs-keep="mq" placeholder="تصفية القائمة" value="' + escapeHTML(rsUI.mq) + '"/>' +
       (canA ? '<button type="button" class="rs-mini" data-rs="mark-all">تحضير الجميع حاضرين</button><button type="button" class="rs-mini" data-rs="mark-rest">غير المحضَّرين ← غائب</button>' : '') + '</div>';
     h += '<div class="rs-att">' + list.map(function(p){
@@ -18048,14 +18057,21 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
     var canP = can("roster.programs"), h = "";
     if(canP){
       var mem = {}; (g.members || []).forEach(function(id){ mem[id] = 1; });
-      var res = rsUI.addq.trim() ? rsFind(rsUI.addq).concat(rs.people.filter(function(p){ return (p.nameKey || "").indexOf(rsNorm(rsUI.addq)) > -1; })) : [];
+      var res = rsUI.addq.trim() ? rsFind(rsUI.addq).concat(rs.people.filter(function(p){ return !p.mergedInto && rsNameHit(p, rsUI.addq); })) : [];
       res = rsUniq(res.map(function(p){ return p.id; })).map(function(id){ return rs.byId[id]; }).filter(function(p){ return p && !mem[p.id]; }).slice(0, 12);
-      h += '<div class="rs-card"><h3>إضافة مشاركين</h3><input type="search" class="rs-wide" data-rs-in="addq" data-rs-keep="addq" placeholder="ابحث في السجل بالاسم أو الرقم أو الجوال" value="' + escapeHTML(rsUI.addq) + '"/>' +
-        (res.length ? '<div class="rs-addlist">' + res.map(function(p){ return '<div><span class="rs-reg" dir="ltr">' + escapeHTML(p.regNo) + '</span><b>' + escapeHTML(p.name) + '</b>' + rsTypeBadge(p.type) + '<button type="button" class="rs-mini" data-rs="mem-add" data-v="' + p.id + '">＋ إضافة</button></div>'; }).join("") + '</div>' : (rsUI.addq.trim() ? '<p class="report-empty">لا نتائج غير مضافة</p>' : '')) +
+      h += '<div class="rs-card"><h3>بحث وإضافة مشاركين</h3><input type="search" class="rs-wide" data-rs-in="addq" data-rs-keep="addq" placeholder="اكتب أي جزء من الاسم أو الرقم أو الجوال — يصفّي المشاركين ويقترح من السجل" value="' + escapeHTML(rsUI.addq) + '"/>' +
+        (res.length ? '<p class="rs-note" style="margin:10px 0 4px">من السجل (غير مضافين لهذا البرنامج):</p><div class="rs-addlist">' + res.map(function(p){ return '<div><span class="rs-reg" dir="ltr">' + escapeHTML(p.regNo) + '</span><b>' + escapeHTML(p.name) + '</b>' + rsTypeBadge(p.type) + '<button type="button" class="rs-mini" data-rs="mem-add" data-v="' + p.id + '">＋ إضافة</button></div>'; }).join("") + '</div>' : '') +
         '<div class="rs-row"><span class="rs-note">إضافة جماعية:</span>' + rsTypesUI().map(function(t){ return '<button type="button" class="rs-mini" data-rs="mem-type" data-v="' + t.k + '">كل ' + t.acc + '</button>'; }).join("") +
         (can("roster.import") ? '<button type="button" class="rs-mini" data-rs="mem-import">رفع ملف لهذا البرنامج</button>' : '') + '</div></div>';
     }
     if(!ms.length) return h + '<p class="report-empty">لا يوجد مشاركون بعد</p>';
+    var aq = rsUI.addq.trim();
+    if(aq){
+      var aqd = rsDigits(aq).replace(/\D/g, ""), aqu = rsDigits(aq).replace(/\s/g, "").toUpperCase();
+      ms = ms.filter(function(p){ return rsNameHit(p, aq) || (aqu && String(p.regNo || "").toUpperCase().indexOf(aqu) > -1) || (aqd.length >= 3 && ((p.phone || "").indexOf(aqd) > -1 || (p.nid || "").indexOf(aqd) > -1)); });
+      h += '<p class="rs-note" style="margin:6px 4px 8px">' + (ms.length ? "من المشاركين في البرنامج: " + ms.length : "لا يوجد مشارك في البرنامج بـ «" + escapeHTML(aq) + "»") + '</p>';
+      if(!ms.length) return h;
+    }
     h += '<div class="rs-tablewrap"><table class="rs-table"><thead><tr><th>رقم التسجيل</th><th>الاسم</th><th>الفئة</th><th>الجوال</th><th></th></tr></thead><tbody>' + ms.map(function(p){
       return '<tr><td class="rs-reg" dir="ltr">' + escapeHTML(p.regNo) + '</td><td><b data-rs="open" data-v="' + p.id + '" class="rs-link">' + escapeHTML(p.name) + '</b></td><td>' + rsTypeBadge(p.type) + '</td><td dir="ltr">' + escapeHTML(p.phone || "—") + '</td><td>' + (canP ? '<button type="button" class="rs-mini rs-mini--del" data-rs="mem-rm" data-v="' + p.id + '">إزالة</button>' : '') + '</td></tr>';
     }).join("") + '</tbody></table></div>';
