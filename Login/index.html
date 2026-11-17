@@ -2444,6 +2444,8 @@
 #rosterRoot .rs-kpis--sm .rs-kpi{padding:9px 10px}
 #rosterRoot .rs-kpis--sm .rs-kpi b{font-size:19px}
 #rosterRoot .rs-tools{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:10px}
+#rosterRoot .rs-tools input[data-rs-in="mq"]{flex:1;min-width:240px}
+#rosterRoot .rs-memsearch{margin-top:14px}
 #rosterRoot input[type=search],#rosterRoot input[type=text],#rosterRoot input[type=tel],#rosterRoot select,#rosterRoot textarea{font:inherit;font-size:14px;border:1px solid rgba(20,28,27,.14);border-radius:12px;padding:9px 12px;background:#fff;color:var(--ink);outline:none}
 #rosterRoot input:focus,#rosterRoot select:focus,#rosterRoot textarea:focus{border-color:#4b7071;box-shadow:0 0 0 3px rgba(75,112,113,.14)}
 #rosterRoot .rs-tools input[type=search]{flex:1;min-width:220px}
@@ -18043,8 +18045,8 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
     h += '<div class="rs-kpis rs-kpis--sm">' + rsKpi(cnt.p, "حاضر") + rsKpi(cnt.l, "متأخر") + rsKpi(cnt.e, "معتذر") + rsKpi(cnt.a, "غائب") + rsKpi(none, "لم يُحضَّر", "tan") + '</div>';
     if(!ms.length) return h + '<div class="rs-empty"><p>لا يوجد مشاركون في البرنامج بعد — أضفهم من تبويب «المشاركون»، أو امسح بطاقة أي شخص مسجل لإضافته وتحضيره مباشرة.</p></div>';
     var q = rsNorm(rsUI.mq), qd = rsDigits(rsUI.mq).replace(/\D/g, "");
-    var list = ms.filter(function(p){ return !q && !qd || (q && rsNameHit(p, rsUI.mq)) || (qd && (String(p.regNo).indexOf(qd) > -1 || (p.phone || "").indexOf(qd) > -1)); });
-    h += '<div class="rs-tools"><input type="search" data-rs-in="mq" data-rs-keep="mq" placeholder="تصفية القائمة" value="' + escapeHTML(rsUI.mq) + '"/>' +
+    var list = rsMemFilter(ms, rsUI.mq);
+    h += '<div class="rs-tools"><input type="search" data-rs-in="mq" data-rs-keep="mq" placeholder="🔍 ابحث في المشاركين — أي جزء من الاسم أو الرقم أو الجوال" value="' + escapeHTML(rsUI.mq) + '"/>' + (rsUI.mq.trim() ? '<span class="rs-note">' + list.length + ' من ' + ms.length + '</span>' : '') +
       (canA ? '<button type="button" class="rs-mini" data-rs="mark-all">تحضير الجميع حاضرين</button><button type="button" class="rs-mini" data-rs="mark-rest">غير المحضَّرين ← غائب</button>' : '') + '</div>';
     h += '<div class="rs-att">' + list.map(function(p){
       var m = marks[p.id];
@@ -18053,25 +18055,31 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
     }).join("") + '</div>';
     return h;
   }
+  // خانة البحث في المشاركين (تُشترك بين «المشاركون» و«سجل الحضور» و«التحضير»): أي جزء من الاسم، أو الرقم، أو الجوال، أو الهوية
+  function rsMemFilter(ms, q){
+    q = String(q || "").trim(); if(!q) return ms;
+    var d = rsDigits(q).replace(/\D/g, ""), u = rsDigits(q).replace(/\s/g, "").toUpperCase();
+    return ms.filter(function(p){ return rsNameHit(p, q) || (u && String(p.regNo || "").toUpperCase().indexOf(u) > -1) || (d.length >= 3 && ((p.phone || "").indexOf(d) > -1 || (p.nid || "").indexOf(d) > -1)); });
+  }
+  function rsMemSearchHTML(total, shown){
+    return '<div class="rs-tools rs-memsearch"><input type="search" data-rs-in="mq" data-rs-keep="mq" placeholder="🔍 ابحث في المشاركين — أي جزء من الاسم أو الرقم أو الجوال" value="' + escapeHTML(rsUI.mq) + '"/>' +
+      (rsUI.mq.trim() ? '<span class="rs-note">' + shown + ' من ' + total + '</span>' : '') + '</div>';
+  }
   function rsMembersHTML(g, ms){
     var canP = can("roster.programs"), h = "";
     if(canP){
       var mem = {}; (g.members || []).forEach(function(id){ mem[id] = 1; });
       var res = rsUI.addq.trim() ? rsFind(rsUI.addq).concat(rs.people.filter(function(p){ return !p.mergedInto && rsNameHit(p, rsUI.addq); })) : [];
       res = rsUniq(res.map(function(p){ return p.id; })).map(function(id){ return rs.byId[id]; }).filter(function(p){ return p && !mem[p.id]; }).slice(0, 12);
-      h += '<div class="rs-card"><h3>بحث وإضافة مشاركين</h3><input type="search" class="rs-wide" data-rs-in="addq" data-rs-keep="addq" placeholder="اكتب أي جزء من الاسم أو الرقم أو الجوال — يصفّي المشاركين ويقترح من السجل" value="' + escapeHTML(rsUI.addq) + '"/>' +
-        (res.length ? '<p class="rs-note" style="margin:10px 0 4px">من السجل (غير مضافين لهذا البرنامج):</p><div class="rs-addlist">' + res.map(function(p){ return '<div><span class="rs-reg" dir="ltr">' + escapeHTML(p.regNo) + '</span><b>' + escapeHTML(p.name) + '</b>' + rsTypeBadge(p.type) + '<button type="button" class="rs-mini" data-rs="mem-add" data-v="' + p.id + '">＋ إضافة</button></div>'; }).join("") + '</div>' : '') +
+      h += '<div class="rs-card"><h3>إضافة مشاركين من السجل</h3><input type="search" class="rs-wide" data-rs-in="addq" data-rs-keep="addq" placeholder="ابحث في السجل عن شخص غير مضاف — أي جزء من الاسم أو الرقم أو الجوال" value="' + escapeHTML(rsUI.addq) + '"/>' +
+        (res.length ? '<div class="rs-addlist">' + res.map(function(p){ return '<div><span class="rs-reg" dir="ltr">' + escapeHTML(p.regNo) + '</span><b>' + escapeHTML(p.name) + '</b>' + rsTypeBadge(p.type) + '<button type="button" class="rs-mini" data-rs="mem-add" data-v="' + p.id + '">＋ إضافة</button></div>'; }).join("") + '</div>' : (rsUI.addq.trim() ? '<p class="report-empty">لا نتائج غير مضافة لهذا البرنامج</p>' : '')) +
         '<div class="rs-row"><span class="rs-note">إضافة جماعية:</span>' + rsTypesUI().map(function(t){ return '<button type="button" class="rs-mini" data-rs="mem-type" data-v="' + t.k + '">كل ' + t.acc + '</button>'; }).join("") +
         (can("roster.import") ? '<button type="button" class="rs-mini" data-rs="mem-import">رفع ملف لهذا البرنامج</button>' : '') + '</div></div>';
     }
     if(!ms.length) return h + '<p class="report-empty">لا يوجد مشاركون بعد</p>';
-    var aq = rsUI.addq.trim();
-    if(aq){
-      var aqd = rsDigits(aq).replace(/\D/g, ""), aqu = rsDigits(aq).replace(/\s/g, "").toUpperCase();
-      ms = ms.filter(function(p){ return rsNameHit(p, aq) || (aqu && String(p.regNo || "").toUpperCase().indexOf(aqu) > -1) || (aqd.length >= 3 && ((p.phone || "").indexOf(aqd) > -1 || (p.nid || "").indexOf(aqd) > -1)); });
-      h += '<p class="rs-note" style="margin:6px 4px 8px">' + (ms.length ? "من المشاركين في البرنامج: " + ms.length : "لا يوجد مشارك في البرنامج بـ «" + escapeHTML(aq) + "»") + '</p>';
-      if(!ms.length) return h;
-    }
+    var total = ms.length; ms = rsMemFilter(ms, rsUI.mq);
+    h += rsMemSearchHTML(total, ms.length);
+    if(!ms.length) return h + '<p class="report-empty">لا يوجد مشارك بـ «' + escapeHTML(rsUI.mq) + '»</p>';
     h += '<div class="rs-tablewrap"><table class="rs-table"><thead><tr><th>رقم التسجيل</th><th>الاسم</th><th>الفئة</th><th>الجوال</th><th></th></tr></thead><tbody>' + ms.map(function(p){
       return '<tr><td class="rs-reg" dir="ltr">' + escapeHTML(p.regNo) + '</td><td><b data-rs="open" data-v="' + p.id + '" class="rs-link">' + escapeHTML(p.name) + '</b></td><td>' + rsTypeBadge(p.type) + '</td><td dir="ltr">' + escapeHTML(p.phone || "—") + '</td><td>' + (canP ? '<button type="button" class="rs-mini rs-mini--del" data-rs="mem-rm" data-v="' + p.id + '">إزالة</button>' : '') + '</td></tr>';
     }).join("") + '</tbody></table></div>';
@@ -18088,6 +18096,8 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
     var avg = trainees.length && held.length ? Math.round(trainees.reduce(function(s, p){ var r = rsRate(g, p.id, held); return s + (r ? r.pct : 0); }, 0) / trainees.length) : 0;
     var h = '<div class="rs-kpis">' + rsKpi(held.length + " / " + ss.length, "جلسات منعقدة") + rsKpi(avg + "%", "متوسط نسبة الحضور") + rsKpi(elig.length, "مؤهل للشهادة (≥ " + th + "%)") + rsKpi(trainees.length - elig.length, "دون النسبة", "tan") + '</div>';
     h += '<div class="rs-bar"><span>✓ حاضر · ◔ متأخر (يُحتسب حضوراً) · ع معتذر · ✗ غائب</span>' + (can("roster.export") ? '<button type="button" class="btn-secondary" data-rs="rec-export">تصدير السجل Excel</button><button type="button" class="btn-secondary" data-rs="rec-cert">تصدير المؤهلين للشهادات</button>' : '') + '</div>';
+    var recTotal = ms.length; ms = rsMemFilter(ms, rsUI.mq);
+    h += rsMemSearchHTML(recTotal, ms.length);
     h += '<div class="rs-tablewrap"><table class="rs-table rs-matrix"><thead><tr><th>الرقم</th><th>الاسم</th>' + ss.map(function(s, i){ return '<th title="' + escapeHTML(s.title || "") + '">' + (i + 1) + '<small>' + rsDate(s.date) + '</small></th>'; }).join("") + '<th>النسبة</th><th>الشهادة</th></tr></thead><tbody>' +
       ms.map(function(p){
         var r = rsRate(g, p.id, held), ok = r && r.pct >= th;
