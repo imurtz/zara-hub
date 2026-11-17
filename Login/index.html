@@ -17524,7 +17524,7 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
     if(keep){ try{ selS = ae.selectionStart; selE = ae.selectionEnd; }catch(e){} }
     // القسم مبسَّط لثلاث شاشات: التحضير، رفع البيانات، السجل والفعاليات (الأشخاص/الفعاليات/التكرار تبويبات فرعية).
     // «كشف حضور عام» مخفي — بياناته باقية كما هي
-    var subs = [["registry", "الأشخاص", "roster.view"], ["programs", "الفعاليات وكشوف الحضور", "roster.view"], ["dupes", "فحص التكرار", "roster.edit"]].filter(function(t){ return can(t[2]); });
+    var subs = [["registry", "الأشخاص", "roster.view"], ["programs", "الفعاليات وكشوف الحضور", "roster.view"], ["stats", "التقرير الإحصائي", "roster.view"], ["dupes", "فحص التكرار", "roster.edit"]].filter(function(t){ return can(t[2]); });
     var tabs = [["desk", "التحضير", "roster.attend"], ["import", "رفع البيانات", "roster.import"]].filter(function(t){ return can(t[2]); });
     if(subs.length) tabs.push([subs[0][0], "السجل والفعاليات", "", subs.map(function(t){ return t[0]; })]);
     var TAB_UI = {
@@ -17544,6 +17544,7 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
     else if(rsUI.tab === "import") h += rsImportHTML();
     else if(rsUI.tab === "programs") h += rsProgramsHTML();
     else if(rsUI.tab === "dupes") h += rsDupesHTML();
+    else if(rsUI.tab === "stats") h += rsStatsHTML();
 
     var y = window.scrollY;
     root.innerHTML = h;
@@ -19188,6 +19189,100 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
     }).catch(function(e){ rsDesk.busy = false; console.error(e); showToast("⚠️ لم يُحفظ — تحقق من الاتصال وأعد المحاولة"); rsRender(); });
   }
 
+  // ===== التقرير الإحصائي لكل فعالية: من الحضور الفعلي فقط (لا أرقام من الملفات المرفوعة)، مقسّم حسب الفئة =====
+  var RS_STAT_ORDER = ["trainee", "volunteer", "supervisor", "admin", "hr", "guest"];
+  var RS_STAT_COL = { trainee: "#4b7071", volunteer: "#b8906e", supervisor: "#8a6fa8", admin: "#4f7fa8", hr: "#3d7a5a", guest: "#a7886c" };
+  function rsStatProg(){
+    var id = rsUI.statProg || rsDeskProgId() || "";
+    var g = rs.programs.find(function(x){ return x.id === id; });
+    if(!g) g = rs.programs.slice().sort(function(a, b){ return String(b.start || "").localeCompare(String(a.start || "")); })[0] || null;
+    return g;
+  }
+  function rsStatCalc(g){
+    var ss = rsSessions(g), ok = function(m){ return m && (m.s === "p" || m.s === "l"); };
+    var held = ss.filter(function(se){ var mk = rs.att[se.id] || {}; return Object.keys(mk).some(function(k){ return ok(mk[k]); }); });
+    var R = {}, uniq = {}, visits = 0, late = 0, door = 0;
+    var role = function(r){ return R[r] = R[r] || { n: 0, m: 0, f: 0, u: 0, all: 0, late: 0, door: 0, day: held.map(function(){ return 0; }), dayM: held.map(function(){ return 0; }), dayF: held.map(function(){ return 0; }) }; };
+    held.forEach(function(se, i){
+      var mk = rs.att[se.id] || {};
+      Object.keys(mk).forEach(function(k){
+        var p = rs.byId[k]; if(!p || !ok(mk[k])) return;
+        if(p.mergedInto && rs.byId[p.mergedInto]) p = rs.byId[p.mergedInto];
+        var r = role(rsAttRole(p)); r.day[i]++; visits++;
+        if(p.gender === "ذكر") r.dayM[i]++; else if(p.gender === "أنثى") r.dayF[i]++;
+        if(mk[k].s === "l"){ r.late++; late++; }
+        (uniq[p.id] = uniq[p.id] || { p: p, d: {} }).d[i] = 1;
+      });
+    });
+    Object.keys(uniq).forEach(function(id){
+      var u = uniq[id], p = u.p, r = role(rsAttRole(p)); r.n++;
+      if(p.gender === "ذكر") r.m++; else if(p.gender === "أنثى") r.f++; else r.u++;
+      if(held.length > 1 && Object.keys(u.d).length === held.length) r.all++;
+      if(p.batch === "desk" || /عند الحضور/.test(p.source || "")){ r.door++; door++; }
+    });
+    var roles = RS_STAT_ORDER.filter(function(k){ return R[k]; }).concat(Object.keys(R).filter(function(k){ return RS_STAT_ORDER.indexOf(k) < 0; }));
+    var tot = { n: Object.keys(uniq).length, all: roles.reduce(function(s, k){ return s + R[k].all; }, 0), m: 0, f: 0, u: 0, day: held.map(function(_, i){ return roles.reduce(function(s, k){ return s + R[k].day[i]; }, 0); }) };
+    roles.forEach(function(k){ tot.m += R[k].m; tot.f += R[k].f; tot.u += R[k].u; });
+    return { g: g, held: held, R: R, roles: roles, tot: tot, visits: visits, late: late, door: door };
+  }
+  function rsStatBody(S){
+    var e = escapeHTML, n = function(x){ return Number(x || 0).toLocaleString("en-US"); }, held = S.held, max = Math.max.apply(null, S.roles.map(function(k){ return S.R[k].n; }).concat([1]));
+    var dayName = function(se, i){ return e(se.title || ("اليوم " + (i + 1))); };
+    var h = '<div class="rss-kpis">' +
+      '<div class="rss-k big"><b>' + n(S.tot.n) + '</b><span>حضروا الفعالية</span></div>' +
+      held.map(function(se, i){ return '<div class="rss-k"><b>' + n(S.tot.day[i]) + '</b><span>' + dayName(se, i) + '<small>' + rsDate(se.date) + '</small></span></div>'; }).join("") +
+      (held.length > 1 ? '<div class="rss-k"><b>' + n(S.tot.all) + '</b><span>حضروا كل الأيام</span></div>' : '') +
+      '<div class="rss-k"><b>' + n(S.tot.m) + ' <i>/</i> ' + n(S.tot.f) + '</b><span>ذكور / إناث</span></div>' +
+      (S.door ? '<div class="rss-k"><b>' + n(S.door) + '</b><span>سُجّلوا عند الحضور</span></div>' : '') + '</div>';
+    // توزيع الفئات
+    h += '<div class="rss-card"><h4>الحضور حسب الفئة</h4>' + S.roles.map(function(k){
+      var r = S.R[k], c = RS_STAT_COL[k] || "#6b7876";
+      return '<div class="rss-bar"><span>' + e(rsT(k).pl) + '</span><div><i style="width:' + Math.max(2, Math.round(r.n / max * 100)) + '%;background:' + c + '"></i></div><b>' + n(r.n) + '</b></div>';
+    }).join("") + '</div>';
+    // بطاقة لكل قسم
+    h += '<div class="rss-grid">' + S.roles.map(function(k){
+      var r = S.R[k], c = RS_STAT_COL[k] || "#6b7876", gt = r.m + r.f + r.u || 1;
+      return '<div class="rss-sec" style="--c:' + c + '"><div class="rss-sec-h"><b>' + e(rsT(k).pl) + '</b><em>' + n(r.n) + '</em></div>' +
+        '<div class="rss-g"><div class="rss-gbar"><i style="width:' + (r.m / gt * 100) + '%;background:#4f7fa8"></i><i style="width:' + (r.f / gt * 100) + '%;background:#c47b8e"></i><i style="width:' + (r.u / gt * 100) + '%;background:#c9d1d0"></i></div>' +
+        '<p><span><i style="background:#4f7fa8"></i>ذكور ' + n(r.m) + '</span><span><i style="background:#c47b8e"></i>إناث ' + n(r.f) + '</span>' + (r.u ? '<span><i style="background:#c9d1d0"></i>غير محدد ' + n(r.u) + '</span>' : '') + '</p></div>' +
+        '<table>' + held.map(function(se, i){ return '<tr><td>' + dayName(se, i) + ' <small>' + rsDate(se.date) + '</small></td><td>' + n(r.day[i]) + '</td></tr>'; }).join("") +
+        (held.length > 1 ? '<tr class="em"><td>حضروا كل الأيام</td><td>' + n(r.all) + '</td></tr><tr><td>يوم واحد فقط</td><td>' + n(r.n - r.all) + '</td></tr>' : '') +
+        (r.late ? '<tr><td>تأخير مسجّل</td><td>' + n(r.late) + '</td></tr>' : '') +
+        (r.door ? '<tr><td>سُجّلوا عند الحضور</td><td>' + n(r.door) + '</td></tr>' : '') + '</table></div>';
+    }).join("") + '</div>';
+    // جدول ملخّص
+    h += '<div class="rss-card"><h4>ملخّص</h4><table class="rss-t"><thead><tr><th>الفئة</th>' + held.map(function(se, i){ return '<th>' + dayName(se, i) + '</th>'; }).join("") + '<th>الأشخاص</th><th>ذكور</th><th>إناث</th></tr></thead><tbody>' +
+      S.roles.map(function(k){ var r = S.R[k]; return '<tr><td>' + e(rsT(k).pl) + '</td>' + r.day.map(function(x){ return '<td>' + n(x) + '</td>'; }).join("") + '<td><b>' + n(r.n) + '</b></td><td>' + n(r.m) + '</td><td>' + n(r.f) + '</td></tr>'; }).join("") +
+      '<tr class="tot"><td>الإجمالي</td>' + S.tot.day.map(function(x){ return '<td>' + n(x) + '</td>'; }).join("") + '<td>' + n(S.tot.n) + '</td><td>' + n(S.tot.m) + '</td><td>' + n(S.tot.f) + '</td></tr></tbody></table>' +
+      '<p class="rss-note">«الأشخاص» يُحسب فيه كل شخص مرة واحدة ولو حضر أكثر من يوم.</p></div>';
+    return h;
+  }
+  var RS_STAT_CSS = '.rss-kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-bottom:12px}.rss-k{background:#fff;border:1px solid #e1e7e6;border-radius:16px;padding:12px 14px}.rss-k b{display:block;font-size:24px;color:#324c4b;line-height:1.2}.rss-k b i{font-style:normal;color:#b9c2c0;font-weight:400}.rss-k span{font-size:12.5px;color:#5b6765}.rss-k small{display:block;font-size:11px}.rss-k.big{background:#4b7071;border-color:#4b7071}.rss-k.big b,.rss-k.big span{color:#fff}.rss-k.big b{font-size:32px}' +
+    '.rss-card{background:#fff;border:1px solid #e1e7e6;border-radius:18px;padding:14px 16px;margin-bottom:12px}.rss-card h4{margin:0 0 10px;font-size:15px}.rss-bar{display:grid;grid-template-columns:130px 1fr 50px;gap:10px;align-items:center;margin:8px 0;font-size:13.5px}.rss-bar div{height:14px;background:#eef2f1;border-radius:7px;overflow:hidden}.rss-bar i{display:block;height:100%;border-radius:7px}.rss-bar b{text-align:left}' +
+    '.rss-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px;margin-bottom:12px}.rss-sec{background:#fff;border:1px solid #e1e7e6;border-top:4px solid var(--c);border-radius:16px;padding:12px 14px}.rss-sec-h{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}.rss-sec-h b{font-size:15px}.rss-sec-h em{font-style:normal;font-size:24px;font-weight:700;color:var(--c)}' +
+    '.rss-gbar{display:flex;height:9px;border-radius:5px;overflow:hidden;background:#eef2f1}.rss-g p{display:flex;gap:10px;flex-wrap:wrap;font-size:11.5px;color:#5b6765;margin:5px 0 8px}.rss-g p i{display:inline-block;width:8px;height:8px;border-radius:2px;margin-inline-end:4px}' +
+    '.rss-sec table{width:100%;border-collapse:collapse;font-size:12.5px}.rss-sec td{padding:5px 2px;border-top:1px solid #f0f3f2}.rss-sec td:last-child{text-align:left;font-weight:700}.rss-sec td small{color:#8a9593}.rss-sec tr.em td{color:#324c4b}' +
+    '.rss-t{width:100%;border-collapse:collapse;font-size:13px}.rss-t th,.rss-t td{padding:7px 8px;text-align:center;border-bottom:1px solid #eef2f1}.rss-t th{background:#f3f6f5}.rss-t td:first-child,.rss-t th:first-child{text-align:right}.rss-t .tot td{font-weight:700;background:#f8f1ea}.rss-note{font-size:12px;color:#6b7876;margin:8px 0 0}';
+  function rsStatsHTML(){
+    var g = rsStatProg();
+    if(!g) return '<div class="rs-empty"><p>لا توجد فعاليات بعد.</p></div>';
+    rsWatchAtt(g.id);
+    var h = '<style>' + RS_STAT_CSS + '</style><div class="rs-row rs-row--sb" style="margin-bottom:12px"><div class="rs-days">' + rs.programs.slice().sort(function(a, b){ return String(b.start || "").localeCompare(String(a.start || "")); }).map(function(x){ return '<button type="button" data-rs="stat-prog" data-v="' + x.id + '" class="' + (x.id === g.id ? "on" : "") + '">' + escapeHTML(x.title) + '<small>' + (x.start ? rsDate(x.start) : "") + '</small></button>'; }).join("") + '</div>' +
+      '<button type="button" class="btn-secondary" data-rs="stat-print" style="flex:none;width:auto">🖨 طباعة / PDF</button></div>';
+    if(rs.attFor !== g.id || !rs.attReady) { /* البيانات تصل خلال لحظة */ }
+    var S = rsStatCalc(g);
+    if(!S.held.length) return h + '<div class="rs-empty"><p>لا يوجد حضور مسجّل في «' + escapeHTML(g.title) + '» بعد.</p></div>';
+    return h + rsStatBody(S);
+  }
+  function rsStatPrint(){
+    var g = rsStatProg(); if(!g) return;
+    var S = rsStatCalc(g), w = window.open("", "_blank");
+    if(!w){ showToast("المتصفح منع فتح نافذة الطباعة — اسمح بالنوافذ المنبثقة"); return; }
+    var range = (g.start ? rsDate(g.start) : "") + (g.end && g.end !== g.start ? " – " + rsDate(g.end) : "");
+    w.document.write('<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><title>التقرير الإحصائي — ' + escapeHTML(g.title) + '</title><link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;600;700&display=swap" rel="stylesheet"><style>@page{size:A4;margin:12mm}*{-webkit-print-color-adjust:exact;print-color-adjust:exact;box-sizing:border-box}body{font-family:"IBM Plex Sans Arabic",Tahoma,sans-serif;color:#141c1b;background:#f6f8f7;margin:0;padding:18px}.hd{background:#324c4b;color:#fff;border-radius:18px;padding:18px 22px;margin-bottom:14px}.hd small{color:#e8cfaf}.hd h1{margin:4px 0;font-size:24px}.hd p{margin:0;color:#d5e0df;font-size:13px}.pb{text-align:center;margin-bottom:12px}.pb button{font:inherit;font-weight:700;border:0;border-radius:999px;padding:9px 22px;background:#b88d66;color:#141c1b;cursor:pointer}@media print{.pb{display:none}body{background:#fff;padding:0}}' + RS_STAT_CSS + '</style></head><body><div class="pb"><button onclick="window.print()">طباعة / حفظ PDF</button></div>' +
+      '<div class="hd"><small>التقرير الإحصائي · ' + escapeHTML(g.kind || "") + '</small><h1>' + escapeHTML(g.title) + '</h1><p>' + range + ' · من الحضور الفعلي المسجّل</p></div>' + rsStatBody(S) + '</body></html>');
+    w.document.close();
+  }
   // ===== التقرير الإحصائي (إنفوجرافيك A4 للطباعة أو الحفظ PDF) — من البيانات الحية لكل الأجهزة =====
   function rsReportOpen(){
     var g = rsDeskProg(); if(!g) return;
@@ -19322,6 +19417,8 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
       case "desk-pick": var p = rs.byId[v]; if(p) rsDeskShow(p); return true;
       case "df-same": var ps = rs.byId[v]; if(ps){ rsDesk.form = null; rsDeskShow(ps); } return true;
       case "desk-change": rsDeskSetProg(""); rsDesk.pick = null; rsRender(); return true;
+      case "stat-prog": rsUI.statProg = v; rsRender(); return true;
+      case "stat-print": rsStatPrint(); return true;
       case "desk-progbtn": rsDeskSetProg(v); rsDesk.sess = ""; rsRender(); rsDeskFocus(); return true;
       case "desk-sessbtn": rsDesk.sess = v; rsDesk.res = null; rsRender(); rsDeskFocus(); return true;
       case "desk-quick": rsDeskQuickProg(); return true;
