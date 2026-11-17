@@ -3918,7 +3918,8 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
     var nTaken = Object.keys(spUI.taken).filter(function(k){ return spUI.taken[k]; }).length;
     var h = '<div class="sp-head"><div><h2>رعاة التقويم الميلادي ' + spUI.year + '</h2><p>الطلبات الواردة من صفحة التسجيل العامة — الشهر المحجوز يظهر مشطوباً للجهات الأخرى</p></div>' +
       '<div class="sp-acts"><a class="sp-btn ghost" href="/sponsor/" target="_blank" rel="noopener">فتح صفحة التسجيل ↗</a>' +
-      '<button type="button" class="sp-btn ghost" data-sp="copy">نسخ الرابط</button>' +
+      '<button type="button" class="sp-btn ghost" data-sp="copy">نسخ رابط التسجيل</button>' +
+      '<button type="button" class="sp-btn ghost" data-sp="copypay" title="صفحة بيانات التحويل — تُرسل للجهة بعد تأكيد الرعاية">نسخ رابط التحويل</button>' +
       '<button type="button" class="sp-btn" data-sp="excel"' + (spUI.reqs.length ? "" : " disabled") + '>تصدير Excel</button></div></div>';
     if(spUI.err) h += '<div class="sp-err">تعذّر تحميل الطلبات (' + spEsc(spUI.err) + ')</div>';
     h += '<div class="sp-stats"><div><b>' + spUI.reqs.length + '</b><span>كل الطلبات</span></div><div><b>' + nTaken + '</b><span>أشهر محجوزة</span></div><div><b>' + (12 - nTaken) + '</b><span>أشهر متاحة</span></div><div><b>' + live.filter(function(r){ return r.status === "confirmed"; }).length + '</b><span>رعاية مؤكدة</span></div></div>';
@@ -3946,7 +3947,7 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
       h += '<div class="sp-row' + (r.status === "cancelled" ? " off" : "") + '">' +
         '<a class="sp-logo" href="' + spEsc(r.logoUrl) + '" target="_blank" rel="noopener" title="فتح الشعار">' + img + '</a>' +
         '<div class="sp-info"><b>' + spEsc(r.org) + '</b><div class="sp-meta"><span class="sp-chip">' + spEsc(r.monthName || SP_MONTHS[r.month - 1]) + ' ' + spUI.year + ' · ' + SP_HIJRI[r.month - 1] + '</span>' +
-        '<a href="tel:' + spEsc(r.phone) + '" dir="ltr">' + spEsc(r.phone) + '</a> · <a href="https://wa.me/' + spEsc(wa) + '" target="_blank" rel="noopener">واتساب</a> · <span>' + spDate(r.createdAt) + '</span>' +
+        '<a href="tel:' + spEsc(r.phone) + '" dir="ltr">' + spEsc(r.phone) + '</a> · <a href="https://wa.me/' + spEsc(wa) + '" target="_blank" rel="noopener">واتساب</a> · <a href="https://wa.me/' + spEsc(wa) + '?text=' + encodeURIComponent("السلام عليكم ورحمة الله،\nشكراً لرعايتكم شهر " + (r.monthName || SP_MONTHS[r.month - 1]) + " في التقويم الميلادي 2027 — " + (r.org || "") + ".\nبيانات التحويل وإرسال الإيصال من هنا:\nhttps://gzara.org/sponsor/?pay=1") + '" target="_blank" rel="noopener">إرسال رابط التحويل</a> · <span>' + spDate(r.createdAt) + '</span>' +
         ' · <a href="' + spEsc(r.logoUrl) + '" download="' + spEsc(r.logoName || "logo") + '">تنزيل الشعار</a> <span class="sp-muted">(' + spEsc(r.logoName || "") + ')</span>' +
         (r.receiptUrl ? ' · <a class="sp-rc" href="' + spEsc(r.receiptUrl) + '" target="_blank" rel="noopener">🧾 إيصال التحويل</a>' + (r.purpose ? ' <span class="sp-muted">(' + spEsc(r.purpose) + ')</span>' : "") : "") + '</div></div>' +
         '<div class="sp-ctl">' + (edit ? '<select data-sp="st" data-id="' + r.id + '">' + SP_STATUS.map(function(s){ return '<option value="' + s.k + '"' + ((r.status || "new") === s.k ? " selected" : "") + '>' + s.l + '</option>'; }).join("") + '</select>' +
@@ -4006,6 +4007,7 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
     if(!b || b.tagName === "SELECT" || !currentUser) return;
     var a = b.getAttribute("data-sp");
     if(a === "copy"){ copyToClipboard("https://gzara.org/sponsor/"); showToast("نُسخ رابط صفحة التسجيل"); }
+    else if(a === "copypay"){ copyToClipboard("https://gzara.org/sponsor/?pay=1"); showToast("نُسخ رابط صفحة التحويل"); }
     else if(a === "excel") spExcel();
     else if(a === "del" && can("sponsor.edit")) spDelete(b.getAttribute("data-id"));
     else if(a === "free" && can("sponsor.edit")) spFree(+b.getAttribute("data-m"));

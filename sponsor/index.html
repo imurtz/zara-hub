@@ -155,9 +155,9 @@
         <div class="drop" id="drop" tabindex="0" role="button" aria-label="رفع الشعار">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4"/><path d="m7 9 5-5 5 5"/><path d="M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/></svg>
           <b>اضغط لرفع الشعار أو اسحبه هنا</b>
-          <span>PNG أو PDF — الحد الأقصى 2 ميجابايت</span>
+          <span>PDF أو PNG أو JPG — الحد الأقصى 4 ميجابايت</span>
         </div>
-        <input type="file" id="logo" accept="image/png,application/pdf,.png,.pdf" hidden />
+        <input type="file" id="logo" accept="image/png,image/jpeg,application/pdf,.png,.jpg,.jpeg,.pdf" hidden />
         <div class="file" id="file">
           <div class="pv" id="pv"></div>
           <div class="meta"><b id="fname"></b><span id="fsize"></span></div>
@@ -165,7 +165,7 @@
         </div>
         <div class="note">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v5"/><path d="M12 16.5v.01"/></svg>
-          <div>نرجو توفير الشعار <b>بجودة عالية النقاوة</b> (يُفضَّل PDF أو PNG بخلفية شفافة ودقة عالية) لضمان ظهوره بوضوح في الطباعة.</div>
+          <div><b>شرط:</b> أن يكون الشعار <b>بجودة عالية النقاوة</b> (يُفضَّل PDF أو PNG بخلفية شفافة)، لضمان ظهوره بوضوح في الطباعة. الصور منخفضة الدقة لا تُقبل.</div>
         </div>
       </div>
 
@@ -176,12 +176,12 @@
     <div class="done" id="done">
       <div class="ok"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg></div>
       <h2>تم استلام طلبكم، شكراً لكم</h2>
-      <p>تم حجز الشهر مبدئياً لجهتكم، وسيتواصل معكم فريق الجمعية قريباً لإتمام الرعاية.</p>
+      <p>تم حجز الشهر مبدئياً لجهتكم، وسيتواصل معكم فريق الجمعية قريباً لتأكيد الرعاية.<br><b>لا يلزمكم أي إجراء آخر الآن.</b></p>
       <div class="sum" id="sum"></div>
     </div>
   </div>
 
-  <div class="card pay" id="pay">
+  <div class="card pay" id="pay" hidden>
     <h2 class="pay-h"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10 12 4l9 6"/><path d="M5 10v8M9.5 10v8M14.5 10v8M19 10v8"/><path d="M3 20h18"/></svg>بيانات التحويل</h2>
     <p class="pay-sub">المستفيد: جمعية العوامية الخيرية للخدمات الاجتماعية</p>
     <div class="iban"><div><span class="bank">البنك الأهلي السعودي</span><b dir="ltr">SA15 1000 0007 2181 5000 0206</b></div><button type="button" data-copy="SA1510000007218150000206">نسخ</button></div>
@@ -219,12 +219,20 @@
   var META = db.collection("calSponsorMeta").doc(YEAR);       // { taken: { "1": requestId, ... } }
   var REQS = db.collection("calSponsorRequests");
   var UPLOAD = "https://zara-media-upload.murtada-ud.workers.dev/";
-  var MAX = 2 * 1024 * 1024;
+  var MAX = 4 * 1024 * 1024, MIN_PX = 1000; // أقل طول لأطول ضلع في PNG/JPG
   var MONTHS = ["يناير","فبراير","مارس","أبريل","مايو","يونيو","يوليو","أغسطس","سبتمبر","أكتوبر","نوفمبر","ديسمبر"];
   // ما يقابل كل شهر ميلادي من الأشهر الهجرية (تقويم أم القرى) — كل شهر ميلادي يقع على شهرين هجريين
   var HIJRI = ["رجب – شعبان 1448","شعبان – رمضان 1448","رمضان – شوال 1448","شوال – ذو القعدة 1448","ذو القعدة – ذو الحجة 1448","ذو الحجة 1448 – محرم 1449","محرم – صفر 1449","صفر – ربيع الأول 1449","ربيع الأول – ربيع الآخر 1449","جمادى الأولى – جمادى الآخرة 1449","جمادى الآخرة – رجب 1449","رجب – شعبان 1449"];
 
   var $ = function(id){ return document.getElementById(id); };
+  // صفحة التحويل منفصلة: تظهر فقط عبر الرابط ‎/sponsor/?pay=1 الذي يرسله فريق الجمعية بعد تأكيد الرعاية،
+  // حتى لا يظن من يسجّل أن التحويل شرط للتسجيل
+  var PAY = /[?&]pay=1\b/.test(location.search) || location.hash === "#pay";
+  if(PAY){
+    document.querySelector(".hero h1").innerHTML = "تحويل رعاية <b>التقويم الميلادي 2027</b>";
+    document.querySelector(".hero p").textContent = "شكراً لرعايتكم — بيانات التحويل أدناه، وبعد التحويل أرسلوا الإيصال بضغطة واحدة.";
+    document.querySelector(".card").hidden = true; $("pay").hidden = false; $("pay").style.marginTop = "0";
+  }
   var taken = {}, picked = "", file = null, lastReq = "";
 
   // ----- الأشهر حسب الإتاحة (تتحدّث مباشرة لو حجز أحد آخر) -----
@@ -262,17 +270,32 @@
 
   // ----- الشعار -----
   function kb(n){ return n > 1048576 ? (n / 1048576).toFixed(2) + " ميجابايت" : Math.ceil(n / 1024) + " كيلوبايت"; }
-  function isOk(f){ return f.type === "image/png" || f.type === "application/pdf" || /\.(png|pdf)$/i.test(f.name); }
+  function isPdf(f){ return f.type === "application/pdf" || /\.pdf$/i.test(f.name); }
+  function isJpg(f){ return f.type === "image/jpeg" || /\.jpe?g$/i.test(f.name); }
+  function isOk(f){ return isPdf(f) || isJpg(f) || f.type === "image/png" || /\.png$/i.test(f.name); }
+  function logoType(f){ return isPdf(f) ? "application/pdf" : isJpg(f) ? "image/jpeg" : "image/png"; }
   function setFile(f){
     hideMsg();
     if(!f) return;
-    if(!isOk(f)){ showMsg("صيغة الملف غير مقبولة — المسموح PNG أو PDF فقط."); return; }
-    if(f.size > MAX){ showMsg("حجم الملف " + kb(f.size) + " — الحد الأقصى 2 ميجابايت."); return; }
+    if(!isOk(f)){ showMsg("صيغة الملف غير مقبولة — المسموح PDF أو PNG أو JPG."); return; }
+    if(f.size > MAX){ showMsg("حجم الملف " + kb(f.size) + " — الحد الأقصى 4 ميجابايت."); return; }
+    if(isPdf(f)) return accept(f);
+    // الصور: نتأكد من الدقة (شرط النقاوة العالية)
+    var url = URL.createObjectURL(f), im = new Image();
+    im.onload = function(){
+      var big = Math.max(im.naturalWidth, im.naturalHeight);
+      if(big < MIN_PX){ URL.revokeObjectURL(url); showMsg("دقة الشعار منخفضة (" + im.naturalWidth + "×" + im.naturalHeight + " بكسل) — نحتاج نسخة بجودة عالية النقاوة لا يقل أطول ضلع فيها عن " + MIN_PX + " بكسل، أو ملف PDF."); return; }
+      accept(f, url, im.naturalWidth + "×" + im.naturalHeight);
+    };
+    im.onerror = function(){ URL.revokeObjectURL(url); showMsg("تعذّرت قراءة الصورة — جرّب ملفاً آخر أو PDF."); };
+    im.src = url;
+  }
+  function accept(f, url, dim){
     file = f;
-    $("fname").textContent = f.name; $("fsize").textContent = kb(f.size);
+    $("fname").textContent = f.name; $("fsize").textContent = kb(f.size) + (dim ? " · " + dim : "");
     var pv = $("pv"); pv.style.backgroundImage = ""; pv.textContent = "";
-    if(/pdf/i.test(f.type) || /\.pdf$/i.test(f.name)) pv.textContent = "PDF";
-    else pv.style.backgroundImage = "url(" + URL.createObjectURL(f) + ")";
+    if(isPdf(f)) pv.textContent = "PDF";
+    else pv.style.backgroundImage = "url(" + url + ")";
     $("file").classList.add("show"); $("drop").style.display = "none";
   }
   function clearFile(){ file = null; $("logo").value = ""; $("file").classList.remove("show"); $("drop").style.display = ""; }
@@ -295,10 +318,10 @@
     if(org.length < 3){ $("org").classList.add("err-in"); $("org").focus(); return showMsg("اكتب اسم الجهة الرسمي."); }
     if(!picked) return showMsg("اختر الشهر المرغوب.");
     if(!/^05\d{8}$/.test(phone)){ $("phone").classList.add("err-in"); $("phone").focus(); return showMsg("رقم الجوال غير صحيح — مثال: 0501234567"); }
-    if(!file) return showMsg("ارفع شعار الجهة (PNG أو PDF).");
+    if(!file) return showMsg("ارفع شعار الجهة (PDF أو PNG أو JPG).");
 
     var btn = $("send"); btn.disabled = true; btn.textContent = "جارٍ رفع الشعار…";
-    var type = /\.pdf$/i.test(file.name) || /pdf/i.test(file.type) ? "application/pdf" : "image/png";
+    var type = logoType(file);
     var month = picked;
     fetch(UPLOAD, { method: "POST", headers: { "Content-Type": type, "X-Folder": "logos" }, body: file })
       .then(function(r){ if(!r.ok) throw new Error("upload_" + r.status); return r.json(); })
@@ -333,7 +356,7 @@
         btn.disabled = false; btn.textContent = "إرسال طلب الرعاية";
         var m = String(err && err.message || "");
         if(m === "taken"){ picked = ""; paintMonths(); showMsg("عذراً، شهر " + MONTHS[month - 1] + " حُجز للتو من جهة أخرى — اختر شهراً آخر."); }
-        else if(m.indexOf("upload_413") === 0) showMsg("حجم الملف كبير — الحد الأقصى 2 ميجابايت.");
+        else if(m.indexOf("upload_413") === 0) showMsg("حجم الملف كبير — الحد الأقصى 4 ميجابايت.");
         else if(m.indexOf("upload") === 0) showMsg("تعذّر رفع الشعار، تأكد من الاتصال وحاول مرة أخرى.");
         else showMsg("تعذّر إرسال الطلب، حاول مرة أخرى بعد لحظات.");
       });
