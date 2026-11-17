@@ -92,11 +92,17 @@ export function drawFooter(ctx, W, H, ratio, o, A) {
   L.gradStops.forEach(([p, a]) => gg.addColorStop(p, `rgba(${r},${g},${b},${a})`));
   ctx.fillStyle = gg; ctx.fillRect(0, H - gh, W, gh);
   // 3) تأثير تاريخ التأسيس (نقشة 1387) — خافت داخل التدرج
+  // تتلاشى النقشة بنفس منحنى التدرج الأخضر: تُرسم على طبقة بارتفاع التدرج ثم تُقنَّع بنفس نقاط التوقف
   if (A.founding && L.founding.opacity > 0) {
     const fh = L.founding.h * u, fw = fh * (A.founding.width / A.founding.height);
-    ctx.globalAlpha = L.founding.opacity;
-    for (let x = 0; x < W; x += fw) ctx.drawImage(A.founding, x, H - fh, fw, fh);
-    ctx.globalAlpha = 1;
+    const cw = Math.ceil(W), ch = Math.max(1, Math.ceil(gh));
+    const lay = typeof OffscreenCanvas !== "undefined" ? new OffscreenCanvas(cw, ch) : Object.assign(document.createElement("canvas"), { width: cw, height: ch });
+    const lc = lay.getContext("2d");
+    for (let y = ch - fh; y > -fh; y -= fh) for (let x = 0; x < W; x += fw) lc.drawImage(A.founding, x, y, fw, fh);
+    const top = L.gradStops[L.gradStops.length - 1][1] || 1, mg = lc.createLinearGradient(0, 0, 0, ch);
+    L.gradStops.forEach(([p, a]) => mg.addColorStop(p, `rgba(0,0,0,${Math.min(1, a / top)})`));
+    lc.globalCompositeOperation = "destination-in"; lc.fillStyle = mg; lc.fillRect(0, 0, cw, ch);
+    ctx.globalAlpha = L.founding.opacity; ctx.drawImage(lay, 0, H - ch); ctx.globalAlpha = 1;
   }
   // 4) مربعات الشعارات
   const bx = L.box, s = bx.size * u, top = bx.top * u;
