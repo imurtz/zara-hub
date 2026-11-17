@@ -760,6 +760,32 @@ async function savePresetAs() {
   if (S.sys) { try { await writeFile(await sysDir("بريستات"), safeName(name) + ".json", JSON.stringify(rec, null, 2)); where = "في مجلد المنظومة"; } catch (e) {} }
   setPresetKey("my:" + name); await loadPresets(); toast(`حُفظ البريست «${name}» ${where} ✓`);
 }
+// استيراد بريستات Lightroom (.xmp): تُقرأ إعداداتها وتُحفظ ضمن «بريستاتي» ويُطبَّق آخرها على الصورة الحالية
+function importXMP() {
+  const inp = document.createElement("input"); inp.type = "file"; inp.accept = ".xmp,.XMP,application/rdf+xml"; inp.multiple = true;
+  inp.onchange = async () => {
+    const files = [...inp.files]; if (!files.length) return;
+    let last = "", ok = 0; const miss = new Set(), bad = [];
+    const local = ls.get("myPresets", []) || [];
+    for (const f of files) {
+      try {
+        const txt = await f.text(); if (!/crs:|camera-raw-settings/i.test(txt)) throw new Error("not xmp");
+        const r = fromXMP(txt), adj = Object.fromEntries(Object.entries(r.adj).filter(([k, v]) => v !== undefined));
+        if (isZero(adj)) throw new Error("empty");
+        const name = (r.name || f.name.replace(/\.xmp$/i, "")).trim();
+        const rec = { name, adj, savedAt: new Date().toISOString(), from: "xmp" };
+        const i = local.findIndex(x => x.name === name); if (i > -1) local[i] = rec; else local.push(rec);
+        if (S.sys) { try { await writeFile(await sysDir("بريستات"), safeName(name) + ".json", JSON.stringify(rec, null, 2)); } catch (e) {} }
+        r.unsupported.forEach(x => miss.add(x)); last = name; ok++;
+      } catch (e) { bad.push(f.name); }
+    }
+    ls.set("myPresets", local);
+    await loadPresets();
+    if (last) applyLR("my:" + last);
+    toast(ok ? `استُورد ${ok === 1 ? "البريست «" + last + "»" : ok + " بريستات"} وطُبّق ${ok === 1 ? "" : "آخرها "}✓` + (bad.length ? ` — تعذّرت قراءة: ${bad.join("، ")}` : "") + (miss.size ? " (بعض الإعدادات الخاصة غير مدعومة)" : "") : "تعذّرت قراءة الملف — تأكد أنه بريست Lightroom ‏(.xmp)");
+  };
+  inp.click();
+}
 async function deletePreset() {
   const key = presetKey(); if (!key.startsWith("my:")) return;
   const name = key.slice(3); if (!confirm(`حذف البريست «${name}»؟`)) return;
@@ -774,7 +800,7 @@ function pickFile(accept) { return new Promise(res => { const i = document.creat
   // التنقل بين المقترحات بالأسهم مع المعاينة الفورية
   $("#lrPrev").onclick = () => { if (sel.selectedIndex > 0) { sel.selectedIndex--; applyLR(sel.value); } };
   $("#lrNext").onclick = () => { if (sel.selectedIndex < sel.options.length - 1) { sel.selectedIndex++; applyLR(sel.value); } };
-  $("#presetSave").onclick = savePresetAs; $("#presetDel").onclick = deletePreset;
+  $("#presetSave").onclick = savePresetAs; $("#presetDel").onclick = deletePreset; $("#presetXmp").onclick = importXMP;
 })();
 
 /* ============ مطابقة صورة مرجعية ============ */
