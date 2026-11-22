@@ -220,10 +220,10 @@ export default {
         const t = url.searchParams.get("t") || ""; const ex = t && await env.DB.prepare("SELECT * FROM experts WHERE token = ? AND active = 1").bind(t).first();
         if (!ex) return json({ ok: false, err: "token" }, 401, H);
         await env.DB.prepare("UPDATE experts SET last_seen=? WHERE id=?").bind(now(), ex.id).run();
-        const pool = ((await env.DB.prepare("SELECT id, field, titles, years, degree, skills, city, gender, updated FROM seekers WHERE status='active' AND consent=1 AND (roster_id NOT LIKE 'zz-%' OR ? = 1)").bind(ex.id.startsWith("zz-") ? 1 : 0).all()).results || []).map(s => Object.assign(s, { titles: JSON.parse(s.titles || "[]"), skills: JSON.parse(s.skills || "[]") }));
+        const pool = ((await env.DB.prepare("SELECT id, reg_no, field, titles, years, degree, skills, city, gender, updated FROM seekers WHERE status='active' AND consent=1 AND (roster_id NOT LIKE 'zz-%' OR ? = 1)").bind(ex.id.startsWith("zz-") ? 1 : 0).all()).results || []).map(s => Object.assign(s, { titles: JSON.parse(s.titles || "[]"), skills: JSON.parse(s.skills || "[]"), code: (String(s.reg_no || "").match(/(\d+)$/) || [])[1] || s.id.slice(-4).toUpperCase() }));
         if (p === "/api/hr/home") { // مربعات المسميات + أسئلة المتابعة المستحقة
           const tiles = {};
-          pool.forEach(s => { const seen = {}; s.titles.forEach(ti => { const k = normT(ti); if (!k || seen[k]) return; seen[k] = 1; (tiles[k] = tiles[k] || { label: ti, n: 0, field: s.field }).n++; }); });
+          pool.forEach(s => { const seen = {}; s.titles.forEach(ti => { const k = normT(ti); if (!k || seen[k]) return; seen[k] = 1; const tl = (tiles[k] = tiles[k] || { label: ti, n: 0, field: s.field, codes: [] }); tl.n++; tl.codes.push(s.code); }); });
           const due = ((await env.DB.prepare("SELECT r.id, r.job, r.created, s.name FROM requests r LEFT JOIN seekers s ON s.id = r.seeker_id WHERE r.expert_id = ? AND (r.outcome IS NULL OR r.outcome = '') AND r.created < ? ORDER BY r.created LIMIT 5").bind(ex.id, now() - FOLLOW_DAYS * 864e5).all()).results || []);
           return json({ ok: true, name: ex.name, total: pool.length, tiles: Object.values(tiles).sort((a, b) => b.n - a.n || a.label.localeCompare(b.label, "ar")), fields: FIELDS.map(f => ({ k: f[0], l: f[1], n: pool.filter(s => s.field === f[0]).length })).filter(f => f.n), due }, 200, H);
         }
@@ -232,7 +232,7 @@ export default {
           const mine = {}; ((await env.DB.prepare("SELECT seeker_id FROM requests WHERE expert_id = ?").bind(ex.id).all()).results || []).forEach(r => mine[r.seeker_id] = 1);
           const rows = pool.filter(s => title ? s.titles.some(x => normT(x) === k) : field ? s.field === field : true)
             .sort((a, b) => (b.years || 0) - (a.years || 0) || b.updated - a.updated)
-            .map(s => ({ id: s.id, fieldName: FIELD_NAME[s.field] || "", titles: s.titles, years: s.years, degree: s.degree, city: s.city, skills: s.skills.slice(0, 5), gender: s.gender, taken: !!mine[s.id] }));
+            .map(s => ({ id: s.id, code: s.code, fieldName: FIELD_NAME[s.field] || "", titles: s.titles, alsoIn: title ? s.titles.filter(x => normT(x) !== k) : [], years: s.years, degree: s.degree, city: s.city, skills: s.skills.slice(0, 5), gender: s.gender, taken: !!mine[s.id] }));
           return json({ ok: true, rows }, 200, H);
         }
         if (p === "/api/hr/open" && req.method === "POST") { // كشف السيرة: يُسجَّل باسم الخبير فوراً
