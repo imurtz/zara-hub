@@ -2513,6 +2513,14 @@ body.rs-kiosk .nav-groups{display:none !important;}
 #cvRoot .cv-main{flex:1;min-width:0}
 #cvRoot .cv-main b{font-size:15px}
 #cvRoot .cv-reg{font-size:12px;color:#8a9593;font-family:monospace}
+#cvRoot .cv-xl{padding:6px 0 !important}
+#cvRoot .cv-xq{display:block;width:calc(100% - 24px);margin:8px 12px 6px;box-sizing:border-box;border:1px solid #dfe5e4;border-radius:12px;padding:10px 14px;font:inherit;font-size:15px;background:#f7f9f8}
+#cvRoot .cv-x{display:flex;align-items:center;gap:10px 14px;flex-wrap:wrap;padding:12px 16px;border-top:1px solid #eef1f0}
+#cvRoot .cv-x-m{flex:1 1 220px;min-width:0}
+#cvRoot .cv-x-m b{font-size:15.5px}
+#cvRoot .cv-x-s{font-size:12.5px;color:#6B7775;margin-top:3px;line-height:1.6}
+#cvRoot .cv-x-a{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+#cvRoot .cv-wa{background:#1fa855 !important;gap:6px}
 #cvRoot .cv-code{font-family:ui-monospace,Menlo,monospace;font-size:17px;letter-spacing:3px;background:#e9f3ef;color:#1f5a44;border-radius:10px;padding:3px 10px}
 #cvRoot .cv-pend{font-size:11px;background:#f8f1ea;color:#8f6a4b;border-radius:10px;padding:1px 8px}
 #cvRoot .cv-f{font-size:13.5px;color:#3d5b56;font-weight:600;margin-top:3px}
@@ -4176,7 +4184,12 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
       if(d.rosterOk === false) h += '<div class="cv-card cv-err">تعذّر جلب الخبراء من «مطابقة البيانات» الآن — حدّث بعد دقيقة.</div>';
       var xs = d.experts.slice().sort(function(a, b){ return (a.gone ? 1 : 0) - (b.gone ? 1 : 0) || (a.pin_at ? 1 : 0) - (b.pin_at ? 1 : 0) || String(a.name).localeCompare(String(b.name), "ar"); });
       var waIc = '<svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2zm0 18.2a8.2 8.2 0 0 1-4.2-1.2l-.3-.2-3 .8.8-2.9-.2-.3A8.2 8.2 0 1 1 12 20.2zm4.5-6.1c-.2-.1-1.5-.7-1.7-.8s-.4-.1-.6.1-.7.8-.8 1-.3.2-.5.1a6.7 6.7 0 0 1-3.3-2.9c-.3-.4.2-.4.7-1.4.1-.2 0-.3 0-.4l-.8-1.8c-.2-.5-.4-.4-.6-.4h-.5a1 1 0 0 0-.7.3 3 3 0 0 0-.9 2.2 5.2 5.2 0 0 0 1.1 2.7 11.8 11.8 0 0 0 4.5 4c1.7.7 2.3.8 3.2.6a2.7 2.7 0 0 0 1.8-1.2 2.2 2.2 0 0 0 .1-1.3c0-.1-.2-.2-.5-.3z"/></svg>';
-      h += xs.length ? '<div class="cv-card"><table class="cv-t"><thead><tr><th>المدرب</th><th>الجوال</th><th>الرمز</th><th>آخر زيارة</th><th>السير المطلوبة</th><th></th></tr></thead><tbody>' + xs.map(function(x){ var n = d.requests.filter(function(r){ return r.expert_id === x.id; }).length; return '<tr' + (x.active && !x.gone ? '' : ' style="opacity:.5"') + '><td>' + e(x.name) + (x.reg_no ? ' <span class="cv-reg" dir="ltr">' + e(x.reg_no) + '</span>' : '') + (x.gone ? ' <span class="cv-pend">لم يعد في السجل</span>' : '') + '</td><td dir="ltr">' + e(x.phone || "") + '</td><td>' + (cvUI.codes[x.id] ? '<b class="cv-code" dir="ltr">' + e(cvUI.codes[x.id].code) + '</b>' : x.pin_at ? 'وُلّد ' + cvDate(x.pin_at) : '<span class="cv-pend">لم يُولّد</span>') + '</td><td>' + (x.last_seen ? cvDate(x.last_seen) : "—") + '</td><td>' + n + '</td><td style="white-space:nowrap">' + (x.gone ? '' : cvUI.codes[x.id] ? '<button type="button" class="cv-btn ghost" data-cv="codecp" data-v="' + e(x.id) + '">نسخ</button> <button type="button" class="cv-btn" style="background:#1fa855;display:inline-flex;align-items:center;gap:6px" data-cv="codewa" data-v="' + e(x.id) + '">' + waIc + 'واتساب</button> ' : '<button type="button" class="cv-btn" data-cv="code" data-v="' + e(x.id) + '" data-n="' + e(x.name) + '" data-old="' + (x.pin_at ? 1 : 0) + '">' + (x.pin_at ? 'رمز جديد' : 'توليد رمز') + '</button> ') + (x.created ? '<button type="button" class="cv-btn ghost" data-cv="xp" data-v="' + e(x.id) + '" data-a="' + (x.active ? 0 : 1) + '">' + (x.active ? "إيقاف" : "تفعيل") + '</button>' : '') + '</td></tr>'; }).join("") + '</tbody></table></div>' : '<div class="cv-card cv-muted">لا يوجد خبراء بصفة «موارد بشرية» في «مطابقة البيانات».</div>';
+      h += xs.length ? '<div class="cv-card cv-xl"><input type="search" class="cv-xq" placeholder="ابحث باسم المدرب أو جواله" oninput="var q=this.value.trim();this.parentNode.querySelectorAll(\'.cv-x\').forEach(function(r){r.style.display=!q||r.getAttribute(\'data-s\').indexOf(q)>-1?\'\':\'none\'})"/>' + xs.map(function(x){
+        var n = d.requests.filter(function(r){ return r.expert_id === x.id; }).length, c = cvUI.codes[x.id];
+        var sub = [x.pin_at ? 'وُلّد رمز ' + cvDate(x.pin_at) : 'لم يُولّد رمز', x.last_seen ? 'آخر زيارة ' + cvDate(x.last_seen) : '', n ? n + ' سيرة مطلوبة' : ''].filter(Boolean).join(' · ');
+        var act = x.gone ? '<span class="cv-pend">لم يعد في السجل</span>' : c ? '<b class="cv-code" dir="ltr">' + e(c.code) + '</b><button type="button" class="cv-btn ghost" data-cv="codecp" data-v="' + e(x.id) + '">نسخ</button><button type="button" class="cv-btn cv-wa" data-cv="codewa" data-v="' + e(x.id) + '">' + waIc + 'واتساب</button>' : '<button type="button" class="cv-btn" data-cv="code" data-v="' + e(x.id) + '" data-n="' + e(x.name) + '" data-old="' + (x.pin_at ? 1 : 0) + '">' + (x.pin_at ? 'رمز جديد' : 'توليد رمز') + '</button>' + (x.created ? '<button type="button" class="cv-btn ghost" data-cv="xp" data-v="' + e(x.id) + '" data-a="' + (x.active ? 0 : 1) + '">' + (x.active ? "إيقاف" : "تفعيل") + '</button>' : '');
+        return '<div class="cv-x"' + (x.active || !x.created ? '' : ' style="opacity:.5"') + ' data-s="' + e((x.name || "") + " " + (x.phone || "")) + '"><div class="cv-x-m"><b>' + e(x.name) + '</b><div class="cv-x-s"><span dir="ltr">' + e(x.phone || "") + '</span> · ' + sub + '</div></div><div class="cv-x-a">' + act + '</div></div>';
+      }).join("") + '</div>' : '<div class="cv-card cv-muted">لا يوجد خبراء بصفة «موارد بشرية» في «مطابقة البيانات».</div>';
       root.innerHTML = h; return;
     }
     if(cvUI.tab === "reqs"){
@@ -4220,7 +4233,7 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
     else if(a === "codewa"){
       var c2 = cvUI.codes[v]; if(!c2) return;
       var first = String(c2.name || "").split(" ")[0];
-      var msg = "حياك الله أ. " + first + "\nهذي صفحة مرشحي «مفاتيح الفرص» لخبراء الموارد البشرية:\nhttps://gzara.org/hr/?p=" + c2.phone + "\n\nرقم الدخول: " + c2.phone + "\nرمز الدخول: " + c2.code + "\n\nتدخل مرة وحدة وتبقى مسجّل على جهازك. تقدر تشوف السير حسب المسمى الوظيفي، وتضيف الوظيفة اللي تبحث لها.\nجمعية العوامية الخيرية";
+      var msg = "حيّاك الله أ. " + first + " 🌷\n\nباسم جمعية العوامية الخيرية نشكرك من القلب على حضورك ومشاركتك في ورشة «مفاتيح التوظيف 2». حرصك واهتمامك ووقتك اللي أعطيته لشبابنا وبناتنا كان له أثر كبير، ونتمنى أن تستمر هذه الشراكة.\n\nوامتداداً لهذا الأثر، جهّزنا لك منصة «مفاتيح الفرص». فيها السير الذاتية لمتدربي الورشة مرتّبة حسب المسمى الوظيفي، وتقدر تضيف الوظيفة اللي تبحث لها:\nhttps://gzara.org/hr/?p=" + c2.phone + "\n\nرقم الدخول: " + c2.phone + "\nرمز الدخول: " + c2.code + "\n\nتدخل مرة وحدة وتبقى مسجّل على جهازك.\n\nشاكرين لك ومقدّرين،\nجمعية العوامية الخيرية";
       window.open("https://wa.me/966" + String(c2.phone).replace(/^0/, "") + "?text=" + encodeURIComponent(msg), "_blank");
     }
     else if(a === "f"){ cvUI.f = v; cvRender(); }
