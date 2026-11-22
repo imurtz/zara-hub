@@ -2513,6 +2513,7 @@ body.rs-kiosk .nav-groups{display:none !important;}
 #cvRoot .cv-main{flex:1;min-width:0}
 #cvRoot .cv-main b{font-size:15px}
 #cvRoot .cv-reg{font-size:12px;color:#8a9593;font-family:monospace}
+#cvRoot .cv-code{font-family:ui-monospace,Menlo,monospace;font-size:17px;letter-spacing:3px;background:#e9f3ef;color:#1f5a44;border-radius:10px;padding:3px 10px}
 #cvRoot .cv-pend{font-size:11px;background:#f8f1ea;color:#8f6a4b;border-radius:10px;padding:1px 8px}
 #cvRoot .cv-f{font-size:13.5px;color:#3d5b56;font-weight:600;margin-top:3px}
 #cvRoot .cv-m{font-size:12.5px;color:#6b7876;margin-top:2px}
@@ -4126,7 +4127,7 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
   // ===== السير الذاتية (مفاتيح الفرص): لوحة المؤسس — البيانات في خدمة zara-cv الخاصة لا في Firestore =====
   // مفتاح اللوحة يُدخل مرة واحدة ويُحفظ على هذا الجهاز فقط (لا يُكتب في الكود المنشور)
   var CV_API = "https://zara-cv.murtada-ud.workers.dev";
-  var cvUI = { data: null, err: "", busy: false, q: "", f: "", tab: "seekers" };
+  var cvUI = { data: null, err: "", busy: false, q: "", f: "", tab: "experts", codes: {} };
   function cvKey(){ try{ return localStorage.getItem("zaraCvAdminKey") || ""; }catch(e){ return ""; } }
   function cvLoad(){
     var k = cvKey(); if(!k){ cvRender(); return; }
@@ -4156,7 +4157,7 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
     var byF = {}; ok.forEach(function(s){ byF[s.field] = (byF[s.field] || 0) + 1; });
     var hired = d.requests.filter(function(r){ return r.outcome === "hired"; });
     h += '<div class="cv-kpis"><div><b>' + ok.length + '</b><span>سيرة جاهزة</span></div><div><b>' + (act.length - ok.length) + '</b><span>بانتظار تأكيد صاحبها</span></div><div><b>' + d.requests.length + '</b><span>سيرة أُرسلت لخبير</span></div><div><b>' + hired.length + '</b><span>توظيف</span></div></div>';
-    h += '<div class="cv-tabs"><button type="button" data-cv="tab" data-v="seekers" class="' + (cvUI.tab === "seekers" ? "on" : "") + '">الباحثون (' + act.length + ')</button><button type="button" data-cv="tab" data-v="reqs" class="' + (cvUI.tab === "reqs" ? "on" : "") + '">من وصلته فرصة (' + d.requests.length + ')</button><button type="button" data-cv="tab" data-v="experts" class="' + (cvUI.tab === "experts" ? "on" : "") + '">الخبراء (' + d.experts.filter(function(x){ return !x.gone; }).length + ')</button><button type="button" data-cv="tab" data-v="jobs" class="' + (cvUI.tab === "jobs" ? "on" : "") + '">الوظائف المطلوبة (' + (d.jobs || []).filter(function(j){ return j.status === "open"; }).length + ')</button></div>';
+    h += '<div class="cv-tabs"><button type="button" data-cv="tab" data-v="seekers" class="' + (cvUI.tab === "seekers" ? "on" : "") + '">الباحثون (' + act.length + ')</button><button type="button" data-cv="tab" data-v="reqs" class="' + (cvUI.tab === "reqs" ? "on" : "") + '">من وصلته فرصة (' + d.requests.length + ')</button><button type="button" data-cv="tab" data-v="experts" class="' + (cvUI.tab === "experts" ? "on" : "") + '">المدربون (' + d.experts.filter(function(x){ return !x.gone; }).length + ')</button><button type="button" data-cv="tab" data-v="jobs" class="' + (cvUI.tab === "jobs" ? "on" : "") + '">الوظائف المطلوبة (' + (d.jobs || []).filter(function(j){ return j.status === "open"; }).length + ')</button></div>';
     if(cvUI.tab === "jobs"){
       var jobs = d.jobs || [];
       h += '<div class="cv-card cv-muted" style="font-size:13px">وظائف أضافها الخبراء من صفحتهم لما ما لقوا المسمى اللي يبونه. «مطابق» = عدد السير الجاهزة اللي مسمّاها قريب من الوظيفة.</div>';
@@ -4164,11 +4165,11 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
       root.innerHTML = h; return;
     }
     if(cvUI.tab === "experts"){
-      h += '<div class="cv-card cv-muted" style="font-size:13px">الخبراء = كل من له صفة «موارد بشرية» في «مطابقة البيانات». رقم الدخول = جواله، والرمز يتولد لما تضغط <b>واتساب</b> وينفتح لك محادثته والرسالة جاهزة — بس أرسل. إرسال رمز جديد يلغي القديم.</div>';
+      h += '<div class="cv-card cv-muted" style="font-size:13px">المدربون = كل من له صفة «موارد بشرية» في «مطابقة البيانات». رقم الدخول = جواله. اضغط <b>توليد رمز</b> ويطلع لك الرمز، وبعدها انسخه أو أرسله بالواتساب. توليد رمز جديد يلغي القديم.</div>';
       if(d.rosterOk === false) h += '<div class="cv-card cv-err">تعذّر جلب الخبراء من «مطابقة البيانات» الآن — حدّث بعد دقيقة.</div>';
       var xs = d.experts.slice().sort(function(a, b){ return (a.gone ? 1 : 0) - (b.gone ? 1 : 0) || (a.pin_at ? 1 : 0) - (b.pin_at ? 1 : 0) || String(a.name).localeCompare(String(b.name), "ar"); });
       var waIc = '<svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2zm0 18.2a8.2 8.2 0 0 1-4.2-1.2l-.3-.2-3 .8.8-2.9-.2-.3A8.2 8.2 0 1 1 12 20.2zm4.5-6.1c-.2-.1-1.5-.7-1.7-.8s-.4-.1-.6.1-.7.8-.8 1-.3.2-.5.1a6.7 6.7 0 0 1-3.3-2.9c-.3-.4.2-.4.7-1.4.1-.2 0-.3 0-.4l-.8-1.8c-.2-.5-.4-.4-.6-.4h-.5a1 1 0 0 0-.7.3 3 3 0 0 0-.9 2.2 5.2 5.2 0 0 0 1.1 2.7 11.8 11.8 0 0 0 4.5 4c1.7.7 2.3.8 3.2.6a2.7 2.7 0 0 0 1.8-1.2 2.2 2.2 0 0 0 .1-1.3c0-.1-.2-.2-.5-.3z"/></svg>';
-      h += xs.length ? '<div class="cv-card"><table class="cv-t"><thead><tr><th>الخبير</th><th>الجوال</th><th>الرمز</th><th>آخر زيارة</th><th>السير المطلوبة</th><th></th></tr></thead><tbody>' + xs.map(function(x){ var n = d.requests.filter(function(r){ return r.expert_id === x.id; }).length; return '<tr' + (x.active && !x.gone ? '' : ' style="opacity:.5"') + '><td>' + e(x.name) + (x.reg_no ? ' <span class="cv-reg" dir="ltr">' + e(x.reg_no) + '</span>' : '') + (x.gone ? ' <span class="cv-pend">لم يعد في السجل</span>' : '') + '</td><td dir="ltr">' + e(x.phone || "") + '</td><td>' + (x.pin_at ? 'أُرسل ' + cvDate(x.pin_at) : '<span class="cv-pend">لم يُرسل</span>') + '</td><td>' + (x.last_seen ? cvDate(x.last_seen) : "—") + '</td><td>' + n + '</td><td style="white-space:nowrap">' + (x.gone ? '' : '<button type="button" class="cv-btn" style="background:#1fa855;display:inline-flex;align-items:center;gap:6px" data-cv="code" data-v="' + e(x.id) + '" data-n="' + e(x.name) + '">' + waIc + (x.pin_at ? 'رمز جديد' : 'واتساب') + '</button> ') + (x.created ? '<button type="button" class="cv-btn ghost" data-cv="xp" data-v="' + e(x.id) + '" data-a="' + (x.active ? 0 : 1) + '">' + (x.active ? "إيقاف" : "تفعيل") + '</button>' : '') + '</td></tr>'; }).join("") + '</tbody></table></div>' : '<div class="cv-card cv-muted">لا يوجد خبراء بصفة «موارد بشرية» في «مطابقة البيانات».</div>';
+      h += xs.length ? '<div class="cv-card"><table class="cv-t"><thead><tr><th>المدرب</th><th>الجوال</th><th>الرمز</th><th>آخر زيارة</th><th>السير المطلوبة</th><th></th></tr></thead><tbody>' + xs.map(function(x){ var n = d.requests.filter(function(r){ return r.expert_id === x.id; }).length; return '<tr' + (x.active && !x.gone ? '' : ' style="opacity:.5"') + '><td>' + e(x.name) + (x.reg_no ? ' <span class="cv-reg" dir="ltr">' + e(x.reg_no) + '</span>' : '') + (x.gone ? ' <span class="cv-pend">لم يعد في السجل</span>' : '') + '</td><td dir="ltr">' + e(x.phone || "") + '</td><td>' + (cvUI.codes[x.id] ? '<b class="cv-code" dir="ltr">' + e(cvUI.codes[x.id].code) + '</b>' : x.pin_at ? 'وُلّد ' + cvDate(x.pin_at) : '<span class="cv-pend">لم يُولّد</span>') + '</td><td>' + (x.last_seen ? cvDate(x.last_seen) : "—") + '</td><td>' + n + '</td><td style="white-space:nowrap">' + (x.gone ? '' : cvUI.codes[x.id] ? '<button type="button" class="cv-btn ghost" data-cv="codecp" data-v="' + e(x.id) + '">نسخ</button> <button type="button" class="cv-btn" style="background:#1fa855;display:inline-flex;align-items:center;gap:6px" data-cv="codewa" data-v="' + e(x.id) + '">' + waIc + 'واتساب</button> ' : '<button type="button" class="cv-btn" data-cv="code" data-v="' + e(x.id) + '" data-n="' + e(x.name) + '" data-old="' + (x.pin_at ? 1 : 0) + '">' + (x.pin_at ? 'رمز جديد' : 'توليد رمز') + '</button> ') + (x.created ? '<button type="button" class="cv-btn ghost" data-cv="xp" data-v="' + e(x.id) + '" data-a="' + (x.active ? 0 : 1) + '">' + (x.active ? "إيقاف" : "تفعيل") + '</button>' : '') + '</td></tr>'; }).join("") + '</tbody></table></div>' : '<div class="cv-card cv-muted">لا يوجد خبراء بصفة «موارد بشرية» في «مطابقة البيانات».</div>';
       root.innerHTML = h; return;
     }
     if(cvUI.tab === "reqs"){
@@ -4197,18 +4198,22 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
     else if(a === "copyhr"){ copyToClipboard("https://gzara.org/hr/"); showToast("نُسخ رابط الخبراء"); }
     else if(a === "xp"){ var on = b.getAttribute("data-a") === "1"; if(!on && !confirm("إيقاف وصول هذا الخبير؟ يخرج من الصفحة فوراً.")) return; fetch(CV_API + "/api/admin/expert?k=" + encodeURIComponent(cvKey()), { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: v, active: on }) }).then(function(){ cvLoad(); }); }
     else if(a === "tab"){ cvUI.tab = v; cvRender(); }
-    else if(a === "code"){ // يولّد رمزاً جديداً ويفتح محادثة الخبير والرسالة جاهزة
-      var nm = b.getAttribute("data-n") || "";
-      var w2 = window.open("", "_blank"); b.disabled = true;
+    else if(a === "code"){ // يولّد رمزاً ويعرضه في السطر — النسخ والواتساب بعدها
+      if(b.getAttribute("data-old") === "1" && !confirm("توليد رمز جديد يلغي الرمز القديم لهذا المدرب. متأكد؟")) return;
+      var nm = b.getAttribute("data-n") || ""; b.disabled = true; b.textContent = "…";
       fetch(CV_API + "/api/admin/code?k=" + encodeURIComponent(cvKey()), { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: v }) }).then(function(r){ return r.json(); }).then(function(d2){
-        b.disabled = false;
-        if(!d2 || !d2.ok){ if(w2) w2.close(); showToast(d2 && d2.err === "phone" ? "جوال الخبير غير صحيح في «مطابقة البيانات»" : "تعذّر توليد الرمز"); return; }
-        var first = String(d2.name || nm).split(" ")[0];
-        var msg = "حياك الله أ. " + first + "\nهذي صفحة مرشحي «مفاتيح الفرص» لخبراء الموارد البشرية:\nhttps://gzara.org/hr/?p=" + d2.phone + "\n\nرقم الدخول: " + d2.phone + "\nرمز الدخول: " + d2.code + "\n\nتدخل مرة وحدة وتبقى مسجّل على جهازك. تقدر تشوف السير حسب المسمى الوظيفي، وتضيف الوظيفة اللي تبحث لها.\nجمعية العوامية الخيرية";
-        var u = "https://wa.me/966" + String(d2.phone).replace(/^0/, "") + "?text=" + encodeURIComponent(msg);
-        if(w2) w2.location.href = u; else window.open(u, "_blank");
+        if(!d2 || !d2.ok){ showToast(d2 && d2.err === "phone" ? "جوال المدرب غير صحيح في «مطابقة البيانات»" : "تعذّر توليد الرمز"); cvRender(); return; }
+        cvUI.codes[v] = { code: d2.code, phone: d2.phone, name: d2.name || nm };
+        copyToClipboard(d2.code); showToast("الرمز " + d2.code + " — نُسخ");
         cvLoad();
-      }).catch(function(){ b.disabled = false; if(w2) w2.close(); showToast("تعذّر الاتصال بالخدمة"); });
+      }).catch(function(){ showToast("تعذّر الاتصال بالخدمة"); cvRender(); });
+    }
+    else if(a === "codecp"){ var c1 = cvUI.codes[v]; if(c1){ copyToClipboard(c1.code); showToast("نُسخ الرمز " + c1.code); } }
+    else if(a === "codewa"){
+      var c2 = cvUI.codes[v]; if(!c2) return;
+      var first = String(c2.name || "").split(" ")[0];
+      var msg = "حياك الله أ. " + first + "\nهذي صفحة مرشحي «مفاتيح الفرص» لخبراء الموارد البشرية:\nhttps://gzara.org/hr/?p=" + c2.phone + "\n\nرقم الدخول: " + c2.phone + "\nرمز الدخول: " + c2.code + "\n\nتدخل مرة وحدة وتبقى مسجّل على جهازك. تقدر تشوف السير حسب المسمى الوظيفي، وتضيف الوظيفة اللي تبحث لها.\nجمعية العوامية الخيرية";
+      window.open("https://wa.me/966" + String(c2.phone).replace(/^0/, "") + "?text=" + encodeURIComponent(msg), "_blank");
     }
     else if(a === "f"){ cvUI.f = v; cvRender(); }
     else if(a === "open"){

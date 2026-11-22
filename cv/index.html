@@ -70,15 +70,6 @@
   .addt{display:flex; gap:8px; margin-top:8px;}
   .addt input{flex:1; padding:10px 13px; font-size:14.5px;}
   .addt button{border:0; background:var(--teal-tint); color:var(--teal-dark); border-radius:12px; padding:0 14px; font-weight:600; cursor:pointer;}
-  .clear{background:#fff; border:1.5px solid #eedfd0; border-radius:22px; padding:16px 18px 14px; margin:0 0 16px; box-shadow:0 10px 28px rgba(143,106,75,.08);}
-  .clear-h{display:flex; align-items:center; gap:9px; font-size:15.5px; color:var(--tan-dark);}
-  .clear-ic{width:30px; height:30px; border-radius:50%; background:var(--tan-tint); display:flex; align-items:center; justify-content:center; color:var(--tan-dark); flex:none;}
-  .clear-ic svg{width:18px; height:18px;}
-  .clear ul{list-style:none; margin:12px 0 0; padding:0; display:flex; flex-direction:column; gap:9px;}
-  .clear li{display:flex; gap:10px; align-items:flex-start; font-size:14px; line-height:1.75; color:var(--ink);}
-  .clear li i{font-style:normal; flex:none; width:24px; height:24px; border-radius:50%; background:var(--teal-tint); color:var(--teal-dark); font-size:12.5px; font-weight:700; display:flex; align-items:center; justify-content:center; margin-top:2px;}
-  .clear li b{color:var(--teal-dark);}
-  .clear .promise{display:block; margin:12px 0 0 !important; font-size:14px !important; text-align:center; border-inline-start:0; border-radius:12px;}
   .consent{display:flex; gap:10px; align-items:flex-start; background:var(--tan-tint); border:1px solid #eedfd0; border-radius:14px; padding:12px 14px; margin-top:16px; font-size:13.5px; line-height:1.8; color:#5a4532; cursor:pointer;}
   .consent input{width:20px; height:20px; margin-top:3px; accent-color:var(--teal); flex:none;}
   .done{text-align:center;}
@@ -99,14 +90,6 @@
     <span class="tag">مفاتيح الفرص</span>
     <h1>ارفع <b>سيرتك الذاتية</b></h1>
     <p>تُفرز سيرتك تلقائياً حسب تخصصك، وتصل إلى خبراء الموارد البشرية في شبكتنا عند توفر فرصة مناسبة.</p>
-  </div>
-  <div class="clear" role="note" aria-label="توضيح مهم">
-    <div class="clear-h"><span class="clear-ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16.5v.01"/></svg></span><b>قبل ما تبدأ… للتوضيح</b></div>
-    <ul>
-      <li><i>1</i><span><b>ما نَعِد بوظيفة.</b> المنصة ليست جهة توظيف، ورفع السيرة لا يعني القبول في عمل.</span></li>
-      <li><i>2</i><span><b>دورنا جسر.</b> نوصل سيرتك لخبراء الموارد البشرية حسب تخصصك.</span></li>
-      <li><i>3</i><span><b>القرار لجهة العمل.</b> التواصل والمقابلة والقبول بينك وبينهم مباشرة.</span></li>
-    </ul>
     <p class="promise">لا نَعِدُك بالوظيفة… لكنّنا نسعى أن نكون الجسرَ الذي تعبُر منه إليها.</p>
   </div>
   <div class="steps"><i id="s1" class="on"></i><i id="s2"></i><i id="s3"></i></div>
@@ -146,7 +129,7 @@
     <div class="addt"><input type="text" id="newTitle" maxlength="60" placeholder="أضف مسمى (مثال: محاسب عام)" /><button type="button" id="addTitle">إضافة</button></div>
     <label class="lb" for="city">المدينة المفضّلة للعمل</label>
     <input type="text" id="city" maxlength="40" placeholder="مثال: القطيف، الدمام، الخبر" />
-    <label class="consent"><input type="checkbox" id="consent" /><span>أوافق على مشاركة سيرتي الذاتية مع خبراء الموارد البشرية في شبكة «مفاتيح الفرص» لغرض ترشيحي لفرص العمل فقط، وأعلم أن المنصة <b>لا تَعِد بوظيفة</b>، وأنني أستطيع حذفها في أي وقت، وأنها تُحذف تلقائياً بعد سنة.</span></label>
+    <label class="consent"><input type="checkbox" id="consent" /><span>أوافق على مشاركة سيرتي الذاتية مع خبراء الموارد البشرية في شبكة «مفاتيح الفرص» لغرض ترشيحي لفرص العمل فقط، وأعلم أنني أستطيع حذفها في أي وقت، وأنها تُحذف تلقائياً بعد سنة.</span></label>
     <div class="msg" id="m3"></div>
     <button class="btn" id="goConfirm">تأكيد وإرسال</button>
   </div>
@@ -155,7 +138,7 @@
   <div class="card done" id="stDone" hidden>
     <div class="ok"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg></div>
     <h2 id="doneH">سيرتك الآن في الشبكة</h2>
-    <p class="sub" id="doneP">ستصل إلى خبراء الموارد البشرية عند توفر فرصة تناسب تخصصك — مع التذكير أنها ليست وعداً بوظيفة، والقرار لجهة العمل. بالتوفيق!</p>
+    <p class="sub" id="doneP">ستصل إلى خبراء الموارد البشرية عند توفر فرصة تناسب تخصصك. بالتوفيق!</p>
     <div class="res" style="text-align:right"><div class="f" id="dField"></div><div class="t" id="dTitles"></div></div>
     <p class="sub" style="margin:14px 0 0">رابطك الخاص لتحديث سيرتك أو حذفها — احتفظ به:</p>
     <div class="mylink"><input type="text" id="myLink" readonly /><button type="button" id="copyLink">نسخ</button></div>
