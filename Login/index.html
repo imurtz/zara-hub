@@ -2486,6 +2486,42 @@ body.rs-kiosk .nav-groups{display:none !important;}
 #rosterRoot .rs-kpis--sm .rs-kpi{padding:9px 10px}
 #rosterRoot .rs-kpis--sm .rs-kpi b{font-size:19px}
 #rosterRoot .rs-tools{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:10px}
+/* ===== السير الذاتية ===== */
+#cvRoot .cv-head{display:flex;justify-content:space-between;align-items:flex-start;gap:14px;flex-wrap:wrap;margin-bottom:16px}
+#cvRoot .cv-head h2{font-size:22px;margin:0 0 4px}
+#cvRoot .cv-head p{margin:0;color:#6b7876;font-size:13.5px}
+#cvRoot .cv-acts{display:flex;gap:8px;flex-wrap:wrap}
+#cvRoot .cv-btn{border:0;background:#4b7071;color:#fff;border-radius:12px;padding:9px 16px;font:inherit;font-size:13.5px;font-weight:600;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;white-space:nowrap}
+#cvRoot .cv-btn.ghost{background:#fff;color:#4b7071;border:1px solid #e4e9e8}
+#cvRoot .cv-card{background:#fff;border:1px solid #e4e9e8;border-radius:18px;padding:16px 18px;margin-bottom:12px}
+#cvRoot .cv-keybox{max-width:440px}
+#cvRoot .cv-keybox p{color:#6b7876;font-size:13px;margin:6px 0 10px}
+#cvRoot .cv-row{display:flex;gap:8px}
+#cvRoot .cv-row input,#cvRoot .cv-tools input{flex:1;width:100%;font:inherit;font-size:14px;border:1px solid #dfe5e4;border-radius:12px;padding:10px 12px;outline:none}
+#cvRoot .cv-err{color:#b3453f}
+#cvRoot .cv-muted{color:#6b7876}
+#cvRoot .cv-kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px}
+#cvRoot .cv-kpis div{background:#fff;border:1px solid #e4e9e8;border-radius:16px;padding:12px 14px}
+#cvRoot .cv-kpis b{display:block;font-size:24px;color:#4b7071}
+#cvRoot .cv-kpis span{font-size:12.5px;color:#6b7876}
+#cvRoot .cv-tabs,#cvRoot .cv-chips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
+#cvRoot .cv-tabs button,#cvRoot .cv-chips button{font:inherit;font-size:13.5px;font-weight:600;border:1px solid rgba(20,28,27,.12);background:#fff;color:#4b5a58;border-radius:20px;padding:6px 14px;cursor:pointer}
+#cvRoot .cv-tabs button.on,#cvRoot .cv-chips button.on{background:#4b7071;border-color:#4b7071;color:#fff}
+#cvRoot .cv-chips i{font-style:normal;opacity:.7;font-size:12px}
+#cvRoot .cv-tools{margin-bottom:12px}
+#cvRoot .cv-item{display:flex;align-items:center;gap:12px;background:#fff;border:1px solid #e4e9e8;border-radius:16px;padding:12px 14px;margin-bottom:8px}
+#cvRoot .cv-main{flex:1;min-width:0}
+#cvRoot .cv-main b{font-size:15px}
+#cvRoot .cv-reg{font-size:12px;color:#8a9593;font-family:monospace}
+#cvRoot .cv-pend{font-size:11px;background:#f8f1ea;color:#8f6a4b;border-radius:10px;padding:1px 8px}
+#cvRoot .cv-f{font-size:13.5px;color:#3d5b56;font-weight:600;margin-top:3px}
+#cvRoot .cv-m{font-size:12.5px;color:#6b7876;margin-top:2px}
+#cvRoot .cv-t{width:100%;border-collapse:collapse;font-size:13px}
+#cvRoot .cv-t th,#cvRoot .cv-t td{padding:8px;border-bottom:1px solid #eef2f1;text-align:right}
+#cvRoot .cv-t th{background:#f3f6f5}
+#cvRoot .cv-hired{color:#3d7a5a}
+@media(max-width:700px){#cvRoot .cv-kpis{grid-template-columns:repeat(2,1fr)}#cvRoot .cv-item{flex-wrap:wrap}}
+
 #rosterRoot .rs-steps{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin:6px 0 20px}
 #rosterRoot .rs-step{display:flex;align-items:center;gap:12px;text-align:right;font:inherit;background:#fff;border:1.5px solid rgba(20,28,27,.1);border-radius:18px;padding:14px 16px;cursor:pointer;transition:all .18s;color:#2b3532}
 #rosterRoot .rs-step:hover{border-color:#4b7071;transform:translateY(-1px);box-shadow:0 8px 20px rgba(45,70,66,.08)}
@@ -3035,6 +3071,10 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
       <span class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="4.5" width="17" height="15" rx="2.5"/><path d="M3.5 15.5l4.5-4.5 4 4 2.5-2.5 6 6"/><circle cx="15.5" cy="9" r="1.6"/></svg></span>
       <span class="dsn-nav-lbl">إصدار</span>
     </div>
+    <div class="nav-tab" data-section="cv">
+      <span class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3.5h7l4 4v12a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1v-15a1 1 0 0 1 1-1z"/><path d="M14 3.5v4h4"/><circle cx="12" cy="11.5" r="2"/><path d="M8.8 17c.6-1.5 1.8-2.3 3.2-2.3s2.6.8 3.2 2.3"/></svg></span>
+      السير الذاتية
+    </div>
     <div class="nav-tab" data-section="bldg">
       <span class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 21V5.500a1.500 1.500 0 0 1 1.500-1.500h7A1.500 1.500 0 0 1 15 5.500V21M15 10h3.500A1.500 1.500 0 0 1 20 11.500V21M3 21h18M8.500 8h3M8.500 12h3M8.500 16h3"/></svg></span>
       أوامر صرف
@@ -3087,6 +3127,10 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
     <!-- ===== رعاة التقويم: طلبات الرعاية من صفحة gzara.org/sponsor (calSponsorRequests + calSponsorMeta/<year>) ===== -->
     <div class="section-view" id="view-sponsor">
       <div id="spRoot"></div>
+    </div>
+    <!-- ===== السير الذاتية: لوحة المؤسس (البيانات في خدمة zara-cv الخاصة) ===== -->
+    <div class="section-view" id="view-cv">
+      <div id="cvRoot"></div>
     </div>
     <!-- ===== أوامر صرف ← المبنى الإداري ===== -->
     <div class="section-view" id="view-bldg">
@@ -3321,6 +3365,7 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
     { key: "calendars", label: "التقاويم الميلادية" },
     { key: "sponsor", label: "رعاة التقويم" },
     { key: "designs", label: "إصدار — منصة التصاميم الجاهزة" },
+    { key: "cv", label: "السير الذاتية" },
     { key: "bldg", label: "أوامر صرف" },
     { key: "roster", label: "مطابقة البيانات" },
     { key: "photos", label: "معالجة الصور" }
@@ -3488,6 +3533,7 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
     if(activeSectionNow === "roster") rsRender();
     if(activeSectionNow === "photos") phRender();
     if(activeSectionNow === "sponsor") spRender();
+    if(activeSectionNow === "cv") cvOpen();
     if(activeSectionNow === "events"){
       var evTab = parts[1];
       if(evTab && EVENTS_TAB_KEYS.indexOf(evTab) > -1) eventsUI.tab = evTab;
@@ -3551,6 +3597,9 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
     { key: "designs", label: "إصدار — منصة التصاميم الجاهزة", perms: [
       { k: "designs.view", l: "فتح القسم وتعبئة النماذج وتنزيل النسخ" },
       { k: "designs.manage", l: "إضافة النماذج وتعديل متغيراتها ومواضعها وحذفها" }
+    ] },
+    { key: "cv", label: "السير الذاتية — مفاتيح التوظيف", perms: [
+      { k: "cv.view", l: "الاطلاع على السير الذاتية وفتح ملفاتها ومتابعة الفرص" }
     ] },
     { key: "bldg", label: "أوامر صرف", perms: [
       { k: "bldg.view", l: "فتح القسم والاطلاع على أوامر الصرف وطباعتها" },
@@ -4074,6 +4123,74 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
     root.innerHTML = '<iframe title="معالجة الصور" src="/photos/" allow="clipboard-write" style="width:100%;height:calc(100vh - 140px);min-height:520px;border:0;border-radius:18px;background:#F5F6F5"></iframe>';
   }
 
+  // ===== السير الذاتية (مفاتيح التوظيف): لوحة المؤسس — البيانات في خدمة zara-cv الخاصة لا في Firestore =====
+  // مفتاح اللوحة يُدخل مرة واحدة ويُحفظ على هذا الجهاز فقط (لا يُكتب في الكود المنشور)
+  var CV_API = "https://zara-cv.murtada-ud.workers.dev";
+  var cvUI = { data: null, err: "", busy: false, q: "", f: "", tab: "seekers" };
+  function cvKey(){ try{ return localStorage.getItem("zaraCvAdminKey") || ""; }catch(e){ return ""; } }
+  function cvLoad(){
+    var k = cvKey(); if(!k){ cvRender(); return; }
+    cvUI.busy = true; cvRender();
+    fetch(CV_API + "/api/admin/list?k=" + encodeURIComponent(k)).then(function(r){ return r.json(); }).then(function(d){
+      cvUI.busy = false;
+      if(!d.ok){ cvUI.err = d.err === "key" ? "key" : "load"; if(d.err === "key"){ try{ localStorage.removeItem("zaraCvAdminKey"); }catch(e){} } }
+      else { cvUI.err = ""; cvUI.data = d; }
+      cvRender();
+    }).catch(function(){ cvUI.busy = false; cvUI.err = "load"; cvRender(); });
+  }
+  function cvDate(t){ if(!t) return ""; var d = new Date(t); return d.toLocaleDateString("ar-SA-u-ca-gregory-nu-latn", { day: "numeric", month: "short", year: "numeric" }); }
+  function cvRender(){
+    var root = document.getElementById("cvRoot"); if(!root || !currentUser || !can("cv.view")) return;
+    var e = escapeHTML, h = '<div class="cv-head"><div><h2>السير الذاتية — مفاتيح التوظيف</h2><p>تُرفع من رابط الباحثين وتُفرز تلقائياً حسب التخصص</p></div><div class="cv-acts"><a class="cv-btn ghost" href="/cv/" target="_blank" rel="noopener">رابط الباحثين ↗</a><button type="button" class="cv-btn ghost" data-cv="copy">نسخ الرابط</button>' + (cvKey() ? '<button type="button" class="cv-btn" data-cv="reload">تحديث</button>' : '') + '</div></div>';
+    if(!cvKey() || cvUI.err === "key" || cvUI.newKey){
+      if(cvUI.ready === undefined){ cvUI.ready = null; fetch(CV_API + "/api/admin/status").then(function(r){ return r.json(); }).then(function(d){ cvUI.ready = !!(d && d.ready); cvRender(); }).catch(function(){ cvUI.ready = true; cvRender(); }); }
+      if(cvUI.ready === false){ root.innerHTML = h + '<div class="cv-card cv-keybox"><b>تهيئة لوحة السير الذاتية</b><p>تُنشأ مرة واحدة: يُولَّد مفتاح خاص بك ويُحفظ على هذا الجهاز. احتفظ به لفتح اللوحة من أجهزة أخرى.</p><button type="button" class="cv-btn" data-cv="init">تهيئة الآن</button></div>'; return; }
+      if(cvUI.newKey){ root.innerHTML = h + '<div class="cv-card cv-keybox"><b>مفتاحك الخاص — احفظه في مكان آمن</b><p>لن يظهر مرة أخرى. يلزمك لفتح اللوحة من جهاز آخر.</p><div class="cv-row"><input type="text" readonly value="' + escapeHTML(cvUI.newKey) + '" dir="ltr" onclick="this.select()"/><button type="button" class="cv-btn" data-cv="keydone">حفظته ✓</button></div></div>'; return; }
+      root.innerHTML = h + '<div class="cv-card cv-keybox"><b>أدخل مفتاح لوحة السير الذاتية</b><p>يُدخل مرة واحدة ويُحفظ على هذا الجهاز فقط.</p>' + (cvUI.err === "key" ? '<p class="cv-err">المفتاح غير صحيح.</p>' : '') + '<div class="cv-row"><input type="password" id="cvKeyIn" placeholder="المفتاح" autocomplete="off"/><button type="button" class="cv-btn" data-cv="setkey">دخول</button></div></div>';
+      return;
+    }
+    if(cvUI.busy && !cvUI.data){ root.innerHTML = h + '<div class="cv-card">جارٍ التحميل…</div>'; return; }
+    if(cvUI.err === "load" && !cvUI.data){ root.innerHTML = h + '<div class="cv-card cv-err">تعذّر الاتصال بخدمة السير الذاتية.</div>'; return; }
+    var d = cvUI.data || { seekers: [], requests: [], experts: [], fields: [] };
+    var act = d.seekers.filter(function(s){ return s.status === "active"; }), ok = act.filter(function(s){ return s.consent; });
+    var byF = {}; ok.forEach(function(s){ byF[s.field] = (byF[s.field] || 0) + 1; });
+    var hired = d.requests.filter(function(r){ return r.outcome === "hired"; });
+    h += '<div class="cv-kpis"><div><b>' + ok.length + '</b><span>سيرة جاهزة</span></div><div><b>' + (act.length - ok.length) + '</b><span>بانتظار تأكيد صاحبها</span></div><div><b>' + d.requests.length + '</b><span>سيرة أُرسلت لخبير</span></div><div><b>' + hired.length + '</b><span>توظيف</span></div></div>';
+    h += '<div class="cv-tabs"><button type="button" data-cv="tab" data-v="seekers" class="' + (cvUI.tab === "seekers" ? "on" : "") + '">الباحثون (' + act.length + ')</button><button type="button" data-cv="tab" data-v="reqs" class="' + (cvUI.tab === "reqs" ? "on" : "") + '">من وصلته فرصة (' + d.requests.length + ')</button></div>';
+    if(cvUI.tab === "reqs"){
+      h += d.requests.length ? '<div class="cv-card"><table class="cv-t"><thead><tr><th>التاريخ</th><th>الخبير</th><th>الجهة</th><th>الوظيفة</th><th>المرشح</th><th>النتيجة</th></tr></thead><tbody>' + d.requests.map(function(r){ return '<tr><td>' + cvDate(r.created) + '</td><td>' + e(r.expert || "") + '</td><td>' + e(r.org || "") + '</td><td>' + e(r.job || "") + '</td><td>' + e(r.seeker || "") + '</td><td>' + (r.outcome === "hired" ? '<b class="cv-hired">تم التوظيف</b>' : r.outcome === "no" ? "لم يتم" : "بانتظار الرد") + '</td></tr>'; }).join("") + '</tbody></table></div>' : '<div class="cv-card cv-muted">لم تُرسل أي سيرة لخبير بعد — تبدأ مع إطلاق روابط الخبراء.</div>';
+      root.innerHTML = h; return;
+    }
+    h += '<div class="cv-chips"><button type="button" data-cv="f" data-v="" class="' + (!cvUI.f ? "on" : "") + '">الكل</button>' + d.fields.filter(function(f){ return byF[f.k]; }).map(function(f){ return '<button type="button" data-cv="f" data-v="' + f.k + '" class="' + (cvUI.f === f.k ? "on" : "") + '">' + e(f.l) + ' <i>' + byF[f.k] + '</i></button>'; }).join("") + '</div>';
+    h += '<div class="cv-tools"><input type="search" id="cvQ" placeholder="ابحث بالاسم أو المسمى أو المدينة" value="' + e(cvUI.q) + '"/></div>';
+    var q = cvUI.q.trim(), rows = act.filter(function(s){ return (!cvUI.f || s.field === cvUI.f) && (!q || [s.name, (s.titles || []).join(" "), s.city, s.fieldName].join(" ").indexOf(q) > -1); });
+    h += rows.length ? '<div class="cv-list">' + rows.map(function(s){
+      return '<div class="cv-item"><div class="cv-main"><b>' + e(s.name) + '</b> <span class="cv-reg" dir="ltr">' + e(s.reg_no || "") + '</span>' + (s.consent ? '' : ' <span class="cv-pend">لم يؤكد</span>') +
+        '<div class="cv-f">' + e(s.fieldName) + (s.titles && s.titles.length ? ' · ' + e(s.titles.join("، ")) : '') + '</div>' +
+        '<div class="cv-m">' + [s.years != null ? s.years + " سنوات" : "", s.degree, s.city, s.phone ? '<span dir="ltr">' + e(s.phone) + '</span>' : "", "حُدّثت " + cvDate(s.updated)].filter(Boolean).join(" · ") + '</div></div>' +
+        '<button type="button" class="cv-btn ghost" data-cv="open" data-v="' + e(s.id) + '">فتح السيرة</button></div>';
+    }).join("") + '</div>' : '<div class="cv-card cv-muted">' + (act.length ? "لا نتائج" : "لم تُرفع أي سيرة بعد — شارك رابط الباحثين مع المتدربين.") + '</div>';
+    root.innerHTML = h;
+  }
+  document.addEventListener("click", function(ev){
+    var b = ev.target.closest && ev.target.closest("#cvRoot [data-cv]"); if(!b) return;
+    var a = b.getAttribute("data-cv"), v = b.getAttribute("data-v");
+    if(a === "setkey"){ var k = (document.getElementById("cvKeyIn") || {}).value || ""; if(!k.trim()) return; try{ localStorage.setItem("zaraCvAdminKey", k.trim()); }catch(e){} cvUI.err = ""; cvLoad(); }
+    else if(a === "reload") cvLoad();
+    else if(a === "init"){ fetch(CV_API + "/api/admin/init", { method: "POST" }).then(function(r){ return r.json(); }).then(function(d){ if(d && d.ok){ cvUI.newKey = d.key; cvUI.ready = true; try{ localStorage.setItem("zaraCvAdminKey", d.key); }catch(e){} } else { cvUI.ready = true; showToast("اللوحة مُهيّأة مسبقاً — أدخل المفتاح"); } cvRender(); }).catch(function(){ showToast("تعذّر الاتصال بالخدمة"); }); }
+    else if(a === "keydone"){ cvUI.newKey = ""; cvLoad(); }
+    else if(a === "copy"){ copyToClipboard("https://gzara.org/cv/"); showToast("نُسخ رابط الباحثين"); }
+    else if(a === "tab"){ cvUI.tab = v; cvRender(); }
+    else if(a === "f"){ cvUI.f = v; cvRender(); }
+    else if(a === "open"){
+      var w = window.open("", "_blank");
+      fetch(CV_API + "/api/admin/file?k=" + encodeURIComponent(cvKey()) + "&id=" + encodeURIComponent(v)).then(function(r){ if(!r.ok) throw 0; return r.blob(); }).then(function(bl){ var u = URL.createObjectURL(bl); if(w) w.location.href = u; else window.open(u, "_blank"); }).catch(function(){ if(w) w.close(); showToast("تعذّر فتح الملف"); });
+    }
+  });
+  document.addEventListener("input", function(ev){ if(ev.target && ev.target.id === "cvQ"){ cvUI.q = ev.target.value; clearTimeout(cvUI._t); cvUI._t = setTimeout(function(){ var pos = ev.target.selectionStart; cvRender(); var i = document.getElementById("cvQ"); if(i){ i.focus(); try{ i.setSelectionRange(pos, pos); }catch(e){} } }, 200); } });
+  document.addEventListener("keydown", function(ev){ if(ev.key === "Enter" && ev.target && ev.target.id === "cvKeyIn"){ var b = document.querySelector('#cvRoot [data-cv="setkey"]'); if(b) b.click(); } });
+  function cvOpen(){ if(!cvUI.data && !cvUI.busy) cvLoad(); else cvRender(); }
+
   // ===== شريط الأقسام المجمَّع: مجموعات بدل صف طويل — قائمة منسدلة على الشاشات الكبيرة وورقة سفلية على الجوال =====
   // التبويبات الأصلية (.nav-tab) باقية كما هي كمصدر للحالة والصلاحيات؛ هذا الشريط يعرضها مجمَّعة ويضغطها
   var NAV_GROUPS = [
@@ -4140,6 +4257,7 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
       if(tab.dataset.section === "roster") rsRender();
       if(tab.dataset.section === "photos") phRender();
       if(tab.dataset.section === "sponsor") spRender();
+      if(tab.dataset.section === "cv") cvOpen();
     });
   });
 

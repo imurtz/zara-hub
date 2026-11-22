@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>ارفع سيرتك الذاتية | مفاتيح التوظيف</title>
+<meta name="description" content="لمتدربي ورشة مفاتيح التوظيف: ارفع سيرتك الذاتية لتصل إلى خبراء الموارد البشرية عند توفر فرصة مناسبة." />
+<meta property="og:type" content="website" />
+<meta property="og:title" content="ارفع سيرتك الذاتية — مفاتيح التوظيف" />
+<meta property="og:description" content="سيرتك تصل إلى خبراء الموارد البشرية عند توفر فرصة تناسب تخصصك." />
+<meta property="og:image" content="https://gzara.org/cv/og.jpg?v=1" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta property="og:url" content="https://gzara.org/cv/" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:image" content="https://gzara.org/cv/og.jpg?v=1" />
+<meta name="robots" content="noindex" />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%23517771'/%3E%3Cpath d='M22 18h14l8 8v20a2 2 0 0 1-2 2H22a2 2 0 0 1-2-2V20a2 2 0 0 1 2-2z' fill='none' stroke='%23fff' stroke-width='3.5' stroke-linejoin='round'/%3E%3Cpath d='M27 34h11M27 40h8' stroke='%23e8cfaf' stroke-width='3.5' stroke-linecap='round'/%3E%3C/svg%3E" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --teal:#517771; --teal-dark:#3d5b56; --teal-tint:#eef3f2;
+    --tan:#b8906e; --tan-dark:#8f6a4b; --tan-tint:#f8f1ea;
+    --ink:#2b3532; --ink-soft:#6b7876; --line:#e4e9e8; --danger:#b3453f;
+    --shadow:0 14px 40px rgba(45,70,66,.10);
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{font-family:'IBM Plex Sans Arabic', sans-serif; color:var(--ink); min-height:100vh; padding:28px 16px 48px;
+    background:radial-gradient(circle at 12% 10%, var(--teal-tint) 0%, transparent 45%), radial-gradient(circle at 90% 88%, var(--tan-tint) 0%, transparent 45%), #fbfcfc;}
+  button,input,select{font-family:inherit;}
+  .wrap{max-width:600px; margin:0 auto;}
+  .hero{text-align:center; margin:8px 0 22px;}
+  .hero .tag{display:inline-block; font-size:12px; font-weight:600; color:var(--tan-dark); background:var(--tan-tint); border:1px solid #eedfd0; padding:4px 14px; border-radius:30px; margin-bottom:12px;}
+  .hero h1{font-size:clamp(24px, 6.2vw, 32px); font-weight:300; line-height:1.35;}
+  .hero h1 b{font-weight:700; background:linear-gradient(90deg, var(--teal), var(--tan)); -webkit-background-clip:text; background-clip:text; color:transparent;}
+  .hero p{color:var(--ink-soft); font-size:14px; margin-top:8px; line-height:1.8;}
+  .steps{display:flex; justify-content:center; gap:8px; margin-bottom:16px;}
+  .steps i{width:34px; height:5px; border-radius:3px; background:var(--line);}
+  .steps i.on{background:var(--teal);}
+  .card{background:rgba(255,255,255,.85); backdrop-filter:blur(14px); -webkit-backdrop-filter:blur(14px); border:1px solid rgba(255,255,255,.9); border-radius:24px; box-shadow:var(--shadow); padding:26px 22px;}
+  .card h2{font-size:18px; font-weight:600; margin-bottom:6px;}
+  .card .sub{font-size:13.5px; color:var(--ink-soft); line-height:1.8; margin-bottom:16px;}
+  label.lb{display:block; font-weight:600; font-size:14px; margin:16px 0 8px;}
+  input[type=tel], input[type=text], select{width:100%; border:1.5px solid var(--line); background:#fff; border-radius:14px; padding:13px 15px; font-size:16px; color:var(--ink); outline:none;}
+  input[type=tel]{direction:ltr; text-align:right; letter-spacing:.5px;}
+  input:focus, select:focus{border-color:var(--teal); box-shadow:0 0 0 4px rgba(81,119,113,.12);}
+  .btn{width:100%; margin-top:18px; border:0; border-radius:16px; padding:15px; font-size:16.5px; font-weight:600; color:#fff; background:linear-gradient(90deg, var(--teal-dark), var(--teal)); cursor:pointer; box-shadow:0 10px 24px rgba(61,91,86,.25);}
+  .btn:disabled{opacity:.6; cursor:wait;}
+  .btn.ghost{background:#fff; color:var(--teal-dark); border:1.5px solid var(--line); box-shadow:none;}
+  .drop{border:2px dashed #cfdad8; background:linear-gradient(180deg,#fff,var(--teal-tint)); border-radius:18px; padding:26px 16px; text-align:center; cursor:pointer;}
+  .drop:hover,.drop.over{border-color:var(--teal);}
+  .drop svg{width:36px; height:36px; color:var(--teal); margin-bottom:6px;}
+  .drop b{display:block; font-size:15px;}
+  .drop span{font-size:12.5px; color:var(--ink-soft);}
+  .msg{display:none; margin-top:14px; font-size:13.5px; color:var(--danger); background:#fbefee; border-radius:12px; padding:10px 13px; line-height:1.7;}
+  .msg.show{display:block;}
+  .hello{background:var(--teal-tint); border-radius:14px; padding:12px 14px; font-size:14px; margin-bottom:6px;}
+  .busy{display:none; text-align:center; padding:20px 6px;}
+  .busy.show{display:block;}
+  .spin{width:38px; height:38px; border:3.5px solid var(--teal-tint); border-top-color:var(--teal); border-radius:50%; margin:0 auto 12px; animation:sp 1s linear infinite;}
+  @keyframes sp{to{transform:rotate(360deg)}}
+  .res{background:#fff; border:1px solid var(--line); border-radius:16px; padding:14px 16px; margin-bottom:6px;}
+  .res .f{font-size:20px; font-weight:700; color:var(--teal-dark);}
+  .res .t{font-size:13px; color:var(--ink-soft); margin-top:4px; line-height:1.7;}
+  .chips{display:flex; flex-wrap:wrap; gap:7px; margin-top:4px;}
+  .chip{display:inline-flex; align-items:center; gap:6px; background:var(--tan-tint); border:1px solid #eedfd0; color:#6e5038; border-radius:30px; padding:6px 12px; font-size:13.5px;}
+  .chip button{border:0; background:none; color:#a77; font-size:15px; cursor:pointer; line-height:1;}
+  .addt{display:flex; gap:8px; margin-top:8px;}
+  .addt input{flex:1; padding:10px 13px; font-size:14.5px;}
+  .addt button{border:0; background:var(--teal-tint); color:var(--teal-dark); border-radius:12px; padding:0 14px; font-weight:600; cursor:pointer;}
+  .consent{display:flex; gap:10px; align-items:flex-start; background:var(--tan-tint); border:1px solid #eedfd0; border-radius:14px; padding:12px 14px; margin-top:16px; font-size:13.5px; line-height:1.8; color:#5a4532; cursor:pointer;}
+  .consent input{width:20px; height:20px; margin-top:3px; accent-color:var(--teal); flex:none;}
+  .done{text-align:center;}
+  .done .ok{width:64px; height:64px; border-radius:50%; background:var(--teal-tint); color:var(--teal); display:flex; align-items:center; justify-content:center; margin:0 auto 14px;}
+  .mylink{display:flex; gap:8px; margin-top:14px; direction:ltr;}
+  .mylink input{flex:1; font-size:12.5px; padding:10px 12px; color:var(--ink-soft);}
+  .mylink button{border:0; background:var(--teal); color:#fff; border-radius:12px; padding:0 14px; font-weight:600; cursor:pointer;}
+  .links{display:flex; gap:14px; justify-content:center; margin-top:16px; font-size:13px;}
+  .links a, .links button{color:var(--teal-dark); background:none; border:0; text-decoration:underline; cursor:pointer; font:inherit; font-size:13px;}
+  .links .del{color:var(--danger);}
+  .foot{text-align:center; color:var(--ink-soft); font-size:12px; margin-top:20px; line-height:1.8;}
+  [hidden]{display:none !important;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="hero">
+    <span class="tag">مفاتيح التوظيف</span>
+    <h1>ارفع <b>سيرتك الذاتية</b></h1>
+    <p>تُفرز سيرتك تلقائياً حسب تخصصك، وتصل إلى خبراء الموارد البشرية في شبكتنا عند توفر فرصة مناسبة.</p>
+  </div>
+  <div class="steps"><i id="s1" class="on"></i><i id="s2"></i><i id="s3"></i></div>
+
+  <!-- 1) الجوال -->
+  <div class="card" id="stPhone">
+    <h2>ابدأ برقم جوالك</h2>
+    <p class="sub">الرقم نفسه الذي سجّلت به في ورشة «مفاتيح التوظيف».</p>
+    <input type="tel" id="phone" inputmode="tel" maxlength="16" autocomplete="tel" placeholder="05XXXXXXXX" />
+    <div class="msg" id="m1"></div>
+    <button class="btn" id="goPhone">متابعة</button>
+  </div>
+
+  <!-- 2) الملف -->
+  <div class="card" id="stFile" hidden>
+    <div class="hello" id="hello"></div>
+    <h2 style="margin-top:12px">ارفع سيرتك الذاتية</h2>
+    <p class="sub">ملف PDF أو Word — الحد الأقصى 5 ميجابايت. الأفضل أن يكون نصاً لا صورة ممسوحة.</p>
+    <div class="drop" id="drop" tabindex="0" role="button">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4"/><path d="m7 9 5-5 5 5"/><path d="M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/></svg>
+      <b>اضغط لاختيار الملف</b><span>PDF أو DOCX</span>
+    </div>
+    <input type="file" id="file" accept=".pdf,.docx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document" hidden />
+    <div class="busy" id="busy"><div class="spin"></div><b>نقرأ سيرتك ونحدد تخصصك…</b><p class="sub" style="margin:6px 0 0">ثوانٍ قليلة</p></div>
+    <div class="msg" id="m2"></div>
+  </div>
+
+  <!-- 3) التأكيد -->
+  <div class="card" id="stConfirm" hidden>
+    <h2>هذا ما فهمناه من سيرتك</h2>
+    <p class="sub">عدّل أي شيء إن لزم، ثم أكّد.</p>
+    <div class="res"><div class="f" id="rField"></div><div class="t" id="rMeta"></div></div>
+    <label class="lb" for="field">المجال</label>
+    <select id="field"></select>
+    <label class="lb">المسميات الوظيفية المناسبة لك</label>
+    <div class="chips" id="titles"></div>
+    <div class="addt"><input type="text" id="newTitle" maxlength="60" placeholder="أضف مسمى (مثال: محاسب عام)" /><button type="button" id="addTitle">إضافة</button></div>
+    <label class="lb" for="city">المدينة المفضّلة للعمل</label>
+    <input type="text" id="city" maxlength="40" placeholder="مثال: القطيف، الدمام، الخبر" />
+    <label class="consent"><input type="checkbox" id="consent" /><span>أوافق على مشاركة سيرتي الذاتية مع خبراء الموارد البشرية في شبكة «مفاتيح التوظيف» لغرض ترشيحي لفرص العمل فقط، وأعلم أنني أستطيع حذفها في أي وقت، وأنها تُحذف تلقائياً بعد سنة.</span></label>
+    <div class="msg" id="m3"></div>
+    <button class="btn" id="goConfirm">تأكيد وإرسال</button>
+  </div>
+
+  <!-- 4) تم -->
+  <div class="card done" id="stDone" hidden>
+    <div class="ok"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg></div>
+    <h2 id="doneH">سيرتك الآن في الشبكة</h2>
+    <p class="sub" id="doneP">ستصل إلى خبراء الموارد البشرية عند توفر فرصة تناسب تخصصك. بالتوفيق!</p>
+    <div class="res" style="text-align:right"><div class="f" id="dField"></div><div class="t" id="dTitles"></div></div>
+    <p class="sub" style="margin:14px 0 0">رابطك الخاص لتحديث سيرتك أو حذفها — احتفظ به:</p>
+    <div class="mylink"><input type="text" id="myLink" readonly /><button type="button" id="copyLink">نسخ</button></div>
+    <div class="links"><button type="button" id="reup">رفع نسخة أحدث</button><button type="button" id="edit">تعديل المجال والمسميات</button><button type="button" class="del" id="del">حذف سيرتي</button></div>
+  </div>
+
+  <div class="foot">بياناتك محفوظة في مخزن خاص، ولا تُعرض إلا لخبراء الموارد البشرية في الشبكة.<br>جمعية العوامية الخيرية — مفاتيح التوظيف</div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
+<script>
+(function(){
+  var API = "https://zara-cv.murtada-ud.workers.dev";
+  var $ = function(id){ return document.getElementById(id); };
+  var S = { phone: "", token: "", profile: null, fields: [] };
+  if(window.pdfjsLib) pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+
+  function show(id){ ["stPhone","stFile","stConfirm","stDone"].forEach(function(x){ $(x).hidden = x !== id; }); var n = { stPhone: 1, stFile: 2, stConfirm: 3, stDone: 3 }[id]; [1,2,3].forEach(function(i){ $("s" + i).className = i <= n ? "on" : ""; }); window.scrollTo({ top: 0, behavior: "smooth" }); }
+  function msg(id, t){ $(id).textContent = t || ""; $(id).classList.toggle("show", !!t); }
+  function esc(s){ return String(s == null ? "" : s).replace(/[&<>"]/g, function(c){ return { "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;" }[c]; }); }
+  function digits(s){ return String(s || "").replace(/[٠-٩]/g, function(d){ return "٠١٢٣٤٥٦٧٨٩".indexOf(d); }); }
+  function phoneNorm(s){ var d = digits(s).replace(/\D/g, "").replace(/^00/, ""); if(/^9665\d{8}$/.test(d)) d = "0" + d.slice(3); else if(/^5\d{8}$/.test(d)) d = "0" + d; return d; }
+  function api(path, opt){ return fetch(API + path, opt).then(function(r){ return r.json().catch(function(){ return { ok: false, err: "server" }; }); }); }
+  function myUrl(){ return location.origin + "/cv/?t=" + S.token; }
+  function save(){ try{ localStorage.setItem("zaraCvToken", S.token); }catch(e){} }
+
+  api("/api/fields").then(function(r){ S.fields = (r && r.fields) || []; $("field").innerHTML = S.fields.map(function(f){ return '<option value="' + f.k + '">' + esc(f.l) + '</option>'; }).join(""); }).catch(function(){});
+
+  // 1) التحقق من الجوال (آلياً من سجل متدربي الورشة)
+  $("goPhone").onclick = function(){
+    msg("m1"); var ph = phoneNorm($("phone").value);
+    if(!/^05\d{8}$/.test(ph)) return msg("m1", "رقم الجوال غير صحيح — مثال: 0501234567");
+    var b = this; b.disabled = true; b.textContent = "جارٍ التحقق…";
+    api("/api/check", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ phone: ph }) }).then(function(r){
+      b.disabled = false; b.textContent = "متابعة";
+      if(!r.ok) return msg("m1", r.err === "notfound" ? "لم نجد هذا الرقم ضمن متدربي «مفاتيح التوظيف». تأكد أنه الرقم نفسه الذي سجّلت به في الورشة." : "تعذّر التحقق الآن، حاول بعد لحظات.");
+      S.phone = ph; $("hello").innerHTML = "أهلاً <b>" + esc(r.name) + "</b> 👋" + (r.existing ? "<br><small>لديك سيرة محفوظة — رفع ملف جديد يستبدلها.</small>" : "");
+      show("stFile");
+    }).catch(function(){ b.disabled = false; b.textContent = "متابعة"; msg("m1", "تعذّر الاتصال، تأكد من الإنترنت وحاول مرة أخرى."); });
+  };
+  $("phone").addEventListener("keydown", function(e){ if(e.key === "Enter") $("goPhone").click(); });
+
+  // 2) قراءة نص السيرة في المتصفح ثم رفعها للفرز
+  function readText(f){
+    if(/\.pdf$/i.test(f.name) || f.type === "application/pdf"){
+      if(!window.pdfjsLib) return Promise.resolve("");
+      return f.arrayBuffer().then(function(buf){ return pdfjsLib.getDocument({ data: buf }).promise; }).then(function(pdf){
+        var n = Math.min(pdf.numPages, 6), jobs = [];
+        for(var i = 1; i <= n; i++) jobs.push(pdf.getPage(i).then(function(pg){ return pg.getTextContent(); }).then(function(tc){ return tc.items.map(function(x){ return x.str; }).join(" "); }));
+        return Promise.all(jobs).then(function(a){ return a.join("\n"); });
+      }).catch(function(){ return ""; });
+    }
+    if(!window.mammoth) return Promise.resolve("");
+    return f.arrayBuffer().then(function(buf){ return mammoth.extractRawText({ arrayBuffer: buf }); }).then(function(r){ return r.value || ""; }).catch(function(){ return ""; });
+  }
+  function pick(f){
+    msg("m2"); if(!f) return;
+    if(!/\.(pdf|docx)$/i.test(f.name)) return msg("m2", "الملف يجب أن يكون PDF أو Word (.docx).");
+    if(f.size > 5 * 1024 * 1024) return msg("m2", "حجم الملف أكبر من 5 ميجابايت.");
+    $("drop").hidden = true; $("busy").classList.add("show");
+    readText(f).then(function(text){
+      var fd = new FormData(); fd.append("phone", S.phone); fd.append("file", f, f.name); fd.append("text", text.slice(0, 20000));
+      return fetch(API + "/api/upload", { method: "POST", body: fd }).then(function(r){ return r.json(); });
+    }).then(function(r){
+      $("busy").classList.remove("show"); $("drop").hidden = false;
+      if(!r || !r.ok) return msg("m2", r && r.err === "size" ? "حجم الملف كبير." : r && r.err === "type" ? "صيغة الملف غير مقبولة." : "تعذّر رفع الملف، حاول مرة أخرى.");
+      S.token = r.token; S.profile = r.profile; save(); fillConfirm(); show("stConfirm");
+    }).catch(function(){ $("busy").classList.remove("show"); $("drop").hidden = false; msg("m2", "تعذّر رفع الملف، تأكد من الاتصال وحاول مرة أخرى."); });
+  }
+  $("drop").onclick = function(){ $("file").click(); };
+  $("drop").onkeydown = function(e){ if(e.key === "Enter" || e.key === " "){ e.preventDefault(); $("file").click(); } };
+  $("file").onchange = function(){ pick(this.files[0]); this.value = ""; };
+  ["dragenter","dragover"].forEach(function(t){ $("drop").addEventListener(t, function(e){ e.preventDefault(); this.classList.add("over"); }); });
+  ["dragleave","drop"].forEach(function(t){ $("drop").addEventListener(t, function(e){ e.preventDefault(); this.classList.remove("over"); }); });
+  $("drop").addEventListener("drop", function(e){ pick(e.dataTransfer.files[0]); });
+
+  // 3) التأكيد
+  var titles = [];
+  function paintTitles(){ $("titles").innerHTML = titles.length ? titles.map(function(t, i){ return '<span class="chip">' + esc(t) + '<button type="button" data-rm="' + i + '" aria-label="حذف">×</button></span>'; }).join("") : '<span class="sub" style="margin:0">أضف مسمى واحداً على الأقل</span>'; }
+  function fillConfirm(){
+    var p = S.profile || {}; titles = (p.titles || []).slice(0, 4);
+    $("rField").textContent = p.fieldName || "—";
+    $("rMeta").textContent = [p.years != null ? p.years + " سنوات خبرة" : "", p.degree, (p.skills || []).slice(0, 4).join("، ")].filter(Boolean).join(" · ") || "اختر مجالك من القائمة";
+    $("field").value = p.field || "other"; $("city").value = p.city || ""; $("consent").checked = !!p.consent; paintTitles();
+  }
+  $("titles").onclick = function(e){ var b = e.target.closest("[data-rm]"); if(b){ titles.splice(+b.getAttribute("data-rm"), 1); paintTitles(); } };
+  function addT(){ var v = $("newTitle").value.trim().replace(/\s+/g, " "); if(v && titles.indexOf(v) < 0 && titles.length < 4){ titles.push(v); paintTitles(); } $("newTitle").value = ""; }
+  $("addTitle").onclick = addT; $("newTitle").addEventListener("keydown", function(e){ if(e.key === "Enter"){ e.preventDefault(); addT(); } });
+  $("field").onchange = function(){ var f = S.fields.find(function(x){ return x.k === $("field").value; }); $("rField").textContent = f ? f.l : ""; };
+  $("goConfirm").onclick = function(){
+    msg("m3");
+    if(!titles.length) return msg("m3", "أضف مسمى وظيفياً واحداً على الأقل.");
+    if(!$("consent").checked) return msg("m3", "يلزم الموافقة على مشاركة السيرة مع خبراء الموارد البشرية حتى تصلهم.");
+    var b = this; b.disabled = true;
+    api("/api/me?t=" + S.token, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ field: $("field").value, titles: titles, city: $("city").value.trim(), consent: true }) }).then(function(r){
+      b.disabled = false; if(!r.ok) return msg("m3", "تعذّر الحفظ، حاول مرة أخرى.");
+      S.profile = r.profile; fillDone(); show("stDone");
+    }).catch(function(){ b.disabled = false; msg("m3", "تعذّر الاتصال، حاول مرة أخرى."); });
+  };
+
+  // 4) تم + الإدارة الذاتية
+  function fillDone(){ var p = S.profile || {}; $("dField").textContent = p.fieldName || ""; $("dTitles").textContent = (p.titles || []).join(" · ") + (p.city ? " — " + p.city : ""); $("myLink").value = myUrl(); }
+  $("copyLink").onclick = function(){ var v = $("myLink").value; (navigator.clipboard ? navigator.clipboard.writeText(v) : Promise.reject()).then(function(){ $("copyLink").textContent = "تم ✓"; setTimeout(function(){ $("copyLink").textContent = "نسخ"; }, 1500); }, function(){ $("myLink").select(); }); };
+  $("edit").onclick = function(){ fillConfirm(); show("stConfirm"); };
+  $("reup").onclick = function(){ if(!S.phone){ show("stPhone"); return; } show("stFile"); };
+  $("del").onclick = function(){
+    if(!confirm("حذف سيرتك الذاتية نهائياً من الشبكة؟")) return;
+    api("/api/me?t=" + S.token, { method: "DELETE" }).then(function(r){ if(!r.ok) return alert("تعذّر الحذف، حاول مرة أخرى."); try{ localStorage.removeItem("zaraCvToken"); }catch(e){} S.token = ""; $("doneH").textContent = "حُذفت سيرتك"; $("doneP").textContent = "حُذف الملف وبياناتك من الشبكة. يمكنك الرفع من جديد في أي وقت من الرابط نفسه."; $("stDone").querySelectorAll(".res,.mylink,.links,.sub + .mylink").forEach(function(e){ e.hidden = true; }); });
+  };
+
+  // فتح الرابط الخاص (?t=) أو رمز محفوظ على الجهاز
+  var t = new URLSearchParams(location.search).get("t"); try{ t = t || localStorage.getItem("zaraCvToken"); }catch(e){}
+  if(t) api("/api/me?t=" + encodeURIComponent(t)).then(function(r){ if(r.ok){ S.token = t; S.profile = r.profile; save(); fillDone(); show("stDone"); } else { try{ localStorage.removeItem("zaraCvToken"); }catch(e){} } }).catch(function(){});
+})();
+</script>
+</body>
+</html>
