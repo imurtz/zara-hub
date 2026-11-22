@@ -3,17 +3,17 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-<title>مرشحو مفاتيح التوظيف | لخبراء الموارد البشرية</title>
+<title>مرشحو مفاتيح الفرص | لخبراء الموارد البشرية</title>
 <meta name="description" content="لخبراء الموارد البشرية: مرشحون جاهزون حسب المسمى الوظيفي — انقر وتصلك السيرة فوراً." />
 <meta property="og:type" content="website" />
-<meta property="og:title" content="مرشحو «مفاتيح التوظيف» — لخبراء الموارد البشرية" />
+<meta property="og:title" content="مرشحو «مفاتيح الفرص» — لخبراء الموارد البشرية" />
 <meta property="og:description" content="مرشحون جاهزون حسب المسمى الوظيفي — انقر وتصلك السيرة فوراً." />
-<meta property="og:image" content="https://gzara.org/hr/og.jpg?v=1" />
+<meta property="og:image" content="https://gzara.org/hr/og.jpg?v=2" />
 <meta property="og:image:width" content="1200" />
 <meta property="og:image:height" content="630" />
 <meta property="og:url" content="https://gzara.org/hr/" />
 <meta name="twitter:card" content="summary_large_image" />
-<meta name="twitter:image" content="https://gzara.org/hr/og.jpg?v=1" />
+<meta name="twitter:image" content="https://gzara.org/hr/og.jpg?v=2" />
 <meta name="robots" content="noindex" />
 <meta name="theme-color" content="#3d5b56" />
 <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -133,12 +133,12 @@
 </head>
 <body>
 <div class="wrap">
-  <div class="top"><span class="tag">مفاتيح التوظيف · للخبراء</span><span class="who" id="who" hidden></span></div>
+  <div class="top"><span class="tag">مفاتيح الفرص · للخبراء</span><span class="who" id="who" hidden></span></div>
 
   <!-- تعريف لمرة واحدة -->
   <div id="vLogin" hidden>
     <h1>مرشحون <b>جاهزون للعمل</b></h1>
-    <p class="sub">لخبراء الموارد البشرية في شبكة «مفاتيح التوظيف». اختر المسمى الوظيفي وتصلك السيرة فوراً.</p>
+    <p class="sub">لخبراء الموارد البشرية في شبكة «مفاتيح الفرص». اختر المسمى الوظيفي وتصلك السيرة فوراً.</p>
     <div class="card login">
       <b>الدخول</b>
       <p class="sub" style="margin-top:4px">رقم الدخول هو جوالك، والرمز يصلك من الجمعية على الواتساب. مرة واحدة على هذا الجهاز.</p>
@@ -182,7 +182,7 @@
     </div>
   </div>
 
-  <div class="foot">بيانات المرشحين مشاركة بموافقتهم لغرض التوظيف فقط — يُرجى عدم تداولها خارج هذا الغرض.<br>جمعية العوامية الخيرية — مفاتيح التوظيف</div>
+  <div class="foot">المنصة جسر بين المرشح وجهة العمل ولا تَعِد المرشحين بوظيفة — قرار التوظيف لجهة العمل.<br>بيانات المرشحين مشاركة بموافقتهم لغرض التوظيف فقط — يُرجى عدم تداولها خارج هذا الغرض.<br>جمعية العوامية الخيرية — مفاتيح الفرص</div>
 </div>
 
 <script>
@@ -206,7 +206,7 @@
     var b = this; b.disabled = true; b.textContent = "جارٍ التحقق…";
     fetch(API + "/api/hr/login", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ phone: ph, code: code }) }).then(function(r){ return r.json(); }).then(function(d){
       b.disabled = false; b.textContent = "دخول";
-      if(!d.ok){ m.textContent = d.err === "notexpert" ? "هذا الرقم غير مسجّل ضمن خبراء الموارد البشرية في «مفاتيح التوظيف». تواصل مع الجمعية لإضافتك." : d.err === "nocode" ? "ما وصلك رمز بعد — تواصل مع الجمعية ويوصلك على الواتساب." : d.err === "badcode" ? "الرمز غير صحيح — تأكد منه في رسالة الواتساب." : d.err === "locked" ? "محاولات كثيرة — حاول بعد " + (d.mins || 15) + " دقيقة." : d.err === "disabled" ? "تم إيقاف الوصول لهذا الرقم." : "تعذّر التحقق الآن، حاول بعد لحظات."; m.classList.add("show"); return; }
+      if(!d.ok){ m.textContent = d.err === "notexpert" ? "هذا الرقم غير مسجّل ضمن خبراء الموارد البشرية في «مفاتيح الفرص». تواصل مع الجمعية لإضافتك." : d.err === "nocode" ? "ما وصلك رمز بعد — تواصل مع الجمعية ويوصلك على الواتساب." : d.err === "badcode" ? "الرمز غير صحيح — تأكد منه في رسالة الواتساب." : d.err === "locked" ? "محاولات كثيرة — حاول بعد " + (d.mins || 15) + " دقيقة." : d.err === "disabled" ? "تم إيقاف الوصول لهذا الرقم." : "تعذّر التحقق الآن، حاول بعد لحظات."; m.classList.add("show"); return; }
       T = d.token; try{ localStorage.setItem("zaraHrToken", T); }catch(e){} loadHome();
     }).catch(function(){ b.disabled = false; b.textContent = "دخول"; m.textContent = "تعذّر الاتصال، حاول مرة أخرى."; m.classList.add("show"); });
   };
@@ -343,7 +343,7 @@
       b.disabled = false; b.className = "go seen"; b.textContent = "تم ✓";
       if(!d.ok){ rev.innerHTML = '<div class="msg show">هذه السيرة لم تعد متاحة.</div>'; rev.classList.add("show"); return; }
       var wa = "966" + String(d.phone || "").replace(/^0/, "");
-      var share = "سيرة ذاتية — " + (d.name || "") + "\n" + (d.titles || []).join(" · ") + "\nالجوال: " + (d.phone || "") + "\nالسيرة: " + d.file + "\n(من مرشحي «مفاتيح التوظيف» — الرابط صالح 7 أيام)";
+      var share = "سيرة ذاتية — " + (d.name || "") + "\n" + (d.titles || []).join(" · ") + "\nالجوال: " + (d.phone || "") + "\nالسيرة: " + d.file + "\n(من مرشحي «مفاتيح الفرص» — الرابط صالح 7 أيام)";
       rev.innerHTML = '<div class="nm">' + esc(d.name) + '</div><div class="m">' + esc((d.titles || []).join(" · ")) + ' — <span dir="ltr">' + esc(d.phone) + '</span></div>' +
         '<div class="acts"><a class="a-cv" href="' + esc(d.file) + '" target="_blank" rel="noopener">📄 فتح السيرة</a>' +
         '<a class="a-wa" href="https://wa.me/?text=' + encodeURIComponent(share) + '" target="_blank" rel="noopener">أرسلها لي بالواتساب</a>' +

@@ -3598,7 +3598,7 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
       { k: "designs.view", l: "فتح القسم وتعبئة النماذج وتنزيل النسخ" },
       { k: "designs.manage", l: "إضافة النماذج وتعديل متغيراتها ومواضعها وحذفها" }
     ] },
-    { key: "cv", label: "السير الذاتية — مفاتيح التوظيف", perms: [
+    { key: "cv", label: "السير الذاتية — مفاتيح الفرص", perms: [
       { k: "cv.view", l: "الاطلاع على السير الذاتية وفتح ملفاتها ومتابعة الفرص" }
     ] },
     { key: "bldg", label: "أوامر صرف", perms: [
@@ -4123,7 +4123,7 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
     root.innerHTML = '<iframe title="معالجة الصور" src="/photos/" allow="clipboard-write" style="width:100%;height:calc(100vh - 140px);min-height:520px;border:0;border-radius:18px;background:#F5F6F5"></iframe>';
   }
 
-  // ===== السير الذاتية (مفاتيح التوظيف): لوحة المؤسس — البيانات في خدمة zara-cv الخاصة لا في Firestore =====
+  // ===== السير الذاتية (مفاتيح الفرص): لوحة المؤسس — البيانات في خدمة zara-cv الخاصة لا في Firestore =====
   // مفتاح اللوحة يُدخل مرة واحدة ويُحفظ على هذا الجهاز فقط (لا يُكتب في الكود المنشور)
   var CV_API = "https://zara-cv.murtada-ud.workers.dev";
   var cvUI = { data: null, err: "", busy: false, q: "", f: "", tab: "seekers" };
@@ -4141,7 +4141,7 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
   function cvDate(t){ if(!t) return ""; var d = new Date(t); return d.toLocaleDateString("ar-SA-u-ca-gregory-nu-latn", { day: "numeric", month: "short", year: "numeric" }); }
   function cvRender(){
     var root = document.getElementById("cvRoot"); if(!root || !currentUser || !can("cv.view")) return;
-    var e = escapeHTML, h = '<div class="cv-head"><div><h2>السير الذاتية — مفاتيح التوظيف</h2><p>تُرفع من رابط الباحثين وتُفرز تلقائياً حسب التخصص</p></div><div class="cv-acts"><a class="cv-btn ghost" href="/cv/" target="_blank" rel="noopener">رابط الباحثين ↗</a><button type="button" class="cv-btn ghost" data-cv="copy">نسخ رابط الباحثين</button><button type="button" class="cv-btn ghost" data-cv="copyhr">نسخ رابط الخبراء</button>' + (cvKey() ? '<button type="button" class="cv-btn" data-cv="reload">تحديث</button>' : '') + '</div></div>';
+    var e = escapeHTML, h = '<div class="cv-head"><div><h2>السير الذاتية — مفاتيح الفرص</h2><p>تُرفع من رابط الباحثين وتُفرز تلقائياً حسب التخصص</p></div><div class="cv-acts"><a class="cv-btn ghost" href="/cv/" target="_blank" rel="noopener">رابط الباحثين ↗</a><button type="button" class="cv-btn ghost" data-cv="copy">نسخ رابط الباحثين</button><button type="button" class="cv-btn ghost" data-cv="copyhr">نسخ رابط الخبراء</button>' + (cvKey() ? '<button type="button" class="cv-btn" data-cv="reload">تحديث</button>' : '') + '</div></div>';
     if(!cvKey() || cvUI.err === "key" || cvUI.newKey){
       if(cvUI.ready === undefined){ cvUI.ready = null; fetch(CV_API + "/api/admin/status").then(function(r){ return r.json(); }).then(function(d){ cvUI.ready = !!(d && d.ready); cvRender(); }).catch(function(){ cvUI.ready = true; cvRender(); }); }
       if(cvUI.ready === false){ root.innerHTML = h + '<div class="cv-card cv-keybox"><b>تهيئة لوحة السير الذاتية</b><p>تُنشأ مرة واحدة: يُولَّد مفتاح خاص بك ويُحفظ على هذا الجهاز. احتفظ به لفتح اللوحة من أجهزة أخرى.</p><button type="button" class="cv-btn" data-cv="init">تهيئة الآن</button></div>'; return; }
@@ -4179,7 +4179,7 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
     h += '<div class="cv-tools"><input type="search" id="cvQ" placeholder="ابحث بالاسم أو المسمى أو المدينة" value="' + e(cvUI.q) + '"/></div>';
     var q = cvUI.q.trim(), rows = act.filter(function(s){ return (!cvUI.f || s.field === cvUI.f) && (!q || [s.name, (s.titles || []).join(" "), s.city, s.fieldName].join(" ").indexOf(q) > -1); });
     h += rows.length ? '<div class="cv-list">' + rows.map(function(s){
-      return '<div class="cv-item"><div class="cv-main"><b>' + e(s.name) + '</b> <span class="cv-reg" dir="ltr">' + e(s.reg_no || "") + '</span>' + (s.consent ? '' : ' <span class="cv-pend">لم يؤكد</span>') +
+      return '<div class="cv-item"><div class="cv-main"><b>' + e(s.name) + '</b> <span class="cv-reg" dir="ltr">' + e(s.reg_no || "") + '</span>' + (s.consent ? '' : ' <span class="cv-pend">لم يؤكد</span>') + (s.attended === false ? ' <span class="cv-pend">لم يحضر الورشة — مخفي عن الخبراء</span>' : '') +
         '<div class="cv-f">' + e(s.fieldName) + (s.titles && s.titles.length ? ' · ' + e(s.titles.join("، ")) : '') + '</div>' +
         '<div class="cv-m">' + [s.years != null ? s.years + " سنوات" : "", s.degree, s.city, s.phone ? '<span dir="ltr">' + e(s.phone) + '</span>' : "", "حُدّثت " + cvDate(s.updated)].filter(Boolean).join(" · ") + '</div></div>' +
         '<button type="button" class="cv-btn ghost" data-cv="open" data-v="' + e(s.id) + '">فتح السيرة</button></div>';
@@ -4204,7 +4204,7 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
         b.disabled = false;
         if(!d2 || !d2.ok){ if(w2) w2.close(); showToast(d2 && d2.err === "phone" ? "جوال الخبير غير صحيح في «مطابقة البيانات»" : "تعذّر توليد الرمز"); return; }
         var first = String(d2.name || nm).split(" ")[0];
-        var msg = "حياك الله أ. " + first + "\nهذي صفحة مرشحي «مفاتيح التوظيف» لخبراء الموارد البشرية:\nhttps://gzara.org/hr/?p=" + d2.phone + "\n\nرقم الدخول: " + d2.phone + "\nرمز الدخول: " + d2.code + "\n\nتدخل مرة وحدة وتبقى مسجّل على جهازك. تقدر تشوف السير حسب المسمى الوظيفي، وتضيف الوظيفة اللي تبحث لها.\nجمعية العوامية الخيرية";
+        var msg = "حياك الله أ. " + first + "\nهذي صفحة مرشحي «مفاتيح الفرص» لخبراء الموارد البشرية:\nhttps://gzara.org/hr/?p=" + d2.phone + "\n\nرقم الدخول: " + d2.phone + "\nرمز الدخول: " + d2.code + "\n\nتدخل مرة وحدة وتبقى مسجّل على جهازك. تقدر تشوف السير حسب المسمى الوظيفي، وتضيف الوظيفة اللي تبحث لها.\nجمعية العوامية الخيرية";
         var u = "https://wa.me/966" + String(d2.phone).replace(/^0/, "") + "?text=" + encodeURIComponent(msg);
         if(w2) w2.location.href = u; else window.open(u, "_blank");
         cvLoad();

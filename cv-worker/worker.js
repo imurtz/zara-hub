@@ -1,4 +1,4 @@
-// خدمة «سيرتي» — حلقة وصل بين متدربي «مفاتيح التوظيف» وخبراء الموارد البشرية
+// خدمة «سيرتي» (مفاتيح الفرص) — حلقة وصل بين حضور ورشة «مفاتيح التوظيف 2» وخبراء الموارد البشرية
 // كل شيء على باقة Cloudflare المجانية: D1 (البيانات) + R2 خاص (ملفات السير — لا رابط عام) + Workers AI (الفرز)
 // لا شيء من بيانات السير يُخزَّن في Firestore المفتوح؛ قراءة الملفات تتم فقط عبر هذا العامل وبمفتاح صالح.
 //
@@ -80,6 +80,23 @@ async function rosterByPhone(phone) {
     return { id: x.document.name.split("/").pop(), name: g("name"), gender: g("gender"), regNo: g("regNo"), type: g("type"), roles, mergedInto: g("mergedInto"), status: g("status") }; });
   return rows.find(p => !p.mergedInto) || rows[0] || null;
 }
+// رفع السير لمن حضر ورشة «مفاتيح التوظيف 2» فقط (حضور مسجّل في اليوم الأول أو الثاني) — يُحدَّث كل 5 دقائق
+const ATT_DOCS = ["rg-mw8ep8ahrc0qn__s-mw8ep8ahcbogz", "rg-mw8ep8ahrc0qn__s-mw8ep8ahfbc9x"];
+let ATT = null, ATT_AT = 0;
+async function attendees() {
+  if (ATT && now() - ATT_AT < 5 * 6e4) return ATT;
+  const set = new Set(); let ok = true;
+  for (const d of ATT_DOCS) {
+    const r = await fetch(`${FS_BASE}/rosterAttendance/${d}?key=${FS_KEY}`);
+    if (!r.ok) { ok = false; continue; }
+    const m = (((await r.json()).fields || {}).marks || {}).mapValue;
+    Object.entries((m && m.fields) || {}).forEach(([id, v]) => { const f = (v.mapValue || {}).fields || {}; if (!f.s || f.s.stringValue === "p") set.add(id); });
+  }
+  if (!ok && ATT) return ATT; // خلل مؤقت: نبقي آخر نسخة
+  if (!ok && !set.size) return null;
+  ATT = set; ATT_AT = now(); return set;
+}
+const attendedOk = (set, id) => !set || String(id || "").startsWith("zz-") || set.has(id);
 // خبير موارد بشرية = من له صفة «موارد بشرية» (أو «مدرب» القديمة) في «مطابقة البيانات»
 async function expertByPhone(phone) {
   const body = { structuredQuery: { from: [{ collectionId: "rosterPeople" }], where: { fieldFilter: { field: { fieldPath: "phone" }, op: "EQUAL", value: { stringValue: phone } } }, limit: 5 } };
@@ -176,6 +193,7 @@ export default {
         if (!/^05\d{8}$/.test(ph)) return json({ ok: false, err: "phone" }, 200, H);
         const r = await rosterByPhone(ph);
         if (!r) return json({ ok: false, err: "notfound" }, 200, H);
+        const att = await attendees(); if (att && !attendedOk(att, r.id)) return json({ ok: false, err: "notattended" }, 200, H);
         const ex = await env.DB.prepare("SELECT token FROM seekers WHERE phone = ? AND status = 'active'").bind(ph).first();
         return json({ ok: true, name: r.name, existing: !!ex }, 200, H);
       }
@@ -184,6 +202,7 @@ export default {
         const fd = await req.formData(); const ph = phoneNorm(fd.get("phone")); const file = fd.get("file"); const text = clip(fd.get("text"), 20000);
         if (!/^05\d{8}$/.test(ph)) return json({ ok: false, err: "phone" }, 400, H);
         const r = await rosterByPhone(ph); if (!r) return json({ ok: false, err: "notfound" }, 403, H);
+        const att = await attendees(); if (att && !attendedOk(att, r.id)) return json({ ok: false, err: "notattended" }, 403, H);
         if (!file || typeof file === "string") return json({ ok: false, err: "nofile" }, 400, H);
         if (file.size > MAX_FILE) return json({ ok: false, err: "size" }, 413, H);
         const name = String(file.name || "cv"), type = /\.pdf$/i.test(name) || file.type === "application/pdf" ? "application/pdf" : /\.docx$/i.test(name) ? "application/vnd.openxmlformats-officedocument.wordprocessingml.document" : "";
@@ -243,7 +262,8 @@ export default {
         const t = url.searchParams.get("t") || ""; const ex = t && await env.DB.prepare("SELECT * FROM experts WHERE token = ? AND active = 1").bind(t).first();
         if (!ex) return json({ ok: false, err: "token" }, 401, H);
         await env.DB.prepare("UPDATE experts SET last_seen=? WHERE id=?").bind(now(), ex.id).run();
-        const pool = ((await env.DB.prepare("SELECT id, reg_no, field, titles, years, degree, skills, city, gender, updated FROM seekers WHERE status='active' AND consent=1 AND (roster_id NOT LIKE 'zz-%' OR ? = 1)").bind(ex.id.startsWith("zz-") ? 1 : 0).all()).results || []).map(s => Object.assign(s, { titles: JSON.parse(s.titles || "[]"), skills: JSON.parse(s.skills || "[]"), code: (String(s.reg_no || "").match(/(\d+)$/) || [])[1] || s.id.slice(-4).toUpperCase() }));
+        const ATTX = await attendees();
+        const pool = ((await env.DB.prepare("SELECT id, roster_id, reg_no, field, titles, years, degree, skills, city, gender, updated FROM seekers WHERE status='active' AND consent=1 AND (roster_id NOT LIKE 'zz-%' OR ? = 1)").bind(ex.id.startsWith("zz-") ? 1 : 0).all()).results || []).filter(s => attendedOk(ATTX, s.roster_id)).map(s => Object.assign(s, { titles: JSON.parse(s.titles || "[]"), skills: JSON.parse(s.skills || "[]"), code: (String(s.reg_no || "").match(/(\d+)$/) || [])[1] || s.id.slice(-4).toUpperCase() }));
         if (p === "/api/hr/home") { // مربعات المسميات + أسئلة المتابعة المستحقة
           const tiles = {};
           pool.forEach(s => { const seen = {}; s.titles.forEach(ti => { const k = normT(ti); if (!k || seen[k]) return; seen[k] = 1; const tl = (tiles[k] = tiles[k] || { label: ti, n: 0, field: s.field, codes: [] }); tl.n++; tl.codes.push(s.code); }); });
@@ -310,7 +330,8 @@ export default {
         const k = url.searchParams.get("k") || "";
         if (!await adminOk(env.DB, k)) return json({ ok: false, err: "key" }, 401, H);
         if (p === "/api/admin/list") {
-          const rows = (await env.DB.prepare("SELECT id, name, phone, reg_no, gender, field, titles, years, degree, city, consent, status, ai, created, updated FROM seekers WHERE roster_id NOT LIKE 'zz-%' ORDER BY updated DESC").all()).results || [];
+          const ATTA = await attendees();
+          const rows = (await env.DB.prepare("SELECT id, roster_id, name, phone, reg_no, gender, field, titles, years, degree, city, consent, status, ai, created, updated FROM seekers WHERE roster_id NOT LIKE 'zz-%' ORDER BY updated DESC").all()).results || [];
           const reqs = (await env.DB.prepare("SELECT r.*, e.name AS expert, e.org AS org, s.name AS seeker FROM requests r LEFT JOIN experts e ON e.id = r.expert_id LEFT JOIN seekers s ON s.id = r.seeker_id WHERE r.expert_id NOT LIKE 'zz-%' ORDER BY r.created DESC LIMIT 500").all()).results || [];
           const dx = (await env.DB.prepare("SELECT id, name, org, phone, active, created, last_seen, pin_at FROM experts WHERE id NOT LIKE 'zz-%' ORDER BY created").all()).results || [];
           const ro = await rosterExperts(), byId = Object.fromEntries(dx.map(x => [x.id, x]));
@@ -318,7 +339,7 @@ export default {
           dx.forEach(x => { if (!experts.some(y => y.id === x.id)) experts.push(Object.assign({ gone: true }, x)); });
           const pool = ((await env.DB.prepare("SELECT titles FROM seekers WHERE status='active' AND consent=1 AND roster_id NOT LIKE 'zz-%'").all()).results || []).map(s => JSON.parse(s.titles || "[]"));
           const jobs = ((await env.DB.prepare("SELECT j.*, e.name AS expert FROM jobs j LEFT JOIN experts e ON e.id = j.expert_id WHERE j.expert_id NOT LIKE 'zz-%' ORDER BY j.created DESC LIMIT 500").all()).results || []).map(j => Object.assign(j, { n: pool.filter(ts => ts.some(x => tMatch(x, j.title))).length }));
-          return json({ ok: true, rosterOk: !!ro, jobs, seekers: rows.map(r => Object.assign(r, { fieldName: FIELD_NAME[r.field] || "", titles: JSON.parse(r.titles || "[]") })), requests: reqs, experts, fields: FIELDS.map(f => ({ k: f[0], l: f[1] })) }, 200, H);
+          return json({ ok: true, rosterOk: !!ro, jobs, seekers: rows.map(r => Object.assign(r, { attended: attendedOk(ATTA, r.roster_id), fieldName: FIELD_NAME[r.field] || "", titles: JSON.parse(r.titles || "[]") })), requests: reqs, experts, fields: FIELDS.map(f => ({ k: f[0], l: f[1] })) }, 200, H);
         }
         if (p === "/api/admin/code" && req.method === "POST") { // رمز دخول جديد من 6 أرقام — يُعرض للمؤسس مرة واحدة ليرسله بالواتساب
           const b = await req.json(); const ro = await rosterExperts(); const pr = ro && ro.find(x => x.id === b.id);
