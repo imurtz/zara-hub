@@ -4129,10 +4129,20 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
   var CV_API = "https://zara-cv.murtada-ud.workers.dev";
   var cvUI = { data: null, err: "", busy: false, q: "", f: "", tab: "experts", codes: {} };
   function cvKey(){ try{ return localStorage.getItem("zaraCvAdminKey") || ""; }catch(e){ return ""; } }
+  // الدخول للوحة السير = نفس دخولك للبوابة (رمز Firebase يتحقق منه الخادم + صلاحية «cv.view» أو أدمن) — بلا مفتاح منفصل
+  var cvAuthReady = new Promise(function(res){ try{ var un = firebase.auth().onAuthStateChanged(function(){ un(); res(); }); setTimeout(res, 4000); }catch(e){ res(); } });
+  function cvTok(){ return cvAuthReady.then(function(){ try{ var u = firebase.auth().currentUser; return u ? u.getIdToken() : ""; }catch(e){ return ""; } }); }
+  function cvFetch(path, opts){
+    opts = opts || {};
+    return cvTok().then(function(t){
+      var hd = Object.assign({}, opts.headers || {}); if(t) hd.Authorization = "Bearer " + t;
+      var k = cvKey(); var u = CV_API + path + (k ? (path.indexOf("?") > -1 ? "&" : "?") + "k=" + encodeURIComponent(k) : "");
+      return fetch(u, Object.assign({}, opts, { headers: hd }));
+    });
+  }
   function cvLoad(){
-    var k = cvKey(); if(!k){ cvRender(); return; }
     cvUI.busy = true; cvRender();
-    fetch(CV_API + "/api/admin/list?k=" + encodeURIComponent(k)).then(function(r){ return r.json(); }).then(function(d){
+    cvFetch("/api/admin/list").then(function(r){ return r.json(); }).then(function(d){
       cvUI.busy = false;
       if(!d.ok){ cvUI.err = d.err === "key" ? "key" : "load"; if(d.err === "key"){ try{ localStorage.removeItem("zaraCvAdminKey"); }catch(e){} } }
       else { cvUI.err = ""; cvUI.data = d; }
@@ -4143,11 +4153,8 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
   function cvRender(){
     var root = document.getElementById("cvRoot"); if(!root || !currentUser || !can("cv.view")) return;
     var e = escapeHTML, h = '<div class="cv-head"><div><h2>السير الذاتية — مفاتيح الفرص</h2><p>تُرفع من رابط الباحثين وتُفرز تلقائياً حسب التخصص</p></div><div class="cv-acts"><a class="cv-btn ghost" href="/cv/" target="_blank" rel="noopener">رابط الباحثين ↗</a><button type="button" class="cv-btn ghost" data-cv="copy">نسخ رابط الباحثين</button><button type="button" class="cv-btn ghost" data-cv="copyhr">نسخ رابط الخبراء</button>' + (cvKey() ? '<button type="button" class="cv-btn" data-cv="reload">تحديث</button>' : '') + '</div></div>';
-    if(!cvKey() || cvUI.err === "key" || cvUI.newKey){
-      if(cvUI.ready === undefined){ cvUI.ready = null; fetch(CV_API + "/api/admin/status").then(function(r){ return r.json(); }).then(function(d){ cvUI.ready = !!(d && d.ready); cvRender(); }).catch(function(){ cvUI.ready = true; cvRender(); }); }
-      if(cvUI.ready === false){ root.innerHTML = h + '<div class="cv-card cv-keybox"><b>تهيئة لوحة السير الذاتية</b><p>تُنشأ مرة واحدة: يُولَّد مفتاح خاص بك ويُحفظ على هذا الجهاز. احتفظ به لفتح اللوحة من أجهزة أخرى.</p><button type="button" class="cv-btn" data-cv="init">تهيئة الآن</button></div>'; return; }
-      if(cvUI.newKey){ root.innerHTML = h + '<div class="cv-card cv-keybox"><b>مفتاحك الخاص — احفظه في مكان آمن</b><p>لن يظهر مرة أخرى. يلزمك لفتح اللوحة من جهاز آخر.</p><div class="cv-row"><input type="text" readonly value="' + escapeHTML(cvUI.newKey) + '" dir="ltr" onclick="this.select()"/><button type="button" class="cv-btn" data-cv="keydone">حفظته ✓</button></div></div>'; return; }
-      root.innerHTML = h + '<div class="cv-card cv-keybox"><b>أدخل مفتاح لوحة السير الذاتية</b><p>يُدخل مرة واحدة ويُحفظ على هذا الجهاز فقط.</p>' + (cvUI.err === "key" ? '<p class="cv-err">المفتاح غير صحيح.</p>' : '') + '<div class="cv-row"><input type="password" id="cvKeyIn" placeholder="المفتاح" autocomplete="off"/><button type="button" class="cv-btn" data-cv="setkey">دخول</button></div></div>';
+    if(cvUI.err === "key"){
+      root.innerHTML = h + '<div class="cv-card cv-keybox"><b>ما قدرنا نتحقق من حسابك</b><p>سجّل خروج من البوابة وادخل من جديد بإيميلك وكلمة المرور، وتنفتح اللوحة مباشرة. (تحتاج صلاحية «الاطلاع على السير الذاتية» أو أدمن.)</p><button type="button" class="cv-btn" data-cv="retry">حاول مرة ثانية</button></div>';
       return;
     }
     if(cvUI.busy && !cvUI.data){ root.innerHTML = h + '<div class="cv-card">جارٍ التحميل…</div>'; return; }
@@ -4190,18 +4197,19 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
   document.addEventListener("click", function(ev){
     var b = ev.target.closest && ev.target.closest("#cvRoot [data-cv]"); if(!b) return;
     var a = b.getAttribute("data-cv"), v = b.getAttribute("data-v");
+    if(a === "retry"){ cvUI.err = ""; cvLoad(); return; }
     if(a === "setkey"){ var k = (document.getElementById("cvKeyIn") || {}).value || ""; if(!k.trim()) return; try{ localStorage.setItem("zaraCvAdminKey", k.trim()); }catch(e){} cvUI.err = ""; cvLoad(); }
     else if(a === "reload") cvLoad();
     else if(a === "init"){ fetch(CV_API + "/api/admin/init", { method: "POST" }).then(function(r){ return r.json(); }).then(function(d){ if(d && d.ok){ cvUI.newKey = d.key; cvUI.ready = true; try{ localStorage.setItem("zaraCvAdminKey", d.key); }catch(e){} } else { cvUI.ready = true; showToast("اللوحة مُهيّأة مسبقاً — أدخل المفتاح"); } cvRender(); }).catch(function(){ showToast("تعذّر الاتصال بالخدمة"); }); }
     else if(a === "keydone"){ cvUI.newKey = ""; cvLoad(); }
     else if(a === "copy"){ copyToClipboard("https://gzara.org/cv/"); showToast("نُسخ رابط الباحثين"); }
     else if(a === "copyhr"){ copyToClipboard("https://gzara.org/hr/"); showToast("نُسخ رابط الخبراء"); }
-    else if(a === "xp"){ var on = b.getAttribute("data-a") === "1"; if(!on && !confirm("إيقاف وصول هذا الخبير؟ يخرج من الصفحة فوراً.")) return; fetch(CV_API + "/api/admin/expert?k=" + encodeURIComponent(cvKey()), { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: v, active: on }) }).then(function(){ cvLoad(); }); }
+    else if(a === "xp"){ var on = b.getAttribute("data-a") === "1"; if(!on && !confirm("إيقاف وصول هذا الخبير؟ يخرج من الصفحة فوراً.")) return; cvFetch("/api/admin/expert", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: v, active: on }) }).then(function(){ cvLoad(); }); }
     else if(a === "tab"){ cvUI.tab = v; cvRender(); }
     else if(a === "code"){ // يولّد رمزاً ويعرضه في السطر — النسخ والواتساب بعدها
       if(b.getAttribute("data-old") === "1" && !confirm("توليد رمز جديد يلغي الرمز القديم لهذا المدرب. متأكد؟")) return;
       var nm = b.getAttribute("data-n") || ""; b.disabled = true; b.textContent = "…";
-      fetch(CV_API + "/api/admin/code?k=" + encodeURIComponent(cvKey()), { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: v }) }).then(function(r){ return r.json(); }).then(function(d2){
+      cvFetch("/api/admin/code", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: v }) }).then(function(r){ return r.json(); }).then(function(d2){
         if(!d2 || !d2.ok){ showToast(d2 && d2.err === "phone" ? "جوال المدرب غير صحيح في «مطابقة البيانات»" : "تعذّر توليد الرمز"); cvRender(); return; }
         cvUI.codes[v] = { code: d2.code, phone: d2.phone, name: d2.name || nm };
         copyToClipboard(d2.code); showToast("الرمز " + d2.code + " — نُسخ");
@@ -4218,7 +4226,7 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
     else if(a === "f"){ cvUI.f = v; cvRender(); }
     else if(a === "open"){
       var w = window.open("", "_blank");
-      fetch(CV_API + "/api/admin/file?k=" + encodeURIComponent(cvKey()) + "&id=" + encodeURIComponent(v)).then(function(r){ if(!r.ok) throw 0; return r.blob(); }).then(function(bl){ var u = URL.createObjectURL(bl); if(w) w.location.href = u; else window.open(u, "_blank"); }).catch(function(){ if(w) w.close(); showToast("تعذّر فتح الملف"); });
+      cvFetch("/api/admin/file?id=" + encodeURIComponent(v)).then(function(r){ if(!r.ok) throw 0; return r.blob(); }).then(function(bl){ var u = URL.createObjectURL(bl); if(w) w.location.href = u; else window.open(u, "_blank"); }).catch(function(){ if(w) w.close(); showToast("تعذّر فتح الملف"); });
     }
   });
   document.addEventListener("input", function(ev){ if(ev.target && ev.target.id === "cvQ"){ cvUI.q = ev.target.value; clearTimeout(cvUI._t); cvUI._t = setTimeout(function(){ var pos = ev.target.selectionStart; cvRender(); var i = document.getElementById("cvQ"); if(i){ i.focus(); try{ i.setSelectionRange(pos, pos); }catch(e){} } }, 200); } });

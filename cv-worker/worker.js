@@ -42,7 +42,7 @@ const FIELD_NAME = Object.fromEntries(FIELDS.map(f => [f[0], f[1]]));
 
 function cors(origin) {
   const o = ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0];
-  return { "Access-Control-Allow-Origin": o, "Access-Control-Allow-Methods": "GET, POST, DELETE, OPTIONS", "Access-Control-Allow-Headers": "Content-Type", "Vary": "Origin" };
+  return { "Access-Control-Allow-Origin": o, "Access-Control-Allow-Methods": "GET, POST, DELETE, OPTIONS", "Access-Control-Allow-Headers": "Content-Type, Authorization", "Vary": "Origin" };
 }
 const json = (o, s, h) => new Response(JSON.stringify(o), { status: s || 200, headers: Object.assign({ "Content-Type": "application/json; charset=utf-8" }, h) });
 const tok = n => { const a = new Uint8Array(n || 18); crypto.getRandomValues(a); return Array.from(a, b => "abcdefghijkmnpqrstuvwxyz23456789"[b % 32]).join(""); };
@@ -175,6 +175,30 @@ function pub(s) { // ما يراه صاحب السيرة عن نفسه
   return { name: s.name, field: s.field, fieldName: FIELD_NAME[s.field] || "", titles: JSON.parse(s.titles || "[]"), tasks: s.tasks, years: s.years, degree: s.degree, skills: JSON.parse(s.skills || "[]"), city: s.city, fileName: s.file_name, consent: !!s.consent, status: s.status, updated: s.updated, expires: s.expires };
 }
 async function sha(s) { const b = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(s)); return Array.from(new Uint8Array(b), x => x.toString(16).padStart(2, "0")).join(""); }
+// دخول المؤسس بحساب البوابة: يتحقق من توقيع رمز Firebase ثم من سجل الموظف (أدمن أو صلاحية cv.view)
+let JWKS = null, JWKS_AT = 0; const STAFF = new Map();
+function b64u(x) { x = x.replace(/-/g, "+").replace(/_/g, "/"); while (x.length % 4) x += "="; return Uint8Array.from(atob(x), c => c.charCodeAt(0)); }
+async function staffOk(t) {
+  if (!t) return false;
+  const c = STAFF.get(t); if (c && c.exp > Date.now()) return c.ok;
+  try {
+    const [h, pl, sg] = t.split("."); if (!sg) return false;
+    const hd = JSON.parse(new TextDecoder().decode(b64u(h))), P = JSON.parse(new TextDecoder().decode(b64u(pl)));
+    const now = Date.now() / 1000;
+    if (P.aud !== "awamia-zara" || P.iss !== "https://securetoken.google.com/awamia-zara" || !(P.exp > now) || !P.email) return false;
+    if (!JWKS || Date.now() - JWKS_AT > 3600e3) { JWKS = (await (await fetch("https://www.googleapis.com/service_accounts/v1/jwk/securetoken@system.gserviceaccount.com")).json()).keys || []; JWKS_AT = Date.now(); }
+    const jwk = JWKS.find(k => k.kid === hd.kid); if (!jwk) return false;
+    const key = await crypto.subtle.importKey("jwk", jwk, { name: "RSASSA-PKCS1-v1_5", hash: "SHA-256" }, false, ["verify"]);
+    if (!await crypto.subtle.verify("RSASSA-PKCS1-v1_5", key, b64u(sg), new TextEncoder().encode(h + "." + pl))) return false;
+    const body = { structuredQuery: { from: [{ collectionId: "employees" }], where: { fieldFilter: { field: { fieldPath: "email" }, op: "EQUAL", value: { stringValue: String(P.email).toLowerCase() } } }, limit: 1 } };
+    const r = await fetch(`${FS_BASE}:runQuery?key=${FS_KEY}`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+    const f = (((await r.json())[0] || {}).document || {}).fields || {};
+    const perms = ((f.perms || {}).arrayValue || {}).values || [];
+    const ok = (f.role || {}).stringValue === "admin" || perms.some(v => v.stringValue === "cv.view");
+    STAFF.set(t, { ok, exp: Math.min(P.exp * 1000, Date.now() + 300e3) });
+    return ok;
+  } catch (e) { return false; }
+}
 async function adminOk(db, k) { if (!k) return false; const r = await db.prepare("SELECT v FROM meta WHERE k = 'admin'").first(); return !!r && r.v === await sha(k); }
 async function logAct(db, who, act, ref) { try { await db.prepare("INSERT INTO log (t, who, act, ref) VALUES (?, ?, ?, ?)").bind(now(), who, act, ref || "").run(); } catch (e) {} }
 
@@ -328,7 +352,8 @@ export default {
       if (p === "/api/admin/status") { const ex = await env.DB.prepare("SELECT v FROM meta WHERE k = 'admin'").first(); return json({ ok: true, ready: !!ex }, 200, H); }
       if (p.startsWith("/api/admin")) {
         const k = url.searchParams.get("k") || "";
-        if (!await adminOk(env.DB, k)) return json({ ok: false, err: "key" }, 401, H);
+        const bt = (req.headers.get("Authorization") || "").replace(/^Bearer\s+/i, "");
+        if (!await staffOk(bt) && !await adminOk(env.DB, k)) return json({ ok: false, err: "key" }, 401, H);
         if (p === "/api/admin/list") {
           const ATTA = await attendees();
           const rows = (await env.DB.prepare("SELECT id, roster_id, name, phone, reg_no, gender, field, titles, years, degree, city, consent, status, ai, created, updated FROM seekers WHERE roster_id NOT LIKE 'zz-%' ORDER BY updated DESC").all()).results || [];
