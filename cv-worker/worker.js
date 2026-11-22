@@ -61,8 +61,14 @@ async function schema(db) {
     db.prepare(`CREATE TABLE IF NOT EXISTS experts (id TEXT PRIMARY KEY, token TEXT UNIQUE, name TEXT, org TEXT, phone TEXT, active INTEGER DEFAULT 1, created INTEGER, last_seen INTEGER)`),
     db.prepare(`CREATE TABLE IF NOT EXISTS requests (id TEXT PRIMARY KEY, expert_id TEXT, seeker_id TEXT, job TEXT, created INTEGER, outcome TEXT, outcome_at INTEGER)`),
     db.prepare(`CREATE TABLE IF NOT EXISTS log (t INTEGER, who TEXT, act TEXT, ref TEXT)`),
-    db.prepare(`CREATE TABLE IF NOT EXISTS meta (k TEXT PRIMARY KEY, v TEXT)`)
+    db.prepare(`CREATE TABLE IF NOT EXISTS meta (k TEXT PRIMARY KEY, v TEXT)`),
+    db.prepare(`CREATE TABLE IF NOT EXISTS jobs (id TEXT PRIMARY KEY, expert_id TEXT, title TEXT, nkey TEXT, field TEXT, note TEXT, status TEXT DEFAULT 'open', created INTEGER, closed INTEGER)`)
   ]);
+  const v = await db.prepare("SELECT v FROM meta WHERE k = 'schema'").first();
+  if (!v || v.v !== "2") { // رمز دخول الخبراء: يُولَّد من لوحة المؤسس ويُرسل بالواتساب
+    for (const c of ["pin_hash TEXT", "pin_at INTEGER", "fails INTEGER DEFAULT 0", "lock_until INTEGER DEFAULT 0"]) { try { await db.prepare(`ALTER TABLE experts ADD COLUMN ${c}`).run(); } catch (e) {} }
+    await db.prepare("INSERT OR REPLACE INTO meta (k, v) VALUES ('schema', '2')").run();
+  }
 }
 
 // التحقق من أن الجوال لمتدرب في «مطابقة البيانات» (rosterPeople) — آلياً بلا تدخل بشري
@@ -89,6 +95,17 @@ async function expertByPhone(phone) {
   }
   return null;
 }
+// خبراء الموارد البشرية في «مطابقة البيانات» — للوحة المؤسس (إرسال رمز الدخول)
+async function rosterExperts() {
+  const body = { structuredQuery: { from: [{ collectionId: "rosterPeople" }], where: { fieldFilter: { field: { fieldPath: "roles" }, op: "ARRAY_CONTAINS_ANY", value: { arrayValue: { values: [{ stringValue: "hr" }, { stringValue: "trainer" }] } } } }, limit: 300 } };
+  const r = await fetch(`${FS_BASE}:runQuery?key=${FS_KEY}`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+  if (!r.ok) return null;
+  return (await r.json()).filter(x => x.document).map(x => { const f = x.document.fields || {}, g = k => f[k] ? Object.values(f[k])[0] : ""; return { id: x.document.name.split("/").pop(), name: g("name"), phone: phoneNorm(g("phone")), regNo: g("regNo"), gender: g("gender"), mergedInto: g("mergedInto"), status: g("status") }; })
+    .filter(p => !p.mergedInto && p.status !== "inactive");
+}
+// مطابقة مرنة للمسميات: «المحاسب» = «محاسب» = «محاسبة»، و«محاسب» تطابق «محاسب عام»
+const nk = t => String(t || "").toLowerCase().replace(/[ًٌٍَُِّْـ]/g, "").replace(/[أإآ]/g, "ا").replace(/ة(?=\s|$)/g, "ه").replace(/ى(?=\s|$)/g, "ي").replace(/[^\p{L}\p{N}\s]/gu, " ").split(/\s+/).filter(Boolean).map(w => w.length > 4 && w.startsWith("ال") ? w.slice(2) : w).join(" ");
+const tMatch = (a, b) => { const A = nk(a), B = nk(b); if (!A || !B) return false; if (A === B) return true; const s = A.length < B.length ? A : B, l = s === A ? B : A; return s.length >= 3 && (" " + l + " ").includes(" " + s) ; };
 const normT = t => clip(t, 60).replace(/^ال(?=\S)/, "").replace(/[ًٌٍَُِّْـ]/g, "").replace(/[أإآ]/g, "ا").replace(/ة\b/g, "ه").replace(/ى\b/g, "ي");
 const FOLLOW_DAYS = 14, SHARE_DAYS = 7;
 
@@ -205,14 +222,20 @@ export default {
 
       // ---------- الخبراء: رابط واحد للجميع + تعريف بالجوال مرة واحدة ----------
       if (p === "/api/hr/login" && req.method === "POST") {
-        const { phone } = await req.json(); const ph = phoneNorm(phone);
+        const b = await req.json(); const ph = phoneNorm(b.phone), code = digits(b.code).replace(/\D/g, "");
         if (!/^05\d{8}$/.test(ph)) return json({ ok: false, err: "phone" }, 200, H);
         const e = await expertByPhone(ph); if (!e) return json({ ok: false, err: "notexpert" }, 200, H);
         let ex = await env.DB.prepare("SELECT * FROM experts WHERE id = ?").bind(e.id).first();
-        if (ex && !ex.active) return json({ ok: false, err: "disabled" }, 200, H);
-        const token = tok(24);
-        if (ex) await env.DB.prepare("UPDATE experts SET token=?, name=?, org=?, phone=?, last_seen=? WHERE id=?").bind(token, e.name, e.org || ex.org || "", ph, now(), e.id).run();
-        else await env.DB.prepare("INSERT INTO experts (id, token, name, org, phone, active, created, last_seen) VALUES (?, ?, ?, ?, ?, 1, ?, ?)").bind(e.id, token, e.name, e.org || "", ph, now(), now()).run();
+        if (!ex || !ex.pin_hash) return json({ ok: false, err: "nocode" }, 200, H);
+        if (!ex.active) return json({ ok: false, err: "disabled" }, 200, H);
+        if ((ex.lock_until || 0) > now()) return json({ ok: false, err: "locked", mins: Math.ceil((ex.lock_until - now()) / 6e4) }, 200, H);
+        if (!code || await sha(e.id + ":" + code) !== ex.pin_hash) {
+          const f = (ex.fails || 0) + 1;
+          await env.DB.prepare("UPDATE experts SET fails=?, lock_until=? WHERE id=?").bind(f >= 6 ? 0 : f, f >= 6 ? now() + 15 * 6e4 : 0, e.id).run();
+          return json({ ok: false, err: f >= 6 ? "locked" : "badcode", mins: 15 }, 200, H);
+        }
+        const token = ex.token && !String(ex.token).startsWith("x-") ? ex.token : tok(24); // نفس الجلسة على كل أجهزته
+        await env.DB.prepare("UPDATE experts SET token=?, name=?, org=?, phone=?, last_seen=?, fails=0, lock_until=0 WHERE id=?").bind(token, e.name, e.org || ex.org || "", ph, now(), e.id).run();
         await logAct(env.DB, "expert:" + e.id, "login", "");
         return json({ ok: true, token, name: e.name }, 200, H);
       }
@@ -225,12 +248,15 @@ export default {
           const tiles = {};
           pool.forEach(s => { const seen = {}; s.titles.forEach(ti => { const k = normT(ti); if (!k || seen[k]) return; seen[k] = 1; const tl = (tiles[k] = tiles[k] || { label: ti, n: 0, field: s.field, codes: [] }); tl.n++; tl.codes.push(s.code); }); });
           const due = ((await env.DB.prepare("SELECT r.id, r.job, r.created, s.name FROM requests r LEFT JOIN seekers s ON s.id = r.seeker_id WHERE r.expert_id = ? AND (r.outcome IS NULL OR r.outcome = '') AND r.created < ? ORDER BY r.created LIMIT 5").bind(ex.id, now() - FOLLOW_DAYS * 864e5).all()).results || []);
-          return json({ ok: true, name: ex.name, total: pool.length, tiles: Object.values(tiles).sort((a, b) => b.n - a.n || a.label.localeCompare(b.label, "ar")), fields: FIELDS.map(f => ({ k: f[0], l: f[1], n: pool.filter(s => s.field === f[0]).length })).filter(f => f.n), due }, 200, H);
+          const jobs = ((await env.DB.prepare("SELECT id, expert_id, title, note, created FROM jobs WHERE status = 'open' ORDER BY created DESC LIMIT 300").all()).results || []);
+          const mine = jobs.filter(j => j.expert_id === ex.id).map(j => ({ id: j.id, title: j.title, note: j.note, created: j.created, n: pool.filter(s => s.titles.some(x => tMatch(x, j.title))).length }));
+          const others = [...new Set(jobs.filter(j => j.expert_id !== ex.id).map(j => j.title))].slice(0, 150);
+          return json({ ok: true, name: ex.name, total: pool.length, jobs: mine, others, tiles: Object.values(tiles).sort((a, b) => b.n - a.n || a.label.localeCompare(b.label, "ar")), fields: FIELDS.map(f => ({ k: f[0], l: f[1], n: pool.filter(s => s.field === f[0]).length })).filter(f => f.n), due }, 200, H);
         }
         if (p === "/api/hr/list") { // بطاقات بلا اسم ولا جوال حتى يطلب الخبير السيرة
-          const title = url.searchParams.get("title") || "", field = url.searchParams.get("field") || "", k = normT(title);
+          const title = url.searchParams.get("title") || "", field = url.searchParams.get("field") || "", job = url.searchParams.get("job") || "", k = normT(title);
           const mine = {}; ((await env.DB.prepare("SELECT seeker_id FROM requests WHERE expert_id = ?").bind(ex.id).all()).results || []).forEach(r => mine[r.seeker_id] = 1);
-          const rows = pool.filter(s => title ? s.titles.some(x => normT(x) === k) : field ? s.field === field : true)
+          const rows = pool.filter(s => job ? s.titles.some(x => tMatch(x, job)) : title ? s.titles.some(x => normT(x) === k) : field ? s.field === field : true)
             .sort((a, b) => (b.years || 0) - (a.years || 0) || b.updated - a.updated)
             .map(s => ({ id: s.id, code: s.code, fieldName: FIELD_NAME[s.field] || "", titles: s.titles, alsoIn: title ? s.titles.filter(x => normT(x) !== k) : [], years: s.years, degree: s.degree, city: s.city, skills: s.skills.slice(0, 5), gender: s.gender, taken: !!mine[s.id] }));
           return json({ ok: true, rows }, 200, H);
@@ -241,6 +267,17 @@ export default {
           let r = await env.DB.prepare("SELECT * FROM requests WHERE expert_id = ? AND seeker_id = ?").bind(ex.id, s.id).first();
           if (!r) { r = { id: "rq-" + tok(16) }; await env.DB.prepare("INSERT INTO requests (id, expert_id, seeker_id, job, created) VALUES (?, ?, ?, ?, ?)").bind(r.id, ex.id, s.id, clip(b.job, 80), now()).run(); r.created = now(); await logAct(env.DB, "expert:" + ex.id, "open", s.id); }
           return json({ ok: true, rid: r.id, name: s.name, phone: s.phone, fieldName: FIELD_NAME[s.field] || "", titles: JSON.parse(s.titles || "[]"), file: `${url.origin}/f/${r.id}`, fileName: s.file_name }, 200, H);
+        }
+        if (p === "/api/hr/job" && req.method === "POST") { // إضافة وظيفة مطلوبة بأبسط شكل: مسمى + ملاحظة اختيارية
+          const b = await req.json();
+          if (b.close) { await env.DB.prepare("UPDATE jobs SET status='closed', closed=? WHERE id=? AND expert_id=?").bind(now(), b.close, ex.id).run(); await logAct(env.DB, "expert:" + ex.id, "job:close", b.close); return json({ ok: true }, 200, H); }
+          const title = clip(b.title, 60); if (title.length < 2) return json({ ok: false, err: "title" }, 200, H);
+          const dup = ((await env.DB.prepare("SELECT id, title FROM jobs WHERE expert_id = ? AND status = 'open'").bind(ex.id).all()).results || []).find(j => nk(j.title) === nk(title));
+          if (dup) return json({ ok: true, dup: true, id: dup.id }, 200, H);
+          const id = "jb-" + tok(12), field = keywordClassify(title).field;
+          await env.DB.prepare("INSERT INTO jobs (id, expert_id, title, nkey, field, note, status, created) VALUES (?, ?, ?, ?, ?, ?, 'open', ?)").bind(id, ex.id, title, nk(title), field, clip(b.note, 140), now()).run();
+          await logAct(env.DB, "expert:" + ex.id, "job:add", title);
+          return json({ ok: true, id, n: pool.filter(s => s.titles.some(x => tMatch(x, title))).length }, 200, H);
         }
         if (p === "/api/hr/outcome" && req.method === "POST") {
           const b = await req.json(); const o = b.outcome === "hired" ? "hired" : "no";
@@ -275,8 +312,24 @@ export default {
         if (p === "/api/admin/list") {
           const rows = (await env.DB.prepare("SELECT id, name, phone, reg_no, gender, field, titles, years, degree, city, consent, status, ai, created, updated FROM seekers WHERE roster_id NOT LIKE 'zz-%' ORDER BY updated DESC").all()).results || [];
           const reqs = (await env.DB.prepare("SELECT r.*, e.name AS expert, e.org AS org, s.name AS seeker FROM requests r LEFT JOIN experts e ON e.id = r.expert_id LEFT JOIN seekers s ON s.id = r.seeker_id WHERE r.expert_id NOT LIKE 'zz-%' ORDER BY r.created DESC LIMIT 500").all()).results || [];
-          const experts = (await env.DB.prepare("SELECT id, name, org, phone, active, created, last_seen FROM experts WHERE id NOT LIKE 'zz-%' ORDER BY created").all()).results || [];
-          return json({ ok: true, seekers: rows.map(r => Object.assign(r, { fieldName: FIELD_NAME[r.field] || "", titles: JSON.parse(r.titles || "[]") })), requests: reqs, experts, fields: FIELDS.map(f => ({ k: f[0], l: f[1] })) }, 200, H);
+          const dx = (await env.DB.prepare("SELECT id, name, org, phone, active, created, last_seen, pin_at FROM experts WHERE id NOT LIKE 'zz-%' ORDER BY created").all()).results || [];
+          const ro = await rosterExperts(), byId = Object.fromEntries(dx.map(x => [x.id, x]));
+          const experts = (ro || []).map(p => Object.assign({ id: p.id, name: p.name, phone: p.phone, reg_no: p.regNo, active: 1, created: null, last_seen: null, pin_at: null }, byId[p.id] ? { org: byId[p.id].org, active: byId[p.id].active, created: byId[p.id].created, last_seen: byId[p.id].last_seen, pin_at: byId[p.id].pin_at } : {}, { name: p.name, phone: p.phone }));
+          dx.forEach(x => { if (!experts.some(y => y.id === x.id)) experts.push(Object.assign({ gone: true }, x)); });
+          const pool = ((await env.DB.prepare("SELECT titles FROM seekers WHERE status='active' AND consent=1 AND roster_id NOT LIKE 'zz-%'").all()).results || []).map(s => JSON.parse(s.titles || "[]"));
+          const jobs = ((await env.DB.prepare("SELECT j.*, e.name AS expert FROM jobs j LEFT JOIN experts e ON e.id = j.expert_id WHERE j.expert_id NOT LIKE 'zz-%' ORDER BY j.created DESC LIMIT 500").all()).results || []).map(j => Object.assign(j, { n: pool.filter(ts => ts.some(x => tMatch(x, j.title))).length }));
+          return json({ ok: true, rosterOk: !!ro, jobs, seekers: rows.map(r => Object.assign(r, { fieldName: FIELD_NAME[r.field] || "", titles: JSON.parse(r.titles || "[]") })), requests: reqs, experts, fields: FIELDS.map(f => ({ k: f[0], l: f[1] })) }, 200, H);
+        }
+        if (p === "/api/admin/code" && req.method === "POST") { // رمز دخول جديد من 6 أرقام — يُعرض للمؤسس مرة واحدة ليرسله بالواتساب
+          const b = await req.json(); const ro = await rosterExperts(); const pr = ro && ro.find(x => x.id === b.id);
+          if (!pr) return json({ ok: false, err: "notexpert" }, 200, H);
+          if (!/^05\d{8}$/.test(pr.phone)) return json({ ok: false, err: "phone" }, 200, H);
+          const a = new Uint32Array(1); crypto.getRandomValues(a); const code = String(100000 + a[0] % 900000), hash = await sha(pr.id + ":" + code);
+          const ex = await env.DB.prepare("SELECT id FROM experts WHERE id = ?").bind(pr.id).first();
+          if (ex) await env.DB.prepare("UPDATE experts SET pin_hash=?, pin_at=?, fails=0, lock_until=0, name=?, phone=?, active=1 WHERE id=?").bind(hash, now(), pr.name, pr.phone, pr.id).run();
+          else await env.DB.prepare("INSERT INTO experts (id, token, name, org, phone, active, created, pin_hash, pin_at) VALUES (?, ?, ?, '', ?, 1, ?, ?, ?)").bind(pr.id, "x-" + tok(12), pr.name, pr.phone, now(), hash, now()).run();
+          await logAct(env.DB, "admin", "code", pr.id);
+          return json({ ok: true, code, phone: pr.phone, name: pr.name }, 200, H);
         }
         if (p === "/api/admin/expert" && req.method === "POST") { const b = await req.json(); await env.DB.prepare("UPDATE experts SET active=?, token=? WHERE id=?").bind(b.active ? 1 : 0, b.active ? tok(24) : "x-" + tok(12), b.id || "").run(); return json({ ok: true }, 200, H); }
         if (p === "/api/admin/file") {

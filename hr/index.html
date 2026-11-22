@@ -66,7 +66,7 @@
   .flt .lbl{font-size:12.5px; color:var(--ink-soft); align-self:center; margin-inline-end:2px;}
   .tile{position:relative; text-align:right; border:1.5px solid var(--line); background:#fff; border-radius:18px; padding:16px 14px 14px; cursor:pointer; transition:all .15s; font:inherit; color:var(--ink); min-height:92px; display:flex; flex-direction:column; justify-content:space-between;}
   .tile:hover{border-color:var(--teal); transform:translateY(-1px); box-shadow:0 8px 20px rgba(45,70,66,.08);}
-  .tile b{font-size:15.5px; line-height:1.4;}
+  .tile b{font-size:15.5px; line-height:1.4; padding-left:34px;}
   .tile span{font-size:12.5px; color:var(--teal-dark); font-weight:600; margin-top:8px;}
   .tile .codes{display:flex; flex-wrap:wrap; gap:4px; margin-top:10px;}
   .tile .codes em{font-style:normal; font-size:11.5px; font-weight:600; color:var(--tan-dark); background:var(--tan-tint); border:1px solid #eedfd0; border-radius:8px; padding:1px 7px; direction:ltr;}
@@ -98,6 +98,36 @@
   .spin{width:30px; height:30px; border:3px solid var(--teal-tint); border-top-color:var(--teal); border-radius:50%; margin:30px auto; animation:sp 1s linear infinite;}
   @keyframes sp{to{transform:rotate(360deg)}}
   .foot{text-align:center; color:var(--ink-soft); font-size:12px; margin-top:26px; line-height:1.8;}
+  input.code{direction:ltr; text-align:center; letter-spacing:8px; font-size:22px; font-weight:700; margin-top:10px;}
+  .lbl2{display:block; font-size:13px; font-weight:600; color:var(--ink-soft); margin-top:14px;}
+  .srow{display:flex; gap:8px; align-items:stretch;}
+  .srow input{flex:1;}
+  .addb{flex:none; border:0; border-radius:14px; padding:0 16px; background:var(--tan); color:#fff; font-weight:700; font-size:15px; cursor:pointer; white-space:nowrap;}
+  .mine{background:#fff; border:1.5px solid #eedfd0; border-radius:20px; padding:14px 16px; margin-top:16px;}
+  .mine h3{font-size:15px; margin-bottom:8px;}
+  .job{display:flex; align-items:center; gap:10px; padding:9px 0; border-top:1px solid var(--line);}
+  .job:first-of-type{border-top:0;}
+  .job .jt{flex:1; min-width:0;} .job .jt b{font-size:15px;} .job .jt div{font-size:12.5px; color:var(--ink-soft);}
+  .job .jn{border:0; border-radius:12px; padding:8px 12px; font:inherit; font-size:13px; font-weight:600; cursor:pointer; background:var(--teal-tint); color:var(--teal-dark); white-space:nowrap;}
+  .job .jn.z{background:#f3f4f4; color:var(--ink-soft); cursor:default;}
+  .job .jx{border:0; background:none; color:var(--ink-soft); font-size:20px; cursor:pointer; padding:0 4px;}
+  .nores{text-align:center; padding:24px 10px; color:var(--ink-soft);}
+  .nores button{margin-top:12px; border:0; border-radius:14px; padding:12px 18px; background:var(--tan); color:#fff; font:inherit; font-weight:700; cursor:pointer;}
+  .sheet-bg{position:fixed; inset:0; background:rgba(30,45,42,.35); z-index:20; display:flex; align-items:flex-end; justify-content:center;}
+  .sheet{background:#fff; width:100%; max-width:520px; border-radius:24px 24px 0 0; padding:20px 18px calc(22px + env(safe-area-inset-bottom)); max-height:88vh; overflow:auto;}
+  @media (min-width:640px){ .sheet-bg{align-items:center;} .sheet{border-radius:24px;} }
+  .sheet h2{font-size:19px; font-weight:700;}
+  .sheet input[type=text]{width:100%; border:1.5px solid var(--line); border-radius:14px; padding:13px 15px; font-size:16px; margin-top:8px; outline:none;}
+  .sheet input[type=text]:focus{border-color:var(--teal); box-shadow:0 0 0 4px rgba(81,119,113,.12);}
+  .sugs{display:flex; flex-direction:column; gap:6px; margin-top:8px;}
+  .sug{display:flex; justify-content:space-between; align-items:center; gap:8px; text-align:right; border:1px solid var(--line); background:#fafbfb; border-radius:12px; padding:9px 12px; font:inherit; font-size:14.5px; cursor:pointer; color:var(--ink);}
+  .sug em{font-style:normal; font-size:12px; color:var(--teal-dark); font-weight:600; white-space:nowrap;}
+  .sug em.o{color:var(--tan-dark);}
+  .hit{margin-top:10px; background:var(--teal-tint); border:1px solid #d5e3e0; border-radius:14px; padding:12px 14px; font-size:14px; line-height:1.7;}
+  .hit.warn{background:var(--tan-tint); border-color:#eedfd0;}
+  .hit button{margin-top:8px; border:0; border-radius:12px; padding:9px 14px; font:inherit; font-size:14px; font-weight:600; cursor:pointer; background:var(--teal); color:#fff;}
+  .sheet .cancel{width:100%; margin-top:8px; border:0; background:none; color:var(--ink-soft); font:inherit; font-size:14px; padding:10px; cursor:pointer;}
+  .toast{position:fixed; bottom:calc(24px + env(safe-area-inset-bottom)); left:50%; transform:translateX(-50%); background:var(--ink); color:#fff; border-radius:14px; padding:11px 18px; font-size:14px; z-index:30; box-shadow:var(--shadow);}
   [hidden]{display:none !important;}
 </style>
 </head>
@@ -110,9 +140,12 @@
     <h1>مرشحون <b>جاهزون للعمل</b></h1>
     <p class="sub">لخبراء الموارد البشرية في شبكة «مفاتيح التوظيف». اختر المسمى الوظيفي وتصلك السيرة فوراً.</p>
     <div class="card login">
-      <b>أدخل رقم جوالك</b>
-      <p class="sub" style="margin-top:4px">مرة واحدة فقط على هذا الجهاز — بلا كلمة مرور.</p>
-      <input type="tel" id="phone" inputmode="tel" maxlength="16" autocomplete="tel" placeholder="05XXXXXXXX" />
+      <b>الدخول</b>
+      <p class="sub" style="margin-top:4px">رقم الدخول هو جوالك، والرمز يصلك من الجمعية على الواتساب. مرة واحدة على هذا الجهاز.</p>
+      <label class="lbl2" for="phone">رقم الجوال</label>
+      <input type="tel" id="phone" inputmode="tel" maxlength="16" autocomplete="username" placeholder="05XXXXXXXX" style="margin-top:6px" />
+      <label class="lbl2" for="code">رمز الدخول</label>
+      <input type="tel" class="code" id="code" inputmode="numeric" maxlength="6" autocomplete="one-time-code" placeholder="••••••" />
       <div class="msg" id="mLogin"></div>
       <button class="btn" id="goLogin">دخول</button>
     </div>
@@ -123,7 +156,8 @@
     <h1>وش <b>الوظيفة</b> اللي عندك؟</h1>
     <p class="sub" id="homeSub"></p>
     <div id="due"></div>
-    <div class="search"><input type="search" id="q" placeholder="ابحث عن مسمى وظيفي… (مثال: محاسب)" /></div>
+    <div id="mine"></div>
+    <div class="search srow"><input type="search" id="q" placeholder="ابحث عن مسمى وظيفي…" /><button type="button" class="addb" id="addJob">＋ وظيفة</button></div>
     <div id="tiles"></div>
   </div>
 
@@ -133,6 +167,19 @@
     <h1 id="listH"></h1>
     <div class="sub" id="listSub"></div>
     <div class="list" id="list" style="margin-top:14px"></div>
+  </div>
+
+  <div class="sheet-bg" id="sheet" hidden>
+    <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="shH">
+      <h2 id="shH">أضف وظيفة تبحث لها عن مرشح</h2>
+      <p class="sub" style="margin-top:2px">اكتب المسمى فقط — نوريك إذا كان موجود.</p>
+      <input type="text" id="jt" maxlength="60" autocomplete="off" placeholder="المسمى الوظيفي… مثال: محاسب" />
+      <div id="jHit"></div>
+      <div class="sugs" id="jSug"></div>
+      <input type="text" id="jn" maxlength="140" autocomplete="off" placeholder="ملاحظة (اختياري): المدينة، الخبرة، دوام جزئي…" style="margin-top:12px" />
+      <button type="button" class="btn" id="jSave">أضف الوظيفة</button>
+      <button type="button" class="cancel" id="jCancel">إلغاء</button>
+    </div>
   </div>
 
   <div class="foot">بيانات المرشحين مشاركة بموافقتهم لغرض التوظيف فقط — يُرجى عدم تداولها خارج هذا الغرض.<br>جمعية العوامية الخيرية — مفاتيح التوظيف</div>
@@ -153,16 +200,20 @@
 
   // تعريف بالجوال مرة واحدة: يُطابَق تلقائياً مع خبراء الموارد البشرية في سجل الورشة
   $("goLogin").onclick = function(){
-    var m = $("mLogin"), ph = phoneNorm($("phone").value); m.classList.remove("show");
+    var m = $("mLogin"), ph = phoneNorm($("phone").value), code = digits($("code").value).replace(/\D/g, ""); m.classList.remove("show");
     if(!/^05\d{8}$/.test(ph)){ m.textContent = "رقم الجوال غير صحيح — مثال: 0501234567"; m.classList.add("show"); return; }
+    if(code.length !== 6){ m.textContent = "اكتب رمز الدخول (6 أرقام) اللي وصلك بالواتساب."; m.classList.add("show"); $("code").focus(); return; }
     var b = this; b.disabled = true; b.textContent = "جارٍ التحقق…";
-    fetch(API + "/api/hr/login", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ phone: ph }) }).then(function(r){ return r.json(); }).then(function(d){
+    fetch(API + "/api/hr/login", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ phone: ph, code: code }) }).then(function(r){ return r.json(); }).then(function(d){
       b.disabled = false; b.textContent = "دخول";
-      if(!d.ok){ m.textContent = d.err === "notexpert" ? "هذا الرقم غير مسجّل ضمن خبراء الموارد البشرية في «مفاتيح التوظيف». تواصل مع الجمعية لإضافتك." : d.err === "disabled" ? "تم إيقاف الوصول لهذا الرقم." : "تعذّر التحقق الآن، حاول بعد لحظات."; m.classList.add("show"); return; }
+      if(!d.ok){ m.textContent = d.err === "notexpert" ? "هذا الرقم غير مسجّل ضمن خبراء الموارد البشرية في «مفاتيح التوظيف». تواصل مع الجمعية لإضافتك." : d.err === "nocode" ? "ما وصلك رمز بعد — تواصل مع الجمعية ويوصلك على الواتساب." : d.err === "badcode" ? "الرمز غير صحيح — تأكد منه في رسالة الواتساب." : d.err === "locked" ? "محاولات كثيرة — حاول بعد " + (d.mins || 15) + " دقيقة." : d.err === "disabled" ? "تم إيقاف الوصول لهذا الرقم." : "تعذّر التحقق الآن، حاول بعد لحظات."; m.classList.add("show"); return; }
       T = d.token; try{ localStorage.setItem("zaraHrToken", T); }catch(e){} loadHome();
     }).catch(function(){ b.disabled = false; b.textContent = "دخول"; m.textContent = "تعذّر الاتصال، حاول مرة أخرى."; m.classList.add("show"); });
   };
-  $("phone").addEventListener("keydown", function(e){ if(e.key === "Enter") $("goLogin").click(); });
+  $("phone").addEventListener("keydown", function(e){ if(e.key === "Enter") $("code").focus(); });
+  $("code").addEventListener("keydown", function(e){ if(e.key === "Enter") $("goLogin").click(); });
+  $("code").addEventListener("input", function(){ var v = digits(this.value).replace(/\D/g, "").slice(0, 6); if(v !== this.value) this.value = v; if(v.length === 6 && /^05\d{8}$/.test(phoneNorm($("phone").value))) $("goLogin").click(); });
+  try{ var qp = new URLSearchParams(location.search).get("p"); if(qp){ $("phone").value = phoneNorm(qp); history.replaceState(null, "", location.pathname); } }catch(e){}
 
   // الرئيسية
   function loadHome(){
@@ -171,13 +222,13 @@
       if(!d.ok){ if(d.err === "token") return out(); $("tiles").innerHTML = '<div class="empty">تعذّر التحميل، حدّث الصفحة.</div>'; return; }
       HOME = d; $("who").innerHTML = "أ. " + esc(String(d.name || "").split(" ")[0]) + '<button type="button" id="logout">خروج</button>'; $("who").hidden = false; $("logout").onclick = out;
       $("homeSub").innerHTML = d.total ? "<b>" + d.total + "</b> " + (d.total === 1 ? "مرشح جاهز" : "مرشحين جاهزين") + " — انقر المسمى المطلوب.<br><small>لكل مرشح رقم ثابت، وقد يظهر المرشح نفسه في أكثر من مسمى.</small>" : "";
-      paintDue(); paintTiles();
+      paintDue(); paintMine(); paintTiles();
     }).catch(function(){ $("tiles").innerHTML = '<div class="empty">تعذّر الاتصال، تأكد من الإنترنت.</div>'; });
   }
   function tileHtml(t){ var cs = (t.codes || []).slice(0, 4).map(function(c){ return '<em>' + esc(c) + '</em>'; }).join("") + ((t.codes || []).length > 4 ? '<em>+' + (t.codes.length - 4) + '</em>' : ''); return '<button type="button" class="tile" data-title="' + esc(t.label) + '"><i>' + t.n + '</i><b>' + esc(t.label) + '</b><div class="codes" title="أرقام المرشحين">' + cs + '</div></button>'; }
   // المربعات مرتبة تحت عناوين المجالات؛ وعند البحث تظهر النتائج دون عناوين
   function paintTiles(){
-    var q = $("q").value.trim(), all = (HOME && HOME.tiles || []), list = all.filter(function(t){ return !q || t.label.indexOf(q) > -1; });
+    var q = $("q").value.trim(), all = (HOME && HOME.tiles || []), list = all.filter(function(t){ return !q || nk(t.label).indexOf(nk(q)) > -1; });
     if(!q && list.length){
       var groups = (HOME.fields || []).map(function(f){ return { f: f, ts: all.filter(function(t){ return t.field === f.k; }) }; }).filter(function(g){ return g.ts.length; });
       var rest = all.filter(function(t){ return !(HOME.fields || []).some(function(f){ return f.k === t.field; }); });
@@ -185,7 +236,7 @@
       $("tiles").innerHTML = groups.map(function(g){ return '<div class="grp"><button type="button" class="grp-h"' + (g.f.k ? ' data-field="' + g.f.k + '" data-l="' + esc(g.f.l) + '"' : '') + '><b>' + esc(g.f.l) + '</b><span>' + g.f.n + ' ' + (g.f.n === 1 ? "مرشح" : "مرشحين") + (g.f.k ? ' · عرض الكل ←' : '') + '</span></button><div class="tiles">' + g.ts.map(tileHtml).join("") + '</div></div>'; }).join("");
       return;
     }
-    $("tiles").innerHTML = list.length ? '<div class="tiles">' + list.map(tileHtml).join("") + '</div>' : '<div class="empty">' + (HOME && HOME.total ? "لا يوجد مسمى بهذا الاسم — جرّب كلمة أخرى" : "لا توجد سير ذاتية بعد — ستظهر هنا فور رفعها.") + '</div>';
+    $("tiles").innerHTML = list.length ? '<div class="tiles">' + list.map(tileHtml).join("") + '</div>' + (q ? '<div class="nores" style="padding-top:14px">ما هي اللي تبيها؟ <button type="button" data-add="' + esc(q) + '">＋ أضف «' + esc(q) + '» كوظيفة</button></div>' : '') : q ? '<div class="nores">ما لقينا «' + esc(q) + '» بين المرشحين الحاليين.<br><button type="button" data-add="' + esc(q) + '">＋ أضفها كوظيفة تبحث لها</button></div>' : '<div class="empty">' + (HOME && HOME.total ? "" : "لا توجد سير ذاتية بعد — ستظهر هنا فور رفعها.") + '</div>';
   }
   function paintDue(){
     var due = (HOME && HOME.due) || [];
@@ -198,13 +249,68 @@
   };
   document.addEventListener("click", function(e){
     var t = e.target.closest(".tile"); if(t){ openList({ title: t.getAttribute("data-title") }); return; }
-    var f = e.target.closest("[data-field]"); if(f){ openList({ field: f.getAttribute("data-field"), label: f.getAttribute("data-l") }); }
+    var f = e.target.closest("[data-field]"); if(f){ openList({ field: f.getAttribute("data-field"), label: f.getAttribute("data-l") }); return; }
+    var a = e.target.closest("[data-add]"); if(a){ openSheet(a.getAttribute("data-add")); return; }
+    var jn = e.target.closest("[data-job]"); if(jn){ openList({ job: jn.getAttribute("data-job") }); return; }
+    var jx = e.target.closest("[data-close]"); if(jx){ if(!confirm("حذف هذه الوظيفة من قائمتك؟")) return; api("/api/hr/job", { close: jx.getAttribute("data-close") }).then(function(){ toast("حُذفت الوظيفة"); loadHome(); }); }
   });
+
+  // ===== الوظائف المطلوبة: إدخال بسيط جداً + تنبيه فوري إن كان المسمى موجوداً =====
+  function nk(t){ return String(t || "").toLowerCase().replace(/[\u064B-\u0652\u0640]/g, "").replace(/[\u0623\u0625\u0622]/g, "\u0627").replace(/\u0629(?=\s|$)/g, "\u0647").replace(/\u0649(?=\s|$)/g, "\u064A").replace(/[^\p{L}\p{N}\s]/gu, " ").split(/\s+/).filter(Boolean).map(function(w){ return w.length > 4 && w.indexOf("\u0627\u0644") === 0 ? w.slice(2) : w; }).join(" "); }
+  function tMatch(a, b){ var A = nk(a), B = nk(b); if(!A || !B) return false; if(A === B) return true; var s = A.length < B.length ? A : B, l = s === A ? B : A; return s.length >= 3 && (" " + l + " ").indexOf(" " + s) > -1; }
+  function toast(t){ var d = document.createElement("div"); d.className = "toast"; d.textContent = t; document.body.appendChild(d); setTimeout(function(){ d.remove(); }, 2200); }
+  function paintMine(){
+    var js = (HOME && HOME.jobs) || [];
+    $("mine").innerHTML = js.length ? '<div class="mine"><h3>وظائفي المطلوبة</h3>' + js.map(function(j){ return '<div class="job"><div class="jt"><b>' + esc(j.title) + '</b>' + (j.note ? '<div>' + esc(j.note) + '</div>' : '') + '</div>' + (j.n ? '<button type="button" class="jn" data-job="' + esc(j.title) + '">' + j.n + ' ' + (j.n === 1 ? "مرشح" : "مرشحين") + ' ←</button>' : '<span class="jn z">لا يوجد بعد</span>') + '<button type="button" class="jx" data-close="' + esc(j.id) + '" aria-label="حذف">×</button></div>'; }).join("") + '</div>' : '';
+  }
+  // اقتراحات أثناء الكتابة: مسميات المرشحين (مع العدد) + وظائفك + وظائف طلبها خبراء آخرون
+  function candidates(){
+    var out = [], seen = {};
+    function add(label, kind, n){ var k = nk(label); if(!k || seen[k]) return; seen[k] = 1; out.push({ label: label, kind: kind, n: n || 0, k: k }); }
+    ((HOME && HOME.jobs) || []).forEach(function(j){ add(j.title, "mine", j.n); });
+    ((HOME && HOME.tiles) || []).forEach(function(t){ add(t.label, "tile", t.n); });
+    ((HOME && HOME.others) || []).forEach(function(t){ add(t, "other"); });
+    return out;
+  }
+  function scoreOf(c, q){ var Q = nk(q); if(!Q) return 0; if(c.k === Q) return 100; if(c.k.indexOf(Q) === 0) return 80; if((" " + c.k).indexOf(" " + Q) > -1) return 70; if(c.k.indexOf(Q) > -1) return 50; if(tMatch(c.label, q)) return 40; var qs = Q.split(" ").filter(function(w){ return w.length >= 3; }); return qs.some(function(w){ return c.k.indexOf(w.slice(0, Math.max(3, w.length - 1))) > -1; }) ? 20 : 0; }
+  function paintSheet(){
+    var q = $("jt").value.trim(), all = candidates(), Q = nk(q);
+    var exact = Q && (all.find(function(c){ return c.k === Q; }) || all.find(function(c){ return Math.abs(c.k.length - Q.length) <= 1 && Math.min(c.k.length, Q.length) >= 4 && (c.k.indexOf(Q) === 0 || Q.indexOf(c.k) === 0); }));
+    var sim = q ? all.map(function(c){ return { c: c, s: scoreOf(c, q) }; }).filter(function(x){ return x.s && x.c !== exact; }).sort(function(a, b){ return b.s - a.s || b.c.n - a.c.n; }).slice(0, 6).map(function(x){ return x.c; }) : [];
+    var hit = "";
+    if(exact && exact.kind === "mine") hit = '<div class="hit warn">أضفت «' + esc(exact.label) + '» من قبل وهي في قائمتك.' + (exact.n ? '<br><button type="button" data-pick-open="' + esc(exact.label) + '">اعرض ' + exact.n + ' ' + (exact.n === 1 ? "مرشح" : "مرشحين") + '</button>' : '') + '</div>';
+    else if(exact && exact.kind === "tile") hit = '<div class="hit">موجودة ✓ — «' + esc(exact.label) + '» فيها <b>' + exact.n + '</b> ' + (exact.n === 1 ? "مرشح جاهز" : "مرشحين جاهزين") + '.<br><button type="button" data-pick-open="' + esc(exact.label) + '">اعرض المرشحين</button></div>';
+    else if(exact) hit = '<div class="hit">هذا المسمى مطلوب عند خبير آخر بنفس الاسم — أضفه وبنوريك أي مرشح يطابقه.</div>';
+    $("jHit").innerHTML = hit;
+    $("jSug").innerHTML = sim.length ? '<div style="font-size:12.5px;color:var(--ink-soft);margin-top:4px">' + (exact ? "مسميات قريبة:" : "يمكن تقصد:") + '</div>' + sim.map(function(c){ return '<button type="button" class="sug" data-pick="' + esc(c.label) + '"><span>' + esc(c.label) + '</span><em' + (c.kind === "other" ? ' class="o"' : '') + '>' + (c.kind === "tile" ? c.n + " " + (c.n === 1 ? "مرشح" : "مرشحين") : c.kind === "mine" ? "في قائمتك" : "مطلوبة") + '</em></button>'; }).join("") : "";
+    var b = $("jSave"); b.disabled = !q || q.length < 2 || !!(exact && exact.kind === "mine");
+    b.textContent = exact && exact.kind === "tile" ? "أضفها لقائمتي برضو" : "أضف الوظيفة";
+  }
+  function openSheet(v){ $("jt").value = v || $("q").value.trim(); $("jn").value = ""; $("sheet").hidden = false; paintSheet(); setTimeout(function(){ $("jt").focus(); }, 60); }
+  function closeSheet(){ $("sheet").hidden = true; }
+  $("addJob").onclick = function(){ openSheet(); };
+  $("jCancel").onclick = closeSheet;
+  $("sheet").addEventListener("click", function(e){
+    if(e.target === this) return closeSheet();
+    var o = e.target.closest("[data-pick-open]"); if(o){ closeSheet(); openList({ title: o.getAttribute("data-pick-open") }); return; }
+    var p = e.target.closest("[data-pick]"); if(p){ $("jt").value = p.getAttribute("data-pick"); paintSheet(); $("jt").focus(); }
+  });
+  $("jt").addEventListener("input", paintSheet);
+  $("jt").addEventListener("keydown", function(e){ if(e.key === "Enter"){ e.preventDefault(); $("jn").focus(); } });
+  $("jn").addEventListener("keydown", function(e){ if(e.key === "Enter") $("jSave").click(); });
+  document.addEventListener("keydown", function(e){ if(e.key === "Escape" && !$("sheet").hidden) closeSheet(); });
+  $("jSave").onclick = function(){
+    var t = $("jt").value.trim(); if(t.length < 2) return; var b = this; b.disabled = true; b.textContent = "لحظة…";
+    api("/api/hr/job", { title: t, note: $("jn").value.trim() }).then(function(d){
+      b.disabled = false; if(!d.ok){ if(d.err === "token") return out(); toast("تعذّر الحفظ، حاول مرة ثانية"); paintSheet(); return; }
+      closeSheet(); $("q").value = ""; toast(d.dup ? "موجودة في قائمتك" : d.n ? "أُضيفت ✓ — فيه " + d.n + " مرشح مطابق" : "أُضيفت ✓ — بنوريك أول ما يتوفر مرشح"); loadHome();
+    }).catch(function(){ b.disabled = false; toast("تعذّر الاتصال"); paintSheet(); });
+  };
 
   // المرشحون
   function openList(o){
-    CUR = o; view("vList"); $("listH").innerHTML = "<b>" + esc(o.title || o.label) + "</b>"; $("listSub").textContent = ""; $("list").innerHTML = '<div class="spin"></div>';
-    api("/api/hr/list?" + (o.title ? "title=" + encodeURIComponent(o.title) : "field=" + encodeURIComponent(o.field))).then(function(d){
+    CUR = o; view("vList"); $("listH").innerHTML = "<b>" + esc(o.job || o.title || o.label) + "</b>"; $("listSub").textContent = ""; $("list").innerHTML = '<div class="spin"></div>';
+    api("/api/hr/list?" + (o.job ? "job=" + encodeURIComponent(o.job) : o.title ? "title=" + encodeURIComponent(o.title) : "field=" + encodeURIComponent(o.field))).then(function(d){
       if(!d.ok){ if(d.err === "token") return out(); $("list").innerHTML = '<div class="empty">تعذّر التحميل.</div>'; return; }
       ROWS = d.rows; FLT = { city: "", exp: "" }; paintRows();
     }).catch(function(){ $("list").innerHTML = '<div class="empty">تعذّر الاتصال.</div>'; });
@@ -233,7 +339,7 @@
   $("list").onclick = function(e){
     var b = e.target.closest(".go"); if(!b) return;
     var card = b.closest(".cand"), rev = card.querySelector(".rev"); b.disabled = true; b.textContent = "لحظة…";
-    api("/api/hr/open", { id: card.getAttribute("data-id"), job: CUR && (CUR.title || CUR.label) || "" }).then(function(d){
+    api("/api/hr/open", { id: card.getAttribute("data-id"), job: CUR && (CUR.job || CUR.title || CUR.label) || "" }).then(function(d){
       b.disabled = false; b.className = "go seen"; b.textContent = "تم ✓";
       if(!d.ok){ rev.innerHTML = '<div class="msg show">هذه السيرة لم تعد متاحة.</div>'; rev.classList.add("show"); return; }
       var wa = "966" + String(d.phone || "").replace(/^0/, "");

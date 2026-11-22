@@ -4156,10 +4156,19 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
     var byF = {}; ok.forEach(function(s){ byF[s.field] = (byF[s.field] || 0) + 1; });
     var hired = d.requests.filter(function(r){ return r.outcome === "hired"; });
     h += '<div class="cv-kpis"><div><b>' + ok.length + '</b><span>سيرة جاهزة</span></div><div><b>' + (act.length - ok.length) + '</b><span>بانتظار تأكيد صاحبها</span></div><div><b>' + d.requests.length + '</b><span>سيرة أُرسلت لخبير</span></div><div><b>' + hired.length + '</b><span>توظيف</span></div></div>';
-    h += '<div class="cv-tabs"><button type="button" data-cv="tab" data-v="seekers" class="' + (cvUI.tab === "seekers" ? "on" : "") + '">الباحثون (' + act.length + ')</button><button type="button" data-cv="tab" data-v="reqs" class="' + (cvUI.tab === "reqs" ? "on" : "") + '">من وصلته فرصة (' + d.requests.length + ')</button><button type="button" data-cv="tab" data-v="experts" class="' + (cvUI.tab === "experts" ? "on" : "") + '">الخبراء (' + d.experts.length + ')</button></div>';
+    h += '<div class="cv-tabs"><button type="button" data-cv="tab" data-v="seekers" class="' + (cvUI.tab === "seekers" ? "on" : "") + '">الباحثون (' + act.length + ')</button><button type="button" data-cv="tab" data-v="reqs" class="' + (cvUI.tab === "reqs" ? "on" : "") + '">من وصلته فرصة (' + d.requests.length + ')</button><button type="button" data-cv="tab" data-v="experts" class="' + (cvUI.tab === "experts" ? "on" : "") + '">الخبراء (' + d.experts.filter(function(x){ return !x.gone; }).length + ')</button><button type="button" data-cv="tab" data-v="jobs" class="' + (cvUI.tab === "jobs" ? "on" : "") + '">الوظائف المطلوبة (' + (d.jobs || []).filter(function(j){ return j.status === "open"; }).length + ')</button></div>';
+    if(cvUI.tab === "jobs"){
+      var jobs = d.jobs || [];
+      h += '<div class="cv-card cv-muted" style="font-size:13px">وظائف أضافها الخبراء من صفحتهم لما ما لقوا المسمى اللي يبونه. «مطابق» = عدد السير الجاهزة اللي مسمّاها قريب من الوظيفة.</div>';
+      h += jobs.length ? '<div class="cv-card"><table class="cv-t"><thead><tr><th>التاريخ</th><th>الوظيفة</th><th>ملاحظة</th><th>الخبير</th><th>مطابق</th><th>الحالة</th></tr></thead><tbody>' + jobs.map(function(j){ return '<tr' + (j.status === "open" ? '' : ' style="opacity:.5"') + '><td>' + cvDate(j.created) + '</td><td><b>' + e(j.title) + '</b></td><td>' + e(j.note || "") + '</td><td>' + e(j.expert || "") + '</td><td>' + (j.n || 0) + '</td><td>' + (j.status === "open" ? "مفتوحة" : "أُغلقت") + '</td></tr>'; }).join("") + '</tbody></table></div>' : '<div class="cv-card cv-muted">ما أضاف أي خبير وظيفة بعد.</div>';
+      root.innerHTML = h; return;
+    }
     if(cvUI.tab === "experts"){
-      h += '<div class="cv-card cv-muted" style="font-size:13px">رابط واحد لكل الخبراء: <b dir="ltr">gzara.org/hr</b> — يدخل الخبير بجواله مرة واحدة، ويُقبل تلقائياً إن كان مسجّلاً بصفة «موارد بشرية» في «مطابقة البيانات».</div>';
-      h += d.experts.length ? '<div class="cv-card"><table class="cv-t"><thead><tr><th>الخبير</th><th>الجهة</th><th>الجوال</th><th>أول دخول</th><th>آخر زيارة</th><th>السير المطلوبة</th><th></th></tr></thead><tbody>' + d.experts.map(function(x){ var n = d.requests.filter(function(r){ return r.expert_id === x.id; }).length; return '<tr' + (x.active ? '' : ' style="opacity:.5"') + '><td>' + e(x.name) + '</td><td>' + e(x.org || "") + '</td><td dir="ltr">' + e(x.phone || "") + '</td><td>' + cvDate(x.created) + '</td><td>' + cvDate(x.last_seen) + '</td><td>' + n + '</td><td><button type="button" class="cv-btn ghost" data-cv="xp" data-v="' + e(x.id) + '" data-a="' + (x.active ? 0 : 1) + '">' + (x.active ? "إيقاف" : "تفعيل") + '</button></td></tr>'; }).join("") + '</tbody></table></div>' : '<div class="cv-card cv-muted">لم يدخل أي خبير بعد — أرسل لهم رابط الخبراء.</div>';
+      h += '<div class="cv-card cv-muted" style="font-size:13px">الخبراء = كل من له صفة «موارد بشرية» في «مطابقة البيانات». رقم الدخول = جواله، والرمز يتولد لما تضغط <b>واتساب</b> وينفتح لك محادثته والرسالة جاهزة — بس أرسل. إرسال رمز جديد يلغي القديم.</div>';
+      if(d.rosterOk === false) h += '<div class="cv-card cv-err">تعذّر جلب الخبراء من «مطابقة البيانات» الآن — حدّث بعد دقيقة.</div>';
+      var xs = d.experts.slice().sort(function(a, b){ return (a.gone ? 1 : 0) - (b.gone ? 1 : 0) || (a.pin_at ? 1 : 0) - (b.pin_at ? 1 : 0) || String(a.name).localeCompare(String(b.name), "ar"); });
+      var waIc = '<svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2zm0 18.2a8.2 8.2 0 0 1-4.2-1.2l-.3-.2-3 .8.8-2.9-.2-.3A8.2 8.2 0 1 1 12 20.2zm4.5-6.1c-.2-.1-1.5-.7-1.7-.8s-.4-.1-.6.1-.7.8-.8 1-.3.2-.5.1a6.7 6.7 0 0 1-3.3-2.9c-.3-.4.2-.4.7-1.4.1-.2 0-.3 0-.4l-.8-1.8c-.2-.5-.4-.4-.6-.4h-.5a1 1 0 0 0-.7.3 3 3 0 0 0-.9 2.2 5.2 5.2 0 0 0 1.1 2.7 11.8 11.8 0 0 0 4.5 4c1.7.7 2.3.8 3.2.6a2.7 2.7 0 0 0 1.8-1.2 2.2 2.2 0 0 0 .1-1.3c0-.1-.2-.2-.5-.3z"/></svg>';
+      h += xs.length ? '<div class="cv-card"><table class="cv-t"><thead><tr><th>الخبير</th><th>الجوال</th><th>الرمز</th><th>آخر زيارة</th><th>السير المطلوبة</th><th></th></tr></thead><tbody>' + xs.map(function(x){ var n = d.requests.filter(function(r){ return r.expert_id === x.id; }).length; return '<tr' + (x.active && !x.gone ? '' : ' style="opacity:.5"') + '><td>' + e(x.name) + (x.reg_no ? ' <span class="cv-reg" dir="ltr">' + e(x.reg_no) + '</span>' : '') + (x.gone ? ' <span class="cv-pend">لم يعد في السجل</span>' : '') + '</td><td dir="ltr">' + e(x.phone || "") + '</td><td>' + (x.pin_at ? 'أُرسل ' + cvDate(x.pin_at) : '<span class="cv-pend">لم يُرسل</span>') + '</td><td>' + (x.last_seen ? cvDate(x.last_seen) : "—") + '</td><td>' + n + '</td><td style="white-space:nowrap">' + (x.gone ? '' : '<button type="button" class="cv-btn" style="background:#1fa855;display:inline-flex;align-items:center;gap:6px" data-cv="code" data-v="' + e(x.id) + '" data-n="' + e(x.name) + '">' + waIc + (x.pin_at ? 'رمز جديد' : 'واتساب') + '</button> ') + (x.created ? '<button type="button" class="cv-btn ghost" data-cv="xp" data-v="' + e(x.id) + '" data-a="' + (x.active ? 0 : 1) + '">' + (x.active ? "إيقاف" : "تفعيل") + '</button>' : '') + '</td></tr>'; }).join("") + '</tbody></table></div>' : '<div class="cv-card cv-muted">لا يوجد خبراء بصفة «موارد بشرية» في «مطابقة البيانات».</div>';
       root.innerHTML = h; return;
     }
     if(cvUI.tab === "reqs"){
@@ -4188,6 +4197,19 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
     else if(a === "copyhr"){ copyToClipboard("https://gzara.org/hr/"); showToast("نُسخ رابط الخبراء"); }
     else if(a === "xp"){ var on = b.getAttribute("data-a") === "1"; if(!on && !confirm("إيقاف وصول هذا الخبير؟ يخرج من الصفحة فوراً.")) return; fetch(CV_API + "/api/admin/expert?k=" + encodeURIComponent(cvKey()), { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: v, active: on }) }).then(function(){ cvLoad(); }); }
     else if(a === "tab"){ cvUI.tab = v; cvRender(); }
+    else if(a === "code"){ // يولّد رمزاً جديداً ويفتح محادثة الخبير والرسالة جاهزة
+      var nm = b.getAttribute("data-n") || "";
+      var w2 = window.open("", "_blank"); b.disabled = true;
+      fetch(CV_API + "/api/admin/code?k=" + encodeURIComponent(cvKey()), { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: v }) }).then(function(r){ return r.json(); }).then(function(d2){
+        b.disabled = false;
+        if(!d2 || !d2.ok){ if(w2) w2.close(); showToast(d2 && d2.err === "phone" ? "جوال الخبير غير صحيح في «مطابقة البيانات»" : "تعذّر توليد الرمز"); return; }
+        var first = String(d2.name || nm).split(" ")[0];
+        var msg = "حياك الله أ. " + first + "\nهذي صفحة مرشحي «مفاتيح التوظيف» لخبراء الموارد البشرية:\nhttps://gzara.org/hr/?p=" + d2.phone + "\n\nرقم الدخول: " + d2.phone + "\nرمز الدخول: " + d2.code + "\n\nتدخل مرة وحدة وتبقى مسجّل على جهازك. تقدر تشوف السير حسب المسمى الوظيفي، وتضيف الوظيفة اللي تبحث لها.\nجمعية العوامية الخيرية";
+        var u = "https://wa.me/966" + String(d2.phone).replace(/^0/, "") + "?text=" + encodeURIComponent(msg);
+        if(w2) w2.location.href = u; else window.open(u, "_blank");
+        cvLoad();
+      }).catch(function(){ b.disabled = false; if(w2) w2.close(); showToast("تعذّر الاتصال بالخدمة"); });
+    }
     else if(a === "f"){ cvUI.f = v; cvRender(); }
     else if(a === "open"){
       var w = window.open("", "_blank");
