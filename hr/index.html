@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>مرشحو مفاتيح التوظيف | لخبراء الموارد البشرية</title>
+<meta name="description" content="لخبراء الموارد البشرية: مرشحون جاهزون حسب المسمى الوظيفي — انقر وتصلك السيرة فوراً." />
+<meta property="og:type" content="website" />
+<meta property="og:title" content="مرشحو «مفاتيح التوظيف» — لخبراء الموارد البشرية" />
+<meta property="og:description" content="مرشحون جاهزون حسب المسمى الوظيفي — انقر وتصلك السيرة فوراً." />
+<meta property="og:image" content="https://gzara.org/hr/og.jpg?v=1" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta property="og:url" content="https://gzara.org/hr/" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:image" content="https://gzara.org/hr/og.jpg?v=1" />
+<meta name="robots" content="noindex" />
+<meta name="theme-color" content="#3d5b56" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-title" content="المرشحون" />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%233d5b56'/%3E%3Ccircle cx='25' cy='26' r='7' fill='none' stroke='%23fff' stroke-width='3.5'/%3E%3Cpath d='M13 47c2-7 7-10 12-10s10 3 12 10' fill='none' stroke='%23fff' stroke-width='3.5' stroke-linecap='round'/%3E%3Cpath d='M40 24h12M40 32h12M44 40h8' stroke='%23e8cfaf' stroke-width='3.5' stroke-linecap='round'/%3E%3C/svg%3E" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --teal:#517771; --teal-dark:#3d5b56; --teal-tint:#eef3f2;
+    --tan:#b8906e; --tan-dark:#8f6a4b; --tan-tint:#f8f1ea;
+    --ink:#2b3532; --ink-soft:#6b7876; --line:#e4e9e8; --danger:#b3453f; --ok:#3d7a5a;
+    --shadow:0 14px 40px rgba(45,70,66,.10);
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{font-family:'IBM Plex Sans Arabic', sans-serif; color:var(--ink); min-height:100vh; padding:22px 16px calc(40px + env(safe-area-inset-bottom));
+    background:radial-gradient(circle at 12% 8%, var(--teal-tint) 0%, transparent 45%), radial-gradient(circle at 92% 90%, var(--tan-tint) 0%, transparent 45%), #fbfcfc;}
+  button,input{font-family:inherit;}
+  .wrap{max-width:860px; margin:0 auto;}
+  .top{display:flex; justify-content:space-between; align-items:center; gap:10px; margin-bottom:18px;}
+  .top .tag{font-size:12px; font-weight:600; color:var(--tan-dark); background:var(--tan-tint); border:1px solid #eedfd0; padding:4px 12px; border-radius:30px;}
+  .top .who{font-size:13px; color:var(--ink-soft);}
+  .top .who button{border:0; background:none; color:var(--ink-soft); text-decoration:underline; cursor:pointer; font-size:12px; margin-inline-start:6px;}
+  h1{font-size:clamp(22px, 5.8vw, 30px); font-weight:300; line-height:1.35;}
+  h1 b{font-weight:700; color:var(--teal-dark);}
+  .sub{font-size:14px; color:var(--ink-soft); line-height:1.8; margin-top:6px;}
+  .card{background:rgba(255,255,255,.88); backdrop-filter:blur(14px); -webkit-backdrop-filter:blur(14px); border:1px solid rgba(255,255,255,.9); border-radius:24px; box-shadow:var(--shadow); padding:24px 20px;}
+  .login{max-width:440px; margin:24px auto 0;}
+  input[type=tel], input[type=search]{width:100%; border:1.5px solid var(--line); background:#fff; border-radius:14px; padding:13px 15px; font-size:16px; color:var(--ink); outline:none;}
+  input[type=tel]{direction:ltr; text-align:right; letter-spacing:.5px; margin-top:14px;}
+  input:focus{border-color:var(--teal); box-shadow:0 0 0 4px rgba(81,119,113,.12);}
+  .btn{width:100%; margin-top:14px; border:0; border-radius:16px; padding:14px; font-size:16px; font-weight:600; color:#fff; background:linear-gradient(90deg, var(--teal-dark), var(--teal)); cursor:pointer; box-shadow:0 10px 24px rgba(61,91,86,.22);}
+  .btn:disabled{opacity:.6; cursor:wait;}
+  .msg{display:none; margin-top:12px; font-size:13.5px; color:var(--danger); background:#fbefee; border-radius:12px; padding:10px 13px; line-height:1.7;}
+  .msg.show{display:block;}
+  .due{background:var(--tan-tint); border:1px solid #eedfd0; border-radius:18px; padding:14px 16px; margin:16px 0 0;}
+  .due b{font-size:15px;}
+  .due .row{display:flex; gap:8px; margin-top:10px; flex-wrap:wrap;}
+  .due button{border:0; border-radius:12px; padding:9px 16px; font-weight:600; cursor:pointer; font-size:14px;}
+  .due .y{background:var(--ok); color:#fff;} .due .n{background:#fff; color:var(--ink); border:1px solid var(--line);}
+  .search{margin:18px 0 12px;}
+  .tiles{display:grid; grid-template-columns:repeat(auto-fill, minmax(165px, 1fr)); gap:10px;}
+  .tile{position:relative; text-align:right; border:1.5px solid var(--line); background:#fff; border-radius:18px; padding:16px 14px 14px; cursor:pointer; transition:all .15s; font:inherit; color:var(--ink); min-height:92px; display:flex; flex-direction:column; justify-content:space-between;}
+  .tile:hover{border-color:var(--teal); transform:translateY(-1px); box-shadow:0 8px 20px rgba(45,70,66,.08);}
+  .tile b{font-size:15.5px; line-height:1.4;}
+  .tile span{font-size:12.5px; color:var(--teal-dark); font-weight:600; margin-top:8px;}
+  .tile i{position:absolute; top:12px; left:12px; font-style:normal; min-width:28px; height:28px; border-radius:14px; background:var(--teal-tint); color:var(--teal-dark); font-weight:700; font-size:13px; display:flex; align-items:center; justify-content:center; padding:0 8px;}
+  .sec{font-size:13px; font-weight:600; color:var(--ink-soft); margin:22px 2px 10px;}
+  .chips{display:flex; flex-wrap:wrap; gap:7px;}
+  .chip{border:1px solid var(--line); background:#fff; border-radius:20px; padding:7px 13px; font-size:13.5px; cursor:pointer; font:inherit;}
+  .chip em{font-style:normal; color:var(--ink-soft); font-size:12px;}
+  .back{border:0; background:#fff; border:1px solid var(--line); border-radius:12px; padding:8px 14px; cursor:pointer; font-size:14px; margin-bottom:12px;}
+  .list{display:flex; flex-direction:column; gap:10px;}
+  .cand{background:#fff; border:1px solid var(--line); border-radius:18px; padding:15px 16px;}
+  .cand .h{display:flex; justify-content:space-between; gap:10px; align-items:flex-start;}
+  .cand .t{font-size:15.5px; font-weight:600;}
+  .cand .m{font-size:13px; color:var(--ink-soft); margin-top:4px; line-height:1.7;}
+  .cand .sk{display:flex; flex-wrap:wrap; gap:5px; margin-top:8px;}
+  .cand .sk span{font-size:12px; background:var(--teal-tint); color:var(--teal-dark); border-radius:10px; padding:2px 9px;}
+  .cand .go{flex:none; border:0; border-radius:12px; padding:10px 14px; background:var(--teal); color:#fff; font-weight:600; font-size:14px; cursor:pointer; white-space:nowrap;}
+  .cand .go.seen{background:var(--teal-tint); color:var(--teal-dark);}
+  .rev{margin-top:12px; border-top:1px dashed var(--line); padding-top:12px; display:none;}
+  .rev.show{display:block;}
+  .rev .nm{font-size:17px; font-weight:700;}
+  .rev .acts{display:flex; flex-wrap:wrap; gap:8px; margin-top:10px;}
+  .rev .acts a, .rev .acts button{display:inline-flex; align-items:center; gap:6px; border-radius:12px; padding:10px 14px; font-size:14px; font-weight:600; text-decoration:none; cursor:pointer; border:0; font-family:inherit;}
+  .a-cv{background:var(--teal-dark); color:#fff;} .a-wa{background:#1fa855; color:#fff;} .a-call{background:#fff; color:var(--ink); border:1px solid var(--line) !important;}
+  .empty{text-align:center; color:var(--ink-soft); padding:30px 10px;}
+  .spin{width:30px; height:30px; border:3px solid var(--teal-tint); border-top-color:var(--teal); border-radius:50%; margin:30px auto; animation:sp 1s linear infinite;}
+  @keyframes sp{to{transform:rotate(360deg)}}
+  .foot{text-align:center; color:var(--ink-soft); font-size:12px; margin-top:26px; line-height:1.8;}
+  [hidden]{display:none !important;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top"><span class="tag">مفاتيح التوظيف · للخبراء</span><span class="who" id="who" hidden></span></div>
+
+  <!-- تعريف لمرة واحدة -->
+  <div id="vLogin" hidden>
+    <h1>مرشحون <b>جاهزون للعمل</b></h1>
+    <p class="sub">لخبراء الموارد البشرية في شبكة «مفاتيح التوظيف». اختر المسمى الوظيفي وتصلك السيرة فوراً.</p>
+    <div class="card login">
+      <b>أدخل رقم جوالك</b>
+      <p class="sub" style="margin-top:4px">مرة واحدة فقط على هذا الجهاز — بلا كلمة مرور.</p>
+      <input type="tel" id="phone" inputmode="tel" maxlength="16" autocomplete="tel" placeholder="05XXXXXXXX" />
+      <div class="msg" id="mLogin"></div>
+      <button class="btn" id="goLogin">دخول</button>
+    </div>
+  </div>
+
+  <!-- الرئيسية: مربعات المسميات -->
+  <div id="vHome" hidden>
+    <h1>وش <b>الوظيفة</b> اللي عندك؟</h1>
+    <p class="sub" id="homeSub"></p>
+    <div id="due"></div>
+    <div class="search"><input type="search" id="q" placeholder="ابحث عن مسمى وظيفي… (مثال: محاسب)" /></div>
+    <div class="tiles" id="tiles"></div>
+    <div class="sec" id="fieldsH" hidden>أو تصفّح حسب المجال</div>
+    <div class="chips" id="fields"></div>
+  </div>
+
+  <!-- المرشحون -->
+  <div id="vList" hidden>
+    <button type="button" class="back" id="back">→ كل المسميات</button>
+    <h1 id="listH"></h1>
+    <p class="sub" id="listSub"></p>
+    <div class="list" id="list" style="margin-top:14px"></div>
+  </div>
+
+  <div class="foot">بيانات المرشحين مشاركة بموافقتهم لغرض التوظيف فقط — يُرجى عدم تداولها خارج هذا الغرض.<br>جمعية العوامية الخيرية — مفاتيح التوظيف</div>
+</div>
+
+<script>
+(function(){
+  var API = "https://zara-cv.murtada-ud.workers.dev";
+  var $ = function(id){ return document.getElementById(id); };
+  var T = ""; try{ T = localStorage.getItem("zaraHrToken") || ""; }catch(e){}
+  var HOME = null, CUR = null;
+  function esc(s){ return String(s == null ? "" : s).replace(/[&<>"]/g, function(c){ return { "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;" }[c]; }); }
+  function digits(s){ return String(s || "").replace(/[٠-٩]/g, function(d){ return d.charCodeAt(0) - 0x0660; }); }
+  function phoneNorm(s){ var d = digits(s).replace(/\D/g, "").replace(/^00/, ""); if(/^9665\d{8}$/.test(d)) d = "0" + d.slice(3); else if(/^5\d{8}$/.test(d)) d = "0" + d; return d; }
+  function view(id){ ["vLogin","vHome","vList"].forEach(function(x){ $(x).hidden = x !== id; }); window.scrollTo(0, 0); }
+  function api(path, body){ return fetch(API + path + (path.indexOf("?") > -1 ? "&" : "?") + "t=" + encodeURIComponent(T), body ? { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) } : {}).then(function(r){ return r.json(); }); }
+  function out(){ try{ localStorage.removeItem("zaraHrToken"); }catch(e){} T = ""; $("who").hidden = true; view("vLogin"); }
+
+  // تعريف بالجوال مرة واحدة: يُطابَق تلقائياً مع خبراء الموارد البشرية في سجل الورشة
+  $("goLogin").onclick = function(){
+    var m = $("mLogin"), ph = phoneNorm($("phone").value); m.classList.remove("show");
+    if(!/^05\d{8}$/.test(ph)){ m.textContent = "رقم الجوال غير صحيح — مثال: 0501234567"; m.classList.add("show"); return; }
+    var b = this; b.disabled = true; b.textContent = "جارٍ التحقق…";
+    fetch(API + "/api/hr/login", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ phone: ph }) }).then(function(r){ return r.json(); }).then(function(d){
+      b.disabled = false; b.textContent = "دخول";
+      if(!d.ok){ m.textContent = d.err === "notexpert" ? "هذا الرقم غير مسجّل ضمن خبراء الموارد البشرية في «مفاتيح التوظيف». تواصل مع الجمعية لإضافتك." : d.err === "disabled" ? "تم إيقاف الوصول لهذا الرقم." : "تعذّر التحقق الآن، حاول بعد لحظات."; m.classList.add("show"); return; }
+      T = d.token; try{ localStorage.setItem("zaraHrToken", T); }catch(e){} loadHome();
+    }).catch(function(){ b.disabled = false; b.textContent = "دخول"; m.textContent = "تعذّر الاتصال، حاول مرة أخرى."; m.classList.add("show"); });
+  };
+  $("phone").addEventListener("keydown", function(e){ if(e.key === "Enter") $("goLogin").click(); });
+
+  // الرئيسية
+  function loadHome(){
+    view("vHome"); $("tiles").innerHTML = '<div class="spin"></div>';
+    api("/api/hr/home").then(function(d){
+      if(!d.ok){ if(d.err === "token") return out(); $("tiles").innerHTML = '<div class="empty">تعذّر التحميل، حدّث الصفحة.</div>'; return; }
+      HOME = d; $("who").innerHTML = "أ. " + esc(String(d.name || "").split(" ")[0]) + '<button type="button" id="logout">خروج</button>'; $("who").hidden = false; $("logout").onclick = out;
+      $("homeSub").textContent = d.total ? d.total + " مرشح جاهز — انقر المسمى المطلوب" : "";
+      paintDue(); paintTiles();
+      $("fieldsH").hidden = !d.fields.length;
+      $("fields").innerHTML = d.fields.map(function(f){ return '<button type="button" class="chip" data-field="' + f.k + '" data-l="' + esc(f.l) + '">' + esc(f.l) + ' <em>' + f.n + '</em></button>'; }).join("");
+    }).catch(function(){ $("tiles").innerHTML = '<div class="empty">تعذّر الاتصال، تأكد من الإنترنت.</div>'; });
+  }
+  function paintTiles(){
+    var q = $("q").value.trim(), list = (HOME && HOME.tiles || []).filter(function(t){ return !q || t.label.indexOf(q) > -1; });
+    $("tiles").innerHTML = list.length ? list.map(function(t){ return '<button type="button" class="tile" data-title="' + esc(t.label) + '"><i>' + t.n + '</i><b>' + esc(t.label) + '</b><span>' + (t.n === 1 ? "مرشح واحد" : t.n === 2 ? "مرشحان" : t.n + " مرشحين") + ' ←</span></button>'; }).join("") : '<div class="empty" style="grid-column:1/-1">' + (HOME && HOME.total ? "لا يوجد مسمى بهذا الاسم — جرّب كلمة أخرى أو تصفّح المجالات بالأسفل" : "لا توجد سير ذاتية بعد — ستظهر هنا فور رفعها.") + '</div>';
+  }
+  function paintDue(){
+    var due = (HOME && HOME.due) || [];
+    $("due").innerHTML = due.map(function(r){ return '<div class="due" data-rid="' + r.id + '"><b>هل تم توظيف ' + esc(r.name || "المرشح") + '؟</b><div class="sub" style="margin:2px 0 0">' + esc(r.job || "") + '</div><div class="row"><button type="button" class="y" data-out="hired">نعم، تم التوظيف</button><button type="button" class="n" data-out="no">لا</button></div></div>'; }).join("");
+  }
+  $("q").addEventListener("input", paintTiles);
+  $("due").onclick = function(e){
+    var b = e.target.closest("[data-out]"); if(!b) return; var box = b.closest("[data-rid]");
+    api("/api/hr/outcome", { rid: box.getAttribute("data-rid"), outcome: b.getAttribute("data-out") }).then(function(){ box.innerHTML = '<b>' + (b.getAttribute("data-out") === "hired" ? "مبروك! شكراً لتحديثك 🌟" : "شكراً لتحديثك") + '</b>'; setTimeout(function(){ box.remove(); }, 1800); });
+  };
+  document.addEventListener("click", function(e){
+    var t = e.target.closest(".tile"); if(t){ openList({ title: t.getAttribute("data-title") }); return; }
+    var f = e.target.closest("[data-field]"); if(f){ openList({ field: f.getAttribute("data-field"), label: f.getAttribute("data-l") }); }
+  });
+
+  // المرشحون
+  function openList(o){
+    CUR = o; view("vList"); $("listH").innerHTML = "<b>" + esc(o.title || o.label) + "</b>"; $("listSub").textContent = ""; $("list").innerHTML = '<div class="spin"></div>';
+    api("/api/hr/list?" + (o.title ? "title=" + encodeURIComponent(o.title) : "field=" + encodeURIComponent(o.field))).then(function(d){
+      if(!d.ok){ if(d.err === "token") return out(); $("list").innerHTML = '<div class="empty">تعذّر التحميل.</div>'; return; }
+      $("listSub").textContent = d.rows.length + " مرشح — انقر «اعرض السيرة» وتصلك فوراً";
+      $("list").innerHTML = d.rows.length ? d.rows.map(function(c){
+        var meta = [c.years != null ? c.years + " سنوات خبرة" : "", c.degree, c.city, c.gender].filter(Boolean).join(" · ");
+        return '<div class="cand" data-id="' + c.id + '"><div class="h"><div><div class="t">' + esc((c.titles || []).join(" · ") || c.fieldName) + '</div><div class="m">' + esc(c.fieldName) + (meta ? " — " + esc(meta) : "") + '</div></div>' +
+          '<button type="button" class="go' + (c.taken ? " seen" : "") + '">' + (c.taken ? "اعرض مجدداً" : "اعرض السيرة") + '</button></div>' +
+          (c.skills && c.skills.length ? '<div class="sk">' + c.skills.map(function(s){ return '<span>' + esc(s) + '</span>'; }).join("") + '</div>' : '') + '<div class="rev"></div></div>';
+      }).join("") : '<div class="empty">لا يوجد مرشحون حالياً.</div>';
+    }).catch(function(){ $("list").innerHTML = '<div class="empty">تعذّر الاتصال.</div>'; });
+  }
+  $("back").onclick = function(){ loadHome(); };
+  $("list").onclick = function(e){
+    var b = e.target.closest(".go"); if(!b) return;
+    var card = b.closest(".cand"), rev = card.querySelector(".rev"); b.disabled = true; b.textContent = "لحظة…";
+    api("/api/hr/open", { id: card.getAttribute("data-id"), job: CUR && (CUR.title || CUR.label) || "" }).then(function(d){
+      b.disabled = false; b.className = "go seen"; b.textContent = "تم ✓";
+      if(!d.ok){ rev.innerHTML = '<div class="msg show">هذه السيرة لم تعد متاحة.</div>'; rev.classList.add("show"); return; }
+      var wa = "966" + String(d.phone || "").replace(/^0/, "");
+      var share = "سيرة ذاتية — " + (d.name || "") + "\n" + (d.titles || []).join(" · ") + "\nالجوال: " + (d.phone || "") + "\nالسيرة: " + d.file + "\n(من مرشحي «مفاتيح التوظيف» — الرابط صالح 7 أيام)";
+      rev.innerHTML = '<div class="nm">' + esc(d.name) + '</div><div class="m">' + esc((d.titles || []).join(" · ")) + ' — <span dir="ltr">' + esc(d.phone) + '</span></div>' +
+        '<div class="acts"><a class="a-cv" href="' + esc(d.file) + '" target="_blank" rel="noopener">📄 فتح السيرة</a>' +
+        '<a class="a-wa" href="https://wa.me/?text=' + encodeURIComponent(share) + '" target="_blank" rel="noopener">أرسلها لي بالواتساب</a>' +
+        '<a class="a-call" href="https://wa.me/' + esc(wa) + '" target="_blank" rel="noopener">تواصل مع المرشح</a></div>';
+      rev.classList.add("show");
+    }).catch(function(){ b.disabled = false; b.textContent = "اعرض السيرة"; });
+  };
+
+  if(T) loadHome(); else view("vLogin");
+})();
+</script>
+</body>
+</html>

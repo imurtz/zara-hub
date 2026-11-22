@@ -70,9 +70,27 @@ async function rosterByPhone(phone) {
   const body = { structuredQuery: { from: [{ collectionId: "rosterPeople" }], where: { fieldFilter: { field: { fieldPath: "phone" }, op: "EQUAL", value: { stringValue: phone } } }, limit: 5 } };
   const r = await fetch(`${FS_BASE}:runQuery?key=${FS_KEY}`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
   if (!r.ok) return null;
-  const rows = (await r.json()).filter(x => x.document).map(x => { const f = x.document.fields || {}, g = k => f[k] ? Object.values(f[k])[0] : ""; return { id: x.document.name.split("/").pop(), name: g("name"), gender: g("gender"), regNo: g("regNo"), type: g("type"), mergedInto: g("mergedInto") }; });
+  const rows = (await r.json()).filter(x => x.document).map(x => { const f = x.document.fields || {}, g = k => f[k] ? Object.values(f[k])[0] : ""; const roles = f.roles && f.roles.arrayValue && f.roles.arrayValue.values ? f.roles.arrayValue.values.map(v => v.stringValue) : [];
+    return { id: x.document.name.split("/").pop(), name: g("name"), gender: g("gender"), regNo: g("regNo"), type: g("type"), roles, mergedInto: g("mergedInto"), status: g("status") }; });
   return rows.find(p => !p.mergedInto) || rows[0] || null;
 }
+// خبير موارد بشرية = من له صفة «موارد بشرية» (أو «مدرب» القديمة) في «مطابقة البيانات»
+async function expertByPhone(phone) {
+  const body = { structuredQuery: { from: [{ collectionId: "rosterPeople" }], where: { fieldFilter: { field: { fieldPath: "phone" }, op: "EQUAL", value: { stringValue: phone } } }, limit: 5 } };
+  const r = await fetch(`${FS_BASE}:runQuery?key=${FS_KEY}`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+  if (!r.ok) return null;
+  for (const x of await r.json()) {
+    if (!x.document) continue;
+    const f = x.document.fields || {}, g = k => f[k] ? Object.values(f[k])[0] : "";
+    const roles = f.roles && f.roles.arrayValue && f.roles.arrayValue.values ? f.roles.arrayValue.values.map(v => v.stringValue) : [];
+    const all = roles.concat([g("type")]);
+    if (g("mergedInto") || g("status") === "inactive") continue;
+    if (all.includes("hr") || all.includes("trainer")) return { id: x.document.name.split("/").pop(), name: g("name"), org: g("org") };
+  }
+  return null;
+}
+const normT = t => clip(t, 60).replace(/^ال(?=\S)/, "").replace(/[ًٌٍَُِّْـ]/g, "").replace(/[أإآ]/g, "ا").replace(/ة\b/g, "ه").replace(/ى\b/g, "ي");
+const FOLLOW_DAYS = 14, SHARE_DAYS = 7;
 
 // الفرز: Workers AI أولاً، والقاموس احتياطاً — النتيجة دائماً مجال من القائمة الثابتة
 function keywordClassify(text) {
@@ -185,6 +203,62 @@ export default {
         }
       }
 
+      // ---------- الخبراء: رابط واحد للجميع + تعريف بالجوال مرة واحدة ----------
+      if (p === "/api/hr/login" && req.method === "POST") {
+        const { phone } = await req.json(); const ph = phoneNorm(phone);
+        if (!/^05\d{8}$/.test(ph)) return json({ ok: false, err: "phone" }, 200, H);
+        const e = await expertByPhone(ph); if (!e) return json({ ok: false, err: "notexpert" }, 200, H);
+        let ex = await env.DB.prepare("SELECT * FROM experts WHERE id = ?").bind(e.id).first();
+        if (ex && !ex.active) return json({ ok: false, err: "disabled" }, 200, H);
+        const token = tok(24);
+        if (ex) await env.DB.prepare("UPDATE experts SET token=?, name=?, org=?, phone=?, last_seen=? WHERE id=?").bind(token, e.name, e.org || ex.org || "", ph, now(), e.id).run();
+        else await env.DB.prepare("INSERT INTO experts (id, token, name, org, phone, active, created, last_seen) VALUES (?, ?, ?, ?, ?, 1, ?, ?)").bind(e.id, token, e.name, e.org || "", ph, now(), now()).run();
+        await logAct(env.DB, "expert:" + e.id, "login", "");
+        return json({ ok: true, token, name: e.name }, 200, H);
+      }
+      if (p.startsWith("/api/hr/")) {
+        const t = url.searchParams.get("t") || ""; const ex = t && await env.DB.prepare("SELECT * FROM experts WHERE token = ? AND active = 1").bind(t).first();
+        if (!ex) return json({ ok: false, err: "token" }, 401, H);
+        await env.DB.prepare("UPDATE experts SET last_seen=? WHERE id=?").bind(now(), ex.id).run();
+        const pool = ((await env.DB.prepare("SELECT id, field, titles, years, degree, skills, city, gender, updated FROM seekers WHERE status='active' AND consent=1 AND (roster_id NOT LIKE 'zz-%' OR ? = 1)").bind(ex.id.startsWith("zz-") ? 1 : 0).all()).results || []).map(s => Object.assign(s, { titles: JSON.parse(s.titles || "[]"), skills: JSON.parse(s.skills || "[]") }));
+        if (p === "/api/hr/home") { // مربعات المسميات + أسئلة المتابعة المستحقة
+          const tiles = {};
+          pool.forEach(s => { const seen = {}; s.titles.forEach(ti => { const k = normT(ti); if (!k || seen[k]) return; seen[k] = 1; (tiles[k] = tiles[k] || { label: ti, n: 0, field: s.field }).n++; }); });
+          const due = ((await env.DB.prepare("SELECT r.id, r.job, r.created, s.name FROM requests r LEFT JOIN seekers s ON s.id = r.seeker_id WHERE r.expert_id = ? AND (r.outcome IS NULL OR r.outcome = '') AND r.created < ? ORDER BY r.created LIMIT 5").bind(ex.id, now() - FOLLOW_DAYS * 864e5).all()).results || []);
+          return json({ ok: true, name: ex.name, total: pool.length, tiles: Object.values(tiles).sort((a, b) => b.n - a.n || a.label.localeCompare(b.label, "ar")), fields: FIELDS.map(f => ({ k: f[0], l: f[1], n: pool.filter(s => s.field === f[0]).length })).filter(f => f.n), due }, 200, H);
+        }
+        if (p === "/api/hr/list") { // بطاقات بلا اسم ولا جوال حتى يطلب الخبير السيرة
+          const title = url.searchParams.get("title") || "", field = url.searchParams.get("field") || "", k = normT(title);
+          const mine = {}; ((await env.DB.prepare("SELECT seeker_id FROM requests WHERE expert_id = ?").bind(ex.id).all()).results || []).forEach(r => mine[r.seeker_id] = 1);
+          const rows = pool.filter(s => title ? s.titles.some(x => normT(x) === k) : field ? s.field === field : true)
+            .sort((a, b) => (b.years || 0) - (a.years || 0) || b.updated - a.updated)
+            .map(s => ({ id: s.id, fieldName: FIELD_NAME[s.field] || "", titles: s.titles, years: s.years, degree: s.degree, city: s.city, skills: s.skills.slice(0, 5), gender: s.gender, taken: !!mine[s.id] }));
+          return json({ ok: true, rows }, 200, H);
+        }
+        if (p === "/api/hr/open" && req.method === "POST") { // كشف السيرة: يُسجَّل باسم الخبير فوراً
+          const b = await req.json(); const s = await env.DB.prepare("SELECT * FROM seekers WHERE id = ? AND status='active' AND consent=1").bind(b.id || "").first();
+          if (!s) return json({ ok: false, err: "gone" }, 404, H);
+          let r = await env.DB.prepare("SELECT * FROM requests WHERE expert_id = ? AND seeker_id = ?").bind(ex.id, s.id).first();
+          if (!r) { r = { id: "rq-" + tok(16) }; await env.DB.prepare("INSERT INTO requests (id, expert_id, seeker_id, job, created) VALUES (?, ?, ?, ?, ?)").bind(r.id, ex.id, s.id, clip(b.job, 80), now()).run(); r.created = now(); await logAct(env.DB, "expert:" + ex.id, "open", s.id); }
+          return json({ ok: true, rid: r.id, name: s.name, phone: s.phone, fieldName: FIELD_NAME[s.field] || "", titles: JSON.parse(s.titles || "[]"), file: `${url.origin}/f/${r.id}`, fileName: s.file_name }, 200, H);
+        }
+        if (p === "/api/hr/outcome" && req.method === "POST") {
+          const b = await req.json(); const o = b.outcome === "hired" ? "hired" : "no";
+          await env.DB.prepare("UPDATE requests SET outcome=?, outcome_at=? WHERE id=? AND expert_id=?").bind(o, now(), b.rid || "", ex.id).run();
+          await logAct(env.DB, "expert:" + ex.id, "outcome:" + o, b.rid || "");
+          return json({ ok: true }, 200, H);
+        }
+      }
+      // رابط السيرة الآمن (للعرض أو الإرسال بالواتساب): صالح 7 أيام من أول طلب، ومسجَّل باسم الخبير
+      if (p.startsWith("/f/")) {
+        const r = await env.DB.prepare("SELECT r.created, s.file_key, s.file_type, s.file_name, s.name, s.status FROM requests r JOIN seekers s ON s.id = r.seeker_id WHERE r.id = ?").bind(p.slice(3)).first();
+        if (!r || r.status !== "active" || !r.file_key) return new Response("الرابط غير صالح أو حُذفت السيرة", { status: 404, headers: { "Content-Type": "text/plain; charset=utf-8" } });
+        if (now() - r.created > SHARE_DAYS * 864e5) return new Response("انتهت صلاحية هذا الرابط — افتح السيرة من صفحة الخبراء مجدداً", { status: 410, headers: { "Content-Type": "text/plain; charset=utf-8" } });
+        const o = await env.CV_BUCKET.get(r.file_key); if (!o) return new Response("الملف غير موجود", { status: 404 });
+        const ext = r.file_type === "application/pdf" ? "pdf" : "docx";
+        return new Response(o.body, { headers: { "Content-Type": r.file_type, "Content-Disposition": `inline; filename*=UTF-8''${encodeURIComponent("سيرة " + (r.name || "") + "." + ext)}`, "Cache-Control": "private, no-store", "X-Robots-Tag": "noindex" } });
+      }
+
       // ---------- لوحة المؤسس ----------
       if (p === "/api/admin/init" && req.method === "POST") { // مرة واحدة فقط: ينشئ مفتاح اللوحة إن لم يوجد
         const ex = await env.DB.prepare("SELECT v FROM meta WHERE k = 'admin'").first();
@@ -199,11 +273,12 @@ export default {
         const k = url.searchParams.get("k") || "";
         if (!await adminOk(env.DB, k)) return json({ ok: false, err: "key" }, 401, H);
         if (p === "/api/admin/list") {
-          const rows = (await env.DB.prepare("SELECT id, name, phone, reg_no, gender, field, titles, years, degree, city, consent, status, ai, created, updated FROM seekers ORDER BY updated DESC").all()).results || [];
-          const reqs = (await env.DB.prepare("SELECT r.*, e.name AS expert, e.org AS org, s.name AS seeker FROM requests r LEFT JOIN experts e ON e.id = r.expert_id LEFT JOIN seekers s ON s.id = r.seeker_id ORDER BY r.created DESC LIMIT 500").all()).results || [];
-          const experts = (await env.DB.prepare("SELECT id, name, org, phone, active, created, last_seen FROM experts ORDER BY created").all()).results || [];
+          const rows = (await env.DB.prepare("SELECT id, name, phone, reg_no, gender, field, titles, years, degree, city, consent, status, ai, created, updated FROM seekers WHERE roster_id NOT LIKE 'zz-%' ORDER BY updated DESC").all()).results || [];
+          const reqs = (await env.DB.prepare("SELECT r.*, e.name AS expert, e.org AS org, s.name AS seeker FROM requests r LEFT JOIN experts e ON e.id = r.expert_id LEFT JOIN seekers s ON s.id = r.seeker_id WHERE r.expert_id NOT LIKE 'zz-%' ORDER BY r.created DESC LIMIT 500").all()).results || [];
+          const experts = (await env.DB.prepare("SELECT id, name, org, phone, active, created, last_seen FROM experts WHERE id NOT LIKE 'zz-%' ORDER BY created").all()).results || [];
           return json({ ok: true, seekers: rows.map(r => Object.assign(r, { fieldName: FIELD_NAME[r.field] || "", titles: JSON.parse(r.titles || "[]") })), requests: reqs, experts, fields: FIELDS.map(f => ({ k: f[0], l: f[1] })) }, 200, H);
         }
+        if (p === "/api/admin/expert" && req.method === "POST") { const b = await req.json(); await env.DB.prepare("UPDATE experts SET active=?, token=? WHERE id=?").bind(b.active ? 1 : 0, b.active ? tok(24) : "x-" + tok(12), b.id || "").run(); return json({ ok: true }, 200, H); }
         if (p === "/api/admin/file") {
           const s = await env.DB.prepare("SELECT file_key, file_type, file_name FROM seekers WHERE id = ?").bind(url.searchParams.get("id") || "").first();
           if (!s || !s.file_key) return json({ ok: false, err: "nofile" }, 404, H);
