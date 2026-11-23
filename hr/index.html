@@ -91,6 +91,14 @@
   .rev{margin-top:12px; border-top:1px dashed var(--line); padding-top:12px; display:none;}
   .rev.show{display:block;}
   .rev .nm{font-size:17px; font-weight:700;}
+  .how{display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:8px; margin:4px 0 16px;}
+  .how div{background:#fff; border:1px solid var(--line, #e4e9e8); border-radius:14px; padding:10px 10px; font-size:13px; line-height:1.5; display:flex; align-items:center; gap:8px;}
+  .how i{font-style:normal; flex:none; width:24px; height:24px; border-radius:50%; background:var(--teal-tint, #eef3f2); color:var(--teal-dark, #3d5b56); font-weight:700; font-size:12.5px; display:flex; align-items:center; justify-content:center;}
+  @media(max-width:420px){ .how{grid-template-columns:1fr;} }
+  .rev .note{font-size:12.5px; color:var(--ink-soft, #6b7876); margin-top:10px; line-height:1.7;}
+  .rev .oc{display:flex; flex-wrap:wrap; gap:8px; align-items:center; margin-top:10px; padding-top:10px; border-top:1px dashed var(--line, #e4e9e8); font-size:13.5px;}
+  .rev .oc button{border:1px solid var(--line, #e4e9e8); background:#fff; border-radius:10px; padding:7px 12px; font:inherit; font-size:13px; font-weight:600; cursor:pointer;}
+  .rev .oc button.y{background:#e9f6ee; border-color:#bfe3cc; color:#1f6b40;}
   .rev .acts{display:flex; flex-wrap:wrap; gap:8px; margin-top:10px;}
   .rev .acts a, .rev .acts button{display:inline-flex; align-items:center; gap:6px; border-radius:12px; padding:10px 14px; font-size:14px; font-weight:600; text-decoration:none; cursor:pointer; border:0; font-family:inherit;}
   .a-cv{background:var(--teal-dark); color:#fff;} .a-wa{background:#1fa855; color:#fff;} .a-call{background:#fff; color:var(--ink); border:1px solid var(--line) !important;}
@@ -155,6 +163,7 @@
   <div id="vHome" hidden>
     <h1>وش <b>الوظيفة</b> اللي عندك؟</h1>
     <p class="sub" id="homeSub"></p>
+    <div class="how" aria-label="طريقة الاستخدام"><div><i>1</i>اختر المسمى الوظيفي</div><div><i>2</i>اضغط «اعرض السيرة»</div><div><i>3</i>تواصل مع المرشح مباشرة</div></div>
     <div id="due"></div>
     <div id="mine"></div>
     <div class="search srow"><input type="search" id="q" placeholder="ابحث عن مسمى وظيفي…" /><button type="button" class="addb" id="addJob">＋ وظيفة</button></div>
@@ -330,24 +339,28 @@
     $("list").innerHTML = rows.length ? rows.map(function(c){
         var meta = [c.years != null ? c.years + " سنوات خبرة" : "", c.degree, c.city, c.gender].filter(Boolean).join(" · ");
         return '<div class="cand" data-id="' + c.id + '"><div class="h"><div><div class="code">مرشح ' + esc(c.code) + '</div><div class="t">' + esc((c.titles || []).join(" · ") || c.fieldName) + '</div>' + (c.alsoIn && c.alsoIn.length ? '<div class="also">يظهر أيضاً في: ' + esc(c.alsoIn.join("، ")) + '</div>' : '') + '<div class="m">' + esc(c.fieldName) + (meta ? " — " + esc(meta) : "") + '</div></div>' +
-          '<button type="button" class="go' + (c.taken ? " seen" : "") + '">' + (c.taken ? "اعرض مجدداً" : "اعرض السيرة") + '</button></div>' +
+          '<button type="button" class="go' + (c.taken ? " seen" : "") + '">' + (c.taken ? "سبق عرضها — اعرض مجدداً" : "اعرض السيرة") + '</button></div>' +
           (c.skills && c.skills.length ? '<div class="sk">' + c.skills.map(function(s){ return '<span>' + esc(s) + '</span>'; }).join("") + '</div>' : '') + '<div class="rev"></div></div>';
       }).join("") : '<div class="empty">' + (ROWS.length ? "لا يوجد مرشح بهذه الشروط" : "لا يوجد مرشحون حالياً.") + '</div>';
   }
   $("listSub").onclick = function(e){ var b = e.target.closest("[data-fc],[data-fe]"); if(!b) return; if(b.hasAttribute("data-fc")) FLT.city = b.getAttribute("data-fc"); else FLT.exp = b.getAttribute("data-fe"); paintRows(); };
   $("back").onclick = function(){ loadHome(); };
   $("list").onclick = function(e){
+    var ob = e.target.closest(".oc [data-out]");
+    if(ob){ var box = ob.closest(".oc"); api("/api/hr/outcome", { rid: box.getAttribute("data-rid"), outcome: ob.getAttribute("data-out") }).then(function(){ box.innerHTML = ob.getAttribute("data-out") === "hired" ? "<b>مبروك! شكراً لتحديثك 🌟 — يختفي المرشح من القائمة.</b>" : "<b>شكراً لتحديثك.</b>"; }); return; }
     var b = e.target.closest(".go"); if(!b) return;
     var card = b.closest(".cand"), rev = card.querySelector(".rev"); b.disabled = true; b.textContent = "لحظة…";
     api("/api/hr/open", { id: card.getAttribute("data-id"), job: CUR && (CUR.job || CUR.title || CUR.label) || "" }).then(function(d){
-      b.disabled = false; b.className = "go seen"; b.textContent = "تم ✓";
+      b.disabled = false; b.className = "go seen"; b.textContent = "البيانات ظاهرة ↓";
       if(!d.ok){ rev.innerHTML = '<div class="msg show">هذه السيرة لم تعد متاحة.</div>'; rev.classList.add("show"); return; }
       var wa = "966" + String(d.phone || "").replace(/^0/, "");
       var share = "سيرة ذاتية — " + (d.name || "") + "\n" + (d.titles || []).join(" · ") + "\nالجوال: " + (d.phone || "") + "\nالسيرة: " + d.file + "\n(من مرشحي «مفاتيح الفرص» — الرابط صالح 7 أيام)";
       rev.innerHTML = '<div class="nm">' + esc(d.name) + '</div><div class="m">' + esc((d.titles || []).join(" · ")) + ' — <span dir="ltr">' + esc(d.phone) + '</span></div>' +
         '<div class="acts"><a class="a-cv" href="' + esc(d.file) + '" target="_blank" rel="noopener">📄 فتح السيرة</a>' +
         '<a class="a-wa" href="https://wa.me/?text=' + encodeURIComponent(share) + '" target="_blank" rel="noopener">أرسلها لي بالواتساب</a>' +
-        '<a class="a-call" href="https://wa.me/' + esc(wa) + '" target="_blank" rel="noopener">تواصل مع المرشح</a></div>';
+        '<a class="a-call" href="https://wa.me/' + esc(wa) + '" target="_blank" rel="noopener">تواصل مع المرشح</a></div>' +
+        '<div class="note">رابط السيرة صالح 7 أيام. التواصل والمقابلة بينك وبين المرشح مباشرة.</div>' +
+        '<div class="oc" data-rid="' + esc(d.rid || "") + '"><span>لو تم توظيفه بلّغنا:</span><button type="button" class="y" data-out="hired">تم توظيفه 🎉</button><button type="button" data-out="no">ما تم</button></div>';
       rev.classList.add("show");
     }).catch(function(){ b.disabled = false; b.textContent = "اعرض السيرة"; });
   };

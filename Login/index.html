@@ -2515,9 +2515,18 @@ body.rs-kiosk .nav-groups{display:none !important;}
 #cvRoot .cv-err{color:#b3453f}
 #cvRoot .cv-muted{color:#6b7876}
 #cvRoot .cv-kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px}
-#cvRoot .cv-kpis div{background:#fff;border:1px solid #e4e9e8;border-radius:16px;padding:12px 14px}
+#cvRoot .cv-kpis button{background:#fff;border:1px solid #e4e9e8;border-radius:16px;padding:12px 14px;text-align:right;font:inherit;color:inherit;cursor:pointer}
+#cvRoot .cv-kpis button:hover{border-color:#b9cfcc}
+#cvRoot .cv-kpis small{display:block;font-size:11.5px;color:#8a9694;margin-top:4px;line-height:1.5}
+#cvRoot .cv-item{flex-wrap:wrap}
+#cvRoot .cv-hint{font-size:12.5px;color:#6b7876;margin:0 0 8px}
+#cvRoot .cv-span{display:block}
+#cvRoot .cv-ed{flex-basis:100%;display:grid;grid-template-columns:1fr 2fr 1fr auto;gap:8px;margin-top:8px}
+#cvRoot .cv-ed select,#cvRoot .cv-ed input{border:1px solid #dfe5e4;border-radius:10px;padding:8px 10px;font:inherit;font-size:13.5px;min-width:0}
+@media(max-width:700px){#cvRoot .cv-ed{grid-template-columns:1fr}}
+#cvRoot .cv-sel{border:1px solid #dfe5e4;border-radius:10px;padding:5px 8px;font:inherit;font-size:13px;background:#fff}
 #cvRoot .cv-kpis b{display:block;font-size:24px;color:#4b7071}
-#cvRoot .cv-kpis span{font-size:12.5px;color:#6b7876}
+#cvRoot .cv-kpis span{display:block;font-size:13px;font-weight:600;color:#3f4b49}
 #cvRoot .cv-tabs,#cvRoot .cv-chips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
 #cvRoot .cv-tabs button,#cvRoot .cv-chips button{font:inherit;font-size:13.5px;font-weight:600;border:1px solid rgba(20,28,27,.12);background:#fff;color:#4b5a58;border-radius:20px;padding:6px 14px;cursor:pointer}
 #cvRoot .cv-tabs button.on,#cvRoot .cv-chips button.on{background:#4b7071;border-color:#4b7071;color:#fff}
@@ -4301,12 +4310,17 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
     hiredReq.forEach(function(r){ if(r.seeker_id && !hiredBy[r.seeker_id]) hiredBy[r.seeker_id] = { org: r.org || "", fromReq: true }; });
     var skById = {}; d.seekers.forEach(function(s){ skById[s.id] = s; });
     var hiredN = hires.length + hiredReq.filter(function(r){ return !hires.some(function(x){ return x.seeker_id === r.seeker_id; }); }).length, newHires = hires.filter(function(x){ return !x.seen; }).length;
-    h += '<div class="cv-kpis"><div><b>' + ok.length + '</b><span>سيرة جاهزة</span></div><div><b>' + (act.length - ok.length) + '</b><span>بانتظار تأكيد صاحبها</span></div><div><b>' + d.requests.length + '</b><span>سيرة أُرسلت لخبير</span></div><div><b>' + hiredN + '</b><span>توظيف</span></div></div>';
+    var okVis = ok.filter(function(x){ return !hiredBy[x.id]; });
+    h += '<p class="cv-hint">ملخص سريع — اضغط أي رقم يوديك لتفاصيله.</p><div class="cv-kpis">' +
+      '<button type="button" data-cv="tab" data-v="seekers"><b>' + okVis.length + '</b><span>سيرة ظاهرة للمدربين</span><small>أكّدها صاحبها وما توظّف بعد</small></button>' +
+      '<button type="button" data-cv="tab" data-v="seekers"><b>' + (act.length - ok.length) + '</b><span>بانتظار تأكيد صاحبها</span><small>رفعها وما ضغط «تأكيد» — مخفية عن المدربين</small></button>' +
+      '<button type="button" data-cv="tab" data-v="reqs"><b>' + d.requests.length + '</b><span>سيرة فتحها مدرب</span><small>كل مرة يضغط مدرب «اعرض السيرة» لمرشح</small></button>' +
+      '<button type="button" data-cv="tab" data-v="hires"><b>' + hiredN + '</b><span>توظيف</span><small>أبلغ المرشح أو أكّده المدرب أو سجّلته أنت</small></button></div>';
     h += '<div class="cv-tabs"><button type="button" data-cv="tab" data-v="seekers" class="' + (cvUI.tab === "seekers" ? "on" : "") + '">الباحثون (' + act.length + ')</button><button type="button" data-cv="tab" data-v="hires" class="' + (cvUI.tab === "hires" ? "on" : "") + '">التوظيف (' + hiredN + ')' + (newHires ? ' <i class="cv-new">' + newHires + ' جديد</i>' : '') + '</button><button type="button" data-cv="tab" data-v="reqs" class="' + (cvUI.tab === "reqs" ? "on" : "") + '">من وصلته فرصة (' + d.requests.length + ')</button><button type="button" data-cv="tab" data-v="experts" class="' + (cvUI.tab === "experts" ? "on" : "") + '">المدربون (' + d.experts.filter(function(x){ return !x.gone; }).length + ')</button><button type="button" data-cv="tab" data-v="jobs" class="' + (cvUI.tab === "jobs" ? "on" : "") + '">الوظائف المطلوبة (' + (d.jobs || []).filter(function(j){ return j.status === "open"; }).length + ')</button></div>';
     if(cvUI.tab === "jobs"){
       var jobs = d.jobs || [];
       h += '<div class="cv-card cv-muted" style="font-size:13px">وظائف أضافها الخبراء من صفحتهم لما ما لقوا المسمى اللي يبونه. «مطابق» = عدد السير الجاهزة اللي مسمّاها قريب من الوظيفة.</div>';
-      h += jobs.length ? '<div class="cv-card"><table class="cv-t"><thead><tr><th>التاريخ</th><th>الوظيفة</th><th>ملاحظة</th><th>الخبير</th><th>مطابق</th><th>الحالة</th><th></th></tr></thead><tbody>' + jobs.map(function(j){ return '<tr' + (j.status === "open" ? '' : ' style="opacity:.5"') + '><td>' + cvDate(j.created) + '</td><td><b>' + e(j.title) + '</b></td><td>' + e(j.note || "") + '</td><td>' + e(j.expert || "") + '</td><td>' + (j.n || 0) + '</td><td>' + (j.status === "open" ? "مفتوحة" : "أُغلقت") + '</td><td><button type="button" class="cv-btn ghost cv-del" data-cv="rowdel" data-t="job" data-v="' + e(j.id) + '">حذف</button></td></tr>'; }).join("") + '</tbody></table></div>' : '<div class="cv-card cv-muted">ما أضاف أي خبير وظيفة بعد.</div>';
+      h += jobs.length ? '<div class="cv-card"><table class="cv-t"><thead><tr><th>التاريخ</th><th>الوظيفة</th><th>ملاحظة</th><th>الخبير</th><th>مطابق</th><th>الحالة</th><th></th></tr></thead><tbody>' + jobs.map(function(j){ return '<tr' + (j.status === "open" ? '' : ' style="opacity:.5"') + '><td>' + cvDate(j.created) + '</td><td><b>' + e(j.title) + '</b></td><td>' + e(j.note || "") + '</td><td>' + e(j.expert || "") + '</td><td>' + (j.n || 0) + '</td><td>' + ('<button type="button" class="cv-btn ghost" data-cv="jstat" data-v="' + e(j.id) + '" data-s="' + (j.status === "open" ? "closed" : "open") + '">' + (j.status === "open" ? "مفتوحة — إغلاق" : "مغلقة — إعادة فتح") + '</button>') + '</td><td><button type="button" class="cv-btn ghost cv-del" data-cv="rowdel" data-t="job" data-v="' + e(j.id) + '">حذف</button></td></tr>'; }).join("") + '</tbody></table></div>' : '<div class="cv-card cv-muted">ما أضاف أي خبير وظيفة بعد.</div>';
       root.innerHTML = h; return;
     }
     if(cvUI.tab === "experts"){
@@ -4335,7 +4349,7 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
       return;
     }
     if(cvUI.tab === "reqs"){
-      h += d.requests.length ? '<div class="cv-card"><table class="cv-t"><thead><tr><th>التاريخ</th><th>الخبير</th><th>الجهة</th><th>الوظيفة</th><th>المرشح</th><th>النتيجة</th><th></th></tr></thead><tbody>' + d.requests.map(function(r){ return '<tr><td>' + cvDate(r.created) + '</td><td>' + e(r.expert || "") + '</td><td>' + e(r.org || "") + '</td><td>' + e(r.job || "") + '</td><td>' + e(r.seeker || "") + '</td><td>' + (r.outcome === "hired" ? '<b class="cv-hired">تم التوظيف</b>' : r.outcome === "no" ? "لم يتم" : r.outcome === "returned" ? "أُرجع للمدربين" : "بانتظار الرد") + '</td><td><button type="button" class="cv-btn ghost cv-del" data-cv="rowdel" data-t="req" data-v="' + e(r.id) + '">حذف</button></td></tr>'; }).join("") + '</tbody></table></div>' : '<div class="cv-card cv-muted">لم تُرسل أي سيرة لخبير بعد — تبدأ مع إطلاق روابط الخبراء.</div>';
+      h += d.requests.length ? '<div class="cv-card"><table class="cv-t"><thead><tr><th>التاريخ</th><th>الخبير</th><th>الجهة</th><th>الوظيفة</th><th>المرشح</th><th>النتيجة</th><th></th></tr></thead><tbody>' + d.requests.map(function(r){ return '<tr><td>' + cvDate(r.created) + '</td><td>' + e(r.expert || "") + '</td><td>' + e(r.org || "") + '</td><td>' + e(r.job || "") + '</td><td>' + e(r.seeker || "") + '</td><td>' + ('<select class="cv-sel" data-cv-sel="req" data-v="' + e(r.id) + '">' + [["", "بانتظار الرد"], ["hired", "تم التوظيف"], ["no", "لم يتم"]].map(function(o){ return '<option value="' + o[0] + '"' + ((r.outcome === "returned" ? "" : (r.outcome || "")) === o[0] ? " selected" : "") + '>' + o[1] + '</option>'; }).join("") + '</select>' + (r.outcome === "returned" ? ' <small>(أُرجع للمدربين)</small>' : '')) + '</td><td><button type="button" class="cv-btn ghost cv-del" data-cv="rowdel" data-t="req" data-v="' + e(r.id) + '">حذف</button></td></tr>'; }).join("") + '</tbody></table></div>' : '<div class="cv-card cv-muted">لم تُرسل أي سيرة لخبير بعد — تبدأ مع إطلاق روابط الخبراء.</div>';
       root.innerHTML = h; return;
     }
     h += '<div class="cv-chips"><button type="button" data-cv="f" data-v="" class="' + (!cvUI.f ? "on" : "") + '">الكل</button>' + d.fields.filter(function(f){ return byF[f.k]; }).map(function(f){ return '<button type="button" data-cv="f" data-v="' + f.k + '" class="' + (cvUI.f === f.k ? "on" : "") + '">' + e(f.l) + ' <i>' + byF[f.k] + '</i></button>'; }).join("") + '</div>';
@@ -4345,10 +4359,14 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
       return '<div class="cv-item"><div class="cv-main"><b>' + e(s.name) + '</b> <span class="cv-reg" dir="ltr">' + e(s.reg_no || "") + '</span>' + (s.consent ? '' : ' <span class="cv-pend">لم يؤكد</span>') + (s.attended === false ? ' <span class="cv-pend">لم يحضر الورشة — مخفي عن الخبراء</span>' : '') + (hiredBy[s.id] ? ' <b class="cv-hired">توظّف' + (hiredBy[s.id].org ? ' — ' + e(hiredBy[s.id].org) : '') + '</b> <span class="cv-pend">مخفي عن المدربين</span>' : '') +
         '<div class="cv-f">' + e(s.fieldName) + (s.titles && s.titles.length ? ' · ' + e(s.titles.join("، ")) : '') + '</div>' +
         '<div class="cv-m">' + [s.years != null ? s.years + " سنوات" : "", s.degree, s.city, s.phone ? '<span dir="ltr">' + e(s.phone) + '</span>' : "", "حُدّثت " + cvDate(s.updated)].filter(Boolean).join(" · ") + '</div></div>' +
-        '<div class="cv-x-a"><button type="button" class="cv-btn ghost" data-cv="open" data-v="' + e(s.id) + '">فتح السيرة</button>' + (hiredBy[s.id] ? '<button type="button" class="cv-btn ghost" data-cv="restore" data-v="' + e(s.id) + '" data-p="' + e(s.phone || "") + '" data-n="' + e(s.name) + '">↩ إرجاعه للمدربين</button>' : '<button type="button" class="cv-btn ghost" data-cv="hire" data-v="' + e(s.id) + '" data-n="' + e(s.name) + '">توظّف ✓</button>') + '<button type="button" class="cv-btn ghost cv-del" data-cv="sdel" data-v="' + e(s.id) + '" data-n="' + e(s.name) + '">حذف</button></div></div>';
+        '<div class="cv-x-a"><button type="button" class="cv-btn ghost" data-cv="open" data-v="' + e(s.id) + '">فتح السيرة</button>' + (hiredBy[s.id] ? '<button type="button" class="cv-btn ghost" data-cv="restore" data-v="' + e(s.id) + '" data-p="' + e(s.phone || "") + '" data-n="' + e(s.name) + '">↩ إرجاعه للمدربين</button>' : '<button type="button" class="cv-btn ghost" data-cv="hire" data-v="' + e(s.id) + '" data-n="' + e(s.name) + '">توظّف ✓</button>') + '<button type="button" class="cv-btn ghost" data-cv="sedit" data-v="' + e(s.id) + '">تعديل</button><button type="button" class="cv-btn ghost cv-del" data-cv="sdel" data-v="' + e(s.id) + '" data-n="' + e(s.name) + '">حذف</button></div></div>' + (cvUI.editId === s.id ? '<div class="cv-ed" data-ed="' + e(s.id) + '"><select data-f="field">' + d.fields.map(function(f){ return '<option value="' + f.k + '"' + (f.k === s.field ? ' selected' : '') + '>' + e(f.l) + '</option>'; }).join('') + '</select><input data-f="titles" value="' + e((s.titles || []).join('، ')) + '" placeholder="المسميات مفصولة بفاصلة"/><input data-f="city" value="' + e(s.city || '') + '" placeholder="المدينة"/><button type="button" class="cv-btn" data-cv="ssave" data-v="' + e(s.id) + '">حفظ</button></div>' : '') + '</div>';
     }).join("") + '</div>' : '<div class="cv-card cv-muted">' + (act.length ? "لا نتائج" : "لم تُرفع أي سيرة بعد — شارك رابط الباحثين مع المتدربين.") + '</div>';
     root.innerHTML = h;
   }
+  document.addEventListener("change", function(ev){
+    var sl = ev.target.closest && ev.target.closest("#cvRoot [data-cv-sel]"); if(!sl) return;
+    cvFetch("/api/admin/edit", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ t: "req", id: sl.getAttribute("data-v"), outcome: sl.value }) }).then(function(r){ return r.json(); }).then(function(d2){ showToast(d2 && d2.ok ? "تم التحديث" : "تعذّر التحديث"); cvLoad(); });
+  });
   document.addEventListener("click", function(ev){
     var b = ev.target.closest && ev.target.closest("#cvRoot [data-cv]"); if(!b) return;
     var a = b.getAttribute("data-cv"), v = b.getAttribute("data-v");
@@ -4370,6 +4388,16 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
       var org = prompt("توظيف " + (b.getAttribute("data-n") || "") + "\nجهة العمل:"); if(org === null) return; org = org.trim(); if(!org) return showToast("اكتب جهة العمل");
       var ttl = prompt("المسمى الوظيفي (اختياري):") || "";
       cvFetch("/api/admin/hire", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: v, org: org, title: ttl.trim() }) }).then(function(r){ return r.json(); }).then(function(d2){ showToast(d2 && d2.ok ? "سُجّل التوظيف 🎉" : "تعذّر التسجيل"); cvLoad(); }).catch(function(){ showToast("تعذّر الاتصال بالخدمة"); });
+    }
+    else if(a === "sedit"){ cvUI.editId = cvUI.editId === v ? "" : v; cvRender(); }
+    else if(a === "ssave"){
+      var box = document.querySelector('#cvRoot [data-ed="' + v + '"]'); if(!box) return;
+      var val = function(f){ return box.querySelector('[data-f="' + f + '"]').value; };
+      b.disabled = true;
+      cvFetch("/api/admin/edit", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ t: "seeker", id: v, field: val("field"), titles: val("titles").split(/[،,]/).map(function(x){ return x.trim(); }).filter(Boolean), city: val("city").trim() }) }).then(function(r){ return r.json(); }).then(function(d2){ showToast(d2 && d2.ok ? "حُفظ التعديل" : "تعذّر الحفظ"); cvUI.editId = ""; cvLoad(); }).catch(function(){ b.disabled = false; showToast("تعذّر الاتصال بالخدمة"); });
+    }
+    else if(a === "jstat"){
+      cvFetch("/api/admin/edit", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ t: "job", id: v, status: b.getAttribute("data-s") }) }).then(function(){ showToast("تم التحديث"); cvLoad(); });
     }
     else if(a === "rowdel"){
       var tt = b.getAttribute("data-t");

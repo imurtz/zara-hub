@@ -420,6 +420,22 @@ export default {
           await logAct(env.DB, "admin", "code", pr.id);
           return json({ ok: true, code, phone: pr.phone, name: pr.name }, 200, H);
         }
+        if (p === "/api/admin/edit" && req.method === "POST") { // تحكم كامل للمؤسس: تعديل السيرة، نتيجة الطلب، حالة الوظيفة
+          const b = await req.json();
+          if (b.t === "seeker") {
+            const sk = await env.DB.prepare("SELECT * FROM seekers WHERE id = ?").bind(b.id || "").first(); if (!sk) return json({ ok: false, err: "notfound" }, 404, H);
+            const field = FIELD_NAME[b.field] ? b.field : sk.field;
+            const titles = (Array.isArray(b.titles) ? b.titles : JSON.parse(sk.titles || "[]")).map(x => clip(x, 60)).filter(Boolean).slice(0, 6);
+            await env.DB.prepare("UPDATE seekers SET field=?, titles=?, city=?, updated=? WHERE id=?").bind(field, JSON.stringify(titles), clip(b.city ?? sk.city, 40), now(), sk.id).run();
+          } else if (b.t === "req") {
+            const o = ["hired", "no", ""].includes(b.outcome) ? b.outcome : "";
+            await env.DB.prepare("UPDATE requests SET outcome=?, outcome_at=? WHERE id=?").bind(o || null, o ? now() : null, b.id || "").run();
+          } else if (b.t === "job") {
+            await env.DB.prepare("UPDATE jobs SET status=?, closed=? WHERE id=?").bind(b.status === "open" ? "open" : "closed", b.status === "open" ? null : now(), b.id || "").run();
+          } else return json({ ok: false, err: "bad" }, 400, H);
+          await logAct(env.DB, "admin", "edit:" + b.t, b.id || "");
+          return json({ ok: true }, 200, H);
+        }
         if (p === "/api/admin/row-del" && req.method === "POST") { // حذف سطر من «من وصلته فرصة» أو «الوظائف المطلوبة»
           const b = await req.json(); const t = b.t === "job" ? "jobs" : b.t === "req" ? "requests" : "";
           if (!t || !b.id) return json({ ok: false, err: "bad" }, 400, H);
