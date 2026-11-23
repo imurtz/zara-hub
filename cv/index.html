@@ -137,6 +137,7 @@
     <label class="consent"><input type="checkbox" id="consent" /><span>أوافق على مشاركة سيرتي الذاتية مع خبراء الموارد البشرية في شبكة «مفاتيح الفرص» لغرض ترشيحي لفرص العمل فقط، وأعلم أنني أستطيع حذفها في أي وقت، وأنها تُحذف تلقائياً بعد سنة.</span></label>
     <div class="msg" id="m3"></div>
     <button class="btn" id="goConfirm">تأكيد وإرسال</button>
+    <div class="links"><button type="button" class="del" id="cancelCv">إلغاء — لا أريد إرسالها</button></div>
   </div>
 
   <!-- 4) تم -->
@@ -147,7 +148,7 @@
     <div class="res" style="text-align:right"><div class="f" id="dField"></div><div class="t" id="dTitles"></div></div>
     <p class="sub" style="margin:14px 0 0">رابطك الخاص لتحديث سيرتك أو حذفها — احتفظ به:</p>
     <div class="mylink"><input type="text" id="myLink" readonly /><button type="button" id="copyLink">نسخ</button></div>
-    <div class="links"><button type="button" id="reup">رفع نسخة أحدث</button><button type="button" id="edit">تعديل المجال والمسميات</button><button type="button" class="del" id="del">حذف سيرتي</button></div>
+    <div class="links"><button type="button" id="reup">رفع نسخة أحدث</button><button type="button" id="edit">تعديل المجال والمسميات</button><button type="button" id="pause">إخفاء سيرتي مؤقتاً</button><button type="button" class="del" id="del">حذف سيرتي</button></div>
   </div>
 
   <a class="hired" id="hiredLink" href="/cv/hired/"><span class="hired-e" aria-hidden="true">🎉</span><span><b>حصلت وظيفة من «مفاتيح الفرص»؟</b><small>لا تنسى ترجع تبلغنا — فرحتك فرحتنا</small></span><i aria-hidden="true">←</i></a>
@@ -253,6 +254,18 @@
   $("copyLink").onclick = function(){ var v = $("myLink").value; (navigator.clipboard ? navigator.clipboard.writeText(v) : Promise.reject()).then(function(){ $("copyLink").textContent = "تم ✓"; setTimeout(function(){ $("copyLink").textContent = "نسخ"; }, 1500); }, function(){ $("myLink").select(); }); };
   $("edit").onclick = function(){ fillConfirm(); show("stConfirm"); };
   $("reup").onclick = function(){ if(!S.phone){ show("stPhone"); return; } show("stFile"); };
+  $("pause").onclick = function(){
+    if(!confirm("إخفاء سيرتك عن الخبراء مؤقتاً؟ تقدر ترجّعها بأي وقت من نفس الرابط.")) return;
+    var p = S.profile || {};
+    api("/api/me?t=" + S.token, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ field: p.field, titles: p.titles || [], city: p.city || "", consent: false }) }).then(function(r){
+      if(!r.ok) return alert("تعذّر الإخفاء، حاول مرة أخرى.");
+      S.profile = r.profile; fillConfirm(); show("stConfirm"); msg("m3", "سيرتك مخفية الآن عن الخبراء. لإظهارها مرة ثانية اضغط «تأكيد وإرسال».");
+    });
+  };
+  $("cancelCv").onclick = function(){
+    if(!confirm("إلغاء إرسال سيرتك وحذف الملف المرفوع؟")) return;
+    api("/api/me?t=" + S.token, { method: "DELETE" }).then(function(r){ if(!r.ok) return alert("تعذّر الإلغاء، حاول مرة أخرى."); try{ localStorage.removeItem("zaraCvToken"); }catch(e){} S.token = ""; S.profile = null; msg("m1", "أُلغيت سيرتك وحُذف الملف. تقدر ترفعها من جديد بأي وقت."); show("stPhone"); });
+  };
   $("del").onclick = function(){
     if(!confirm("حذف سيرتك الذاتية نهائياً من الشبكة؟")) return;
     api("/api/me?t=" + S.token, { method: "DELETE" }).then(function(r){ if(!r.ok) return alert("تعذّر الحذف، حاول مرة أخرى."); try{ localStorage.removeItem("zaraCvToken"); }catch(e){} S.token = ""; $("doneH").textContent = "حُذفت سيرتك"; $("doneP").textContent = "حُذف الملف وبياناتك من الشبكة. يمكنك الرفع من جديد في أي وقت من الرابط نفسه."; $("stDone").querySelectorAll(".res,.mylink,.links,.sub + .mylink").forEach(function(e){ e.hidden = true; }); });
@@ -260,7 +273,7 @@
 
   // فتح الرابط الخاص (?t=) أو رمز محفوظ على الجهاز
   var t = new URLSearchParams(location.search).get("t"); try{ t = t || localStorage.getItem("zaraCvToken"); }catch(e){}
-  if(t) api("/api/me?t=" + encodeURIComponent(t)).then(function(r){ if(r.ok){ S.token = t; S.profile = r.profile; save(); if(!r.profile.consent){ fillConfirm(); show("stConfirm"); msg("m3", "باقي خطوة أخيرة: راجع البيانات ثم اضغط «تأكيد وإرسال» حتى تظهر سيرتك للخبراء."); } else { fillDone(); show("stDone"); } } else { try{ localStorage.removeItem("zaraCvToken"); }catch(e){} } }).catch(function(){});
+  if(t) api("/api/me?t=" + encodeURIComponent(t)).then(function(r){ if(r.ok){ S.token = t; S.profile = r.profile; save(); if(!r.profile.consent){ fillConfirm(); show("stConfirm"); msg("m3", "سيرتك غير ظاهرة للخبراء حالياً: راجع البيانات ثم اضغط «تأكيد وإرسال» لإظهارها."); } else { fillDone(); show("stDone"); } } else { try{ localStorage.removeItem("zaraCvToken"); }catch(e){} } }).catch(function(){});
 })();
 </script>
 </body>
