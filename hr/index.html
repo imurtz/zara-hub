@@ -249,7 +249,7 @@
   }
   function paintDue(){
     var due = (HOME && HOME.due) || [];
-    $("due").innerHTML = due.map(function(r){ return '<div class="due" data-rid="' + r.id + '"><b>هل تم توظيف ' + esc(r.name || "المرشح") + '؟</b><div class="sub" style="margin:2px 0 0">' + esc(r.job || "") + '</div><div class="row"><button type="button" class="y" data-out="hired">نعم، تم التوظيف</button><button type="button" class="n" data-out="no">لا</button></div></div>'; }).join("");
+    $("due").innerHTML = due.map(function(r){ return '<div class="due" data-rid="' + r.id + '"><b>وش صار مع ' + esc(r.name || "المرشح") + '؟</b><div class="sub" style="margin:2px 0 0">' + esc(r.job || "") + '</div><div class="row"><button type="button" class="y" data-out="hired">قابلته وتوظّف 🎉</button><button type="button" class="n" data-out="int_no">قابلته — غير مناسب</button><button type="button" class="n" data-out="cv_no">اطّلعت على السيرة — غير مناسبة</button></div></div>'; }).join("");
   }
   $("q").addEventListener("input", paintTiles);
   $("due").onclick = function(e){
@@ -347,7 +347,7 @@
   $("back").onclick = function(){ loadHome(); };
   $("list").onclick = function(e){
     var ob = e.target.closest(".oc [data-out]");
-    if(ob){ var box = ob.closest(".oc"); api("/api/hr/outcome", { rid: box.getAttribute("data-rid"), outcome: ob.getAttribute("data-out") }).then(function(){ box.innerHTML = ob.getAttribute("data-out") === "hired" ? "<b>مبروك! شكراً لتحديثك 🌟 — يختفي المرشح من القائمة.</b>" : "<b>شكراً لتحديثك.</b>"; }); return; }
+    if(ob){ var box = ob.closest(".oc"); api("/api/hr/outcome", { rid: box.getAttribute("data-rid"), outcome: ob.getAttribute("data-out") }).then(function(){ box.innerHTML = ob.getAttribute("data-out") === "hired" ? "<b>مبروك! شكراً لتحديثك 🌟 — يختفي المرشح من القائمة.</b>" : "<b>شكراً، وصلنا رأيك ✓</b>"; }); return; }
     var b = e.target.closest(".go"); if(!b) return;
     var card = b.closest(".cand"), rev = card.querySelector(".rev"); b.disabled = true; b.textContent = "لحظة…";
     api("/api/hr/open", { id: card.getAttribute("data-id"), job: CUR && (CUR.job || CUR.title || CUR.label) || "" }).then(function(d){
@@ -360,7 +360,7 @@
         '<a class="a-wa" href="https://wa.me/?text=' + encodeURIComponent(share) + '" target="_blank" rel="noopener">أرسلها لي بالواتساب</a>' +
         '<a class="a-call" href="https://wa.me/' + esc(wa) + '" target="_blank" rel="noopener">تواصل مع المرشح</a></div>' +
         '<div class="note">رابط السيرة صالح 7 أيام. التواصل والمقابلة بينك وبين المرشح مباشرة.</div>' +
-        '<div class="oc" data-rid="' + esc(d.rid || "") + '"><span>لو تم توظيفه بلّغنا:</span><button type="button" class="y" data-out="hired">تم توظيفه 🎉</button><button type="button" data-out="no">ما تم</button></div>';
+        '<div class="oc" data-rid="' + esc(d.rid || "") + '"><span>وش صار مع المرشح؟</span><button type="button" class="y" data-out="hired">قابلته وتوظّف 🎉</button><button type="button" data-out="int_no">قابلته — غير مناسب</button><button type="button" data-out="cv_no">اطّلعت على السيرة — غير مناسبة</button></div>';
       rev.classList.add("show");
     }).catch(function(){ b.disabled = false; b.textContent = "اعرض السيرة"; });
   };

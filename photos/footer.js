@@ -224,30 +224,38 @@ export function detectTilt(src) {
   const t = straighten(src, a1), a2 = tiltOnce(t, 3); t.width = t.height = 0;
   return Math.max(-15, Math.min(15, Math.round((a1 + a2) * 10) / 10));
 }
-function tiltOnce(src, range) {
-  const M = 640, k = Math.min(1, M / Math.max(src.width, src.height)), w = Math.max(16, Math.round(src.width * k)), h = Math.max(16, Math.round(src.height * k));
+function tiltOnce(src, range, opt = {}) {
+  // طريقة الإسقاط: نقاط الحواف تُسقط على خطوط بزوايا مختلفة؛ الزاوية الصحيحة تجمع نقاط كل خط مستقيم في عمود واحد
+  // (الخطوط الطويلة تعطي قمة حادة، والزخارف والوجوه تتوزع) — للخطوط الأفقية والرأسية معاً
+  const M = 720, k = Math.min(1, M / Math.max(src.width, src.height)), w = Math.max(16, Math.round(src.width * k)), h = Math.max(16, Math.round(src.height * k));
   const cv = new OffscreenCanvas(w, h), x = cv.getContext("2d", { willReadFrequently: true }); x.drawImage(src, 0, 0, w, h);
   const d = x.getImageData(0, 0, w, h).data, g = new Float32Array(w * h);
   for (let i = 0, j = 0; i < g.length; i++, j += 4) g[i] = 0.299 * d[j] + 0.587 * d[j + 1] + 0.114 * d[j + 2];
-  const B = 0.1, n = Math.round(2 * range / B) + 1, hist = new Float64Array(n);
-  let total = 0;
-  for (let yy = 1; yy < h - 1; yy++) for (let xx = 1; xx < w - 1; xx++) {
+  const HX = [], HY = [], VX = [], VY = [], lim = range + 8;
+  const mg = Math.round(Math.min(w, h) * 0.03); // نتجاهل الأطراف (حواف القص)
+  for (let yy = Math.max(1, mg); yy < h - Math.max(1, mg); yy++) for (let xx = Math.max(1, mg); xx < w - Math.max(1, mg); xx++) {
     const i = yy * w + xx;
     const gx = (g[i - w + 1] + 2 * g[i + 1] + g[i + w + 1]) - (g[i - w - 1] + 2 * g[i - 1] + g[i + w - 1]);
     const gy = (g[i + w - 1] + 2 * g[i + w] + g[i + w + 1]) - (g[i - w - 1] + 2 * g[i - w] + g[i - w + 1]);
-    const m = gx * gx + gy * gy; if (m < 14400) continue; // حواف واضحة فقط
-    let l = Math.atan2(gy, gx) * 180 / Math.PI + 90; l = ((l % 90) + 90) % 90; if (l > 45) l -= 90;
-    const wt = Math.sqrt(m); total += wt;
-    if (Math.abs(l) > range) continue;
-    hist[Math.round((l + range) / B)] += wt;
+    if (gx * gx + gy * gy < (opt.thr || 6400)) continue;
+    let l = Math.atan2(gy, gx) * 180 / Math.PI + 90; l = ((l % 180) + 180) % 180; // اتجاه الخط 0..180
+    if (l > 90) l -= 180; // -90..90
+    if (Math.abs(l) <= lim) { HX.push(xx); HY.push(yy); }          // خط أفقي تقريباً
+    else if (90 - Math.abs(l) <= lim) { VX.push(xx); VY.push(yy); } // خط رأسي تقريباً
   }
-  if (!total) return 0;
-  // تنعيم ثم أعلى قمة
-  const sm = new Float64Array(n); for (let i = 0; i < n; i++) { let s = 0; for (let j = -4; j <= 4; j++) { const q = i + j; if (q >= 0 && q < n) s += hist[q] * (5 - Math.abs(j)); } sm[i] = s; }
-  let bi = 0; for (let i = 1; i < n; i++) if (sm[i] > sm[bi]) bi = i;
-  const ang = bi * B - range;
-  // ثقة: القمة يجب أن تبرز عن المتوسط، وإلا الصورة بلا خطوط مستقيمة واضحة
-  const mean = sm.reduce((a, b) => a + b, 0) / n;
-  if (sm[bi] < mean * 2 || Math.abs(ang) < 0.15) return 0; // بلا خطوط مستقيمة واضحة (صور الوجوه القريبة) = لا تعديل
+  if (HX.length + VX.length < 200) return opt.diag ? { ang: 0, conf: 0 } : 0;
+  const B = 0.2, n = Math.round(2 * range / B) + 1, score = new Float64Array(n), R = Math.ceil(Math.hypot(w, h)) + 2, acc = new Float32Array(2 * R + 1);
+  for (let a = 0; a < n; a++) {
+    const t = (a * B - range) * Math.PI / 180, c = Math.cos(t), sn = Math.sin(t); let sc = 0;
+    acc.fill(0); for (let p = 0; p < HX.length; p++) acc[Math.round(HY[p] * c - HX[p] * sn) + R]++;
+    for (let q = 0; q < acc.length; q++) sc += acc[q] * acc[q];
+    acc.fill(0); for (let p = 0; p < VX.length; p++) acc[Math.round(VX[p] * c + VY[p] * sn) + R]++;
+    for (let q = 0; q < acc.length; q++) sc += acc[q] * acc[q];
+    score[a] = sc;
+  }
+  let bi = 0; for (let a = 1; a < n; a++) if (score[a] > score[bi]) bi = a;
+  const sorted = Array.from(score).sort((p, q) => p - q), med = sorted[n >> 1], ang = bi * B - range, conf = score[bi] / med;
+  if (opt.diag) return { ang: -ang, conf };
+  if (conf < (opt.minConf || 1.06) || Math.abs(ang) < 0.15) return 0;
   return Math.round(-ang * 10) / 10;
 }

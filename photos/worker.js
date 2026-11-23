@@ -1,7 +1,7 @@
 // عامل المعالجة: يفك الصورة ← يقص ← يصغّر ← يرمّز MozJPEG (بدون حقوق) ← يرسم الحقوق ← يرمّز (مع حقوق).
 // صورة واحدة في كل مرة، ويُغلق كل شيء بعدها حتى لا تمتلئ الذاكرة.
 import encode, { init as initEnc } from "./vendor/jsquash/encode.js";
-import { cropRect, drawFooter, FONT_M, FONT_R, RATIOS, straighten, tiltFaces } from "./footer.js?v=51";
+import { cropRect, drawFooter, FONT_M, FONT_R, RATIOS, straighten, tiltFaces } from "./footer.js?v=52";
 import { applyAdjust, isZero, setACRCurves, gpuInfo } from "./adjust.js";
 
 let assets = null, encReady = null;

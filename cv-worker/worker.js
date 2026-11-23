@@ -365,10 +365,10 @@ export default {
           return json({ ok: true, id, n: pool.filter(s => s.titles.some(x => tMatch(x, title))).length }, 200, H);
         }
         if (p === "/api/hr/outcome" && req.method === "POST") {
-          const b = await req.json(); const o = b.outcome === "hired" ? "hired" : "no";
+          const b = await req.json(); const o = ["hired", "cv_no", "int_no"].includes(b.outcome) ? b.outcome : "no";
           await env.DB.prepare("UPDATE requests SET outcome=?, outcome_at=? WHERE id=? AND expert_id=?").bind(o, now(), b.rid || "", ex.id).run();
           await logAct(env.DB, "expert:" + ex.id, "outcome:" + o, b.rid || "");
-          if (!isTest(ex.id)) { const rq = await env.DB.prepare("SELECT s.name FROM requests r LEFT JOIN seekers s ON s.id = r.seeker_id WHERE r.id = ?").bind(b.rid || "").first(); ctx.waitUntil(feed(o === "hired" ? "🎉" : "➖", "المدرب " + ex.name + (o === "hired" ? " أكّد توظيف " : " أفاد بعدم توظيف ") + ((rq && rq.name) || "مرشح"), "صفحة المدربين")); }
+          if (!isTest(ex.id)) { const rq = await env.DB.prepare("SELECT s.name FROM requests r LEFT JOIN seekers s ON s.id = r.seeker_id WHERE r.id = ?").bind(b.rid || "").first(); const OUTL = { hired: " قابل وتوظّف: ", cv_no: " اطّلع على السيرة وهي غير مناسبة: ", int_no: " قابل وغير مناسب: ", no: " لم يتم التوظيف: " }; ctx.waitUntil(feed(o === "hired" ? "🎉" : "➖", "المدرب " + ex.name + OUTL[o] + ((rq && rq.name) || "مرشح"), "صفحة المدربين")); }
           return json({ ok: true }, 200, H);
         }
       }
@@ -428,7 +428,7 @@ export default {
             const titles = (Array.isArray(b.titles) ? b.titles : JSON.parse(sk.titles || "[]")).map(x => clip(x, 60)).filter(Boolean).slice(0, 6);
             await env.DB.prepare("UPDATE seekers SET field=?, titles=?, city=?, updated=? WHERE id=?").bind(field, JSON.stringify(titles), clip(b.city ?? sk.city, 40), now(), sk.id).run();
           } else if (b.t === "req") {
-            const o = ["hired", "no", ""].includes(b.outcome) ? b.outcome : "";
+            const o = ["hired", "no", "cv_no", "int_no", ""].includes(b.outcome) ? b.outcome : "";
             await env.DB.prepare("UPDATE requests SET outcome=?, outcome_at=? WHERE id=?").bind(o || null, o ? now() : null, b.id || "").run();
           } else if (b.t === "job") {
             await env.DB.prepare("UPDATE jobs SET status=?, closed=? WHERE id=?").bind(b.status === "open" ? "open" : "closed", b.status === "open" ? null : now(), b.id || "").run();
