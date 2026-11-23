@@ -1273,6 +1273,19 @@
   .user-chip{background:rgba(20,28,27,.05); padding:5px 14px 5px 5px;}
   .user-avatar{width:32px; height:32px; background:linear-gradient(140deg, #58807F, var(--teal-dark)); font-weight:600;}
   .user-name{font-weight:600; color:var(--ink);}
+  .hb-wrap{position:relative}
+  .hb-btn{position:relative;width:40px;height:40px;border-radius:50%;border:1px solid var(--line);background:rgba(255,255,255,.7);color:var(--ink-2);display:flex;align-items:center;justify-content:center;cursor:pointer}
+  .hb-btn i{position:absolute;top:-3px;left:-3px;min-width:18px;height:18px;border-radius:9px;background:#d9534f;color:#fff;font-style:normal;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;padding:0 5px;box-shadow:0 0 0 2px #fff}
+  .hb-panel{position:absolute;top:48px;right:0;z-index:300;width:min(380px,calc(100vw - 24px));max-height:70vh;overflow:auto;background:#fff;border:1px solid var(--line);border-radius:18px;box-shadow:0 18px 50px rgba(30,50,48,.18);padding:6px 0}
+  .hb-head{display:flex;align-items:center;justify-content:space-between;padding:10px 16px 8px;font-weight:700}
+  .hb-head small{font-weight:400;color:var(--ink-2);font-size:12px}
+  .hb-sec{font-size:11.5px;font-weight:700;color:#8f6a4b;padding:10px 16px 4px}
+  .hb-it{display:flex;gap:10px;width:100%;text-align:right;border:0;background:none;padding:9px 16px;font:inherit;font-size:13.5px;line-height:1.6;color:inherit;cursor:pointer;border-top:1px solid #f1f4f3}
+  .hb-it:hover{background:#f6f9f8}
+  .hb-it.new{background:#f3f8f6}
+  .hb-it em{font-style:normal;font-size:17px;line-height:1.3;flex:none}
+  .hb-it small{display:block;color:var(--ink-2);font-size:11.5px}
+  .hb-empty{padding:18px 16px;color:var(--ink-2);font-size:13.5px;text-align:center}
   .logout-btn{border:1px solid var(--line); border-radius:999px; padding:9px 16px; background:rgba(255,255,255,.7); color:var(--ink-2);}
 
   /* تبويبات الأقسام: حبوب داخل مسار ناعم */
@@ -3043,6 +3056,7 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
           <div class="user-role" id="userRoleLabel">—</div>
         </div>
       </div>
+      <div class="hb-wrap"><button type="button" class="hb-btn" id="hbBtn" title="ما صار اليوم" aria-label="الإشعارات"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 8a6 6 0 1 1 12 0c0 7 3 8 3 8H3s3-1 3-8"/><path d="M10.3 20a2 2 0 0 0 3.4 0"/></svg><i id="hbCount" hidden></i></button><div class="hb-panel" id="hbPanel" hidden></div></div>
       <button class="logout-btn" id="logoutBtn">تسجيل الخروج</button>
     </div>
     <div class="topbar-left">
@@ -3363,6 +3377,105 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
   // نسخة محلية على الجهاز: إعادة فتح الصفحة لا تعيد قراءة كل السجلات من الخادم (توفير حد القراءة اليومي)
   try{ db.enablePersistence({ synchronizeTabs: true }).catch(function(e){ console.warn("persistence", e && e.code); }); }catch(e){}
 
+  // ===== جرس «ما صار اليوم»: كل كتابة في الأقسام تُسجَّل تلقائياً في hubFeed، ويرى كل موظف ما يخص صلاحياته فقط =====
+  var HB_MAP = {
+    events:           { perm: "events.view", sec: "events", ic: "🕊️", name: function(d){ return d.deceasedName || d.title || d.name || ""; }, add: "أضاف سجل مناسبة", upd: "عدّل سجل مناسبة", del: "حذف سجل مناسبة" },
+    bldgOrders:       { perm: "bldg.view", sec: "bldg", ic: "🧾", name: function(d){ return [d.no ? "رقم " + d.no : "", d.beneficiary || d.purpose || ""].filter(Boolean).join(" — "); }, add: "أنشأ أمر صرف", upd: "حدّث أمر صرف", del: "حذف أمر صرف" },
+    calSponsorRequests:{ perm: "sponsor.view", sec: "sponsor", ic: "🤝", name: function(d){ return d.org || ""; }, add: "طلب رعاية جديد", upd: "حدّث طلب رعاية", del: "حذف طلب رعاية" },
+    rosterImports:    { perm: "roster.view", sec: "roster", ic: "📥", name: function(d){ return (d.file || "") + (d.total ? " (" + d.total + ")" : ""); }, add: "رفع ملف في مطابقة البيانات", upd: "حدّث ملفاً في مطابقة البيانات", del: "تراجع عن رفع ملف" },
+    rosterPrograms:   { perm: "roster.view", sec: "roster", ic: "📚", name: function(d){ return d.title || ""; }, add: "أنشأ برنامجاً", upd: "حدّث برنامج", del: "حذف برنامج" },
+    rosterAttendance: { perm: "roster.view", sec: "roster", ic: "✅", once: 30, add: "سجّل حضوراً", upd: "سجّل حضوراً", del: "حذف كشف حضور" },
+    rosterPeople:     { perm: "roster.view", sec: "roster", ic: "👥", once: 30, add: "أضاف أشخاصاً للسجل", upd: "عدّل بيانات في السجل", del: "حذف أشخاصاً من السجل" },
+    wsTasks:          { perm: "tasks.view", sec: "tasks", ic: "📌", name: function(d){ return d.title || ""; }, add: "أضاف مهمة", upd: function(d){ return d.status === "done" ? "أنجز مهمة" : "حدّث مهمة"; }, del: "حذف مهمة" },
+    wsProjects:       { perm: "tasks.view", sec: "tasks", ic: "🗂️", name: function(d){ return d.title || d.name || ""; }, add: "أنشأ مشروعاً", upd: "حدّث مشروع", del: "حذف مشروع" },
+    wsEvents:         { perm: "tasks.view", sec: "tasks", ic: "📅", name: function(d){ return d.title || ""; }, add: "أضاف موعداً", upd: "حدّث موعد", del: "حذف موعد" },
+    docEntries:       { perm: "docs.view", sec: "docs", ic: "📝", name: function(d){ return d.title || ""; }, add: "وثّق إنجازاً", upd: "حدّث توثيقاً", del: "حذف توثيقاً" },
+    calendarsApproved:{ perm: "calendars.view", sec: "calendars", ic: "🗓️", name: function(d){ return d.title || d.year || ""; }, add: "اعتمد تقويماً", upd: "حدّث تقويماً معتمداً", del: "ألغى اعتماد تقويم" },
+    designTemplates:  { perm: "events.templates", sec: "events", ic: "🎨", name: function(d){ return d.name || ""; }, add: "أضاف قالب تصميم", upd: "عدّل قالب تصميم", del: "حذف قالب تصميم" },
+    employees:        { perm: "admin", sec: "admin", ic: "🔑", name: function(d){ return d.name || ""; }, add: "أضاف موظفاً", upd: "عدّل بيانات موظف", del: "حذف موظفاً" }
+  };
+  var hbSent = {};
+  function hbLog(col, id, kind, data){
+    try{
+      var m = HB_MAP[col]; if(!m || typeof currentUser === "undefined" || !currentUser) return;
+      if(col === "wsTasks" && data && kind === "upd" && data.status !== "done") return; // تحديثات المهام الصغيرة لها إشعاراتها الخاصة
+      if(data && kind !== "del" && data.createdAt && Math.abs(Date.now() - Number(data.createdAt.toMillis ? data.createdAt.toMillis() : data.createdAt)) < 60000) kind = "add";
+      var verb = typeof m[kind] === "function" ? m[kind](data || {}) : m[kind];
+      var key = col + "|" + (m.once ? "" : id) + "|" + verb, win = (m.once || 10) * 60000;
+      if(hbSent[key] && Date.now() - hbSent[key] < win) return; hbSent[key] = Date.now();
+      var rk = "rate|" + col, rt = (hbSent[rk] || []).filter(function(t){ return Date.now() - t < 120000; }); // عمليات جماعية (استيراد) = سطر واحد لا مئات
+      if(rt.length >= 3){ if(!hbSent["bulk|" + col] || Date.now() - hbSent["bulk|" + col] > 600000){ hbSent["bulk|" + col] = Date.now(); verb = verb + " (عملية جماعية)"; data = null; } else return; }
+      rt.push(Date.now()); hbSent[rk] = rt;
+      var nm = m.name && data ? String(m.name(data) || "").slice(0, 80) : "";
+      var fid = "f-" + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+      hbOrig.set.call(db.collection("hubFeed").doc(fid), { id: fid, at: Date.now(), day: toISODate(new Date()), perm: m.perm, sec: m.sec, ic: m.ic, text: verb + (nm ? ": " + nm : ""), by: currentUser.name || "", byId: currentUser.id || "" }).catch(function(){});
+    }catch(e){}
+  }
+  var hbOrig = {};
+  (function(){
+    try{
+      var DR = firebase.firestore.DocumentReference.prototype, WB = firebase.firestore.WriteBatch.prototype, CR = firebase.firestore.CollectionReference.prototype;
+      var colOf = function(ref){ try{ return ref.parent.id; }catch(e){ return ""; } };
+      hbOrig.set = DR.set; hbOrig.update = DR.update; hbOrig.del = DR.delete; hbOrig.add = CR.add;
+      DR.set = function(d, o){ var r = hbOrig.set.apply(this, arguments); if(HB_MAP[colOf(this)]) hbLog(colOf(this), this.id, o && o.merge ? "upd" : "upd", d); return r; };
+      DR.update = function(d){ var r = hbOrig.update.apply(this, arguments); if(HB_MAP[colOf(this)]) hbLog(colOf(this), this.id, "upd", typeof d === "object" ? d : null); return r; };
+      DR.delete = function(){ var r = hbOrig.del.apply(this, arguments); if(HB_MAP[colOf(this)]) hbLog(colOf(this), this.id, "del", null); return r; };
+      CR.add = function(d){ var self = this, r = hbOrig.add.apply(this, arguments); if(HB_MAP[self.id]) hbLog(self.id, "", "add", d); return r; };
+      var ws0 = WB.set, wu0 = WB.update, wd0 = WB.delete;
+      WB.set = function(ref, d){ if(HB_MAP[colOf(ref)]) hbLog(colOf(ref), ref.id, "upd", d); return ws0.apply(this, arguments); };
+      WB.update = function(ref, d){ if(HB_MAP[colOf(ref)]) hbLog(colOf(ref), ref.id, "upd", typeof d === "object" ? d : null); return wu0.apply(this, arguments); };
+      WB.delete = function(ref){ if(HB_MAP[colOf(ref)]) hbLog(colOf(ref), ref.id, "del", null); return wd0.apply(this, arguments); };
+    }catch(e){ console.warn("hub feed hook", e); }
+  })();
+  var hb = { started: false, feed: [], mine: [], open: false };
+  function hbSeenKey(){ return "zaraHub.hbSeen." + (currentUser ? currentUser.id : ""); }
+  function hbSeen(){ try{ return Number(localStorage.getItem(hbSeenKey())) || 0; }catch(e){ return 0; } }
+  function hbItems(){
+    var me = currentUser; if(!me) return [];
+    var feed = hb.feed.filter(function(f){ return f.byId !== me.id && (f.perm === "admin" ? me.role === "admin" : empCan(me, f.perm)); });
+    var mine = hb.mine.filter(function(n){ return n.at > Date.now() - 864e5 || !n.read; }).map(function(n){ return { id: n.id, at: n.at, ic: n.type === "cv-hired" ? "🎉" : "🔔", text: n.text, by: n.from || "", sec: n.type === "cv-hired" ? "cv" : "tasks", mine: true }; });
+    return mine.concat(feed).sort(function(a, b){ return b.at - a.at; });
+  }
+  function hbRenderBtn(){
+    var c = document.getElementById("hbCount"); if(!c) return;
+    var seen = hbSeen(), n = hbItems().filter(function(x){ return x.at > seen; }).length;
+    c.hidden = !n; c.textContent = n > 9 ? "9+" : n;
+    if(hb.open) hbRenderPanel();
+  }
+  function hbTime(t){ var d = new Date(t); return d.toLocaleTimeString("ar-SA-u-nu-latn", { hour: "numeric", minute: "2-digit" }); }
+  function hbRenderPanel(){
+    var el = document.getElementById("hbPanel"); if(!el) return;
+    var items = hbItems(), seen = hb.panelSeen || 0;
+    var h = '<div class="hb-head"><span>ما صار اليوم</span><small>' + items.length + ' حدث</small></div>';
+    if(!items.length) h += '<div class="hb-empty">ما صار شي اليوم في أقسامك بعد.</div>';
+    var mine = items.filter(function(x){ return x.mine; }), rest = items.filter(function(x){ return !x.mine; });
+    var row = function(x){ return '<button type="button" class="hb-it' + (x.at > seen ? " new" : "") + '" data-hb-sec="' + escapeHTML(x.sec || "") + '"><em>' + (x.ic || "•") + '</em><span>' + escapeHTML(x.text) + '<small>' + escapeHTML(x.by || "") + (x.by ? " · " : "") + hbTime(x.at) + '</small></span></button>'; };
+    if(mine.length) h += '<div class="hb-sec">لك</div>' + mine.slice(0, 20).map(row).join("");
+    if(rest.length) h += '<div class="hb-sec">في أقسامك</div>' + rest.slice(0, 80).map(row).join("");
+    el.innerHTML = h;
+  }
+  function hbStart(){
+    if(hb.started || !currentUser) return; hb.started = true;
+    var today = function(){ return toISODate(new Date()); }, day = today();
+    var sub = function(){
+      if(hb.unsub) hb.unsub();
+      hb.unsub = db.collection("hubFeed").where("day", "==", day).onSnapshot(function(snap){ hb.feed = snap.docs.map(function(d){ return d.data(); }); hbRenderBtn(); }, function(e){ console.warn("hubFeed", e && e.code); });
+    };
+    sub();
+    setInterval(function(){ var d = today(); if(d !== day){ day = d; sub(); } }, 60000); // يوم جديد = جرس جديد
+    db.collection("wsNotifs").where("to", "==", currentUser.id).onSnapshot(function(snap){ hb.mine = snap.docs.map(function(d){ return d.data(); }); hbRenderBtn(); }, function(){});
+    document.getElementById("hbBtn").addEventListener("click", function(ev){
+      ev.stopPropagation(); hb.open = !hb.open; var p = document.getElementById("hbPanel"); p.hidden = !hb.open;
+      if(hb.open){ hb.panelSeen = hbSeen(); hbRenderPanel(); try{ localStorage.setItem(hbSeenKey(), String(Date.now())); }catch(e){} hbRenderBtn(); }
+    });
+    document.getElementById("hbPanel").addEventListener("click", function(ev){
+      var b = ev.target.closest(".hb-it"); if(!b) return; ev.stopPropagation();
+      var sec = b.getAttribute("data-hb-sec"); hb.open = false; document.getElementById("hbPanel").hidden = true;
+      if(sec){ var t = document.querySelector('.nav-tab[data-section="' + sec + '"]'); if(t && t.style.display !== "none") t.click(); }
+    });
+    document.addEventListener("click", function(ev){ if(hb.open && !ev.target.closest(".hb-wrap")){ hb.open = false; document.getElementById("hbPanel").hidden = true; } });
+  }
+
   var GEMINI_PROXY_URL = "https://zara-gemini-proxy.murtada-ud.workers.dev/";
 
   var STORAGE_KEY = "zaraHub.employees";
@@ -3474,6 +3587,7 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
 
   function enterApp(emp){
     currentUser = emp;
+    setTimeout(hbStart, 1500);
     loginScreen.style.display = "none";
     appScreen.style.display = "flex";
     document.getElementById("userName").textContent = emp.name;
