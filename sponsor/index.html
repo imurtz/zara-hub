@@ -215,6 +215,8 @@
     appId: "1:544481222945:web:f5c2ae0bd54b0393135e60"
   });
   var db = firebase.firestore();
+  // سطر في جرس «ما صار اليوم» داخل البوابة (hubFeed)
+  function hubFeed(perm, sec, ic, text, by){ try{ var at = Date.now(), id = "f-x-" + at.toString(36) + Math.random().toString(36).slice(2, 7); db.collection("hubFeed").doc(id).set({ id: id, at: at, day: new Date(at + 3 * 36e5).toISOString().slice(0, 10), perm: perm, sec: sec, ic: ic, text: String(text).slice(0, 160), by: by, byId: "ext" }).catch(function(){}); }catch(e){} }
   var YEAR = "2027";
   var META = db.collection("calSponsorMeta").doc(YEAR);       // { taken: { "1": requestId, ... } }
   var REQS = db.collection("calSponsorRequests");
@@ -342,7 +344,7 @@
               status: "new", createdAt: Date.now(), ua: navigator.userAgent.slice(0, 160)
             });
           });
-        }).then(function(){ lastReq = ref.id; return ref.id; });
+        }).then(function(){ lastReq = ref.id; hubFeed("sponsor.view", "sponsor", "🤝", "طلب رعاية جديد: " + org + " — شهر " + MONTHS[month - 1], "صفحة الرعاة"); return ref.id; });
       })
       .then(function(){
         $("f").style.display = "none";

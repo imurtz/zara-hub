@@ -176,6 +176,14 @@ function pub(s) { // ما يراه صاحب السيرة عن نفسه
   return { name: s.name, phone: s.phone, field: s.field, fieldName: FIELD_NAME[s.field] || "", titles: JSON.parse(s.titles || "[]"), tasks: s.tasks, years: s.years, degree: s.degree, skills: JSON.parse(s.skills || "[]"), city: s.city, fileName: s.file_name, consent: !!s.consent, status: s.status, updated: s.updated, expires: s.expires };
 }
 async function sha(s) { const b = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(s)); return Array.from(new Uint8Array(b), x => x.toString(16).padStart(2, "0")).join(""); }
+// سطر في جرس «ما صار اليوم» بالبوابة (hubFeed) — يظهر لمن له صلاحية السير (cv.view) والأدمن
+async function feed(ic, text, by) {
+  try {
+    const at = now(), id = "f-cv-" + at.toString(36) + tok(5), day = new Date(at + 3 * 36e5).toISOString().slice(0, 10); // يوم الرياض
+    await fetch(`${FS_BASE}/hubFeed/${id}?key=${FS_KEY}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ fields: { id: { stringValue: id }, at: { integerValue: String(at) }, day: { stringValue: day }, perm: { stringValue: "cv.view" }, sec: { stringValue: "cv" }, ic: { stringValue: ic }, text: { stringValue: text }, by: { stringValue: by || "مفاتيح الفرص" }, byId: { stringValue: "ext" } } }) });
+  } catch (e) {}
+}
+const isTest = id => String(id || "").startsWith("zz-");
 // إشعار داخل البوابة (جرس مساحة العمل) لكل أدمن ومن له صلاحية السير — Firestore wsNotifs
 async function hubNotify(text) {
   try {
@@ -251,6 +259,7 @@ export default {
         if (ex) await env.DB.prepare(`UPDATE seekers SET token=?, phone=?, name=?, gender=?, roster_id=?, reg_no=?, file_key=?, file_name=?, file_type=?, text=?, field=?, titles=?, tasks=?, years=?, degree=?, skills=?, city=?, ai=?, updated=?, expires=? WHERE id=?`).bind(...vals, id).run();
         else await env.DB.prepare(`INSERT INTO seekers (token, phone, name, gender, roster_id, reg_no, file_key, file_name, file_type, text, field, titles, tasks, years, degree, skills, city, ai, updated, expires, id, created) VALUES (${Array(22).fill("?").join(",")})`).bind(...vals, id, t).run();
         await logAct(env.DB, "seeker:" + id, ex ? "reupload" : "upload", cls.field);
+        if (!isTest(r.id)) ctx.waitUntil(feed("📄", (ex ? "حدّث سيرته: " : "سيرة جديدة: ") + r.name + " — " + (FIELD_NAME[cls.field] || ""), "صفحة الباحثين"));
         const s = await env.DB.prepare("SELECT * FROM seekers WHERE id = ?").bind(id).first();
         return json({ ok: true, token, profile: pub(s) }, 200, H);
       }
@@ -265,6 +274,7 @@ export default {
         if (ex) await env.DB.prepare("UPDATE hires SET org=?, title=?, created=?, seen=0 WHERE id=?").bind(org, title, now(), ex.id).run();
         else await env.DB.prepare("INSERT INTO hires (id, seeker_id, roster_id, name, phone, org, title, src, created, seen) VALUES (?,?,?,?,?,?,?,?,?,0)").bind("h-" + tok(10), sk ? sk.id : "", r.id, r.name, ph, org, title, "self", now()).run();
         await logAct(env.DB, "seeker:" + (sk ? sk.id : r.id), "hired", org);
+        if (!isTest(r.id)) ctx.waitUntil(feed("🎉", "أبلغ بتوظيفه: " + r.name + " — " + org + (title ? " (" + title + ")" : ""), "صفحة الباحثين"));
         if (!String(r.id).startsWith("zz-")) ctx.waitUntil(hubNotify("🎉 " + r.name + (/^(f|أنثى|انثى)/i.test(r.gender || "") ? " حصلت" : " حصل") + " على وظيفة" + (title ? " «" + title + "»" : "") + " في " + org + " — عن طريق مفاتيح الفرص"));
         return json({ ok: true, name: r.name }, 200, H);
       }
@@ -278,12 +288,14 @@ export default {
           const titles = (Array.isArray(b.titles) ? b.titles : JSON.parse(s.titles || "[]")).map(x => clip(x, 60)).filter(Boolean).slice(0, 4);
           await env.DB.prepare("UPDATE seekers SET field=?, titles=?, city=?, consent=?, updated=?, expires=? WHERE id=?").bind(field, JSON.stringify(titles), clip(b.city ?? s.city, 40), b.consent ? 1 : 0, now(), now() + KEEP_DAYS * 864e5, s.id).run();
           await logAct(env.DB, "seeker:" + s.id, b.consent ? "confirm" : "update", field);
+          if (!isTest(s.roster_id)) ctx.waitUntil(feed("✔️", (b.consent && !s.consent ? "أكّد سيرته وصارت ظاهرة للمدربين: " : "عدّل بيانات سيرته: ") + s.name, "صفحة الباحثين"));
           return json({ ok: true, profile: pub(await env.DB.prepare("SELECT * FROM seekers WHERE id = ?").bind(s.id).first()) }, 200, H);
         }
         if (req.method === "DELETE") { // حذف نهائي بطلب صاحب السيرة
           if (s.file_key) { try { await env.CV_BUCKET.delete(s.file_key); } catch (e) {} }
           await env.DB.prepare("UPDATE seekers SET status='withdrawn', text='', file_key='', titles='[]', skills='[]', token=?, updated=? WHERE id=?").bind("x-" + tok(12), now(), s.id).run();
           await logAct(env.DB, "seeker:" + s.id, "withdraw", "");
+          if (!isTest(s.roster_id)) ctx.waitUntil(feed("🗑️", "حذف سيرته بنفسه: " + s.name, "صفحة الباحثين"));
           return json({ ok: true }, 200, H);
         }
       }
@@ -305,6 +317,7 @@ export default {
         const token = ex.token && !String(ex.token).startsWith("x-") ? ex.token : tok(24); // نفس الجلسة على كل أجهزته
         await env.DB.prepare("UPDATE experts SET token=?, name=?, org=?, phone=?, last_seen=?, fails=0, lock_until=0 WHERE id=?").bind(token, e.name, e.org || ex.org || "", ph, now(), e.id).run();
         await logAct(env.DB, "expert:" + e.id, "login", "");
+        if (!isTest(e.id)) ctx.waitUntil(feed("🔓", "دخل المدرب " + e.name + " لصفحة المرشحين", "صفحة المدربين"));
         return json({ ok: true, token, name: e.name }, 200, H);
       }
       if (p.startsWith("/api/hr/")) {
@@ -334,24 +347,28 @@ export default {
           const b = await req.json(); const s = await env.DB.prepare("SELECT * FROM seekers WHERE id = ? AND status='active' AND consent=1").bind(b.id || "").first();
           if (!s) return json({ ok: false, err: "gone" }, 404, H);
           let r = await env.DB.prepare("SELECT * FROM requests WHERE expert_id = ? AND seeker_id = ?").bind(ex.id, s.id).first();
+          const isNew = !r;
           if (!r) { r = { id: "rq-" + tok(16) }; await env.DB.prepare("INSERT INTO requests (id, expert_id, seeker_id, job, created) VALUES (?, ?, ?, ?, ?)").bind(r.id, ex.id, s.id, clip(b.job, 80), now()).run(); r.created = now(); await logAct(env.DB, "expert:" + ex.id, "open", s.id); }
+          if (!isTest(ex.id) && isNew) ctx.waitUntil(feed("👁️", "المدرب " + ex.name + " فتح سيرة " + s.name + (b.job ? " — لوظيفة " + clip(b.job, 60) : ""), "صفحة المدربين"));
           return json({ ok: true, rid: r.id, name: s.name, phone: s.phone, fieldName: FIELD_NAME[s.field] || "", titles: JSON.parse(s.titles || "[]"), file: `${url.origin}/f/${r.id}`, fileName: s.file_name }, 200, H);
         }
         if (p === "/api/hr/job" && req.method === "POST") { // إضافة وظيفة مطلوبة بأبسط شكل: مسمى + ملاحظة اختيارية
           const b = await req.json();
-          if (b.close) { await env.DB.prepare("UPDATE jobs SET status='closed', closed=? WHERE id=? AND expert_id=?").bind(now(), b.close, ex.id).run(); await logAct(env.DB, "expert:" + ex.id, "job:close", b.close); return json({ ok: true }, 200, H); }
+          if (b.close) { await env.DB.prepare("UPDATE jobs SET status='closed', closed=? WHERE id=? AND expert_id=?").bind(now(), b.close, ex.id).run(); await logAct(env.DB, "expert:" + ex.id, "job:close", b.close); if (!isTest(ex.id)) ctx.waitUntil(feed("📪", "المدرب " + ex.name + " أغلق وظيفة مطلوبة", "صفحة المدربين")); return json({ ok: true }, 200, H); }
           const title = clip(b.title, 60); if (title.length < 2) return json({ ok: false, err: "title" }, 200, H);
           const dup = ((await env.DB.prepare("SELECT id, title FROM jobs WHERE expert_id = ? AND status = 'open'").bind(ex.id).all()).results || []).find(j => nk(j.title) === nk(title));
           if (dup) return json({ ok: true, dup: true, id: dup.id }, 200, H);
           const id = "jb-" + tok(12), field = keywordClassify(title).field;
           await env.DB.prepare("INSERT INTO jobs (id, expert_id, title, nkey, field, note, status, created) VALUES (?, ?, ?, ?, ?, ?, 'open', ?)").bind(id, ex.id, title, nk(title), field, clip(b.note, 140), now()).run();
           await logAct(env.DB, "expert:" + ex.id, "job:add", title);
+          if (!isTest(ex.id)) ctx.waitUntil(feed("➕", "المدرب " + ex.name + " أضاف وظيفة مطلوبة: " + title, "صفحة المدربين"));
           return json({ ok: true, id, n: pool.filter(s => s.titles.some(x => tMatch(x, title))).length }, 200, H);
         }
         if (p === "/api/hr/outcome" && req.method === "POST") {
           const b = await req.json(); const o = b.outcome === "hired" ? "hired" : "no";
           await env.DB.prepare("UPDATE requests SET outcome=?, outcome_at=? WHERE id=? AND expert_id=?").bind(o, now(), b.rid || "", ex.id).run();
           await logAct(env.DB, "expert:" + ex.id, "outcome:" + o, b.rid || "");
+          if (!isTest(ex.id)) { const rq = await env.DB.prepare("SELECT s.name FROM requests r LEFT JOIN seekers s ON s.id = r.seeker_id WHERE r.id = ?").bind(b.rid || "").first(); ctx.waitUntil(feed(o === "hired" ? "🎉" : "➖", "المدرب " + ex.name + (o === "hired" ? " أكّد توظيف " : " أفاد بعدم توظيف ") + ((rq && rq.name) || "مرشح"), "صفحة المدربين")); }
           return json({ ok: true }, 200, H);
         }
       }

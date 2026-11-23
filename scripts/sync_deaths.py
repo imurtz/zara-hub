@@ -72,6 +72,22 @@ def http(url, data=None, headers=None, method=None, timeout=20, retries=3):
 
 
 # ---------------- Firestore (REST) ----------------
+def hub_feed(ic, text, perm="events.view", sec="events"):
+    # سطر في جرس «ما صار اليوم» بالبوابة — لا يوقف المزامنة لو فشل
+    try:
+        at = int(time.time() * 1000)
+        fid = "f-sync-%d-%s" % (at, uuid4_hex()[:5])
+        day = time.strftime("%Y-%m-%d", time.gmtime(at / 1000 + 3 * 3600))
+        fs_patch("hubFeed/" + fid, {"id": fid, "at": at, "day": day, "perm": perm, "sec": sec, "ic": ic, "text": text[:160], "by": "المزامنة التلقائية", "byId": "ext"})
+    except Exception as e:
+        print("  (تنبيه) تعذّر إضافة سطر الجرس:", e)
+
+
+def uuid4_hex():
+    import uuid
+    return uuid.uuid4().hex
+
+
 def fs_value(v):
     if isinstance(v, bool):
         return {"booleanValue": v}
@@ -622,6 +638,7 @@ def main():
                 fs_patch("events/" + rec["id"], dict(rec))
                 ids[url_key(it["url"])] = rec["id"]
                 print("  ✓ جديد: " + label + ((" 🔗 " + bl) if bl else ""))
+                hub_feed("🕊️", "وفاة جديدة من المزامنة: " + str(rec.get("deceasedName") or label))
                 if not args.no_short and not bl:
                     c = short_code(it["url"]); write_redirect(c, it["url"], it.get("og") or {})
                     pending_short.append({"rid": rec["id"], "code": c, "label": label})
@@ -688,6 +705,8 @@ def main():
             st.update({"ids": ids, "skip": sorted(skip), "seen": []})     # الخريطة الكبيرة تُكتب فقط عند تغيّرها
         fs_patch(STATE_PATH, st, mask=list(st.keys()))
     print("انتهى بـ %.1f ثانية: جديد %d، محدَّث %d، فشل %d" % (time.time() - t0, imported, updated, failed))
+    if not args.dry_run and (updated or failed):
+        hub_feed("⚠️" if failed else "🔄", "مزامنة الوفيات: " + "، ".join([x for x in ["حُدّث %d سجل" % updated if updated else "", "فشل %d" % failed if failed else ""] if x]))
     if failed and not (imported or updated):
         sys.exit(1)
 

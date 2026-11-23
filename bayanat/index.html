@@ -697,6 +697,8 @@
   };
   firebase.initializeApp(firebaseConfig);
   var db = firebase.firestore();
+  // سطر في جرس «ما صار اليوم» داخل البوابة (hubFeed)
+  function hubFeed(perm, sec, ic, text, by){ try{ var at = Date.now(), id = "f-x-" + at.toString(36) + Math.random().toString(36).slice(2, 7); db.collection("hubFeed").doc(id).set({ id: id, at: at, day: new Date(at + 3 * 36e5).toISOString().slice(0, 10), perm: perm, sec: sec, ic: ic, text: String(text).slice(0, 160), by: by, byId: "ext" }).catch(function(){}); }catch(e){} }
 
   var WHATSAPP_NUMBER = "966543467704";
   var GEMINI_PROXY_URL = "https://zara-gemini-proxy.murtada-ud.workers.dev/";
@@ -2652,6 +2654,7 @@
     submitBtn.textContent = "جاري الإرسال...";
     rec._m = Date.now();   // ختم التعديل — لوحة الموظفين تجلب ما تغيّر بعد آخر مزامنة فقط
     db.collection("events").doc(rec.id).set(rec).then(function(){
+      try{ var fnm = String((cat.key === "marriages" ? [rec.husbandName, rec.wifeName].filter(Boolean).join(" و") : rec.deceasedName || rec.fullName || rec.title || rec.name || "") || "").trim(); hubFeed("events.view", "events", "📨", "تسجيل جديد في «" + (cat.label || "المناسبات") + "»" + (fnm ? ": " + fnm : "") + " — بانتظار المراجعة", "النموذج العام"); }catch(e){}
       document.getElementById("formCard").style.display = "none";
       document.getElementById("thanksCard").style.display = "block";
       // رابط المتابعة + التبرع باسم المناسبة + القياس (سكربت مستقل بآخر الصفحة)
