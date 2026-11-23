@@ -1,7 +1,7 @@
 // عامل المعالجة: يفك الصورة ← يقص ← يصغّر ← يرمّز MozJPEG (بدون حقوق) ← يرسم الحقوق ← يرمّز (مع حقوق).
 // صورة واحدة في كل مرة، ويُغلق كل شيء بعدها حتى لا تمتلئ الذاكرة.
 import encode, { init as initEnc } from "./vendor/jsquash/encode.js";
-import { cropRect, drawFooter, FONT_M, FONT_R, RATIOS } from "./footer.js?v=50";
+import { cropRect, drawFooter, FONT_M, FONT_R, RATIOS, straighten, tiltFaces } from "./footer.js?v=51";
 import { applyAdjust, isZero, setACRCurves, gpuInfo } from "./adjust.js";
 
 let assets = null, encReady = null;
@@ -90,12 +90,14 @@ function withXmp(jpg, m) {
 
 async function job(m) {
   const T = { decode: 0, scale: 0, adjust: 0, encode: 0 }; let t0 = performance.now();
-  const bmp = await createImageBitmap(m.file, { imageOrientation: "from-image", colorSpaceConversion: "default" });
+  const raw = await createImageBitmap(m.file, { imageOrientation: "from-image", colorSpaceConversion: "default" });
+  // الإمالة قبل القص (نفس دالة المعاينة)
+  const bmp = m.rot ? straighten(raw, m.rot) : raw, faces = m.rot ? tiltFaces(m.faces, raw.width, raw.height, m.rot) : m.faces;
   T.decode = performance.now() - t0;
   const res = { id: m.id, W: bmp.width, H: bmp.height, outs: [], T };
   try {
     for (const ratio of m.ratios) {
-      const r = cropRect(bmp.width, bmp.height, ratio, m.faces, m.pos && m.pos[ratio]);
+      const r = cropRect(bmp.width, bmp.height, ratio, faces, m.pos && m.pos[ratio]);
       const [tw, th] = sizeFor(r.sw, r.sh, m.q);
       t0 = performance.now(); const { out, ctx } = drawScaled(bmp, r, tw, th); T.scale += performance.now() - t0;
       t0 = performance.now(); if (!isZero(m.adj)) { const id = ctx.getImageData(0, 0, tw, th); applyAdjust(id, m.adj); ctx.putImageData(id, 0, 0); } T.adjust += performance.now() - t0;
@@ -107,7 +109,7 @@ async function job(m) {
       out.width = out.height = 0;
       res.size = res.size || {}; res.size[ratio] = [tw, th];
     }
-  } finally { bmp.close(); T.gpu = gpuInfo().ready ? 1 : 0; T.outW = res.size ? Math.max(...Object.values(res.size).map(v => Math.max(...v))) : 0; }
+  } finally { raw.close(); if (bmp !== raw) bmp.width = bmp.height = 0; T.gpu = gpuInfo().ready ? 1 : 0; T.outW = res.size ? Math.max(...Object.values(res.size).map(v => Math.max(...v))) : 0; }
   return res;
 }
 

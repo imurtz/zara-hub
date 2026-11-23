@@ -1,6 +1,6 @@
 // معالجة صور الفعاليات — بوابة زارة. كل شيء داخل المتصفح: لا Firebase ولا رفع ولا أي خادم.
 import { setACRCurves, ADJ, ZERO, isZero, applyAdjust, histogram, fromXMP, BANDS, parseCube, lutFromPair, imageStats, matchAdj, LOOKS, lookRef } from "./adjust.js";
-import { RATIOS, hijriOf, gregOf, cropRect, drawFooter, FONT_M, FONT_R, LOGO_FILL, MARK_FILL, titleCheck } from "./footer.js?v=50";
+import { RATIOS, hijriOf, gregOf, cropRect, drawFooter, FONT_M, FONT_R, LOGO_FILL, MARK_FILL, titleCheck, straighten, tiltFaces, detectTilt } from "./footer.js?v=51";
 
 const $ = s => document.querySelector(s);
 const $$ = s => [...document.querySelectorAll(s)];
@@ -210,7 +210,7 @@ const SET_KEYS = ["title", "date", "hijri", "photographer", "pattern", "short", 
 let lastProj = "";
 function projSnap() {
   const f = F(), st = {}; for (const k of SET_KEYS) if (f[k] !== undefined) st[k] = f[k];
-  return { version: 2, source: S.srcName, settings: st, items: S.items.map(it => ({ name: it.name, pos: it.pos, adj: it.adj || null, preset: it.preset || "", tweak: it.tweak || null })), removed: [...(S.removed || [])] };
+  return { version: 2, source: S.srcName, settings: st, items: S.items.map(it => ({ name: it.name, pos: it.pos, rot: rotOf(it) || 0, adj: it.adj || null, preset: it.preset || "", tweak: it.tweak || null })), removed: [...(S.removed || [])] };
 }
 const projStr = () => S.items.length ? JSON.stringify(projSnap()) : "";
 const projKey = () => "proj:" + S.srcName + ":" + S.items.length;
@@ -236,7 +236,7 @@ async function findProject() {
 }
 async function restoreProject() {
   const j = await findProject(); if (!j) return;
-  const edited = j.items.filter(x => (x.pos && Object.keys(x.pos).length) || x.adj || x.tweak).length, removed = (j.removed || []).length;
+  const edited = j.items.filter(x => (x.pos && Object.keys(x.pos).length) || x.adj || x.tweak || x.rot).length, removed = (j.removed || []).length;
   const hasSet = j.settings && (j.settings.title || (j.settings.adj && !isZero(j.settings.adj)));
   if (!edited && !removed && !hasSet) return;
   const when = j.savedAt ? new Date(j.savedAt).toLocaleString("ar-SA-u-nu-latn", { dateStyle: "medium", timeStyle: "short" }) : "";
@@ -248,7 +248,7 @@ async function restoreProject() {
     const by = new Map(j.items.map(x => [x.name, x]));
     const rm = new Set(j.removed || []);
     S.items = S.items.filter(it => !rm.has(it.name)); S.removed = rm;
-    for (const it of S.items) { const x = by.get(it.name); if (!x) continue; it.pos = x.pos || {}; if (x.adj) it.adj = x.adj; else delete it.adj; if (x.preset) it.preset = x.preset; if (x.tweak) it.tweak = x.tweak; }
+    for (const it of S.items) { const x = by.get(it.name); if (!x) continue; it.pos = x.pos || {}; it.rot = +x.rot || 0; if (x.adj) it.adj = x.adj; else delete it.adj; if (x.preset) it.preset = x.preset; if (x.tweak) it.tweak = x.tweak; }
     S.cur = Math.min(S.cur, Math.max(0, S.items.length - 1)); prevFor = -1;
     paintForm(); try { paintLogos(); } catch (e) {} paintGrid(); paintAdj(); renderPreview(); analyze();
     lastProj = projStr();
@@ -363,14 +363,16 @@ function paintCell(i) {
   el.classList.toggle("err", !!it.err);
   const port = it.ar && it.ar < 1;
   el.innerHTML = (it.thumb ? `<img src="${it.thumb}" alt="" loading="lazy">` : `<span class="sk"></span>`) +
-    `<em>${i + 1}</em>` + (it.faces && it.faces.length ? `<span class="fc">☺ ${it.faces.length}</span>` : "") +
+    `<em>${i + 1}</em>` + (it.faces && it.faces.length ? `<span class="fc">☺ ${it.faces.length}</span>` : "") + (rotOf(it) ? `<span class="fc">↻ ${rotOf(it)}°</span>` : "") +
     (port ? `<span class="pt">عمودية</span>` : "") + (Object.keys(it.pos).length ? `<span class="ed">✎</span>` : "") + (it.adj ? `<span class="ad">🎨</span>` : hasTweak(it) ? `<span class="ad">🎚</span>` : "") +
     `<span class="rm" data-rm="${i}" role="button" title="إزالة من القائمة (الملف الأصلي لا يُحذف)">🗑</span>` +
     (it.status ? `<span class="st ${it.status}">${it.status === "done" ? "✓" : it.status === "fail" ? "✕" : it.status === "skip" ? "↷" : "…"}</span>` : "");
 }
 
 /* ============ المعاينة ============ */
-let prevBmp = null, prevFor = -1, prevTok = 0, prevRect = null, srcKey = "", srcPix = null;
+let prevBmp = null, prevRaw = null, prevRotFor = null, prevFor = -1, prevTok = 0, prevRect = null, srcKey = "", srcPix = null;
+function rotOf(it) { return (it && +it.rot) || 0; }
+function facesOf(it) { return it && it.faces && rotOf(it) && prevRaw ? tiltFaces(it.faces, prevRaw.width, prevRaw.height, rotOf(it)) : ((it && it.faces) || []); }
 function textOpts() {
   return { title: F().title, hijri: F().hijri || hijriOf(F().date), greg: gregOf(F().date), photographer: F().noCredit ? "" : F().photographer, label: "التغطية الفوتوغرافية", noCredit: !!F().noCredit };
 }
@@ -401,10 +403,11 @@ async function _renderPreview() {
       const f = await getFile(it);
       const b = await createImageBitmap(f, { imageOrientation: "from-image", resizeWidth: 1800, resizeQuality: "high" });
       if (tok !== prevTok) { b.close(); return; }
-      if (prevBmp) prevBmp.close(); prevBmp = b; prevFor = S.cur;
+      if (prevRaw) prevRaw.close(); prevRaw = b; prevFor = S.cur; prevRotFor = null;
     } catch (e) { return; }
   }
-  const r = cropRect(prevBmp.width, prevBmp.height, S.ratio, it.faces || [], it.pos[S.ratio]);
+  if (prevRotFor !== rotOf(it)) { prevBmp = straighten(prevRaw, rotOf(it)); prevRotFor = rotOf(it); srcKey = ""; }
+  const r = cropRect(prevBmp.width, prevBmp.height, S.ratio, facesOf(it), it.pos[S.ratio]);
   prevRect = r;
   if (S.cropMode) { drawCropMode(cv, it, r); paintCrop(); return; }
   // أثناء سحب المؤشر: معاينة أخف (أسرع) — وعند الإفلات تعود بالدقة الكاملة
@@ -412,7 +415,7 @@ async function _renderPreview() {
   if (cv.width !== w || cv.height !== h) { cv.width = w; cv.height = h; }
   const ctx = cv.getContext("2d", { willReadFrequently: true }); ctx.imageSmoothingQuality = "high";
   // نسخة مخزنة من الصورة المقصوصة (لا نعيد الرسم من الأصل مع كل حركة)
-  const key = [S.cur, prevFor, r.sx, r.sy, r.sw, r.sh, w, h].join();
+  const key = [S.cur, prevFor, rotOf(it), r.sx, r.sy, r.sw, r.sh, w, h].join();
   if (srcKey !== key) { ctx.drawImage(prevBmp, r.sx, r.sy, r.sw, r.sh, 0, 0, w, h); srcPix = ctx.getImageData(0, 0, w, h); srcKey = key; }
   const adj = adjOf(it), id = new ImageData(new Uint8ClampedArray(srcPix.data), w, h);
   if (!S.before && !isZero(adj)) applyAdjust(id, adj);
@@ -421,7 +424,7 @@ async function _renderPreview() {
   if ($("#showRights").checked && !S.before) drawFooter(ctx, w, h, S.ratio, textOpts(), assetsNow());
   if ($("#showFaces").checked && it.faces) {
     ctx.strokeStyle = "#F2C14E"; ctx.lineWidth = Math.max(2, w / 500);
-    it.faces.forEach(f => ctx.strokeRect((f.x * prevBmp.width - r.sx) * k, (f.y * prevBmp.height - r.sy) * k, f.w * prevBmp.width * k, f.h * prevBmp.height * k));
+    facesOf(it).forEach(f => ctx.strokeRect((f.x * prevBmp.width - r.sx) * k, (f.y * prevBmp.height - r.sy) * k, f.w * prevBmp.width * k, f.h * prevBmp.height * k));
   }
   if (fast) return;
   $("#prevMeta").innerHTML = `${S.cur + 1} / ${S.items.length} · ${esc(it.name)}${it.faces ? ` · ${it.faces.length ? it.faces.length + " وجه" : "بلا وجوه — قص من المنتصف"}` : ""}`;
@@ -456,6 +459,7 @@ async function paintCrop() {
   const manual = it.pos[S.ratio] != null, z = r.z || 1;
   $("#cropHint").textContent = S.cropMode ? "حدد القص على الصورة الكبيرة فوق" : "للتحديد الدقيق اضغط «✂️ حدد القص» أو مفتاح C";
   $("#cropBtns").innerHTML = `<button type="button" data-crop="auto" class="${manual ? "" : "on"}">تلقائي</button><button type="button" data-crop="center">توسيط</button><button type="button" data-crop="all" title="ينسخ نفس الإطار لكل الصور">نفس القص لكل الصور</button>`;
+  const tr = $("#tiltRange"); if (tr && document.activeElement !== tr) tr.value = rotOf(it); if ($("#tiltVal")) $("#tiltVal").textContent = (rotOf(it) > 0 ? "+" : "") + rotOf(it).toFixed(1) + "°";
   const rg = $("#cropRange"); rg.hidden = false; rg.min = 20; rg.max = 100; rg.value = Math.round(z * 100);
   $("#cropZoom").textContent = Math.round(z * 100) + "%";
 }
@@ -493,6 +497,24 @@ function setBox(b) {
     }
     if (v === "auto") return setBox("auto");
     if (v === "center") return setBox({ ...curBox(), cx: 0.5, cy: 0.5 });
+  });
+  // الإمالة: يدوي بالمنزلق، أو تلقائي من خطوط الصورة (للصورة الحالية أو لكل الصور)
+  const setRot = (it, v) => { it.rot = Math.max(-15, Math.min(15, Math.round(v * 10) / 10)); };
+  let tiltT = 0;
+  $("#tiltRange").addEventListener("input", e => { const it = S.items[S.cur]; if (!it) return; setRot(it, +e.target.value); $("#tiltVal").textContent = (it.rot > 0 ? "+" : "") + it.rot.toFixed(1) + "°"; S.dragging = true; clearTimeout(tiltT); previewRAF(); tiltT = setTimeout(() => { S.dragging = false; paintCell(S.cur); renderPreview(); }, 250); });
+  $("#tiltBtns").addEventListener("click", async e => {
+    const b = e.target.closest("[data-tilt]"); if (!b) return; const v = b.dataset.tilt, it = S.items[S.cur]; if (!it) return;
+    if (v === "zero") { it.rot = 0; paintCell(S.cur); return renderPreview(); }
+    if (v === "pm") { setRot(it, rotOf(it) + (+b.dataset.d)); paintCell(S.cur); return renderPreview(); }
+    if (v === "auto") { const a = detectTilt(prevRaw); it.rot = a; paintCell(S.cur); renderPreview(); return toast(a ? `عُدّلت الإمالة ${a > 0 ? "+" : ""}${a}°` : "الصورة مستوية — ما تحتاج تعديل"); }
+    if (v === "autoall") {
+      b.disabled = true; let n = 0;
+      for (let i = 0; i < S.items.length; i++) {
+        b.textContent = `جارٍ… ${i + 1}/${S.items.length}`;
+        try { const bm = await createImageBitmap(await getFile(S.items[i]), { imageOrientation: "from-image", resizeWidth: 900, resizeQuality: "medium" }); const a = detectTilt(bm); bm.close(); S.items[i].rot = a; if (a) n++; paintCell(i); } catch (err) {}
+      }
+      b.disabled = false; b.textContent = "تلقائي لكل الصور"; renderPreview(); toast(`عُدّلت الإمالة في ${n} صورة، والباقي مستوية`);
+    }
   });
   // Shift + الأسهم يحرك، Shift + (+/-) يكبّر ويصغّر
   addEventListener("keydown", e => {
@@ -910,7 +932,7 @@ $("#fullBtn").onclick = async () => {
   win.document.write(`<title>معاينة…</title><body style="margin:0;background:#111;color:#ccc;font:16px system-ui;display:grid;place-items:center;height:100vh" dir="rtl">جارٍ تجهيز المعاينة بدقة عالية…</body>`);
   try {
     const w = await makeWorker(), file = await getFile(it), q = { maxEdge: 3200, quality: 92, chroma444: true };
-    const run = (adj, rights) => new Promise((res, rej) => { w.onmessage = e => e.data.type === "done" ? res(e.data) : rej(new Error(e.data.error)); w.postMessage({ type: "job", id: 0, file, faces: it.faces || [], pos: it.pos, adj, ratios: [S.ratio], plain: !rights, rights, q, text: textOpts(), meta: {} }); });
+    const run = (adj, rights) => new Promise((res, rej) => { w.onmessage = e => e.data.type === "done" ? res(e.data) : rej(new Error(e.data.error)); w.postMessage({ type: "job", id: 0, file, faces: it.faces || [], rot: rotOf(it), pos: it.pos, adj, ratios: [S.ratio], plain: !rights, rights, q, text: textOpts(), meta: {} }); });
     const rights = $("#showRights").checked;
     const after = await run(adjOf(it), rights), before = await run(ZERO, rights);
     w.terminate();
@@ -1136,7 +1158,7 @@ async function exportAll() {
           const res = await new Promise((res, rej) => {
             w.onmessage = e => e.data.type === "done" ? res(e.data) : rej(new Error(e.data.error));
             w.onerror = ev => rej(new Error(ev.message || "worker"));
-            w.postMessage({ type: "job", id: i, file, faces: it.faces || [], pos: it.pos, adj: adjOf(it), ratios: f.ratios, plain: f.plain, rights: f.rights, q, text, meta });
+            w.postMessage({ type: "job", id: i, file, faces: it.faces || [], rot: rotOf(it), pos: it.pos, adj: adjOf(it), ratios: f.ratios, plain: f.plain, rights: f.rights, q, text, meta });
           });
           for (const o of res.outs) {
             const blob = new Blob([o.buf], { type: "image/jpeg" });

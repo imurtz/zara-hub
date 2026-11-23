@@ -144,6 +144,7 @@ details.adv summary em{color:var(--tan);font-style:normal}
 .mini{flex:none;width:260px}
 .zoomRow{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--soft)}
 .zoomRow input{flex:1}
+.tiltRow{margin-top:10px;display:flex;flex-direction:column;gap:6px}
 @media (max-width:600px){.cropbar{flex-direction:column;align-items:stretch}.mini{width:100%}}
 #mini{display:block;width:100%;height:auto;border-radius:8px;cursor:crosshair;touch-action:none}
 .cb{flex:1;display:flex;flex-direction:column;gap:7px;font-size:13px}
@@ -354,6 +355,8 @@ body{padding:0;height:100vh;overflow:hidden}
           <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap"><button type="button" class="pri sm3" id="cropModeBtn">✂️ حدد القص على الصورة</button></div> <small id="cropHint">اضغط أو اسحب على الصورة الصغيرة لتحديد الإطار</small>
           <div class="qbtns" id="cropBtns"></div>
           <label class="zoomRow">الحجم <input type="range" id="cropRange" min="20" max="100" step="1"> <span id="cropZoom">100%</span></label>
+          <div class="tiltRow"><label class="zoomRow">الإمالة <input type="range" id="tiltRange" min="-15" max="15" step="0.1" value="0"> <span id="tiltVal">0.0°</span></label>
+            <div class="qbtns" id="tiltBtns"><button type="button" data-tilt="pm" data-d="-0.5" title="عكس عقارب الساعة">↺</button><button type="button" data-tilt="pm" data-d="0.5" title="مع عقارب الساعة">↻</button><button type="button" data-tilt="auto">إمالة تلقائية</button><button type="button" data-tilt="autoall">تلقائي لكل الصور</button><button type="button" data-tilt="zero">بدون إمالة</button></div></div>
         </div>
       </div>
           <ul class="tips"><li>اسحب الإطار على الصورة الكبيرة لتحريكه، واسحب الزوايا لتكبيره أو تصغيره.</li><li><b>Enter</b> = اعتماد القص · عجلة الفأرة = تكبير/تصغير · ← → صورة سابقة/تالية.</li><li>القص يُحفظ لكل مقاس على حدة.</li></ul>

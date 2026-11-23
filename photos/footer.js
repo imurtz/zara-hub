@@ -193,3 +193,61 @@ export function fitTitle(ctx, text, maxW, size) {
   while (list.length > 2 && sz > size * TITLE_MIN) { sz *= 0.97; list = wrap(sz); }
   return { size: sz, list, scale: sz / size };
 }
+
+// ===== الإمالة: تدوير الصورة ثم قصها لأكبر مستطيل بنفس النسبة داخل الصورة المدوّرة (بلا زوايا فارغة) =====
+// deg موجب = مع عقارب الساعة. تُطبَّق قبل القص في المعاينة والتصدير بنفس الدالة.
+export function tiltScale(W, H, deg) {
+  const t = Math.abs(deg) * Math.PI / 180, c = Math.cos(t), s = Math.sin(t);
+  return Math.min(W / (W * c + H * s), H / (W * s + H * c));
+}
+export function straighten(src, deg) {
+  if (!deg) return src;
+  const W = src.width, H = src.height, k = tiltScale(W, H, deg), w = Math.max(1, Math.round(W * k)), h = Math.max(1, Math.round(H * k));
+  const out = new OffscreenCanvas(w, h), x = out.getContext("2d", { willReadFrequently: true });
+  x.imageSmoothingQuality = "high"; x.translate(w / 2, h / 2); x.rotate(deg * Math.PI / 180); x.drawImage(src, -W / 2, -H / 2);
+  return out;
+}
+// نقل مواضع الوجوه (نسبية) إلى الصورة بعد الإمالة
+export function tiltFaces(faces, W, H, deg) {
+  if (!deg || !faces || !faces.length) return faces || [];
+  const k = tiltScale(W, H, deg), w = W * k, h = H * k, a = deg * Math.PI / 180, c = Math.cos(a), s = Math.sin(a);
+  return faces.map(f => {
+    const px = (f.x + f.w / 2) * W - W / 2, py = (f.y + f.h / 2) * H - H / 2;
+    const qx = px * c - py * s, qy = px * s + py * c, fw = f.w * W / w, fh = f.h * H / h;
+    return { ...f, x: (qx + w / 2) / w - fw / 2, y: (qy + h / 2) / h - fh / 2, w: fw, h: fh };
+  }).filter(f => f.x + f.w > 0 && f.y + f.h > 0 && f.x < 1 && f.y < 1);
+}
+// الإمالة التلقائية: يقيس ميل الخطوط الأفقية والرأسية الواضحة (جدران، أبواب، طاولات، أفق) ويعيد زاوية التصحيح
+export function detectTilt(src) {
+  // مرحلتان: تقدير أولي، ثم قياس الميل المتبقي بعد التصحيح (يحسّن الدقة في الزوايا الكبيرة)
+  const a1 = tiltOnce(src, 12); if (!a1) return 0;
+  const t = straighten(src, a1), a2 = tiltOnce(t, 3); t.width = t.height = 0;
+  return Math.max(-15, Math.min(15, Math.round((a1 + a2) * 10) / 10));
+}
+function tiltOnce(src, range) {
+  const M = 640, k = Math.min(1, M / Math.max(src.width, src.height)), w = Math.max(16, Math.round(src.width * k)), h = Math.max(16, Math.round(src.height * k));
+  const cv = new OffscreenCanvas(w, h), x = cv.getContext("2d", { willReadFrequently: true }); x.drawImage(src, 0, 0, w, h);
+  const d = x.getImageData(0, 0, w, h).data, g = new Float32Array(w * h);
+  for (let i = 0, j = 0; i < g.length; i++, j += 4) g[i] = 0.299 * d[j] + 0.587 * d[j + 1] + 0.114 * d[j + 2];
+  const B = 0.1, n = Math.round(2 * range / B) + 1, hist = new Float64Array(n);
+  let total = 0;
+  for (let yy = 1; yy < h - 1; yy++) for (let xx = 1; xx < w - 1; xx++) {
+    const i = yy * w + xx;
+    const gx = (g[i - w + 1] + 2 * g[i + 1] + g[i + w + 1]) - (g[i - w - 1] + 2 * g[i - 1] + g[i + w - 1]);
+    const gy = (g[i + w - 1] + 2 * g[i + w] + g[i + w + 1]) - (g[i - w - 1] + 2 * g[i - w] + g[i - w + 1]);
+    const m = gx * gx + gy * gy; if (m < 14400) continue; // حواف واضحة فقط
+    let l = Math.atan2(gy, gx) * 180 / Math.PI + 90; l = ((l % 90) + 90) % 90; if (l > 45) l -= 90;
+    const wt = Math.sqrt(m); total += wt;
+    if (Math.abs(l) > range) continue;
+    hist[Math.round((l + range) / B)] += wt;
+  }
+  if (!total) return 0;
+  // تنعيم ثم أعلى قمة
+  const sm = new Float64Array(n); for (let i = 0; i < n; i++) { let s = 0; for (let j = -4; j <= 4; j++) { const q = i + j; if (q >= 0 && q < n) s += hist[q] * (5 - Math.abs(j)); } sm[i] = s; }
+  let bi = 0; for (let i = 1; i < n; i++) if (sm[i] > sm[bi]) bi = i;
+  const ang = bi * B - range;
+  // ثقة: القمة يجب أن تبرز عن المتوسط، وإلا الصورة بلا خطوط مستقيمة واضحة
+  const mean = sm.reduce((a, b) => a + b, 0) / n;
+  if (sm[bi] < mean * 2 || Math.abs(ang) < 0.15) return 0; // بلا خطوط مستقيمة واضحة (صور الوجوه القريبة) = لا تعديل
+  return Math.round(-ang * 10) / 10;
+}
