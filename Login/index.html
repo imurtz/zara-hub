@@ -3402,7 +3402,9 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
       if(data && kind !== "del" && data.createdAt && Math.abs(Date.now() - Number(data.createdAt.toMillis ? data.createdAt.toMillis() : data.createdAt)) < 60000) kind = "add";
       var verb = typeof m[kind] === "function" ? m[kind](data || {}) : m[kind];
       var key = col + "|" + (m.once ? "" : id) + "|" + verb, win = (m.once || 10) * 60000;
-      if(hbSent[key] && Date.now() - hbSent[key] < win) return; hbSent[key] = Date.now();
+      if(hbSent[key] && Date.now() - hbSent[key] < win) return;
+      var dk = col + "|" + id; if(id && !m.once && kind === "upd" && hbSent[dk] && Date.now() - hbSent[dk] < win) return; // تعديل بعد الإضافة مباشرة = نفس الحدث
+      hbSent[key] = Date.now(); if(id) hbSent[dk] = Date.now();
       var rk = "rate|" + col, rt = (hbSent[rk] || []).filter(function(t){ return Date.now() - t < 120000; }); // عمليات جماعية (استيراد) = سطر واحد لا مئات
       if(rt.length >= 3){ if(!hbSent["bulk|" + col] || Date.now() - hbSent["bulk|" + col] > 600000){ hbSent["bulk|" + col] = Date.now(); verb = verb + " (عملية جماعية)"; data = null; } else return; }
       rt.push(Date.now()); hbSent[rk] = rt;
