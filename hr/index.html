@@ -69,7 +69,7 @@
   .tile b{font-size:15.5px; line-height:1.4; padding-left:34px;}
   .tile span{font-size:12.5px; color:var(--teal-dark); font-weight:600; margin-top:8px;}
   .tile .codes{display:flex; flex-wrap:wrap; gap:4px; margin-top:10px;}
-  .tile .codes em{font-style:normal; font-size:11.5px; font-weight:600; color:var(--tan-dark); background:var(--tan-tint); border:1px solid #eedfd0; border-radius:8px; padding:1px 7px; direction:ltr;}
+  .tile .codes em{font-style:normal; font-size:11.5px; font-weight:700; color:var(--tan-dark); background:var(--tan-tint); border:1px solid #eedfd0; border-radius:8px; padding:1px 7px; direction:ltr;}
   .cand .code{display:inline-block; font-size:12px; font-weight:700; color:var(--tan-dark); background:var(--tan-tint); border:1px solid #eedfd0; border-radius:8px; padding:1px 9px; margin-bottom:6px;}
   .cand .also{font-size:12.5px; color:var(--teal-dark); margin-top:4px;}
   .sub small{font-size:12.5px; color:var(--ink-soft);}
@@ -234,7 +234,10 @@
       paintDue(); paintMine(); paintTiles();
     }).catch(function(){ $("tiles").innerHTML = '<div class="empty">تعذّر الاتصال، تأكد من الإنترنت.</div>'; });
   }
-  function tileHtml(t){ var cs = (t.codes || []).slice(0, 4).map(function(c){ return '<em>' + esc(c) + '</em>'; }).join("") + ((t.codes || []).length > 4 ? '<em>+' + (t.codes.length - 4) + '</em>' : ''); return '<button type="button" class="tile" data-title="' + esc(t.label) + '"><i>' + t.n + '</i><b>' + esc(t.label) + '</b><div class="codes" title="أرقام المرشحين">' + cs + '</div></button>'; }
+  // لون ثابت لكل مرشح (نفس الرقم = نفس اللون في المربعات والبطاقات) — يسهّل تمييزه بنظرة
+  var CODE_PAL = [["#E3F1EC","#1E6B52","#BFE0D3"],["#FDEBDD","#A4501A","#F6CDAE"],["#E6EEFB","#2C5AA0","#C5D6F2"],["#F6E6F1","#8E3474","#E8C3DD"],["#FFF4CC","#8A6400","#F1DE94"],["#EAE7FB","#5442A8","#CFC8F2"],["#E2F3F7","#1F6E80","#BEE1EA"],["#FBE4E4","#A33A3A","#F1C2C2"],["#EEF4DF","#55721A","#D4E3B3"],["#F3EDE4","#7A5A36","#E2D3BE"],["#E5F0FF","#1F5FBF","#BFD7FA"],["#FCE9F5","#A53283","#F2C6E3"]];
+  function codeStyle(c){ var h = 0, s2 = String(c); for(var i = 0; i < s2.length; i++) h = (h * 31 + s2.charCodeAt(i)) >>> 0; var p = CODE_PAL[h % CODE_PAL.length]; return ' style="background:' + p[0] + ';color:' + p[1] + ';border-color:' + p[2] + '"'; }
+  function tileHtml(t){ var cs = (t.codes || []).slice(0, 4).map(function(c){ return '<em' + codeStyle(c) + '>' + esc(c) + '</em>'; }).join("") + ((t.codes || []).length > 4 ? '<em>+' + (t.codes.length - 4) + '</em>' : ''); return '<button type="button" class="tile" data-title="' + esc(t.label) + '"><i>' + t.n + '</i><b>' + esc(t.label) + '</b><div class="codes" title="أرقام المرشحين">' + cs + '</div></button>'; }
   // المربعات مرتبة تحت عناوين المجالات؛ وعند البحث تظهر النتائج دون عناوين
   function paintTiles(){
     var q = $("q").value.trim(), all = (HOME && HOME.tiles || []), list = all.filter(function(t){ return !q || nk(t.label).indexOf(nk(q)) > -1; });
@@ -338,7 +341,7 @@
     $("listSub").innerHTML = rows.length + (rows.length === ROWS.length ? "" : " من " + ROWS.length) + " مرشح — انقر «اعرض السيرة» وتصلك فوراً" + fh;
     $("list").innerHTML = rows.length ? rows.map(function(c){
         var meta = [c.years != null ? c.years + " سنوات خبرة" : "", c.degree, c.city, c.gender].filter(Boolean).join(" · ");
-        return '<div class="cand" data-id="' + c.id + '"><div class="h"><div><div class="code">مرشح ' + esc(c.code) + '</div><div class="t">' + esc((c.titles || []).join(" · ") || c.fieldName) + '</div>' + (c.alsoIn && c.alsoIn.length ? '<div class="also">يظهر أيضاً في: ' + esc(c.alsoIn.join("، ")) + '</div>' : '') + '<div class="m">' + esc(c.fieldName) + (meta ? " — " + esc(meta) : "") + '</div></div>' +
+        return '<div class="cand" data-id="' + c.id + '"><div class="h"><div><div class="code"' + codeStyle(c.code) + '>مرشح ' + esc(c.code) + '</div><div class="t">' + esc((c.titles || []).join(" · ") || c.fieldName) + '</div>' + (c.alsoIn && c.alsoIn.length ? '<div class="also">يظهر أيضاً في: ' + esc(c.alsoIn.join("، ")) + '</div>' : '') + '<div class="m">' + esc(c.fieldName) + (meta ? " — " + esc(meta) : "") + '</div></div>' +
           '<button type="button" class="go' + (c.taken ? " seen" : "") + '">' + (c.taken ? "سبق عرضها — اعرض مجدداً" : "اعرض السيرة") + '</button></div>' +
           (c.skills && c.skills.length ? '<div class="sk">' + c.skills.map(function(s){ return '<span>' + esc(s) + '</span>'; }).join("") + '</div>' : '') + '<div class="rev"></div></div>';
       }).join("") : '<div class="empty">' + (ROWS.length ? "لا يوجد مرشح بهذه الشروط" : "لا يوجد مرشحون حالياً.") + '</div>';
