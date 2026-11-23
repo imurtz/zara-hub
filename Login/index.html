@@ -4306,7 +4306,7 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
     if(cvUI.tab === "jobs"){
       var jobs = d.jobs || [];
       h += '<div class="cv-card cv-muted" style="font-size:13px">وظائف أضافها الخبراء من صفحتهم لما ما لقوا المسمى اللي يبونه. «مطابق» = عدد السير الجاهزة اللي مسمّاها قريب من الوظيفة.</div>';
-      h += jobs.length ? '<div class="cv-card"><table class="cv-t"><thead><tr><th>التاريخ</th><th>الوظيفة</th><th>ملاحظة</th><th>الخبير</th><th>مطابق</th><th>الحالة</th></tr></thead><tbody>' + jobs.map(function(j){ return '<tr' + (j.status === "open" ? '' : ' style="opacity:.5"') + '><td>' + cvDate(j.created) + '</td><td><b>' + e(j.title) + '</b></td><td>' + e(j.note || "") + '</td><td>' + e(j.expert || "") + '</td><td>' + (j.n || 0) + '</td><td>' + (j.status === "open" ? "مفتوحة" : "أُغلقت") + '</td></tr>'; }).join("") + '</tbody></table></div>' : '<div class="cv-card cv-muted">ما أضاف أي خبير وظيفة بعد.</div>';
+      h += jobs.length ? '<div class="cv-card"><table class="cv-t"><thead><tr><th>التاريخ</th><th>الوظيفة</th><th>ملاحظة</th><th>الخبير</th><th>مطابق</th><th>الحالة</th><th></th></tr></thead><tbody>' + jobs.map(function(j){ return '<tr' + (j.status === "open" ? '' : ' style="opacity:.5"') + '><td>' + cvDate(j.created) + '</td><td><b>' + e(j.title) + '</b></td><td>' + e(j.note || "") + '</td><td>' + e(j.expert || "") + '</td><td>' + (j.n || 0) + '</td><td>' + (j.status === "open" ? "مفتوحة" : "أُغلقت") + '</td><td><button type="button" class="cv-btn ghost cv-del" data-cv="rowdel" data-t="job" data-v="' + e(j.id) + '">حذف</button></td></tr>'; }).join("") + '</tbody></table></div>' : '<div class="cv-card cv-muted">ما أضاف أي خبير وظيفة بعد.</div>';
       root.innerHTML = h; return;
     }
     if(cvUI.tab === "experts"){
@@ -4335,7 +4335,7 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
       return;
     }
     if(cvUI.tab === "reqs"){
-      h += d.requests.length ? '<div class="cv-card"><table class="cv-t"><thead><tr><th>التاريخ</th><th>الخبير</th><th>الجهة</th><th>الوظيفة</th><th>المرشح</th><th>النتيجة</th></tr></thead><tbody>' + d.requests.map(function(r){ return '<tr><td>' + cvDate(r.created) + '</td><td>' + e(r.expert || "") + '</td><td>' + e(r.org || "") + '</td><td>' + e(r.job || "") + '</td><td>' + e(r.seeker || "") + '</td><td>' + (r.outcome === "hired" ? '<b class="cv-hired">تم التوظيف</b>' : r.outcome === "no" ? "لم يتم" : r.outcome === "returned" ? "أُرجع للمدربين" : "بانتظار الرد") + '</td></tr>'; }).join("") + '</tbody></table></div>' : '<div class="cv-card cv-muted">لم تُرسل أي سيرة لخبير بعد — تبدأ مع إطلاق روابط الخبراء.</div>';
+      h += d.requests.length ? '<div class="cv-card"><table class="cv-t"><thead><tr><th>التاريخ</th><th>الخبير</th><th>الجهة</th><th>الوظيفة</th><th>المرشح</th><th>النتيجة</th><th></th></tr></thead><tbody>' + d.requests.map(function(r){ return '<tr><td>' + cvDate(r.created) + '</td><td>' + e(r.expert || "") + '</td><td>' + e(r.org || "") + '</td><td>' + e(r.job || "") + '</td><td>' + e(r.seeker || "") + '</td><td>' + (r.outcome === "hired" ? '<b class="cv-hired">تم التوظيف</b>' : r.outcome === "no" ? "لم يتم" : r.outcome === "returned" ? "أُرجع للمدربين" : "بانتظار الرد") + '</td><td><button type="button" class="cv-btn ghost cv-del" data-cv="rowdel" data-t="req" data-v="' + e(r.id) + '">حذف</button></td></tr>'; }).join("") + '</tbody></table></div>' : '<div class="cv-card cv-muted">لم تُرسل أي سيرة لخبير بعد — تبدأ مع إطلاق روابط الخبراء.</div>';
       root.innerHTML = h; return;
     }
     h += '<div class="cv-chips"><button type="button" data-cv="f" data-v="" class="' + (!cvUI.f ? "on" : "") + '">الكل</button>' + d.fields.filter(function(f){ return byF[f.k]; }).map(function(f){ return '<button type="button" data-cv="f" data-v="' + f.k + '" class="' + (cvUI.f === f.k ? "on" : "") + '">' + e(f.l) + ' <i>' + byF[f.k] + '</i></button>'; }).join("") + '</div>';
@@ -4370,6 +4370,12 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
       var org = prompt("توظيف " + (b.getAttribute("data-n") || "") + "\nجهة العمل:"); if(org === null) return; org = org.trim(); if(!org) return showToast("اكتب جهة العمل");
       var ttl = prompt("المسمى الوظيفي (اختياري):") || "";
       cvFetch("/api/admin/hire", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: v, org: org, title: ttl.trim() }) }).then(function(r){ return r.json(); }).then(function(d2){ showToast(d2 && d2.ok ? "سُجّل التوظيف 🎉" : "تعذّر التسجيل"); cvLoad(); }).catch(function(){ showToast("تعذّر الاتصال بالخدمة"); });
+    }
+    else if(a === "rowdel"){
+      var tt = b.getAttribute("data-t");
+      if(!confirm(tt === "job" ? "حذف هذه الوظيفة المطلوبة؟" : "حذف هذا السطر من «من وصلته فرصة»؟")) return;
+      b.disabled = true;
+      cvFetch("/api/admin/row-del", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ t: tt, id: v }) }).then(function(r){ return r.json(); }).then(function(d2){ showToast(d2 && d2.ok ? "حُذف" : "تعذّر الحذف"); cvLoad(); }).catch(function(){ b.disabled = false; showToast("تعذّر الاتصال بالخدمة"); });
     }
     else if(a === "restore"){
       if(!confirm("إرجاع " + (b.getAttribute("data-n") || "") + " لقائمة المدربين؟\nيُلغى تسجيل توظيفه ويرجع يظهر للمدربين فوراً.")) return;

@@ -420,6 +420,18 @@ export default {
           await logAct(env.DB, "admin", "code", pr.id);
           return json({ ok: true, code, phone: pr.phone, name: pr.name }, 200, H);
         }
+        if (p === "/api/admin/row-del" && req.method === "POST") { // حذف سطر من «من وصلته فرصة» أو «الوظائف المطلوبة»
+          const b = await req.json(); const t = b.t === "job" ? "jobs" : b.t === "req" ? "requests" : "";
+          if (!t || !b.id) return json({ ok: false, err: "bad" }, 400, H);
+          await env.DB.prepare(`DELETE FROM ${t} WHERE id = ?`).bind(b.id).run();
+          await logAct(env.DB, "admin", "del:" + b.t, b.id);
+          return json({ ok: true }, 200, H);
+        }
+        if (p === "/api/admin/backup") { // نسخة احتياطية كاملة لجداول D1 (للمؤسس فقط)
+          const out = {};
+          for (const t of ["seekers", "experts", "requests", "jobs", "hires", "log", "meta"]) out[t] = (await env.DB.prepare(`SELECT * FROM ${t}`).all()).results || [];
+          return json({ ok: true, at: now(), tables: out }, 200, H);
+        }
         if (p === "/api/admin/seeker-del" && req.method === "POST") { // حذف سيرة من لوحة المؤسس: الملف يُحذف نهائياً
           const b = await req.json(); const sk = await env.DB.prepare("SELECT * FROM seekers WHERE id = ?").bind(b.id).first();
           if (!sk) return json({ ok: false, err: "notfound" }, 404, H);
