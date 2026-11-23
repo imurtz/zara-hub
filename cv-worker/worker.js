@@ -62,6 +62,7 @@ async function schema(db) {
     db.prepare(`CREATE TABLE IF NOT EXISTS requests (id TEXT PRIMARY KEY, expert_id TEXT, seeker_id TEXT, job TEXT, created INTEGER, outcome TEXT, outcome_at INTEGER)`),
     db.prepare(`CREATE TABLE IF NOT EXISTS log (t INTEGER, who TEXT, act TEXT, ref TEXT)`),
     db.prepare(`CREATE TABLE IF NOT EXISTS meta (k TEXT PRIMARY KEY, v TEXT)`),
+    db.prepare(`CREATE TABLE IF NOT EXISTS hires (id TEXT PRIMARY KEY, seeker_id TEXT, roster_id TEXT, name TEXT, phone TEXT, org TEXT, title TEXT, src TEXT, created INTEGER, seen INTEGER DEFAULT 0)`),
     db.prepare(`CREATE TABLE IF NOT EXISTS jobs (id TEXT PRIMARY KEY, expert_id TEXT, title TEXT, nkey TEXT, field TEXT, note TEXT, status TEXT DEFAULT 'open', created INTEGER, closed INTEGER)`)
   ]);
   const v = await db.prepare("SELECT v FROM meta WHERE k = 'schema'").first();
@@ -175,6 +176,16 @@ function pub(s) { // ما يراه صاحب السيرة عن نفسه
   return { name: s.name, field: s.field, fieldName: FIELD_NAME[s.field] || "", titles: JSON.parse(s.titles || "[]"), tasks: s.tasks, years: s.years, degree: s.degree, skills: JSON.parse(s.skills || "[]"), city: s.city, fileName: s.file_name, consent: !!s.consent, status: s.status, updated: s.updated, expires: s.expires };
 }
 async function sha(s) { const b = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(s)); return Array.from(new Uint8Array(b), x => x.toString(16).padStart(2, "0")).join(""); }
+// إشعار داخل البوابة (جرس مساحة العمل) لكل أدمن ومن له صلاحية السير — Firestore wsNotifs
+async function hubNotify(text) {
+  try {
+    const r = await fetch(`${FS_BASE}/employees?key=${FS_KEY}&pageSize=300&mask.fieldPaths=role&mask.fieldPaths=perms`);
+    const docs = ((await r.json()).documents || []).filter(d => { const f = d.fields || {}; return (f.role || {}).stringValue === "admin" || (((f.perms || {}).arrayValue || {}).values || []).some(v => v.stringValue === "cv.view"); });
+    const at = now();
+    await Promise.all(docs.map(d => { const to = d.name.split("/").pop(), id = "ntf-cv-" + tok(10);
+      return fetch(`${FS_BASE}/wsNotifs/${id}?key=${FS_KEY}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ fields: { id: { stringValue: id }, to: { stringValue: to }, type: { stringValue: "cv-hired" }, text: { stringValue: text }, ref: { nullValue: null }, from: { stringValue: "مفاتيح الفرص" }, at: { integerValue: String(at) }, read: { booleanValue: false } } }) }); }));
+  } catch (e) {}
+}
 // دخول المؤسس بحساب البوابة: يتحقق من توقيع رمز Firebase ثم من سجل الموظف (أدمن أو صلاحية cv.view)
 let JWKS = null, JWKS_AT = 0; const STAFF = new Map();
 function b64u(x) { x = x.replace(/-/g, "+").replace(/_/g, "/"); while (x.length % 4) x += "="; return Uint8Array.from(atob(x), c => c.charCodeAt(0)); }
@@ -203,7 +214,7 @@ async function adminOk(db, k) { if (!k) return false; const r = await db.prepare
 async function logAct(db, who, act, ref) { try { await db.prepare("INSERT INTO log (t, who, act, ref) VALUES (?, ?, ?, ?)").bind(now(), who, act, ref || "").run(); } catch (e) {} }
 
 export default {
-  async fetch(req, env) {
+  async fetch(req, env, ctx) {
     const origin = req.headers.get("Origin") || "", H = cors(origin), url = new URL(req.url), p = url.pathname.replace(/\/+$/, "");
     if (req.method === "OPTIONS") return new Response(null, { headers: H });
     try {
@@ -242,6 +253,20 @@ export default {
         await logAct(env.DB, "seeker:" + id, ex ? "reupload" : "upload", cls.field);
         const s = await env.DB.prepare("SELECT * FROM seekers WHERE id = ?").bind(id).first();
         return json({ ok: true, token, profile: pub(s) }, 200, H);
+      }
+
+      if (p === "/api/hired" && req.method === "POST") { // الباحث يبلغنا أنه توظّف عن طريق «مفاتيح الفرص»
+        const b = await req.json(); const ph = phoneNorm(b.phone), org = clip(b.org, 80), title = clip(b.title, 80);
+        if (!/^05\d{8}$/.test(ph)) return json({ ok: false, err: "phone" }, 200, H);
+        if (!org || !b.confirm) return json({ ok: false, err: "fields" }, 200, H);
+        const r = await rosterByPhone(ph); if (!r) return json({ ok: false, err: "notfound" }, 200, H);
+        const sk = await env.DB.prepare("SELECT id FROM seekers WHERE phone = ? ORDER BY updated DESC").bind(ph).first();
+        const ex = await env.DB.prepare("SELECT id FROM hires WHERE phone = ? AND src = 'self'").bind(ph).first();
+        if (ex) await env.DB.prepare("UPDATE hires SET org=?, title=?, created=?, seen=0 WHERE id=?").bind(org, title, now(), ex.id).run();
+        else await env.DB.prepare("INSERT INTO hires (id, seeker_id, roster_id, name, phone, org, title, src, created, seen) VALUES (?,?,?,?,?,?,?,?,?,0)").bind("h-" + tok(10), sk ? sk.id : "", r.id, r.name, ph, org, title, "self", now()).run();
+        await logAct(env.DB, "seeker:" + (sk ? sk.id : r.id), "hired", org);
+        if (!String(r.id).startsWith("zz-")) ctx.waitUntil(hubNotify("🎉 " + r.name + (/^(f|أنثى|انثى)/i.test(r.gender || "") ? " حصلت" : " حصل") + " على وظيفة" + (title ? " «" + title + "»" : "") + " في " + org + " — عن طريق مفاتيح الفرص"));
+        return json({ ok: true, name: r.name }, 200, H);
       }
 
       if (p === "/api/me") {
@@ -364,7 +389,8 @@ export default {
           dx.forEach(x => { if (!experts.some(y => y.id === x.id)) experts.push(Object.assign({ gone: true }, x)); });
           const pool = ((await env.DB.prepare("SELECT titles FROM seekers WHERE status='active' AND consent=1 AND roster_id NOT LIKE 'zz-%'").all()).results || []).map(s => JSON.parse(s.titles || "[]"));
           const jobs = ((await env.DB.prepare("SELECT j.*, e.name AS expert FROM jobs j LEFT JOIN experts e ON e.id = j.expert_id WHERE j.expert_id NOT LIKE 'zz-%' ORDER BY j.created DESC LIMIT 500").all()).results || []).map(j => Object.assign(j, { n: pool.filter(ts => ts.some(x => tMatch(x, j.title))).length }));
-          return json({ ok: true, rosterOk: !!ro, jobs, seekers: rows.map(r => Object.assign(r, { attended: attendedOk(ATTA, r.roster_id), fieldName: FIELD_NAME[r.field] || "", titles: JSON.parse(r.titles || "[]") })), requests: reqs, experts, fields: FIELDS.map(f => ({ k: f[0], l: f[1] })) }, 200, H);
+          const hires = (await env.DB.prepare("SELECT * FROM hires WHERE roster_id NOT LIKE 'zz-%' ORDER BY created DESC LIMIT 500").all()).results || [];
+          return json({ ok: true, rosterOk: !!ro, jobs, hires, seekers: rows.map(r => Object.assign(r, { attended: attendedOk(ATTA, r.roster_id), fieldName: FIELD_NAME[r.field] || "", titles: JSON.parse(r.titles || "[]") })), requests: reqs, experts, fields: FIELDS.map(f => ({ k: f[0], l: f[1] })) }, 200, H);
         }
         if (p === "/api/admin/code" && req.method === "POST") { // رمز دخول جديد من 6 أرقام — يُعرض للمؤسس مرة واحدة ليرسله بالواتساب
           const b = await req.json(); const ro = await rosterExperts(); const pr = ro && ro.find(x => x.id === b.id);
@@ -376,6 +402,24 @@ export default {
           else await env.DB.prepare("INSERT INTO experts (id, token, name, org, phone, active, created, pin_hash, pin_at) VALUES (?, ?, ?, '', ?, 1, ?, ?, ?)").bind(pr.id, "x-" + tok(12), pr.name, pr.phone, now(), hash, now()).run();
           await logAct(env.DB, "admin", "code", pr.id);
           return json({ ok: true, code, phone: pr.phone, name: pr.name }, 200, H);
+        }
+        if (p === "/api/admin/seeker-del" && req.method === "POST") { // حذف سيرة من لوحة المؤسس: الملف يُحذف نهائياً
+          const b = await req.json(); const sk = await env.DB.prepare("SELECT * FROM seekers WHERE id = ?").bind(b.id).first();
+          if (!sk) return json({ ok: false, err: "notfound" }, 404, H);
+          if (sk.file_key) { try { await env.CV_BUCKET.delete(sk.file_key); } catch (e) {} }
+          await env.DB.prepare("UPDATE seekers SET status='deleted', text='', file_key='', titles='[]', skills='[]', token=?, updated=? WHERE id=?").bind("x-" + tok(12), now(), sk.id).run();
+          await logAct(env.DB, "admin", "delete", sk.id);
+          return json({ ok: true }, 200, H);
+        }
+        if (p === "/api/admin/hire" && req.method === "POST") { // تسجيل توظيف من المؤسس / حذفه / تعليم المقروء
+          const b = await req.json();
+          if (b.seen) { await env.DB.prepare("UPDATE hires SET seen=1 WHERE seen=0").run(); return json({ ok: true }, 200, H); }
+          if (b.del) { await env.DB.prepare("DELETE FROM hires WHERE id=?").bind(b.del).run(); return json({ ok: true }, 200, H); }
+          const sk = await env.DB.prepare("SELECT * FROM seekers WHERE id = ?").bind(b.id).first();
+          if (!sk) return json({ ok: false, err: "notfound" }, 404, H);
+          await env.DB.prepare("INSERT INTO hires (id, seeker_id, roster_id, name, phone, org, title, src, created, seen) VALUES (?,?,?,?,?,?,?,?,?,1)").bind("h-" + tok(10), sk.id, sk.roster_id, sk.name, sk.phone, clip(b.org, 80), clip(b.title, 80), "admin", now()).run();
+          await logAct(env.DB, "admin", "hire", sk.id);
+          return json({ ok: true }, 200, H);
         }
         if (p === "/api/admin/expert" && req.method === "POST") { const b = await req.json(); await env.DB.prepare("UPDATE experts SET active=?, token=? WHERE id=?").bind(b.active ? 1 : 0, b.active ? tok(24) : "x-" + tok(12), b.id || "").run(); return json({ ok: true }, 200, H); }
         if (p === "/api/admin/file") {

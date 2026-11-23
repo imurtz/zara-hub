@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>حصلت وظيفة؟ بلّغنا | مفاتيح الفرص</title>
+<meta name="description" content="حصلت على وظيفة عن طريق مفاتيح الفرص؟ بلّغنا نفرح معك." />
+<meta property="og:type" content="website" />
+<meta property="og:title" content="حصلت وظيفة؟ بلّغنا — مفاتيح الفرص" />
+<meta property="og:image" content="https://gzara.org/cv/og.jpg?v=2" />
+<meta name="robots" content="noindex" />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%23517771'/%3E%3Cpath d='M22 18h14l8 8v20a2 2 0 0 1-2 2H22a2 2 0 0 1-2-2V20a2 2 0 0 1 2-2z' fill='none' stroke='%23fff' stroke-width='3.5' stroke-linejoin='round'/%3E%3Cpath d='M27 34h11M27 40h8' stroke='%23e8cfaf' stroke-width='3.5' stroke-linecap='round'/%3E%3C/svg%3E" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --teal:#517771; --teal-dark:#3d5b56; --teal-tint:#eef3f2;
+    --tan:#b8906e; --tan-dark:#8f6a4b; --tan-tint:#f8f1ea;
+    --ink:#2b3532; --ink-soft:#6b7876; --line:#e4e9e8; --danger:#b3453f;
+    --shadow:0 14px 40px rgba(45,70,66,.10);
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{font-family:'IBM Plex Sans Arabic', sans-serif; color:var(--ink); min-height:100vh; padding:28px 16px 48px;
+    background:radial-gradient(circle at 12% 10%, var(--teal-tint) 0%, transparent 45%), radial-gradient(circle at 90% 88%, var(--tan-tint) 0%, transparent 45%), #fbfcfc;}
+  button,input,select{font-family:inherit;}
+  .wrap{max-width:600px; margin:0 auto;}
+  .hero{text-align:center; margin:8px 0 22px;}
+  .hero .tag{display:inline-block; font-size:12px; font-weight:600; color:var(--tan-dark); background:var(--tan-tint); border:1px solid #eedfd0; padding:4px 14px; border-radius:30px; margin-bottom:12px;}
+  .hero h1{font-size:clamp(24px, 6.2vw, 32px); font-weight:300; line-height:1.35;}
+  .hero h1 b{font-weight:700; background:linear-gradient(90deg, var(--teal), var(--tan)); -webkit-background-clip:text; background-clip:text; color:transparent;}
+  .hero p{color:var(--ink-soft); font-size:14px; margin-top:8px; line-height:1.8;}
+  .promise{display:inline-block; margin-top:14px !important; font-size:15px !important; color:var(--tan-dark) !important; font-weight:500; line-height:1.9; padding:8px 18px; border-inline-start:3px solid var(--tan); background:linear-gradient(90deg, transparent, var(--tan-tint)); border-radius:4px 12px 12px 4px;}
+  .steps{display:flex; justify-content:center; gap:8px; margin-bottom:16px;}
+  .steps i{width:34px; height:5px; border-radius:3px; background:var(--line);}
+  .steps i.on{background:var(--teal);}
+  .card{background:rgba(255,255,255,.85); backdrop-filter:blur(14px); -webkit-backdrop-filter:blur(14px); border:1px solid rgba(255,255,255,.9); border-radius:24px; box-shadow:var(--shadow); padding:26px 22px;}
+  .card h2{font-size:18px; font-weight:600; margin-bottom:6px;}
+  .card .sub{font-size:13.5px; color:var(--ink-soft); line-height:1.8; margin-bottom:16px;}
+  label.lb{display:block; font-weight:600; font-size:14px; margin:16px 0 8px;}
+  input[type=tel], input[type=text], select{width:100%; border:1.5px solid var(--line); background:#fff; border-radius:14px; padding:13px 15px; font-size:16px; color:var(--ink); outline:none;}
+  input[type=tel]{direction:ltr; text-align:right; letter-spacing:.5px;}
+  input:focus, select:focus{border-color:var(--teal); box-shadow:0 0 0 4px rgba(81,119,113,.12);}
+  .btn{width:100%; margin-top:18px; border:0; border-radius:16px; padding:15px; font-size:16.5px; font-weight:600; color:#fff; background:linear-gradient(90deg, var(--teal-dark), var(--teal)); cursor:pointer; box-shadow:0 10px 24px rgba(61,91,86,.25);}
+  .btn:disabled{opacity:.6; cursor:wait;}
+  .btn.ghost{background:#fff; color:var(--teal-dark); border:1.5px solid var(--line); box-shadow:none;}
+  .drop{border:2px dashed #cfdad8; background:linear-gradient(180deg,#fff,var(--teal-tint)); border-radius:18px; padding:26px 16px; text-align:center; cursor:pointer;}
+  .drop:hover,.drop.over{border-color:var(--teal);}
+  .drop svg{width:36px; height:36px; color:var(--teal); margin-bottom:6px;}
+  .drop b{display:block; font-size:15px;}
+  .drop span{font-size:12.5px; color:var(--ink-soft);}
+  .msg{display:none; margin-top:14px; font-size:13.5px; color:var(--danger); background:#fbefee; border-radius:12px; padding:10px 13px; line-height:1.7;}
+  .msg.show{display:block;}
+  .hello{background:var(--teal-tint); border-radius:14px; padding:12px 14px; font-size:14px; margin-bottom:6px;}
+  .busy{display:none; text-align:center; padding:20px 6px;}
+  .busy.show{display:block;}
+  .spin{width:38px; height:38px; border:3.5px solid var(--teal-tint); border-top-color:var(--teal); border-radius:50%; margin:0 auto 12px; animation:sp 1s linear infinite;}
+  @keyframes sp{to{transform:rotate(360deg)}}
+  .res{background:#fff; border:1px solid var(--line); border-radius:16px; padding:14px 16px; margin-bottom:6px;}
+  .res .f{font-size:20px; font-weight:700; color:var(--teal-dark);}
+  .res .t{font-size:13px; color:var(--ink-soft); margin-top:4px; line-height:1.7;}
+  .chips{display:flex; flex-wrap:wrap; gap:7px; margin-top:4px;}
+  .chip{display:inline-flex; align-items:center; gap:6px; background:var(--tan-tint); border:1px solid #eedfd0; color:#6e5038; border-radius:30px; padding:6px 12px; font-size:13.5px;}
+  .chip button{border:0; background:none; color:#a77; font-size:15px; cursor:pointer; line-height:1;}
+  .addt{display:flex; gap:8px; margin-top:8px;}
+  .addt input{flex:1; padding:10px 13px; font-size:14.5px;}
+  .addt button{border:0; background:var(--teal-tint); color:var(--teal-dark); border-radius:12px; padding:0 14px; font-weight:600; cursor:pointer;}
+  .consent{display:flex; gap:10px; align-items:flex-start; background:var(--tan-tint); border:1px solid #eedfd0; border-radius:14px; padding:12px 14px; margin-top:16px; font-size:13.5px; line-height:1.8; color:#5a4532; cursor:pointer;}
+  .consent input{width:20px; height:20px; margin-top:3px; accent-color:var(--teal); flex:none;}
+  .done{text-align:center;}
+  .done .ok{width:64px; height:64px; border-radius:50%; background:var(--teal-tint); color:var(--teal); display:flex; align-items:center; justify-content:center; margin:0 auto 14px;}
+  .mylink{display:flex; gap:8px; margin-top:14px; direction:ltr;}
+  .mylink input{flex:1; font-size:12.5px; padding:10px 12px; color:var(--ink-soft);}
+  .mylink button{border:0; background:var(--teal); color:#fff; border-radius:12px; padding:0 14px; font-weight:600; cursor:pointer;}
+  .links{display:flex; gap:14px; justify-content:center; margin-top:16px; font-size:13px;}
+  .links a, .links button{color:var(--teal-dark); background:none; border:0; text-decoration:underline; cursor:pointer; font:inherit; font-size:13px;}
+  .links .del{color:var(--danger);}
+  .foot{text-align:center; color:var(--ink-soft); font-size:12px; margin-top:20px; line-height:1.8;}
+  [hidden]{display:none !important;}
+  .party{font-size:46px; line-height:1; margin-bottom:6px;}
+  .chk{display:flex; gap:10px; align-items:flex-start; margin-top:18px; font-size:14px; line-height:1.8; background:var(--teal-tint); border-radius:14px; padding:12px 14px; cursor:pointer;}
+  .chk input{width:20px; height:20px; margin-top:4px; accent-color:var(--teal); flex:none;}
+  .back{display:block; text-align:center; margin-top:16px; color:var(--teal-dark); font-size:14px; font-weight:600; text-decoration:none;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="hero">
+    <span class="tag">مفاتيح الفرص</span>
+    <div class="party" aria-hidden="true">🎉</div>
+    <h1>مبروك <b>الوظيفة!</b></h1>
+    <p>فرحتك فرحتنا — بلّغنا عن وظيفتك اللي حصلتها عن طريق «مفاتيح الفرص».</p>
+  </div>
+
+  <div class="card" id="stForm">
+    <label class="lb" for="phone" style="margin-top:0">رقم جوالك</label>
+    <input type="tel" id="phone" inputmode="tel" maxlength="16" autocomplete="tel" placeholder="05XXXXXXXX" />
+    <label class="lb" for="org">جهة العمل</label>
+    <input type="text" id="org" maxlength="80" placeholder="اسم الشركة أو الجهة" />
+    <label class="lb" for="title">المسمى الوظيفي <span style="font-weight:400;color:var(--ink-soft)">(اختياري)</span></label>
+    <input type="text" id="title" maxlength="80" placeholder="مثال: محاسب" />
+    <label class="chk"><input type="checkbox" id="confirm" /><span>أؤكد أنني حصلت على هذه الوظيفة عن طريق منصة «مفاتيح الفرص».</span></label>
+    <div class="msg" id="m"></div>
+    <button class="btn" id="go">تأكيد</button>
+  </div>
+
+  <div class="card done" id="stDone" hidden style="text-align:center">
+    <div class="party" aria-hidden="true">🤝</div>
+    <h2 id="doneH">وصلنا خبرك… ألف مبروك!</h2>
+    <p class="sub" style="margin:8px 0 0">شكراً إنك رجعت وبلّغتنا، هذا يفرحنا ويساعدنا نكمل لغيرك. نتمنى لك التوفيق في عملك الجديد.</p>
+  </div>
+
+  <a class="back" href="/cv/">← الرجوع لصفحة السيرة</a>
+  <div class="foot">جمعية العوامية الخيرية — مفاتيح الفرص</div>
+</div>
+<script>
+(function(){
+  var API = "https://zara-cv.murtada-ud.workers.dev";
+  var $ = function(id){ return document.getElementById(id); };
+  function digits(s){ return String(s || "").replace(/[٠-٩]/g, function(d){ return "٠١٢٣٤٥٦٧٨٩".indexOf(d); }); }
+  function phoneNorm(s){ var d = digits(s).replace(/\D/g, "").replace(/^00/, ""); if(/^9665\d{8}$/.test(d)) d = "0" + d.slice(3); else if(/^5\d{8}$/.test(d)) d = "0" + d; return d; }
+  function msg(t){ $("m").textContent = t || ""; $("m").classList.toggle("show", !!t); }
+  try{ var q = new URLSearchParams(location.search).get("p"); if(q) $("phone").value = q; }catch(e){}
+  $("go").onclick = function(){
+    msg(); var ph = phoneNorm($("phone").value), org = $("org").value.trim();
+    if(!/^05\d{8}$/.test(ph)) return msg("رقم الجوال غير صحيح — مثال: 0501234567");
+    if(!org) return msg("اكتب جهة العمل.");
+    if(!$("confirm").checked) return msg("أكّد أن الوظيفة عن طريق «مفاتيح الفرص».");
+    var b = this; b.disabled = true; b.textContent = "جارٍ الإرسال…";
+    fetch(API + "/api/hired", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ phone: ph, org: org, title: $("title").value.trim(), confirm: true }) })
+      .then(function(r){ return r.json(); }).then(function(r){
+        b.disabled = false; b.textContent = "تأكيد";
+        if(!r.ok) return msg(r.err === "notfound" ? "ما لقينا هذا الرقم ضمن متدربي الورشة — اكتب الرقم اللي سجّلت فيه." : "تعذّر الإرسال الآن، حاول بعد لحظات.");
+        if(r.name) $("doneH").textContent = "وصلنا خبرك يا " + String(r.name).split(" ")[0] + "… ألف مبروك!";
+        $("stForm").hidden = true; $("stDone").hidden = false; window.scrollTo({ top: 0, behavior: "smooth" });
+      }).catch(function(){ b.disabled = false; b.textContent = "تأكيد"; msg("تعذّر الاتصال، تأكد من الإنترنت وحاول مرة ثانية."); });
+  };
+})();
+</script>
+</body>
+</html>
