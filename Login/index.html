@@ -1276,7 +1276,8 @@
   .hb-wrap{position:relative}
   .hb-btn{position:relative;width:40px;height:40px;border-radius:50%;border:1px solid var(--line);background:rgba(255,255,255,.7);color:var(--ink-2);display:flex;align-items:center;justify-content:center;cursor:pointer}
   .hb-btn i{position:absolute;top:-3px;left:-3px;min-width:18px;height:18px;border-radius:9px;background:#d9534f;color:#fff;font-style:normal;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;padding:0 5px;box-shadow:0 0 0 2px #fff}
-  .hb-panel{position:absolute;top:48px;right:0;z-index:300;width:min(380px,calc(100vw - 24px));max-height:70vh;overflow:auto;background:#fff;border:1px solid var(--line);border-radius:18px;box-shadow:0 18px 50px rgba(30,50,48,.18);padding:6px 0}
+  .hb-btn i[hidden],.hb-panel[hidden]{display:none !important}
+  .hb-panel{font-family:inherit;direction:rtl;position:fixed;top:80px;right:16px;z-index:10050;width:min(380px,calc(100vw - 24px));max-height:70vh;overflow:auto;background:#fff;border:1px solid var(--line);border-radius:18px;box-shadow:0 18px 50px rgba(30,50,48,.18);padding:6px 0}
   .hb-head{display:flex;align-items:center;justify-content:space-between;padding:10px 16px 8px;font-weight:700}
   .hb-head small{font-weight:400;color:var(--ink-2);font-size:12px}
   .hb-sec{font-size:11.5px;font-weight:700;color:#8f6a4b;padding:10px 16px 4px}
@@ -3469,16 +3470,17 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
     hb.unsub2 = db.collection("wsNotifs").where("to", "==", currentUser.id).onSnapshot(function(snap){ hb.mine = snap.docs.map(function(d){ return d.data(); }); hbRenderBtn(); }, function(){});
     hbRenderBtn();
     if(hb.bound) return; hb.bound = true;
+    document.body.appendChild(document.getElementById("hbPanel")); // خارج الشريط العلوي حتى لا تختفي خلف الأقسام
     document.getElementById("hbBtn").addEventListener("click", function(ev){
       ev.stopPropagation(); hb.open = !hb.open; var p = document.getElementById("hbPanel"); p.hidden = !hb.open;
-      if(hb.open){ hb.panelSeen = hbSeen(); hbRenderPanel(); try{ localStorage.setItem(hbSeenKey(), String(Date.now())); }catch(e){} hbRenderBtn(); }
+      if(hb.open){ var rc = this.getBoundingClientRect(), pw = Math.min(380, window.innerWidth - 24); p.style.top = (rc.bottom + 8) + "px"; p.style.right = Math.max(12, Math.min(window.innerWidth - rc.right, window.innerWidth - pw - 12)) + "px"; hb.panelSeen = hbSeen(); hbRenderPanel(); try{ localStorage.setItem(hbSeenKey(), String(Date.now())); }catch(e){} hbRenderBtn(); }
     });
     document.getElementById("hbPanel").addEventListener("click", function(ev){
       var b = ev.target.closest(".hb-it"); if(!b) return; ev.stopPropagation();
       var sec = b.getAttribute("data-hb-sec"); hb.open = false; document.getElementById("hbPanel").hidden = true;
       if(sec){ var t = document.querySelector('.nav-tab[data-section="' + sec + '"]'); if(t && t.style.display !== "none") t.click(); }
     });
-    document.addEventListener("click", function(ev){ if(hb.open && !ev.target.closest(".hb-wrap")){ hb.open = false; document.getElementById("hbPanel").hidden = true; } });
+    document.addEventListener("click", function(ev){ if(hb.open && !ev.target.closest(".hb-wrap") && !ev.target.closest("#hbPanel")){ hb.open = false; document.getElementById("hbPanel").hidden = true; } });
   }
 
   var GEMINI_PROXY_URL = "https://zara-gemini-proxy.murtada-ud.workers.dev/";
