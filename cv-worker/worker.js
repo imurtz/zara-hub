@@ -415,6 +415,13 @@ export default {
           const b = await req.json();
           if (b.seen) { await env.DB.prepare("UPDATE hires SET seen=1 WHERE seen=0").run(); return json({ ok: true }, 200, H); }
           if (b.del) { await env.DB.prepare("DELETE FROM hires WHERE id=?").bind(b.del).run(); return json({ ok: true }, 200, H); }
+          if (b.restore) { // إرجاع الشخص لقائمة المدربين: يُلغى كل تسجيل توظيف له (بلاغه، تسجيل المؤسس، تأكيد الخبير)
+            const ph = phoneNorm(b.phone || ""), sid = String(b.seeker || "");
+            await env.DB.prepare("DELETE FROM hires WHERE (phone = ? AND ? != '') OR (seeker_id = ? AND ? != '')").bind(ph, ph, sid, sid).run();
+            if (sid) await env.DB.prepare("UPDATE requests SET outcome='returned', outcome_at=? WHERE seeker_id = ? AND outcome = 'hired'").bind(now(), sid).run();
+            await logAct(env.DB, "admin", "hire:restore", sid || ph);
+            return json({ ok: true }, 200, H);
+          }
           const sk = await env.DB.prepare("SELECT * FROM seekers WHERE id = ?").bind(b.id).first();
           if (!sk) return json({ ok: false, err: "notfound" }, 404, H);
           await env.DB.prepare("INSERT INTO hires (id, seeker_id, roster_id, name, phone, org, title, src, created, seen) VALUES (?,?,?,?,?,?,?,?,?,1)").bind("h-" + tok(10), sk.id, sk.roster_id, sk.name, sk.phone, clip(b.org, 80), clip(b.title, 80), "admin", now()).run();
