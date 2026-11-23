@@ -57,6 +57,13 @@
   .search{margin:18px 0 12px;}
   .tiles{display:grid; grid-template-columns:repeat(auto-fill, minmax(165px, 1fr)); gap:10px;}
   .grp{margin-top:18px;}
+  .grp-row{display:flex; align-items:baseline; gap:6px;}
+  .grp-tg{flex:none; width:30px; height:30px; border-radius:50%; border:1px solid var(--line); background:#fff; color:var(--teal-dark); font-size:14px; cursor:pointer; transition:transform .2s; align-self:center;}
+  .grp.closed .grp-tg{transform:rotate(90deg);}
+  .grp.closed .tiles{display:none;}
+  .grp.closed .grp-h{padding-bottom:4px;}
+  .grp-all{display:flex; justify-content:flex-end; margin-top:12px;}
+  .grp-all button{border:0; background:none; color:var(--teal-dark); font:inherit; font-size:13px; font-weight:600; cursor:pointer;}
   .grp-h{display:flex; justify-content:space-between; align-items:baseline; width:100%; border:0; background:none; font:inherit; color:var(--ink); padding:4px 2px 10px; cursor:pointer; text-align:right;}
   .grp-h b{font-size:16px;}
   .grp-h span{font-size:12.5px; color:var(--teal-dark); font-weight:600;}
@@ -239,13 +246,23 @@
   function codeStyle(c){ var h = 0, s2 = String(c); for(var i = 0; i < s2.length; i++) h = (h * 31 + s2.charCodeAt(i)) >>> 0; var p = CODE_PAL[h % CODE_PAL.length]; return ' style="background:' + p[0] + ';color:' + p[1] + ';border-color:' + p[2] + '"'; }
   function tileHtml(t){ var cs = (t.codes || []).slice(0, 4).map(function(c){ return '<em' + codeStyle(c) + '>' + esc(c) + '</em>'; }).join("") + ((t.codes || []).length > 4 ? '<em>+' + (t.codes.length - 4) + '</em>' : ''); return '<button type="button" class="tile" data-title="' + esc(t.label) + '"><i>' + t.n + '</i><b>' + esc(t.label) + '</b><div class="codes" title="أرقام المرشحين">' + cs + '</div></button>'; }
   // المربعات مرتبة تحت عناوين المجالات؛ وعند البحث تظهر النتائج دون عناوين
+  // حالة طي المجالات تُحفظ على جهاز المدرب (مفتوحة افتراضياً)
+  function hrCol(){ try{ return JSON.parse(localStorage.getItem("hrCollapsed") || "{}"); }catch(e){ return {}; } }
+  function hrColSet(o){ try{ localStorage.setItem("hrCollapsed", JSON.stringify(o)); }catch(e){} }
+  document.addEventListener("click", function(e){
+    var t = e.target.closest("[data-tg]");
+    if(t){ var o = hrCol(), k = t.getAttribute("data-tg"); if(o[k]) delete o[k]; else o[k] = 1; hrColSet(o); paintTiles(); return; }
+    var a = e.target.closest("[data-tgall]");
+    if(a){ var o2 = {}; if(a.getAttribute("data-tgall") === "close") document.querySelectorAll(".grp-tg").forEach(function(b){ o2[b.getAttribute("data-tg")] = 1; }); hrColSet(o2); paintTiles(); }
+  });
   function paintTiles(){
     var q = $("q").value.trim(), all = (HOME && HOME.tiles || []), list = all.filter(function(t){ return !q || nk(t.label).indexOf(nk(q)) > -1; });
     if(!q && list.length){
       var groups = (HOME.fields || []).map(function(f){ return { f: f, ts: all.filter(function(t){ return t.field === f.k; }) }; }).filter(function(g){ return g.ts.length; });
       var rest = all.filter(function(t){ return !(HOME.fields || []).some(function(f){ return f.k === t.field; }); });
       if(rest.length) groups.push({ f: { k: "", l: "مسميات أخرى", n: rest.length }, ts: rest });
-      $("tiles").innerHTML = groups.map(function(g){ return '<div class="grp"><button type="button" class="grp-h"' + (g.f.k ? ' data-field="' + g.f.k + '" data-l="' + esc(g.f.l) + '"' : '') + '><b>' + esc(g.f.l) + '</b><span>' + g.f.n + ' ' + (g.f.n === 1 ? "مرشح" : "مرشحين") + (g.f.k ? ' · عرض الكل ←' : '') + '</span></button><div class="tiles">' + g.ts.map(tileHtml).join("") + '</div></div>'; }).join("");
+      var col = hrCol(), allClosed = groups.every(function(g){ return col[g.f.k || "_"]; });
+      $("tiles").innerHTML = '<div class="grp-all"><button type="button" data-tgall="' + (allClosed ? "open" : "close") + '">' + (allClosed ? "فتح كل المجالات ▾" : "طي كل المجالات ▴") + '</button></div>' + groups.map(function(g){ var gk = g.f.k || "_", closed = !!col[gk]; return '<div class="grp' + (closed ? ' closed' : '') + '"><div class="grp-row"><button type="button" class="grp-tg" data-tg="' + gk + '" aria-expanded="' + !closed + '" title="' + (closed ? "فتح" : "طي") + '">▾</button><button type="button" class="grp-h"' + (g.f.k ? ' data-field="' + g.f.k + '" data-l="' + esc(g.f.l) + '"' : '') + '><b>' + esc(g.f.l) + '</b><span>' + g.f.n + ' ' + (g.f.n === 1 ? "مرشح" : "مرشحين") + (g.f.k ? ' · عرض الكل ←' : '') + '</span></button></div><div class="tiles">' + g.ts.map(tileHtml).join("") + '</div></div>'; }).join("");
       return;
     }
     $("tiles").innerHTML = list.length ? '<div class="tiles">' + list.map(tileHtml).join("") + '</div>' + (q ? '<div class="nores" style="padding-top:14px">ما هي اللي تبيها؟ <button type="button" data-add="' + esc(q) + '">＋ أضف «' + esc(q) + '» كوظيفة</button></div>' : '') : q ? '<div class="nores">ما لقينا «' + esc(q) + '» بين المرشحين الحاليين.<br><button type="button" data-add="' + esc(q) + '">＋ أضفها كوظيفة تبحث لها</button></div>' : '<div class="empty">' + (HOME && HOME.total ? "" : "لا توجد سير ذاتية بعد — ستظهر هنا فور رفعها.") + '</div>';
