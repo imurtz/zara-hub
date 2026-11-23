@@ -260,7 +260,7 @@
 
   // فتح الرابط الخاص (?t=) أو رمز محفوظ على الجهاز
   var t = new URLSearchParams(location.search).get("t"); try{ t = t || localStorage.getItem("zaraCvToken"); }catch(e){}
-  if(t) api("/api/me?t=" + encodeURIComponent(t)).then(function(r){ if(r.ok){ S.token = t; S.profile = r.profile; save(); fillDone(); show("stDone"); } else { try{ localStorage.removeItem("zaraCvToken"); }catch(e){} } }).catch(function(){});
+  if(t) api("/api/me?t=" + encodeURIComponent(t)).then(function(r){ if(r.ok){ S.token = t; S.profile = r.profile; save(); if(!r.profile.consent){ fillConfirm(); show("stConfirm"); msg("m3", "باقي خطوة أخيرة: راجع البيانات ثم اضغط «تأكيد وإرسال» حتى تظهر سيرتك للخبراء."); } else { fillDone(); show("stDone"); } } else { try{ localStorage.removeItem("zaraCvToken"); }catch(e){} } }).catch(function(){});
 })();
 </script>
 </body>
