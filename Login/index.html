@@ -3454,6 +3454,7 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
     if(rest.length) h += '<div class="hb-sec">في أقسامك</div>' + rest.slice(0, 80).map(row).join("");
     el.innerHTML = h;
   }
+  function hbStop(){ try{ if(hb.unsub) hb.unsub(); if(hb.unsub2) hb.unsub2(); clearInterval(hb.timer); }catch(e){} hb.started = false; hb.feed = []; hb.mine = []; hb.open = false; var p = document.getElementById("hbPanel"); if(p) p.hidden = true; var c = document.getElementById("hbCount"); if(c) c.hidden = true; }
   function hbStart(){
     if(hb.started || !currentUser) return; hb.started = true;
     var today = function(){ return toISODate(new Date()); }, day = today();
@@ -3462,8 +3463,10 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
       hb.unsub = db.collection("hubFeed").where("day", "==", day).onSnapshot(function(snap){ hb.feed = snap.docs.map(function(d){ return d.data(); }); hbRenderBtn(); }, function(e){ console.warn("hubFeed", e && e.code); });
     };
     sub();
-    setInterval(function(){ var d = today(); if(d !== day){ day = d; sub(); } }, 60000); // يوم جديد = جرس جديد
-    db.collection("wsNotifs").where("to", "==", currentUser.id).onSnapshot(function(snap){ hb.mine = snap.docs.map(function(d){ return d.data(); }); hbRenderBtn(); }, function(){});
+    hb.timer = setInterval(function(){ var d = today(); if(d !== day){ day = d; sub(); } }, 60000); // يوم جديد = جرس جديد
+    hb.unsub2 = db.collection("wsNotifs").where("to", "==", currentUser.id).onSnapshot(function(snap){ hb.mine = snap.docs.map(function(d){ return d.data(); }); hbRenderBtn(); }, function(){});
+    hbRenderBtn();
+    if(hb.bound) return; hb.bound = true;
     document.getElementById("hbBtn").addEventListener("click", function(ev){
       ev.stopPropagation(); hb.open = !hb.open; var p = document.getElementById("hbPanel"); p.hidden = !hb.open;
       if(hb.open){ hb.panelSeen = hbSeen(); hbRenderPanel(); try{ localStorage.setItem(hbSeenKey(), String(Date.now())); }catch(e){} hbRenderBtn(); }
@@ -4011,6 +4014,7 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
   });
 
   document.getElementById("logoutBtn").addEventListener("click", function(){
+    hbStop();
     clearSession();
     appScreen.style.display = "none";
     loginScreen.style.display = "flex";
