@@ -4291,8 +4291,8 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
       cvRender();
     }).catch(function(){ cvUI.busy = false; cvUI.err = "load"; cvRender(); });
   }
-  // رابط واتساب: على الجوال wa.me، وعلى الكمبيوتر واتساب ويب (برنامج واتساب للماك يحوّل الإيموجي إلى علامات استفهام)
-  function waLink(phone, text){ var ph = "966" + String(phone || "").replace(/\D/g, "").replace(/^966/, "").replace(/^0/, ""); var mob = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent); return (mob ? "https://wa.me/" + ph + "?text=" : "https://web.whatsapp.com/send?phone=" + ph + "&text=") + encodeURIComponent(text); }
+  // رابط واتساب عبر wa.me: يفتح صفحة واتساب اللي تخيّرك بين التطبيق وواتساب ويب
+  function waLink(phone, text){ var ph = "966" + String(phone || "").replace(/\D/g, "").replace(/^966/, "").replace(/^0/, ""); return "https://wa.me/" + ph + "?text=" + encodeURIComponent(text); }
   function cvDate(t){ if(!t) return ""; var d = new Date(t); return d.toLocaleDateString("ar-SA-u-ca-gregory-nu-latn", { day: "numeric", month: "short", year: "numeric" }); }
   function cvRender(){
     var root = document.getElementById("cvRoot"); if(!root || !currentUser || !can("cv.view")) return;
