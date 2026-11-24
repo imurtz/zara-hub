@@ -510,7 +510,7 @@ body.embedded header.top{justify-content:flex-start}
 .d-e.cover.flip .cv-q{border-top:0;margin-top:4.4mm;padding-top:0}
 .d-e.cover.flip .cv-q .qrbox{width:19mm;height:19mm}
 .d-e.cover.flip .cv-q p{font-size:3.8mm}
-.d-e.cover.flip .logo{width:30mm;padding:2mm 2.6mm;background:#fff;border-radius:3.5mm;mix-blend-mode:normal;box-shadow:0 .6mm 2.4mm rgba(81,118,112,.12)}
+.d-e.cover.flip .logo{width:32mm;padding:0;background:none;border-radius:0;box-shadow:none;mix-blend-mode:normal}
 .d-e.cover.flip .cv-t h1{font-size:11.5mm}
 .d-e.cover.flip .cv-y b{font-size:9.5mm}
 .d-e.cover.flip .cv-lic{right:auto;left:14mm;bottom:12mm}
@@ -3335,7 +3335,7 @@ function coverArt(c){return c.artImg?blob(c.artImg):"cover/"+(COVER_ART.some(x=>
 function eCover(c){const s=S(),lic=s.licNo&&s.licNo.trim();
  const feats=String(c.feats||"").split(/[،,\n]/).map(x=>x.trim()).filter(Boolean).slice(0,6);
  const st=[1,2,3].map(n=>[c["st"+n+"v"],c["st"+n+"u"],c["st"+n+"l"]]).filter(x=>x[0]);
- return `<section class="page d-e cover flip"><img class="cv-art" src="${coverArt(c)}" alt=""><div class="cv-veil"></div>${logo()}
+ return `<section class="page d-e cover flip"><img class="cv-art" src="${coverArt(c)}" alt=""><div class="cv-veil"></div><img class="logo" src="${S().logo?blob(S().logo):"cover/logo.png"}" alt="شعار الجمعية">
  <div class="cv-t"><h1>${esc(c.title)}</h1><div class="cv-y"><b>${YEAR}</b><span>${hijriSpan()} هـ</span></div></div>
  <div class="cv-card"><div class="cv-ch"><b>${esc(c.kick)}</b><span>${esc(c.sub)}</span></div>
   <ul class="cv-f">${feats.map(f=>`<li>${esc(f)}</li>`).join("")}</ul>
