@@ -58,6 +58,8 @@ header.top{display:flex;flex-wrap:wrap;gap:14px 24px;align-items:flex-end;justif
 .field input:focus-visible,button:focus-visible,select:focus-visible{outline:2px solid var(--focus);outline-offset:1px}
 .row3{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .img{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.cv-side{margin-bottom:8px;display:flex}
+.cv-side button{flex:1;font-size:.78rem}
 .cv-pick{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
 .cv-pick button{border:2px solid var(--line);border-radius:12px;background:#fff;padding:4px;cursor:pointer;font:inherit;font-size:.8rem;display:flex;flex-direction:column;gap:4px;align-items:stretch}
 .cv-pick button[aria-pressed="true"]{border-color:#517670;box-shadow:0 0 0 3px rgba(81,118,112,.18)}
@@ -472,6 +474,13 @@ body.embedded header.top{justify-content:flex-start}
 .d-e.cover .cv-q p{margin:0;font-size:4mm;font-weight:700;line-height:1.45;color:var(--cg)}
 .d-e.cover .cv-lic{right:14mm;bottom:12mm;background:var(--cg);color:#fff;border-radius:10mm;padding:1.1mm 4mm;font-size:2.4mm;font-weight:500;white-space:nowrap}
 .d-e.cover .cv-lic b{font-weight:700}
+/* المبنى يميناً: كل المحتوى في العمود الأيسر */
+.d-e.cover.flip .cv-art{object-position:right center}
+.d-e.cover.flip .cv-veil{background:linear-gradient(90deg,rgba(250,248,244,.9) 0,rgba(250,248,244,.72) 34%,rgba(250,248,244,0) 56%)}
+.d-e.cover.flip .cv-t{right:auto;left:14mm;width:88mm;top:27mm}
+.d-e.cover.flip .cv-card{right:auto;left:14mm;top:58mm}
+.d-e.cover.flip .cv-lic{right:auto;left:14mm}
+.d-e.cover.flip .handle{left:auto;right:12mm}
 .d-e.cover .handle{left:12mm;top:auto;bottom:11mm;font-size:2.6mm;color:rgba(81,118,112,.75);letter-spacing:.3mm}
 .d-e .photo img{width:100%;height:100%;object-fit:cover;display:block}
 .d-e .phimg{width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:repeating-linear-gradient(135deg,#dfe6e2 0 3mm,#d3dcd7 3mm 6mm)}
@@ -2985,7 +2994,7 @@ function defGift(i){return{h1:GIFT[i][0],h2:GIFT[i][1],camp:CAMP[i][0],url:"http
 const defSettings=()=>({licNo:"",licStart:"",licEnd:"",handle:"AwamiaCharity",design:"a",font:"1",logo:"",colG:"#517670",colB:"#b8926d",lblSponsor:"برعاية",lblSponsors:"رعاة التقويم",lblGo:"ابدأ خَيْرَكَ الآن",lblArtist:"الفنان",lblLicNo:"رقم ترخيص التبرعات",lblLicStart:"تاريخ البدء",lblLicEnd:"تاريخ الانتهاء",fTitle:"اريد جعل هذه المساهمة هدية",fName:"إسم المرسل",fTo:"إسم المهدي إليه",fPhone:"جوال المهدي إليه",fModel:"نموذج الإهداء",fOpts:"بدون، الوالدين، الإخوة، الأصدقاء"});
 /* الغلاف الأمامي: لوحة فنية للمبنى الإداري (ثلاث لوحات جاهزة أو صورة مرفوعة) + بيانات المشروع على نهج غلاف 2026 */
 const COVER_ART=[["art1","لوحة الطبقات"],["art2","الرسم الخطّي"],["art3","الألوان المائية"]];
-const defCover=()=>({art:"art1",artImg:"",title:"التقويم السنوي",kick:"المبنى الإداري",sub:"يضم المشروع",feats:"مكاتب إدارية، قاعة احتفالات، مكتبة وحديقة سطح، مساحات مفتوحة للاستثمار، مواقف سيارات",st1v:"1638",st1u:"م²",st1l:"مساحة أرض المشروع",st2v:"3590",st2u:"م²",st2l:"المساحة الإجمالية للبناء",st3v:"04",st3u:"ونصف",st3l:"عدد الطوابق",qrLine:"ساهم في بناء|مستقبل مجتمعنا",url:"https://example.com/awamia/2027/building",qrImg:""});
+const defCover=()=>({art:"art1",artImg:"",side:"left",title:"التقويم السنوي",kick:"المبنى الإداري",sub:"يضم المشروع",feats:"مكاتب إدارية، قاعة احتفالات، مكتبة وحديقة سطح، مساحات مفتوحة للاستثمار، مواقف سيارات",st1v:"1638",st1u:"م²",st1l:"مساحة أرض المشروع",st2v:"3590",st2u:"م²",st2l:"المساحة الإجمالية للبناء",st3v:"04",st3u:"ونصف",st3l:"عدد الطوابق",qrLine:"ساهم في بناء|مستقبل مجتمعنا",url:"https://example.com/awamia/2027/building",qrImg:""});
 function defaults(id){if(id==="settings")return defSettings();if(id==="cover")return defCover();const n=+id.slice(1)-1;return id[0]==="m"?defMonth(n):defGift(n)}
 
 /* ---------- state ---------- */
@@ -3290,7 +3299,7 @@ function coverArt(c){return c.artImg?blob(c.artImg):"cover/"+(COVER_ART.some(x=>
 function eCover(c){const s=S(),lic=s.licNo&&s.licNo.trim();
  const feats=String(c.feats||"").split(/[،,\n]/).map(x=>x.trim()).filter(Boolean).slice(0,6);
  const st=[1,2,3].map(n=>[c["st"+n+"v"],c["st"+n+"u"],c["st"+n+"l"]]).filter(x=>x[0]);
- return `<section class="page d-e cover"><img class="cv-art" src="${coverArt(c)}" alt=""><div class="cv-veil"></div>${logo()}
+ return `<section class="page d-e cover${c.side==="right"?" flip":""}"><img class="cv-art" src="${coverArt(c)}" alt=""><div class="cv-veil"></div>${logo()}
  <div class="cv-t"><h1>${esc(c.title)}</h1><div class="cv-y"><b>${YEAR}</b><span>${hijriSpan()} هـ</span></div></div>
  <div class="cv-card"><div class="cv-ch"><b>${esc(c.kick)}</b><span>${esc(c.sub)}</span></div>
   <ul class="cv-f">${feats.map(f=>`<li>${esc(f)}</li>`).join("")}</ul>
@@ -3435,7 +3444,7 @@ function renderEditor(){if(cur.kind==="c")return renderCoverEditor();const id=cu
  $("#editor").innerHTML=h;updatePill()}
 const CF=[["title","العنوان الرئيسي","t"],["kick","عنوان المشروع","t"],["sub","السطر تحته","t"],["feats","مكونات المشروع (افصل بفاصلة)","t"]];
 function renderCoverEditor(){const id="cover",c=draft.cover;
- let h=`<h2>الغلاف الأمامي</h2><p class="hint">السنة الميلادية والهجرية تُحسبان تلقائيًا (${YEAR} · ${hijriSpan()} هـ). الشعار والترخيص من الإعدادات العامة.</p><h3>لوحة الغلاف</h3><div class="cv-pick">${COVER_ART.map(a=>`<button type="button" data-art="${a[0]}" aria-pressed="${!c.artImg&&c.art===a[0]}"><img src="cover/${a[0]}.webp" alt=""><span>${a[1]}</span></button>`).join("")}</div>`;
+ let h=`<h2>الغلاف الأمامي</h2><p class="hint">السنة الميلادية والهجرية تُحسبان تلقائيًا (${YEAR} · ${hijriSpan()} هـ). الشعار والترخيص من الإعدادات العامة.</p><h3>لوحة الغلاف</h3><div class="seg cv-side" role="group" aria-label="مكان المبنى في اللوحة"><button type="button" data-side="left" aria-pressed="${c.side!=="right"}">المبنى يسار · البيانات يمين</button><button type="button" data-side="right" aria-pressed="${c.side==="right"}">المبنى يمين · البيانات يسار</button></div><div class="cv-pick">${COVER_ART.map(a=>`<button type="button" data-art="${a[0]}" aria-pressed="${!c.artImg&&c.art===a[0]}"><img src="cover/${a[0]}.webp" alt=""><span>${a[1]}</span></button>`).join("")}</div>`;
  h+=fieldHtml(id,["artImg","أو ارفع لوحة أخرى (أفقية 7:5، المبنى يساراً والمساحة الهادئة يميناً)","i"]);
  h+=CF.map(f=>fieldHtml(id,f)).join("");
  h+=`<h3>أرقام المشروع</h3>`+[1,2,3].map(n=>`<div class="row3">${fieldHtml(id,["st"+n+"v","الرقم","t"])}${fieldHtml(id,["st"+n+"u","الوحدة","t"])}</div>${fieldHtml(id,["st"+n+"l","الوصف","t"])}`).join("");
@@ -3496,6 +3505,7 @@ document.addEventListener("click",e=>{const t=e.target.closest("button");if(!t)r
  else if(t.id==="printbtn")printAll();
  else if(t.dataset.d){if(SEC==="approved"||CANW===false)return;draft.settings.design=t.dataset.d;renderAll();autosaveSoon()}
  else if(t.dataset.m)go(+t.dataset.m,cur.kind==="c"?"m":cur.kind);
+ else if(t.dataset.side){draft.cover.side=t.dataset.side;renderEditor();drawPreview();refreshUi();autosaveSoon()}
  else if(t.dataset.art){draft.cover.art=t.dataset.art;draft.cover.artImg="";renderEditor();drawPreview();refreshUi();autosaveSoon()}
  else if(t.parentElement&&t.parentElement.id==="kind")go(cur.mo,t.dataset.k);
  else if(t.id==="prev")step(-1);else if(t.id==="next")step(1);
