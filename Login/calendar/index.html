@@ -58,6 +58,10 @@ header.top{display:flex;flex-wrap:wrap;gap:14px 24px;align-items:flex-end;justif
 .field input:focus-visible,button:focus-visible,select:focus-visible{outline:2px solid var(--focus);outline-offset:1px}
 .row3{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .img{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.cv-pick{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.cv-pick button{border:2px solid var(--line);border-radius:12px;background:#fff;padding:4px;cursor:pointer;font:inherit;font-size:.8rem;display:flex;flex-direction:column;gap:4px;align-items:stretch}
+.cv-pick button[aria-pressed="true"]{border-color:#517670;box-shadow:0 0 0 3px rgba(81,118,112,.18)}
+.cv-pick img{width:100%;aspect-ratio:7/5;object-fit:cover;border-radius:8px;display:block}
 .thumb{width:64px;height:48px;border-radius:6px;background:var(--soft) center/cover;border:1px solid var(--line);flex:none}
 .hint{font-size:.78rem;color:var(--muted);margin:0}
 .savebar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;border-top:1px solid var(--line);padding-top:12px}
@@ -442,6 +446,33 @@ body.embedded header.top{justify-content:flex-start}
 .d-e.page{position:relative;width:210mm;height:150mm;overflow:hidden;background:#fff;page-break-after:always;color:var(--cg);font-family:var(--fb),sans-serif}
 .d-e.page>*{position:absolute}
 .d-e .photo{left:0;top:0;width:64mm;height:150mm;overflow:hidden}
+.d-e.cover .cv-art{left:0;top:0;width:210mm;height:150mm;object-fit:cover;object-position:left center}
+.d-e.cover .cv-veil{inset:0;background:linear-gradient(270deg,rgba(250,248,244,.9) 0,rgba(250,248,244,.72) 34%,rgba(250,248,244,0) 56%)}
+.d-e.cover .logo{left:auto;right:14mm;top:11mm;width:34mm}
+.d-e.cover .cv-t{right:14mm;top:31mm;text-align:right}
+.d-e.cover .cv-t h1{margin:0;font-family:var(--fd),sans-serif;font-weight:800;font-size:13.5mm;line-height:1.1;color:var(--cg);white-space:nowrap}
+.d-e.cover .cv-y{display:flex;align-items:baseline;gap:4mm;margin-top:1.5mm}
+.d-e.cover .cv-y b{font-family:var(--fd),sans-serif;font-size:12mm;font-weight:700;color:var(--cb);letter-spacing:.6mm;line-height:1}
+.d-e.cover .cv-y span{font-size:4.6mm;font-weight:600;color:var(--cg)}
+.d-e.cover .cv-card{right:14mm;top:70mm;width:88mm;padding:4mm 5mm;background:rgba(255,255,255,.82);border:.3mm solid rgba(184,146,109,.45);border-radius:5mm;box-shadow:0 1.5mm 6mm rgba(81,118,112,.1)}
+.d-e.cover .cv-card>*{position:static}
+.d-e.cover .cv-ch{display:flex;align-items:center;gap:2.5mm}
+.d-e.cover .cv-ch b{background:var(--cg);color:#fff;border-radius:10mm;padding:.8mm 3.6mm;font-size:3.6mm;font-weight:700}
+.d-e.cover .cv-ch span{font-size:3.2mm;font-weight:600;color:var(--cb)}
+.d-e.cover .cv-f{list-style:none;margin:2.6mm 0 0;padding:0;display:grid;grid-template-columns:1fr 1fr;gap:1.1mm 3mm}
+.d-e.cover .cv-f li{font-size:2.9mm;font-weight:500;color:var(--cg);display:flex;align-items:center;gap:1.4mm;white-space:nowrap}
+.d-e.cover .cv-f li::before{content:"";width:1.4mm;height:1.4mm;border-radius:50%;background:var(--cb);flex:none}
+.d-e.cover .cv-s{display:flex;gap:2.4mm;margin-top:3mm}
+.d-e.cover .cv-s div{flex:1;background:rgba(81,118,112,.07);border-radius:3mm;padding:1.6mm 2mm;text-align:center}
+.d-e.cover .cv-s b{display:block;font-family:var(--fd),sans-serif;font-size:5.2mm;font-weight:700;color:var(--cb);line-height:1.1}
+.d-e.cover .cv-s b small{font-size:2.4mm;font-weight:600;margin-inline-start:.6mm}
+.d-e.cover .cv-s span{display:block;font-size:2.2mm;color:var(--cg);margin-top:.6mm;line-height:1.3}
+.d-e.cover .cv-q{display:flex;align-items:center;gap:3mm;margin-top:3mm;padding-top:2.6mm;border-top:.25mm dashed rgba(184,146,109,.55)}
+.d-e.cover .cv-q .qrbox{width:21mm;height:21mm;flex:none;border:.3mm solid var(--cb);border-radius:2.6mm;display:flex;align-items:center;justify-content:center;background:#fff}
+.d-e.cover .cv-q p{margin:0;font-size:4mm;font-weight:700;line-height:1.45;color:var(--cg)}
+.d-e.cover .cv-lic{right:14mm;bottom:8mm;background:var(--cg);color:#fff;border-radius:10mm;padding:1.1mm 4mm;font-size:2.4mm;font-weight:500;white-space:nowrap}
+.d-e.cover .cv-lic b{font-weight:700}
+.d-e.cover .handle{left:8mm;top:auto;bottom:6mm;font-size:2.6mm;color:rgba(81,118,112,.75);letter-spacing:.3mm}
 .d-e .photo img{width:100%;height:100%;object-fit:cover;display:block}
 .d-e .phimg{width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:repeating-linear-gradient(135deg,#dfe6e2 0 3mm,#d3dcd7 3mm 6mm)}
 .d-e .phimg span{font-size:2.8mm;color:var(--cg);opacity:.6}
@@ -599,7 +630,7 @@ body.embedded header.top{justify-content:flex-start}
       <div class="stage" id="stage"><div class="mk-shade"></div><div class="mk-body" id="mkbody"></div><div class="rig" id="rig"><div class="pagebox" id="pagebox"></div></div><div id="mockcells"></div><div class="mk-over" id="mkover"></div></div><div class="mockbar"><button class="btn" id="mkdl">تنزيل صورة الموك أب</button><button class="btn" id="mkwhite">خلفية بيضاء</button><label class="btn" id="mkuplbl" hidden>رفع صورة خلفية<input type="file" id="mkup" accept="image/png,image/jpeg,image/webp" hidden></label><button class="btn" id="mkreset" hidden>الخلفية الافتراضية</button><span class="mkhint" id="mkhint" hidden>مقاس صورة الخلفية: 4000 × 3200 بكسل لأعلى نقاوة (وأقلّه 2400 × 1920) — أفقية بنسبة 5:4 وبصيغة JPG أو PNG — والتقويم يقف في منتصف الصورة وقاعدته في ثلثها السفلي.</span><span class="mkmsg" id="mkmsg" role="status"></span></div>
       <div class="navrow">
         <button class="btn" id="prev" aria-label="الصفحة السابقة">‹ السابقة</button>
-        <div class="seg" id="kind" role="group" aria-label="نوع الصفحة"><button data-k="g">صفحة الموسم</button><button data-k="m">صفحة الشهر</button></div>
+        <div class="seg" id="kind" role="group" aria-label="نوع الصفحة"><button data-k="c">الغلاف</button><button data-k="g">صفحة الموسم</button><button data-k="m">صفحة الشهر</button></div>
         <button class="btn" id="next" aria-label="الصفحة التالية">التالية ›</button>
       </div>
       <div class="months" id="months" role="group" aria-label="الأشهر"></div>
@@ -2952,11 +2983,14 @@ const SSN=[
  ["المربعانية", "من 7 ديسمبر · 40 يوماً", "أول الشتاء الحقيقي وأبرد أيام السنة، تطول فيها الليالي ويشتد البرد.", "", "في أربعينية البرد|دفّئ أسرة بمسحة"]];
 function defGift(i){return{h1:GIFT[i][0],h2:GIFT[i][1],camp:CAMP[i][0],url:"https://example.com/awamia/2027/gift-"+pad(i+1),qrImg:"",titleImg:"",sTitle:SSN[i][0],sWhen:SSN[i][1],sLine:SSN[i][2],proverb:SSN[i][3],vLine:SSN[i][4]}}
 const defSettings=()=>({licNo:"",licStart:"",licEnd:"",handle:"AwamiaCharity",design:"a",font:"1",logo:"",colG:"#517670",colB:"#b8926d",lblSponsor:"برعاية",lblSponsors:"رعاة التقويم",lblGo:"ابدأ خَيْرَكَ الآن",lblArtist:"الفنان",lblLicNo:"رقم ترخيص التبرعات",lblLicStart:"تاريخ البدء",lblLicEnd:"تاريخ الانتهاء",fTitle:"اريد جعل هذه المساهمة هدية",fName:"إسم المرسل",fTo:"إسم المهدي إليه",fPhone:"جوال المهدي إليه",fModel:"نموذج الإهداء",fOpts:"بدون، الوالدين، الإخوة، الأصدقاء"});
-function defaults(id){if(id==="settings")return defSettings();const n=+id.slice(1)-1;return id[0]==="m"?defMonth(n):defGift(n)}
+/* الغلاف الأمامي: لوحة فنية للمبنى الإداري (ثلاث لوحات جاهزة أو صورة مرفوعة) + بيانات المشروع على نهج غلاف 2026 */
+const COVER_ART=[["art1","لوحة الطبقات"],["art2","الرسم الخطّي"],["art3","الألوان المائية"]];
+const defCover=()=>({art:"art1",artImg:"",title:"التقويم السنوي",kick:"المبنى الإداري",sub:"يضم المشروع",feats:"مكاتب إدارية، قاعة احتفالات، مكتبة وحديقة سطح، مساحات مفتوحة للاستثمار، مواقف سيارات",st1v:"1638",st1u:"م²",st1l:"مساحة أرض المشروع",st2v:"3590",st2u:"م²",st2l:"المساحة الإجمالية للبناء",st3v:"04",st3u:"ونصف",st3l:"عدد الطوابق",qrLine:"ساهم في بناء|مستقبل مجتمعنا",url:"https://example.com/awamia/2027/building",qrImg:""});
+function defaults(id){if(id==="settings")return defSettings();if(id==="cover")return defCover();const n=+id.slice(1)-1;return id[0]==="m"?defMonth(n):defGift(n)}
 
 /* ---------- state ---------- */
 const clone=o=>JSON.parse(JSON.stringify(o));
-const IDS=["settings"];for(let i=1;i<=12;i++){IDS.push("m"+pad(i),"g"+pad(i))}
+const IDS=["settings","cover"];for(let i=1;i<=12;i++){IDS.push("m"+pad(i),"g"+pad(i))}
 const saved={},draft={};IDS.forEach(id=>{saved[id]=defaults(id);draft[id]=clone(saved[id])});
 const cur={mo:1,kind:"m"};
 let DB=null,ASSETS=null,DL=null,CANW=null,CANEDIT=null,BRIDGE=null;
@@ -2969,7 +3003,7 @@ const S=()=>draft.settings;
 const $=s=>document.querySelector(s);
 const esc=s=>String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const blob=id=>/^(https?:|data:|blob:)/.test(id)?id:"/_blob/"+id;
-const curId=()=>cur.kind+pad(cur.mo);
+const curId=()=>cur.kind==="c"?"cover":cur.kind+pad(cur.mo);
 
 /* ---------- dates (Umm al-Qura via Intl) ---------- */
 const HF=new Intl.DateTimeFormat("en-u-ca-islamic-umalqura-nu-latn",{day:"numeric",month:"numeric",year:"numeric",timeZone:"UTC"});
@@ -3250,8 +3284,22 @@ function demoPhoto(i){const s=DEMO_SCN[i],k=s[9];
 const DEMO_LOGOS=DEMO_SP.map((_,i)=>demoLogo(i)),DEMO_PHOTOS=DEMO_SCN.map((_,i)=>demoPhoto(i));
 const demo=(mo,m)=>Object.assign({},m,{sponsorImg:m.sponsorImg||DEMO_LOGOS[mo-1],photo:m.photo||DEMO_PHOTOS[mo-1],artist:m.artist==="اسم الفنان"?DEMO_ART[mo-1]:m.artist});
 
+/* سنتا الهجري اللتان يغطيهما العام الميلادي (أول يوم وآخر يوم — أم القرى)، بالترتيب الصحيح للقراءة من اليمين */
+function hijriSpan(){const a=hij(1,1).year,b=hij(12,31).year;return a===b?String(a):a+" – "+b}
+function coverArt(c){return c.artImg?blob(c.artImg):"cover/"+(COVER_ART.some(x=>x[0]===c.art)?c.art:"art1")+".webp"}
+function eCover(c){const s=S(),lic=s.licNo&&s.licNo.trim();
+ const feats=String(c.feats||"").split(/[،,\n]/).map(x=>x.trim()).filter(Boolean).slice(0,6);
+ const st=[1,2,3].map(n=>[c["st"+n+"v"],c["st"+n+"u"],c["st"+n+"l"]]).filter(x=>x[0]);
+ return `<section class="page d-e cover"><img class="cv-art" src="${coverArt(c)}" alt=""><div class="cv-veil"></div>${logo()}
+ <div class="cv-t"><h1>${esc(c.title)}</h1><div class="cv-y"><b>${YEAR}</b><span>${hijriSpan()} هـ</span></div></div>
+ <div class="cv-card"><div class="cv-ch"><b>${esc(c.kick)}</b><span>${esc(c.sub)}</span></div>
+  <ul class="cv-f">${feats.map(f=>`<li>${esc(f)}</li>`).join("")}</ul>
+  <div class="cv-s">${st.map(x=>`<div><b>${esc(x[0])}<small>${esc(x[1])}</small></b><span>${esc(x[2])}</span></div>`).join("")}</div>
+  <div class="cv-q"><div class="qrbox">${qrEl(c.url,19,c.qrImg)}</div><p>${esc(c.qrLine).replace(/\|/g,"<br>")}</p></div></div>
+ ${lic?`<div class="cv-lic">${esc(s.lblLicNo||"رقم ترخيص التبرعات")}: <b>${esc(s.licNo)}</b>${s.licStart?` · ${esc(s.lblLicStart||"تاريخ البدء")}: <b>${esc(s.licStart)}</b>`:""}${s.licEnd?` · ${esc(s.lblLicEnd||"تاريخ الانتهاء")}: <b>${esc(s.licEnd)}</b>`:""}</div>`:""}
+ <div class="handle">${esc(s.handle)}</div></section>`}
 const R={e:[eMonth,eGift]};
-function pageHtml(){const f=R[draft.settings.design]||R.e;return cur.kind==="m"?f[0](cur.mo,demo(cur.mo,draft["m"+pad(cur.mo)])):f[1](draft["g"+pad(cur.mo)])}
+function pageHtml(){const f=R[draft.settings.design]||R.e;if(cur.kind==="c")return eCover(draft.cover);return cur.kind==="m"?f[0](cur.mo,demo(cur.mo,draft["m"+pad(cur.mo)])):f[1](draft["g"+pad(cur.mo)])}
 
 /* ---------- preview ---------- */
 const PXW=210*96/25.4,PXH=150*96/25.4;
@@ -3349,7 +3397,7 @@ if(document.fonts&&document.fonts.ready)document.fonts.ready.then(()=>drawPrevie
 if(document.fonts&&document.fonts.load)Promise.all(["700 20px ZThm","500 20px ZThm"].map(f=>document.fonts.load(f))).then(()=>drawPreview(),()=>{});
 
 /* ---------- print all (24 pages, 210×150mm) ---------- */
-function printAll(){const keep={mo:cur.mo,kind:cur.kind};let h="";
+function printAll(){const keep={mo:cur.mo,kind:cur.kind};let h="";cur.kind="c";h+=viewHtml();
  for(let mo=1;mo<=12;mo++)for(const k of ["g","m"]){cur.mo=mo;cur.kind=k;h+=viewHtml()}
  cur.mo=keep.mo;cur.kind=keep.kind;const box=$("#printall");box.innerHTML=h;
  box.style.cssText="display:block;position:absolute;left:-99999px;top:0;width:210mm";fitE(box);
@@ -3366,10 +3414,10 @@ function buildNav(){
 function syncNav(){
  document.querySelectorAll("#designs .tab").forEach(b=>b.setAttribute("aria-pressed",b.dataset.d===(R[draft.settings.design]?draft.settings.design:"e")));
  document.querySelectorAll("#kind button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.k===cur.kind));
- document.querySelectorAll("#months .mbtn").forEach(b=>{const n=+b.dataset.m;b.setAttribute("aria-pressed",n===cur.mo);b.querySelector("i").hidden=!(dirty("m"+pad(n))||dirty("g"+pad(n)))});
+ document.querySelectorAll("#months .mbtn").forEach(b=>{const n=+b.dataset.m;b.setAttribute("aria-pressed",cur.kind!=="c"&&n===cur.mo);b.querySelector("i").hidden=!(dirty("m"+pad(n))||dirty("g"+pad(n)))});
  const vs=(SEC==="approved"&&APPROVED&&APPROVED.data.settings)?Object.assign(defSettings(),APPROVED.data.settings):draft.settings;$("#app").style.setProperty("--cg",vs.colG);$("#app").style.setProperty("--cb",vs.colB);$("#app").dataset.font=vs.font;$("#fontsel").value=draft.settings.font}
 function go(mo,kind){cur.mo=Math.min(12,Math.max(1,mo));cur.kind=kind;renderAll()}
-function step(dir){let s=(cur.mo-1)*2+(cur.kind==="m"?1:0)+dir;s=Math.min(23,Math.max(0,s));go(Math.floor(s/2)+1,s%2?"m":"g")}
+function step(dir){let s=cur.kind==="c"?-1:(cur.mo-1)*2+(cur.kind==="m"?1:0);s=Math.min(23,Math.max(-1,s+dir));if(s<0)return go(1,"c");go(Math.floor(s/2)+1,s%2?"m":"g")}
 
 /* ---------- editor ---------- */
 const MF=[["sponsor","اسم الراعي","t"],["sponsorImg","شعار الراعي","i"],["photo","صورة الشهر","i"],["artist","اسم الفنان","t"],["s1","الشعار أسفل الشهر — السطر الأول","t"],["s2","الشعار أسفل الشهر — السطر الثاني","t"]];
@@ -3379,10 +3427,20 @@ function fieldHtml(id,[k,label,type]){const v=draft[id][k]||"";
  if(type==="i")return `<div class="field"><label>${label}</label><div class="img"><div class="thumb" style="${v?`background-image:url(${blob(v)})`:""}"></div>${ASSETS?`<button class="btn" data-up="${k}" data-id="${id}">رفع صورة</button>${v?`<button class="btn ghost" data-rm="${k}" data-id="${id}">إزالة</button>`:""}<input type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml" hidden data-file="${k}" data-id="${id}">`:`<span class="hint">الرفع متاح للمحرّر فقط</span>`}</div></div>`;
  return `<div class="field"><label>${label}</label><input type="${type==="u"?"url":"text"}" ${type==="u"?'dir="ltr"':""} data-k="${k}" value="${esc(v)}"></div>`}
 function qrGroup(id,n,title){return `<h3>${title}</h3><div class="row3">${["a","b"].map((c,i)=>fieldHtml(id,["q"+n+c,i?"السطر الثاني":"السطر الأول","t"])).join("")}</div>${fieldHtml(id,["q"+n+"u","الرابط (يتولّد منه الـQR تلقائيًا)","u"])}${fieldHtml(id,["q"+n+"img","أو ارفع صورة QR جاهزة (تحلّ محل المولَّد)","i"])}`}
-function renderEditor(){const id=curId(),isM=cur.kind==="m",name=MONTH_AR[cur.mo-1];
+function renderEditor(){if(cur.kind==="c")return renderCoverEditor();const id=curId(),isM=cur.kind==="m",name=MONTH_AR[cur.mo-1];
  let h=`<h2>${isM?"صفحة شهر "+name:"صفحة الموسم (ظهر التقويم) قبل "+name}</h2>`;if(isM&&(!draft[id].sponsorImg||!draft[id].photo))h+=`<p class="hint" style="background:#F6EEE5;border-radius:14px;padding:9px 14px;color:#8F6A45">الشعار والصورة واسم الفنان الظاهرة في المعاينة بيانات توضيحية لتخيّل الشكل، وتختفي عند رفع الحقيقية. لا تُحفظ، وقائمة المراجعة تعدّها ناقصة.</p>`;
  if(isM){h+=MF.map(f=>fieldHtml(id,f)+(f[0]==="photo"&&draft[id].photo?phCtl(id):"")).join("")+qrGroup(id,1,"رمز QR الأول")+qrGroup(id,2,"رمز QR الثاني (حملة الشهر)")+qrGroup(id,3,"رمز QR الثالث (صدقة الجمعة)")}
  else{h+=GF.map(f=>fieldHtml(id,f)).join("")+`<p class="hint">الرعاة في أسفل الصفحة يؤخذون تلقائيًا من صفحات الأشهر الاثني عشر.</p>`}
+ h+=`<div class="savebar"><button class="btn primary" id="save">حفظ</button><button class="btn" id="revert">تراجع</button><button class="btn ghost" id="saveall">حفظ الكل</button><span class="pill" id="dpill"></span></div><div id="status" role="status" aria-live="polite"></div>`;
+ $("#editor").innerHTML=h;updatePill()}
+const CF=[["title","العنوان الرئيسي","t"],["kick","عنوان المشروع","t"],["sub","السطر تحته","t"],["feats","مكونات المشروع (افصل بفاصلة)","t"]];
+function renderCoverEditor(){const id="cover",c=draft.cover;
+ let h=`<h2>الغلاف الأمامي</h2><p class="hint">السنة الميلادية والهجرية تُحسبان تلقائيًا (${YEAR} · ${hijriSpan()} هـ). الشعار والترخيص من الإعدادات العامة.</p><h3>لوحة الغلاف</h3><div class="cv-pick">${COVER_ART.map(a=>`<button type="button" data-art="${a[0]}" aria-pressed="${!c.artImg&&c.art===a[0]}"><img src="cover/${a[0]}.webp" alt=""><span>${a[1]}</span></button>`).join("")}</div>`;
+ h+=fieldHtml(id,["artImg","أو ارفع لوحة أخرى (أفقية 7:5، المبنى يساراً والمساحة الهادئة يميناً)","i"]);
+ h+=CF.map(f=>fieldHtml(id,f)).join("");
+ h+=`<h3>أرقام المشروع</h3>`+[1,2,3].map(n=>`<div class="row3">${fieldHtml(id,["st"+n+"v","الرقم","t"])}${fieldHtml(id,["st"+n+"u","الوحدة","t"])}</div>${fieldHtml(id,["st"+n+"l","الوصف","t"])}`).join("");
+ h+=`<h3>رمز QR</h3>${fieldHtml(id,["qrLine","العبارة بجانبه (ضع | لكسر السطر)","t"])}${fieldHtml(id,["url","الرابط (يتولّد منه الـQR تلقائيًا)","u"])}${fieldHtml(id,["qrImg","أو ارفع صورة QR جاهزة","i"])}`;
+ if(!S().licNo||!S().licNo.trim())h+=`<p class="hint" style="background:#F6EEE5;border-radius:14px;padding:9px 14px;color:#8F6A45">شريط ترخيص التبرعات لا يظهر حتى تُدخل رقم الترخيص وتاريخيه في «الإعدادات العامة».</p>`;
  h+=`<div class="savebar"><button class="btn primary" id="save">حفظ</button><button class="btn" id="revert">تراجع</button><button class="btn ghost" id="saveall">حفظ الكل</button><span class="pill" id="dpill"></span></div><div id="status" role="status" aria-live="polite"></div>`;
  $("#editor").innerHTML=h;updatePill()}
 function updatePill(){const p=$("#dpill");if(!p)return;const d=dirty(curId());const n=IDS.filter(dirty).length;
@@ -3407,7 +3465,7 @@ function refreshUi(){syncNav();updatePill();gpill()}
 const fmtDate=iso=>{try{return new Date(iso).toLocaleString("ar",{dateStyle:"long",timeStyle:"short"})}catch(_){return iso}};
 function checks(){const ms=[],gs=[];for(let i=1;i<=12;i++){ms.push(draft["m"+pad(i)]);gs.push(draft["g"+pad(i)])}
  const ph=ms.filter(m=>/^الراعي \d\d$/.test(m.sponsor)).length,nl=ms.filter(m=>!m.sponsorImg).length,np=ms.filter(m=>!m.photo).length,na=ms.filter(m=>m.artist==="اسم الفنان").length;
- let ex=0;ms.forEach(m=>[1,2,3].forEach(k=>{if(!m["q"+k+"img"]&&/example\.com/.test(m["q"+k+"u"]))ex++}));gs.forEach(g=>{if(!g.qrImg&&/example\.com/.test(g.url))ex++});
+ let ex=0;ms.forEach(m=>[1,2,3].forEach(k=>{if(!m["q"+k+"img"]&&/example\.com/.test(m["q"+k+"u"]))ex++}));gs.forEach(g=>{if(!g.qrImg&&/example\.com/.test(g.url))ex++});if(!draft.cover.qrImg&&/example\.com/.test(draft.cover.url))ex++;
  return[[!!draft.settings.licNo.trim(),"رقم ترخيص التبرعات وتاريخاه","غير مُدخل"],[ex===0,"روابط الـQR الحقيقية","يوجد "+ex+" رابط تجريبي من 48"],[np===0,"صور الأشهر","ينقص "+np+" من 12"],[nl===0,"شعارات الرعاة","ينقص "+nl+" من 12"],[ph===0,"أسماء الرعاة","يوجد "+ph+" اسم افتراضي"],[na===0,"أسماء الفنانين","يوجد "+na+" اسم افتراضي"]]}
 function renderApprove(){const a=$("#approve");if(!a)return;const n=IDS.filter(dirty).length;
  let h=`<h2>الاعتماد</h2><p class="hint" style="font-size:.86rem">${APPROVED?"آخر اعتماد: "+fmtDate(APPROVED.approvedAt)+".":"لم يُعتمد هذا التقويم بعد — هو الآن قيد التصميم."} عند الاعتماد تُحفظ نسخة كاملة تظهر في قسم «التقويم الميلادي المعتمد».</p>`;
@@ -3437,7 +3495,8 @@ document.addEventListener("click",e=>{const t=e.target.closest("button");if(!t)r
  else if(t.id==="apreopen"&&APPROVED){if(!confirm("سيُستبدل ما في قسم التصميم بنسخة من التقويم المعتمد. متابعة؟"))return;IDS.forEach(id=>{draft[id]=Object.assign(defaults(id),clone(APPROVED.data[id]||{}))});SEC="design";renderAll();status("تم فتح نسخة من المعتمد للتعديل.");autosaveSoon();if(BRIDGE&&BRIDGE.onSection)BRIDGE.onSection("design")}
  else if(t.id==="printbtn")printAll();
  else if(t.dataset.d){if(SEC==="approved"||CANW===false)return;draft.settings.design=t.dataset.d;renderAll();autosaveSoon()}
- else if(t.dataset.m)go(+t.dataset.m,cur.kind);
+ else if(t.dataset.m)go(+t.dataset.m,cur.kind==="c"?"m":cur.kind);
+ else if(t.dataset.art){draft.cover.art=t.dataset.art;draft.cover.artImg="";renderEditor();drawPreview();refreshUi();autosaveSoon()}
  else if(t.parentElement&&t.parentElement.id==="kind")go(cur.mo,t.dataset.k);
  else if(t.id==="prev")step(-1);else if(t.id==="next")step(1);
  else if(t.dataset.up){document.querySelector(`[data-file="${t.dataset.up}"][data-id="${t.dataset.id}"]`).click()}
