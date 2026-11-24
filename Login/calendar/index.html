@@ -474,6 +474,23 @@ body.embedded header.top{justify-content:flex-start}
 .d-e.cover .cv-q p{margin:0;font-size:4mm;font-weight:700;line-height:1.45;color:var(--cg)}
 .d-e.cover .cv-lic{right:14mm;bottom:12mm;background:var(--cg);color:#fff;border-radius:10mm;padding:1.1mm 4mm;font-size:2.4mm;font-weight:500;white-space:nowrap}
 .d-e.cover .cv-lic b{font-weight:700}
+/* الغلاف الخلفي */
+.d-e.back .bk-art{left:0;top:0;width:210mm;height:150mm;object-fit:cover;opacity:.2;-webkit-mask-image:linear-gradient(180deg,transparent 35%,#000 85%);mask-image:linear-gradient(180deg,transparent 35%,#000 85%)}
+.d-e.back .logo{left:12mm;top:12mm;width:32mm}
+.d-e.back .bk-t{right:14mm;top:13mm;width:118mm;text-align:right}
+.d-e.back .bk-t h1{margin:0;font-family:var(--fd),sans-serif;font-weight:800;font-size:11mm;line-height:1.15;color:var(--cg)}
+.d-e.back .bk-sub{margin-top:1mm;font-size:4.2mm;font-weight:700;color:var(--cb)}
+.d-e.back .bk-t p{margin:2.6mm 0 0;font-size:3.3mm;line-height:1.75;color:var(--cg);font-weight:500}
+.d-e.back .bk-sp{top:64mm;left:14mm;right:14mm}
+.d-e.back .bk-c{right:14mm;top:96mm;width:100mm;display:grid;grid-template-columns:1fr 1fr;gap:2mm 4mm}
+.d-e.back .bk-c div{background:rgba(255,255,255,.8);border:.25mm solid rgba(184,146,109,.4);border-radius:3mm;padding:1.5mm 3mm}
+.d-e.back .bk-c span{display:block;font-size:2.3mm;color:var(--cb);font-weight:600}
+.d-e.back .bk-c b{display:block;font-size:3.2mm;color:var(--cg);font-weight:700;text-align:right}
+.d-e.back .bk-q{left:14mm;top:96mm;display:flex;align-items:center;gap:3mm;background:rgba(255,255,255,.85);border:.3mm solid rgba(184,146,109,.45);border-radius:4mm;padding:2.6mm 4mm}
+.d-e.back .bk-q .qrbox{width:21mm;height:21mm;flex:none;border:.3mm solid var(--cb);border-radius:2.6mm;display:flex;align-items:center;justify-content:center;background:#fff}
+.d-e.back .bk-q p{margin:0;font-size:4.2mm;font-weight:700;line-height:1.45;color:var(--cg)}
+.d-e.back .bk-lic{right:14mm;bottom:12mm;background:var(--cg);color:#fff;border-radius:10mm;padding:1.1mm 4mm;font-size:2.4mm;font-weight:500;white-space:nowrap}
+.d-e.back .bk-lic b{font-weight:700}
 /* المبنى يميناً: كل المحتوى في العمود الأيسر */
 .d-e.cover.flip .cv-art{object-position:right center}
 .d-e.cover.flip .cv-veil{background:linear-gradient(90deg,rgba(250,248,244,.9) 0,rgba(250,248,244,.72) 34%,rgba(250,248,244,0) 56%)}
@@ -639,7 +656,7 @@ body.embedded header.top{justify-content:flex-start}
       <div class="stage" id="stage"><div class="mk-shade"></div><div class="mk-body" id="mkbody"></div><div class="rig" id="rig"><div class="pagebox" id="pagebox"></div></div><div id="mockcells"></div><div class="mk-over" id="mkover"></div></div><div class="mockbar"><button class="btn" id="mkdl">تنزيل صورة الموك أب</button><button class="btn" id="mkwhite">خلفية بيضاء</button><label class="btn" id="mkuplbl" hidden>رفع صورة خلفية<input type="file" id="mkup" accept="image/png,image/jpeg,image/webp" hidden></label><button class="btn" id="mkreset" hidden>الخلفية الافتراضية</button><span class="mkhint" id="mkhint" hidden>مقاس صورة الخلفية: 4000 × 3200 بكسل لأعلى نقاوة (وأقلّه 2400 × 1920) — أفقية بنسبة 5:4 وبصيغة JPG أو PNG — والتقويم يقف في منتصف الصورة وقاعدته في ثلثها السفلي.</span><span class="mkmsg" id="mkmsg" role="status"></span></div>
       <div class="navrow">
         <button class="btn" id="prev" aria-label="الصفحة السابقة">‹ السابقة</button>
-        <div class="seg" id="kind" role="group" aria-label="نوع الصفحة"><button data-k="c">الغلاف</button><button data-k="g">صفحة الموسم</button><button data-k="m">صفحة الشهر</button></div>
+        <div class="seg" id="kind" role="group" aria-label="نوع الصفحة"><button data-k="c">الغلاف</button><button data-k="g">صفحة الموسم</button><button data-k="m">صفحة الشهر</button><button data-k="b">الغلاف الخلفي</button></div>
         <button class="btn" id="next" aria-label="الصفحة التالية">التالية ›</button>
       </div>
       <div class="months" id="months" role="group" aria-label="الأشهر"></div>
@@ -2995,11 +3012,13 @@ const defSettings=()=>({licNo:"",licStart:"",licEnd:"",handle:"AwamiaCharity",de
 /* الغلاف الأمامي: لوحة فنية للمبنى الإداري (ثلاث لوحات جاهزة أو صورة مرفوعة) + بيانات المشروع على نهج غلاف 2026 */
 const COVER_ART=[["art4","لوحة الطبقات","right"],["art5","الرسم الخطّي","right"]];
 const defCover=()=>({art:"art4",artImg:"",side:"right",title:"التقويم السنوي",kick:"المبنى الإداري",sub:"يضم المشروع",feats:"مكاتب إدارية، قاعة احتفالات، مكتبة وحديقة سطح، مساحات مفتوحة للاستثمار، مواقف سيارات",st1v:"1638",st1u:"م²",st1l:"مساحة أرض المشروع",st2v:"3590",st2u:"م²",st2l:"المساحة الإجمالية للبناء",st3v:"04",st3u:"ونصف",st3l:"عدد الطوابق",qrLine:"ساهم في بناء|مستقبل مجتمعنا",url:"https://example.com/awamia/2027/building",qrImg:""});
-function defaults(id){if(id==="settings")return defSettings();if(id==="cover")return defCover();const n=+id.slice(1)-1;return id[0]==="m"?defMonth(n):defGift(n)}
+/* الغلاف الخلفي (الصفحة الأخيرة بعد ديسمبر): شكر الرعاة، نبذة، التواصل، QR التبرع، الترخيص */
+const defBack=()=>({title:"شكراً لكم",sub:"رعاة تقويم الجمعية لعام",about:"جمعية العوامية الخيرية للخدمات الاجتماعية، تأسست عام 1970م، ترعى الأسر وتمكّنها وتخدم المجتمع، بشراكة أهل الخير والداعمين.",web:"awamiach.sa",phone:"",addr:"العوامية — القطيف",qrLine:"تبرّع الآن|لأثرٍ يدوم",url:"https://awamiach.sa",qrImg:"",fade:"1"});
+function defaults(id){if(id==="settings")return defSettings();if(id==="cover")return defCover();if(id==="back")return defBack();const n=+id.slice(1)-1;return id[0]==="m"?defMonth(n):defGift(n)}
 
 /* ---------- state ---------- */
 const clone=o=>JSON.parse(JSON.stringify(o));
-const IDS=["settings","cover"];for(let i=1;i<=12;i++){IDS.push("m"+pad(i),"g"+pad(i))}
+const IDS=["settings","cover","back"];for(let i=1;i<=12;i++){IDS.push("m"+pad(i),"g"+pad(i))}
 const saved={},draft={};IDS.forEach(id=>{saved[id]=defaults(id);draft[id]=clone(saved[id])});
 const cur={mo:1,kind:"m"};
 let DB=null,ASSETS=null,DL=null,CANW=null,CANEDIT=null,BRIDGE=null;
@@ -3012,7 +3031,7 @@ const S=()=>draft.settings;
 const $=s=>document.querySelector(s);
 const esc=s=>String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const blob=id=>/^(https?:|data:|blob:)/.test(id)?id:"/_blob/"+id;
-const curId=()=>cur.kind==="c"?"cover":cur.kind+pad(cur.mo);
+const curId=()=>cur.kind==="c"?"cover":cur.kind==="b"?"back":cur.kind+pad(cur.mo);
 
 /* ---------- dates (Umm al-Qura via Intl) ---------- */
 const HF=new Intl.DateTimeFormat("en-u-ca-islamic-umalqura-nu-latn",{day:"numeric",month:"numeric",year:"numeric",timeZone:"UTC"});
@@ -3307,8 +3326,16 @@ function eCover(c){const s=S(),lic=s.licNo&&s.licNo.trim();
   <div class="cv-q"><div class="qrbox">${qrEl(c.url,19,c.qrImg)}</div><p>${esc(c.qrLine).replace(/\|/g,"<br>")}</p></div></div>
  ${lic?`<div class="cv-lic">${esc(s.lblLicNo||"رقم ترخيص التبرعات")}: <b>${esc(s.licNo)}</b>${s.licStart?` · ${esc(s.lblLicStart||"تاريخ البدء")}: <b>${esc(s.licStart)}</b>`:""}${s.licEnd?` · ${esc(s.lblLicEnd||"تاريخ الانتهاء")}: <b>${esc(s.licEnd)}</b>`:""}</div>`:""}
  <div class="handle">${esc(s.handle)}</div></section>`}
+function eBack(b){const s=S(),lic=s.licNo&&s.licNo.trim(),c=draft.cover;
+ const rows=[["الموقع",b.web,1],["حساب الجمعية","@"+s.handle,1],["الجوال",b.phone,1],["العنوان",b.addr,0]].filter(x=>x[1]&&x[1]!=="@");
+ return `<section class="page d-e back">${b.fade!=="0"?`<img class="bk-art" src="${coverArt(c)}" alt="">`:""}${pat("g")}${logo()}
+ <div class="bk-t"><h1>${esc(b.title)}</h1><div class="bk-sub">${esc(b.sub)} ${YEAR}</div><p>${esc(b.about)}</p></div>
+ <div class="sponsors bk-sp">${allSp()}</div>
+ <div class="bk-c">${rows.map(x=>`<div><span>${x[0]}</span><b${x[2]?' dir="ltr"':""}>${esc(x[1])}</b></div>`).join("")}</div>
+ <div class="bk-q"><div class="qrbox">${qrEl(b.url,19,b.qrImg)}</div><p>${esc(b.qrLine).replace(/\|/g,"<br>")}</p></div>
+ ${lic?`<div class="cv-lic bk-lic">${esc(s.lblLicNo||"رقم ترخيص التبرعات")}: <b>${esc(s.licNo)}</b>${s.licStart?` · ${esc(s.lblLicStart||"تاريخ البدء")}: <b>${esc(s.licStart)}</b>`:""}${s.licEnd?` · ${esc(s.lblLicEnd||"تاريخ الانتهاء")}: <b>${esc(s.licEnd)}</b>`:""}</div>`:""}</section>`}
 const R={e:[eMonth,eGift]};
-function pageHtml(){const f=R[draft.settings.design]||R.e;if(cur.kind==="c")return eCover(draft.cover);return cur.kind==="m"?f[0](cur.mo,demo(cur.mo,draft["m"+pad(cur.mo)])):f[1](draft["g"+pad(cur.mo)])}
+function pageHtml(){const f=R[draft.settings.design]||R.e;if(cur.kind==="c")return eCover(draft.cover);if(cur.kind==="b")return eBack(draft.back);return cur.kind==="m"?f[0](cur.mo,demo(cur.mo,draft["m"+pad(cur.mo)])):f[1](draft["g"+pad(cur.mo)])}
 
 /* ---------- preview ---------- */
 const PXW=210*96/25.4,PXH=150*96/25.4;
@@ -3408,7 +3435,7 @@ if(document.fonts&&document.fonts.load)Promise.all(["700 20px ZThm","500 20px ZT
 /* ---------- print all (24 pages, 210×150mm) ---------- */
 function printAll(){const keep={mo:cur.mo,kind:cur.kind};let h="";cur.kind="c";h+=viewHtml();
  for(let mo=1;mo<=12;mo++)for(const k of ["g","m"]){cur.mo=mo;cur.kind=k;h+=viewHtml()}
- cur.mo=keep.mo;cur.kind=keep.kind;const box=$("#printall");box.innerHTML=h;
+ cur.kind="b";h+=viewHtml();cur.mo=keep.mo;cur.kind=keep.kind;const box=$("#printall");box.innerHTML=h;
  box.style.cssText="display:block;position:absolute;left:-99999px;top:0;width:210mm";fitE(box);
  const imgs=[...box.querySelectorAll("img")].filter(i=>!i.complete);
  // نقوش التراث تُستخدم كأقنعة CSS لا كصور، فلا ينتظرها المتصفح قبل الطباعة — تُحمَّل هنا صراحةً أولاً وإلا خرجت الصفحات بلا نقش
@@ -3423,10 +3450,10 @@ function buildNav(){
 function syncNav(){
  document.querySelectorAll("#designs .tab").forEach(b=>b.setAttribute("aria-pressed",b.dataset.d===(R[draft.settings.design]?draft.settings.design:"e")));
  document.querySelectorAll("#kind button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.k===cur.kind));
- document.querySelectorAll("#months .mbtn").forEach(b=>{const n=+b.dataset.m;b.setAttribute("aria-pressed",cur.kind!=="c"&&n===cur.mo);b.querySelector("i").hidden=!(dirty("m"+pad(n))||dirty("g"+pad(n)))});
+ document.querySelectorAll("#months .mbtn").forEach(b=>{const n=+b.dataset.m;b.setAttribute("aria-pressed",cur.kind!=="c"&&cur.kind!=="b"&&n===cur.mo);b.querySelector("i").hidden=!(dirty("m"+pad(n))||dirty("g"+pad(n)))});
  const vs=(SEC==="approved"&&APPROVED&&APPROVED.data.settings)?Object.assign(defSettings(),APPROVED.data.settings):draft.settings;$("#app").style.setProperty("--cg",vs.colG);$("#app").style.setProperty("--cb",vs.colB);$("#app").dataset.font=vs.font;$("#fontsel").value=draft.settings.font}
 function go(mo,kind){cur.mo=Math.min(12,Math.max(1,mo));cur.kind=kind;renderAll()}
-function step(dir){let s=cur.kind==="c"?-1:(cur.mo-1)*2+(cur.kind==="m"?1:0);s=Math.min(23,Math.max(-1,s+dir));if(s<0)return go(1,"c");go(Math.floor(s/2)+1,s%2?"m":"g")}
+function step(dir){let s=cur.kind==="c"?-1:cur.kind==="b"?24:(cur.mo-1)*2+(cur.kind==="m"?1:0);s=Math.min(24,Math.max(-1,s+dir));if(s<0)return go(1,"c");if(s>23)return go(12,"b");go(Math.floor(s/2)+1,s%2?"m":"g")}
 
 /* ---------- editor ---------- */
 const MF=[["sponsor","اسم الراعي","t"],["sponsorImg","شعار الراعي","i"],["photo","صورة الشهر","i"],["artist","اسم الفنان","t"],["s1","الشعار أسفل الشهر — السطر الأول","t"],["s2","الشعار أسفل الشهر — السطر الثاني","t"]];
@@ -3436,7 +3463,7 @@ function fieldHtml(id,[k,label,type]){const v=draft[id][k]||"";
  if(type==="i")return `<div class="field"><label>${label}</label><div class="img"><div class="thumb" style="${v?`background-image:url(${blob(v)})`:""}"></div>${ASSETS?`<button class="btn" data-up="${k}" data-id="${id}">رفع صورة</button>${v?`<button class="btn ghost" data-rm="${k}" data-id="${id}">إزالة</button>`:""}<input type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml" hidden data-file="${k}" data-id="${id}">`:`<span class="hint">الرفع متاح للمحرّر فقط</span>`}</div></div>`;
  return `<div class="field"><label>${label}</label><input type="${type==="u"?"url":"text"}" ${type==="u"?'dir="ltr"':""} data-k="${k}" value="${esc(v)}"></div>`}
 function qrGroup(id,n,title){return `<h3>${title}</h3><div class="row3">${["a","b"].map((c,i)=>fieldHtml(id,["q"+n+c,i?"السطر الثاني":"السطر الأول","t"])).join("")}</div>${fieldHtml(id,["q"+n+"u","الرابط (يتولّد منه الـQR تلقائيًا)","u"])}${fieldHtml(id,["q"+n+"img","أو ارفع صورة QR جاهزة (تحلّ محل المولَّد)","i"])}`}
-function renderEditor(){if(cur.kind==="c")return renderCoverEditor();const id=curId(),isM=cur.kind==="m",name=MONTH_AR[cur.mo-1];
+function renderEditor(){if(cur.kind==="c")return renderCoverEditor();if(cur.kind==="b")return renderBackEditor();const id=curId(),isM=cur.kind==="m",name=MONTH_AR[cur.mo-1];
  let h=`<h2>${isM?"صفحة شهر "+name:"صفحة الموسم (ظهر التقويم) قبل "+name}</h2>`;if(isM&&(!draft[id].sponsorImg||!draft[id].photo))h+=`<p class="hint" style="background:#F6EEE5;border-radius:14px;padding:9px 14px;color:#8F6A45">الشعار والصورة واسم الفنان الظاهرة في المعاينة بيانات توضيحية لتخيّل الشكل، وتختفي عند رفع الحقيقية. لا تُحفظ، وقائمة المراجعة تعدّها ناقصة.</p>`;
  if(isM){h+=MF.map(f=>fieldHtml(id,f)+(f[0]==="photo"&&draft[id].photo?phCtl(id):"")).join("")+qrGroup(id,1,"رمز QR الأول")+qrGroup(id,2,"رمز QR الثاني (حملة الشهر)")+qrGroup(id,3,"رمز QR الثالث (صدقة الجمعة)")}
  else{h+=GF.map(f=>fieldHtml(id,f)).join("")+`<p class="hint">الرعاة في أسفل الصفحة يؤخذون تلقائيًا من صفحات الأشهر الاثني عشر.</p>`}
@@ -3450,6 +3477,14 @@ function renderCoverEditor(){const id="cover",c=draft.cover;
  h+=`<h3>أرقام المشروع</h3>`+[1,2,3].map(n=>`<div class="row3">${fieldHtml(id,["st"+n+"v","الرقم","t"])}${fieldHtml(id,["st"+n+"u","الوحدة","t"])}</div>${fieldHtml(id,["st"+n+"l","الوصف","t"])}`).join("");
  h+=`<h3>رمز QR</h3>${fieldHtml(id,["qrLine","العبارة بجانبه (ضع | لكسر السطر)","t"])}${fieldHtml(id,["url","الرابط (يتولّد منه الـQR تلقائيًا)","u"])}${fieldHtml(id,["qrImg","أو ارفع صورة QR جاهزة","i"])}`;
  if(!S().licNo||!S().licNo.trim())h+=`<p class="hint" style="background:#F6EEE5;border-radius:14px;padding:9px 14px;color:#8F6A45">شريط ترخيص التبرعات لا يظهر حتى تُدخل رقم الترخيص وتاريخيه في «الإعدادات العامة».</p>`;
+ h+=`<div class="savebar"><button class="btn primary" id="save">حفظ</button><button class="btn" id="revert">تراجع</button><button class="btn ghost" id="saveall">حفظ الكل</button><span class="pill" id="dpill"></span></div><div id="status" role="status" aria-live="polite"></div>`;
+ $("#editor").innerHTML=h;updatePill()}
+function renderBackEditor(){const id="back",b=draft.back;
+ let h=`<h2>الغلاف الخلفي</h2><p class="hint">الصفحة الأخيرة بعد ديسمبر. شعارات الرعاة تؤخذ تلقائيًا من صفحات الأشهر، والشعار والترخيص وحساب الجمعية من الإعدادات العامة.</p>`;
+ h+=[["title","العنوان","t"],["sub","السطر تحته (تُضاف السنة تلقائيًا)","t"],["about","نبذة عن الجمعية","t"]].map(f=>fieldHtml(id,f)).join("");
+ h+=`<h3>التواصل</h3>`+[["web","الموقع","t"],["phone","الجوال","t"],["addr","العنوان","t"]].map(f=>fieldHtml(id,f)).join("");
+ h+=`<h3>رمز QR</h3>${fieldHtml(id,["qrLine","العبارة بجانبه (ضع | لكسر السطر)","t"])}${fieldHtml(id,["url","الرابط","u"])}${fieldHtml(id,["qrImg","أو ارفع صورة QR جاهزة","i"])}`;
+ h+=`<h3>الخلفية</h3><div class="seg cv-side" role="group"><button type="button" data-bfade="1" aria-pressed="${b.fade!=="0"}">لوحة الغلاف بشكل خفيف</button><button type="button" data-bfade="0" aria-pressed="${b.fade==="0"}">بدون لوحة</button></div>`;
  h+=`<div class="savebar"><button class="btn primary" id="save">حفظ</button><button class="btn" id="revert">تراجع</button><button class="btn ghost" id="saveall">حفظ الكل</button><span class="pill" id="dpill"></span></div><div id="status" role="status" aria-live="polite"></div>`;
  $("#editor").innerHTML=h;updatePill()}
 function updatePill(){const p=$("#dpill");if(!p)return;const d=dirty(curId());const n=IDS.filter(dirty).length;
@@ -3504,7 +3539,8 @@ document.addEventListener("click",e=>{const t=e.target.closest("button");if(!t)r
  else if(t.id==="apreopen"&&APPROVED){if(!confirm("سيُستبدل ما في قسم التصميم بنسخة من التقويم المعتمد. متابعة؟"))return;IDS.forEach(id=>{draft[id]=Object.assign(defaults(id),clone(APPROVED.data[id]||{}))});SEC="design";renderAll();status("تم فتح نسخة من المعتمد للتعديل.");autosaveSoon();if(BRIDGE&&BRIDGE.onSection)BRIDGE.onSection("design")}
  else if(t.id==="printbtn")printAll();
  else if(t.dataset.d){if(SEC==="approved"||CANW===false)return;draft.settings.design=t.dataset.d;renderAll();autosaveSoon()}
- else if(t.dataset.m)go(+t.dataset.m,cur.kind==="c"?"m":cur.kind);
+ else if(t.dataset.m)go(+t.dataset.m,cur.kind==="c"||cur.kind==="b"?"m":cur.kind);
+ else if(t.dataset.bfade){draft.back.fade=t.dataset.bfade;renderEditor();drawPreview();refreshUi();autosaveSoon()}
  else if(t.dataset.side){draft.cover.side=t.dataset.side;renderEditor();drawPreview();refreshUi();autosaveSoon()}
  else if(t.dataset.art){draft.cover.art=t.dataset.art;draft.cover.artImg="";const ca=COVER_ART.find(x=>x[0]===t.dataset.art);if(ca)draft.cover.side=ca[2];renderEditor();drawPreview();refreshUi();autosaveSoon()}
  else if(t.parentElement&&t.parentElement.id==="kind")go(cur.mo,t.dataset.k);
