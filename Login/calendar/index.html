@@ -494,8 +494,8 @@ body.embedded header.top{justify-content:flex-start}
 /* المبنى يميناً: كل المحتوى في العمود الأيسر */
 .d-e.cover.flip .cv-art{object-position:right center}
 .d-e.cover.flip .cv-veil{background:linear-gradient(90deg,rgba(250,248,244,.9) 0,rgba(250,248,244,.72) 34%,rgba(250,248,244,0) 56%)}
-.d-e.cover.flip .cv-t{right:auto;left:14mm;width:88mm;top:27mm}
-.d-e.cover.flip .cv-card{right:auto;left:14mm;top:58mm}
+.d-e.cover.flip .cv-t{right:14mm;top:12mm}
+.d-e.cover.flip .cv-card{right:auto;left:14mm;top:40mm}
 .d-e.cover.flip .cv-lic{right:auto;left:14mm}
 .d-e.cover.flip .handle{left:auto;right:12mm}
 .d-e.cover .handle{left:12mm;top:auto;bottom:11mm;font-size:2.6mm;color:rgba(81,118,112,.75);letter-spacing:.3mm}
@@ -3318,7 +3318,7 @@ function coverArt(c){return c.artImg?blob(c.artImg):"cover/"+(COVER_ART.some(x=>
 function eCover(c){const s=S(),lic=s.licNo&&s.licNo.trim();
  const feats=String(c.feats||"").split(/[،,\n]/).map(x=>x.trim()).filter(Boolean).slice(0,6);
  const st=[1,2,3].map(n=>[c["st"+n+"v"],c["st"+n+"u"],c["st"+n+"l"]]).filter(x=>x[0]);
- return `<section class="page d-e cover${c.side==="right"?" flip":""}"><img class="cv-art" src="${coverArt(c)}" alt=""><div class="cv-veil"></div>${logo()}
+ return `<section class="page d-e cover flip"><img class="cv-art" src="${coverArt(c)}" alt=""><div class="cv-veil"></div>${logo()}
  <div class="cv-t"><h1>${esc(c.title)}</h1><div class="cv-y"><b>${YEAR}</b><span>${hijriSpan()} هـ</span></div></div>
  <div class="cv-card"><div class="cv-ch"><b>${esc(c.kick)}</b><span>${esc(c.sub)}</span></div>
   <ul class="cv-f">${feats.map(f=>`<li>${esc(f)}</li>`).join("")}</ul>
@@ -3471,8 +3471,8 @@ function renderEditor(){if(cur.kind==="c")return renderCoverEditor();if(cur.kind
  $("#editor").innerHTML=h;updatePill()}
 const CF=[["title","العنوان الرئيسي","t"],["kick","عنوان المشروع","t"],["sub","السطر تحته","t"],["feats","مكونات المشروع (افصل بفاصلة)","t"]];
 function renderCoverEditor(){const id="cover",c=draft.cover;
- let h=`<h2>الغلاف الأمامي</h2><p class="hint">السنة الميلادية والهجرية تُحسبان تلقائيًا (${YEAR} · ${hijriSpan()} هـ). الشعار والترخيص من الإعدادات العامة.</p><h3>لوحة الغلاف</h3><div class="seg cv-side" role="group" aria-label="مكان المبنى في اللوحة"><button type="button" data-side="left" aria-pressed="${c.side!=="right"}">المبنى يسار · البيانات يمين</button><button type="button" data-side="right" aria-pressed="${c.side==="right"}">المبنى يمين · البيانات يسار</button></div><div class="cv-pick">${COVER_ART.map(a=>`<button type="button" data-art="${a[0]}" aria-pressed="${!c.artImg&&c.art===a[0]}"><img src="cover/${a[0]}.webp" alt=""><span>${a[1]}</span></button>`).join("")}</div>`;
- h+=fieldHtml(id,["artImg","أو ارفع لوحة أخرى (أفقية 7:5، المبنى يساراً والمساحة الهادئة يميناً)","i"]);
+ let h=`<h2>الغلاف الأمامي</h2><p class="hint">السنة الميلادية والهجرية تُحسبان تلقائيًا (${YEAR} · ${hijriSpan()} هـ). الشعار والترخيص من الإعدادات العامة.</p><h3>لوحة الغلاف</h3><div class="cv-pick">${COVER_ART.map(a=>`<button type="button" data-art="${a[0]}" aria-pressed="${!c.artImg&&c.art===a[0]}"><img src="cover/${a[0]}.webp" alt=""><span>${a[1]}</span></button>`).join("")}</div>`;
+ h+=fieldHtml(id,["artImg","أو ارفع لوحة أخرى (أفقية 7:5، المبنى يميناً والمساحة الهادئة يساراً)","i"]);
  h+=CF.map(f=>fieldHtml(id,f)).join("");
  h+=`<h3>أرقام المشروع</h3>`+[1,2,3].map(n=>`<div class="row3">${fieldHtml(id,["st"+n+"v","الرقم","t"])}${fieldHtml(id,["st"+n+"u","الوحدة","t"])}</div>${fieldHtml(id,["st"+n+"l","الوصف","t"])}`).join("");
  h+=`<h3>رمز QR</h3>${fieldHtml(id,["qrLine","العبارة بجانبه (ضع | لكسر السطر)","t"])}${fieldHtml(id,["url","الرابط (يتولّد منه الـQR تلقائيًا)","u"])}${fieldHtml(id,["qrImg","أو ارفع صورة QR جاهزة","i"])}`;
