@@ -594,8 +594,10 @@ body.embedded header.top{justify-content:flex-start}
 .d-e .ghost{left:78mm;top:29mm;direction:ltr;font-family:var(--fb);font-weight:700;font-size:15.5mm;line-height:1;letter-spacing:-.3mm;color:transparent;-webkit-text-stroke:.26mm var(--cb);opacity:.8}
 /* ---- الشريط التراثي: نقش من تراث القطيف لكل شهر (ملفات Login/calendar/heritage/NN.png) يخرج من الحافة السفلية ومقطوع عندها، ويخفت نحو الأعلى ---- */
 .d-e .her{left:64mm;right:0;bottom:0;height:12.5mm;background:var(--cg);opacity:.27;
- -webkit-mask-image:linear-gradient(to top,#000 0%,rgba(0,0,0,.86) 18%,rgba(0,0,0,.62) 38%,rgba(0,0,0,.36) 58%,rgba(0,0,0,.15) 78%,rgba(0,0,0,.04) 92%,transparent 100%),var(--hm);-webkit-mask-size:100% 100%,58mm auto;-webkit-mask-position:0 0,left bottom;-webkit-mask-repeat:no-repeat,repeat-x;-webkit-mask-composite:source-in;
- mask-image:linear-gradient(to top,#000 0%,rgba(0,0,0,.86) 18%,rgba(0,0,0,.62) 38%,rgba(0,0,0,.36) 58%,rgba(0,0,0,.15) 78%,rgba(0,0,0,.04) 92%,transparent 100%),var(--hm);mask-size:100% 100%,58mm auto;mask-position:0 0,left bottom;mask-repeat:no-repeat,repeat-x;mask-composite:intersect}
+ -webkit-mask-image:var(--hm);-webkit-mask-size:58mm auto;-webkit-mask-position:left bottom;-webkit-mask-repeat:repeat-x;
+ mask-image:var(--hm);mask-size:58mm auto;mask-position:left bottom;mask-repeat:repeat-x}
+/* التلاشي نحو الأعلى: طبقة بيضاء متدرجة فوق النقش (قناع واحد فقط — الطباعة/PDF تُسقط القناع المزدوج) */
+.d-e .her-fade{left:64mm;right:0;bottom:0;height:12.5mm;background:linear-gradient(to top,rgba(255,255,255,0) 0%,rgba(255,255,255,.14) 18%,rgba(255,255,255,.38) 38%,rgba(255,255,255,.64) 58%,rgba(255,255,255,.85) 78%,rgba(255,255,255,.96) 92%,#fff 100%)}
 /* ---- ظهر التقويم «صفحة الموسم»: يُقرأ من الجهة المقابلة للمكتب، فالخط كبير والنص قليل ---- */
 .d-e .ssn{right:15mm;top:31mm;width:104mm;display:flex;flex-direction:column;align-items:flex-start;text-align:right}
 .d-e .ssn .kick{font-size:3.1mm;font-weight:700;color:var(--cb);letter-spacing:.2mm}
@@ -3279,7 +3281,7 @@ function eMonth(mo,m){const g=gridData(mo),mt=monthMeta(mo);
  <h1>${MONTH_AR[mo-1]}</h1><div class="ghost">${pad(mo)}</div><div class="meta"><i>${mt.label}</i><span>${YEAR} م &nbsp;·&nbsp; ${hy(mt.year)} هـ</span></div>
  <div class="slogan"><b>${esc(m.s1)}</b><span>${esc(m.s2)}</span></div>
  <table class="grid" style="--rh:${(43.5/g.rows).toFixed(2)}mm"><thead><tr>${head()}</tr></thead><tbody>${body}</tbody></table><div class="legend">${chips}</div>
- <div class="dock">${q(1)}${q(2)}${q(3)}</div><div class="her" style="--hm:url(heritage/${pad(mo)}.png)"></div></section>`}
+ <div class="dock">${q(1)}${q(2)}${q(3)}</div><div class="her" style="--hm:url(heritage/${pad(mo)}.png)"></div><div class="her-fade"></div></section>`}
 function eGift(g){const mo=GIDX(g),mn=MONTH_AR[mo];return `<section class="page d-e gift">${pat("g")}${logo()}
  <div class="ssn"><div class="kick">موسم ${esc(mn)}</div><h2>${esc(g.sTitle)}</h2>${g.sWhen?`<div class="when">${esc(g.sWhen)}</div>`:""}<p>${esc(g.sLine)}</p>${g.proverb?`<blockquote>«${esc(g.proverb)}»</blockquote>`:""}</div>
  <div class="vis"><p>${esc(g.vLine)}</p><div class="vq"><div class="qrbox">${qrEl(g.url,22.5,g.qrImg)}</div><div class="vt"><b>${esc(g.camp)}</b><span>${esc(S().lblGo)}</span></div></div></div>
