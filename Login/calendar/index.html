@@ -2993,7 +2993,7 @@ const SSN=[
 function defGift(i){return{h1:GIFT[i][0],h2:GIFT[i][1],camp:CAMP[i][0],url:"https://example.com/awamia/2027/gift-"+pad(i+1),qrImg:"",titleImg:"",sTitle:SSN[i][0],sWhen:SSN[i][1],sLine:SSN[i][2],proverb:SSN[i][3],vLine:SSN[i][4]}}
 const defSettings=()=>({licNo:"",licStart:"",licEnd:"",handle:"AwamiaCharity",design:"a",font:"1",logo:"",colG:"#517670",colB:"#b8926d",lblSponsor:"برعاية",lblSponsors:"رعاة التقويم",lblGo:"ابدأ خَيْرَكَ الآن",lblArtist:"الفنان",lblLicNo:"رقم ترخيص التبرعات",lblLicStart:"تاريخ البدء",lblLicEnd:"تاريخ الانتهاء",fTitle:"اريد جعل هذه المساهمة هدية",fName:"إسم المرسل",fTo:"إسم المهدي إليه",fPhone:"جوال المهدي إليه",fModel:"نموذج الإهداء",fOpts:"بدون، الوالدين، الإخوة، الأصدقاء"});
 /* الغلاف الأمامي: لوحة فنية للمبنى الإداري (ثلاث لوحات جاهزة أو صورة مرفوعة) + بيانات المشروع على نهج غلاف 2026 */
-const COVER_ART=[["art4","المبنى يميناً","right"],["art1","لوحة الطبقات","left"],["art2","الرسم الخطّي","left"],["art3","الألوان المائية","left"]];
+const COVER_ART=[["art4","لوحة الطبقات","right"],["art5","الرسم الخطّي","right"]];
 const defCover=()=>({art:"art4",artImg:"",side:"right",title:"التقويم السنوي",kick:"المبنى الإداري",sub:"يضم المشروع",feats:"مكاتب إدارية، قاعة احتفالات، مكتبة وحديقة سطح، مساحات مفتوحة للاستثمار، مواقف سيارات",st1v:"1638",st1u:"م²",st1l:"مساحة أرض المشروع",st2v:"3590",st2u:"م²",st2l:"المساحة الإجمالية للبناء",st3v:"04",st3u:"ونصف",st3l:"عدد الطوابق",qrLine:"ساهم في بناء|مستقبل مجتمعنا",url:"https://example.com/awamia/2027/building",qrImg:""});
 function defaults(id){if(id==="settings")return defSettings();if(id==="cover")return defCover();const n=+id.slice(1)-1;return id[0]==="m"?defMonth(n):defGift(n)}
 
