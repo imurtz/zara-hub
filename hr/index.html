@@ -57,7 +57,12 @@
   .search{margin:18px 0 12px;}
   .tiles{display:grid; grid-template-columns:repeat(auto-fill, minmax(165px, 1fr)); gap:10px;}
   .grp{margin-top:18px;}
-  .grp-row{display:flex; align-items:baseline; gap:6px;}
+  .grp-row{display:flex; align-items:center; gap:6px;}
+  .grp-h{align-items:center !important;}
+  .grp-meta{display:flex; align-items:center; gap:10px;}
+  .grp-n{font-style:normal; display:inline-flex; align-items:baseline; gap:5px; background:var(--teal); color:#fff; border-radius:10px; padding:5px 12px; font-size:13px; font-weight:600; box-shadow:0 4px 12px rgba(81,119,113,.22);}
+  .grp-n b{font-size:17px; font-weight:800; line-height:1;}
+  .grp-go{font-style:normal; font-size:12.5px; color:var(--ink-soft); font-weight:600;}
   .grp-tg{flex:none; width:30px; height:30px; border-radius:50%; border:1px solid var(--line); background:#fff; color:var(--teal-dark); font-size:14px; cursor:pointer; transition:transform .2s; align-self:center;}
   .grp.closed .grp-tg{transform:rotate(90deg);}
   .grp.closed .tiles{display:none;}
@@ -262,7 +267,7 @@
       var rest = all.filter(function(t){ return !(HOME.fields || []).some(function(f){ return f.k === t.field; }); });
       if(rest.length) groups.push({ f: { k: "", l: "مسميات أخرى", n: rest.length }, ts: rest });
       var col = hrCol(), allClosed = groups.every(function(g){ return col[g.f.k || "_"]; });
-      $("tiles").innerHTML = '<div class="grp-all"><button type="button" data-tgall="' + (allClosed ? "open" : "close") + '">' + (allClosed ? "فتح كل المجالات ▾" : "طي كل المجالات ▴") + '</button></div>' + groups.map(function(g){ var gk = g.f.k || "_", closed = !!col[gk]; return '<div class="grp' + (closed ? ' closed' : '') + '"><div class="grp-row"><button type="button" class="grp-tg" data-tg="' + gk + '" aria-expanded="' + !closed + '" title="' + (closed ? "فتح" : "طي") + '">▾</button><button type="button" class="grp-h"' + (g.f.k ? ' data-field="' + g.f.k + '" data-l="' + esc(g.f.l) + '"' : '') + '><b>' + esc(g.f.l) + '</b><span>' + g.f.n + ' ' + (g.f.n === 1 ? "مرشح" : "مرشحين") + (g.f.k ? ' · عرض الكل ←' : '') + '</span></button></div><div class="tiles">' + g.ts.map(tileHtml).join("") + '</div></div>'; }).join("");
+      $("tiles").innerHTML = '<div class="grp-all"><button type="button" data-tgall="' + (allClosed ? "open" : "close") + '">' + (allClosed ? "فتح كل المجالات ▾" : "طي كل المجالات ▴") + '</button></div>' + groups.map(function(g){ var gk = g.f.k || "_", closed = !!col[gk]; return '<div class="grp' + (closed ? ' closed' : '') + '"><div class="grp-row"><button type="button" class="grp-tg" data-tg="' + gk + '" aria-expanded="' + !closed + '" title="' + (closed ? "فتح" : "طي") + '">▾</button><button type="button" class="grp-h"' + (g.f.k ? ' data-field="' + g.f.k + '" data-l="' + esc(g.f.l) + '"' : '') + '><b>' + esc(g.f.l) + '</b><span class="grp-meta">' + (g.f.k ? '<i class="grp-go">عرض الكل ←</i>' : '') + '<em class="grp-n"><b>' + g.f.n + '</b> ' + (g.f.n === 1 ? "مرشح" : "مرشحين") + '</em></span></button></div><div class="tiles">' + g.ts.map(tileHtml).join("") + '</div></div>'; }).join("");
       return;
     }
     $("tiles").innerHTML = list.length ? '<div class="tiles">' + list.map(tileHtml).join("") + '</div>' + (q ? '<div class="nores" style="padding-top:14px">ما هي اللي تبيها؟ <button type="button" data-add="' + esc(q) + '">＋ أضف «' + esc(q) + '» كوظيفة</button></div>' : '') : q ? '<div class="nores">ما لقينا «' + esc(q) + '» بين المرشحين الحاليين.<br><button type="button" data-add="' + esc(q) + '">＋ أضفها كوظيفة تبحث لها</button></div>' : '<div class="empty">' + (HOME && HOME.total ? "" : "لا توجد سير ذاتية بعد — ستظهر هنا فور رفعها.") + '</div>';
