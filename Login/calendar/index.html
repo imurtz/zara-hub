@@ -3335,7 +3335,7 @@ function coverArt(c){return c.artImg?blob(c.artImg):"cover/"+(COVER_ART.some(x=>
 function eCover(c){const s=S(),lic=s.licNo&&s.licNo.trim();
  const feats=String(c.feats||"").split(/[،,\n]/).map(x=>x.trim()).filter(Boolean).slice(0,6);
  const st=[1,2,3].map(n=>[c["st"+n+"v"],c["st"+n+"u"],c["st"+n+"l"]]).filter(x=>x[0]);
- return `<section class="page d-e cover flip"><img class="cv-art" src="${coverArt(c)}" alt=""><div class="cv-veil"></div><img class="logo" src="${S().logo?blob(S().logo):"cover/logo-t.png"}" alt="شعار الجمعية">
+ return `<section class="page d-e cover flip"><img class="cv-art" src="${coverArt(c)}" alt=""><div class="cv-veil"></div><img class="logo" src="${S().logo?blob(S().logo):"/assets/logo.png"}" alt="شعار الجمعية">
  <div class="cv-t"><h1>${esc(c.title)}</h1><div class="cv-y"><b>${YEAR}</b><span>${hijriSpan()} هـ</span></div></div>
  <div class="cv-card"><div class="cv-ch"><b>${esc(c.kick)}</b><span>${esc(c.sub)}</span></div>
   <ul class="cv-f">${feats.map(f=>`<li>${esc(f)}</li>`).join("")}</ul>
