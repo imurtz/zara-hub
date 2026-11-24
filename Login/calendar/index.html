@@ -60,7 +60,7 @@ header.top{display:flex;flex-wrap:wrap;gap:14px 24px;align-items:flex-end;justif
 .img{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
 .cv-side{margin-bottom:8px;display:flex}
 .cv-side button{flex:1;font-size:.78rem}
-.cv-pick{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.cv-pick{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
 .cv-pick button{border:2px solid var(--line);border-radius:12px;background:#fff;padding:4px;cursor:pointer;font:inherit;font-size:.8rem;display:flex;flex-direction:column;gap:4px;align-items:stretch}
 .cv-pick button[aria-pressed="true"]{border-color:#517670;box-shadow:0 0 0 3px rgba(81,118,112,.18)}
 .cv-pick img{width:100%;aspect-ratio:7/5;object-fit:cover;border-radius:8px;display:block}
@@ -2993,8 +2993,8 @@ const SSN=[
 function defGift(i){return{h1:GIFT[i][0],h2:GIFT[i][1],camp:CAMP[i][0],url:"https://example.com/awamia/2027/gift-"+pad(i+1),qrImg:"",titleImg:"",sTitle:SSN[i][0],sWhen:SSN[i][1],sLine:SSN[i][2],proverb:SSN[i][3],vLine:SSN[i][4]}}
 const defSettings=()=>({licNo:"",licStart:"",licEnd:"",handle:"AwamiaCharity",design:"a",font:"1",logo:"",colG:"#517670",colB:"#b8926d",lblSponsor:"برعاية",lblSponsors:"رعاة التقويم",lblGo:"ابدأ خَيْرَكَ الآن",lblArtist:"الفنان",lblLicNo:"رقم ترخيص التبرعات",lblLicStart:"تاريخ البدء",lblLicEnd:"تاريخ الانتهاء",fTitle:"اريد جعل هذه المساهمة هدية",fName:"إسم المرسل",fTo:"إسم المهدي إليه",fPhone:"جوال المهدي إليه",fModel:"نموذج الإهداء",fOpts:"بدون، الوالدين، الإخوة، الأصدقاء"});
 /* الغلاف الأمامي: لوحة فنية للمبنى الإداري (ثلاث لوحات جاهزة أو صورة مرفوعة) + بيانات المشروع على نهج غلاف 2026 */
-const COVER_ART=[["art1","لوحة الطبقات"],["art2","الرسم الخطّي"],["art3","الألوان المائية"]];
-const defCover=()=>({art:"art1",artImg:"",side:"left",title:"التقويم السنوي",kick:"المبنى الإداري",sub:"يضم المشروع",feats:"مكاتب إدارية، قاعة احتفالات، مكتبة وحديقة سطح، مساحات مفتوحة للاستثمار، مواقف سيارات",st1v:"1638",st1u:"م²",st1l:"مساحة أرض المشروع",st2v:"3590",st2u:"م²",st2l:"المساحة الإجمالية للبناء",st3v:"04",st3u:"ونصف",st3l:"عدد الطوابق",qrLine:"ساهم في بناء|مستقبل مجتمعنا",url:"https://example.com/awamia/2027/building",qrImg:""});
+const COVER_ART=[["art4","المبنى يميناً","right"],["art1","لوحة الطبقات","left"],["art2","الرسم الخطّي","left"],["art3","الألوان المائية","left"]];
+const defCover=()=>({art:"art4",artImg:"",side:"right",title:"التقويم السنوي",kick:"المبنى الإداري",sub:"يضم المشروع",feats:"مكاتب إدارية، قاعة احتفالات، مكتبة وحديقة سطح، مساحات مفتوحة للاستثمار، مواقف سيارات",st1v:"1638",st1u:"م²",st1l:"مساحة أرض المشروع",st2v:"3590",st2u:"م²",st2l:"المساحة الإجمالية للبناء",st3v:"04",st3u:"ونصف",st3l:"عدد الطوابق",qrLine:"ساهم في بناء|مستقبل مجتمعنا",url:"https://example.com/awamia/2027/building",qrImg:""});
 function defaults(id){if(id==="settings")return defSettings();if(id==="cover")return defCover();const n=+id.slice(1)-1;return id[0]==="m"?defMonth(n):defGift(n)}
 
 /* ---------- state ---------- */
@@ -3506,7 +3506,7 @@ document.addEventListener("click",e=>{const t=e.target.closest("button");if(!t)r
  else if(t.dataset.d){if(SEC==="approved"||CANW===false)return;draft.settings.design=t.dataset.d;renderAll();autosaveSoon()}
  else if(t.dataset.m)go(+t.dataset.m,cur.kind==="c"?"m":cur.kind);
  else if(t.dataset.side){draft.cover.side=t.dataset.side;renderEditor();drawPreview();refreshUi();autosaveSoon()}
- else if(t.dataset.art){draft.cover.art=t.dataset.art;draft.cover.artImg="";renderEditor();drawPreview();refreshUi();autosaveSoon()}
+ else if(t.dataset.art){draft.cover.art=t.dataset.art;draft.cover.artImg="";const ca=COVER_ART.find(x=>x[0]===t.dataset.art);if(ca)draft.cover.side=ca[2];renderEditor();drawPreview();refreshUi();autosaveSoon()}
  else if(t.parentElement&&t.parentElement.id==="kind")go(cur.mo,t.dataset.k);
  else if(t.id==="prev")step(-1);else if(t.id==="next")step(1);
  else if(t.dataset.up){document.querySelector(`[data-file="${t.dataset.up}"][data-id="${t.dataset.id}"]`).click()}
