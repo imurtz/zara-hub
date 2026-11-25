@@ -311,7 +311,7 @@
   document.addEventListener("click", function(e){
     var t = e.target.closest("[data-tg]");
     if(t){ var o = hrCol(), k = t.getAttribute("data-tg"); if(o[k]) delete o[k]; else o[k] = 1; hrColSet(o); paintTiles(); return; }
-    var cg = e.target.closest(".grp.closed"); if(cg){ var tb = cg.querySelector("[data-tg]"); if(tb){ var oc = hrCol(); delete oc[tb.getAttribute("data-tg")]; hrColSet(oc); paintTiles(); } e.stopPropagation(); return; }
+    var cg = e.target.closest(".grp.closed"); if(cg && !e.target.closest("[data-field]")){ var hf = cg.querySelector("[data-field]"); if(hf) hf.click(); return; }
     var a = e.target.closest("[data-tgall]");
     if(a){ var o2 = {}; if(a.getAttribute("data-tgall") === "close") document.querySelectorAll(".grp-tg").forEach(function(b){ o2[b.getAttribute("data-tg")] = 1; }); hrColSet(o2); paintTiles(); }
   });
