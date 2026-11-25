@@ -56,7 +56,7 @@
     '.pg-x{border:0;background:#eef3f2;color:#3d5b56;width:34px;height:34px;border-radius:50%;font-size:16px;cursor:pointer;flex:none}' +
     '.pg-tabs{display:flex;flex-wrap:wrap;gap:6px;padding:12px 20px 0}.pg-tabs button{border:1px solid #dfe5e4;background:#fff;border-radius:20px;padding:6px 12px;font:inherit;font-size:13px;cursor:pointer;color:#3d5b56}.pg-tabs button[aria-pressed=true]{background:#517670;color:#fff;border-color:#517670}' +
     '.pg-good{display:flex;gap:16px;align-items:center;margin:14px 20px 4px;padding:14px;border-radius:16px;background:#eef6f1;border:1.5px solid #bfe0cd}' +
-    '.pg-good svg{width:150px;flex:none;border-radius:10px;border:3px solid #2f9e5b}.pg-good b{color:#1f6b40;font-size:15px}.pg-good p{margin:4px 0 0;font-size:13.5px;line-height:1.8}' +
+    '.pg-good svg,.pg-good img{width:170px !important;flex:none;border-radius:10px;border:3px solid #2f9e5b}.pg-good b{color:#1f6b40;font-size:15px}.pg-good p{margin:4px 0 0;font-size:13.5px;line-height:1.8}' +
     '.pg-sec{margin:14px 20px 6px;font-weight:700;font-size:14px;color:#a33a3a}' +
     '.pg-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;padding:0 20px 20px}' +
     '.pg-c{border:1px solid #f0d6d6;background:#fff;border-radius:14px;padding:6px;position:relative}' +
@@ -64,16 +64,17 @@
     '.pg-c b{display:block;font-size:13.5px;margin:6px 4px 0}.pg-c span{display:block;font-size:12px;color:#6b7876;margin:2px 4px 4px;line-height:1.5}' +
     '.pg-f{margin:0 20px 18px;padding:10px 14px;border-radius:12px;background:#f8f1ea;color:#8f6a4b;font-size:13px;line-height:1.8}' +
     '.pg-open{display:inline-flex;align-items:center;gap:6px;margin-top:8px;border:1px dashed #b8926d;background:#fbf6f1;color:#8f6a4b;border-radius:12px;padding:7px 12px;font:inherit;font-size:13px;font-weight:600;cursor:pointer}' +
-    '@media(max-width:520px){.pg-good{flex-direction:column;align-items:stretch}.pg-good svg{width:100%}}';
+    '@media(max-width:520px){.pg-good{flex-direction:column;align-items:stretch}.pg-good svg,.pg-good img{width:100% !important}}';
   var el = null, cur = "graduates";
+  // صور حقيقية (إن وُجدت في /assets/photo-guide/) وإلا الرسم البديل
+  var REAL = { good: 1, selfie: 1, far: 1, blurry: 1, dark: 1, backlight: 1, group: 1, cropped: 1, stickers: 1, glasses: 1, screen: 1 };
+  function pic(k) { return REAL[k] ? '<img src="/assets/photo-guide/' + k + '.webp?v=' + REAL[k] + '" alt="" loading="lazy" style="display:block;width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:8px">' : SC[k](); }
   function render() {
-    var c = CAT[cur] || ["الصورة", "صورة شخصية واضحة لصاحب المناسبة."];
-    var keys = Object.keys(CAT);
+    
     el.innerHTML = '<div class="pg" role="dialog" aria-modal="true" aria-label="دليل الصورة المقبولة"><div class="pg-h"><div><b>دليل الصورة المقبولة</b><small>الصور غير المناسبة نضطر نطلب بدلها، وهذا يؤخّر النشر. اختر صورة مثل المثال الأخضر.</small></div><button type="button" class="pg-x" data-pg-x aria-label="إغلاق">✕</button></div>' +
-      '<div class="pg-tabs">' + keys.map(function (k) { return '<button type="button" data-pg-cat="' + k + '" aria-pressed="' + (k === cur) + '">' + CAT[k][0] + '</button>'; }).join("") + '</div>' +
-      '<div class="pg-good">' + SC.good() + '<div><b>✓ الصورة المناسبة — ' + c[0] + '</b><p>' + c[1] + '<br>من الصدر للأعلى، الوجه واضح وينظر للكاميرا، إضاءة جيدة من الأمام، خلفية هادئة، وبدون فلاتر.</p></div></div>' +
+      '<div class="pg-good">' + pic("good") + '<div><b>✓ الصورة المناسبة لكل المناسبات</b><p>صورة شخصية لصاحب المناسبة وحده: من الصدر للأعلى، الوجه واضح وينظر للكاميرا، إضاءة جيدة من الأمام، خلفية هادئة، وبدون فلاتر.</p></div></div>' +
       '<div class="pg-sec">✗ صور يُفضّل ما ترسلها — عشان ما يتأخر النشر</div>' +
-      '<div class="pg-grid">' + BAD.map(function (b) { return '<div class="pg-c">' + SC[b[0]]() + '<i>✗</i><b>' + b[1] + '</b><span>' + b[2] + '</span></div>'; }).join("") + '</div>' +
+      '<div class="pg-grid">' + BAD.map(function (b) { return '<div class="pg-c">' + pic(b[0]) + '<i>✗</i><b>' + b[1] + '</b><span>' + b[2] + '</span></div>'; }).join("") + '</div>' +
       '<div class="pg-f">نصيحة: اطلب من أحد يصوّرك من مسافة متر تقريباً، في مكان مضيء، والجوال بمستوى العين — أو أرسل صورة شخصية رسمية جاهزة.</div></div>';
   }
   function open(cat) {
