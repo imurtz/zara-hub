@@ -92,7 +92,7 @@
   function close() { if (el && el.parentNode) el.parentNode.removeChild(el); document.removeEventListener("keydown", esc); }
   function esc(e) { if (e.key === "Escape") close(); }
   // زر جاهز يُوضع تحت خانة الصورة
-  function button(cat) { return '<button type="button" class="pg-open" data-photo-guide="' + (cat || "") + '">📷 شوف أمثلة الصور المقبولة والمرفوضة</button>'; }
+  function button(cat) { return '<button type="button" class="pg-open" data-photo-guide="' + (cat || "") + '">📷 شيّك أوضاع الصور غير المقبولة قبل الرفع</button>'; }
   document.addEventListener("click", function (e) { var b = e.target.closest && e.target.closest("[data-photo-guide]"); if (b) { e.preventDefault(); open(b.getAttribute("data-photo-guide")); } });
   if (!document.getElementById("pg-css")) { var st0 = document.createElement("style"); st0.id = "pg-css"; st0.textContent = CSS; (document.head || document.documentElement).appendChild(st0); }
   window.photoGuide = { open: open, close: close, button: button };
