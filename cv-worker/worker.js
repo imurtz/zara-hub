@@ -66,13 +66,17 @@ async function schema(db) {
     db.prepare(`CREATE TABLE IF NOT EXISTS jobs (id TEXT PRIMARY KEY, expert_id TEXT, title TEXT, nkey TEXT, field TEXT, note TEXT, status TEXT DEFAULT 'open', created INTEGER, closed INTEGER)`)
   ]);
   const v = await db.prepare("SELECT v FROM meta WHERE k = 'schema'").first();
-  if (!v || (v.v !== "2" && v.v !== "3")) { // رمز دخول الخبراء: يُولَّد من لوحة المؤسس ويُرسل بالواتساب
+  if (!v || !["2", "3", "4"].includes(v.v)) { // رمز دخول الخبراء: يُولَّد من لوحة المؤسس ويُرسل بالواتساب
     for (const c of ["pin_hash TEXT", "pin_at INTEGER", "fails INTEGER DEFAULT 0", "lock_until INTEGER DEFAULT 0"]) { try { await db.prepare(`ALTER TABLE experts ADD COLUMN ${c}`).run(); } catch (e) {} }
     await db.prepare("INSERT OR REPLACE INTO meta (k, v) VALUES ('schema', '2')").run();
   }
-  if (!v || v.v !== "3") { // ملخص السيرة في 3 أسطر للمدربين (يُولَّد مرة ويُحفظ)
+  if (!v || !["3", "4"].includes(v.v)) { // ملخص السيرة في 3 أسطر للمدربين (يُولَّد مرة ويُحفظ)
     try { await db.prepare("ALTER TABLE seekers ADD COLUMN summary TEXT").run(); } catch (e) {}
     await db.prepare("INSERT OR REPLACE INTO meta (k, v) VALUES ('schema', '3')").run();
+  }
+  if (!v || v.v !== "4") { // جنس الخبير للتحية «الأستاذ / الأستاذة»
+    try { await db.prepare("ALTER TABLE experts ADD COLUMN gender TEXT").run(); } catch (e) {}
+    await db.prepare("INSERT OR REPLACE INTO meta (k, v) VALUES ('schema', '4')").run();
   }
 }
 
@@ -113,7 +117,7 @@ async function expertByPhone(phone) {
     const roles = f.roles && f.roles.arrayValue && f.roles.arrayValue.values ? f.roles.arrayValue.values.map(v => v.stringValue) : [];
     const all = roles.concat([g("type")]);
     if (g("mergedInto") || g("status") === "inactive") continue;
-    if (all.includes("hr") || all.includes("trainer")) return { id: x.document.name.split("/").pop(), name: g("name"), org: g("org") };
+    if (all.includes("hr") || all.includes("trainer")) return { id: x.document.name.split("/").pop(), name: g("name"), org: g("org"), gender: g("gender") };
   }
   return null;
 }
@@ -353,7 +357,7 @@ export default {
           return json({ ok: false, err: f >= 6 ? "locked" : "badcode", mins: 15 }, 200, H);
         }
         const token = ex.token && !String(ex.token).startsWith("x-") ? ex.token : tok(24); // نفس الجلسة على كل أجهزته
-        await env.DB.prepare("UPDATE experts SET token=?, name=?, org=?, phone=?, last_seen=?, fails=0, lock_until=0 WHERE id=?").bind(token, e.name, e.org || ex.org || "", ph, now(), e.id).run();
+        await env.DB.prepare("UPDATE experts SET token=?, name=?, org=?, phone=?, last_seen=?, fails=0, lock_until=0, gender=? WHERE id=?").bind(token, e.name, e.org || ex.org || "", ph, now(), e.gender || "", e.id).run();
         await logAct(env.DB, "expert:" + e.id, "login", "");
         if (!isTest(e.id)) ctx.waitUntil(feed("🔓", "دخل المدرب " + e.name + " لصفحة المرشحين", "صفحة المدربين"));
         return json({ ok: true, token, name: e.name }, 200, H);
@@ -371,7 +375,9 @@ export default {
           const jobs = ((await env.DB.prepare("SELECT id, expert_id, title, note, created FROM jobs WHERE status = 'open' ORDER BY created DESC LIMIT 300").all()).results || []);
           const mine = jobs.filter(j => j.expert_id === ex.id).map(j => ({ id: j.id, title: j.title, note: j.note, created: j.created, n: pool.filter(s => s.titles.some(x => tMatch(x, j.title))).length }));
           const others = [...new Set(jobs.filter(j => j.expert_id !== ex.id).map(j => j.title))].slice(0, 150);
-          return json({ ok: true, name: ex.name, total: pool.length, jobs: mine, others, tiles: Object.values(tiles).sort((a, b) => b.n - a.n || a.label.localeCompare(b.label, "ar")), fields: FIELDS.map(f => ({ k: f[0], l: f[1], n: pool.filter(s => s.field === f[0]).length })).filter(f => f.n), due, ages: pool.map(s => [s.code, s.field, s.created || s.updated || 0]) }, 200, H);
+          if (!ex.gender && ex.phone) { const rp = await expertByPhone(ex.phone).catch(() => null); if (rp && rp.gender) { ex.gender = rp.gender; await env.DB.prepare("UPDATE experts SET gender=? WHERE id=?").bind(rp.gender, ex.id).run(); } }
+          const st = await env.DB.prepare("SELECT COUNT(*) AS o, SUM(CASE WHEN outcome='hired' THEN 1 ELSE 0 END) AS h FROM requests WHERE expert_id = ?").bind(ex.id).first();
+          return json({ ok: true, name: ex.name, gender: ex.gender || "", stats: { opened: (st && st.o) || 0, hired: (st && st.h) || 0 }, total: pool.length, jobs: mine, others, tiles: Object.values(tiles).sort((a, b) => b.n - a.n || a.label.localeCompare(b.label, "ar")), fields: FIELDS.map(f => ({ k: f[0], l: f[1], n: pool.filter(s => s.field === f[0]).length })).filter(f => f.n), due, ages: pool.map(s => [s.code, s.field, s.created || s.updated || 0]) }, 200, H);
         }
         if (p === "/api/hr/list") { // بطاقات بلا اسم ولا جوال حتى يطلب الخبير السيرة
           const title = url.searchParams.get("title") || "", field = url.searchParams.get("field") || "", job = url.searchParams.get("job") || "", k = normT(title);

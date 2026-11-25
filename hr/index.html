@@ -179,6 +179,16 @@
   .sum .sl{font-size:12px; font-weight:700; color:var(--teal-dark); margin-bottom:4px;}
   .sum div{font-size:13.5px; line-height:1.75; color:var(--ink);}
   .sum div:not(.sl)::before{content:"• "; color:var(--tan);}
+  /* ترحيب باسم المدرب */
+  .hello{position:relative; overflow:hidden; background:linear-gradient(120deg, var(--teal-dark), var(--teal)); color:#fff; border-radius:22px; padding:18px 20px 16px; margin-bottom:18px; box-shadow:0 14px 34px rgba(61,91,86,.22);}
+  .hello::after{content:""; position:absolute; left:-40px; top:-50px; width:170px; height:170px; border-radius:50%; background:rgba(232,207,175,.16);}
+  .hello .hi{font-size:13.5px; opacity:.85;}
+  .hello .nm{font-size:clamp(22px, 6vw, 30px); font-weight:700; line-height:1.35; margin-top:2px;}
+  .hello .nm small{font-size:.62em; font-weight:500; color:#e8cfaf; margin-inline-end:6px;}
+  .hello .tx{font-size:13.5px; opacity:.9; margin-top:4px; line-height:1.7;}
+  .hello .st{display:flex; flex-wrap:wrap; gap:8px; margin-top:12px; position:relative; z-index:1;}
+  .hello .st span{background:rgba(255,255,255,.14); border:1px solid rgba(255,255,255,.22); border-radius:12px; padding:5px 11px; font-size:13px;}
+  .hello .st b{font-size:16px; margin-inline-end:3px;}
   [hidden]{display:none !important;}
 </style>
 </head>
@@ -204,6 +214,7 @@
 
   <!-- الرئيسية: مربعات المسميات -->
   <div id="vHome" hidden>
+    <div class="hello" id="hello" hidden></div>
     <h1>وش <b>الوظيفة</b> اللي عندك؟</h1>
     <p class="sub" id="homeSub"></p>
     <div class="search big srow"><input type="search" id="q" placeholder="🔍 اكتب المسمى… مثال: محاسب، مبيعات" autocomplete="off" /><button type="button" class="addb" id="addJob">＋ وظيفة</button></div>
@@ -280,7 +291,7 @@
     view("vHome"); $("tiles").innerHTML = '<div class="spin"></div>';
     api("/api/hr/home").then(function(d){
       if(!d.ok){ if(d.err === "token") return out(); $("tiles").innerHTML = '<div class="empty">تعذّر التحميل، حدّث الصفحة.</div>'; return; }
-      HOME = d; $("who").innerHTML = '<button type="button" class="helpb" id="helpB">؟ طريقة الاستخدام</button> أ. ' + esc(String(d.name || "").split(" ")[0]) + '<button type="button" id="logout">خروج</button>'; $("who").hidden = false; $("logout").onclick = out; $("helpB").onclick = function(){ $("how").hidden = !$("how").hidden; };
+      HOME = d; paintHello(d); $("who").innerHTML = '<button type="button" class="helpb" id="helpB">؟ طريقة الاستخدام</button>' + '<button type="button" id="logout">خروج</button>'; $("who").hidden = false; $("logout").onclick = out; $("helpB").onclick = function(){ $("how").hidden = !$("how").hidden; };
       $("homeSub").innerHTML = d.total ? "<b>" + d.total + "</b> " + (d.total === 1 ? "مرشح جاهز" : "مرشحين جاهزين") + " — انقر المسمى المطلوب.<br><small>لكل مرشح رقم ثابت، وقد يظهر المرشح نفسه في أكثر من مسمى.</small>" : "";
       NEWC = {}; NEWF = {}; NEWN = 0; (d.ages || []).forEach(function(a){ if(isNew(a[2])){ NEWC[a[0]] = 1; NEWF[a[1]] = (NEWF[a[1]] || 0) + 1; NEWN++; } });
       $("fresh").innerHTML = NEWN ? '<div class="fresh"><span>🆕 ' + (NEWN === 1 ? "وصلت <b>سيرة جديدة</b>" : NEWN === 2 ? "وصلت <b>سيرتين جديدتين</b>" : "وصلت <b>" + NEWN + "</b> " + (NEWN <= 10 ? "سير جديدة" : "سيرة جديدة")) + ' من زيارتك الماضية</span><button type="button" id="seeNew">اعرضها</button></div>' : "";
@@ -315,6 +326,18 @@
       return;
     }
     $("tiles").innerHTML = list.length ? '<div class="tiles">' + list.map(tileHtml).join("") + '</div>' + (q ? '<div class="nores" style="padding-top:14px">ما هي اللي تبيها؟ <button type="button" data-add="' + esc(q) + '">＋ أضف «' + esc(q) + '» كوظيفة</button></div>' : '') : q ? '<div class="nores">ما لقينا «' + esc(q) + '» بين المرشحين الحاليين.<br><button type="button" data-add="' + esc(q) + '">＋ أضفها كوظيفة تبحث لها</button></div>' : '<div class="empty">' + (HOME && HOME.total ? "" : "لا توجد سير ذاتية بعد — ستظهر هنا فور رفعها.") + '</div>';
+  }
+  // ترحيب واضح باسم المدرب: الأستاذ / الأستاذة حسب السجل، وإن لم يُعرف الجنس «أ.»
+  function paintHello(d){
+    var w = String(d.name || "").trim().split(/\s+/).filter(Boolean), nm = w.length > 2 ? w[0] + " " + w[w.length - 1] : w.join(" ");
+    var f = /أنث|female|^f$/i.test(d.gender || ""), m = /ذكر|male|^m$/i.test(d.gender || "") && !f;
+    var hon = f ? "الأستاذة" : m ? "الأستاذ" : "أ.", h = new Date().getHours();
+    var st = d.stats || {}, o = st.opened || 0, hi = st.hired || 0;
+    $("hello").innerHTML = '<div class="hi">' + (h < 12 ? "صباح الخير ☀️" : "مساء الخير 🌙") + '، ' + (f ? "حيّاكِ الله" : "حيّاك الله") + '</div>' +
+      '<div class="nm"><small>' + hon + '</small>' + esc(nm) + '</div>' +
+      '<div class="tx">' + (f ? "شريكتنا" : "شريكنا") + ' في «مفاتيح الفرص» — كل سيرة ' + (f ? "تطّلعين" : "تطّلع") + ' عليها فرصة لمتدرب من متدربينا 💚</div>' +
+      (o || hi ? '<div class="st">' + (o ? '<span><b>' + o + '</b>' + (o === 1 ? "سيرة اطّلعت عليها" : o === 2 ? "سيرتين اطّلعت عليها" : "سير اطّلعت عليها") + '</span>' : '') + (hi ? '<span>🎉 <b>' + hi + '</b>' + (hi === 1 ? "متدرب توظّف عن طريقك" : "متدربين توظّفوا عن طريقك") + '</span>' : '') + '</div>' : '');
+    $("hello").hidden = !nm;
   }
   function paintDue(){
     var due = (HOME && HOME.due) || [];
