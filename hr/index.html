@@ -148,6 +148,35 @@
   .hit button{margin-top:8px; border:0; border-radius:12px; padding:9px 14px; font:inherit; font-size:14px; font-weight:600; cursor:pointer; background:var(--teal); color:#fff;}
   .sheet .cancel{width:100%; margin-top:8px; border:0; background:none; color:var(--ink-soft); font:inherit; font-size:14px; padding:10px; cursor:pointer;}
   .toast{position:fixed; bottom:calc(24px + env(safe-area-inset-bottom)); left:50%; transform:translateX(-50%); background:var(--ink); color:#fff; border-radius:14px; padding:11px 18px; font-size:14px; z-index:30; box-shadow:var(--shadow);}
+  /* بحث بارز */
+  .search.big input{padding:16px 18px; font-size:17px; border-width:2px; border-color:#d5e3e0; box-shadow:0 8px 22px rgba(45,70,66,.07);}
+  .search.big .addb{padding:0 18px;}
+  .helpb{border:1px solid var(--line); background:#fff; color:var(--teal-dark); border-radius:20px; padding:3px 11px; font:inherit; font-size:12.5px; font-weight:600; cursor:pointer;}
+  /* بانتظار ردّك */
+  .dueh{display:flex; align-items:center; gap:8px; margin:16px 2px 0; font-size:14.5px; font-weight:700; color:var(--tan-dark);}
+  .dueh i{font-style:normal; background:var(--tan); color:#fff; border-radius:10px; padding:1px 9px; font-size:13px;}
+  .due{margin-top:8px !important;}
+  /* جديد */
+  .fresh{display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap; margin-top:14px; background:linear-gradient(90deg,#fff7e8,#fdf0e0); border:1px solid #f0d9b5; border-radius:16px; padding:12px 15px; font-size:14.5px;}
+  .fresh button{border:0; border-radius:12px; padding:8px 14px; background:var(--tan-dark); color:#fff; font:inherit; font-size:13.5px; font-weight:700; cursor:pointer;}
+  .nw{font-style:normal; display:inline-block; background:#e4572e; color:#fff; border-radius:8px; padding:1px 7px; font-size:11px; font-weight:700; line-height:1.6; vertical-align:middle;}
+  .tile .nw{position:absolute; top:-7px; right:12px;}
+  .cand .nw{margin-inline-start:6px;}
+  /* المجالات: المطوية تصير مربعات جنب بعض */
+  .grps{display:grid; grid-template-columns:repeat(auto-fill, minmax(230px, 1fr)); gap:10px; align-items:start;}
+  .grps .grp{grid-column:1/-1; margin-top:10px;}
+  .grps .grp.closed{grid-column:auto; margin-top:0; background:#fff; border:1.5px solid var(--line); border-radius:18px; padding:12px 12px 10px; cursor:pointer; transition:all .15s;}
+  .grps .grp.closed:hover{border-color:var(--teal); box-shadow:0 8px 20px rgba(45,70,66,.08);}
+  .grp-ic{font-size:18px; margin-inline-end:4px;}
+  .grp.closed .grp-h{flex-direction:column; align-items:flex-start !important; gap:8px; padding:0;}
+  .grp.closed .grp-h b{font-size:15px;}
+  .grp.closed .grp-row{align-items:flex-start;}
+  .grp.closed .grp-go{display:none;}
+  /* ملخص السيرة */
+  .sum{margin-top:10px; background:#f6f9f8; border:1px solid #dfe9e7; border-radius:14px; padding:10px 12px;}
+  .sum .sl{font-size:12px; font-weight:700; color:var(--teal-dark); margin-bottom:4px;}
+  .sum div{font-size:13.5px; line-height:1.75; color:var(--ink);}
+  .sum div:not(.sl)::before{content:"• "; color:var(--tan);}
   [hidden]{display:none !important;}
 </style>
 </head>
@@ -175,10 +204,11 @@
   <div id="vHome" hidden>
     <h1>وش <b>الوظيفة</b> اللي عندك؟</h1>
     <p class="sub" id="homeSub"></p>
-    <div class="how" aria-label="طريقة الاستخدام"><div><i>1</i>اختر المسمى الوظيفي</div><div><i>2</i>اضغط «اعرض السيرة»</div><div><i>3</i>تواصل مع المرشح مباشرة</div></div>
+    <div class="search big srow"><input type="search" id="q" placeholder="🔍 اكتب المسمى… مثال: محاسب، مبيعات" autocomplete="off" /><button type="button" class="addb" id="addJob">＋ وظيفة</button></div>
+    <div class="how" id="how" hidden aria-label="طريقة الاستخدام"><div><i>1</i>ابحث أو اختر المسمى الوظيفي</div><div><i>2</i>اقرأ الملخص واضغط «اعرض السيرة»</div><div><i>3</i>تواصل مع المرشح مباشرة</div></div>
     <div id="due"></div>
+    <div id="fresh"></div>
     <div id="mine"></div>
-    <div class="search srow"><input type="search" id="q" placeholder="ابحث عن مسمى وظيفي…" /><button type="button" class="addb" id="addJob">＋ وظيفة</button></div>
     <div id="tiles"></div>
   </div>
 
@@ -212,6 +242,12 @@
   var $ = function(id){ return document.getElementById(id); };
   var T = ""; try{ T = localStorage.getItem("zaraHrToken") || ""; }catch(e){}
   var HOME = null, CUR = null;
+  // «جديد»: كل ما انضاف بعد آخر زيارة (الزيارة = جلسة متصفح) — يُحفظ على جهاز المدرب فقط
+  var PREV = 0;
+  try{ if(!sessionStorage.getItem("hrSess")){ localStorage.setItem("hrPrevVisit", localStorage.getItem("hrLastVisit") || "0"); localStorage.setItem("hrLastVisit", String(Date.now())); sessionStorage.setItem("hrSess", "1"); } PREV = +localStorage.getItem("hrPrevVisit") || 0; }catch(e){}
+  function isNew(at){ return PREV > 0 && +at > PREV; }
+  var NEWC = {}, NEWF = {}, NEWN = 0;
+  var FIC = { accounting:"🧮", hr:"👥", it:"💻", engineering:"🏗️", sales:"📈", customer:"🎧", admin:"🗂️", business:"📊", education:"🎓", health:"🩺", pharmacy:"💊", logistics:"🚚", safety:"🦺", legal:"⚖️", media:"🎨", technical:"🔧", hospitality:"🛎️", science:"🔬", other:"📁" };
   function esc(s){ return String(s == null ? "" : s).replace(/[&<>"]/g, function(c){ return { "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;" }[c]; }); }
   function digits(s){ return String(s || "").replace(/[٠-٩]/g, function(d){ return d.charCodeAt(0) - 0x0660; }); }
   function phoneNorm(s){ var d = digits(s).replace(/\D/g, "").replace(/^00/, ""); if(/^9665\d{8}$/.test(d)) d = "0" + d.slice(3); else if(/^5\d{8}$/.test(d)) d = "0" + d; return d; }
@@ -241,15 +277,19 @@
     view("vHome"); $("tiles").innerHTML = '<div class="spin"></div>';
     api("/api/hr/home").then(function(d){
       if(!d.ok){ if(d.err === "token") return out(); $("tiles").innerHTML = '<div class="empty">تعذّر التحميل، حدّث الصفحة.</div>'; return; }
-      HOME = d; $("who").innerHTML = "أ. " + esc(String(d.name || "").split(" ")[0]) + '<button type="button" id="logout">خروج</button>'; $("who").hidden = false; $("logout").onclick = out;
+      HOME = d; $("who").innerHTML = '<button type="button" class="helpb" id="helpB">؟ طريقة الاستخدام</button> أ. ' + esc(String(d.name || "").split(" ")[0]) + '<button type="button" id="logout">خروج</button>'; $("who").hidden = false; $("logout").onclick = out; $("helpB").onclick = function(){ $("how").hidden = !$("how").hidden; };
       $("homeSub").innerHTML = d.total ? "<b>" + d.total + "</b> " + (d.total === 1 ? "مرشح جاهز" : "مرشحين جاهزين") + " — انقر المسمى المطلوب.<br><small>لكل مرشح رقم ثابت، وقد يظهر المرشح نفسه في أكثر من مسمى.</small>" : "";
+      NEWC = {}; NEWF = {}; NEWN = 0; (d.ages || []).forEach(function(a){ if(isNew(a[2])){ NEWC[a[0]] = 1; NEWF[a[1]] = (NEWF[a[1]] || 0) + 1; NEWN++; } });
+      $("fresh").innerHTML = NEWN ? '<div class="fresh"><span>🆕 ' + (NEWN === 1 ? "وصلت <b>سيرة جديدة</b>" : NEWN === 2 ? "وصلت <b>سيرتين جديدتين</b>" : "وصلت <b>" + NEWN + "</b> " + (NEWN <= 10 ? "سير جديدة" : "سيرة جديدة")) + ' من زيارتك الماضية</span><button type="button" id="seeNew">اعرضها</button></div>' : "";
+      if(NEWN) $("seeNew").onclick = function(){ openList({ fresh: 1 }); };
+      try{ if(!localStorage.getItem("hrHowSeen")){ $("how").hidden = false; localStorage.setItem("hrHowSeen", "1"); } }catch(e){}
       paintDue(); paintMine(); paintTiles();
     }).catch(function(){ $("tiles").innerHTML = '<div class="empty">تعذّر الاتصال، تأكد من الإنترنت.</div>'; });
   }
   // لون ثابت لكل مرشح (نفس الرقم = نفس اللون في المربعات والبطاقات) — يسهّل تمييزه بنظرة
   var CODE_PAL = [["#E3F1EC","#1E6B52","#BFE0D3"],["#FDEBDD","#A4501A","#F6CDAE"],["#E6EEFB","#2C5AA0","#C5D6F2"],["#F6E6F1","#8E3474","#E8C3DD"],["#FFF4CC","#8A6400","#F1DE94"],["#EAE7FB","#5442A8","#CFC8F2"],["#E2F3F7","#1F6E80","#BEE1EA"],["#FBE4E4","#A33A3A","#F1C2C2"],["#EEF4DF","#55721A","#D4E3B3"],["#F3EDE4","#7A5A36","#E2D3BE"],["#E5F0FF","#1F5FBF","#BFD7FA"],["#FCE9F5","#A53283","#F2C6E3"]];
   function codeStyle(c){ var h = 0, s2 = String(c); for(var i = 0; i < s2.length; i++) h = (h * 31 + s2.charCodeAt(i)) >>> 0; var p = CODE_PAL[h % CODE_PAL.length]; return ' style="background:' + p[0] + ';color:' + p[1] + ';border-color:' + p[2] + '"'; }
-  function tileHtml(t){ var cs = (t.codes || []).slice(0, 4).map(function(c){ return '<em' + codeStyle(c) + '>' + esc(c) + '</em>'; }).join("") + ((t.codes || []).length > 4 ? '<em>+' + (t.codes.length - 4) + '</em>' : ''); return '<button type="button" class="tile" data-title="' + esc(t.label) + '"><i>' + t.n + '</i><b>' + esc(t.label) + '</b><div class="codes" title="أرقام المرشحين">' + cs + '</div></button>'; }
+  function tileHtml(t){ var cs = (t.codes || []).slice(0, 4).map(function(c){ return '<em' + codeStyle(c) + '>' + esc(c) + '</em>'; }).join("") + ((t.codes || []).length > 4 ? '<em>+' + (t.codes.length - 4) + '</em>' : ''); var tn = (t.codes || []).filter(function(c){ return NEWC[c]; }).length; return '<button type="button" class="tile" data-title="' + esc(t.label) + '">' + (tn ? '<em class="nw">جديد' + (tn > 1 ? " " + tn : "") + '</em>' : '') + '<i>' + t.n + '</i><b>' + esc(t.label) + '</b><div class="codes" title="أرقام المرشحين">' + cs + '</div></button>'; }
   // المربعات مرتبة تحت عناوين المجالات؛ وعند البحث تظهر النتائج دون عناوين
   // حالة طي المجالات تُحفظ على جهاز المدرب (مفتوحة افتراضياً)
   function hrCol(){ try{ return JSON.parse(localStorage.getItem("hrCollapsed") || "{}"); }catch(e){ return {}; } }
@@ -257,6 +297,7 @@
   document.addEventListener("click", function(e){
     var t = e.target.closest("[data-tg]");
     if(t){ var o = hrCol(), k = t.getAttribute("data-tg"); if(o[k]) delete o[k]; else o[k] = 1; hrColSet(o); paintTiles(); return; }
+    var cg = e.target.closest(".grp.closed"); if(cg){ var tb = cg.querySelector("[data-tg]"); if(tb){ var oc = hrCol(); delete oc[tb.getAttribute("data-tg")]; hrColSet(oc); paintTiles(); } e.stopPropagation(); return; }
     var a = e.target.closest("[data-tgall]");
     if(a){ var o2 = {}; if(a.getAttribute("data-tgall") === "close") document.querySelectorAll(".grp-tg").forEach(function(b){ o2[b.getAttribute("data-tg")] = 1; }); hrColSet(o2); paintTiles(); }
   });
@@ -267,14 +308,14 @@
       var rest = all.filter(function(t){ return !(HOME.fields || []).some(function(f){ return f.k === t.field; }); });
       if(rest.length) groups.push({ f: { k: "", l: "مسميات أخرى", n: rest.length }, ts: rest });
       var col = hrCol(), allClosed = groups.every(function(g){ return col[g.f.k || "_"]; });
-      $("tiles").innerHTML = '<div class="grp-all"><button type="button" data-tgall="' + (allClosed ? "open" : "close") + '">' + (allClosed ? "فتح كل المجالات ▾" : "طي كل المجالات ▴") + '</button></div>' + groups.map(function(g){ var gk = g.f.k || "_", closed = !!col[gk]; return '<div class="grp' + (closed ? ' closed' : '') + '"><div class="grp-row"><button type="button" class="grp-tg" data-tg="' + gk + '" aria-expanded="' + !closed + '" title="' + (closed ? "فتح" : "طي") + '">▾</button><button type="button" class="grp-h"' + (g.f.k ? ' data-field="' + g.f.k + '" data-l="' + esc(g.f.l) + '"' : '') + '><b>' + esc(g.f.l) + '</b><span class="grp-meta">' + (g.f.k ? '<i class="grp-go">عرض الكل ←</i>' : '') + '<em class="grp-n"><b>' + g.f.n + '</b> ' + (g.f.n === 1 ? "مرشح" : "مرشحين") + '</em></span></button></div><div class="tiles">' + g.ts.map(tileHtml).join("") + '</div></div>'; }).join("");
+      $("tiles").innerHTML = '<div class="grp-all"><button type="button" data-tgall="' + (allClosed ? "open" : "close") + '">' + (allClosed ? "فتح كل المجالات ▾" : "طي كل المجالات ▴") + '</button></div><div class="grps">' + groups.map(function(g){ var gk = g.f.k || "_", closed = !!col[gk]; return '<div class="grp' + (closed ? ' closed' : '') + '"><div class="grp-row"><button type="button" class="grp-tg" data-tg="' + gk + '" aria-expanded="' + !closed + '" title="' + (closed ? "فتح" : "طي") + '">▾</button><button type="button" class="grp-h"' + (g.f.k ? ' data-field="' + g.f.k + '" data-l="' + esc(g.f.l) + '"' : '') + '><b><span class="grp-ic">' + (FIC[g.f.k] || "📁") + '</span>' + esc(g.f.l) + '</b><span class="grp-meta">' + (g.f.k ? '<i class="grp-go">عرض الكل ←</i>' : '') + '<em class="grp-n"><b>' + g.f.n + '</b> ' + (g.f.n === 1 ? "مرشح" : "مرشحين") + '</em>' + (NEWF[g.f.k] ? '<em class="nw">' + NEWF[g.f.k] + ' جديد</em>' : '') + '</span></button></div><div class="tiles">' + g.ts.map(tileHtml).join("") + '</div></div>'; }).join("") + '</div>';
       return;
     }
     $("tiles").innerHTML = list.length ? '<div class="tiles">' + list.map(tileHtml).join("") + '</div>' + (q ? '<div class="nores" style="padding-top:14px">ما هي اللي تبيها؟ <button type="button" data-add="' + esc(q) + '">＋ أضف «' + esc(q) + '» كوظيفة</button></div>' : '') : q ? '<div class="nores">ما لقينا «' + esc(q) + '» بين المرشحين الحاليين.<br><button type="button" data-add="' + esc(q) + '">＋ أضفها كوظيفة تبحث لها</button></div>' : '<div class="empty">' + (HOME && HOME.total ? "" : "لا توجد سير ذاتية بعد — ستظهر هنا فور رفعها.") + '</div>';
   }
   function paintDue(){
     var due = (HOME && HOME.due) || [];
-    $("due").innerHTML = due.map(function(r){ return '<div class="due" data-rid="' + r.id + '"><b>وش صار مع ' + esc(r.name || "المرشح") + '؟</b><div class="sub" style="margin:2px 0 0">' + esc(r.job || "") + '</div><div class="row"><button type="button" class="y" data-out="hired">قابلته وتوظّف 🎉</button><button type="button" class="n" data-out="int_no">قابلته — غير مناسب</button><button type="button" class="n" data-out="cv_no">اطّلعت على السيرة — غير مناسبة</button></div></div>'; }).join("");
+    $("due").innerHTML = (due.length ? '<div class="dueh">⏳ بانتظار ردّك <i>' + due.length + '</i><span style="font-weight:400;font-size:12.5px;color:var(--ink-soft)">— ضغطة وحدة تكفي</span></div>' : '') + due.map(function(r){ return '<div class="due" data-rid="' + r.id + '"><b>وش صار مع ' + esc(r.name || "المرشح") + '؟</b><div class="sub" style="margin:2px 0 0">' + esc(r.job || "") + '</div><div class="row"><button type="button" class="y" data-out="hired">قابلته وتوظّف 🎉</button><button type="button" class="n" data-out="int_no">قابلته — غير مناسب</button><button type="button" class="n" data-out="cv_no">اطّلعت على السيرة — غير مناسبة</button></div></div>'; }).join("");
   }
   $("q").addEventListener("input", paintTiles);
   $("due").onclick = function(e){
@@ -343,10 +384,10 @@
 
   // المرشحون
   function openList(o){
-    CUR = o; view("vList"); $("listH").innerHTML = "<b>" + esc(o.job || o.title || o.label) + "</b>"; $("listSub").textContent = ""; $("list").innerHTML = '<div class="spin"></div>';
-    api("/api/hr/list?" + (o.job ? "job=" + encodeURIComponent(o.job) : o.title ? "title=" + encodeURIComponent(o.title) : "field=" + encodeURIComponent(o.field))).then(function(d){
+    CUR = o; view("vList"); $("listH").innerHTML = "<b>" + esc(o.fresh ? "🆕 السير الجديدة" : o.job || o.title || o.label) + "</b>"; $("listSub").textContent = ""; $("list").innerHTML = '<div class="spin"></div>';
+    api("/api/hr/list?" + (o.job ? "job=" + encodeURIComponent(o.job) : o.title ? "title=" + encodeURIComponent(o.title) : "field=" + encodeURIComponent(o.field || ""))).then(function(d){
       if(!d.ok){ if(d.err === "token") return out(); $("list").innerHTML = '<div class="empty">تعذّر التحميل.</div>'; return; }
-      ROWS = d.rows; FLT = { city: "", exp: "" }; paintRows();
+      ROWS = o.fresh ? d.rows.filter(function(c){ return isNew(c.created); }) : d.rows; if(!o.fresh) ROWS.sort(function(a, b){ return (isNew(b.created) ? 1 : 0) - (isNew(a.created) ? 1 : 0); }); FLT = { city: "", exp: "" }; paintRows();
     }).catch(function(){ $("list").innerHTML = '<div class="empty">تعذّر الاتصال.</div>'; });
   }
   // فلاتر المدينة والخبرة: تظهر فقط إذا زاد المرشحون عن 5
@@ -363,9 +404,10 @@
     $("listSub").innerHTML = rows.length + (rows.length === ROWS.length ? "" : " من " + ROWS.length) + " مرشح — انقر «اعرض السيرة» وتصلك فوراً" + fh;
     $("list").innerHTML = rows.length ? rows.map(function(c){
         var meta = [c.years != null ? c.years + " سنوات خبرة" : "", c.degree, c.city, c.gender].filter(Boolean).join(" · ");
-        return '<div class="cand" data-id="' + c.id + '"><div class="h"><div><div class="code"' + codeStyle(c.code) + '>مرشح ' + esc(c.code) + '</div><div class="t">' + esc((c.titles || []).join(" · ") || c.fieldName) + '</div>' + (c.alsoIn && c.alsoIn.length ? '<div class="also">يظهر أيضاً في: ' + esc(c.alsoIn.join("، ")) + '</div>' : '') + '<div class="m">' + esc(c.fieldName) + (meta ? " — " + esc(meta) : "") + '</div></div>' +
+        return '<div class="cand" data-id="' + c.id + '"><div class="h"><div><div class="code"' + codeStyle(c.code) + '>مرشح ' + esc(c.code) + '</div>' + (isNew(c.created) ? '<em class="nw">جديد</em>' : '') + '<div class="t">' + esc((c.titles || []).join(" · ") || c.fieldName) + '</div>' + (c.alsoIn && c.alsoIn.length ? '<div class="also">يظهر أيضاً في: ' + esc(c.alsoIn.join("، ")) + '</div>' : '') + '<div class="m">' + esc(c.fieldName) + (meta ? " — " + esc(meta) : "") + '</div></div>' +
           '<button type="button" class="go' + (c.taken ? " seen" : "") + '">' + (c.taken ? "سبق عرضها — اعرض مجدداً" : "اعرض السيرة") + '</button></div>' +
-          (c.skills && c.skills.length ? '<div class="sk">' + c.skills.map(function(s){ return '<span>' + esc(s) + '</span>'; }).join("") + '</div>' : '') + '<div class="rev"></div></div>';
+          (c.summary && c.summary.length ? '<div class="sum"><div class="sl">✨ ملخص سريع</div>' + c.summary.map(function(l){ return '<div>' + esc(l) + '</div>'; }).join("") + '</div>' : '') +
+          (c.skills && c.skills.length && !(c.summary && c.summary.length) ? '<div class="sk">' + c.skills.map(function(s){ return '<span>' + esc(s) + '</span>'; }).join("") + '</div>' : '') + '<div class="rev"></div></div>';
       }).join("") : '<div class="empty">' + (ROWS.length ? "لا يوجد مرشح بهذه الشروط" : "لا يوجد مرشحون حالياً.") + '</div>';
   }
   $("listSub").onclick = function(e){ var b = e.target.closest("[data-fc],[data-fe]"); if(!b) return; if(b.hasAttribute("data-fc")) FLT.city = b.getAttribute("data-fc"); else FLT.exp = b.getAttribute("data-fe"); paintRows(); };

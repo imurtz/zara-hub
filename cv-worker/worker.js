@@ -66,9 +66,13 @@ async function schema(db) {
     db.prepare(`CREATE TABLE IF NOT EXISTS jobs (id TEXT PRIMARY KEY, expert_id TEXT, title TEXT, nkey TEXT, field TEXT, note TEXT, status TEXT DEFAULT 'open', created INTEGER, closed INTEGER)`)
   ]);
   const v = await db.prepare("SELECT v FROM meta WHERE k = 'schema'").first();
-  if (!v || v.v !== "2") { // رمز دخول الخبراء: يُولَّد من لوحة المؤسس ويُرسل بالواتساب
+  if (!v || (v.v !== "2" && v.v !== "3")) { // رمز دخول الخبراء: يُولَّد من لوحة المؤسس ويُرسل بالواتساب
     for (const c of ["pin_hash TEXT", "pin_at INTEGER", "fails INTEGER DEFAULT 0", "lock_until INTEGER DEFAULT 0"]) { try { await db.prepare(`ALTER TABLE experts ADD COLUMN ${c}`).run(); } catch (e) {} }
     await db.prepare("INSERT OR REPLACE INTO meta (k, v) VALUES ('schema', '2')").run();
+  }
+  if (!v || v.v !== "3") { // ملخص السيرة في 3 أسطر للمدربين (يُولَّد مرة ويُحفظ)
+    try { await db.prepare("ALTER TABLE seekers ADD COLUMN summary TEXT").run(); } catch (e) {}
+    await db.prepare("INSERT OR REPLACE INTO meta (k, v) VALUES ('schema', '3')").run();
   }
 }
 
@@ -172,6 +176,40 @@ ${list}
   } catch (e) { return Object.assign(kw, { src: "kw:err:" + clip(e && e.message, 160) }); }
 }
 
+// ملخص 3 أسطر للمدرب: المؤهل · الخبرة · أبرز مهارة — Workers AI، وإن تعذّر يُركَّب من البيانات المستخرجة
+function sumFallback(s) {
+  const L = [];
+  if (s.degree) L.push("المؤهل: " + s.degree);
+  L.push(s.years ? "الخبرة: " + s.years + (s.years > 10 ? " سنة" : s.years > 2 ? " سنوات" : s.years === 2 ? " سنتين" : " سنة") + (s.tasks ? " — " + clip(s.tasks, 90) : "") : "الخبرة: " + (s.tasks ? clip(s.tasks, 100) : "حديث تخرّج / بدون خبرة مذكورة"));
+  const sk = Array.isArray(s.skills) ? s.skills : JSON.parse(s.skills || "[]");
+  if (sk.length) L.push("أبرز المهارات: " + sk.slice(0, 3).join("، "));
+  return L.slice(0, 3);
+}
+async function aiSummary(env, s) {
+  if (!env.AI || String(s.text || "").trim().length < 120) return null;
+  const prompt = `لخّص السيرة الذاتية التالية لمسؤول توظيف في 3 أسطر قصيرة بالعربية فقط، بدون اسم الشخص أو رقمه أو أي بيانات تواصل. أعد JSON فقط: {"lines": ["المؤهل: ...", "الخبرة: ...", "أبرز ما يميّزه: ..."]} — كل سطر أقل من 90 حرفاً، ولا تخترع معلومة غير موجودة.
+السيرة:
+"""${clip(s.text, 5000)}"""`;
+  for (const model of AI_MODELS) {
+    try {
+      const r = await env.AI.run(model, { messages: [{ role: "user", content: prompt }], max_tokens: 300, temperature: 0.1 });
+      let out = r && (r.response !== undefined ? r.response : r.result), j = null;
+      if (out && typeof out === "object") j = out; else { const m = String(out || "").match(/\{[\s\S]*\}/); if (m) j = JSON.parse(m[0]); }
+      const lines = j && Array.isArray(j.lines) ? j.lines.map(x => clip(x, 110)).filter(x => x && !/05\d{8}|@|\+966/.test(x)).slice(0, 3) : [];
+      if (lines.length >= 2) return lines;
+    } catch (e) {}
+  }
+  return null;
+}
+async function fillSummaries(env, ids) {
+  for (const id of ids.slice(0, 6)) {
+    const s = await env.DB.prepare("SELECT id, text, degree, years, tasks, skills FROM seekers WHERE id = ?").bind(id).first();
+    if (!s) continue;
+    const lines = (await aiSummary(env, s)) || sumFallback(s);
+    await env.DB.prepare("UPDATE seekers SET summary = ? WHERE id = ?").bind(JSON.stringify(lines), id).run();
+  }
+}
+
 function pub(s) { // ما يراه صاحب السيرة عن نفسه
   return { name: s.name, phone: s.phone, field: s.field, fieldName: FIELD_NAME[s.field] || "", titles: JSON.parse(s.titles || "[]"), tasks: s.tasks, years: s.years, degree: s.degree, skills: JSON.parse(s.skills || "[]"), city: s.city, fileName: s.file_name, consent: !!s.consent, status: s.status, updated: s.updated, expires: s.expires };
 }
@@ -256,7 +294,7 @@ export default {
         await env.CV_BUCKET.put(key, file.stream(), { httpMetadata: { contentType: type } });
         if (ex && ex.file_key) { try { await env.CV_BUCKET.delete(ex.file_key); } catch (e) {} }
         const t = now(), vals = [token, ph, r.name, r.gender || "", r.id, r.regNo || "", key, clip(name, 120), type, text, cls.field, JSON.stringify(cls.titles), cls.tasks, cls.years, cls.degree, JSON.stringify(cls.skills), cls.city, cls.src, t, t + KEEP_DAYS * 864e5];
-        if (ex) await env.DB.prepare(`UPDATE seekers SET token=?, phone=?, name=?, gender=?, roster_id=?, reg_no=?, file_key=?, file_name=?, file_type=?, text=?, field=?, titles=?, tasks=?, years=?, degree=?, skills=?, city=?, ai=?, updated=?, expires=? WHERE id=?`).bind(...vals, id).run();
+        if (ex) await env.DB.prepare(`UPDATE seekers SET token=?, phone=?, name=?, gender=?, roster_id=?, reg_no=?, file_key=?, file_name=?, file_type=?, text=?, field=?, titles=?, tasks=?, years=?, degree=?, skills=?, city=?, ai=?, updated=?, expires=?, summary=NULL WHERE id=?`).bind(...vals, id).run();
         else await env.DB.prepare(`INSERT INTO seekers (token, phone, name, gender, roster_id, reg_no, file_key, file_name, file_type, text, field, titles, tasks, years, degree, skills, city, ai, updated, expires, id, created) VALUES (${Array(22).fill("?").join(",")})`).bind(...vals, id, t).run();
         await logAct(env.DB, "seeker:" + id, ex ? "reupload" : "upload", cls.field);
         if (!isTest(r.id)) ctx.waitUntil(feed("📄", (ex ? "حدّث سيرته: " : "سيرة جديدة: ") + r.name + " — " + (FIELD_NAME[cls.field] || ""), "صفحة الباحثين"));
@@ -325,7 +363,7 @@ export default {
         if (!ex) return json({ ok: false, err: "token" }, 401, H);
         await env.DB.prepare("UPDATE experts SET last_seen=? WHERE id=?").bind(now(), ex.id).run();
         const ATTX = await attendees();
-        const pool = ((await env.DB.prepare("SELECT id, roster_id, reg_no, field, titles, years, degree, skills, city, gender, updated FROM seekers WHERE status='active' AND consent=1 AND phone NOT IN (SELECT phone FROM hires) AND id NOT IN (SELECT seeker_id FROM requests WHERE outcome='hired') AND (roster_id NOT LIKE 'zz-%' OR ? = 1)").bind(ex.id.startsWith("zz-") ? 1 : 0).all()).results || []).filter(s => attendedOk(ATTX, s.roster_id)).map(s => Object.assign(s, { titles: JSON.parse(s.titles || "[]"), skills: JSON.parse(s.skills || "[]"), code: (String(s.reg_no || "").match(/(\d+)$/) || [])[1] || s.id.slice(-4).toUpperCase() }));
+        const pool = ((await env.DB.prepare("SELECT id, roster_id, reg_no, field, titles, years, degree, skills, city, gender, updated, created, tasks, summary FROM seekers WHERE status='active' AND consent=1 AND phone NOT IN (SELECT phone FROM hires) AND id NOT IN (SELECT seeker_id FROM requests WHERE outcome='hired') AND (roster_id NOT LIKE 'zz-%' OR ? = 1)").bind(ex.id.startsWith("zz-") ? 1 : 0).all()).results || []).filter(s => attendedOk(ATTX, s.roster_id)).map(s => Object.assign(s, { titles: JSON.parse(s.titles || "[]"), skills: JSON.parse(s.skills || "[]"), code: (String(s.reg_no || "").match(/(\d+)$/) || [])[1] || s.id.slice(-4).toUpperCase() }));
         if (p === "/api/hr/home") { // مربعات المسميات + أسئلة المتابعة المستحقة
           const tiles = {};
           pool.forEach(s => { const seen = {}; s.titles.forEach(ti => { const k = normT(ti); if (!k || seen[k]) return; seen[k] = 1; const tl = (tiles[k] = tiles[k] || { label: ti, n: 0, field: s.field, codes: [] }); tl.n++; tl.codes.push(s.code); }); });
@@ -333,14 +371,15 @@ export default {
           const jobs = ((await env.DB.prepare("SELECT id, expert_id, title, note, created FROM jobs WHERE status = 'open' ORDER BY created DESC LIMIT 300").all()).results || []);
           const mine = jobs.filter(j => j.expert_id === ex.id).map(j => ({ id: j.id, title: j.title, note: j.note, created: j.created, n: pool.filter(s => s.titles.some(x => tMatch(x, j.title))).length }));
           const others = [...new Set(jobs.filter(j => j.expert_id !== ex.id).map(j => j.title))].slice(0, 150);
-          return json({ ok: true, name: ex.name, total: pool.length, jobs: mine, others, tiles: Object.values(tiles).sort((a, b) => b.n - a.n || a.label.localeCompare(b.label, "ar")), fields: FIELDS.map(f => ({ k: f[0], l: f[1], n: pool.filter(s => s.field === f[0]).length })).filter(f => f.n), due }, 200, H);
+          return json({ ok: true, name: ex.name, total: pool.length, jobs: mine, others, tiles: Object.values(tiles).sort((a, b) => b.n - a.n || a.label.localeCompare(b.label, "ar")), fields: FIELDS.map(f => ({ k: f[0], l: f[1], n: pool.filter(s => s.field === f[0]).length })).filter(f => f.n), due, ages: pool.map(s => [s.code, s.field, s.created || s.updated || 0]) }, 200, H);
         }
         if (p === "/api/hr/list") { // بطاقات بلا اسم ولا جوال حتى يطلب الخبير السيرة
           const title = url.searchParams.get("title") || "", field = url.searchParams.get("field") || "", job = url.searchParams.get("job") || "", k = normT(title);
           const mine = {}; ((await env.DB.prepare("SELECT seeker_id FROM requests WHERE expert_id = ?").bind(ex.id).all()).results || []).forEach(r => mine[r.seeker_id] = 1);
           const rows = pool.filter(s => job ? s.titles.some(x => tMatch(x, job)) : title ? s.titles.some(x => normT(x) === k) : field ? s.field === field : true)
             .sort((a, b) => (b.years || 0) - (a.years || 0) || b.updated - a.updated)
-            .map(s => ({ id: s.id, code: s.code, fieldName: FIELD_NAME[s.field] || "", titles: s.titles, alsoIn: title ? s.titles.filter(x => normT(x) !== k) : [], years: s.years, degree: s.degree, city: s.city, skills: s.skills.slice(0, 5), gender: s.gender, taken: !!mine[s.id] }));
+            .map(s => ({ id: s.id, code: s.code, fieldName: FIELD_NAME[s.field] || "", titles: s.titles, alsoIn: title ? s.titles.filter(x => normT(x) !== k) : [], years: s.years, degree: s.degree, city: s.city, skills: s.skills.slice(0, 5), gender: s.gender, taken: !!mine[s.id], created: s.created || s.updated || 0, summary: s.summary ? JSON.parse(s.summary) : sumFallback(s), sumAi: !!s.summary }));
+          const miss = rows.filter(r => !r.sumAi).map(r => r.id); if (miss.length) ctx.waitUntil(fillSummaries(env, miss).catch(() => {}));
           return json({ ok: true, rows }, 200, H);
         }
         if (p === "/api/hr/open" && req.method === "POST") { // كشف السيرة: يُسجَّل باسم الخبير فوراً
