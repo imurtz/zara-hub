@@ -466,6 +466,7 @@
   }
 
 </style>
+<script src="/assets/photo-guide.js?v=1"></script>
 </head>
 <body>
 <!-- ============ شاشة افتتاحية: موشن شعار بوابة زارة ============
@@ -1246,7 +1247,7 @@
       : (cat.photoRequired ? "إلزامية — تُضغط تلقائياً لحجم مناسب بعد الرفع" : "صورة توضيحية إن رغبتم بإرفاقها — تُضغط تلقائياً لحجم مناسب بعد الرفع")) +
       " — الصيغ المقبولة: PNG أو JPG فقط";
     grid.innerHTML += '<div class="field full"><label>' + photoLabel + '</label>' + photoFieldHTML() +
-      '<p class="field-hint">' + photoHint + '</p></div>';
+      '<p class="field-hint">' + photoHint + '</p>' + (window.photoGuide ? photoGuide.button(cat.key) : '') + '</div>';
     document.getElementById("errMsg").style.display = "none";
     bindFormEvents();
     updateSubmitButtonState();
