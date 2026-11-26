@@ -3955,7 +3955,7 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
     var msg = "مرحباً " + emp.name + "،\nبيانات دخولك إلى بوابة زارة:\n\nالرابط: https://gzara.org/Login/\nالبريد الإلكتروني: " + emp.email + "\nكلمة المرور: " + pw + "\n\nيُرجى عدم مشاركة هذه البيانات مع أحد.";
     try{ copyToClipboard(msg); }catch(e){}
     var phone = waPhone(emp.phone);
-    window.open("https://wa.me/" + phone + "?text=" + encodeURIComponent(msg), "_blank");
+    window.open("https://api.whatsapp.com/send?phone=" + phone + "&text=" + encodeURIComponent(msg), "_blank");
     showToast(phone ? "وُلّدت كلمة المرور ونُسخت الرسالة — أرسلها من نافذة الواتساب" : "وُلّدت كلمة المرور — لا يوجد رقم جوال مسجّل، اختر جهة الاتصال في الواتساب");
   }
   function empSections(emp){
@@ -4311,8 +4311,8 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
       cvRender();
     }).catch(function(){ cvUI.busy = false; cvUI.err = "load"; cvRender(); });
   }
-  // رابط واتساب عبر wa.me: يفتح صفحة واتساب اللي تخيّرك بين التطبيق وواتساب ويب
-  function waLink(phone, text){ var ph = "966" + String(phone || "").replace(/\D/g, "").replace(/^966/, "").replace(/^0/, ""); return "https://wa.me/" + ph + "?text=" + encodeURIComponent(text); }
+  // رابط واتساب مباشر عبر api.whatsapp.com — wa.me يحوّل الإيموجي إلى «�» أثناء التحويل
+  function waLink(phone, text){ var ph = "966" + String(phone || "").replace(/\D/g, "").replace(/^966/, "").replace(/^0/, ""); return "https://api.whatsapp.com/send?phone=" + ph + "&text=" + encodeURIComponent(text); }
   function cvDate(t){ if(!t) return ""; var d = new Date(t); return d.toLocaleDateString("ar-SA-u-ca-gregory-nu-latn", { day: "numeric", month: "short", year: "numeric" }); }
   function cvRender(){
     var root = document.getElementById("cvRoot"); if(!root || !currentUser || !can("cv.view")) return;
@@ -4453,8 +4453,7 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
       var first = String(c2.name || "").split(" ")[0];
       var msg = "حيّاك الله أ. " + first + " 🌷\nشكرًا لمشاركتك في *«مفاتيح التوظيف 2»*، ونقدّر لك أثرك الطيب. 💚\n\n🔑 *مفاتيح الفرص*\nمنصة خاصة بجمعية العوامية الخيرية، تضم سير المتدربين حسب المسمى الوظيفي، وتتيح لك إضافة احتياجاتك الوظيفية.\n\n🔗 https://gzara.org/hr/?p=" + c2.phone + "\n*رقم الدخول:* " + c2.phone + "\n*رمز الدخول:* " + c2.code + "\n\n🤝 نتطلع أن تكون سببًا في وصول أحد متدربينا إلى فرصته الوظيفية.\n\n*جمعية العوامية الخيرية*";
       if(a === "codemsg"){ copyToClipboard(msg); showToast("نُسخت الرسالة كاملة — الصقها في محادثة المدرب"); return; }
-      // رابط wa.me يخرّب الإيموجي (تطلع ◆؟) في واتساب الكمبيوتر — نشيلها من رسالة الرابط فقط، والنسخ يبقى بإيموجي
-      window.open(waLink(c2.phone, msg.replace(/[ \t]*[\u{1F000}-\u{1FAFF}\u2600-\u27BF\uFE0F]+[ \t]*/gu, function(m){ return /\n/.test(m) ? m : ""; }).replace(/^ +| +$/gm, "")), "_blank");
+      window.open(waLink(c2.phone, msg), "_blank");
       cvMarkSent(v); cvRender();
     }
     else if(a === "bulkcode"){ // يولّد رموز كل المدربين اللي ما عندهم رمز — واحد ورا الثاني
@@ -12222,7 +12221,7 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
     var done = function(){ if(btn){ btn.disabled = false; btn.innerHTML = orig; } };
     var textOnly = function(){
       copyToClipboard(text);
-      window.open("https://wa.me/?text=" + encodeURIComponent(text), "_blank");
+      window.open("https://api.whatsapp.com/send?text=" + encodeURIComponent(text), "_blank");
     };
     if(!imageUrl){ done(); textOnly(); return; }
     fetch(imageUrl, { mode: "cors" }).then(function(res){ if(!res.ok) throw new Error("img"); return res.blob(); }).then(function(blob){
@@ -12237,7 +12236,7 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
       var link = document.createElement("a");
       link.download = file.name; link.href = URL.createObjectURL(blob); link.click();
       setTimeout(function(){ URL.revokeObjectURL(link.href); }, 4000);
-      window.open("https://wa.me/?text=" + encodeURIComponent(text), "_blank");
+      window.open("https://api.whatsapp.com/send?text=" + encodeURIComponent(text), "_blank");
       showToast("تم نسخ النص وتنزيل الصورة — أرفقها يدوياً بالمحادثة");
     }).catch(function(){ done(); showToast("تعذّر تحميل الصورة — أُرسل النص فقط"); textOnly(); });
   }
@@ -12260,7 +12259,7 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
     if(!tmpl){
       copyToClipboard(shareText);
       showToast("لا يوجد قالب تصميم لهذا التصنيف — تم نسخ النص فقط");
-      window.open("https://wa.me/?text=" + encodeURIComponent(shareText), "_blank");
+      window.open("https://api.whatsapp.com/send?text=" + encodeURIComponent(shareText), "_blank");
       finish();
       return;
     }
@@ -12277,7 +12276,7 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
         document.body.removeChild(offCanvas);
         copyToClipboard(shareText);
         showToast("تعذّر تجهيز الصورة — تم نسخ النص فقط");
-        window.open("https://wa.me/?text=" + encodeURIComponent(shareText), "_blank");
+        window.open("https://api.whatsapp.com/send?text=" + encodeURIComponent(shareText), "_blank");
         finish();
         return;
       }
@@ -12286,7 +12285,7 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
         finish();
         if(!blob){
           copyToClipboard(shareText);
-          window.open("https://wa.me/?text=" + encodeURIComponent(shareText), "_blank");
+          window.open("https://api.whatsapp.com/send?text=" + encodeURIComponent(shareText), "_blank");
           return;
         }
         var fileName = ((rec.fullName || rec.husbandName || rec.deceasedName || "تصميم").replace(/[^\w؀-ۿ ]/g, "").trim() || "تصميم") + ".png";
@@ -12304,7 +12303,7 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
         link.href = URL.createObjectURL(blob);
         link.click();
         setTimeout(function(){ URL.revokeObjectURL(link.href); }, 4000);
-        window.open("https://wa.me/?text=" + encodeURIComponent(shareText), "_blank");
+        window.open("https://api.whatsapp.com/send?text=" + encodeURIComponent(shareText), "_blank");
         showToast("تم نسخ النص وتنزيل الصورة — أرفقها يدوياً بالمحادثة (واتساب على الحاسوب لا يدعم الإرفاق التلقائي)");
       }, "image/png");
     });
@@ -17918,7 +17917,7 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
     var cd = rsCardOf(p.id), g = rsDeskProg();
     var msg = cd ? "السلام عليكم " + p.name + "\nتم تأكيد حضورك" + (g ? " في " + g.title : "") + ".\nرقمك التسلسلي: " + cd.code + ((cd.g === "m" || cd.g === "f") ? " (" + rsColorName(cd) + ")" : "") + "\nاحتفظ ببطاقتك طوال أيام الفعالية."
       : "السلام عليكم " + p.name + "\nتم تسجيلك في جمعية العوامية الخيرية بصفة " + rsT(p.type).l + ".";
-    return "https://wa.me/" + ph + "?text=" + encodeURIComponent(msg);
+    return "https://api.whatsapp.com/send?phone=" + ph + "&text=" + encodeURIComponent(msg);
   }
   function rsBeep(ok){
     try{
