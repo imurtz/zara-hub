@@ -2560,6 +2560,8 @@ body.rs-kiosk .nav-groups{display:none !important;}
 .cvv-doc{max-width:760px;margin:16px auto;background:#fff;padding:28px 32px;border-radius:12px;line-height:1.8;font-size:15px}
 .cvv-doc img{max-width:100%}
 .cvv-msg{padding:40px;text-align:center;color:#6b7876}
+  .cv-bulk{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+  .cv-sent{font-size:12px;font-weight:700;color:#1F7A72;background:#E3F4F1;border-radius:999px;padding:3px 10px}
 #cvRoot .cv-code{font-family:ui-monospace,Menlo,monospace;font-size:17px;letter-spacing:3px;background:#e9f3ef;color:#1f5a44;border-radius:10px;padding:3px 10px}
 #cvRoot .cv-pend{font-size:11px;background:#f8f1ea;color:#8f6a4b;border-radius:10px;padding:1px 8px}
 #cvRoot .cv-f{font-size:13.5px;color:#3d5b56;font-weight:600;margin-top:3px}
@@ -4283,6 +4285,11 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
   // مفتاح اللوحة يُدخل مرة واحدة ويُحفظ على هذا الجهاز فقط (لا يُكتب في الكود المنشور)
   var CV_API = "https://zara-cv.murtada-ud.workers.dev";
   var cvUI = { data: null, err: "", busy: false, q: "", f: "", tab: "experts", codes: {} };
+  // الرموز المولّدة تبقى طوال جلسة المتصفح (تنمسح بإغلاق التبويب) — وعلامة «أُرسلت» تبقى على هذا الجهاز
+  try{ cvUI.codes = JSON.parse(sessionStorage.getItem("cvCodes") || "{}") || {}; }catch(e){}
+  function cvSaveCodes(){ try{ sessionStorage.setItem("cvCodes", JSON.stringify(cvUI.codes)); }catch(e){} }
+  function cvSent(){ try{ return JSON.parse(localStorage.getItem("cvSentWa") || "{}") || {}; }catch(e){ return {}; } }
+  function cvMarkSent(id){ var m = cvSent(); m[id] = Date.now(); try{ localStorage.setItem("cvSentWa", JSON.stringify(m)); }catch(e){} }
   function cvKey(){ try{ return localStorage.getItem("zaraCvAdminKey") || ""; }catch(e){ return ""; } }
   // الدخول للوحة السير = نفس دخولك للبوابة (رمز Firebase يتحقق منه الخادم + صلاحية «cv.view» أو أدمن) — بلا مفتاح منفصل
   var cvAuthReady = new Promise(function(res){ try{ var un = firebase.auth().onAuthStateChanged(function(){ un(); res(); }); setTimeout(res, 4000); }catch(e){ res(); } });
@@ -4341,12 +4348,17 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
     if(cvUI.tab === "experts"){
       h += '<div class="cv-card cv-muted" style="font-size:13px">المدربون = كل من له صفة «موارد بشرية» في «مطابقة البيانات». رقم الدخول = جواله. اضغط <b>توليد رمز</b> ويطلع لك الرمز، وبعدها انسخه أو أرسله بالواتساب. توليد رمز جديد يلغي القديم.</div>';
       if(d.rosterOk === false) h += '<div class="cv-card cv-err">تعذّر جلب الخبراء من «مطابقة البيانات» الآن — حدّث بعد دقيقة.</div>';
-      var xs = d.experts.slice().sort(function(a, b){ return (a.gone ? 1 : 0) - (b.gone ? 1 : 0) || (a.pin_at ? 1 : 0) - (b.pin_at ? 1 : 0) || String(a.name).localeCompare(String(b.name), "ar"); });
+      var sentM = cvSent(), live = d.experts.filter(function(x){ return !x.gone; });
+      var noCode = live.filter(function(x){ return !x.pin_at && !cvUI.codes[x.id]; }), ready = live.filter(function(x){ return cvUI.codes[x.id] && !sentM[x.id]; }), sentN = live.filter(function(x){ return cvUI.codes[x.id] && sentM[x.id]; }).length;
+      h += '<div class="cv-card cv-bulk"><div><b>إرسال الدعوات بالواتساب</b><div class="cv-x-s">' + (cvUI.bulk ? 'جارٍ توليد الرموز… ' + cvUI.bulk : (noCode.length ? noCode.length + ' مدرب بدون رمز · ' : '') + 'جاهز للإرسال: ' + ready.length + (sentN ? ' · أُرسل: ' + sentN : '')) + '</div></div>' + (noCode.length && !cvUI.bulk ? '<button type="button" class="cv-btn" data-cv="bulkcode">⚡ توليد رموز الكل (' + noCode.length + ')</button>' : '') + '</div>';
+      if(ready.length) h += '<p class="cv-hint">اضغط <b>واتساب</b> عند كل اسم بالترتيب، وتنفتح محادثته والرسالة جاهزة فيها. بعد الإرسال يتعلّم السطر ✓ وينزل تحت.</p>';
+      var rank = function(x){ return x.gone ? 4 : cvUI.codes[x.id] ? (sentM[x.id] ? 2 : 0) : x.pin_at ? 3 : 1; };
+      var xs = d.experts.slice().sort(function(a, b){ return rank(a) - rank(b) || String(a.name).localeCompare(String(b.name), "ar"); });
       var waIc = '<svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2zm0 18.2a8.2 8.2 0 0 1-4.2-1.2l-.3-.2-3 .8.8-2.9-.2-.3A8.2 8.2 0 1 1 12 20.2zm4.5-6.1c-.2-.1-1.5-.7-1.7-.8s-.4-.1-.6.1-.7.8-.8 1-.3.2-.5.1a6.7 6.7 0 0 1-3.3-2.9c-.3-.4.2-.4.7-1.4.1-.2 0-.3 0-.4l-.8-1.8c-.2-.5-.4-.4-.6-.4h-.5a1 1 0 0 0-.7.3 3 3 0 0 0-.9 2.2 5.2 5.2 0 0 0 1.1 2.7 11.8 11.8 0 0 0 4.5 4c1.7.7 2.3.8 3.2.6a2.7 2.7 0 0 0 1.8-1.2 2.2 2.2 0 0 0 .1-1.3c0-.1-.2-.2-.5-.3z"/></svg>';
       h += xs.length ? '<div class="cv-card cv-xl"><input type="search" class="cv-xq" placeholder="ابحث باسم المدرب أو جواله" oninput="var q=this.value.trim();this.parentNode.querySelectorAll(\'.cv-x\').forEach(function(r){r.style.display=!q||r.getAttribute(\'data-s\').indexOf(q)>-1?\'\':\'none\'})"/>' + xs.map(function(x){
         var n = d.requests.filter(function(r){ return r.expert_id === x.id; }).length, c = cvUI.codes[x.id];
         var sub = [x.pin_at ? 'وُلّد رمز ' + cvDate(x.pin_at) : 'لم يُولّد رمز', x.last_seen ? 'آخر زيارة ' + cvDate(x.last_seen) : '', n ? n + ' سيرة مطلوبة' : ''].filter(Boolean).join(' · ');
-        var act = x.gone ? '<span class="cv-pend">لم يعد في السجل</span>' : c ? '<b class="cv-code" dir="ltr">' + e(c.code) + '</b><button type="button" class="cv-btn ghost" data-cv="codecp" data-v="' + e(x.id) + '">نسخ</button><button type="button" class="cv-btn cv-wa" data-cv="codewa" data-v="' + e(x.id) + '">' + waIc + 'واتساب</button><button type="button" class="cv-btn ghost" data-cv="codemsg" data-v="' + e(x.id) + '">نسخ الرسالة</button>' : '<button type="button" class="cv-btn" data-cv="code" data-v="' + e(x.id) + '" data-n="' + e(x.name) + '" data-old="' + (x.pin_at ? 1 : 0) + '">' + (x.pin_at ? 'رمز جديد' : 'توليد رمز') + '</button>' + (x.created ? '<button type="button" class="cv-btn ghost" data-cv="xp" data-v="' + e(x.id) + '" data-a="' + (x.active ? 0 : 1) + '">' + (x.active ? "إيقاف" : "تفعيل") + '</button>' : '');
+        var act = x.gone ? '<span class="cv-pend">لم يعد في السجل</span>' : c ? (sentM[x.id] ? '<span class="cv-sent">✓ أُرسلت</span>' : '') + '<b class="cv-code" dir="ltr">' + e(c.code) + '</b><button type="button" class="cv-btn ghost" data-cv="codecp" data-v="' + e(x.id) + '">نسخ</button><button type="button" class="cv-btn cv-wa" data-cv="codewa" data-v="' + e(x.id) + '">' + waIc + 'واتساب</button><button type="button" class="cv-btn ghost" data-cv="codemsg" data-v="' + e(x.id) + '">نسخ الرسالة</button>' : '<button type="button" class="cv-btn" data-cv="code" data-v="' + e(x.id) + '" data-n="' + e(x.name) + '" data-old="' + (x.pin_at ? 1 : 0) + '">' + (x.pin_at ? 'رمز جديد' : 'توليد رمز') + '</button>' + (x.created ? '<button type="button" class="cv-btn ghost" data-cv="xp" data-v="' + e(x.id) + '" data-a="' + (x.active ? 0 : 1) + '">' + (x.active ? "إيقاف" : "تفعيل") + '</button>' : '');
         return '<div class="cv-x"' + (x.active || !x.created ? '' : ' style="opacity:.5"') + ' data-s="' + e((x.name || "") + " " + (x.phone || "")) + '"><div class="cv-x-m"><b>' + e(x.name) + '</b><div class="cv-x-s"><span dir="ltr">' + e(x.phone || "") + '</span> · ' + sub + '</div></div><div class="cv-x-a">' + act + '</div></div>';
       }).join("") + '</div>' : '<div class="cv-card cv-muted">لا يوجد خبراء بصفة «موارد بشرية» في «مطابقة البيانات».</div>';
       root.innerHTML = h; return;
@@ -4430,7 +4442,7 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
       var nm = b.getAttribute("data-n") || ""; b.disabled = true; b.textContent = "…";
       cvFetch("/api/admin/code", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: v }) }).then(function(r){ return r.json(); }).then(function(d2){
         if(!d2 || !d2.ok){ showToast(d2 && d2.err === "phone" ? "جوال المدرب غير صحيح في «مطابقة البيانات»" : "تعذّر توليد الرمز"); cvRender(); return; }
-        cvUI.codes[v] = { code: d2.code, phone: d2.phone, name: d2.name || nm };
+        cvUI.codes[v] = { code: d2.code, phone: d2.phone, name: d2.name || nm }; cvSaveCodes();
         copyToClipboard(d2.code); showToast("الرمز " + d2.code + " — نُسخ");
         cvLoad();
       }).catch(function(){ showToast("تعذّر الاتصال بالخدمة"); cvRender(); });
@@ -4442,6 +4454,20 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
       var msg = "حيّاك الله أ. " + first + " 🌷\nشكرًا لمشاركتك في *«مفاتيح التوظيف 2»*، ونقدّر لك أثرك الطيب. 💚\n\n🔑 *مفاتيح الفرص*\nمنصة خاصة بجمعية العوامية الخيرية، تضم سير المتدربين حسب المسمى الوظيفي، وتتيح لك إضافة احتياجاتك الوظيفية.\n\n🔗 https://gzara.org/hr/?p=" + c2.phone + "\n*رقم الدخول:* " + c2.phone + "\n*رمز الدخول:* " + c2.code + "\n\n🤝 نتطلع أن تكون سببًا في وصول أحد متدربينا إلى فرصته الوظيفية.\n\n*جمعية العوامية الخيرية*";
       if(a === "codemsg"){ copyToClipboard(msg); showToast("نُسخت الرسالة كاملة — الصقها في محادثة المدرب"); return; }
       window.open(waLink(c2.phone, msg), "_blank");
+      cvMarkSent(v); cvRender();
+    }
+    else if(a === "bulkcode"){ // يولّد رموز كل المدربين اللي ما عندهم رمز — واحد ورا الثاني
+      var dd = cvUI.data || { experts: [] }, todo = dd.experts.filter(function(x){ return !x.gone && !x.pin_at && !cvUI.codes[x.id]; });
+      if(!todo.length || !confirm("توليد رموز دخول لـ " + todo.length + " مدرب؟\n(المدربون اللي عندهم رمز سابق ما يتغير رمزهم)")) return;
+      var okN = 0, badN = 0, i = 0;
+      var step = function(){
+        if(i >= todo.length){ cvUI.bulk = ""; showToast("تمّ: " + okN + " رمز جاهز" + (badN ? " · تعذّر " + badN + " (تأكد من الجوال)" : "")); cvLoad(); return; }
+        var x = todo[i++]; cvUI.bulk = i + " من " + todo.length; cvRender();
+        cvFetch("/api/admin/code", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: x.id }) }).then(function(r){ return r.json(); }).then(function(d2){
+          if(d2 && d2.ok){ okN++; cvUI.codes[x.id] = { code: d2.code, phone: d2.phone, name: d2.name || x.name }; cvSaveCodes(); } else badN++;
+        }).catch(function(){ badN++; }).then(step);
+      };
+      step();
     }
     else if(a === "f"){ cvUI.f = v; cvRender(); }
     else if(a === "view"){ cvViewer(v); }
