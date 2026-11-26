@@ -10078,7 +10078,7 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
   var FOOTER_CREDIT_DEFAULT = "صُنع بحب من قبل جمعية العوامية الخيرية";
   var PHOTO_PAN_PROMPT_DEFAULT = "مو راضين عن موضع صورتكم داخل التصميم؟ عدّلوها بأنفسكم:";
   function loadPublicFormConfig(){
-    var cfg = { footerMessage: "", footerCredit: FOOTER_CREDIT_DEFAULT, photoPanPrompt: PHOTO_PAN_PROMPT_DEFAULT, defaultFemalePhotos: {}, showDesignPreview: true, giveLinks: {}, banner: { enabled: BANNER_DEFAULTS.enabled, intervalSeconds: BANNER_DEFAULTS.intervalSeconds, slides: BANNER_DEFAULTS.slides.map(copyBannerSlide) } };
+    var cfg = { footerMessage: "", footerCredit: FOOTER_CREDIT_DEFAULT, photoPanPrompt: PHOTO_PAN_PROMPT_DEFAULT, defaultFemalePhotos: {}, showDesignPreview: true, showPolicy: true, aiAssist: true, giveLinks: {}, banner: { enabled: BANNER_DEFAULTS.enabled, intervalSeconds: BANNER_DEFAULTS.intervalSeconds, slides: BANNER_DEFAULTS.slides.map(copyBannerSlide) } };
     EVENTS_CATEGORIES.forEach(function(c){ cfg[c.key] = { hidden: [], hints: {}, labels: {}, custom: [] }; });
     var p = _publicFormConfigCache;
     if(p){
@@ -10089,6 +10089,8 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
       // congrats...)، بدل حقل واحد كان مخصصاً للخريجات فقط
       if(p.defaultFemalePhotos && typeof p.defaultFemalePhotos === "object") cfg.defaultFemalePhotos = p.defaultFemalePhotos;
       if(typeof p.showDesignPreview === "boolean") cfg.showDesignPreview = p.showDesignPreview;
+      if(typeof p.showPolicy === "boolean") cfg.showPolicy = p.showPolicy;
+      if(typeof p.aiAssist === "boolean") cfg.aiAssist = p.aiAssist;
       // روابط «تبرّع الآن» حسب نوع المناسبة — الفارغ منها يستخدم صفحة مشاريع الجمعية العامة
       if(p.giveLinks && typeof p.giveLinks === "object") cfg.giveLinks = p.giveLinks;
       if(p.banner){
@@ -14450,6 +14452,16 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
       '<p class="hint" style="margin:6px 0 0;">أزل العلامة لتصير الصفحة لاستقبال البيانات فقط — تُجهَّز التصاميم من لوحة التحكم</p>' +
     '</div>';
     html += '<div style="margin-bottom:18px; padding-bottom:16px; border-bottom:1px solid var(--line);">' +
+      '<label style="display:flex; align-items:center; gap:8px; font-size:13px; font-weight:700; color:var(--teal-dark);">' +
+        '<input type="checkbox" data-action="public-cfg-policy-toggle"' + (cfg.showPolicy !== false ? " checked" : "") + '/> إظهار «سياسة النشر» للزوار' +
+      '</label>' +
+      '<p class="hint" style="margin:6px 0 0;">أزل العلامة لإغلاقها مؤقتاً: تختفي روابطها من الصفحة الرئيسية ونموذج التسجيل، وتظهر صفحتها «قيد التحديث». أرجع العلامة وترجع فوراً.</p>' +
+      '<label style="display:flex; align-items:center; gap:8px; font-size:13px; font-weight:700; color:var(--teal-dark); margin-top:14px;">' +
+        '<input type="checkbox" data-action="public-cfg-ai-toggle"' + (cfg.aiAssist !== false ? " checked" : "") + '/> إظهار صندوق «✨ صياغة جاهزة» بالذكاء الاصطناعي في التهنئة' +
+      '</label>' +
+      '<p class="hint" style="margin:6px 0 0;">أزل العلامة ليختفي الصندوق ويكتب الزائر تفاصيل التهنئة بنفسه فقط.</p>' +
+    '</div>';
+    html += '<div style="margin-bottom:18px; padding-bottom:16px; border-bottom:1px solid var(--line);">' +
       '<label style="display:block; font-size:13px; font-weight:700; color:var(--teal-dark); margin-bottom:4px;">روابط التبرع باسم المناسبة</label>' +
       '<p class="hint" style="margin:0 0 10px;">رابط زر «تبرّع الآن» الذي يظهر للمسجِّل بعد الإرسال وفي صفحة متابعة الطلب. اترك الخانة فارغة لاستخدام صفحة مشاريع الجمعية العامة.</p>' +
       EVENTS_CATEGORIES.map(function(c){
@@ -15860,6 +15872,16 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
       pCfgPv.showDesignPreview = e.target.checked;
       savePublicFormConfig(pCfgPv);
       showToast(e.target.checked ? "المعاينة تظهر للزائر بعد الإرسال" : "أُغلقت المعاينة — الصفحة لاستقبال البيانات فقط");
+    } else if(e.target.matches('[data-action="public-cfg-policy-toggle"]')){
+      var pCfgPo = loadPublicFormConfig();
+      pCfgPo.showPolicy = e.target.checked;
+      savePublicFormConfig(pCfgPo);
+      showToast(e.target.checked ? "سياسة النشر ظاهرة للزوار" : "أُغلقت سياسة النشر مؤقتاً");
+    } else if(e.target.matches('[data-action="public-cfg-ai-toggle"]')){
+      var pCfgAi = loadPublicFormConfig();
+      pCfgAi.aiAssist = e.target.checked;
+      savePublicFormConfig(pCfgAi);
+      showToast(e.target.checked ? "صندوق الصياغة الجاهزة ظاهر في التهنئة" : "أُغلق صندوق الصياغة الجاهزة");
     } else if(e.target.matches('[data-action="public-cfg-banner-toggle"]')){
       var pCfg5 = loadPublicFormConfig();
       pCfg5.banner.enabled = e.target.checked;

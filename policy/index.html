@@ -165,5 +165,12 @@
     <img src="/assets/logo.png" alt="شعار جمعية العوامية الخيرية" /><span>صُنع بحب من قبل جمعية العوامية الخيرية</span>
   </footer>
 </div>
+<script>
+// سياسة النشر: تُغلق مؤقتاً من لوحة التحكم (eventsMeta/publicFormConfig.showPolicy)
+fetch("https://firestore.googleapis.com/v1/projects/awamia-zara/databases/(default)/documents/eventsMeta/publicFormConfig?key=AIzaSyBPos-QSrnK_x5HS742FJkNJVhXwGdq8j8&mask.fieldPaths=showPolicy").then(function(r){ return r.json(); }).then(function(d){
+  var v = d && d.fields && d.fields.showPolicy; if(!v || v.booleanValue !== false) return;
+  var w = document.querySelector(".wrap"); if(w) w.innerHTML = '<div style="text-align:center;padding:90px 16px"><h1 style="font-weight:600;font-size:26px">سياسة النشر <b>قيد التحديث</b></h1><p style="margin-top:12px;color:#6b7876;font-size:16px">نعمل على تحديثها، وتعود قريباً.</p><p style="margin-top:22px"><a href="/" style="color:#3d5b56;font-weight:600">← الرئيسية</a></p></div>';
+}).catch(function(){});
+</script>
 </body>
 </html>

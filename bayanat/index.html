@@ -544,7 +544,7 @@
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-4.35-9.5-8.5C.5 8.5 3 5 6.5 5c2 0 3.5 1.2 4.5 2.5C12 6.2 13.5 5 15.5 5 19 5 21.5 8.5 21.5 12.5 19 16.65 12 21 12 21z"/></svg>
       التبرعات
     </a>
-    <a class="quick-link-pill" href="/policy/">
+    <a class="quick-link-pill" href="/policy/" id="policyPill">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3h7l5 5v13a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z"/><path d="M14 3v5h5"/><path d="M9 13h6M9 16.5h6M9 9.5h2.5"/></svg>
       سياسة النشر
     </a>
@@ -952,6 +952,7 @@
       if(typeof p.photoPanPrompt === "string") cfg.photoPanPrompt = p.photoPanPrompt;
       if(p.defaultFemalePhotos && typeof p.defaultFemalePhotos === "object") cfg.defaultFemalePhotos = p.defaultFemalePhotos;
       if(typeof p.showDesignPreview === "boolean") cfg.showDesignPreview = p.showDesignPreview;
+      cfg.showPolicy = p.showPolicy !== false; cfg.aiAssist = p.aiAssist !== false;
       if(p.banner){
         if(typeof p.banner.enabled === "boolean") cfg.banner.enabled = p.banner.enabled;
         if(typeof p.banner.intervalSeconds === "number" && p.banner.intervalSeconds >= 2) cfg.banner.intervalSeconds = p.banner.intervalSeconds;
@@ -1453,7 +1454,7 @@
     return '<div class="field full ai-block">' +
       '<label>تفاصيل التهنئة <span class="req">*</span></label>' +
       '<textarea data-key="details" rows="4" placeholder="اكتب تفاصيل المناسبة كما هي، مثال: حصوله على جائزة التميز من..."></textarea>' +
-      '<div id="aiHelper" class="ai-helper">' + aiHelperHTML() + '</div>' +
+      (loadPublicFormConfig().aiAssist === false ? '' : '<div id="aiHelper" class="ai-helper">' + aiHelperHTML() + '</div>') +
     '</div>';
   }
   function aiHelperHTML(){
@@ -2893,6 +2894,7 @@
   db.collection("eventsMeta").doc("publicFormConfig").get().then(function(doc){
     _publicFormConfigCache = doc.exists ? doc.data() : null;
     window.__zaraGive = (_publicFormConfigCache && _publicFormConfigCache.giveLinks) || {};
+    var pp = document.getElementById("policyPill"); if(pp) pp.style.display = (_publicFormConfigCache && _publicFormConfigCache.showPolicy === false) ? "none" : "";
     renderCatSelect();
     renderForm();
     renderFooterMessage();

@@ -470,5 +470,12 @@
   });
 })();
 </script>
+<script>
+// سياسة النشر: تُغلق مؤقتاً من لوحة التحكم (eventsMeta/publicFormConfig.showPolicy)
+fetch("https://firestore.googleapis.com/v1/projects/awamia-zara/databases/(default)/documents/eventsMeta/publicFormConfig?key=AIzaSyBPos-QSrnK_x5HS742FJkNJVhXwGdq8j8&mask.fieldPaths=showPolicy").then(function(r){ return r.json(); }).then(function(d){
+  var v = d && d.fields && d.fields.showPolicy; if(!v || v.booleanValue !== false) return;
+  document.querySelectorAll('a[href="/policy/"]').forEach(function(a){ a.style.display = "none"; });
+}).catch(function(){});
+</script>
 </body>
 </html>
