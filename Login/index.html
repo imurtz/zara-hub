@@ -4453,7 +4453,8 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
       var first = String(c2.name || "").split(" ")[0];
       var msg = "حيّاك الله أ. " + first + " 🌷\nشكرًا لمشاركتك في *«مفاتيح التوظيف 2»*، ونقدّر لك أثرك الطيب. 💚\n\n🔑 *مفاتيح الفرص*\nمنصة خاصة بجمعية العوامية الخيرية، تضم سير المتدربين حسب المسمى الوظيفي، وتتيح لك إضافة احتياجاتك الوظيفية.\n\n🔗 https://gzara.org/hr/?p=" + c2.phone + "\n*رقم الدخول:* " + c2.phone + "\n*رمز الدخول:* " + c2.code + "\n\n🤝 نتطلع أن تكون سببًا في وصول أحد متدربينا إلى فرصته الوظيفية.\n\n*جمعية العوامية الخيرية*";
       if(a === "codemsg"){ copyToClipboard(msg); showToast("نُسخت الرسالة كاملة — الصقها في محادثة المدرب"); return; }
-      window.open(waLink(c2.phone, msg), "_blank");
+      // رابط wa.me يخرّب الإيموجي (تطلع ◆؟) في واتساب الكمبيوتر — نشيلها من رسالة الرابط فقط، والنسخ يبقى بإيموجي
+      window.open(waLink(c2.phone, msg.replace(/[ \t]*[\u{1F000}-\u{1FAFF}\u2600-\u27BF\uFE0F]+[ \t]*/gu, function(m){ return /\n/.test(m) ? m : ""; }).replace(/^ +| +$/gm, "")), "_blank");
       cvMarkSent(v); cvRender();
     }
     else if(a === "bulkcode"){ // يولّد رموز كل المدربين اللي ما عندهم رمز — واحد ورا الثاني
