@@ -45,8 +45,17 @@ function cors(origin) {
   return { "Access-Control-Allow-Origin": o, "Access-Control-Allow-Methods": "GET, POST, DELETE, OPTIONS", "Access-Control-Allow-Headers": "Content-Type, Authorization", "Vary": "Origin" };
 }
 // تصحيح مفردات معتمدة عند العرض فقط (الأصل يبقى): ضابط عمليات موارد بشرية/علاقات عامة → أخصائي، دعم فني → دعم تقني
-const fixW = t => String(t).replace(/ضابط(ة?)(\s+)(ال)?عمليات(\s+)(ال)?موارد(\s+)(ال)?بشرية/g, (m, a, s1, b, s2, c, s3, d) => "أخصائي" + a + s1 + (b || "") + "عمليات" + s2 + (c || "") + "موارد" + s3 + (d || "") + "بشرية").replace(/ضابط(ة?)(\s+)(ال)?علاقات(\s+)(ال)?عامة/g, (m, a, s1, b, s2, c) => "أخصائي" + a + s1 + (b || "") + "علاقات" + s2 + (c || "") + "عامة").replace(/(ال)?دعم(\s+)(ال)?فني/g, (m, a, s1, b) => (a || "") + "دعم" + s1 + (b || "") + "تقني");
-const json = (o, s, h) => new Response(fixW(JSON.stringify(o)), { status: s || 200, headers: Object.assign({ "Content-Type": "application/json; charset=utf-8" }, h) });
+const fixW = t => String(t).replace(/ضابطة?(\s+)(ال)?عمليات(\s+)(ال)?موارد(\s+)(ال)?بشرية/g, (m, s1, b, s2, c, s3, d) => "أخصائي" + s1 + (b || "") + "عمليات" + s2 + (c || "") + "موارد" + s3 + (d || "") + "بشرية").replace(/ضابطة?(\s+)(ال)?علاقات(\s+)(ال)?عامة/g, (m, s1, b, s2, c) => "أخصائي" + s1 + (b || "") + "علاقات" + s2 + (c || "") + "عامة").replace(/(ال)?دعم(\s+)(ال)?فني/g, (m, a, s1, b) => (a || "") + "دعم" + s1 + (b || "") + "تقني");
+// المسميات تُعرض بصيغة المذكر دائماً، وتوحيد مسميات معتمدة (مطابقة كاملة للمسمى) — العرض فقط، الأصل يبقى
+const MASC = /(^|[\s(/،-])(أخصائية|اخصائية|إخصائية|منسقة|مساعدة|موظفة|مسؤولة|مسئولة|مديرة|مشرفة|سكرتيرة|معلمة|مدربة|ممرضة|مصممة|مطورة|مهندسة|محللة|مستشارة|باحثة|مندوبة|كاتبة|ضابطة|متخصصة|مختصة|محاسبة|مبرمجة|مراقبة|مدققة|مسوقة|منفذة|رئيسة|عاملة|فنية|إدارية|ادارية|أمينة(?=\s+(?:سجلات|صندوق|مكتبة|مستودع)))(?=$|[\s)/،-])/g;
+const T_MAP = [
+  [/^(?:مساعد\s+[إا]داري\s+(?:لل|ال)?موارد\s+(?:ال)?بشرية|[إا]داري|مساعد\s+[إا]داري)$/, "منسق موارد بشرية"],
+  [/^(?:ضابط\s+)?(?:ال)?علاقات\s+(?:ال)?عامة$/, "أخصائي علاقات عامة"],
+  [/^(?:متخصص\s+(?:في\s+)?(?:ال)?موارد\s+(?:ال)?بشرية|أمين\s+سجلات\s+(?:ال)?موارد\s+(?:ال)?بشرية|مسؤول\s+(?:ال)?موارد\s+(?:ال)?بشرية|ضابط\s+عمليات\s+(?:ال)?موارد\s+(?:ال)?بشرية)$/, "أخصائي عمليات الموارد البشرية"],
+];
+const fixT = t => { let x = fixW(String(t || "").trim()).replace(MASC, (m, p, w) => p + w.slice(0, -1)).replace(/\s+/g, " "); for (const [re, to] of T_MAP) if (re.test(x)) return to; return x; };
+const TKEYS = { title: 1, label: 1, job: 1 };
+const json = (o, s, h) => new Response(fixW(JSON.stringify(o, (k, v) => (k === "titles" || k === "alsoIn") && Array.isArray(v) ? v.map(x => typeof x === "string" ? fixT(x) : x) : TKEYS[k] && typeof v === "string" ? fixT(v) : v)), { status: s || 200, headers: Object.assign({ "Content-Type": "application/json; charset=utf-8" }, h) });
 const tok = n => { const a = new Uint8Array(n || 18); crypto.getRandomValues(a); return Array.from(a, b => "abcdefghijkmnpqrstuvwxyz23456789"[b % 32]).join(""); };
 const now = () => Date.now();
 function digits(s) { return String(s || "").replace(/[\u0660-\u0669]/g, d => d.charCodeAt(0) - 0x0660).replace(/[\u06F0-\u06F9]/g, d => d.charCodeAt(0) - 0x06F0); }
@@ -369,7 +378,7 @@ export default {
         if (!ex) return json({ ok: false, err: "token" }, 401, H);
         await env.DB.prepare("UPDATE experts SET last_seen=? WHERE id=?").bind(now(), ex.id).run();
         const ATTX = await attendees();
-        const pool = ((await env.DB.prepare("SELECT id, roster_id, reg_no, field, titles, years, degree, skills, city, gender, updated, created, tasks, summary FROM seekers WHERE status='active' AND consent=1 AND phone NOT IN (SELECT phone FROM hires) AND id NOT IN (SELECT seeker_id FROM requests WHERE outcome='hired') AND (roster_id NOT LIKE 'zz-%' OR ? = 1)").bind(ex.id.startsWith("zz-") ? 1 : 0).all()).results || []).filter(s => attendedOk(ATTX, s.roster_id)).map(s => Object.assign(s, { titles: JSON.parse(s.titles || "[]"), skills: JSON.parse(s.skills || "[]"), code: (String(s.reg_no || "").match(/(\d+)$/) || [])[1] || s.id.slice(-4).toUpperCase() }));
+        const pool = ((await env.DB.prepare("SELECT id, roster_id, reg_no, field, titles, years, degree, skills, city, gender, updated, created, tasks, summary FROM seekers WHERE status='active' AND consent=1 AND phone NOT IN (SELECT phone FROM hires) AND id NOT IN (SELECT seeker_id FROM requests WHERE outcome='hired') AND (roster_id NOT LIKE 'zz-%' OR ? = 1)").bind(ex.id.startsWith("zz-") ? 1 : 0).all()).results || []).filter(s => attendedOk(ATTX, s.roster_id)).map(s => Object.assign(s, { titles: [...new Set(JSON.parse(s.titles || "[]").map(fixT))], skills: JSON.parse(s.skills || "[]"), code: (String(s.reg_no || "").match(/(\d+)$/) || [])[1] || s.id.slice(-4).toUpperCase() }));
         if (p === "/api/hr/home") { // مربعات المسميات + أسئلة المتابعة المستحقة
           const tiles = {};
           pool.forEach(s => { const seen = {}; s.titles.forEach(ti => { const k = normT(ti); if (!k || seen[k]) return; seen[k] = 1; const tl = (tiles[k] = tiles[k] || { label: ti, n: 0, field: s.field, codes: [] }); tl.n++; tl.codes.push(s.code); }); });
