@@ -2502,6 +2502,65 @@ body.rs-kiosk .nav-groups{display:none !important;}
 #rosterRoot .rs-kpis--sm .rs-kpi b{font-size:19px}
 #rosterRoot .rs-tools{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:10px}
 /* ===== السير الذاتية ===== */
+#stRoot .cv-card{background:#fff;border:1px solid var(--line);border-radius:18px;padding:16px 18px;margin-bottom:12px}
+#stRoot .st-head{display:flex;justify-content:space-between;align-items:flex-start;gap:14px;flex-wrap:wrap;margin-bottom:14px}
+#stRoot .st-head h2{font-size:22px;margin:0 0 4px;display:flex;align-items:center;gap:10px}
+#stRoot .st-head p{margin:0;color:var(--ink-soft);font-size:13px}
+#stRoot .st-live{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:700;color:#2f8a5b;background:#e8f6ee;border-radius:999px;padding:3px 10px}
+#stRoot .st-live i{width:8px;height:8px;border-radius:50%;background:#2fb36b;animation:stPulse 1.6s infinite}
+@keyframes stPulse{0%{box-shadow:0 0 0 0 rgba(47,179,107,.6)}70%{box-shadow:0 0 0 8px rgba(47,179,107,0)}100%{box-shadow:0 0 0 0 rgba(47,179,107,0)}}
+#stRoot .st-ctl{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+#stRoot .st-pill{border:1px solid var(--line);background:#fff;border-radius:999px;padding:7px 14px;font:inherit;font-size:13px;cursor:pointer;color:var(--ink)}
+#stRoot .st-pill.on{background:var(--teal);color:#fff;border-color:var(--teal)}
+#stRoot .st-ctl select{border:1px solid var(--line);border-radius:999px;padding:7px 12px;font:inherit;font-size:13px;background:#fff}
+#stRoot .st-now{display:grid;grid-template-columns:auto 1fr auto;gap:18px;align-items:center;background:linear-gradient(120deg,var(--teal-tint),#fff 60%,var(--tan-tint));border:1px solid var(--line);border-radius:20px;padding:16px 20px;margin-bottom:12px}
+#stRoot .st-now-big b{display:block;font-size:40px;line-height:1;color:var(--teal-dark)}
+#stRoot .st-now-big span,#stRoot .st-now-t span{font-size:12.5px;color:var(--ink-soft)}
+#stRoot .st-now-pg{display:flex;flex-wrap:wrap;gap:6px}
+#stRoot .st-chip{background:#fff;border:1px solid var(--line);border-radius:999px;padding:4px 11px;font-size:12.5px}
+#stRoot .st-chip b{color:var(--teal-dark)}
+#stRoot .st-now-t{display:flex;gap:18px;text-align:center}
+#stRoot .st-now-t b{display:block;font-size:22px;color:var(--ink)}
+#stRoot .st-k{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:12px}
+#stRoot .st-k>div{background:#fff;border:1px solid var(--line);border-radius:16px;padding:12px 14px}
+#stRoot .st-k b{display:block;font-size:24px;color:var(--teal-dark)}
+#stRoot .st-k small{display:block;font-size:12px;color:var(--ink-soft);margin-top:3px}
+#stRoot .st-h3{font-weight:700;font-size:15px;margin-bottom:10px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+#stRoot .st-h3 small{font-weight:400;color:var(--ink-soft);font-size:12px}
+#stRoot .st-sub{font-size:12px;color:var(--ink-soft);margin:10px 0 4px}
+#stRoot .st-mut{color:var(--ink-soft);font-size:13px}
+#stRoot .st-cols{display:flex;align-items:flex-end;gap:6px;height:150px}
+#stRoot .st-col{flex:1;display:flex;align-items:flex-end;gap:1px;height:100%;min-width:0}
+#stRoot .st-col i{flex:1;border-radius:4px 4px 0 0;min-height:2px}
+#stRoot .st-col i.a,#stRoot .st-lg.a{background:var(--teal)}
+#stRoot .st-col i.b,#stRoot .st-lg.b{background:var(--tan)}
+#stRoot .st-lg{display:inline-block;width:10px;height:10px;border-radius:3px;margin:0 4px 0 2px;vertical-align:middle}
+#stRoot .st-axis{display:flex;justify-content:space-between;font-size:11.5px;color:var(--ink-soft);margin-top:6px}
+#stRoot .st-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+#stRoot .st-grid3{display:grid;grid-template-columns:1.3fr .8fr 1.2fr;gap:12px}
+#stRoot .st-t{width:100%;border-collapse:collapse;font-size:13px}
+#stRoot .st-t th{text-align:right;font-weight:600;color:var(--ink-soft);font-size:12px;padding:6px 4px;border-bottom:1px solid var(--line)}
+#stRoot .st-t td{padding:7px 4px;border-bottom:1px solid #f1f4f3}
+#stRoot .st-lnk{border:0;background:none;font:inherit;color:var(--teal-dark);cursor:pointer;padding:0;text-align:right}
+#stRoot .st-bar{display:grid;grid-template-columns:minmax(0,1.3fr) 1fr auto;gap:10px;align-items:center;font-size:13px;padding:4px 0}
+#stRoot .st-bl{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#stRoot .st-bl small{color:var(--ink-soft);font-size:11px}
+#stRoot .st-bt{background:var(--teal-tint);border-radius:99px;height:8px;overflow:hidden}
+#stRoot .st-bt i{display:block;height:100%;background:var(--teal);border-radius:99px}
+#stRoot .st-dev{display:flex;gap:10px}
+#stRoot .st-dev>div{flex:1;text-align:center;background:var(--teal-tint);border-radius:14px;padding:14px 6px}
+#stRoot .st-dev b{display:block;font-size:24px;color:var(--teal-dark)}
+#stRoot .st-dev span{font-size:12px;color:var(--ink-soft)}
+#stRoot .st-hrs{display:flex;align-items:flex-end;gap:2px;height:90px}
+#stRoot .st-hrs i{flex:1;background:var(--tan);border-radius:3px 3px 0 0;opacity:.85}
+#stRoot .st-x{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+#stRoot .st-x>div{background:var(--tan-tint);border-radius:14px;padding:12px}
+#stRoot .st-x b{display:block;font-size:20px;color:#8a6446}
+#stRoot .st-x span{font-size:12px;color:var(--ink-soft)}
+#stRoot .st-feed>div{display:flex;gap:10px;align-items:center;font-size:13px;padding:6px 0;border-bottom:1px solid #f1f4f3}
+#stRoot .st-feed .st-t1{color:var(--ink-soft);font-size:12px;min-width:70px}
+#stRoot .st-feed b{font-weight:600}
+@media (max-width:900px){#stRoot .st-grid,#stRoot .st-grid3{grid-template-columns:1fr}#stRoot .st-k,#stRoot .st-x{grid-template-columns:1fr 1fr}#stRoot .st-now{grid-template-columns:1fr}}
 #cvRoot .cv-head{display:flex;justify-content:space-between;align-items:flex-start;gap:14px;flex-wrap:wrap;margin-bottom:16px}
 #cvRoot .cv-head h2{font-size:22px;margin:0 0 4px}
 #cvRoot .cv-head p{margin:0;color:#6b7876;font-size:13.5px}
@@ -3138,6 +3197,10 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
       <span class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8.5A2.5 2.5 0 0 1 6.5 6h1.8l1.4-2h4.6l1.4 2h1.8A2.5 2.5 0 0 1 20 8.5v9a2.5 2.5 0 0 1-2.5 2.5h-11A2.5 2.5 0 0 1 4 17.5z"/><circle cx="12" cy="12.5" r="3.6"/></svg></span>
       معالجة الصور
     </div>
+    <div class="nav-tab" data-section="stats">
+      <span class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h16"/><path d="M7 16v-4M11 16V8M15 16v-6M19 16V5"/></svg></span>
+      إحصائيات الزوار
+    </div>
     <div class="nav-tab admin-tab" data-section="admin" id="adminTabBtn" style="display:none;">
       <span class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3.2"/><path d="M12 2.5v3M12 18.5v3M21.5 12h-3M5.5 12h-3M18.5 5.5l-2 2M7.5 16.5l-2 2M18.5 18.5l-2-2M7.5 7.5l-2-2"/></svg></span>
       لوحة التحكم
@@ -3182,6 +3245,10 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
     <!-- ===== السير الذاتية: لوحة المؤسس (البيانات في خدمة zara-cv الخاصة) ===== -->
     <div class="section-view" id="view-cv">
       <div id="cvRoot"></div>
+    </div>
+    <!-- ===== إحصائيات الزوار (للأدمن فقط) — البيانات في خدمة zara-cv (جدول hits) ===== -->
+    <div class="section-view" id="view-stats">
+      <div id="stRoot"></div>
     </div>
     <!-- ===== أوامر صرف ← المبنى الإداري ===== -->
     <div class="section-view" id="view-bldg">
@@ -3524,7 +3591,8 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
     { key: "cv", label: "السير الذاتية" },
     { key: "bldg", label: "أوامر صرف" },
     { key: "roster", label: "مطابقة البيانات" },
-    { key: "photos", label: "معالجة الصور" }
+    { key: "photos", label: "معالجة الصور" },
+    { key: "stats", label: "إحصائيات الزوار", adminOnly: true }
   ];
 
   var currentUser = null;
@@ -3961,7 +4029,7 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
   function empSections(emp){
     if(emp.role === "admin") return SECTION_DEFS.map(function(s){ return s.key; });
     var perms = empPerms(emp);
-    return SECTION_DEFS.map(function(s){ return s.key; }).filter(function(k){ return perms.indexOf(k + ".view") > -1; });
+    return SECTION_DEFS.filter(function(s){ return !s.adminOnly; }).map(function(s){ return s.key; }).filter(function(k){ return perms.indexOf(k + ".view") > -1; });
   }
 
   function applySectionPermissions(emp){
@@ -3990,7 +4058,7 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
   function renderEmpSectionCheckboxes(checkedKeys){
     checkedKeys = checkedKeys || [];
     var group = document.getElementById("empSectionsGroup");
-    group.innerHTML = SECTION_DEFS.map(function(s){
+    group.innerHTML = SECTION_DEFS.filter(function(s){ return !s.adminOnly; }).map(function(s){
       var checked = checkedKeys.indexOf(s.key) > -1 ? "checked" : "";
       return '<label><input type="checkbox" class="emp-section-cb" value="' + s.key + '" ' + checked + '/> ' + s.label + '</label>';
     }).join("");
@@ -4505,13 +4573,113 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
   }
   function cvOpen(){ if(!cvUI.data && !cvUI.busy) cvLoad(); else cvRender(); }
 
+  // ===== إحصائيات الزوار (للأدمن فقط): الصفحات العامة gzara.org — مجهولة الهوية، مباشرة كل 10 ثوانٍ =====
+  var stUI = { days: 7, page: "", full: null, live: null, err: "", tL: null, tF: null, liveAt: 0 };
+  function stActive(){ var v = document.getElementById("view-stats"); return !!(v && v.classList.contains("active") && document.visibilityState === "visible" && currentUser && currentUser.role === "admin"); }
+  function stName(p){ var n = (stUI.full && stUI.full.names) || {}; return n[p] || (p === "/s" ? "صفحات المناسبات المنشورة" : p); }
+  function stAgo(t){ var s = Math.max(0, Math.round((Date.now() - t) / 1000)); return s < 60 ? "قبل " + s + " ث" : s < 3600 ? "قبل " + Math.round(s / 60) + " د" : "قبل " + Math.round(s / 3600) + " س"; }
+  function stN(n){ return Number(n || 0).toLocaleString("en-US"); }
+  function stSec(s){ s = Math.round(s || 0); return s < 60 ? s + " ث" : Math.floor(s / 60) + " د " + (s % 60) + " ث"; }
+  function stLoadLive(){
+    if(!stActive()) return;
+    cvFetch("/api/admin/live").then(function(r){ return r.json(); }).then(function(d){ if(d && d.ok){ stUI.live = d; stUI.liveAt = Date.now(); stUI.err = ""; } else if(d && d.err === "key") stUI.err = "key"; stRender(); }).catch(function(){});
+  }
+  function stLoadFull(){
+    if(!stActive()) return;
+    cvFetch("/api/admin/stats?days=" + stUI.days + (stUI.page ? "&page=" + encodeURIComponent(stUI.page) : "")).then(function(r){ return r.json(); }).then(function(d){ if(d && d.ok){ stUI.full = d; stUI.err = ""; } else stUI.err = d && d.err === "key" ? "key" : "load"; stRender(); }).catch(function(){ stUI.err = "load"; stRender(); });
+  }
+  function stOpen(){
+    stLoadLive(); stLoadFull();
+    clearInterval(stUI.tL); clearInterval(stUI.tF);
+    stUI.tL = setInterval(stLoadLive, 10000); stUI.tF = setInterval(stLoadFull, 60000);
+  }
+  document.addEventListener("visibilitychange", function(){ if(document.visibilityState === "visible" && stActive()){ stLoadLive(); stLoadFull(); } });
+  function stBars(rows, key, lab, max){
+    max = max || Math.max.apply(null, rows.map(function(r){ return r[key] || 0; }).concat([1]));
+    return rows.map(function(r){ var w = Math.max(2, Math.round((r[key] || 0) / max * 100)); return '<div class="st-bar"><div class="st-bl">' + lab(r) + '</div><div class="st-bt"><i style="width:' + w + '%"></i></div><b>' + stN(r[key]) + '</b></div>'; }).join("");
+  }
+  function stRender(){
+    var root = document.getElementById("stRoot"); if(!root || !currentUser) return;
+    if(currentUser.role !== "admin"){ root.innerHTML = '<div class="cv-card">هذا القسم للأدمن فقط.</div>'; return; }
+    var e = escapeHTML, F = stUI.full, L = stUI.live;
+    var h = '<div class="st-head"><div><h2>إحصائيات الزوار <span class="st-live"><i></i>مباشر</span></h2><p>زيارات صفحات gzara.org العامة ونقراتهم — بدون أسماء ولا أرقام جوالات' + (stUI.liveAt ? ' · آخر تحديث ' + new Date(stUI.liveAt).toLocaleTimeString("ar-SA-u-nu-latn", { hour: "numeric", minute: "2-digit", second: "2-digit" }) : '') + '</p></div><div class="st-ctl">' +
+      [[1, "اليوم"], [7, "7 أيام"], [30, "30 يوم"], [90, "90 يوم"]].map(function(x){ return '<button type="button" class="st-pill' + (stUI.days === x[0] ? ' on' : '') + '" data-st="days" data-v="' + x[0] + '">' + x[1] + '</button>'; }).join("") +
+      '<select data-st="page"><option value="">كل الصفحات</option>' + Object.keys((F && F.names) || {}).concat(["/s"]).filter(function(p, i, a){ return a.indexOf(p) === i && p !== "/submit.html"; }).map(function(p){ return '<option value="' + e(p) + '"' + (stUI.page === p ? ' selected' : '') + '>' + e(stName(p)) + '</option>'; }).join("") + '</select></div></div>';
+    if(stUI.err === "key"){ root.innerHTML = h + '<div class="cv-card">ما قدرنا نتحقق من حساب الأدمن — سجّل خروج وادخل من جديد.</div>'; return; }
+    if(!F && !L){ root.innerHTML = h + '<div class="cv-card">' + (stUI.err ? 'تعذّر الاتصال بخدمة الإحصائيات.' : 'جارٍ التحميل…') + '</div>'; return; }
+    // مباشر
+    if(L){
+      h += '<div class="st-now"><div class="st-now-big"><b>' + stN(L.live.total) + '</b><span>على الموقع الآن</span></div><div class="st-now-pg">' + (L.live.pages.length ? L.live.pages.map(function(x){ return '<span class="st-chip">' + e(stName(x.p)) + ' <b>' + x.n + '</b></span>'; }).join("") : '<span class="st-mut">ما فيه أحد الحين</span>') + '</div>' +
+        '<div class="st-now-t"><div><b>' + stN(L.today.views) + '</b><span>زيارة اليوم</span></div><div><b>' + stN(L.today.visitors) + '</b><span>زائر اليوم</span></div></div></div>';
+    }
+    if(F){
+      var tv = F.daily.reduce(function(a, r){ return a + (r.views || 0); }, 0);
+      var uv = F.devs.reduce(function(a, r){ return a + (r.n || 0); }, 0);
+      var tc = F.pages.reduce(function(a, r){ return a + (r.clicks || 0); }, 0);
+      var dn = F.durs.reduce(function(a, r){ return a + r.n; }, 0), avgSec = dn ? F.durs.reduce(function(a, r){ return a + (r.sec || 0) * r.n; }, 0) / dn : 0;
+      h += '<div class="cv-kpis st-k">' +
+        '<div><b>' + stN(tv) + '</b><small>زيارة (فتح صفحة)</small></div>' +
+        '<div><b>' + stN(uv) + '</b><small>زائر مختلف · ' + (uv ? Math.round(F.newVisitors / uv * 100) : 0) + '% جدد</small></div>' +
+        '<div><b>' + stSec(avgSec) + '</b><small>متوسط البقاء في الصفحة</small></div>' +
+        '<div><b>' + stN(tc) + '</b><small>نقرة على زر أو رابط</small></div></div>';
+      // يومي
+      if(F.days > 1){
+        var days = [], base = Math.floor((F.from + 3 * 3600e3) / 864e5), byD = {}; F.daily.forEach(function(r){ byD[r.day] = r; });
+        for(var i = 0; i < F.days; i++) days.push(byD[base + i] || { day: base + i, views: 0, visitors: 0 });
+        var mx = Math.max.apply(null, days.map(function(r){ return r.views; }).concat([1]));
+        h += '<div class="cv-card"><div class="st-h3">الزيارات يومياً <small><i class="st-lg a"></i>زيارات <i class="st-lg b"></i>زوار</small></div><div class="st-cols">' + days.map(function(r){ var dt = new Date(r.day * 864e5); return '<div class="st-col" title="' + dt.toLocaleDateString("ar-SA-u-ca-gregory-nu-latn", { day: "numeric", month: "short" }) + ': ' + r.views + ' زيارة · ' + r.visitors + ' زائر"><i class="a" style="height:' + Math.round(r.views / mx * 100) + '%"></i><i class="b" style="height:' + Math.round(r.visitors / mx * 100) + '%"></i></div>'; }).join("") + '</div><div class="st-axis"><span>' + new Date(days[0].day * 864e5).toLocaleDateString("ar-SA-u-ca-gregory-nu-latn", { day: "numeric", month: "short" }) + '</span><span>اليوم</span></div></div>';
+      }
+      // الصفحات + النقرات
+      var dur = {}; F.durs.forEach(function(r){ dur[r.p] = r; });
+      h += '<div class="st-grid"><div class="cv-card"><div class="st-h3">أكثر الصفحات زيارة</div>' + (F.pages.length ? '<table class="st-t"><thead><tr><th>الصفحة</th><th>زيارات</th><th>زوار</th><th>البقاء</th><th>تمرير</th></tr></thead><tbody>' + F.pages.map(function(r){ var d = dur[r.p] || {}; return '<tr><td><button type="button" class="st-lnk" data-st="pg" data-v="' + e(r.p) + '">' + e(stName(r.p)) + '</button></td><td><b>' + stN(r.views) + '</b></td><td>' + stN(r.visitors) + '</td><td>' + (d.n ? stSec(d.sec) : '—') + '</td><td>' + (d.n ? Math.round(d.scroll || 0) + '%' : '—') + '</td></tr>'; }).join("") + '</tbody></table>' : '<p class="st-mut">ما فيه زيارات بعد في هذي الفترة.</p>') + '</div>';
+      h += '<div class="cv-card"><div class="st-h3">وين ينقرون أكثر شي</div>' + (F.clicks.length ? stBars(F.clicks.slice(0, 15), "n", function(r){ return e(r.l) + (stUI.page ? '' : ' <small>' + e(stName(r.p)) + '</small>'); }) : '<p class="st-mut">ما فيه نقرات بعد.</p>') + '</div></div>';
+      // أحداث مخصصة
+      var ev = function(p, l){ return F.evs.filter(function(r){ return r.p === p && r.l === l; }); };
+      var funnel = ev("/cv", "خطوة").sort(function(a, b){ return String(a.x).localeCompare(String(b.x)); });
+      var hrSearch = ev("/hr", "بحث"), hrList = ev("/hr", "فتح قائمة"), hrReq = ev("/hr", "طلب سيرة");
+      if(funnel.length || hrSearch.length || hrList.length){
+        h += '<div class="st-grid">';
+        if(funnel.length){ var f0 = funnel[0].n || 1; h += '<div class="cv-card"><div class="st-h3">رحلة رفع السيرة <small>كم واحد وصل لكل خطوة</small></div>' + stBars(funnel, "n", function(r){ return e(String(r.x).replace(/^\d\s*/, "")) + ' <small>' + Math.round(r.n / f0 * 100) + '%</small>'; }, f0) + '</div>'; }
+        if(hrList.length || hrSearch.length){ h += '<div class="cv-card"><div class="st-h3">بوابة المدربين — وش يدورون</div>' + (hrList.length ? '<div class="st-sub">القوائم اللي فتحوها</div>' + stBars(hrList.slice(0, 8), "n", function(r){ return e(r.x || "—"); }) : '') + (hrSearch.length ? '<div class="st-sub">كلمات البحث</div>' + stBars(hrSearch.slice(0, 8), "n", function(r){ return e(r.x); }) : '') + (hrReq.length ? '<div class="st-sub">طلبات السير حسب المسمى</div>' + stBars(hrReq.slice(0, 6), "n", function(r){ return e(r.x || "—"); }) : '') + '</div>'; }
+        h += '</div>';
+      }
+      // المصادر + الأجهزة + الساعات
+      var dm = 0, dd = 0; F.devs.forEach(function(r){ if(r.d === "m") dm = r.n; else dd += r.n; });
+      var hrs = []; for(var k = 0; k < 24; k++) hrs.push(0); F.hours.forEach(function(r){ hrs[r.h] = r.n; }); var hm = Math.max.apply(null, hrs.concat([1]));
+      h += '<div class="st-grid3"><div class="cv-card"><div class="st-h3">من وين جوا</div>' + (F.refs.length ? stBars(F.refs, "n", function(r){ return e(r.r || "مباشر / واتساب"); }) : '<p class="st-mut">—</p>') + '</div>' +
+        '<div class="cv-card"><div class="st-h3">الأجهزة</div><div class="st-dev"><div><b>' + (dm + dd ? Math.round(dm / (dm + dd) * 100) : 0) + '%</b><span>جوال</span></div><div><b>' + (dm + dd ? Math.round(dd / (dm + dd) * 100) : 0) + '%</b><span>كمبيوتر</span></div></div></div>' +
+        '<div class="cv-card"><div class="st-h3">أوقات الذروة <small>بتوقيت السعودية</small></div><div class="st-hrs">' + hrs.map(function(n, i){ return '<i title="الساعة ' + i + ': ' + n + ' زيارة" style="height:' + Math.max(3, Math.round(n / hm * 100)) + '%"></i>'; }).join("") + '</div><div class="st-axis"><span>12 ص</span><span>12 ظ</span><span>11 م</span></div></div></div>';
+      // أرقام إضافية من «مفاتيح الفرص»
+      var X = F.extra || {};
+      h += '<div class="cv-card"><div class="st-h3">أرقام إضافية — مفاتيح الفرص <small>خلال الفترة المختارة</small></div><div class="st-x">' +
+        '<div><b>' + stN((X.seekers || {}).shown) + '</b><span>سيرة ظاهرة للمدربين</span></div>' +
+        '<div><b>' + stN((X.seekers || {}).recent) + '</b><span>سيرة جديدة</span></div>' +
+        '<div><b>' + stN((X.experts || {}).active7) + ' / ' + stN((X.experts || {}).n) + '</b><span>مدرب دخل آخر 7 أيام (من اللي وصلهم رمز)</span></div>' +
+        '<div><b>' + stN((X.opened || {}).n) + '</b><span>سيرة طلبها المدربون</span></div></div></div>';
+    }
+    // آخر النشاط
+    if(L && L.feed.length){
+      var kl = { view: "فتح", click: "نقر", ev: "" };
+      h += '<div class="cv-card"><div class="st-h3">آخر النشاط <small>يتحدّث تلقائياً</small></div><div class="st-feed">' + L.feed.slice(0, 25).map(function(r){ return '<div><span class="st-t1">' + stAgo(r.t) + '</span><span class="st-dv">' + (r.d === "m" ? "📱" : "💻") + '</span><b>' + e(stName(r.p)) + '</b><span>' + (r.k === "view" ? "فتح الصفحة" : r.k === "click" ? "نقر «" + e(r.l) + "»" : e(r.l) + (r.x ? ": " + e(r.x) : "")) + '</span></div>'; }).join("") + '</div></div>';
+    }
+    root.innerHTML = h;
+  }
+  document.addEventListener("click", function(ev){
+    var b = ev.target.closest && ev.target.closest("#stRoot [data-st]"); if(!b || b.tagName === "SELECT") return;
+    var a = b.getAttribute("data-st");
+    if(a === "days"){ stUI.days = +b.getAttribute("data-v"); stUI.full = null; stRender(); stLoadFull(); }
+    if(a === "pg"){ stUI.page = b.getAttribute("data-v"); stLoadFull(); }
+  });
+  document.addEventListener("change", function(ev){ var s = ev.target.closest && ev.target.closest('#stRoot select[data-st="page"]'); if(s){ stUI.page = s.value; stLoadFull(); } });
+
   // ===== شريط الأقسام المجمَّع: مجموعات بدل صف طويل — قائمة منسدلة على الشاشات الكبيرة وورقة سفلية على الجوال =====
   // التبويبات الأصلية (.nav-tab) باقية كما هي كمصدر للحالة والصلاحيات؛ هذا الشريط يعرضها مجمَّعة ويضغطها
   var NAV_GROUPS = [
     { k: "work", l: "العمل اليومي", ic: '<rect x="5" y="4" width="14" height="17" rx="2.5"/><path d="M9 4h6v3H9zM8.5 12l2.2 2.2L15.5 10"/>', s: ["tasks", "docs"] },
     { k: "media", l: "المناسبات والإعلام", ic: '<rect x="3.5" y="5" width="17" height="14" rx="2.5"/><circle cx="9" cy="10" r="1.6"/><path d="M3.5 16l5-4.5 4 3.5 2.5-2 5 4"/>', s: ["events", "designs", "photos"] },
     { k: "cal", l: "التقويم", ic: '<rect x="4" y="5" width="16" height="15" rx="2.5"/><path d="M8 3v4M16 3v4M4 10h16"/><path d="M8.5 14h2M13.5 14h2M8.5 17h2"/>', s: ["calendars", "sponsor"] },
-    { k: "prog", l: "البرامج والمالية", ic: '<circle cx="9" cy="8.5" r="3"/><path d="M3.5 19c.8-3 3-4.5 5.5-4.5s4.7 1.5 5.5 4.5"/><path d="M16 7.5h4.5M16 11h4.5M17.5 14.5h3"/>', s: ["roster", "cv", "bldg"] }
+    { k: "prog", l: "البرامج والمالية", ic: '<circle cx="9" cy="8.5" r="3"/><path d="M3.5 19c.8-3 3-4.5 5.5-4.5s4.7 1.5 5.5 4.5"/><path d="M16 7.5h4.5M16 11h4.5M17.5 14.5h3"/>', s: ["roster", "cv", "bldg"] },
+    { k: "stats", l: "الإحصائيات", ic: '<path d="M4 20h16"/><path d="M7 16v-4M11 16V8M15 16v-6M19 16V5"/>', s: ["stats"] }
   ];
   var navgOpen = "";
   function navgTab(key){ return document.querySelector('#navTabs .nav-tab[data-section="' + key + '"]'); }
@@ -4572,6 +4740,7 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
       if(tab.dataset.section === "photos") phRender();
       if(tab.dataset.section === "sponsor") spRender();
       if(tab.dataset.section === "cv") cvOpen();
+      if(tab.dataset.section === "stats") stOpen();
     });
   });
 

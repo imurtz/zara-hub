@@ -171,7 +171,7 @@
   var S = { phone: "", token: "", profile: null, fields: [], slot: 1, other: null };
   if(window.pdfjsLib) pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
 
-  function show(id){ if(id !== "stDone") $("twoBox").hidden = true; ["stPhone","stFile","stConfirm","stDone"].forEach(function(x){ $(x).hidden = x !== id; }); var n = { stPhone: 1, stFile: 2, stConfirm: 3, stDone: 3 }[id]; [1,2,3].forEach(function(i){ $("s" + i).className = i <= n ? "on" : ""; }); window.scrollTo({ top: 0, behavior: "smooth" }); }
+  function show(id){ window.zt && zt("خطوة", { stPhone: "1 الجوال", stFile: "2 رفع الملف", stConfirm: "3 التأكيد", stDone: "4 تمّ الإرسال" }[id]); if(id !== "stDone") $("twoBox").hidden = true; ["stPhone","stFile","stConfirm","stDone"].forEach(function(x){ $(x).hidden = x !== id; }); var n = { stPhone: 1, stFile: 2, stConfirm: 3, stDone: 3 }[id]; [1,2,3].forEach(function(i){ $("s" + i).className = i <= n ? "on" : ""; }); window.scrollTo({ top: 0, behavior: "smooth" }); }
   function msg(id, t){ $(id).textContent = t || ""; $(id).classList.toggle("show", !!t); }
   function esc(s){ return String(s == null ? "" : s).replace(/[&<>"]/g, function(c){ return { "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;" }[c]; }); }
   function digits(s){ return String(s || "").replace(/[٠-٩]/g, function(d){ return "٠١٢٣٤٥٦٧٨٩".indexOf(d); }); }
@@ -295,5 +295,6 @@
   if(t) loadTok(t);
 })();
 </script>
+<script src="/assets/zt.js" defer></script>
 </body>
 </html>

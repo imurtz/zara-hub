@@ -63,7 +63,9 @@ function digits(s) { return String(s || "").replace(/[\u0660-\u0669]/g, d => d.c
 function phoneNorm(s) { let d = digits(s).replace(/\D/g, "").replace(/^00/, ""); if (/^9665\d{8}$/.test(d)) d = "0" + d.slice(3); else if (/^5\d{8}$/.test(d)) d = "0" + d; return d; }
 const clip = (s, n) => String(s || "").replace(/\s+/g, " ").trim().slice(0, n);
 
+let SCHEMA_DONE = false;
 async function schema(db) {
+  if (SCHEMA_DONE) return;
   await db.batch([
     db.prepare(`CREATE TABLE IF NOT EXISTS seekers (id TEXT PRIMARY KEY, token TEXT UNIQUE, phone TEXT, name TEXT, gender TEXT, roster_id TEXT, reg_no TEXT,
       file_key TEXT, file_name TEXT, file_type TEXT, text TEXT, field TEXT, titles TEXT, tasks TEXT, years INTEGER, degree TEXT, skills TEXT, city TEXT,
@@ -93,7 +95,14 @@ async function schema(db) {
   if (!v || v.v !== "5") { // سيرة ثانية بتخصص مختلف لنفس الشخص (slot 1 أو 2)
     try { await db.prepare("ALTER TABLE seekers ADD COLUMN slot INTEGER DEFAULT 1").run(); } catch (e) {}
     await db.prepare("INSERT OR REPLACE INTO meta (k, v) VALUES ('schema', '5')").run();
-  }
+  }  try { // إحصائيات زوار الصفحات العامة — مجهولة الهوية (بلا IP ولا أسماء)، تُحذف بعد 120 يوماً
+    await db.batch([
+      db.prepare("CREATE TABLE IF NOT EXISTS hits (t INTEGER, v TEXT, s TEXT, p TEXT, k TEXT, l TEXT, x TEXT, d TEXT, r TEXT)"),
+      db.prepare("CREATE INDEX IF NOT EXISTS hits_t ON hits(t)")
+    ]);
+  } catch (e) {}
+  SCHEMA_DONE = true;
+
 }
 
 // التحقق من أن الجوال لمتدرب في «مطابقة البيانات» (rosterPeople) — آلياً بلا تدخل بشري
@@ -272,9 +281,45 @@ async function staffOk(t) {
     const f = (((await r.json())[0] || {}).document || {}).fields || {};
     const perms = ((f.perms || {}).arrayValue || {}).values || [];
     const ok = (f.role || {}).stringValue === "admin" || perms.some(v => v.stringValue === "cv.view");
-    STAFF.set(t, { ok, exp: Math.min(P.exp * 1000, Date.now() + 300e3) });
+    STAFF.set(t, { ok, admin: (f.role || {}).stringValue === "admin", exp: Math.min(P.exp * 1000, Date.now() + 300e3) });
     return ok;
   } catch (e) { return false; }
+}
+async function staffAdmin(t) { if (!await staffOk(t)) return false; const c = STAFF.get(t); return !!(c && c.admin); }
+// ---------- إحصائيات الزوار ----------
+const PAGES = { "/": "الصفحة الرئيسية", "/bayanat": "تسجيل بيانات المناسبات", "/submit.html": "تسجيل بيانات المناسبات", "/policy": "سياسة النشر", "/cv": "رفع السيرة الذاتية", "/cv/hired": "بلاغ التوظيف", "/hr": "بوابة المدربين", "/sponsor": "رعاية التقويم", "/live": "عدّاد التسجيل" };
+const RIY = 3 * 3600e3, DAY = 864e5;
+async function trackIn(raw, ua, env) {
+  if (/bot|crawl|spider|preview|facebookexternalhit|whatsapp|slurp|headless/i.test(ua)) return;
+  let b; try { b = JSON.parse(raw); } catch (e) { return; }
+  const v = clip(b.v, 24), sid = clip(b.s, 24); if (!v || !sid || !Array.isArray(b.e) || v.startsWith("zz")) return;
+  const d = /mobile|android|iphone|ipad/i.test(ua) ? "m" : "d", t0 = now();
+  const st = b.e.slice(0, 40).map(e => env.DB.prepare("INSERT INTO hits (t, v, s, p, k, l, x, d, r) VALUES (?,?,?,?,?,?,?,?,?)").bind(t0, v, sid, clip(e.p, 80).replace(/\/+$/, "") || "/", clip(e.k, 12), clip(e.l, 60), clip(e.x, 120), d, clip(e.r, 60)));
+  if (st.length) await env.DB.batch(st);
+  if (Math.random() < 0.01) await env.DB.prepare("DELETE FROM hits WHERE t < ? OR p LIKE '/zz%'").bind(t0 - 120 * DAY).run();
+}
+async function statsLive(db) {
+  const t = now(), live = (await db.prepare("SELECT p, COUNT(DISTINCT s) AS n FROM hits WHERE t > ? GROUP BY p ORDER BY n DESC").bind(t - 120e3).all()).results || [];
+  const feed = (await db.prepare("SELECT t, p, k, l, x, d FROM hits WHERE t > ? AND k IN ('view','click','ev') ORDER BY t DESC LIMIT 40").bind(t - DAY).all()).results || [];
+  const d0 = Math.floor((t + RIY) / DAY) * DAY - RIY;
+  const today = await db.prepare("SELECT SUM(k='view') AS views, COUNT(DISTINCT v) AS visitors, COUNT(DISTINCT s) AS sessions FROM hits WHERE t >= ?").bind(d0).first();
+  return { now: t, live: { total: (await db.prepare("SELECT COUNT(DISTINCT s) AS n FROM hits WHERE t > ?").bind(t - 120e3).first()).n || 0, pages: live }, today, feed };
+}
+async function statsFull(db, days, page) {
+  const t = now(), from = Math.floor((t + RIY) / DAY) * DAY - RIY - (days - 1) * DAY, pf = page ? " AND p = ?" : "", pa = page ? [page] : [];
+  const q = (sql, ...a) => db.prepare(sql).bind(from, ...pa, ...a).all().then(r => r.results || []);
+  const [daily, pages, clicks, refs, devs, hours, evs, newv, durs] = await Promise.all([
+    q(`SELECT CAST((t + ${RIY}) / ${DAY} AS INTEGER) AS day, SUM(k='view') AS views, COUNT(DISTINCT v) AS visitors FROM hits WHERE t >= ?${pf} GROUP BY day ORDER BY day`),
+    q(`SELECT p, SUM(k='view') AS views, COUNT(DISTINCT v) AS visitors, SUM(k='click') AS clicks FROM hits WHERE t >= ?${pf} GROUP BY p ORDER BY views DESC LIMIT 30`),
+    q(`SELECT p, l, COUNT(*) AS n, COUNT(DISTINCT v) AS u FROM hits WHERE t >= ?${pf} AND k = 'click' AND l != '' GROUP BY p, l ORDER BY n DESC LIMIT 60`),
+    q(`SELECT r, COUNT(*) AS n FROM hits WHERE t >= ?${pf} AND k = 'view' GROUP BY r ORDER BY n DESC LIMIT 12`),
+    q(`SELECT d, COUNT(DISTINCT v) AS n FROM hits WHERE t >= ?${pf} GROUP BY d`),
+    q(`SELECT CAST(((t + ${RIY}) % ${DAY}) / 3600000 AS INTEGER) AS h, SUM(k='view') AS n FROM hits WHERE t >= ?${pf} GROUP BY h`),
+    q(`SELECT p, l, x, COUNT(*) AS n FROM hits WHERE t >= ?${pf} AND k = 'ev' GROUP BY p, l, x ORDER BY n DESC LIMIT 80`),
+    q(`SELECT COUNT(DISTINCT v) AS n FROM hits WHERE t >= ?${pf} AND k = 'view' AND x = 'new'`),
+    q(`SELECT p, AVG(CAST(l AS INTEGER)) AS sec, AVG(CAST(x AS INTEGER)) AS scroll, COUNT(*) AS n FROM hits WHERE t >= ?${pf} AND k = 'leave' GROUP BY p`)
+  ]);
+  return { from, days, daily, pages, clicks, refs, devs, hours, evs, newVisitors: (newv[0] || {}).n || 0, durs };
 }
 async function adminOk(db, k) { if (!k) return false; const r = await db.prepare("SELECT v FROM meta WHERE k = 'admin'").first(); return !!r && r.v === await sha(k); }
 async function logAct(db, who, act, ref) { try { await db.prepare("INSERT INTO log (t, who, act, ref) VALUES (?, ?, ?, ?)").bind(now(), who, act, ref || "").run(); } catch (e) {} }
@@ -285,6 +330,8 @@ export default {
     if (req.method === "OPTIONS") return new Response(null, { headers: H });
     try {
       await schema(env.DB);
+
+      if (p === "/api/t" && req.method === "POST") { const raw = (await req.text()).slice(0, 20000); ctx.waitUntil(trackIn(raw, req.headers.get("User-Agent") || "", env).catch(() => {})); return new Response(null, { status: 204, headers: H }); }
 
       // ---------- الباحث ----------
       if (p === "/api/fields") return json({ fields: FIELDS.map(f => ({ k: f[0], l: f[1] })) }, 200, H);
@@ -461,6 +508,15 @@ export default {
         const k = url.searchParams.get("k") || "";
         const bt = (req.headers.get("Authorization") || "").replace(/^Bearer\s+/i, "");
         if (!await staffOk(bt) && !await adminOk(env.DB, k)) return json({ ok: false, err: "key" }, 401, H);
+        if (p === "/api/admin/stats" || p === "/api/admin/live") { // إحصائيات الزوار — للأدمن فقط
+          if (!await staffAdmin(bt) && !await adminOk(env.DB, k)) return json({ ok: false, err: "key" }, 403, H);
+          if (p === "/api/admin/live") return jsonRaw(Object.assign({ ok: true }, await statsLive(env.DB)), 200, H);
+          const days = Math.max(1, Math.min(90, +url.searchParams.get("days") || 7));
+          const extra = { experts: await env.DB.prepare("SELECT COUNT(*) AS n, SUM(last_seen > ?) AS active7 FROM experts WHERE id NOT LIKE 'zz-%' AND pin_at IS NOT NULL").bind(now() - 7 * DAY).first(),
+            seekers: await env.DB.prepare("SELECT COUNT(*) AS n, SUM(consent = 1) AS shown, SUM(created > ?) AS recent FROM seekers WHERE status = 'active' AND roster_id NOT LIKE 'zz-%'").bind(now() - days * DAY).first(),
+            opened: await env.DB.prepare("SELECT COUNT(*) AS n FROM requests WHERE created > ? AND expert_id NOT LIKE 'zz-%'").bind(now() - days * DAY).first() };
+          return jsonRaw(Object.assign({ ok: true, extra, names: PAGES }, await statsFull(env.DB, days, url.searchParams.get("page") || "")), 200, H);
+        }
         if (p === "/api/admin/list") {
           const ATTA = await attendees();
           const rows = (await env.DB.prepare("SELECT id, roster_id, name, phone, reg_no, gender, field, titles, years, degree, city, consent, status, ai, created, updated, COALESCE(slot, 1) AS slot FROM seekers WHERE roster_id NOT LIKE 'zz-%' ORDER BY updated DESC").all()).results || [];

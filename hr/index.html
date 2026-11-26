@@ -344,6 +344,7 @@
     $("due").innerHTML = (due.length ? '<div class="dueh">⏳ بانتظار ردّك <i>' + due.length + '</i><span style="font-weight:400;font-size:12.5px;color:var(--ink-soft)">— ضغطة وحدة تكفي</span></div>' : '') + due.map(function(r){ return '<div class="due" data-rid="' + r.id + '"><b>وش صار مع ' + esc(r.name || "المرشح") + '؟</b><div class="sub" style="margin:2px 0 0">' + esc(r.job || "") + '</div><div class="row"><button type="button" class="y" data-out="hired">قابلته وتوظّف 🎉</button><button type="button" class="n" data-out="int_no">قابلته — غير مناسب</button><button type="button" class="n" data-out="cv_no">اطّلعت على السيرة — غير مناسبة</button></div></div>'; }).join("");
   }
   $("q").addEventListener("input", paintTiles);
+  var _zq; $("q").addEventListener("input", function(){ var v = this.value.trim(); clearTimeout(_zq); if(v.length > 1) _zq = setTimeout(function(){ window.zt && zt("بحث", v); }, 1800); });
   $("due").onclick = function(e){
     var b = e.target.closest("[data-out]"); if(!b) return; var box = b.closest("[data-rid]");
     api("/api/hr/outcome", { rid: box.getAttribute("data-rid"), outcome: b.getAttribute("data-out") }).then(function(){ box.innerHTML = '<b>' + (b.getAttribute("data-out") === "hired" ? "مبروك! شكراً لتحديثك 🌟" : "شكراً لتحديثك") + '</b>'; setTimeout(function(){ box.remove(); }, 1800); });
@@ -402,6 +403,7 @@
   document.addEventListener("keydown", function(e){ if(e.key === "Escape" && !$("sheet").hidden) closeSheet(); });
   $("jSave").onclick = function(){
     var t = $("jt").value.trim(); if(t.length < 2) return; var b = this; b.disabled = true; b.textContent = "لحظة…";
+    window.zt && zt("إضافة وظيفة", t);
     api("/api/hr/job", { title: t, note: $("jn").value.trim() }).then(function(d){
       b.disabled = false; if(!d.ok){ if(d.err === "token") return out(); toast("تعذّر الحفظ، حاول مرة ثانية"); paintSheet(); return; }
       closeSheet(); $("q").value = ""; toast(d.dup ? "موجودة في قائمتك" : d.n ? "أُضيفت ✓ — فيه " + d.n + " مرشح مطابق" : "أُضيفت ✓ — بنوريك أول ما يتوفر مرشح"); loadHome();
@@ -410,6 +412,7 @@
 
   // المرشحون
   function openList(o){
+    window.zt && zt("فتح قائمة", o.fresh ? "السير الجديدة" : o.job || o.title || o.label || "");
     CUR = o; view("vList"); $("listH").innerHTML = "<b>" + esc(o.fresh ? "🆕 السير الجديدة" : o.job || o.title || o.label) + "</b>"; $("listSub").textContent = ""; $("list").innerHTML = '<div class="spin"></div>';
     api("/api/hr/list?" + (o.job ? "job=" + encodeURIComponent(o.job) : o.title ? "title=" + encodeURIComponent(o.title) : "field=" + encodeURIComponent(o.field || ""))).then(function(d){
       if(!d.ok){ if(d.err === "token") return out(); $("list").innerHTML = '<div class="empty">تعذّر التحميل.</div>'; return; }
@@ -443,6 +446,7 @@
     if(ob){ var box = ob.closest(".oc"); api("/api/hr/outcome", { rid: box.getAttribute("data-rid"), outcome: ob.getAttribute("data-out") }).then(function(){ box.innerHTML = ob.getAttribute("data-out") === "hired" ? "<b>مبروك! شكراً لتحديثك 🌟 — يختفي المرشح من القائمة.</b>" : "<b>شكراً، وصلنا رأيك ✓</b>"; }); return; }
     var b = e.target.closest(".go"); if(!b) return;
     var card = b.closest(".cand"), rev = card.querySelector(".rev"); b.disabled = true; b.textContent = "لحظة…";
+    window.zt && zt("طلب سيرة", CUR && (CUR.job || CUR.title || CUR.label) || "");
     api("/api/hr/open", { id: card.getAttribute("data-id"), job: CUR && (CUR.job || CUR.title || CUR.label) || "" }).then(function(d){
       b.disabled = false; b.className = "go seen"; b.textContent = "البيانات ظاهرة ↓";
       if(!d.ok){ rev.innerHTML = '<div class="msg show">هذه السيرة لم تعد متاحة.</div>'; rev.classList.add("show"); return; }
@@ -461,5 +465,6 @@
   if(T) loadHome(); else view("vLogin");
 })();
 </script>
+<script src="/assets/zt.js" defer></script>
 </body>
 </html>
