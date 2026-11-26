@@ -44,7 +44,9 @@ function cors(origin) {
   const o = ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0];
   return { "Access-Control-Allow-Origin": o, "Access-Control-Allow-Methods": "GET, POST, DELETE, OPTIONS", "Access-Control-Allow-Headers": "Content-Type, Authorization", "Vary": "Origin" };
 }
-const json = (o, s, h) => new Response(JSON.stringify(o), { status: s || 200, headers: Object.assign({ "Content-Type": "application/json; charset=utf-8" }, h) });
+// تصحيح مفردات معتمدة أينما وردت (المسميات، الملخصات، الوظائف): ضابط عمليات موارد بشرية → أخصائي، دعم فني → دعم تقني
+const fixW = t => String(t).replace(/ضابط(ة?)(\s+)(ال)?عمليات(\s+)(ال)?موارد(\s+)(ال)?بشرية/g, (m, a, s1, b, s2, c, s3, d) => "أخصائي" + a + s1 + (b || "") + "عمليات" + s2 + (c || "") + "موارد" + s3 + (d || "") + "بشرية").replace(/(ال)?دعم(\s+)(ال)?فني/g, (m, a, s1, b) => (a || "") + "دعم" + s1 + (b || "") + "تقني");
+const json = (o, s, h) => new Response(fixW(JSON.stringify(o)), { status: s || 200, headers: Object.assign({ "Content-Type": "application/json; charset=utf-8" }, h) });
 const tok = n => { const a = new Uint8Array(n || 18); crypto.getRandomValues(a); return Array.from(a, b => "abcdefghijkmnpqrstuvwxyz23456789"[b % 32]).join(""); };
 const now = () => Date.now();
 function digits(s) { return String(s || "").replace(/[\u0660-\u0669]/g, d => d.charCodeAt(0) - 0x0660).replace(/[\u06F0-\u06F9]/g, d => d.charCodeAt(0) - 0x06F0); }
@@ -130,9 +132,9 @@ async function rosterExperts() {
     .filter(p => !p.mergedInto && p.status !== "inactive");
 }
 // مطابقة مرنة للمسميات: «المحاسب» = «محاسب» = «محاسبة»، و«محاسب» تطابق «محاسب عام»
-const nk = t => String(t || "").toLowerCase().replace(/[ًٌٍَُِّْـ]/g, "").replace(/[أإآ]/g, "ا").replace(/ة(?=\s|$)/g, "ه").replace(/ى(?=\s|$)/g, "ي").replace(/[^\p{L}\p{N}\s]/gu, " ").split(/\s+/).filter(Boolean).map(w => w.length > 4 && w.startsWith("ال") ? w.slice(2) : w).join(" ");
+const nk = t => fixW(t || "").toLowerCase().replace(/[ًٌٍَُِّْـ]/g, "").replace(/[أإآ]/g, "ا").replace(/ة(?=\s|$)/g, "ه").replace(/ى(?=\s|$)/g, "ي").replace(/[^\p{L}\p{N}\s]/gu, " ").split(/\s+/).filter(Boolean).map(w => w.length > 4 && w.startsWith("ال") ? w.slice(2) : w).join(" ");
 const tMatch = (a, b) => { const A = nk(a), B = nk(b); if (!A || !B) return false; if (A === B) return true; const s = A.length < B.length ? A : B, l = s === A ? B : A; return s.length >= 3 && (" " + l + " ").includes(" " + s) ; };
-const normT = t => clip(t, 60).replace(/^ال(?=\S)/, "").replace(/[ًٌٍَُِّْـ]/g, "").replace(/[أإآ]/g, "ا").replace(/ة\b/g, "ه").replace(/ى\b/g, "ي");
+const normT = t => fixW(clip(t, 60)).replace(/^ال(?=\S)/, "").replace(/[ًٌٍَُِّْـ]/g, "").replace(/[أإآ]/g, "ا").replace(/ة\b/g, "ه").replace(/ى\b/g, "ي");
 const FOLLOW_DAYS = 14, SHARE_DAYS = 7;
 
 // الفرز: Workers AI أولاً، والقاموس احتياطاً — النتيجة دائماً مجال من القائمة الثابتة
