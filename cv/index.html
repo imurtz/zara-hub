@@ -82,6 +82,12 @@
   .links .del{color:var(--danger);}
   .foot{text-align:center; color:var(--ink-soft); font-size:12px; margin-top:20px; line-height:1.8;}
   [hidden]{display:none !important;}
+  .two{display:flex; align-items:center; gap:12px; padding:14px 16px;}
+  .two .tx{flex:1; font-size:13.5px; line-height:1.7; color:var(--ink-soft);}
+  .two .tx b{display:block; color:var(--ink); font-size:15px;}
+  .two button{border:0; background:var(--teal); color:#fff; border-radius:12px; padding:10px 14px; font-weight:600; cursor:pointer; font:inherit; font-size:14px; white-space:nowrap;}
+  .two button.gh{background:var(--teal-tint); color:var(--teal-dark);}
+  .slotTag{display:inline-block; background:var(--teal-tint); color:var(--teal-dark); border-radius:20px; padding:2px 10px; font-size:12px; font-weight:700; margin-bottom:6px;}
   .hired{display:flex; align-items:center; gap:12px; margin-top:18px; padding:14px 16px; background:linear-gradient(90deg, var(--tan-tint), #fff); border:1.5px solid #eedfd0; border-radius:20px; text-decoration:none; color:var(--ink);}
   .hired-e{font-size:28px; line-height:1;}
   .hired b{display:block; font-size:15px;}
@@ -151,6 +157,7 @@
     <div class="links"><button type="button" id="reup">رفع نسخة أحدث</button><button type="button" id="edit">تعديل المجال والمسميات</button><button type="button" id="pause">إخفاء سيرتي مؤقتاً</button><button type="button" class="del" id="del">حذف سيرتي</button></div>
   </div>
 
+  <div class="card two" id="twoBox" hidden></div>
   <a class="hired" id="hiredLink" href="/cv/hired/"><span class="hired-e" aria-hidden="true">🎉</span><span><b>حصلت وظيفة من «مفاتيح الفرص»؟</b><small>لا تنسى ترجع تبلغنا — فرحتك فرحتنا</small></span><i aria-hidden="true">←</i></a>
   <div class="foot">بياناتك محفوظة في مخزن خاص، ولا تُعرض إلا لخبراء الموارد البشرية في الشبكة.<br>جمعية العوامية الخيرية — مفاتيح الفرص</div>
 </div>
@@ -161,10 +168,10 @@
 (function(){
   var API = "https://zara-cv.murtada-ud.workers.dev";
   var $ = function(id){ return document.getElementById(id); };
-  var S = { phone: "", token: "", profile: null, fields: [] };
+  var S = { phone: "", token: "", profile: null, fields: [], slot: 1, other: null };
   if(window.pdfjsLib) pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
 
-  function show(id){ ["stPhone","stFile","stConfirm","stDone"].forEach(function(x){ $(x).hidden = x !== id; }); var n = { stPhone: 1, stFile: 2, stConfirm: 3, stDone: 3 }[id]; [1,2,3].forEach(function(i){ $("s" + i).className = i <= n ? "on" : ""; }); window.scrollTo({ top: 0, behavior: "smooth" }); }
+  function show(id){ if(id !== "stDone") $("twoBox").hidden = true; ["stPhone","stFile","stConfirm","stDone"].forEach(function(x){ $(x).hidden = x !== id; }); var n = { stPhone: 1, stFile: 2, stConfirm: 3, stDone: 3 }[id]; [1,2,3].forEach(function(i){ $("s" + i).className = i <= n ? "on" : ""; }); window.scrollTo({ top: 0, behavior: "smooth" }); }
   function msg(id, t){ $(id).textContent = t || ""; $(id).classList.toggle("show", !!t); }
   function esc(s){ return String(s == null ? "" : s).replace(/[&<>"]/g, function(c){ return { "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;" }[c]; }); }
   function digits(s){ return String(s || "").replace(/[٠-٩]/g, function(d){ return "٠١٢٣٤٥٦٧٨٩".indexOf(d); }); }
@@ -185,7 +192,7 @@
     api("/api/check", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ phone: ph }) }).then(function(r){
       b.disabled = false; b.textContent = "متابعة";
       if(!r.ok) return msg("m1", r.err === "notattended" ? "هذه الخدمة لمن حضر ورشة «مفاتيح التوظيف 2» فقط، ولم نجد حضوراً مسجّلاً لهذا الرقم. إذا حضرت فعلاً تواصل مع الجمعية لتصحيح الحضور." : r.err === "notfound" ? "لم نجد هذا الرقم ضمن حضور ورشة «مفاتيح التوظيف 2». تأكد أنه الرقم نفسه الذي سجّلت به في الورشة."  : "تعذّر التحقق الآن، حاول بعد لحظات.");
-      S.phone = ph; $("hello").innerHTML = "أهلاً <b>" + esc(r.name) + "</b> 👋" + (r.existing ? "<br><small>لديك سيرة محفوظة — رفع ملف جديد يستبدلها.</small>" : "");
+      S.phone = ph; S.slot = 1; $("hello").innerHTML = "أهلاً <b>" + esc(r.name) + "</b> 👋" + (r.existing ? "<br><small>لديك سيرة محفوظة — رفع ملف جديد يستبدل " + ((r.slots || []).length > 1 ? "سيرتك الأولى. لتحديث الثانية افتح رابطها الخاص." : "ها.") + "</small>" : "");
       show("stFile");
     }).catch(function(){ b.disabled = false; b.textContent = "متابعة"; msg("m1", "تعذّر الاتصال، تأكد من الإنترنت وحاول مرة أخرى."); });
   };
@@ -210,12 +217,12 @@
     if(f.size > 5 * 1024 * 1024) return msg("m2", "حجم الملف أكبر من 5 ميجابايت.");
     $("drop").hidden = true; $("busy").classList.add("show");
     readText(f).then(function(text){
-      var fd = new FormData(); fd.append("phone", S.phone); fd.append("file", f, f.name); fd.append("text", text.slice(0, 20000));
+      var fd = new FormData(); fd.append("phone", S.phone); fd.append("file", f, f.name); fd.append("text", text.slice(0, 20000)); fd.append("slot", String(S.slot || 1));
       return fetch(API + "/api/upload", { method: "POST", body: fd }).then(function(r){ return r.json(); });
     }).then(function(r){
       $("busy").classList.remove("show"); $("drop").hidden = false;
       if(!r || !r.ok) return msg("m2", r && r.err === "size" ? "حجم الملف كبير." : r && r.err === "type" ? "صيغة الملف غير مقبولة." : "تعذّر رفع الملف، حاول مرة أخرى.");
-      S.token = r.token; S.profile = r.profile; save(); fillConfirm(); show("stConfirm");
+      S.token = r.token; S.profile = r.profile; S.slot = r.profile.slot || 1; save(); fillConfirm(); show("stConfirm");
     }).catch(function(){ $("busy").classList.remove("show"); $("drop").hidden = false; msg("m2", "تعذّر رفع الملف، تأكد من الاتصال وحاول مرة أخرى."); });
   }
   $("drop").onclick = function(){ $("file").click(); };
@@ -245,15 +252,26 @@
     var b = this; b.disabled = true;
     api("/api/me?t=" + S.token, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ field: $("field").value, titles: titles, city: $("city").value.trim(), consent: true }) }).then(function(r){
       b.disabled = false; if(!r.ok) return msg("m3", "تعذّر الحفظ، حاول مرة أخرى.");
-      S.profile = r.profile; fillDone(); show("stDone");
+      S.profile = r.profile; api("/api/me?t=" + S.token).then(function(r2){ S.other = (r2 && r2.other) || null; fillDone(); }).catch(function(){}); fillDone(); show("stDone");
     }).catch(function(){ b.disabled = false; msg("m3", "تعذّر الاتصال، حاول مرة أخرى."); });
   };
 
   // 4) تم + الإدارة الذاتية
-  function fillDone(){ var p = S.profile || {}; $("dField").textContent = p.fieldName || ""; $("dTitles").textContent = (p.titles || []).join(" · ") + (p.city ? " — " + p.city : ""); $("myLink").value = myUrl(); }
+  function paintTwo(){
+    var p = S.profile || {}, o = S.other, bx = $("twoBox");
+    if(o){ bx.innerHTML = '<div class="tx"><b>' + (o.slot === 2 ? "سيرتك الثانية" : "سيرتك الأولى") + ': ' + esc(o.fieldName || "") + '</b>' + esc((o.titles || []).join(" · ")) + '</div><button type="button" class="gh" id="goOther">عرضها</button>'; }
+    else if((p.slot || 1) === 1){ bx.innerHTML = '<div class="tx"><b>عندك سيرة ثانية بتخصص مختلف؟</b>أضفها وتظهر للمدربين مستقلة بمسمياتها، بجانب سيرتك هذي.</div><button type="button" id="addSecond">➕ أضف سيرة ثانية</button>'; }
+    else { bx.hidden = true; return; }
+    bx.hidden = false;
+  }
+  $("twoBox").onclick = function(e){
+    if(e.target.closest("#addSecond")){ S.phone = S.phone || (S.profile && S.profile.phone) || ""; if(!S.phone){ show("stPhone"); return; } S.slot = 2; $("hello").innerHTML = "سيرتك <b>الثانية</b> — بتخصص مختلف عن الأولى، وتبقى الأولى كما هي ✨"; $("twoBox").hidden = true; show("stFile"); }
+    else if(e.target.closest("#goOther") && S.other){ loadTok(S.other.token); }
+  };
+  function fillDone(){ var p = S.profile || {}; $("dField").innerHTML = (S.other || p.slot === 2 ? '<span class="slotTag">' + (p.slot === 2 ? "السيرة الثانية" : "السيرة الأولى") + '</span><br>' : '') + esc(p.fieldName || ""); paintTwo(); $("dTitles").textContent = (p.titles || []).join(" · ") + (p.city ? " — " + p.city : ""); $("myLink").value = myUrl(); }
   $("copyLink").onclick = function(){ var v = $("myLink").value; (navigator.clipboard ? navigator.clipboard.writeText(v) : Promise.reject()).then(function(){ $("copyLink").textContent = "تم ✓"; setTimeout(function(){ $("copyLink").textContent = "نسخ"; }, 1500); }, function(){ $("myLink").select(); }); };
   $("edit").onclick = function(){ fillConfirm(); show("stConfirm"); };
-  $("reup").onclick = function(){ if(!S.phone){ show("stPhone"); return; } show("stFile"); };
+  $("reup").onclick = function(){ S.phone = S.phone || (S.profile && S.profile.phone) || ""; if(!S.phone){ show("stPhone"); return; } S.slot = (S.profile && S.profile.slot) || 1; $("twoBox").hidden = true; show("stFile"); };
   $("pause").onclick = function(){
     if(!confirm("إخفاء سيرتك عن الخبراء مؤقتاً؟ تقدر ترجّعها بأي وقت من نفس الرابط.")) return;
     var p = S.profile || {};
@@ -273,7 +291,8 @@
 
   // فتح الرابط الخاص (?t=) أو رمز محفوظ على الجهاز
   var t = new URLSearchParams(location.search).get("t"); try{ t = t || localStorage.getItem("zaraCvToken"); }catch(e){}
-  if(t) api("/api/me?t=" + encodeURIComponent(t)).then(function(r){ if(r.ok){ S.token = t; S.profile = r.profile; save(); if(!r.profile.consent){ fillConfirm(); show("stConfirm"); msg("m3", "سيرتك غير ظاهرة للخبراء حالياً: راجع البيانات ثم اضغط «تأكيد وإرسال» لإظهارها."); } else { fillDone(); show("stDone"); } } else { try{ localStorage.removeItem("zaraCvToken"); }catch(e){} } }).catch(function(){});
+  function loadTok(t){ return api("/api/me?t=" + encodeURIComponent(t)).then(function(r){ if(r.ok){ S.token = t; S.profile = r.profile; S.other = r.other || null; S.slot = r.profile.slot || 1; S.phone = S.phone || r.profile.phone || ""; save(); window.scrollTo(0, 0); if(!r.profile.consent){ fillConfirm(); show("stConfirm"); msg("m3", "سيرتك غير ظاهرة للخبراء حالياً: راجع البيانات ثم اضغط «تأكيد وإرسال» لإظهارها."); } else { fillDone(); show("stDone"); } } else { try{ localStorage.removeItem("zaraCvToken"); }catch(e){} } }).catch(function(){}); }
+  if(t) loadTok(t);
 })();
 </script>
 </body>
