@@ -44,8 +44,8 @@ function cors(origin) {
   const o = ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0];
   return { "Access-Control-Allow-Origin": o, "Access-Control-Allow-Methods": "GET, POST, DELETE, OPTIONS", "Access-Control-Allow-Headers": "Content-Type, Authorization", "Vary": "Origin" };
 }
-// تصحيح مفردات معتمدة أينما وردت (المسميات، الملخصات، الوظائف): ضابط عمليات موارد بشرية → أخصائي، دعم فني → دعم تقني
-const fixW = t => String(t).replace(/ضابط(ة?)(\s+)(ال)?عمليات(\s+)(ال)?موارد(\s+)(ال)?بشرية/g, (m, a, s1, b, s2, c, s3, d) => "أخصائي" + a + s1 + (b || "") + "عمليات" + s2 + (c || "") + "موارد" + s3 + (d || "") + "بشرية").replace(/(ال)?دعم(\s+)(ال)?فني/g, (m, a, s1, b) => (a || "") + "دعم" + s1 + (b || "") + "تقني");
+// تصحيح مفردات معتمدة عند العرض فقط (الأصل يبقى): ضابط عمليات موارد بشرية/علاقات عامة → أخصائي، دعم فني → دعم تقني
+const fixW = t => String(t).replace(/ضابط(ة?)(\s+)(ال)?عمليات(\s+)(ال)?موارد(\s+)(ال)?بشرية/g, (m, a, s1, b, s2, c, s3, d) => "أخصائي" + a + s1 + (b || "") + "عمليات" + s2 + (c || "") + "موارد" + s3 + (d || "") + "بشرية").replace(/ضابط(ة?)(\s+)(ال)?علاقات(\s+)(ال)?عامة/g, (m, a, s1, b, s2, c) => "أخصائي" + a + s1 + (b || "") + "علاقات" + s2 + (c || "") + "عامة").replace(/(ال)?دعم(\s+)(ال)?فني/g, (m, a, s1, b) => (a || "") + "دعم" + s1 + (b || "") + "تقني");
 const json = (o, s, h) => new Response(fixW(JSON.stringify(o)), { status: s || 200, headers: Object.assign({ "Content-Type": "application/json; charset=utf-8" }, h) });
 const tok = n => { const a = new Uint8Array(n || 18); crypto.getRandomValues(a); return Array.from(a, b => "abcdefghijkmnpqrstuvwxyz23456789"[b % 32]).join(""); };
 const now = () => Date.now();
