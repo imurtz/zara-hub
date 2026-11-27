@@ -2586,6 +2586,7 @@ body.rs-kiosk .nav-groups{display:none !important;}
 @media(max-width:700px){#cvRoot .cv-ed{grid-template-columns:1fr}}
 #cvRoot .cv-sel{border:1px solid #dfe5e4;border-radius:10px;padding:5px 8px;font:inherit;font-size:13px;background:#fff}
 #cvRoot .cv-kpis b{display:block;font-size:24px;color:#4b7071}
+#cvRoot .cv-sel{border:1px solid #e4e9e8;border-radius:12px;padding:8px 12px;font:inherit;font-size:13.5px;background:#fff;max-width:100%}
 #cvRoot .cv-kpis span{display:block;font-size:13px;font-weight:600;color:#3f4b49}
 #cvRoot .cv-tabs,#cvRoot .cv-chips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
 #cvRoot .cv-tabs button,#cvRoot .cv-chips button{font:inherit;font-size:13.5px;font-weight:600;border:1px solid rgba(20,28,27,.12);background:#fff;color:#4b5a58;border-radius:20px;padding:6px 14px;cursor:pointer}
@@ -4406,23 +4407,42 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
       '<button type="button" data-cv="tab" data-v="seekers"><b>' + (act.length - ok.length) + '</b><span>بانتظار تأكيد صاحبها</span><small>رفعها وما ضغط «تأكيد» — مخفية عن المدربين</small></button>' +
       '<button type="button" data-cv="tab" data-v="reqs"><b>' + d.requests.length + '</b><span>سيرة فتحها مدرب</span><small>كل مرة يضغط مدرب «اعرض السيرة» لمرشح</small></button>' +
       '<button type="button" data-cv="tab" data-v="hires"><b>' + hiredN + '</b><span>توظيف</span><small>أبلغ المرشح أو أكّده المدرب أو سجّلته أنت</small></button></div>';
-    h += '<div class="cv-tabs"><button type="button" data-cv="tab" data-v="seekers" class="' + (cvUI.tab === "seekers" ? "on" : "") + '">الباحثون (' + act.length + ')</button><button type="button" data-cv="tab" data-v="hires" class="' + (cvUI.tab === "hires" ? "on" : "") + '">التوظيف (' + hiredN + ')' + (newHires ? ' <i class="cv-new">' + newHires + ' جديد</i>' : '') + '</button><button type="button" data-cv="tab" data-v="reqs" class="' + (cvUI.tab === "reqs" ? "on" : "") + '">من وصلته فرصة (' + d.requests.length + ')</button><button type="button" data-cv="tab" data-v="experts" class="' + (cvUI.tab === "experts" ? "on" : "") + '">المدربون (' + d.experts.filter(function(x){ return !x.gone; }).length + ')</button><button type="button" data-cv="tab" data-v="vacs" class="' + (cvUI.tab === "vacs" ? "on" : "") + '">الوظائف المعلنة (' + (d.vacs || []).filter(function(v){ return v.status === "open"; }).length + ')' + ((d.apps || []).length ? ' · ' + d.apps.length + ' تقديم' : '') + '</button><button type="button" data-cv="tab" data-v="jobs" class="' + (cvUI.tab === "jobs" ? "on" : "") + '">الوظائف المطلوبة (' + (d.jobs || []).filter(function(j){ return j.status === "open"; }).length + ')</button></div>';
+    h += '<div class="cv-tabs"><button type="button" data-cv="tab" data-v="seekers" class="' + (cvUI.tab === "seekers" ? "on" : "") + '">الباحثون (' + act.length + ')</button><button type="button" data-cv="tab" data-v="hires" class="' + (cvUI.tab === "hires" ? "on" : "") + '">التوظيف (' + hiredN + ')' + (newHires ? ' <i class="cv-new">' + newHires + ' جديد</i>' : '') + '</button><button type="button" data-cv="tab" data-v="reqs" class="' + (cvUI.tab === "reqs" ? "on" : "") + '">من وصلته فرصة (' + d.requests.length + ')</button><button type="button" data-cv="tab" data-v="experts" class="' + (cvUI.tab === "experts" ? "on" : "") + '">المدربون (' + d.experts.filter(function(x){ return !x.gone; }).length + ')</button><button type="button" data-cv="tab" data-v="vacs" class="' + (cvUI.tab === "vacs" ? "on" : "") + '">التقديمات على الوظائف (' + (d.apps || []).length + ')' + ((d.apps || []).filter(function(a){ return !a.seen; }).length ? ' <i class="cv-new">' + d.apps.filter(function(a){ return !a.seen; }).length + ' لم يطّلع عليها المدرب</i>' : '') + '</button><button type="button" data-cv="tab" data-v="jobs" class="' + (cvUI.tab === "jobs" ? "on" : "") + '">الوظائف المطلوبة (' + (d.jobs || []).filter(function(j){ return j.status === "open"; }).length + ')</button></div>';
     if(cvUI.tab === "jobs"){
       var jobs = d.jobs || [];
       h += '<div class="cv-card cv-muted" style="font-size:13px">وظائف أضافها الخبراء من صفحتهم لما ما لقوا المسمى اللي يبونه. «مطابق» = عدد السير الجاهزة اللي مسمّاها قريب من الوظيفة.</div>';
       h += jobs.length ? '<div class="cv-card"><table class="cv-t"><thead><tr><th>التاريخ</th><th>الوظيفة</th><th>ملاحظة</th><th>الخبير</th><th>مطابق</th><th>الحالة</th><th></th></tr></thead><tbody>' + jobs.map(function(j){ return '<tr' + (j.status === "open" ? '' : ' style="opacity:.5"') + '><td>' + cvDate(j.created) + '</td><td><b>' + e(j.title) + '</b></td><td>' + e(j.note || "") + '</td><td>' + e(j.expert || "") + '</td><td>' + (j.n || 0) + '</td><td>' + ('<button type="button" class="cv-btn ghost" data-cv="jstat" data-v="' + e(j.id) + '" data-s="' + (j.status === "open" ? "closed" : "open") + '">' + (j.status === "open" ? "مفتوحة — إغلاق" : "مغلقة — إعادة فتح") + '</button>') + '</td><td><button type="button" class="cv-btn ghost cv-del" data-cv="rowdel" data-t="job" data-v="' + e(j.id) + '">حذف</button></td></tr>'; }).join("") + '</tbody></table></div>' : '<div class="cv-card cv-muted">ما أضاف أي خبير وظيفة بعد.</div>';
       root.innerHTML = h; return;
     }
-    if(cvUI.tab === "vacs"){ // وظائف أعلنها المدربون للتقديم المباشر + من قدّم وحالته
+    if(cvUI.tab === "vacs"){ // التقديمات على وظائف المدربين — للمتابعة والتواصل لو المدرب غير متاح
       var VST = { "new": "لم يُراجع", fit: "مناسب", interview: "مقابلة", no: "غير مناسب", hired: "توظّف ✓" };
-      var xName = {}; (d.experts || []).forEach(function(x){ xName[x.id] = x.name; });
-      h += '<div class="cv-card cv-muted" style="font-size:13px">وظائف يعلنها المدربون من صفحتهم، وتظهر للمتدربين في gzara.org/cv فيقدّمون عليها برقم الجوال. المدرب يتابع المتقدمين ويحدّث حالتهم من صفحته، وتشوف هنا كل شي.</div>';
-      var vs = d.vacs || [];
-      h += vs.length ? vs.map(function(v){
-        var ap = (d.apps || []).filter(function(a){ return a.vacancy_id === v.id; }), c = {}; ap.forEach(function(a){ c[a.status] = (c[a.status] || 0) + 1; });
-        return '<div class="cv-card"' + (v.status === "open" ? '' : ' style="opacity:.6"') + '><div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap"><div><b style="font-size:16px">' + e(v.title) + '</b>' + (v.title_en ? ' <span class="cv-muted" dir="ltr" style="font-size:12px">' + e(v.title_en) + '</span>' : '') + '<div class="cv-x-s">' + [e(v.company || ""), e(v.city || ""), 'المدرب: ' + e(v.expert || xName[v.expert_id] || "—"), cvDate(v.created), v.status === "open" ? "مفتوحة" : "مغلقة"].filter(Boolean).join(" · ") + '</div></div><div style="text-align:center"><b style="font-size:22px;color:#4b7071">' + ap.length + '</b><div class="cv-x-s">متقدم</div></div></div>' +
-          (ap.length ? '<div class="cv-x-s" style="margin-top:6px">' + Object.keys(VST).filter(function(k){ return c[k]; }).map(function(k){ return VST[k] + ': <b>' + c[k] + '</b>'; }).join(" · ") + '</div><table class="cv-t" style="margin-top:8px"><thead><tr><th>المتقدم</th><th>الجوال</th><th>تاريخ التقديم</th><th>الحالة</th><th></th></tr></thead><tbody>' + ap.map(function(a){ return '<tr><td><b>' + e(a.name || "—") + '</b></td><td dir="ltr">' + e(a.phone || "") + '</td><td>' + cvDate(a.created) + '</td><td>' + (VST[a.status] || a.status) + '</td><td>' + (a.sid && a.sst === "active" ? '<button type="button" class="cv-btn ghost" data-cv="view" data-v="' + e(a.sid) + '">استعراض السيرة</button>' : '') + '</td></tr>'; }).join("") + '</tbody></table>' : '<div class="cv-x-s" style="margin-top:6px">ما فيه متقدمين للحين.</div>') + '</div>';
-      }).join("") : '<div class="cv-card cv-muted">ما أعلن أي مدرب وظيفة بعد.</div>';
+      var XP = {}; (d.experts || []).forEach(function(x){ XP[x.id] = x; });
+      var vById = {}; (d.vacs || []).forEach(function(v){ vById[v.id] = v; });
+      var ap = d.apps || [], unseen = ap.filter(function(a){ return !a.seen; }), wa = function(ph){ return "966" + String(ph || "").replace(/\D/g, "").replace(/^966/, "").replace(/^0/, ""); };
+      var cnt = {}; ap.forEach(function(a){ cnt[a.status] = (cnt[a.status] || 0) + 1; });
+      h += '<div class="cv-kpis"><button type="button" data-cv="vf" data-v=""><b>' + ap.length + '</b><span>تقديم على وظائف المدربين</span><small>على ' + (d.vacs || []).length + ' وظيفة</small></button>' +
+        '<button type="button" data-cv="vf" data-v="unseen"><b>' + unseen.length + '</b><span>لم يطّلع عليها المدرب</span><small>نبّهه بالواتساب من زر «إشعار المدرب»</small></button>' +
+        '<button type="button" data-cv="vf" data-v="new"><b>' + (cnt["new"] || 0) + '</b><span>لم يُراجع بعد</span><small>ما حدّد المدرب حالته</small></button>' +
+        '<button type="button" data-cv="vf" data-v="active"><b>' + ((cnt.fit || 0) + (cnt.interview || 0)) + '</b><span>مناسب / مقابلة</span><small>' + (cnt.hired ? cnt.hired + ' توظّف ✓' : 'تحت المتابعة') + '</small></button></div>';
+      // حسب المدرب: إشعار بالواتساب بالطلبات اللي ما اطّلع عليها
+      var byX = {}; ap.forEach(function(a){ var v = vById[a.vacancy_id]; if(v){ (byX[v.expert_id] = byX[v.expert_id] || []).push(a); } });
+      var xs = Object.keys(byX);
+      if(xs.length) h += '<div class="cv-card"><b>المدربون اللي عندهم طلبات</b><div class="cv-xl" style="margin-top:8px">' + xs.map(function(xid){
+        var x = XP[xid] || {}, list = byX[xid], nn = list.filter(function(a){ return !a.seen; }).length;
+        return '<div class="cv-x"><div class="cv-x-m"><b>' + e(x.name || "—") + '</b><div class="cv-x-s">' + (x.phone ? '<span dir="ltr">' + e(x.phone) + '</span> · ' : '') + list.length + ' طلب' + (nn ? ' · <b style="color:#b3453f">' + nn + ' ما اطّلع عليها</b>' : ' · اطّلع على الكل') + (x.last_seen ? ' · آخر دخول ' + cvDate(x.last_seen) : ' · ما دخل لوحته بعد') + '</div></div><div class="cv-x-a">' + (x.phone ? '<button type="button" class="cv-btn cv-wa" data-cv="notifyx" data-v="' + e(xid) + '">📲 إشعار المدرب</button>' : '<span class="cv-pend">لا يوجد جوال</span>') + '</div></div>';
+      }).join("") + '</div></div>';
+      // القائمة: كل تقديم بتفاصيله
+      var f = cvUI.vf || "", vsel = cvUI.vv || "";
+      var rows = ap.filter(function(a){ return (!vsel || a.vacancy_id === vsel) && (!f || (f === "unseen" ? !a.seen : f === "active" ? (a.status === "fit" || a.status === "interview") : a.status === f)); });
+      h += '<div class="cv-card"><div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:10px"><b style="flex:1">الطلبات' + (f || vsel ? ' (' + rows.length + ' من ' + ap.length + ')' : '') + '</b><select data-cv="vv" class="cv-sel"><option value="">كل الوظائف</option>' + (d.vacs || []).map(function(v){ return '<option value="' + e(v.id) + '"' + (vsel === v.id ? ' selected' : '') + '>' + e(v.title) + (v.city ? ' — ' + e(v.city) : '') + '</option>'; }).join("") + '</select>' + (f ? '<button type="button" class="cv-btn ghost" data-cv="vf" data-v="">إلغاء الفلتر</button>' : '') + '</div>' +
+        (rows.length ? '<div class="cv-xl">' + rows.map(function(a){
+          var v = vById[a.vacancy_id] || {}, x = XP[v.expert_id] || {}, ts = []; try{ ts = JSON.parse(a.titles || "[]"); }catch(er){}
+          return '<div class="cv-x"><div class="cv-x-m"><b>' + e(a.name || "—") + '</b> <span class="cv-pend">' + (VST[a.status] || a.status) + '</span>' + (!a.seen ? ' <i class="cv-new">لم يطّلع المدرب</i>' : '') +
+            '<div class="cv-x-s">📌 <b>' + e(v.title || "—") + '</b>' + (v.company ? ' · ' + e(v.company) : '') + (v.city ? ' · ' + e(v.city) : '') + ' · المدرب: ' + e(x.name || "—") + '</div>' +
+            '<div class="cv-x-s">' + [ts.join("، "), a.years != null ? a.years + " سنوات خبرة" : "", a.degree, a.city ? "من " + a.city : ""].filter(Boolean).map(e).join(" · ") + '</div>' +
+            '<div class="cv-x-s">قدّم ' + cvDate(a.created) + (a.updated ? ' · آخر تحديث من المدرب ' + cvDate(a.updated) : '') + (a.note ? ' · ملاحظة المدرب: ' + e(a.note) : '') + '</div></div>' +
+            '<div class="cv-x-a">' + (a.phone ? '<a class="cv-btn ghost" href="tel:' + e(a.phone) + '" dir="ltr">' + e(a.phone) + '</a><a class="cv-btn cv-wa" target="_blank" rel="noopener" href="https://api.whatsapp.com/send?phone=' + wa(a.phone) + '">واتساب</a>' : '') + (a.sid && a.sst === "active" ? '<button type="button" class="cv-btn ghost" data-cv="view" data-v="' + e(a.sid) + '">السيرة</button>' : '<span class="cv-pend">سحب سيرته</span>') + '</div></div>';
+        }).join("") + '</div>' : '<div class="cv-muted">' + (ap.length ? 'لا توجد طلبات بهذا الفلتر.' : 'ما قدّم أحد على وظائف المدربين للحين.') + '</div>') + '</div>';
       root.innerHTML = h; return;
     }
     if(cvUI.tab === "experts"){
@@ -4475,7 +4495,7 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
     cvFetch("/api/admin/edit", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ t: "req", id: sl.getAttribute("data-v"), outcome: sl.value }) }).then(function(r){ return r.json(); }).then(function(d2){ showToast(d2 && d2.ok ? "تم التحديث" : "تعذّر التحديث"); cvLoad(); });
   });
   document.addEventListener("click", function(ev){
-    var b = ev.target.closest && ev.target.closest("#cvRoot [data-cv]"); if(!b) return;
+    var b = ev.target.closest && ev.target.closest("#cvRoot [data-cv]"); if(!b || b.tagName === "SELECT") return;
     var a = b.getAttribute("data-cv"), v = b.getAttribute("data-v");
     if(a === "retry"){ cvUI.err = ""; cvLoad(); return; }
     if(a === "setkey"){ var k = (document.getElementById("cvKeyIn") || {}).value || ""; if(!k.trim()) return; try{ localStorage.setItem("zaraCvAdminKey", k.trim()); }catch(e){} cvUI.err = ""; cvLoad(); }
@@ -4526,6 +4546,15 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
         copyToClipboard(d2.code); showToast("الرمز " + d2.code + " — نُسخ");
         cvLoad();
       }).catch(function(){ showToast("تعذّر الاتصال بالخدمة"); cvRender(); });
+    }
+    else if(a === "vf"){ cvUI.vf = v; cvRender(); }
+    else if(a === "notifyx"){ // رسالة واتساب جاهزة للمدرب بالطلبات اللي ما اطّلع عليها
+      var dd = cvUI.data || {}, xx = (dd.experts || []).find(function(z){ return z.id === v; }) || {}, myV = (dd.vacs || []).filter(function(z){ return z.expert_id === v; });
+      var lines = myV.map(function(z){ var all = (dd.apps || []).filter(function(q){ return q.vacancy_id === z.id; }), nn = all.filter(function(q){ return !q.seen; }).length; return all.length ? "▫️ " + z.title + (z.city ? " (" + z.city + ")" : "") + ": " + all.length + " متقدم" + (nn ? " — " + nn + " جديد" : "") : ""; }).filter(Boolean);
+      var tot = (dd.apps || []).filter(function(q){ return myV.some(function(z){ return z.id === q.vacancy_id; }) && !q.seen; }).length;
+      var fem = /^(f|أنثى|انثى)/i.test(xx.gender || ""), first = String(xx.name || "").split(" ")[0];
+      var msg2 = "حيّا" + (fem ? "كِ" : "ك") + " الله " + (fem ? "أ. " : "أ. ") + first + " 🌷\n" + (tot ? "وصل" + (fem ? "تكِ" : "تك") + " *" + tot + " " + (tot === 1 ? "طلب جديد" : tot === 2 ? "طلبين جديدين" : "طلبات جديدة") + "* على وظائف" + (fem ? "كِ" : "ك") + " المعلنة في *«مفاتيح الفرص»*:" : "تذكير بالطلبات على وظائف" + (fem ? "كِ" : "ك") + " المعلنة في *«مفاتيح الفرص»*:") + "\n\n" + lines.join("\n") + "\n\nتقدر" + (fem ? "ين" : "") + " " + (fem ? "تطّلعين" : "تطّلع") + " على المتقدمين وسيرهم وتحدّد حالتهم من لوحت" + (fem ? "كِ" : "ك") + ":\n🔗 https://gzara.org/hr/\n\nشكراً لتعاون" + (fem ? "كِ" : "ك") + " 💚\n*جمعية العوامية الخيرية*";
+      window.open(waLink(xx.phone, msg2), "_blank");
     }
     else if(a === "codecp"){ var c1 = cvUI.codes[v]; if(c1){ copyToClipboard(c1.code); showToast("نُسخ الرمز " + c1.code); } }
     else if(a === "codewa" || a === "codemsg"){
@@ -4682,6 +4711,7 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
     if(a === "days"){ stUI.days = +b.getAttribute("data-v"); stUI.full = null; stRender(); stLoadFull(); }
     if(a === "pg"){ stUI.page = b.getAttribute("data-v"); stLoadFull(); }
   });
+  document.addEventListener("change", function(ev){ var sv = ev.target.closest && ev.target.closest('#cvRoot select[data-cv="vv"]'); if(sv){ cvUI.vv = sv.value; cvRender(); } });
   document.addEventListener("change", function(ev){ var s = ev.target.closest && ev.target.closest('#stRoot select[data-st="page"]'); if(s){ stUI.page = s.value; stLoadFull(); } });
 
   // ===== شريط الأقسام المجمَّع: مجموعات بدل صف طويل — قائمة منسدلة على الشاشات الكبيرة وورقة سفلية على الجوال =====
