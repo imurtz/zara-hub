@@ -10315,7 +10315,7 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
   var FOOTER_CREDIT_DEFAULT = "صُنع بحب من قبل جمعية العوامية الخيرية";
   var PHOTO_PAN_PROMPT_DEFAULT = "مو راضين عن موضع صورتكم داخل التصميم؟ عدّلوها بأنفسكم:";
   function loadPublicFormConfig(){
-    var cfg = { footerMessage: "", footerCredit: FOOTER_CREDIT_DEFAULT, photoPanPrompt: PHOTO_PAN_PROMPT_DEFAULT, defaultFemalePhotos: {}, showDesignPreview: true, showPolicy: true, aiAssist: true, giveLinks: {}, banner: { enabled: BANNER_DEFAULTS.enabled, intervalSeconds: BANNER_DEFAULTS.intervalSeconds, slides: BANNER_DEFAULTS.slides.map(copyBannerSlide) } };
+    var cfg = { footerMessage: "", footerCredit: FOOTER_CREDIT_DEFAULT, photoPanPrompt: PHOTO_PAN_PROMPT_DEFAULT, defaultFemalePhotos: {}, showDesignPreview: true, showPolicy: true, aiAssist: true, giveLinks: {}, igPosts: [], banner: { enabled: BANNER_DEFAULTS.enabled, intervalSeconds: BANNER_DEFAULTS.intervalSeconds, slides: BANNER_DEFAULTS.slides.map(copyBannerSlide) } };
     EVENTS_CATEGORIES.forEach(function(c){ cfg[c.key] = { hidden: [], hints: {}, labels: {}, custom: [] }; });
     var p = _publicFormConfigCache;
     if(p){
@@ -10330,6 +10330,8 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
       if(typeof p.aiAssist === "boolean") cfg.aiAssist = p.aiAssist;
       // روابط «تبرّع الآن» حسب نوع المناسبة — الفارغ منها يستخدم صفحة مشاريع الجمعية العامة
       if(p.giveLinks && typeof p.giveLinks === "object") cfg.giveLinks = p.giveLinks;
+      // منشورات الانستقرام للسلايد تحت فيديو الصفحة الرئيسية (الأحدث أولاً، 10 كحد أقصى)
+      if(Array.isArray(p.igPosts)) cfg.igPosts = p.igPosts;
       if(p.banner){
         if(typeof p.banner.enabled === "boolean") cfg.banner.enabled = p.banner.enabled;
         if(typeof p.banner.intervalSeconds === "number" && p.banner.intervalSeconds >= 2) cfg.banner.intervalSeconds = p.banner.intervalSeconds;
@@ -14699,6 +14701,11 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
       '<p class="hint" style="margin:6px 0 0;">أزل العلامة ليختفي الصندوق ويكتب الزائر تفاصيل التهنئة بنفسه فقط.</p>' +
     '</div>';
     html += '<div style="margin-bottom:18px; padding-bottom:16px; border-bottom:1px solid var(--line);">' +
+      '<label style="display:block; font-size:13px; font-weight:700; color:var(--teal-dark); margin-bottom:4px;">سلايد المناسبات من الانستقرام (الصفحة الرئيسية)</label>' +
+      '<p class="hint" style="margin:0 0 10px;">الصق رابط كل منشور في سطر، والأحدث فوق. يظهر أول 10 تحت الفيديو في الصفحة الرئيسية، وإذا فضّيت الخانة يختفي السلايد.</p>' +
+      '<textarea data-action="public-cfg-ig" dir="ltr" rows="6" placeholder="https://www.instagram.com/p/XXXXXXXX/" style="width:100%; box-sizing:border-box; border:1.5px solid var(--line); border-radius:8px; padding:8px 10px; font-size:12.5px; text-align:left; font-family:inherit;">' + escapeHTML((cfg.igPosts || []).map(function(c){ return "https://www.instagram.com/p/" + c + "/"; }).join("\n")) + '</textarea>' +
+    '</div>';
+    html += '<div style="margin-bottom:18px; padding-bottom:16px; border-bottom:1px solid var(--line);">' +
       '<label style="display:block; font-size:13px; font-weight:700; color:var(--teal-dark); margin-bottom:4px;">روابط التبرع باسم المناسبة</label>' +
       '<p class="hint" style="margin:0 0 10px;">رابط زر «تبرّع الآن» الذي يظهر للمسجِّل بعد الإرسال وفي صفحة متابعة الطلب. اترك الخانة فارغة لاستخدام صفحة مشاريع الجمعية العامة.</p>' +
       EVENTS_CATEGORIES.map(function(c){
@@ -16096,6 +16103,13 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
       var pCfg3c = loadPublicFormConfig();
       pCfg3c.photoPanPrompt = e.target.value;
       savePublicFormConfig(pCfg3c);
+    } else if(e.target.matches('[data-action="public-cfg-ig"]')){
+      var igCodes = [];
+      e.target.value.split(/[\s,]+/).forEach(function(l){ var m = l.match(/instagram\.com\/(?:[A-Za-z0-9_.]+\/)?(?:p|reel|reels|tv)\/([A-Za-z0-9_-]+)/); if(m && igCodes.indexOf(m[1]) < 0) igCodes.push(m[1]); });
+      var pCfgI = loadPublicFormConfig();
+      pCfgI.igPosts = igCodes.slice(0, 10);
+      savePublicFormConfig(pCfgI);
+      showToast(igCodes.length ? "حُفظ السلايد — " + Math.min(igCodes.length, 10) + " منشور" + (igCodes.length > 10 ? " (أول 10 فقط)" : "") : "أُزيل السلايد من الصفحة الرئيسية");
     } else if(e.target.matches('[data-action="public-cfg-give"]')){
       var gUrl = e.target.value.trim();
       if(gUrl && !/^https:\/\/[^\s"'<>]+$/i.test(gUrl)){ showToast("الرابط يجب أن يبدأ بـ https://"); return; }

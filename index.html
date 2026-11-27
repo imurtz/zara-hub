@@ -80,6 +80,21 @@
   .film-sound.on .film-wave{display:inline; animation:filmPulse 1.6s ease-in-out infinite;}
   .film-sound.on .film-mute{display:none;}
   @keyframes filmPulse{0%,100%{opacity:1;} 50%{opacity:.45;}}
+  /* ===== سلايد آخر المناسبات من الانستقرام (تحت الفيديو) ===== */
+  .ig{margin-top:34px;}
+  .ig[hidden]{display:none;}
+  .ig-head{display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:14px;}
+  .ig-head h2{font-size:clamp(20px, 2.4vw, 26px); font-weight:300;}
+  .ig-head h2 strong{font-weight:700;}
+  .ig-nav{display:flex; gap:8px;}
+  .ig-nav button{width:40px; height:40px; border-radius:50%; border:1px solid var(--hair); background:rgba(255,255,255,.85); color:var(--ink); cursor:pointer; display:flex; align-items:center; justify-content:center; box-shadow:var(--shadow-sm); transition:transform .3s var(--ease), background .3s ease;}
+  .ig-nav button:hover{background:#fff; transform:translateY(-2px);}
+  .ig-nav svg{width:18px; height:18px;}
+  .ig-track{display:flex; gap:16px; overflow-x:auto; scroll-snap-type:x mandatory; scroll-behavior:smooth; padding:4px 2px 14px; scrollbar-width:none;}
+  .ig-track::-webkit-scrollbar{display:none;}
+  .ig-card{flex:none; width:min(326px, 80vw); scroll-snap-align:start; border-radius:22px; overflow:hidden; background:#fff; border:1px solid var(--hair); box-shadow:var(--shadow-md);}
+  .ig-card iframe{display:block; width:100%; height:470px; border:0; background:#fff;}
+  .ig-more{display:inline-flex; margin-top:6px; font-size:13.5px; font-weight:500; color:var(--teal-deep); text-decoration:none;}
   .hero{display:grid; grid-template-columns:minmax(0, 1.02fr) minmax(0, .98fr); gap:56px; align-items:center; padding:74px 0 84px;}
   .kicker{display:inline-flex; align-items:center; gap:9px; font-size:13px; font-weight:500; color:var(--teal-deep); background:rgba(255,255,255,.8); border:1px solid var(--hair); border-radius:999px; padding:7px 14px 7px 16px; margin-bottom:24px; box-shadow:var(--shadow-sm);}
   .kicker i{width:7px; height:7px; border-radius:50%; background:var(--tan); box-shadow:0 0 0 4px rgba(184,141,102,.2);}
@@ -285,6 +300,38 @@
       <span>تشغيل الصوت</span>
     </button>
   </div>
+  <section class="ig" id="igSlide" hidden aria-label="آخر المناسبات الاجتماعية">
+    <div class="ig-head">
+      <h2>آخر <strong>المناسبات الاجتماعية</strong></h2>
+      <div class="ig-nav">
+        <button type="button" data-ig="1" aria-label="السابق"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></button>
+        <button type="button" data-ig="-1" aria-label="التالي"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"/></svg></button>
+      </div>
+    </div>
+    <div class="ig-track" id="igTrack"></div>
+  </section>
+  <script>
+  // منشورات الانستقرام: يختارها المؤسس من بوابة الموظفين (إعدادات المناسبات) — الأحدث أولاً، 10 كحد أقصى
+  (function(){
+    var box = document.getElementById("igSlide"), tr = document.getElementById("igTrack");
+    if(!window.fetch) return;
+    fetch("https://firestore.googleapis.com/v1/projects/awamia-zara/databases/(default)/documents/eventsMeta/publicFormConfig?mask.fieldPaths=igPosts&key=AIzaSyBPos-QSrnK_x5HS742FJkNJVhXwGdq8j8")
+      .then(function(r){ return r.json(); }).then(function(d){
+        var v = (((d.fields || {}).igPosts || {}).arrayValue || {}).values || [];
+        var codes = v.map(function(x){ return x.stringValue || ""; }).filter(function(c){ return /^[A-Za-z0-9_-]{5,40}$/.test(c); }).slice(0, 10);
+        if(!codes.length) return;
+        tr.innerHTML = codes.map(function(c){
+          return '<div class="ig-card"><iframe src="https://www.instagram.com/p/' + c + '/embed/" loading="lazy" scrolling="no" allowtransparency="true" title="منشور انستقرام"></iframe></div>';
+        }).join("");
+        box.hidden = false;
+      }).catch(function(){});
+    box.addEventListener("click", function(e){
+      var b = e.target.closest("[data-ig]"); if(!b) return;
+      var card = tr.querySelector(".ig-card"), w = card ? card.offsetWidth + 16 : 340;
+      tr.scrollBy({ left: Number(b.getAttribute("data-ig")) * w, behavior: "smooth" });
+    });
+  })();
+  </script>
   <section class="hero">
     <div>
       <p class="kicker"><i></i>المنصة الرقمية لجمعية العوامية الخيرية</p>
