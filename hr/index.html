@@ -511,17 +511,26 @@
         : '<div class="vempty">عندك وظيفة شاغرة؟ أعلنها هنا وتظهر للمتدربين في صفحة رفع السيرة، يقدّمون عليها بضغطة، وتتابع كل الطلبات من هالمكان.</div>') + '</div>';
   }
   $("vacBox").onclick = function(e){
-    if(e.target.closest("#vNew")){ ["vfT","vfC","vfCity","vfI","vfD","vfQ","vfE"].forEach(function(k){ $(k).value = ""; }); msg("mVac"); $("vacSheet").hidden = false; setTimeout(function(){ $("vfT").focus(); }, 100); return; }
+    if(e.target.closest("#vNew")){ vacForm(null); return; }
     var r = e.target.closest("[data-vac]"); if(r) openApps(r.getAttribute("data-vac"));
   };
+  var EDITV = null;
+  function vacForm(v){ // v = وظيفة للتعديل، أو null لوظيفة جديدة
+    EDITV = v;
+    $("vsH").textContent = v ? "✏️ تعديل الوظيفة" : "📢 أعلن وظيفة للتقديم"; $("vfSave").textContent = v ? "حفظ التعديل" : "نشر الوظيفة";
+    $("vfT").value = v ? v.title || "" : ""; $("vfC").value = v ? v.company || "" : ""; $("vfCity").value = v ? v.city || "" : ""; $("vfI").value = v ? v.intro || "" : "";
+    $("vfD").value = v ? (v.duties || []).join("\n") : ""; $("vfQ").value = v ? (v.quals || []).join("\n") : ""; $("vfE").value = v ? v.exp || "" : "";
+    msg("mVac"); $("vacSheet").hidden = false; setTimeout(function(){ $("vfT").focus(); }, 100);
+  }
   $("vfCancel").onclick = function(){ $("vacSheet").hidden = true; };
   $("vacSheet").onclick = function(e){ if(e.target === this) this.hidden = true; };
   $("vfSave").onclick = function(){
     var t = $("vfT").value.trim(); if(!t) return msg("mVac", "اكتب المسمى الوظيفي.");
     var b = this; b.disabled = true;
-    api("/api/hr/vacs", { title: t, company: $("vfC").value.trim(), city: $("vfCity").value.trim(), intro: $("vfI").value.trim(), duties: $("vfD").value, quals: $("vfQ").value, exp: $("vfE").value.trim() }).then(function(d){
+    api("/api/hr/vacs", { id: EDITV ? EDITV.id : "", title_en: EDITV ? EDITV.title_en || "" : "", tags: EDITV ? EDITV.tags || [] : [], title: t, company: $("vfC").value.trim(), city: $("vfCity").value.trim(), intro: $("vfI").value.trim(), duties: $("vfD").value, quals: $("vfQ").value, exp: $("vfE").value.trim() }).then(function(d){
       b.disabled = false; if(!d || !d.ok) return msg("mVac", "تعذّر النشر، حاول مرة أخرى.");
-      $("vacSheet").hidden = true; window.zt && zt("إعلان وظيفة", t); loadVacs();
+      $("vacSheet").hidden = true; window.zt && zt(EDITV ? "تعديل وظيفة" : "إعلان وظيفة", t);
+      if(EDITV){ var id = EDITV.id; EDITV = null; openApps(id); alert("✓ تم حفظ التعديل — يظهر للمتدربين فوراً"); } else loadVacs();
     }).catch(function(){ b.disabled = false; msg("mVac", "تعذّر الاتصال."); });
   };
   function openApps(id){
@@ -535,7 +544,7 @@
     var v = APPV, cnt = {}; APPS.forEach(function(a){ cnt[a.status] = (cnt[a.status] || 0) + 1; });
     $("appsH").innerHTML = "<b>" + esc(v.title) + "</b>";
     $("appsSub").innerHTML = esc([v.company, v.city].filter(Boolean).join(" · ")) + " — <b>" + APPS.length + "</b> متقدم" + (v.status === "open" ? "" : " · <b style='color:var(--danger)'>الوظيفة مغلقة</b>") +
-      '<div class="vtools"><button type="button" id="vToggle">' + (v.status === "open" ? "🔒 إغلاق التقديم" : "🔓 إعادة فتح التقديم") + '</button></div>';
+      '<div class="vtools"><button type="button" id="vEdit">✏️ تعديل الوظيفة</button>' + (APPS.length ? '<button type="button" id="vCsv">📥 تصدير المتقدمين (Excel)</button>' : '') + '<button type="button" id="vToggle">' + (v.status === "open" ? "🔒 إغلاق التقديم" : "🔓 إعادة فتح التقديم") + '</button></div>';
     $("appsF").innerHTML = APPS.length ? '<div class="stf"><button type="button" data-af=""' + (!AFLT ? ' class="on"' : '') + '>الكل (' + APPS.length + ')</button>' + Object.keys(STL).filter(function(k){ return cnt[k]; }).map(function(k){ return '<button type="button" data-af="' + k + '"' + (AFLT === k ? ' class="on"' : '') + '>' + STL[k] + ' (' + cnt[k] + ')</button>'; }).join("") + '</div>' : '';
     var rows = APPS.filter(function(a){ return !AFLT || a.status === AFLT; });
     $("apps").innerHTML = rows.length ? rows.map(function(a){
@@ -550,6 +559,13 @@
   $("backA").onclick = function(){ loadHome(); };
   $("vApps").onclick = function(e){
     var f = e.target.closest("[data-af]"); if(f){ AFLT = f.getAttribute("data-af"); paintApps(); return; }
+    if(e.target.closest("#vEdit")){ vacForm(APPV); return; }
+    if(e.target.closest("#vCsv")){ // ملف يفتح في Excel: لترسل قائمة المتقدمين للجهة
+      var q = function(x){ return '"' + String(x == null ? "" : x).replace(/"/g, '""') + '"'; };
+      var rows = [["الاسم", "الجوال", "المسميات", "المجال", "سنوات الخبرة", "المؤهل", "المدينة", "الحالة", "تاريخ التقديم"]].concat(APPS.map(function(a){ return [a.name, a.phone, (a.titles || []).join(" / "), a.fieldName, a.years, a.degree, a.city, STL[a.status], new Date(a.created).toLocaleDateString("en-GB")]; }));
+      var blob = new Blob(["\ufeff" + rows.map(function(r){ return r.map(q).join(","); }).join("\r\n")], { type: "text/csv;charset=utf-8" });
+      var l = document.createElement("a"); l.href = URL.createObjectURL(blob); l.download = "متقدمو " + APPV.title + ".csv"; document.body.appendChild(l); l.click(); setTimeout(function(){ URL.revokeObjectURL(l.href); l.remove(); }, 500); return;
+    }
     if(e.target.closest("#vToggle")){ var cl = APPV.status === "open"; if(cl && !confirm("إغلاق التقديم على «" + APPV.title + "»؟ تختفي من صفحة المتدربين، والمتقدمون يبقون عندك.")) return; api("/api/hr/vacs", cl ? { close: APPV.id } : { open: APPV.id }).then(function(){ APPV.status = cl ? "closed" : "open"; paintApps(); loadVacs(); }); return; }
     var card = e.target.closest("[data-app]"); if(!card) return;
     var a = APPS.find(function(x){ return x.id === card.getAttribute("data-app"); }); if(!a) return;
