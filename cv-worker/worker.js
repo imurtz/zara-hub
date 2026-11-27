@@ -63,6 +63,7 @@ function digits(s) { return String(s || "").replace(/[\u0660-\u0669]/g, d => d.c
 function phoneNorm(s) { let d = digits(s).replace(/\D/g, "").replace(/^00/, ""); if (/^9665\d{8}$/.test(d)) d = "0" + d.slice(3); else if (/^5\d{8}$/.test(d)) d = "0" + d; return d; }
 const clip = (s, n) => String(s || "").replace(/\s+/g, " ").trim().slice(0, n);
 
+const VAC_SEED = [{"id": "vac-abre-metro", "title": "أخصائي قياس الأبعاد", "title_en": "Metrologist", "company": "ABRE Business Solutions — لصالح شركة صناعية رائدة", "city": "الرياض", "tags": ["للسعوديين فقط", "صناعة السيارات"], "intro": "فرصة لمن يحب الدقة في القياس وضبط الجودة في قطاع صناعة السيارات والصناعة المتقدمة، والعمل على أحدث أجهزة القياس ودعم عمليات الجودة الحرجة.", "duties": ["برمجة وتشغيل أجهزة القياس الإحداثي (CMM) وأنظمة المسح", "قياس أبعاد القطع المصبوبة والمطلية والمجمّعة", "قراءة الرسومات الهندسية ومتطلبات GD&T", "إعداد قياسات PPAP ودراسات القدرة واعتماد المنتجات", "تحليل بيانات القياس وإعداد تقارير الأبعاد", "دعم تحسين العمليات وضبط القوالب بناءً على نتائج القياس", "إجراء دراسات Gauge R&R وتحليل نظام القياس (MSA)", "متابعة سجلات المعايرة والتزام أجهزة القياس"], "quals": ["دبلوم أو بكالوريوس في الهندسة الميكانيكية أو علم القياس أو تقنية التصنيع أو ما يعادلها", "تدريب أو خبرة في برمجة وتشغيل CMM (مثل PC-DMIS أو Calypso)", "فهم جيد لـ GD&T وMSA وSPC ومتطلبات IATF 16949"], "exp": "من سنتين إلى 4 سنوات في قياس الأبعاد، ويُفضّل في صناعة السيارات — ويُشجَّع حديثو التخرج المتميزون تقنياً على التقديم."}, {"id": "vac-abre-recv", "title": "مشغّل استلام وفك الشحنات الواردة", "title_en": "Inbound Receiving & Unboxing Operator", "company": "ABRE Business Solutions — لصالح شركة صناعية رائدة", "city": "الرياض", "tags": ["للسعوديين فقط", "مستودعات ولوجستيات", "تدريب متوفر"], "intro": "فرصة لمن يهتم بالخدمات اللوجستية وعمليات المستودعات ومناولة المواد في بيئة تصنيع سريعة — الدور: استلام المواد الواردة وفحصها وترميزها وتجهيزها للإنتاج بدقة.", "duties": ["استلام الشحنات وتنزيلها وعدّها وفحصها مقابل أوامر الشراء ومذكرات التسليم", "فك الشحنات المستوردة وإعادة تعبئتها في حاويات المصنع", "فحص القطع من التلف أو التلوث أو أخطاء الملصقات والإبلاغ عن أي اختلاف", "وضع الملصقات الداخلية وتسجيل الاستلام في نظام ERP/WMS", "تطبيق مبدأ FIFO والمحافظة على تتبّع المواد", "معالجة مخلفات التغليف ودعم إعادة التدوير", "المحافظة على النظافة وتنظيم بيئة العمل (5S)", "مساندة فريق المستودع في أوقات الذروة"], "quals": ["الثانوية العامة أو دبلوم تقني", "القدرة على قراءة مستندات التسليم وملصقات القطع بالإنجليزية", "مهارات حاسب أساسية لإدخال البيانات", "يُوفَّر تدريب على المناولة اليدوية والسلامة"], "exp": "سنة إلى سنتين في المستودعات أو الاستلام أو اللوجستيات (مفضّلة) — ويُشجَّع حديثو التخرج الراغبون في التعلّم، فالتدريب متوفر."}, {"id": "vac-abre-line", "title": "مشغّل إمداد خطوط الإنتاج", "title_en": "Inbound Line Supply Operator", "company": "ABRE Business Solutions — لصالح شركة صناعية رائدة", "city": "الرياض", "tags": ["للسعوديين فقط", "بدون خبرة", "تدريب كامل"], "intro": "فرصة لبناء مسار مهني في اللوجستيات وعمليات المستودعات ودعم الإنتاج في بيئة تصنيع عالمية — مع تدريب كامل للمقبولين.", "duties": ["توصيل المواد الخام والقطع والتغليف من المستودع إلى خطوط الإنتاج في الوقت وبالكمية الصحيحة", "تشغيل مسارات القاطرات (Tugger) والإمداد الدوري وفق الجداول", "صرف المواد باستخدام بطاقات كانبان وقوائم الصرف وأجهزة المسح", "تعبئة مخزون خطوط الإنتاج مع الالتزام بمبدأ FIFO", "التحقق من أرقام القطع والكميات والملصقات", "الإبلاغ الفوري عن النقص أو التلف أو أي اختلاف", "فحص المعدات يومياً والمحافظة على بيئة عمل آمنة", "دعم تغيير خطوط الإنتاج والالتزام بمعايير 5S"], "quals": ["الثانوية العامة (مفضّلة)", "مهارات أساسية في القراءة والحساب", "لياقة بدنية للمشي والرفع ومناولة المواد", "الاستعداد للحصول على شهادة تشغيل القاطرات ومعدات النقل عبر تدريب الشركة"], "exp": "لا تُشترط خبرة سابقة والتدريب كامل — وخبرة المستودعات أو المخزون أو التجزئة أو التصنيع ميزة إضافية."}];
 let SCHEMA_DONE = false;
 async function schema(db) {
   if (SCHEMA_DONE) return;
@@ -100,6 +101,18 @@ async function schema(db) {
       db.prepare("CREATE TABLE IF NOT EXISTS hits (t INTEGER, v TEXT, s TEXT, p TEXT, k TEXT, l TEXT, x TEXT, d TEXT, r TEXT)"),
       db.prepare("CREATE INDEX IF NOT EXISTS hits_t ON hits(t)")
     ]);
+  } catch (e) {}
+  try { // وظائف معلنة للتقديم من المدربين + طلبات التقديم عليها
+    await db.batch([
+      db.prepare("CREATE TABLE IF NOT EXISTS vacancies (id TEXT PRIMARY KEY, expert_id TEXT, title TEXT, title_en TEXT, company TEXT, city TEXT, tags TEXT, intro TEXT, duties TEXT, quals TEXT, exp TEXT, status TEXT DEFAULT 'open', created INTEGER, closed INTEGER)"),
+      db.prepare("CREATE TABLE IF NOT EXISTS applications (id TEXT PRIMARY KEY, vacancy_id TEXT, seeker_id TEXT, phone TEXT, created INTEGER, status TEXT DEFAULT 'new', note TEXT, seen INTEGER DEFAULT 0, updated INTEGER)"),
+      db.prepare("CREATE INDEX IF NOT EXISTS applications_v ON applications(vacancy_id)")
+    ]);
+    const sd = await db.prepare("SELECT v FROM meta WHERE k = 'vacseed1'").first();
+    if (!sd) { // أول 3 وظائف — أعلنتها الأستاذة زينب آل الشيخ (ABRE، الرياض)
+      const t = now();
+      await db.batch(VAC_SEED.map((x, i) => db.prepare("INSERT OR IGNORE INTO vacancies (id, expert_id, title, title_en, company, city, tags, intro, duties, quals, exp, status, created) VALUES (?,?,?,?,?,?,?,?,?,?,?,'open',?)").bind(x.id, "rp-mw8hizdxoqf8m", x.title, x.title_en, x.company, x.city, JSON.stringify(x.tags), x.intro, JSON.stringify(x.duties), JSON.stringify(x.quals), x.exp, t - i)).concat([db.prepare("INSERT OR REPLACE INTO meta (k, v) VALUES ('vacseed1', '1')")]));
+    }
   } catch (e) {}
   SCHEMA_DONE = true;
 
@@ -321,6 +334,8 @@ async function statsFull(db, days, page) {
   ]);
   return { from, days, daily, pages, clicks, refs, devs, hours, evs, newVisitors: (newv[0] || {}).n || 0, durs };
 }
+const vacPub = v => ({ id: v.id, title: v.title, title_en: v.title_en, company: v.company, city: v.city, tags: JSON.parse(v.tags || "[]"), intro: v.intro, duties: JSON.parse(v.duties || "[]"), quals: JSON.parse(v.quals || "[]"), exp: v.exp, status: v.status, created: v.created });
+const lines = (x, n) => (Array.isArray(x) ? x : String(x || "").split(/\n+/)).map(l => clip(String(l).replace(/^[-•*\d.)\s]+/, ""), 200)).filter(Boolean).slice(0, n || 12);
 async function adminOk(db, k) { if (!k) return false; const r = await db.prepare("SELECT v FROM meta WHERE k = 'admin'").first(); return !!r && r.v === await sha(k); }
 async function logAct(db, who, act, ref) { try { await db.prepare("INSERT INTO log (t, who, act, ref) VALUES (?, ?, ?, ?)").bind(now(), who, act, ref || "").run(); } catch (e) {} }
 
@@ -332,6 +347,26 @@ export default {
       await schema(env.DB);
 
       if (p === "/api/t" && req.method === "POST") { const raw = (await req.text()).slice(0, 20000); ctx.waitUntil(trackIn(raw, req.headers.get("User-Agent") || "", env).catch(() => {})); return new Response(null, { status: 204, headers: H }); }
+
+      if (p === "/api/vacancies") { // الوظائف المفتوحة للتقديم — تظهر أعلى صفحة رفع السيرة
+        const vs = ((await env.DB.prepare("SELECT * FROM vacancies WHERE status = 'open' ORDER BY created DESC LIMIT 50").all()).results || []).map(vacPub);
+        let applied = []; const t = url.searchParams.get("t") || "";
+        if (t) { const sk = await env.DB.prepare("SELECT phone FROM seekers WHERE token = ? AND status = 'active'").bind(t).first(); if (sk) applied = ((await env.DB.prepare("SELECT vacancy_id FROM applications WHERE phone = ?").bind(sk.phone).all()).results || []).map(x => x.vacancy_id); }
+        return jsonRaw({ ok: true, vacancies: vs, applied }, 200, H);
+      }
+      if (p === "/api/apply" && req.method === "POST") { // التقديم على وظيفة: سيرة مؤكَّدة فقط، ومرة واحدة لكل وظيفة
+        const b = await req.json(); const sk = b.t && await env.DB.prepare("SELECT * FROM seekers WHERE token = ? AND status = 'active'").bind(b.t).first();
+        if (!sk) return json({ ok: false, err: "token" }, 200, H);
+        if (!sk.consent) return json({ ok: false, err: "confirm" }, 200, H);
+        const v = await env.DB.prepare("SELECT * FROM vacancies WHERE id = ? AND status = 'open'").bind(b.id || "").first();
+        if (!v) return json({ ok: false, err: "closed" }, 200, H);
+        const ex = await env.DB.prepare("SELECT id FROM applications WHERE vacancy_id = ? AND phone = ?").bind(v.id, sk.phone).first();
+        if (ex) return json({ ok: true, already: true }, 200, H);
+        await env.DB.prepare("INSERT INTO applications (id, vacancy_id, seeker_id, phone, created, status, seen) VALUES (?,?,?,?,?,'new',0)").bind("ap-" + tok(12), v.id, sk.id, sk.phone, now()).run();
+        await logAct(env.DB, "seeker:" + sk.id, "apply", v.id);
+        if (!isTest(sk.roster_id)) ctx.waitUntil(feed("📨", "تقديم على وظيفة «" + v.title + "»: " + sk.name, "صفحة الباحثين"));
+        return json({ ok: true }, 200, H);
+      }
 
       // ---------- الباحث ----------
       if (p === "/api/fields") return json({ fields: FIELDS.map(f => ({ k: f[0], l: f[1] })) }, 200, H);
@@ -435,6 +470,37 @@ export default {
         await env.DB.prepare("UPDATE experts SET last_seen=? WHERE id=?").bind(now(), ex.id).run();
         const ATTX = await attendees();
         const pool = ((await env.DB.prepare("SELECT id, roster_id, reg_no, field, titles, years, degree, skills, city, gender, updated, created, tasks, summary, COALESCE(slot, 1) AS slot FROM seekers WHERE status='active' AND consent=1 AND phone NOT IN (SELECT phone FROM hires) AND id NOT IN (SELECT seeker_id FROM requests WHERE outcome='hired') AND (roster_id NOT LIKE 'zz-%' OR ? = 1)").bind(ex.id.startsWith("zz-") ? 1 : 0).all()).results || []).filter(s => attendedOk(ATTX, s.roster_id)).map(s => Object.assign(s, { titles: [...new Set(JSON.parse(s.titles || "[]").map(fixT))], skills: JSON.parse(s.skills || "[]"), code: ((String(s.reg_no || "").match(/(\d+)$/) || [])[1] || s.id.slice(-4).toUpperCase()) + (s.slot === 2 ? "-2" : "") }));
+        if (p === "/api/hr/vacs") { // لوحة المدرب: وظائفه المعلنة وعدد المتقدمين
+          if (req.method === "POST") {
+            const b = await req.json();
+            if (b.close || b.open) { await env.DB.prepare("UPDATE vacancies SET status = ?, closed = ? WHERE id = ? AND expert_id = ?").bind(b.close ? "closed" : "open", b.close ? now() : null, b.close || b.open, ex.id).run(); return json({ ok: true }, 200, H); }
+            const title = clip(b.title, 80); if (!title) return json({ ok: false, err: "title" }, 200, H);
+            const id = b.id && (await env.DB.prepare("SELECT id FROM vacancies WHERE id = ? AND expert_id = ?").bind(b.id, ex.id).first()) ? b.id : "vac-" + tok(10);
+            await env.DB.prepare("INSERT OR REPLACE INTO vacancies (id, expert_id, title, title_en, company, city, tags, intro, duties, quals, exp, status, created) VALUES (?,?,?,?,?,?,?,?,?,?,?,'open',COALESCE((SELECT created FROM vacancies WHERE id = ?), ?))")
+              .bind(id, ex.id, title, clip(b.title_en, 80), clip(b.company, 100), clip(b.city, 40), JSON.stringify(lines(b.tags, 4)), clip(b.intro, 600), JSON.stringify(lines(b.duties)), JSON.stringify(lines(b.quals)), clip(b.exp, 300), id, now()).run();
+            await logAct(env.DB, "expert:" + ex.id, "vacancy", id);
+            if (!isTest(ex.id)) ctx.waitUntil(feed("📢", "المدرب " + ex.name + " أعلن وظيفة: " + title, "صفحة المدربين"));
+            return json({ ok: true, id }, 200, H);
+          }
+          const vs = (await env.DB.prepare("SELECT v.*, (SELECT COUNT(*) FROM applications a WHERE a.vacancy_id = v.id) AS n, (SELECT COUNT(*) FROM applications a WHERE a.vacancy_id = v.id AND a.seen = 0) AS nnew FROM vacancies v WHERE v.expert_id = ? ORDER BY v.status = 'open' DESC, v.created DESC").bind(ex.id).all()).results || [];
+          return jsonRaw({ ok: true, vacancies: vs.map(v => Object.assign(vacPub(v), { n: v.n, nnew: v.nnew })) }, 200, H);
+        }
+        if (p === "/api/hr/apps") { // المتقدمون على وظيفة — بالاسم والجوال لأنهم قدّموا بأنفسهم
+          if (req.method === "POST") {
+            const b = await req.json(); const st = ["new", "fit", "interview", "no", "hired"].includes(b.status) ? b.status : null;
+            const a = await env.DB.prepare("SELECT a.id, a.seeker_id, v.title FROM applications a JOIN vacancies v ON v.id = a.vacancy_id WHERE a.id = ? AND v.expert_id = ?").bind(b.id || "", ex.id).first();
+            if (!a) return json({ ok: false, err: "notfound" }, 404, H);
+            await env.DB.prepare("UPDATE applications SET status = COALESCE(?, status), note = COALESCE(?, note), updated = ? WHERE id = ?").bind(st, b.note == null ? null : clip(b.note, 300), now(), a.id).run();
+            if (st === "hired") { const sk = await env.DB.prepare("SELECT * FROM seekers WHERE id = ?").bind(a.seeker_id).first(); if (sk && !(await env.DB.prepare("SELECT id FROM hires WHERE phone = ?").bind(sk.phone).first())) { await env.DB.prepare("INSERT INTO hires (id, seeker_id, roster_id, name, phone, org, title, src, created, seen) VALUES (?,?,?,?,?,?,?,?,?,0)").bind("h-" + tok(10), sk.id, sk.roster_id, sk.name, sk.phone, ex.org || "", a.title, "expert", now()).run(); if (!isTest(ex.id)) ctx.waitUntil(hubNotify("🎉 " + sk.name + " توظّف في «" + a.title + "» — عن طريق المدرب " + ex.name)); } }
+            await logAct(env.DB, "expert:" + ex.id, "app:" + (st || "note"), a.id);
+            return json({ ok: true }, 200, H);
+          }
+          const v = await env.DB.prepare("SELECT * FROM vacancies WHERE id = ? AND expert_id = ?").bind(url.searchParams.get("id") || "", ex.id).first();
+          if (!v) return json({ ok: false, err: "notfound" }, 404, H);
+          const rows = (await env.DB.prepare("SELECT a.id, a.created, a.status, a.note, a.seen, s.id AS sid, s.name, s.phone, s.gender, s.field, s.titles, s.years, s.degree, s.city, s.summary, s.status AS sst FROM applications a JOIN seekers s ON s.id = a.seeker_id WHERE a.vacancy_id = ? ORDER BY a.created DESC").bind(v.id).all()).results || [];
+          await env.DB.prepare("UPDATE applications SET seen = 1 WHERE vacancy_id = ? AND seen = 0").bind(v.id).run();
+          return json({ ok: true, vacancy: vacPub(v), apps: rows.map(r => ({ id: r.id, created: r.created, status: r.status, note: r.note || "", isNew: !r.seen, sid: r.sid, name: r.name, phone: r.phone, gender: r.gender, fieldName: FIELD_NAME[r.field] || "", titles: JSON.parse(r.titles || "[]"), years: r.years, degree: r.degree, city: r.city, summary: r.summary ? JSON.parse(r.summary) : [], active: r.sst === "active" })) }, 200, H);
+        }
         if (p === "/api/hr/home") { // مربعات المسميات + أسئلة المتابعة المستحقة
           const tiles = {};
           pool.forEach(s => { const seen = {}; s.titles.forEach(ti => { const k = normT(ti); if (!k || seen[k]) return; seen[k] = 1; const tl = (tiles[k] = tiles[k] || { label: ti, n: 0, field: s.field, codes: [] }); tl.n++; tl.codes.push(s.code); }); });

@@ -90,6 +90,37 @@
   .chips{display:flex; flex-wrap:wrap; gap:7px;}
   .chip{border:1px solid var(--line); background:#fff; border-radius:20px; padding:7px 13px; font-size:13.5px; cursor:pointer; font:inherit;}
   .chip em{font-style:normal; color:var(--ink-soft); font-size:12px;}
+  .vbox{background:rgba(255,255,255,.92); border:1px solid var(--line); border-radius:20px; padding:14px 16px; margin:16px 0 0; box-shadow:var(--shadow);}
+  .vbox-h{display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;}
+  .vbox-h b{font-size:16px;}
+  .vbox-h button{border:0; border-radius:12px; padding:8px 14px; font-weight:600; font-size:13.5px; cursor:pointer; background:var(--teal-tint); color:var(--teal-dark);}
+  .vrow{display:flex; align-items:center; gap:10px; padding:11px 0; border-top:1px solid #eef2f1; cursor:pointer;}
+  .vrow:first-of-type{border-top:0;}
+  .vrow .vm{flex:1; min-width:0;}
+  .vrow .vm b{display:block; font-size:15px; color:var(--teal-dark);}
+  .vrow .vm small{font-size:12.5px; color:var(--ink-soft);}
+  .vrow .vn{flex:none; text-align:center; min-width:62px;}
+  .vrow .vn b{display:block; font-size:20px; line-height:1.1; color:var(--ink);}
+  .vrow .vn small{font-size:11px; color:var(--ink-soft);}
+  .vrow .vnew{background:#e0533d; color:#fff; border-radius:20px; font-size:11px; font-weight:700; padding:2px 8px; font-style:normal;}
+  .vrow.off{opacity:.55;}
+  .vempty{font-size:13.5px; color:var(--ink-soft); margin-top:8px; line-height:1.8;}
+  .stf{display:flex; flex-wrap:wrap; gap:6px; margin-top:12px;}
+  .stf button{border:1px solid var(--line); background:#fff; border-radius:20px; padding:6px 12px; font-size:13px; cursor:pointer;}
+  .stf button.on{background:var(--teal); border-color:var(--teal); color:#fff;}
+  .app .who2{font-size:16px; font-weight:700;}
+  .app .ph{font-size:13.5px; margin-top:2px;} .app .ph a{color:var(--teal-dark);}
+  .app .meta{font-size:13px; color:var(--ink-soft); margin-top:4px; line-height:1.7;}
+  .app .acts{display:flex; flex-wrap:wrap; gap:6px; margin-top:10px;}
+  .app .acts button{border:1px solid var(--line); background:#fff; border-radius:12px; padding:7px 11px; font-size:13px; cursor:pointer;}
+  .app .acts button.on{color:#fff; border-color:transparent;}
+  .app .acts button.on[data-st="new"]{background:#8a9694;} .app .acts button.on[data-st="fit"]{background:var(--teal);} .app .acts button.on[data-st="interview"]{background:var(--tan);} .app .acts button.on[data-st="no"]{background:#b3453f;} .app .acts button.on[data-st="hired"]{background:var(--ok);}
+  .app .acts .cv{background:var(--teal); color:#fff; border-color:var(--teal); font-weight:600;}
+  .app .stl{display:inline-block; font-size:11.5px; font-weight:700; border-radius:20px; padding:2px 9px; margin-inline-start:6px; vertical-align:middle; background:var(--teal-tint); color:var(--teal-dark);}
+  .vf{width:100%; border:1.5px solid var(--line); border-radius:12px; padding:11px 13px; font:inherit; font-size:15px; margin-top:10px; resize:vertical; outline:none;}
+  .vf:focus{border-color:var(--teal);}
+  .vtools{display:flex; gap:8px; flex-wrap:wrap; margin-top:10px;}
+  .vtools button{border:1px solid var(--line); background:#fff; border-radius:12px; padding:7px 12px; font-size:13px; cursor:pointer;}
   .back{border:0; background:#fff; border:1px solid var(--line); border-radius:12px; padding:8px 14px; cursor:pointer; font-size:14px; margin-bottom:12px;}
   .list{display:flex; flex-direction:column; gap:10px;}
   .cand{background:#fff; border:1px solid var(--line); border-radius:18px; padding:15px 16px;}
@@ -219,6 +250,7 @@
     <p class="sub" id="homeSub"></p>
     <div class="search big srow"><input type="search" id="q" placeholder="🔍 اكتب المسمى… مثال: محاسب، مبيعات" autocomplete="off" /><button type="button" class="addb" id="addJob">＋ وظيفة</button></div>
     <div class="how" id="how" hidden aria-label="طريقة الاستخدام"><div><i>1</i>ابحث أو اختر المسمى الوظيفي</div><div><i>2</i>اقرأ الملخص واضغط «اعرض السيرة»</div><div><i>3</i>تواصل مع المرشح مباشرة</div></div>
+    <div id="vacBox"></div>
     <div id="due"></div>
     <div id="fresh"></div>
     <div id="mine"></div>
@@ -231,6 +263,32 @@
     <h1 id="listH"></h1>
     <div class="sub" id="listSub"></div>
     <div class="list" id="list" style="margin-top:14px"></div>
+  </div>
+
+  <!-- المتقدمون على وظيفة معلنة -->
+  <div id="vApps" hidden>
+    <button type="button" class="back" id="backA">→ الرئيسية</button>
+    <h1 id="appsH"></h1>
+    <div class="sub" id="appsSub"></div>
+    <div id="appsF"></div>
+    <div class="list" id="apps" style="margin-top:12px"></div>
+  </div>
+
+  <div class="sheet-bg" id="vacSheet" hidden>
+    <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="vsH">
+      <h2 id="vsH">📢 أعلن وظيفة للتقديم</h2>
+      <p class="sub" style="margin-top:2px">تظهر فوراً للمتدربين في صفحة رفع السيرة، ويقدّمون عليها بضغطة — وتتابع طلباتهم من هنا.</p>
+      <input type="text" class="vf" id="vfT" maxlength="80" placeholder="المسمى الوظيفي *" />
+      <input type="text" class="vf" id="vfC" maxlength="100" placeholder="الجهة / الشركة" />
+      <input type="text" class="vf" id="vfCity" maxlength="40" placeholder="المدينة" />
+      <textarea class="vf" id="vfI" maxlength="600" rows="2" placeholder="نبذة قصيرة عن الوظيفة"></textarea>
+      <textarea class="vf" id="vfD" rows="4" placeholder="المهام — كل مهمة في سطر"></textarea>
+      <textarea class="vf" id="vfQ" rows="3" placeholder="المؤهلات — كل مؤهل في سطر"></textarea>
+      <input type="text" class="vf" id="vfE" maxlength="300" placeholder="الخبرة المطلوبة (مثال: سنتين، أو بدون خبرة)" />
+      <div class="msg" id="mVac"></div>
+      <button type="button" class="btn" id="vfSave">نشر الوظيفة</button>
+      <button type="button" class="cancel" id="vfCancel">إلغاء</button>
+    </div>
   </div>
 
   <div class="sheet-bg" id="sheet" hidden>
@@ -265,7 +323,7 @@
   function esc(s){ return String(s == null ? "" : s).replace(/[&<>"]/g, function(c){ return { "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;" }[c]; }); }
   function digits(s){ return String(s || "").replace(/[٠-٩]/g, function(d){ return d.charCodeAt(0) - 0x0660; }); }
   function phoneNorm(s){ var d = digits(s).replace(/\D/g, "").replace(/^00/, ""); if(/^9665\d{8}$/.test(d)) d = "0" + d.slice(3); else if(/^5\d{8}$/.test(d)) d = "0" + d; return d; }
-  function view(id){ ["vLogin","vHome","vList"].forEach(function(x){ $(x).hidden = x !== id; }); window.scrollTo(0, 0); }
+  function view(id){ ["vLogin","vHome","vList","vApps"].forEach(function(x){ $(x).hidden = x !== id; }); window.scrollTo(0, 0); }
   function api(path, body){ return fetch(API + path + (path.indexOf("?") > -1 ? "&" : "?") + "t=" + encodeURIComponent(T), body ? { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) } : {}).then(function(r){ return r.json(); }); }
   function out(){ try{ localStorage.removeItem("zaraHrToken"); }catch(e){} T = ""; $("who").hidden = true; view("vLogin"); }
 
@@ -297,7 +355,7 @@
       $("fresh").innerHTML = NEWN ? '<div class="fresh"><span>🆕 ' + (NEWN === 1 ? "وصلت <b>سيرة جديدة</b>" : NEWN === 2 ? "وصلت <b>سيرتين جديدتين</b>" : "وصلت <b>" + NEWN + "</b> " + (NEWN <= 10 ? "سير جديدة" : "سيرة جديدة")) + ' من زيارتك الماضية</span><button type="button" id="seeNew">اعرضها</button></div>' : "";
       if(NEWN) $("seeNew").onclick = function(){ openList({ fresh: 1 }); };
       try{ if(!localStorage.getItem("hrHowSeen")){ $("how").hidden = false; localStorage.setItem("hrHowSeen", "1"); } }catch(e){}
-      paintDue(); paintMine(); paintTiles();
+      paintDue(); paintMine(); paintTiles(); loadVacs();
     }).catch(function(){ $("tiles").innerHTML = '<div class="empty">تعذّر الاتصال، تأكد من الإنترنت.</div>'; });
   }
   // لون ثابت لكل مرشح (نفس الرقم = نفس اللون في المربعات والبطاقات) — يسهّل تمييزه بنظرة
@@ -441,6 +499,68 @@
   }
   $("listSub").onclick = function(e){ var b = e.target.closest("[data-fc],[data-fe]"); if(!b) return; if(b.hasAttribute("data-fc")) FLT.city = b.getAttribute("data-fc"); else FLT.exp = b.getAttribute("data-fe"); paintRows(); };
   $("back").onclick = function(){ loadHome(); };
+  // ===== وظائفي المعلنة: لوحة تحكم المدرب لمتابعة المتقدمين =====
+  function msg(id, t){ var m = $(id); m.textContent = t || ""; m.classList.toggle("show", !!t); }
+  var VACS = [], APPV = null, APPS = [], AFLT = "";
+  var STL = { "new": "لم يُراجع", fit: "مناسب", interview: "مقابلة", no: "غير مناسب", hired: "توظّف ✓" };
+  function loadVacs(){ api("/api/hr/vacs").then(function(d){ if(d && d.ok){ VACS = d.vacancies || []; paintVacBox(); } }).catch(function(){}); }
+  function paintVacBox(){
+    var open = VACS.filter(function(v){ return v.status === "open"; }), nn = VACS.reduce(function(a, v){ return a + (v.nnew || 0); }, 0);
+    $("vacBox").innerHTML = '<div class="vbox"><div class="vbox-h"><b>📢 وظائفك المعلنة' + (nn ? ' <i class="vnew" style="font-style:normal;background:#e0533d;color:#fff;border-radius:20px;font-size:11px;padding:2px 8px">' + nn + ' طلب جديد</i>' : '') + '</b><button type="button" id="vNew">＋ أعلن وظيفة للتقديم</button></div>' +
+      (VACS.length ? VACS.map(function(v){ return '<div class="vrow' + (v.status === "open" ? '' : ' off') + '" data-vac="' + esc(v.id) + '"><div class="vm"><b>' + esc(v.title) + '</b><small>' + esc([v.company, v.city, v.status === "open" ? "مفتوحة للتقديم" : "مغلقة"].filter(Boolean).join(" · ")) + '</small></div>' + (v.nnew ? '<i class="vnew">' + v.nnew + ' جديد</i>' : '') + '<div class="vn"><b>' + (v.n || 0) + '</b><small>متقدم</small></div></div>'; }).join("")
+        : '<div class="vempty">عندك وظيفة شاغرة؟ أعلنها هنا وتظهر للمتدربين في صفحة رفع السيرة، يقدّمون عليها بضغطة، وتتابع كل الطلبات من هالمكان.</div>') + '</div>';
+  }
+  $("vacBox").onclick = function(e){
+    if(e.target.closest("#vNew")){ ["vfT","vfC","vfCity","vfI","vfD","vfQ","vfE"].forEach(function(k){ $(k).value = ""; }); msg("mVac"); $("vacSheet").hidden = false; setTimeout(function(){ $("vfT").focus(); }, 100); return; }
+    var r = e.target.closest("[data-vac]"); if(r) openApps(r.getAttribute("data-vac"));
+  };
+  $("vfCancel").onclick = function(){ $("vacSheet").hidden = true; };
+  $("vacSheet").onclick = function(e){ if(e.target === this) this.hidden = true; };
+  $("vfSave").onclick = function(){
+    var t = $("vfT").value.trim(); if(!t) return msg("mVac", "اكتب المسمى الوظيفي.");
+    var b = this; b.disabled = true;
+    api("/api/hr/vacs", { title: t, company: $("vfC").value.trim(), city: $("vfCity").value.trim(), intro: $("vfI").value.trim(), duties: $("vfD").value, quals: $("vfQ").value, exp: $("vfE").value.trim() }).then(function(d){
+      b.disabled = false; if(!d || !d.ok) return msg("mVac", "تعذّر النشر، حاول مرة أخرى.");
+      $("vacSheet").hidden = true; window.zt && zt("إعلان وظيفة", t); loadVacs();
+    }).catch(function(){ b.disabled = false; msg("mVac", "تعذّر الاتصال."); });
+  };
+  function openApps(id){
+    view("vApps"); APPV = null; AFLT = ""; $("appsH").innerHTML = ""; $("appsSub").textContent = ""; $("appsF").innerHTML = ""; $("apps").innerHTML = '<div class="spin"></div>';
+    api("/api/hr/apps?id=" + encodeURIComponent(id)).then(function(d){
+      if(!d || !d.ok){ if(d && d.err === "token") return out(); $("apps").innerHTML = '<div class="empty">تعذّر التحميل.</div>'; return; }
+      APPV = d.vacancy; APPS = d.apps || []; paintApps(); loadVacs();
+    }).catch(function(){ $("apps").innerHTML = '<div class="empty">تعذّر الاتصال.</div>'; });
+  }
+  function paintApps(){
+    var v = APPV, cnt = {}; APPS.forEach(function(a){ cnt[a.status] = (cnt[a.status] || 0) + 1; });
+    $("appsH").innerHTML = "<b>" + esc(v.title) + "</b>";
+    $("appsSub").innerHTML = esc([v.company, v.city].filter(Boolean).join(" · ")) + " — <b>" + APPS.length + "</b> متقدم" + (v.status === "open" ? "" : " · <b style='color:var(--danger)'>الوظيفة مغلقة</b>") +
+      '<div class="vtools"><button type="button" id="vToggle">' + (v.status === "open" ? "🔒 إغلاق التقديم" : "🔓 إعادة فتح التقديم") + '</button></div>';
+    $("appsF").innerHTML = APPS.length ? '<div class="stf"><button type="button" data-af=""' + (!AFLT ? ' class="on"' : '') + '>الكل (' + APPS.length + ')</button>' + Object.keys(STL).filter(function(k){ return cnt[k]; }).map(function(k){ return '<button type="button" data-af="' + k + '"' + (AFLT === k ? ' class="on"' : '') + '>' + STL[k] + ' (' + cnt[k] + ')</button>'; }).join("") + '</div>' : '';
+    var rows = APPS.filter(function(a){ return !AFLT || a.status === AFLT; });
+    $("apps").innerHTML = rows.length ? rows.map(function(a){
+      var wa = "966" + String(a.phone || "").replace(/^0/, "");
+      return '<div class="cand app" data-app="' + esc(a.id) + '" data-sid="' + esc(a.sid) + '"><div class="who2">' + esc(a.name) + (a.isNew ? ' <em class="nw">جديد</em>' : '') + '<span class="stl">' + STL[a.status] + '</span></div>' +
+        '<div class="ph"><a href="tel:' + esc(a.phone) + '" dir="ltr">' + esc(a.phone) + '</a> · <a href="https://api.whatsapp.com/send?phone=' + wa + '" target="_blank" rel="noopener">واتساب</a></div>' +
+        '<div class="meta">' + esc([(a.titles || []).join("، ") || a.fieldName, a.years != null ? a.years + " سنوات خبرة" : "", a.degree, a.city].filter(Boolean).join(" · ")) + '<br><small>قدّم ' + new Date(a.created).toLocaleDateString("ar-SA-u-ca-gregory-nu-latn", { day: "numeric", month: "short" }) + '</small></div>' +
+        (a.summary && a.summary.length ? '<div class="sum"><div class="sl">✨ ملخص سريع</div>' + a.summary.map(function(l){ return '<div>' + esc(l) + '</div>'; }).join("") + '</div>' : '') +
+        '<div class="acts">' + (a.active ? '<button type="button" class="cv" data-cv="1">📄 افتح السيرة</button>' : '<span class="sub">سحب سيرته من المنصة</span>') + Object.keys(STL).map(function(k){ return '<button type="button" data-st="' + k + '"' + (a.status === k ? ' class="on"' : '') + '>' + STL[k] + '</button>'; }).join("") + '</div><div class="rev"></div></div>';
+    }).join("") : '<div class="empty">' + (APPS.length ? "لا يوجد متقدمون بهذه الحالة." : "ما فيه متقدمين للحين — أول ما يقدّم أحد يظهر هنا.") + '</div>';
+  }
+  $("backA").onclick = function(){ loadHome(); };
+  $("vApps").onclick = function(e){
+    var f = e.target.closest("[data-af]"); if(f){ AFLT = f.getAttribute("data-af"); paintApps(); return; }
+    if(e.target.closest("#vToggle")){ var cl = APPV.status === "open"; if(cl && !confirm("إغلاق التقديم على «" + APPV.title + "»؟ تختفي من صفحة المتدربين، والمتقدمون يبقون عندك.")) return; api("/api/hr/vacs", cl ? { close: APPV.id } : { open: APPV.id }).then(function(){ APPV.status = cl ? "closed" : "open"; paintApps(); loadVacs(); }); return; }
+    var card = e.target.closest("[data-app]"); if(!card) return;
+    var a = APPS.find(function(x){ return x.id === card.getAttribute("data-app"); }); if(!a) return;
+    var sb = e.target.closest("[data-st]");
+    if(sb){ var st = sb.getAttribute("data-st"); if(st === "hired" && !confirm("تأكيد توظيف " + a.name + " في «" + APPV.title + "»؟ 🎉")) return; a.status = st; paintApps(); api("/api/hr/apps", { id: a.id, status: st }).then(function(d){ if(!d || !d.ok) alert("تعذّر الحفظ"); }); window.zt && zt("حالة متقدم", STL[st]); return; }
+    if(e.target.closest("[data-cv]")){
+      var w = window.open("", "_blank");
+      api("/api/hr/open", { id: a.sid, job: APPV.title }).then(function(d){ if(d && d.ok && d.file){ if(w) w.location.href = d.file; else location.href = d.file; } else { if(w) w.close(); alert("تعذّر فتح السيرة — ربما سحبها صاحبها."); } }).catch(function(){ if(w) w.close(); });
+    }
+  };
+
   $("list").onclick = function(e){
     var ob = e.target.closest(".oc [data-out]");
     if(ob){ var box = ob.closest(".oc"); api("/api/hr/outcome", { rid: box.getAttribute("data-rid"), outcome: ob.getAttribute("data-out") }).then(function(){ box.innerHTML = ob.getAttribute("data-out") === "hired" ? "<b>مبروك! شكراً لتحديثك 🌟 — يختفي المرشح من القائمة.</b>" : "<b>شكراً، وصلنا رأيك ✓</b>"; }); return; }

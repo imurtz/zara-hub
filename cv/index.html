@@ -82,6 +82,30 @@
   .links .del{color:var(--danger);}
   .foot{text-align:center; color:var(--ink-soft); font-size:12px; margin-top:20px; line-height:1.8;}
   [hidden]{display:none !important;}
+  .vacs{margin:0 0 18px;}
+  .vacs-h{display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:10px;}
+  .vacs-h h2{font-size:18px; font-weight:700;}
+  .vacs-h span{font-size:12.5px; color:var(--tan-dark); background:var(--tan-tint); border:1px solid #eedfd0; border-radius:30px; padding:3px 11px; font-weight:600;}
+  .vac{background:#fff; border:1px solid var(--line); border-radius:18px; padding:15px 16px; margin-bottom:10px; box-shadow:0 6px 18px rgba(45,70,66,.06);}
+  .vac .vt{font-size:16.5px; font-weight:700; color:var(--teal-dark); line-height:1.5;}
+  .vac .ve{font-size:12.5px; color:var(--ink-soft); direction:ltr; text-align:right;}
+  .vac .vc{font-size:13px; color:var(--ink-soft); margin-top:4px;}
+  .vac .vg{display:flex; flex-wrap:wrap; gap:6px; margin-top:8px;}
+  .vac .vg i{font-style:normal; font-size:12px; background:var(--teal-tint); color:var(--teal-dark); border-radius:20px; padding:3px 10px;}
+  .vac .vi{font-size:13.5px; line-height:1.8; margin-top:8px; color:var(--ink);}
+  .vac details{margin-top:6px; font-size:13.5px; line-height:1.8;}
+  .vac summary{cursor:pointer; color:var(--teal-dark); font-weight:600; font-size:13.5px; list-style:none;}
+  .vac summary::-webkit-details-marker{display:none;}
+  .vac summary::after{content:" ▾";}
+  .vac details[open] summary::after{content:" ▴";}
+  .vac details b{display:block; margin-top:8px; font-size:13.5px;}
+  .vac details ul{padding-inline-start:18px; color:var(--ink-soft);}
+  .vac .va{display:flex; align-items:center; gap:10px; margin-top:12px;}
+  .vac .va button{border:0; border-radius:12px; padding:10px 18px; font:inherit; font-size:14.5px; font-weight:700; cursor:pointer; color:#fff; background:linear-gradient(90deg, var(--teal), var(--teal-dark));}
+  .vac .va button:disabled{opacity:.6; cursor:wait;}
+  .vac .va .done{color:var(--ok, #3d7a5a); font-weight:700; font-size:14px;}
+  .vac .va small{font-size:12px; color:var(--ink-soft);}
+  .vnote{background:var(--tan-tint); border:1px solid #eedfd0; border-radius:14px; padding:10px 13px; font-size:13.5px; line-height:1.7; color:#5a4532; margin-bottom:12px;}
   .two{display:flex; align-items:center; gap:12px; padding:14px 16px;}
   .two .tx{flex:1; font-size:13.5px; line-height:1.7; color:var(--ink-soft);}
   .two .tx b{display:block; color:var(--ink); font-size:15px;}
@@ -103,6 +127,7 @@
     <p>تُفرز سيرتك تلقائياً حسب تخصصك، وتصل إلى خبراء الموارد البشرية في شبكتنا عند توفر فرصة مناسبة.</p>
     <p class="promise">لا نَعِدُك بالوظيفة… لكنّنا نسعى أن نكون الجسرَ الذي تعبُر منه إليها.</p>
   </div>
+  <div class="vacs" id="vacs" hidden></div>
   <div class="steps"><i id="s1" class="on"></i><i id="s2"></i><i id="s3"></i></div>
 
   <!-- 1) الجوال -->
@@ -168,7 +193,7 @@
 (function(){
   var API = "https://zara-cv.murtada-ud.workers.dev";
   var $ = function(id){ return document.getElementById(id); };
-  var S = { phone: "", token: "", profile: null, fields: [], slot: 1, other: null };
+  var S = { phone: "", token: "", profile: null, fields: [], slot: 1, other: null, vacs: [], applied: [] };
   if(window.pdfjsLib) pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
 
   function show(id){ window.zt && zt("خطوة", { stPhone: "1 الجوال", stFile: "2 رفع الملف", stConfirm: "3 التأكيد", stDone: "4 تمّ الإرسال" }[id]); if(id !== "stDone") $("twoBox").hidden = true; ["stPhone","stFile","stConfirm","stDone"].forEach(function(x){ $(x).hidden = x !== id; }); var n = { stPhone: 1, stFile: 2, stConfirm: 3, stDone: 3 }[id]; [1,2,3].forEach(function(i){ $("s" + i).className = i <= n ? "on" : ""; }); window.scrollTo({ top: 0, behavior: "smooth" }); }
@@ -252,7 +277,7 @@
     var b = this; b.disabled = true;
     api("/api/me?t=" + S.token, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ field: $("field").value, titles: titles, city: $("city").value.trim(), consent: true }) }).then(function(r){
       b.disabled = false; if(!r.ok) return msg("m3", "تعذّر الحفظ، حاول مرة أخرى.");
-      S.profile = r.profile; api("/api/me?t=" + S.token).then(function(r2){ S.other = (r2 && r2.other) || null; fillDone(); }).catch(function(){}); fillDone(); show("stDone");
+      S.profile = r.profile; afterReady(); api("/api/me?t=" + S.token).then(function(r2){ S.other = (r2 && r2.other) || null; fillDone(); }).catch(function(){}); fillDone(); show("stDone");
     }).catch(function(){ b.disabled = false; msg("m3", "تعذّر الاتصال، حاول مرة أخرى."); });
   };
 
@@ -289,10 +314,48 @@
     api("/api/me?t=" + S.token, { method: "DELETE" }).then(function(r){ if(!r.ok) return alert("تعذّر الحذف، حاول مرة أخرى."); try{ localStorage.removeItem("zaraCvToken"); }catch(e){} S.token = ""; $("doneH").textContent = "حُذفت سيرتك"; $("doneP").textContent = "حُذف الملف وبياناتك من الشبكة. يمكنك الرفع من جديد في أي وقت من الرابط نفسه."; $("stDone").querySelectorAll(".res,.mylink,.links,.sub + .mylink").forEach(function(e){ e.hidden = true; }); });
   };
 
+
+  // ===== وظائف معلنة من مدربي «مفاتيح الفرص» — التقديم بسيرتك المؤكدة بضغطة =====
+  function pend(v){ try{ if(v === undefined) return localStorage.getItem("zaraPendVac") || ""; if(v) localStorage.setItem("zaraPendVac", v); else localStorage.removeItem("zaraPendVac"); }catch(e){ return ""; } }
+  function li(a){ return (a || []).length ? '<ul>' + a.map(function(x){ return '<li>' + esc(x) + '</li>'; }).join("") + '</ul>' : ''; }
+  function paintVacs(){
+    var bx = $("vacs"); if(!S.vacs.length){ bx.hidden = true; return; }
+    var pv = pend(), pvV = pv && S.vacs.find(function(v){ return v.id === pv; });
+    bx.hidden = false;
+    bx.innerHTML = '<div class="vacs-h"><h2>💼 وظائف متاحة للتقديم</h2><span>' + S.vacs.length + ' ' + (S.vacs.length === 1 ? 'وظيفة' : S.vacs.length === 2 ? 'وظيفتين' : S.vacs.length <= 10 ? 'وظائف' : 'وظيفة') + '</span></div>' +
+      (pvV && !(S.token && S.profile && S.profile.consent) ? '<div class="vnote">اخترت التقديم على <b>«' + esc(pvV.title) + '»</b> — ارفع سيرتك وأكّدها تحت، ونقدّم لك عليها تلقائياً ✨</div>' : '') +
+      S.vacs.map(function(v){
+        var done = S.applied.indexOf(v.id) > -1;
+        return '<div class="vac" id="vac-' + esc(v.id) + '"><div class="vt">' + esc(v.title) + '</div>' + (v.title_en ? '<div class="ve">' + esc(v.title_en) + '</div>' : '') +
+          '<div class="vc">' + esc([v.company, v.city].filter(Boolean).join(" · ")) + '</div>' +
+          ((v.tags || []).length ? '<div class="vg">' + v.tags.map(function(t){ return '<i>' + esc(t) + '</i>'; }).join("") + '</div>' : '') +
+          (v.intro ? '<div class="vi">' + esc(v.intro) + '</div>' : '') +
+          '<details><summary>التفاصيل والمتطلبات</summary>' + ((v.duties || []).length ? '<b>المهام</b>' + li(v.duties) : '') + ((v.quals || []).length ? '<b>المؤهلات</b>' + li(v.quals) : '') + (v.exp ? '<b>الخبرة</b><div style="color:var(--ink-soft)">' + esc(v.exp) + '</div>' : '') + '</details>' +
+          '<div class="va">' + (done ? '<span class="done">✓ قدّمت على هذه الوظيفة</span>' : '<button type="button" data-apply="' + esc(v.id) + '">قدّم الآن</button><small>تصل سيرتك للمسؤول عن الوظيفة مباشرة</small>') + '</div></div>';
+      }).join("");
+  }
+  function loadVacs(){ api("/api/vacancies" + (S.token ? "?t=" + encodeURIComponent(S.token) : "")).then(function(r){ if(r && r.ok){ S.vacs = r.vacancies || []; S.applied = r.applied || []; if(pend() && !S.vacs.some(function(v){ return v.id === pend(); })) pend(""); paintVacs(); } }).catch(function(){}); }
+  function applyTo(id, auto){
+    var v = S.vacs.find(function(x){ return x.id === id; }); if(!v) return;
+    if(!S.token || !S.profile || !S.profile.consent){
+      pend(id); paintVacs();
+      if(S.token && S.profile && !S.profile.consent){ fillConfirm(); show("stConfirm"); msg("m3", "أكّد سيرتك أولاً (اضغط «تأكيد وإرسال») ونقدّم لك على «" + v.title + "» تلقائياً."); }
+      else { show("stPhone"); setTimeout(function(){ $("phone").focus(); }, 300); }
+      document.querySelector(".steps").scrollIntoView({ behavior: "smooth", block: "start" }); return;
+    }
+    if(!auto && !confirm("تقديم سيرتك على وظيفة «" + v.title + "»؟\nتصل سيرتك وبيانات تواصلك للمسؤول عن الوظيفة.")) return;
+    var b = document.querySelector('[data-apply="' + id + '"]'); if(b){ b.disabled = true; b.textContent = "جارٍ التقديم…"; }
+    api("/api/apply", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ t: S.token, id: id }) }).then(function(r){
+      if(r && r.ok){ pend(""); if(S.applied.indexOf(id) < 0) S.applied.push(id); paintVacs(); window.zt && zt("تقديم على وظيفة", v.title); if(auto) alert("✓ تم تقديمك على «" + v.title + "» — بالتوفيق!"); var el = $("vac-" + id); if(el) el.scrollIntoView({ behavior: "smooth", block: "center" }); }
+      else { if(b){ b.disabled = false; b.textContent = "قدّم الآن"; } alert(r && r.err === "closed" ? "هذه الوظيفة أُغلقت." : r && r.err === "confirm" ? "أكّد سيرتك أولاً ثم قدّم." : "تعذّر التقديم، حاول مرة أخرى."); }
+    }).catch(function(){ if(b){ b.disabled = false; b.textContent = "قدّم الآن"; } alert("تعذّر الاتصال، حاول مرة أخرى."); });
+  }
+  $("vacs").onclick = function(e){ var b = e.target.closest("[data-apply]"); if(b) applyTo(b.getAttribute("data-apply")); };
+  function afterReady(){ loadVacs(); var pv = pend(); if(pv && S.token && S.profile && S.profile.consent) setTimeout(function(){ if(S.vacs.some(function(v){ return v.id === pv; }) && S.applied.indexOf(pv) < 0) applyTo(pv, true); }, 900); }
   // فتح الرابط الخاص (?t=) أو رمز محفوظ على الجهاز
   var t = new URLSearchParams(location.search).get("t"); try{ t = t || localStorage.getItem("zaraCvToken"); }catch(e){}
-  function loadTok(t){ return api("/api/me?t=" + encodeURIComponent(t)).then(function(r){ if(r.ok){ S.token = t; S.profile = r.profile; S.other = r.other || null; S.slot = r.profile.slot || 1; S.phone = S.phone || r.profile.phone || ""; save(); window.scrollTo(0, 0); if(!r.profile.consent){ fillConfirm(); show("stConfirm"); msg("m3", "سيرتك غير ظاهرة للخبراء حالياً: راجع البيانات ثم اضغط «تأكيد وإرسال» لإظهارها."); } else { fillDone(); show("stDone"); } } else { try{ localStorage.removeItem("zaraCvToken"); }catch(e){} } }).catch(function(){}); }
-  if(t) loadTok(t);
+  function loadTok(t){ return api("/api/me?t=" + encodeURIComponent(t)).then(function(r){ if(r.ok){ S.token = t; S.profile = r.profile; S.other = r.other || null; S.slot = r.profile.slot || 1; S.phone = S.phone || r.profile.phone || ""; save(); window.scrollTo(0, 0); afterReady(); if(!r.profile.consent){ fillConfirm(); show("stConfirm"); msg("m3", "سيرتك غير ظاهرة للخبراء حالياً: راجع البيانات ثم اضغط «تأكيد وإرسال» لإظهارها."); } else { fillDone(); show("stDone"); } } else { try{ localStorage.removeItem("zaraCvToken"); }catch(e){} loadVacs(); } }).catch(function(){ loadVacs(); }); }
+  if(t) loadTok(t); else loadVacs();
 })();
 </script>
 <script src="/assets/zt.js" defer></script>
