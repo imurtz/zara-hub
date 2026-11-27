@@ -82,6 +82,27 @@
   .links .del{color:var(--danger);}
   .foot{text-align:center; color:var(--ink-soft); font-size:12px; margin-top:20px; line-height:1.8;}
   [hidden]{display:none !important;}
+  .choose{display:grid; gap:12px; margin:0 0 18px;}
+  .ch{display:flex; gap:14px; align-items:center; text-align:right; width:100%; background:#fff; border:1.5px solid var(--line); border-radius:20px; padding:18px; cursor:pointer; font:inherit; color:var(--ink); box-shadow:0 8px 22px rgba(45,70,66,.07); transition:transform .15s, border-color .15s;}
+  .ch:hover{border-color:var(--teal); transform:translateY(-2px);}
+  .ch .ch-i{flex:none; font-size:30px; width:58px; height:58px; border-radius:16px; background:var(--teal-tint); display:flex; align-items:center; justify-content:center;}
+  .ch .ch-t{flex:1; min-width:0;}
+  .ch b{display:block; font-size:17px; color:var(--teal-dark);}
+  .ch small{display:block; margin-top:2px; font-size:13px; color:var(--ink-soft); line-height:1.6;}
+  .ch i{flex:none; font-style:normal; font-size:20px; color:var(--teal);}
+  .ch:disabled{opacity:.55; cursor:default; transform:none;}
+  body.m-choose .steps, body.m-choose .card, body.m-choose #vacs, body.m-choose #twoBox{display:none !important;}
+  body.m-jobs .steps, body.m-jobs .card, body.m-jobs #choose, body.m-jobs #twoBox{display:none !important;}
+  body.m-cv #choose, body.m-cv #vacs{display:none !important;}
+  .mback{border:1px solid var(--line); background:#fff; border-radius:12px; padding:7px 13px; font:inherit; font-size:13.5px; cursor:pointer; margin-bottom:12px; color:var(--ink);}
+  .vac .af{margin-top:12px; background:var(--teal-tint); border-radius:14px; padding:12px;}
+  .vac .af label{font-size:13.5px; font-weight:600; display:block; margin-bottom:6px;}
+  .vac .af .row{display:flex; gap:8px;}
+  .vac .af input{flex:1; min-width:0; direction:ltr; text-align:right; padding:11px 13px; font-size:16px;}
+  .vac .af button{border:0; border-radius:12px; padding:0 18px; font:inherit; font-weight:700; color:#fff; background:linear-gradient(90deg, var(--teal), var(--teal-dark)); cursor:pointer; white-space:nowrap;}
+  .vac .af .am{font-size:13px; line-height:1.7; margin-top:8px; color:var(--danger);}
+  .vac .af .am.ok{color:var(--teal-dark);}
+  .vac .af .am button{margin-top:8px; padding:9px 14px; display:block;}
   .vacs{margin:0 0 18px;}
   .vacs-h{display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:10px;}
   .vacs-h h2{font-size:18px; font-weight:700;}
@@ -123,9 +144,13 @@
 <div class="wrap">
   <div class="hero">
     <span class="tag">مفاتيح الفرص</span>
-    <h1>ارفع <b>سيرتك الذاتية</b></h1>
-    <p>تُفرز سيرتك تلقائياً حسب تخصصك، وتصل إلى خبراء الموارد البشرية في شبكتنا عند توفر فرصة مناسبة.</p>
+    <h1>خطوتك نحو <b>الوظيفة</b></h1>
+    <p>قدّم على وظيفة متاحة الآن، أو ارفع سيرتك لتصل إلى خبراء الموارد البشرية في شبكتنا عند توفر فرصة مناسبة.</p>
     <p class="promise">لا نَعِدُك بالوظيفة… لكنّنا نسعى أن نكون الجسرَ الذي تعبُر منه إليها.</p>
+  </div>
+  <div class="choose" id="choose">
+    <button type="button" class="ch" data-mode="jobs"><span class="ch-i">💼</span><span class="ch-t"><b>قدّم على وظيفة متاحة</b><small id="chJobs">وظائف معلنة الآن — اختر وقدّم برقم جوالك</small></span><i>←</i></button>
+    <button type="button" class="ch" data-mode="cv"><span class="ch-i">📄</span><span class="ch-t"><b>ارفع سيرتك على المنصة</b><small>تصل للمدربين وخبراء التوظيف حسب تخصصك</small></span><i>←</i></button>
   </div>
   <div class="vacs" id="vacs" hidden></div>
   <div class="steps"><i id="s1" class="on"></i><i id="s2"></i><i id="s3"></i></div>
@@ -179,6 +204,7 @@
     <div class="res" style="text-align:right"><div class="f" id="dField"></div><div class="t" id="dTitles"></div></div>
     <p class="sub" style="margin:14px 0 0">رابطك الخاص لتحديث سيرتك أو حذفها — احتفظ به:</p>
     <div class="mylink"><input type="text" id="myLink" readonly /><button type="button" id="copyLink">نسخ</button></div>
+    <button type="button" class="btn" id="toJobs" style="margin-top:16px" hidden>💼 شوف الوظائف المتاحة وقدّم</button>
     <div class="links"><button type="button" id="reup">رفع نسخة أحدث</button><button type="button" id="edit">تعديل المجال والمسميات</button><button type="button" id="pause">إخفاء سيرتي مؤقتاً</button><button type="button" class="del" id="del">حذف سيرتي</button></div>
   </div>
 
@@ -322,8 +348,8 @@
     var bx = $("vacs"); if(!S.vacs.length){ bx.hidden = true; return; }
     var pv = pend(), pvV = pv && S.vacs.find(function(v){ return v.id === pv; });
     bx.hidden = false;
-    bx.innerHTML = '<div class="vacs-h"><h2>💼 وظائف متاحة للتقديم</h2><span>' + S.vacs.length + ' ' + (S.vacs.length === 1 ? 'وظيفة' : S.vacs.length === 2 ? 'وظيفتين' : S.vacs.length <= 10 ? 'وظائف' : 'وظيفة') + '</span></div>' +
-      (pvV && !(S.token && S.profile && S.profile.consent) ? '<div class="vnote">اخترت التقديم على <b>«' + esc(pvV.title) + '»</b> — ارفع سيرتك وأكّدها تحت، ونقدّم لك عليها تلقائياً ✨</div>' : '') +
+    bx.innerHTML = '<button type="button" class="mback" data-back="1">→ رجوع</button><div class="vacs-h"><h2>💼 وظائف متاحة للتقديم</h2><span>' + S.vacs.length + ' ' + (S.vacs.length === 1 ? 'وظيفة' : S.vacs.length === 2 ? 'وظيفتين' : S.vacs.length <= 10 ? 'وظائف' : 'وظيفة') + '</span></div>' +
+      '<p class="sub" style="margin:-4px 0 12px">اختر الوظيفة واضغط «قدّم الآن» — يكفي رقم جوالك إذا كانت سيرتك على المنصة.</p>' +
       S.vacs.map(function(v){
         var done = S.applied.indexOf(v.id) > -1;
         return '<div class="vac" id="vac-' + esc(v.id) + '"><div class="vt">' + esc(v.title) + '</div>' + (v.title_en ? '<div class="ve">' + esc(v.title_en) + '</div>' : '') +
@@ -331,30 +357,64 @@
           ((v.tags || []).length ? '<div class="vg">' + v.tags.map(function(t){ return '<i>' + esc(t) + '</i>'; }).join("") + '</div>' : '') +
           (v.intro ? '<div class="vi">' + esc(v.intro) + '</div>' : '') +
           '<details><summary>التفاصيل والمتطلبات</summary>' + ((v.duties || []).length ? '<b>المهام</b>' + li(v.duties) : '') + ((v.quals || []).length ? '<b>المؤهلات</b>' + li(v.quals) : '') + (v.exp ? '<b>الخبرة</b><div style="color:var(--ink-soft)">' + esc(v.exp) + '</div>' : '') + '</details>' +
-          '<div class="va">' + (done ? '<span class="done">✓ قدّمت على هذه الوظيفة</span>' : '<button type="button" data-apply="' + esc(v.id) + '">قدّم الآن</button><small>تصل سيرتك للمسؤول عن الوظيفة مباشرة</small>') + '</div></div>';
+          '<div class="va">' + (done ? '<span class="done">✓ قدّمت على هذه الوظيفة</span>' : '<button type="button" data-apply="' + esc(v.id) + '">قدّم الآن</button><small>تصل سيرتك للمسؤول عن الوظيفة مباشرة</small>') + '</div>' + (OPENF === v.id && !done ? applyForm(v) : '') + '</div>';
       }).join("");
   }
-  function loadVacs(){ api("/api/vacancies" + (S.token ? "?t=" + encodeURIComponent(S.token) : "")).then(function(r){ if(r && r.ok){ S.vacs = r.vacancies || []; S.applied = r.applied || []; if(pend() && !S.vacs.some(function(v){ return v.id === pend(); })) pend(""); paintVacs(); } }).catch(function(){}); }
+  function loadVacs(){ api("/api/vacancies" + (S.token ? "?t=" + encodeURIComponent(S.token) : "")).then(function(r){ if(r && r.ok){ S.vacs = r.vacancies || []; S.applied = r.applied || []; if(pend() && !S.vacs.some(function(v){ return v.id === pend(); })) pend(""); paintVacs(); paintChoose(); } }).catch(function(){}); }
   function applyTo(id, auto){
     var v = S.vacs.find(function(x){ return x.id === id; }); if(!v) return;
-    if(!S.token || !S.profile || !S.profile.consent){
-      pend(id); paintVacs();
-      if(S.token && S.profile && !S.profile.consent){ fillConfirm(); show("stConfirm"); msg("m3", "أكّد سيرتك أولاً (اضغط «تأكيد وإرسال») ونقدّم لك على «" + v.title + "» تلقائياً."); }
-      else { show("stPhone"); setTimeout(function(){ $("phone").focus(); }, 300); }
-      document.querySelector(".steps").scrollIntoView({ behavior: "smooth", block: "start" }); return;
-    }
+    if(!auto && (!S.token || !S.profile || !S.profile.consent)){ OPENF = id; paintVacs(); setTimeout(function(){ var i = $("afp"); if(i){ i.focus(); i.scrollIntoView({ behavior: "smooth", block: "center" }); } }, 60); return; }
     if(!auto && !confirm("تقديم سيرتك على وظيفة «" + v.title + "»؟\nتصل سيرتك وبيانات تواصلك للمسؤول عن الوظيفة.")) return;
     var b = document.querySelector('[data-apply="' + id + '"]'); if(b){ b.disabled = true; b.textContent = "جارٍ التقديم…"; }
     api("/api/apply", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ t: S.token, id: id }) }).then(function(r){
-      if(r && r.ok){ pend(""); if(S.applied.indexOf(id) < 0) S.applied.push(id); paintVacs(); window.zt && zt("تقديم على وظيفة", v.title); if(auto) alert("✓ تم تقديمك على «" + v.title + "» — بالتوفيق!"); var el = $("vac-" + id); if(el) el.scrollIntoView({ behavior: "smooth", block: "center" }); }
+      if(r && r.ok){ pend(""); if(S.applied.indexOf(id) < 0) S.applied.push(id); paintVacs(); window.zt && zt("تقديم على وظيفة", v.title); if(auto){ alert("✓ تم تقديمك على «" + v.title + "» — بالتوفيق!"); setMode("jobs"); } var el = $("vac-" + id); if(el) el.scrollIntoView({ behavior: "smooth", block: "center" }); }
       else { if(b){ b.disabled = false; b.textContent = "قدّم الآن"; } alert(r && r.err === "closed" ? "هذه الوظيفة أُغلقت." : r && r.err === "confirm" ? "أكّد سيرتك أولاً ثم قدّم." : "تعذّر التقديم، حاول مرة أخرى."); }
     }).catch(function(){ if(b){ b.disabled = false; b.textContent = "قدّم الآن"; } alert("تعذّر الاتصال، حاول مرة أخرى."); });
   }
-  $("vacs").onclick = function(e){ var b = e.target.closest("[data-apply]"); if(b) applyTo(b.getAttribute("data-apply")); };
+  // نموذج التقديم برقم الجوال داخل بطاقة الوظيفة
+  var OPENF = "";
+  function applyForm(v){ return '<div class="af"><label for="afp">رقم جوالك (اللي سجّلت فيه بالورشة)</label><div class="row"><input type="tel" id="afp" inputmode="tel" maxlength="16" placeholder="05XXXXXXXX" value="' + esc(S.phone || "") + '" /><button type="button" data-send="' + esc(v.id) + '">تقديم</button></div><div class="am" id="afm"></div></div>'; }
+  function sendApply(id){
+    var v = S.vacs.find(function(x){ return x.id === id; }), ph = phoneNorm($("afp").value), m = $("afm"), b = document.querySelector('[data-send="' + id + '"]');
+    m.className = "am"; m.innerHTML = "";
+    if(!/^05\d{8}$/.test(ph)){ m.textContent = "رقم الجوال غير صحيح — مثال: 0501234567"; return; }
+    b.disabled = true; b.textContent = "…";
+    api("/api/apply", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ phone: ph, id: id }) }).then(function(r){
+      b.disabled = false; b.textContent = "تقديم"; S.phone = ph;
+      if(r && r.ok){ OPENF = ""; if(S.applied.indexOf(id) < 0) S.applied.push(id); paintVacs(); window.zt && zt("تقديم على وظيفة", v.title); var el = $("vac-" + id); if(el){ el.scrollIntoView({ behavior: "smooth", block: "center" }); var d = el.querySelector(".done"); if(d) d.textContent = r.already ? "✓ سبق أن قدّمت على هذه الوظيفة" : "✓ تم تقديمك — بالتوفيق!"; } return; }
+      var e = r && r.err;
+      if(e === "nocv" || e === "confirm"){
+        pend(id); m.className = "am ok";
+        m.innerHTML = (e === "nocv" ? "أهلاً " + esc((r.name || "").split(" ")[0]) + " 👋 ما عندك سيرة على المنصة بعد — ارفعها الحين (أقل من دقيقة) ونقدّمك على هذه الوظيفة تلقائياً." : "سيرتك محفوظة لكنها غير مؤكدة — ارفعها من جديد ونقدّمك تلقائياً.") + '<button type="button" data-upnow="1">📄 ارفع سيرتي وقدّم</button>';
+        return;
+      }
+      m.textContent = e === "notattended" ? "التقديم متاح لمن حضر ورشة «مفاتيح التوظيف 2» فقط، ولم نجد حضوراً مسجّلاً لهذا الرقم." : e === "notfound" ? "هذا الرقم غير مسجّل في ورشة «مفاتيح التوظيف 2» — استخدم الرقم نفسه اللي سجّلت فيه." : e === "closed" ? "هذه الوظيفة أُغلقت." : "تعذّر التقديم، حاول مرة أخرى.";
+    }).catch(function(){ b.disabled = false; b.textContent = "تقديم"; m.textContent = "تعذّر الاتصال، حاول مرة أخرى."; });
+  }
+  $("vacs").onclick = function(e){
+    if(e.target.closest("[data-back]")){ setMode(S.token ? "cv" : "choose"); return; }
+    var s2 = e.target.closest("[data-send]"); if(s2){ sendApply(s2.getAttribute("data-send")); return; }
+    if(e.target.closest("[data-upnow]")){ var pv = pend(), v = S.vacs.find(function(x){ return x.id === pv; }); S.slot = 1; $("hello").innerHTML = "ارفع سيرتك وبعد التأكيد نقدّمك على <b>«" + esc(v ? v.title : "") + "»</b> تلقائياً ✨"; setMode("cv"); show("stFile"); return; }
+    var b = e.target.closest("[data-apply]"); if(b) applyTo(b.getAttribute("data-apply"));
+  };
+  $("vacs").addEventListener("keydown", function(e){ if(e.key === "Enter" && e.target.id === "afp"){ var b = document.querySelector("[data-send]"); if(b) b.click(); } });
+  // الخياران: التقديم على وظيفة / رفع السيرة
+  function setMode(m){
+    document.body.classList.remove("m-choose", "m-jobs", "m-cv"); document.body.classList.add("m-" + m);
+    if(m === "jobs"){ paintVacs(); window.zt && zt("اختيار", "التقديم على وظيفة"); }
+    if(m === "cv" && !S.token && $("stDone").hidden && $("stConfirm").hidden && $("stFile").hidden) show("stPhone");
+    $("toJobs").hidden = !S.vacs.length;
+    window.scrollTo(0, 0);
+  }
+  $("choose").onclick = function(e){ var b = e.target.closest("[data-mode]"); if(b && !b.disabled){ if(b.getAttribute("data-mode") === "cv") window.zt && zt("اختيار", "رفع السيرة"); setMode(b.getAttribute("data-mode")); } };
+  $("toJobs").onclick = function(){ setMode("jobs"); };
+  function paintChoose(){ var n = S.vacs.length, b = document.querySelector('[data-mode="jobs"]'); b.disabled = !n; $("chJobs").textContent = n ? (n === 1 ? "وظيفة وحدة" : n === 2 ? "وظيفتين" : n + (n <= 10 ? " وظائف" : " وظيفة")) + " معلنة الآن — اختر وقدّم برقم جوالك" : "لا توجد وظائف معلنة حالياً — تابعنا قريباً"; $("toJobs").hidden = !n; }
   function afterReady(){ loadVacs(); var pv = pend(); if(pv && S.token && S.profile && S.profile.consent) setTimeout(function(){ if(S.vacs.some(function(v){ return v.id === pv; }) && S.applied.indexOf(pv) < 0) applyTo(pv, true); }, 900); }
   // فتح الرابط الخاص (?t=) أو رمز محفوظ على الجهاز
   var t = new URLSearchParams(location.search).get("t"); try{ t = t || localStorage.getItem("zaraCvToken"); }catch(e){}
   function loadTok(t){ return api("/api/me?t=" + encodeURIComponent(t)).then(function(r){ if(r.ok){ S.token = t; S.profile = r.profile; S.other = r.other || null; S.slot = r.profile.slot || 1; S.phone = S.phone || r.profile.phone || ""; save(); window.scrollTo(0, 0); afterReady(); if(!r.profile.consent){ fillConfirm(); show("stConfirm"); msg("m3", "سيرتك غير ظاهرة للخبراء حالياً: راجع البيانات ثم اضغط «تأكيد وإرسال» لإظهارها."); } else { fillDone(); show("stDone"); } } else { try{ localStorage.removeItem("zaraCvToken"); }catch(e){} loadVacs(); } }).catch(function(){ loadVacs(); }); }
+  document.body.classList.add(t ? "m-cv" : "m-choose");
+  if(new URLSearchParams(location.search).get("jobs")){ document.body.classList.remove("m-choose", "m-cv"); document.body.classList.add("m-jobs"); }
   if(t) loadTok(t); else loadVacs();
 })();
 </script>

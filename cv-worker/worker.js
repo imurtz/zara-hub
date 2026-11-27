@@ -355,7 +355,15 @@ export default {
         return jsonRaw({ ok: true, vacancies: vs, applied }, 200, H);
       }
       if (p === "/api/apply" && req.method === "POST") { // التقديم على وظيفة: سيرة مؤكَّدة فقط، ومرة واحدة لكل وظيفة
-        const b = await req.json(); const sk = b.t && await env.DB.prepare("SELECT * FROM seekers WHERE token = ? AND status = 'active'").bind(b.t).first();
+        const b = await req.json(); let sk = b.t && await env.DB.prepare("SELECT * FROM seekers WHERE token = ? AND status = 'active'").bind(b.t).first();
+        if (!sk && b.phone) { // تقديم مباشر برقم الجوال: نفس تحقق الرفع (سجل الورشة + الحضور)، وبسيرته المؤكدة المحفوظة
+          const ph = phoneNorm(b.phone); if (!/^05\d{8}$/.test(ph)) return json({ ok: false, err: "phone" }, 200, H);
+          const r = await rosterByPhone(ph); if (!r) return json({ ok: false, err: "notfound" }, 200, H);
+          const att = await attendees(); if (att && !attendedOk(att, r.id)) return json({ ok: false, err: "notattended" }, 200, H);
+          const all = (await env.DB.prepare("SELECT * FROM seekers WHERE phone = ? AND status = 'active' ORDER BY consent DESC, updated DESC").bind(ph).all()).results || [];
+          if (!all.length) return json({ ok: false, err: "nocv", name: r.name }, 200, H);
+          sk = all[0];
+        }
         if (!sk) return json({ ok: false, err: "token" }, 200, H);
         if (!sk.consent) return json({ ok: false, err: "confirm" }, 200, H);
         const v = await env.DB.prepare("SELECT * FROM vacancies WHERE id = ? AND status = 'open'").bind(b.id || "").first();
