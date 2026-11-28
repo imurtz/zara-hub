@@ -318,6 +318,8 @@
     fetch("https://firestore.googleapis.com/v1/projects/awamia-zara/databases/(default)/documents/eventsMeta/publicFormConfig?mask.fieldPaths=igPosts&key=AIzaSyBPos-QSrnK_x5HS742FJkNJVhXwGdq8j8")
       .then(function(r){ return r.json(); }).then(function(d){
         var v = (((d.fields || {}).igPosts || {}).arrayValue || {}).values || [];
+        // إن لم تُحدَّد روابط من البوابة: آخر 10 مناسبات اجتماعية منشورة (تهنئة/مولود/عقد قران) حتى 27 نوفمبر 2026
+        if(!v.length) v = ["DgQM0NjjcA0","DgP-ZLiDRNm","DgKrRw5l8t5","DgC-FZxF8OS","Df9zmFslyWl","Df7T_1al3wE","Df6n6MdF2tC","Df7YNX1F3fM","Dfw7R_HDIop","Dfw8Va6DGA1"].map(function(c){ return { stringValue: c }; });
         var codes = v.map(function(x){ return x.stringValue || ""; }).filter(function(c){ return /^[A-Za-z0-9_-]{5,40}$/.test(c); }).slice(0, 10);
         if(!codes.length) return;
         tr.innerHTML = codes.map(function(c){
