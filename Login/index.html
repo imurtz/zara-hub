@@ -3141,7 +3141,7 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
           <div class="user-role" id="userRoleLabel">—</div>
         </div>
       </div>
-      <div class="hb-wrap"><button type="button" class="hb-btn" id="hbBtn" title="ما صار اليوم" aria-label="الإشعارات"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 8a6 6 0 1 1 12 0c0 7 3 8 3 8H3s3-1 3-8"/><path d="M10.3 20a2 2 0 0 0 3.4 0"/></svg><i id="hbCount" hidden></i></button><div class="hb-panel" id="hbPanel" hidden></div></div>
+      <div class="hb-wrap"><button type="button" class="hb-btn" id="hbBtn" title="الإشعارات" aria-label="الإشعارات"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 8a6 6 0 1 1 12 0c0 7 3 8 3 8H3s3-1 3-8"/><path d="M10.3 20a2 2 0 0 0 3.4 0"/></svg><i id="hbCount" hidden></i></button><div class="hb-panel" id="hbPanel" hidden></div></div>
       <button class="logout-btn" id="logoutBtn">تسجيل الخروج</button>
     </div>
     <div class="topbar-left">
@@ -3527,8 +3527,9 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
   function hbSeen(){ try{ return Number(localStorage.getItem(hbSeenKey())) || 0; }catch(e){ return 0; } }
   function hbItems(){
     var me = currentUser; if(!me) return [];
-    var feed = hb.feed.filter(function(f){ return f.byId !== me.id && (f.perm === "admin" ? me.role === "admin" : empCan(me, f.perm)); });
-    var mine = hb.mine.filter(function(n){ return n.at > Date.now() - 864e5 || !n.read; }).map(function(n){ return { id: n.id, at: n.at, ic: n.type === "cv-hired" ? "🎉" : "🔔", text: n.text, by: n.from || "", sec: n.type === "cv-hired" ? "cv" : "tasks", mine: true }; });
+    var d0 = new Date(); d0.setHours(0, 0, 0, 0); var keep = hb.open ? (hb.panelSeen || 0) : hbSeen();
+    var feed = hb.feed.filter(function(f){ return f.byId !== me.id && (f.at >= d0.getTime() || f.at > keep) && (f.perm === "admin" ? me.role === "admin" : empCan(me, f.perm)); });
+    var mine = hb.mine.filter(function(n){ return n.at > Date.now() - 864e5 || !n.read || n.at > hbSeen(); }).map(function(n){ return { id: n.id, at: n.at, ic: n.type === "cv-hired" ? "🎉" : "🔔", text: n.text, by: n.from || "", sec: n.type === "cv-hired" ? "cv" : "tasks", mine: true }; });
     return mine.concat(feed).sort(function(a, b){ return b.at - a.at; });
   }
   function hbRenderBtn(){
@@ -3537,12 +3538,12 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
     c.hidden = !n; c.textContent = n > 9 ? "9+" : n;
     if(hb.open) hbRenderPanel();
   }
-  function hbTime(t){ var d = new Date(t); return d.toLocaleTimeString("ar-SA-u-nu-latn", { hour: "numeric", minute: "2-digit" }); }
+  function hbTime(t){ var d = new Date(t), tm = d.toLocaleTimeString("ar-SA-u-nu-latn", { hour: "numeric", minute: "2-digit" }); return d.toDateString() === new Date().toDateString() ? tm : d.toLocaleDateString("ar-SA-u-ca-gregory-nu-latn", { weekday: "long", day: "numeric", month: "short" }) + " · " + tm; }
   function hbRenderPanel(){
     var el = document.getElementById("hbPanel"); if(!el) return;
     var items = hbItems(), seen = hb.panelSeen || 0;
-    var h = '<div class="hb-head"><span>ما صار اليوم</span><small>' + items.length + ' حدث</small></div>';
-    if(!items.length) h += '<div class="hb-empty">ما صار شي اليوم في أقسامك بعد.</div>';
+    var h = '<div class="hb-head"><span>الإشعارات</span><small>' + items.length + ' حدث</small></div>';
+    if(!items.length) h += '<div class="hb-empty">ما فيه إشعارات جديدة في أقسامك.</div>';
     var mine = items.filter(function(x){ return x.mine; }), rest = items.filter(function(x){ return !x.mine; });
     var row = function(x){ return '<button type="button" class="hb-it' + (x.at > seen ? " new" : "") + '" data-hb-sec="' + escapeHTML(x.sec || "") + '"><em>' + (x.ic || "•") + '</em><span>' + escapeHTML(x.text) + '<small>' + escapeHTML(x.by || "") + (x.by ? " · " : "") + hbTime(x.at) + '</small></span></button>'; };
     if(mine.length) h += '<div class="hb-sec">لك</div>' + mine.slice(0, 20).map(row).join("");
@@ -3553,9 +3554,13 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
   function hbStart(){
     if(hb.started || !currentUser) return; hb.started = true;
     var today = function(){ return toISODate(new Date()); }, day = today();
+    // الجرس يعرض أحداث اليوم + كل ما لم تره منذ آخر مرة فتحت فيها الجرس (حتى لو من أيام سابقة، بحد أقصى 30 يوماً)
     var sub = function(){
       if(hb.unsub) hb.unsub();
-      hb.unsub = db.collection("hubFeed").where("day", "==", day).onSnapshot(function(snap){ hb.feed = snap.docs.map(function(d){ return d.data(); }); hbRenderBtn(); }, function(e){ console.warn("hubFeed", e && e.code); });
+      var d0 = new Date(); d0.setHours(0, 0, 0, 0);
+      var seen = hbSeen(), since = seen ? Math.min(d0.getTime(), seen) : d0.getTime();
+      since = Math.max(since, Date.now() - 30 * 864e5);
+      hb.unsub = db.collection("hubFeed").where("at", ">", since).onSnapshot(function(snap){ hb.feed = snap.docs.map(function(d){ return d.data(); }); hbRenderBtn(); }, function(e){ console.warn("hubFeed", e && e.code); });
     };
     sub();
     hb.timer = setInterval(function(){ var d = today(); if(d !== day){ day = d; sub(); } }, 60000); // يوم جديد = جرس جديد
@@ -4616,6 +4621,48 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
 
   // ===== إحصائيات الزوار (للأدمن فقط): الصفحات العامة gzara.org — مجهولة الهوية، مباشرة كل 10 ثوانٍ =====
   var stUI = { days: 7, page: "", full: null, live: null, err: "", tL: null, tF: null, liveAt: 0 };
+  // سجل الإشعارات: كل ما مرّ على الجرس محفوظ دائماً في Firestore (hubFeed = أحداث الأقسام، wsNotifs = إشعارات شخصية) — يُحمَّل عند الطلب فقط
+  var nlUI = { days: 30, rows: null, busy: false, err: "", sec: "" };
+  function nlSecName(k){ var d = SECTION_DEFS.find(function(x){ return x.key === k; }); return d ? d.label : (k === "admin" ? "الإدارة" : k || "—"); }
+  function nlLoad(){
+    if(nlUI.busy) return; nlUI.busy = true; nlUI.err = ""; stRender();
+    var from = nlUI.days ? Date.now() - nlUI.days * 864e5 : 0;
+    var q1 = from ? db.collection("hubFeed").where("at", ">", from) : db.collection("hubFeed");
+    var q2 = from ? db.collection("wsNotifs").where("at", ">", from) : db.collection("wsNotifs");
+    var names = {}; loadEmployees().forEach(function(x){ names[x.id] = x.name; });
+    Promise.all([q1.get(), q2.get()]).then(function(r){
+      var rows = [];
+      r[0].forEach(function(d){ var x = d.data(); rows.push({ at: x.at || 0, kind: "قسم", sec: x.sec || "", text: x.text || "", by: x.by || "", to: "كل من له صلاحية القسم" }); });
+      r[1].forEach(function(d){ var x = d.data(); rows.push({ at: x.at || 0, kind: "شخصي", sec: x.type === "cv-hired" ? "cv" : x.type === "doc" ? "docs" : "tasks", text: x.text || "", by: x.from || "", to: names[x.to] || x.to || "", read: !!x.read }); });
+      nlUI.rows = rows.sort(function(a, b){ return b.at - a.at; }); nlUI.busy = false; stRender();
+    }).catch(function(e){ nlUI.busy = false; nlUI.err = (e && e.code) || "load"; stRender(); });
+  }
+  function nlDate(t){ var d = new Date(t); return d.toLocaleDateString("ar-SA-u-ca-gregory-nu-latn", { day: "numeric", month: "short", year: "numeric" }) + " " + d.toLocaleTimeString("ar-SA-u-nu-latn", { hour: "numeric", minute: "2-digit" }); }
+  function nlCSV(){
+    var rows = (nlUI.rows || []).filter(function(r){ return !nlUI.sec || r.sec === nlUI.sec; });
+    var q = function(v){ return '"' + String(v == null ? "" : v).replace(/"/g, '""') + '"'; };
+    var csv = "\ufeff" + ["التاريخ", "الوقت", "النوع", "القسم", "الإشعار", "من", "إلى", "مقروء"].map(q).join(",") + "\n" + rows.map(function(r){ var d = new Date(r.at); return [toISODate(d), d.toTimeString().slice(0, 5), r.kind, nlSecName(r.sec), r.text, r.by, r.to, r.kind === "شخصي" ? (r.read ? "نعم" : "لا") : ""].map(q).join(","); }).join("\n");
+    var a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8" })); a.download = "سجل-الإشعارات-" + toISODate(new Date()) + ".csv"; document.body.appendChild(a); a.click(); setTimeout(function(){ URL.revokeObjectURL(a.href); a.remove(); }, 500);
+  }
+  function nlHTML(){
+    var e = escapeHTML;
+    var h = '<div class="cv-card" id="nlCard"><div class="st-h3">سجل الإشعارات <small>كل إشعارات الجرس القديمة والجديدة محفوظة — للتقارير الإحصائية</small></div><div class="st-ctl" style="margin-bottom:10px">' +
+      [[7, "7 أيام"], [30, "30 يوم"], [90, "90 يوم"], [365, "سنة"], [0, "الكل"]].map(function(x){ return '<button type="button" class="st-pill' + (nlUI.days === x[0] ? ' on' : '') + '" data-st="nld" data-v="' + x[0] + '">' + x[1] + '</button>'; }).join("") +
+      '<button type="button" class="st-pill" data-st="nlload">' + (nlUI.busy ? 'جارٍ التحميل…' : nlUI.rows ? '↻ تحديث' : 'عرض السجل') + '</button>' + (nlUI.rows && nlUI.rows.length ? '<button type="button" class="st-pill" data-st="nlcsv">📥 تصدير Excel (CSV)</button>' : '') + '</div>';
+    if(nlUI.err) return h + '<p class="st-mut">تعذّر تحميل السجل (' + e(nlUI.err) + ').</p></div>';
+    if(!nlUI.rows) return h + '<p class="st-mut">اختر الفترة واضغط «عرض السجل».</p></div>';
+    var all = nlUI.rows, rows = all.filter(function(r){ return !nlUI.sec || r.sec === nlUI.sec; });
+    if(!all.length) return h + '<p class="st-mut">ما فيه إشعارات في هذي الفترة.</p></div>';
+    var bySec = {}, byBy = {}, byDay = {}; all.forEach(function(r){ bySec[r.sec] = (bySec[r.sec] || 0) + 1; });
+    rows.forEach(function(r){ if(r.by) byBy[r.by] = (byBy[r.by] || 0) + 1; var k = toISODate(new Date(r.at)); byDay[k] = (byDay[k] || 0) + 1; });
+    var toArr = function(o, kk){ return Object.keys(o).map(function(k){ var x = { n: o[k] }; x[kk] = k; return x; }).sort(function(a, b){ return b.n - a.n; }); };
+    var days = Object.keys(byDay).length || 1;
+    h += '<div class="cv-kpis st-k"><div><b>' + stN(rows.length) + '</b><small>إشعار' + (nlUI.sec ? ' في ' + e(nlSecName(nlUI.sec)) : '') + '</small></div><div><b>' + stN(rows.filter(function(r){ return r.kind === "شخصي"; }).length) + '</b><small>إشعار شخصي (موجّه لموظف)</small></div><div><b>' + (Math.round(rows.length / days * 10) / 10) + '</b><small>متوسط يومي (أيام فيها نشاط)</small></div><div><b>' + stN(Object.keys(byBy).length) + '</b><small>موظف صدرت منه إشعارات</small></div></div>';
+    h += '<div class="st-grid"><div><div class="st-sub">حسب القسم <small>(اضغط للتصفية)</small></div>' + toArr(bySec, "s").map(function(r){ return '<div class="st-bar"><div class="st-bl"><button type="button" class="st-lnk" data-st="nlsec" data-v="' + e(r.s) + '">' + (nlUI.sec === r.s ? '✓ ' : '') + e(nlSecName(r.s)) + '</button></div><div class="st-bt"><i style="width:' + Math.max(2, Math.round(r.n / all.length * 100)) + '%"></i></div><b>' + stN(r.n) + '</b></div>'; }).join("") + (nlUI.sec ? '<button type="button" class="st-lnk" data-st="nlsec" data-v="">× إلغاء التصفية</button>' : '') + '</div>' +
+      '<div><div class="st-sub">حسب الموظف</div>' + stBars(toArr(byBy, "p").slice(0, 10), "n", function(r){ return e(r.p); }) + '</div></div>';
+    h += '<div class="st-sub">آخر الإشعارات <small>(أول 150 — الكامل في ملف التصدير)</small></div><div class="st-feed">' + rows.slice(0, 150).map(function(r){ return '<div><span class="st-t1">' + e(nlDate(r.at)) + '</span><b>' + e(nlSecName(r.sec)) + '</b><span>' + e(r.text) + (r.by ? ' — ' + e(r.by) : '') + (r.kind === "شخصي" ? ' ← ' + e(r.to) : '') + '</span></div>'; }).join("") + '</div></div>';
+    return h;
+  }
   function stActive(){ var v = document.getElementById("view-stats"); return !!(v && v.classList.contains("active") && document.visibilityState === "visible" && currentUser && currentUser.role === "admin"); }
   function stName(p){ var n = (stUI.full && stUI.full.names) || {}; return n[p] || (p === "/s" ? "صفحات المناسبات المنشورة" : p); }
   function stAgo(t){ var s = Math.max(0, Math.round((Date.now() - t) / 1000)); return s < 60 ? "قبل " + s + " ث" : s < 3600 ? "قبل " + Math.round(s / 60) + " د" : "قبل " + Math.round(s / 3600) + " س"; }
@@ -4646,8 +4693,8 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
     var h = '<div class="st-head"><div><h2>إحصائيات الزوار <span class="st-live"><i></i>مباشر</span></h2><p>زيارات صفحات gzara.org العامة ونقراتهم — بدون أسماء ولا أرقام جوالات' + (stUI.liveAt ? ' · آخر تحديث ' + new Date(stUI.liveAt).toLocaleTimeString("ar-SA-u-nu-latn", { hour: "numeric", minute: "2-digit", second: "2-digit" }) : '') + '</p></div><div class="st-ctl">' +
       [[1, "اليوم"], [7, "7 أيام"], [30, "30 يوم"], [90, "90 يوم"]].map(function(x){ return '<button type="button" class="st-pill' + (stUI.days === x[0] ? ' on' : '') + '" data-st="days" data-v="' + x[0] + '">' + x[1] + '</button>'; }).join("") +
       '<select data-st="page"><option value="">كل الصفحات</option>' + Object.keys((F && F.names) || {}).concat(["/s"]).filter(function(p, i, a){ return a.indexOf(p) === i && p !== "/submit.html"; }).map(function(p){ return '<option value="' + e(p) + '"' + (stUI.page === p ? ' selected' : '') + '>' + e(stName(p)) + '</option>'; }).join("") + '</select></div></div>';
-    if(stUI.err === "key"){ root.innerHTML = h + '<div class="cv-card">ما قدرنا نتحقق من حساب الأدمن — سجّل خروج وادخل من جديد.</div>'; return; }
-    if(!F && !L){ root.innerHTML = h + '<div class="cv-card">' + (stUI.err ? 'تعذّر الاتصال بخدمة الإحصائيات.' : 'جارٍ التحميل…') + '</div>'; return; }
+    if(stUI.err === "key"){ root.innerHTML = h + '<div class="cv-card">ما قدرنا نتحقق من حساب الأدمن — سجّل خروج وادخل من جديد.</div>' + nlHTML(); return; }
+    if(!F && !L){ root.innerHTML = h + '<div class="cv-card">' + (stUI.err ? 'تعذّر الاتصال بخدمة الإحصائيات.' : 'جارٍ التحميل…') + '</div>' + nlHTML(); return; }
     // مباشر
     if(L){
       h += '<div class="st-now"><div class="st-now-big"><b>' + stN(L.live.total) + '</b><span>على الموقع الآن</span></div><div class="st-now-pg">' + (L.live.pages.length ? L.live.pages.map(function(x){ return '<span class="st-chip">' + e(stName(x.p)) + ' <b>' + x.n + '</b></span>'; }).join("") : '<span class="st-mut">ما فيه أحد الحين</span>') + '</div>' +
@@ -4703,11 +4750,15 @@ body.rs-kiosk #rosterRoot{padding-top:12px}
       var kl = { view: "فتح", click: "نقر", ev: "" };
       h += '<div class="cv-card"><div class="st-h3">آخر النشاط <small>يتحدّث تلقائياً</small></div><div class="st-feed">' + L.feed.slice(0, 25).map(function(r){ return '<div><span class="st-t1">' + stAgo(r.t) + '</span><span class="st-dv">' + (r.d === "m" ? "📱" : "💻") + '</span><b>' + e(stName(r.p)) + '</b><span>' + (r.k === "view" ? "فتح الصفحة" : r.k === "click" ? "نقر «" + e(r.l) + "»" : e(r.l) + (r.x ? ": " + e(r.x) : "")) + '</span></div>'; }).join("") + '</div></div>';
     }
-    root.innerHTML = h;
+    root.innerHTML = h + nlHTML();
   }
   document.addEventListener("click", function(ev){
     var b = ev.target.closest && ev.target.closest("#stRoot [data-st]"); if(!b || b.tagName === "SELECT") return;
     var a = b.getAttribute("data-st");
+    if(a === "nld"){ nlUI.days = +b.getAttribute("data-v"); nlUI.rows = null; nlUI.sec = ""; stRender(); return; }
+    if(a === "nlload"){ nlLoad(); return; }
+    if(a === "nlcsv"){ nlCSV(); return; }
+    if(a === "nlsec"){ nlUI.sec = b.getAttribute("data-v"); stRender(); return; }
     if(a === "days"){ stUI.days = +b.getAttribute("data-v"); stUI.full = null; stRender(); stLoadFull(); }
     if(a === "pg"){ stUI.page = b.getAttribute("data-v"); stLoadFull(); }
   });
