@@ -343,7 +343,9 @@
         var HEART = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 20.5s-7.5-4.6-7.5-10.2A4.3 4.3 0 0 1 12 7.6a4.3 4.3 0 0 1 7.5 2.7c0 5.6-7.5 10.2-7.5 10.2z"/></svg>';
         var BUBBLE = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M20.5 12a8.5 8.5 0 0 1-12.6 7.4L3.5 20.5l1.1-4.2A8.5 8.5 0 1 1 20.5 12z"/></svg>';
         // بطاقات بتصميم الموقع: الصورة كاملة + الإعجابات + التعليقات (من خدمة zara-cv، تتحدّث كل ساعة) — وإن تعذّرت نرجع للتضمين الرسمي
-        fetch("https://zara-cv.murtada-ud.workers.dev/api/ig?c=" + codes.join(",")).then(function(r){ return r.json(); }).then(function(j){
+        var api = "https://zara-cv.murtada-ud.workers.dev/api/ig?c=" + codes.join(",");
+        var get = function(){ return fetch(api).then(function(r){ if(!r.ok) throw 0; return r.json(); }); };
+        get().catch(function(){ return new Promise(function(ok){ setTimeout(ok, 2000); }).then(get); }).then(function(j){
           var by = {}; (j.posts || []).forEach(function(p){ by[p.c] = p; });
           tr.innerHTML = codes.map(function(c){
             var p = by[c]; if(!p || !p.ok) return frame(c);

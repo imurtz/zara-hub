@@ -347,10 +347,18 @@ async function logAct(db, who, act, ref) { try { await db.prepare("INSERT INTO l
 const IG_MON = { January: 1, February: 2, March: 3, April: 4, May: 5, June: 6, July: 7, August: 8, September: 9, October: 10, November: 11, December: 12 };
 function igNum(x) { if (!x) return 0; x = String(x).replace(/,/g, ""); const m = x.match(/^([\d.]+)\s*([KM]?)/i); if (!m) return 0; return Math.round(parseFloat(m[1]) * (/k/i.test(m[2]) ? 1e3 : /m/i.test(m[2]) ? 1e6 : 1)); }
 function igUnesc(s) { return String(s || "").replace(/&#x([0-9a-f]+);/gi, (_, h) => String.fromCodePoint(parseInt(h, 16))).replace(/&#(\d+);/g, (_, d) => String.fromCodePoint(+d)).replace(/&amp;/g, "&").replace(/&quot;/g, '"').replace(/&#039;|&#39;/g, "'").replace(/&lt;/g, "<").replace(/&gt;/g, ">"); }
-async function igPost(code, ctx) {
-  const key = new Request("https://ig-cache.zara/v4/" + code), cache = caches.default;
-  const hit = await cache.match(key); if (hit) return hit.json();
-  let out = { c: code, ok: false };
+async function igPost(code, ctx, db) {
+  // آخر نتيجة ناجحة محفوظة في D1 (عامة لكل المناطق) وتُعرض فوراً؛ وإذا عمرها أكثر من ساعة تتحدّث بالخلفية — فلو رفض الانستقرام طلباً ما تختفي البطاقة
+  const k = "ig:" + code; let old = null;
+  try { const r = await db.prepare("SELECT v FROM meta WHERE k = ?").bind(k).first(); if (r) old = JSON.parse(r.v); } catch (e) {}
+  const save = n => db.prepare("INSERT OR REPLACE INTO meta (k, v) VALUES (?, ?)").bind(k, JSON.stringify(n)).run();
+  if (old && Date.now() - (old.t || 0) < 3600e3) return old;
+  if (old) { ctx.waitUntil(igFetch(code, old).then(n => n.ok ? save(n) : null).catch(() => {})); return old; }
+  const n = await igFetch(code, null); if (n.ok) ctx.waitUntil(save(n).catch(() => {}));
+  return n;
+}
+async function igFetch(code, old) {
+  let out = { c: code, ok: false }, full = false;
   try {
     const dbg = [];
     const get = (u, hd) => fetch(u, { headers: hd }).then(r => { dbg.push(r.status); return r.text(); }).catch(er => { dbg.push("x"); return ""; });
@@ -366,12 +374,13 @@ async function igPost(code, ctx) {
     const ti = e.indexOf('class="EmbeddedMediaImage"'), tag = ti < 0 ? "" : e.slice(e.lastIndexOf("<img", ti), e.indexOf(">", ti) + 1);
     const ss = (tag.match(/srcset="([^"]*)"/) || [])[1];
     if (ss) { const c = igUnesc(ss).split(/,\s*(?=https:)/).map(x => { const p = x.trim().split(/\s+/); return { u: p[0], w: parseInt(p[1]) || 0 }; }).filter(x => x.u).sort((a, b) => a.w - b.w); img = (c.find(x => x.w >= 640) || c[c.length - 1] || {}).u || ""; }
-    if (!img) img = igUnesc((tag.match(/src="([^"]*)"/) || [])[1] || "") || meta("og:image");
+    if (!img) img = igUnesc((tag.match(/src="([^"]*)"/) || [])[1] || "");
+    full = !!img; if (!img) img = (old && old.full && old.img) || meta("og:image"); else full = true; if (old && old.full && !tag) full = true;
     let likes = m ? igNum(m[1]) : null;
     if (likes == null) { const li = e.indexOf(' likes</a>'); if (li > 0) likes = igNum(e.slice(e.lastIndexOf(">", li) + 1, li)); }
     if (img) out = { c: code, ok: true, dbg: out.dbg, img, likes, comments: m ? igNum(m[2]) : null, date: dt ? dt[3] + "-" + String(IG_MON[dt[1]] || 1).padStart(2, "0") + "-" + dt[2].padStart(2, "0") : "" };
   } catch (err) {}
-  ctx.waitUntil(cache.put(key, new Response(JSON.stringify(out), { headers: { "Cache-Control": "max-age=" + (out.ok ? 3600 : 300) } })));
+  if (out.ok) { out.full = full; out.t = full ? Date.now() : Date.now() - 3000e3; delete out.dbg; if (old) { if (out.comments == null) out.comments = old.comments; if (out.likes == null) out.likes = old.likes; if (!out.date) out.date = old.date; } }
   return out;
 }
 
@@ -381,7 +390,7 @@ export default {
     if (req.method === "OPTIONS") return new Response(null, { headers: H });
     if (p === "/api/ig") { // ?c=كود,كود — 12 كحد أقصى
       const codes = (url.searchParams.get("c") || "").split(",").filter(c => /^[A-Za-z0-9_-]{5,40}$/.test(c)).slice(0, 12);
-      const posts = []; for (const c of codes) posts.push(await igPost(c, ctx));
+      const posts = []; for (const c of codes) posts.push(await igPost(c, ctx, env.DB));
       return new Response(JSON.stringify({ ok: true, posts }), { headers: Object.assign({ "Content-Type": "application/json; charset=utf-8", "Cache-Control": "public, max-age=600", "Access-Control-Allow-Origin": "*" }, {}) });
     }
     try {
