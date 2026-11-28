@@ -342,10 +342,48 @@ const lines = (x, n) => (Array.isArray(x) ? x : String(x || "").split(/\n+/)).ma
 async function adminOk(db, k) { if (!k) return false; const r = await db.prepare("SELECT v FROM meta WHERE k = 'admin'").first(); return !!r && r.v === await sha(k); }
 async function logAct(db, who, act, ref) { try { await db.prepare("INSERT INTO log (t, who, act, ref) VALUES (?, ?, ?, ?)").bind(now(), who, act, ref || "").run(); } catch (e) {} }
 
+
+// ===== سلايد الانستقرام في الصفحة الرئيسية: صورة المنشور + الإعجابات + التعليقات (من بيانات المعاينة العامة، مخزَّنة ساعة) =====
+const IG_MON = { January: 1, February: 2, March: 3, April: 4, May: 5, June: 6, July: 7, August: 8, September: 9, October: 10, November: 11, December: 12 };
+function igNum(x) { if (!x) return 0; x = String(x).replace(/,/g, ""); const m = x.match(/^([\d.]+)\s*([KM]?)/i); if (!m) return 0; return Math.round(parseFloat(m[1]) * (/k/i.test(m[2]) ? 1e3 : /m/i.test(m[2]) ? 1e6 : 1)); }
+function igUnesc(s) { return String(s || "").replace(/&#x([0-9a-f]+);/gi, (_, h) => String.fromCodePoint(parseInt(h, 16))).replace(/&#(\d+);/g, (_, d) => String.fromCodePoint(+d)).replace(/&amp;/g, "&").replace(/&quot;/g, '"').replace(/&#039;|&#39;/g, "'").replace(/&lt;/g, "<").replace(/&gt;/g, ">"); }
+async function igPost(code, ctx) {
+  const key = new Request("https://ig-cache.zara/v4/" + code), cache = caches.default;
+  const hit = await cache.match(key); if (hit) return hit.json();
+  let out = { c: code, ok: false };
+  try {
+    const dbg = [];
+    const get = (u, hd) => fetch(u, { headers: hd }).then(r => { dbg.push(r.status); return r.text(); }).catch(er => { dbg.push("x"); return ""; });
+    const h = await get("https://www.instagram.com/p/" + code + "/", { "User-Agent": "facebookexternalhit/1.1 (+http://www.facebook.com/externalhit_uatext.php)", "Accept-Language": "en-US,en;q=0.9" });
+    const e = await get("https://www.instagram.com/p/" + code + "/embed/captioned/", { "User-Agent": "facebookexternalhit/1.1 (+http://www.facebook.com/externalhit_uatext.php)", "Accept-Language": "en-US,en;q=0.9" });
+    out.dbg = dbg.join(",") + "|" + h.length + "|" + e.length;
+    // indexOf بدل regex على صفحة ~600KB — حتى لا نتجاوز حد المعالجة في Cloudflare
+    const meta = n => { let i = h.indexOf('property="' + n + '" content="'); if (i < 0) i = h.indexOf('name="' + n + '" content="'); if (i < 0) return ""; i = h.indexOf('content="', i) + 9; return igUnesc(h.slice(i, h.indexOf('"', i))); };
+    const d = meta("og:description") || meta("description");
+    const m = d.match(/([\d.,]+[KM]?) likes?, ([\d.,]+[KM]?) comments?/i), dt = d.match(/on ([A-Za-z]+) (\d+), (\d{4})/);
+    // الصورة كاملة بدون قص (المعاينة og:image مقصوصة مربعاً): من صفحة التضمين، بأقرب مقاس لـ 640
+    let img = "";
+    const ti = e.indexOf('class="EmbeddedMediaImage"'), tag = ti < 0 ? "" : e.slice(e.lastIndexOf("<img", ti), e.indexOf(">", ti) + 1);
+    const ss = (tag.match(/srcset="([^"]*)"/) || [])[1];
+    if (ss) { const c = igUnesc(ss).split(/,\s*(?=https:)/).map(x => { const p = x.trim().split(/\s+/); return { u: p[0], w: parseInt(p[1]) || 0 }; }).filter(x => x.u).sort((a, b) => a.w - b.w); img = (c.find(x => x.w >= 640) || c[c.length - 1] || {}).u || ""; }
+    if (!img) img = igUnesc((tag.match(/src="([^"]*)"/) || [])[1] || "") || meta("og:image");
+    let likes = m ? igNum(m[1]) : null;
+    if (likes == null) { const li = e.indexOf(' likes</a>'); if (li > 0) likes = igNum(e.slice(e.lastIndexOf(">", li) + 1, li)); }
+    if (img) out = { c: code, ok: true, dbg: out.dbg, img, likes, comments: m ? igNum(m[2]) : null, date: dt ? dt[3] + "-" + String(IG_MON[dt[1]] || 1).padStart(2, "0") + "-" + dt[2].padStart(2, "0") : "" };
+  } catch (err) {}
+  ctx.waitUntil(cache.put(key, new Response(JSON.stringify(out), { headers: { "Cache-Control": "max-age=" + (out.ok ? 3600 : 300) } })));
+  return out;
+}
+
 export default {
   async fetch(req, env, ctx) {
     const origin = req.headers.get("Origin") || "", H = cors(origin), url = new URL(req.url), p = url.pathname.replace(/\/+$/, "");
     if (req.method === "OPTIONS") return new Response(null, { headers: H });
+    if (p === "/api/ig") { // ?c=كود,كود — 12 كحد أقصى
+      const codes = (url.searchParams.get("c") || "").split(",").filter(c => /^[A-Za-z0-9_-]{5,40}$/.test(c)).slice(0, 12);
+      const posts = []; for (const c of codes) posts.push(await igPost(c, ctx));
+      return new Response(JSON.stringify({ ok: true, posts }), { headers: Object.assign({ "Content-Type": "application/json; charset=utf-8", "Cache-Control": "public, max-age=600", "Access-Control-Allow-Origin": "*" }, {}) });
+    }
     try {
       await schema(env.DB);
 
